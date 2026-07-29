@@ -1,0 +1,46 @@
+# Sensitive local sources: ROMs and patches are never published.
+*.gb
+*.gbc
+*.rom
+*.ips
+*.bps
+*.ups
+*.patch
+*.diff
+
+# Reproducible build outputs, distributions, and reports.
+/mod/
+/reports/
+/dist/
+/.cache/
+
+# Derived extractions produced by gen1recomp.
+/generated/
+/GameVersion/
+data/generated/
+assets/generated/
+catalog.json
+/config/charmap.json
+
+# Worksheets containing ROM references or temporary catalogs.
+*-worksheet/
+worksheet/
+
+# review/overrides.json contains original editorial corrections.
+# Do not ignore review/overrides.json.
+
+# Local saves and configuration.
+save.lua
+save.lua.bak
+options.lua
+portable.txt
+
+# System and editor files.
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+__pycache__/
+*.py[cod]
+/venv/
+/.venv/

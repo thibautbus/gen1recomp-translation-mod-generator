@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+set -eu
+repo=${GEN1RECOMP_REPO:-../gen1recomp}
+exec python3 "$repo/tools/modkit.py" "$@"

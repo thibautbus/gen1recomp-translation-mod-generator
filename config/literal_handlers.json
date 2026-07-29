@@ -1,0 +1,106 @@
+{
+  "schema": "gen1recomp-translation-mods/literal-handlers",
+  "version": 2,
+  "description": "QID recipes for extracted-text gaps; branch text comes only from the selected corpus language.",
+  "handlers": [
+    {
+      "id": "viridian-city-youngster2",
+      "map": "VIRIDIAN_CITY",
+      "text_constant": "TEXT_VIRIDIANCITY_YOUNGSTER2",
+      "prompt": {"qid": "rb.ViridianCity.ViridianCityYoungster2YouWantToKnowAboutText"},
+      "yes": {"qid": "rb.ViridianCity.ViridianCityYoungster2CaterpieAndWeedleDescriptionText"},
+      "no": {"qid": "rb.ViridianCity.ViridianCityYoungster2OkThenText"}
+    },
+    {
+      "id": "museum-1f-ticket-clerk",
+      "map": "MUSEUM_1F",
+      "text_constant": "TEXT_MUSEUM1F_SCIENTIST1",
+      "flow": [
+        {"if": {
+          "condition": {"flag": "EVENT_BOUGHT_MUSEUM_TICKET"},
+          "then": [{"say": {"qid": "rb.Museum1F.Museum1FScientist1TakePlentyOfTimeText"}}],
+          "else": [
+            {"say": {"qid": "rb.Museum1F.Museum1FScientist1WouldYouLikeToComeInText"}},
+            {"choice": {
+              "yes": [
+                {"if": {
+                  "condition": {"money_gte": 50},
+                  "then": [
+                    {"money": {"amount": -50}},
+                    {"set_flag": {"flag": "EVENT_BOUGHT_MUSEUM_TICKET"}},
+                    {"say": {"qid": "rb.Museum1F.Museum1FScientist1ThankYouText"}}
+                  ],
+                  "else": [{"say": {"qid": "rb.Museum1F.Museum1FScientist1DontHaveEnoughMoneyText"}}]
+                }}
+              ],
+              "no": [{"say": {"qid": "rb.Museum1F.Museum1FScientist1ComeAgainText"}}]
+            }}
+          ]
+        }}
+      ],
+      "on_step": {
+        "when": {"coords": [[9, 4], [10, 4]], "not_flag": "EVENT_BOUGHT_MUSEUM_TICKET"},
+        "flow": [
+          {"say": {"qid": "rb.Museum1F.Museum1FScientist1WouldYouLikeToComeInText"}},
+          {"choice": {
+            "yes": [{"if": {"condition": {"money_gte": 50}, "then": [
+              {"money": {"amount": -50}},
+              {"set_flag": {"flag": "EVENT_BOUGHT_MUSEUM_TICKET"}},
+              {"say": {"qid": "rb.Museum1F.Museum1FScientist1ThankYouText"}}
+            ], "else": [
+              {"say": {"qid": "rb.Museum1F.Museum1FScientist1DontHaveEnoughMoneyText"}},
+              {"script_move": {"direction": "down", "steps": 1}}
+            ]}}],
+            "no": [
+              {"say": {"qid": "rb.Museum1F.Museum1FScientist1ComeAgainText"}},
+              {"script_move": {"direction": "down", "steps": 1}}
+            ]
+          }}
+        ]
+      }
+    },
+    {
+      "id": "bike-shop-clerk",
+      "map": "BIKE_SHOP",
+      "text_constant": "TEXT_BIKESHOP_CLERK",
+      "flow": [
+        {"if": {
+          "condition": {"inventory": {"item": "BICYCLE", "op": "gt", "amount": 0}},
+          "then": [{"say": {"qid": "rb.BikeShop.BikeShopClerkHowDoYouLikeYourBicycleText"}}],
+          "else": [
+            {"if": {
+              "condition": {"inventory": {"item": "BIKE_VOUCHER", "op": "gt", "amount": 0}},
+              "then": [
+                {"say": {"qid": "rb.BikeShop.BikeShopClerkOhThatsAVoucherText"}},
+                {"inventory": {"item": "BIKE_VOUCHER", "op": "remove"}},
+                {"inventory": {"item": "BICYCLE", "op": "set", "amount": 1}},
+                {"set_flag": {"flag": "EVENT_GOT_BICYCLE"}},
+                {"say": {"qid": "rb.BikeShop.BikeShopExchangedVoucherText"}}
+              ],
+              "else": [{"say": {"qid": "rb.BikeShop.BikeShopClerkWelcomeText"}}]
+            }}
+          ]
+        }}
+      ]
+    },
+    {
+      "id": "bike-shop-middle-aged-woman",
+      "map": "BIKE_SHOP",
+      "text_constant": "TEXT_BIKESHOP_MIDDLE_AGED_WOMAN",
+      "flow": [{"say": {"qid": "rb.BikeShop.BikeShopMiddleAgedWomanText"}}]
+    },
+    {
+      "id": "bike-shop-youngster",
+      "map": "BIKE_SHOP",
+      "text_constant": "TEXT_BIKESHOP_YOUNGSTER",
+      "flow": [{"if": {
+        "condition": {"any": [
+          {"flag": "EVENT_GOT_BICYCLE"},
+          {"inventory": {"item": "BICYCLE", "op": "gt", "amount": 0}}
+        ]},
+        "then": [{"say": {"qid": "rb.BikeShop.BikeShopYoungsterCoolBikeText"}}],
+        "else": [{"say": {"qid": "rb.BikeShop.BikeShopYoungsterTheseBikesAreExpensiveText"}}]
+      }}]
+    }
+  ]
+}

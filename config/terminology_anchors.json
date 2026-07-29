@@ -1,0 +1,19 @@
+{
+  "schema": "gen1recomp-translation-mods/terminology-anchors",
+  "version": 1,
+  "description": "Corpus qids and extraction metadata for localized machine displays; values come from the selected language corpus.",
+  "anchors": {
+    "technical_prefix": {
+      "qid": "rb.names.TechnicalPrefix",
+      "extraction": {"kind": "text"}
+    },
+    "hidden_prefix": {
+      "qid": "rb.names.HiddenPrefix",
+      "extraction": {"kind": "text"}
+    },
+    "quantity_style": {
+      "qid": "rb.list_menu.InitialQuantityText",
+      "extraction": {"kind": "quantity_digits", "sample": "01"}
+    }
+  }
+}

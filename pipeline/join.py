@@ -1,0 +1,398 @@
+"""Join corpus records to the exact keys emitted by modkit worksheets."""
+from __future__ import annotations
+
+import re
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from collections import defaultdict
+
+from .model import Alignment
+from .tokens import corpus_to_engine
+
+CATALOGS = ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels")
+
+# Terminology is deliberately represented by corpus qids, never by a table of
+# translated strings.  This keeps machine displays auditable when adding a
+# language: the selected corpus row is the only source of the localized prefix
+# and quantity style.
+_DEFAULT_TERMINOLOGY_ANCHORS = Path(__file__).resolve().parents[1] / "config" / "terminology_anchors.json"
+
+
+def _load_terminology_anchors(path: str | Path | None = None) -> dict:
+    explicit = path is not None
+    path = Path(path) if explicit else _DEFAULT_TERMINOLOGY_ANCHORS
+    if not path.is_file():
+        if explicit:
+            raise ValueError(f"terminology anchors file not found: {path}")
+        return {}
+    try:
+        body = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise ValueError(f"invalid terminology anchors JSON: {path}") from exc
+    return _validate_terminology_anchors(body)
+
+
+def _validate_terminology_anchors(body: object) -> dict:
+    if not isinstance(body, dict):
+        raise ValueError("terminology anchors must be a JSON object")
+    if body.get("schema") != "gen1recomp-translation-mods/terminology-anchors":
+        raise ValueError("unsupported or missing terminology anchors schema")
+    if body.get("version") != 1:
+        raise ValueError("unsupported or missing terminology anchors version")
+    anchors = body.get("anchors")
+    if not isinstance(anchors, dict):
+        raise ValueError("terminology anchors require an 'anchors' object")
+    required = {"technical_prefix", "hidden_prefix", "quantity_style"}
+    if set(anchors) != required:
+        raise ValueError("terminology anchors must contain exactly technical_prefix, hidden_prefix and quantity_style")
+    seen_qids = set()
+    expected = {
+        "technical_prefix": ("text", None),
+        "hidden_prefix": ("text", None),
+        "quantity_style": ("quantity_digits", "01"),
+    }
+    for name in required:
+        spec = anchors.get(name)
+        if not isinstance(spec, dict) or not isinstance(spec.get("qid"), str) or not spec["qid"].strip():
+            raise ValueError(f"terminology anchor {name!r} requires a non-empty qid")
+        qid = spec["qid"].strip()
+        if qid in seen_qids:
+            raise ValueError("terminology anchor qids must be distinct")
+        seen_qids.add(qid)
+        extraction = spec.get("extraction")
+        if not isinstance(extraction, dict) or extraction.get("kind") != expected[name][0]:
+            raise ValueError(f"terminology anchor {name!r} has invalid extraction kind")
+        if name == "quantity_style" and extraction.get("sample") != expected[name][1]:
+            raise ValueError("quantity_style extraction sample must be exactly '01'")
+    return body
+
+# A handful of modkit labels are aliases for the labels used by the Red/Blue
+# corpus.  These mappings are taken from Gen1Recomp's generated text data and
+# are deliberately explicit: an alias is only followed when the corresponding
+# engine symbol exists in the corpus.  Unknown aliases remain in the audit as
+# manual review instead of being guessed from English text.
+ENGINE_ALIASES = {
+    "_ActorNameText": "rb.text_2.MonName1Text",
+    "_UsedMove1Text": "rb.text_2.Used1Text",
+    "_UsedMove2Text": "rb.text_2.Used2Text",
+    **{f"_EndUsedMove{index}Text": f"rb.text_2.ExclamationPoint{index}Text" for index in range(1, 6)},
+}
+
+
+@dataclass
+class WorksheetEntry:
+    key: str
+    english: str
+    catalog: str
+
+
+def _unquote(value: str) -> str:
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] == '"':
+        value = value[1:-1]
+    value = value.replace('\\"', '"').replace('\\\\', '\\')
+    value = value.replace('\\n', '\n').replace('\\r', '\r').replace('\\t', '\t')
+    return re.sub(r"\\([0-7]{1,3})", lambda m: chr(int(m.group(1), 8)), value)
+
+
+def read_worksheets(root: str | Path) -> dict[str, list[WorksheetEntry]]:
+    root = Path(root); result = {}
+    for catalog in CATALOGS:
+        path = root / f"{catalog}.txt"
+        entries = []
+        if path.is_file():
+            for line in path.read_text(encoding="utf-8").splitlines():
+                if not line or line.startswith("#") or "\t" not in line:
+                    continue
+                key, english = line.split("\t", 1)
+                entries.append(WorksheetEntry(_unquote(key), _unquote(english), catalog))
+        result[catalog] = entries
+    return result
+
+
+def _norm(value: str) -> str:
+    return re.sub(r"\s+", " ", corpus_to_engine(value).replace("\r\n", "\n").strip()).casefold()
+
+
+def _symbols(qid: str) -> set[str]:
+    # Scope markers are internal (e.g. ^RG.Species), not part of the symbol.
+    cleaned = re.sub(r"\^(?:RG|R|G|B)(?=\.|$)", "", qid)
+    parts = cleaned.split(".")
+    tail = parts[-1]
+    # Structured records append a field name after the actual decomp symbol.
+    # Dialogue symbols themselves commonly end in "Text", so never strip that
+    # suffix from an arbitrary symbol.
+    if tail in {"Species", "DescriptionText"} and len(parts) > 1:
+        tail = parts[-2]
+    return {"_" + tail, tail}
+
+
+def _same_value(candidates: list[Alignment]) -> list[Alignment]:
+    """Collapse canonical aliases when every candidate yields the same value.
+
+    Duplicate ROM labels (for example the two Juggler entries) are not a
+    semantic ambiguity when they carry identical French text.  We keep the
+    first qid in stable order and record the strategy in the audit.
+    """
+    if any(candidate.translation is None for candidate in candidates):
+        return candidates
+    by_value: dict[str, list[Alignment]] = defaultdict(list)
+    for candidate in candidates:
+        by_value[corpus_to_engine(candidate.translation)].append(candidate)
+    if len(by_value) == 1 and candidates:
+        return [sorted(candidates, key=lambda item: item.qid)[0]]
+    return candidates
+
+
+def _canonical_candidates(catalog: str, key: str, candidates: list[Alignment]) -> tuple[list[Alignment], str | None, str | None]:
+    """Apply catalogue-specific canonical selection rules.
+
+    Returns candidates, a strategy label, and an optional reason.  A ``None``
+    strategy means that the generic symbol/English matching was retained.
+    """
+    # Engine aliases are stronger than symbol/English matching and are only
+    # accepted when the exact qid is present.
+    alias = ENGINE_ALIASES.get(key) if catalog == "dialogue" else None
+    if alias:
+        selected = [item for item in candidates if item.qid == alias]
+        if selected:
+            return selected, "engine_alias", f"Gen1Recomp engine alias {key} -> {alias}"
+
+    if catalog == "dialogue" and key.startswith("_") and key.endswith("DexEntry"):
+        expected = f"rb.dex_text.{key[1:]}"
+        selected = [
+            item for item in candidates
+            if item.qid == expected
+            # The CLI's compact aligned JSON intentionally omits corpus
+            # metadata; an unsuffixed qid is therefore the stable proof of the
+            # shared (Red+Blue) scope in addition to the richer metadata path.
+            and (item.english.metadata.get("version_scope") == "both" or "^" not in item.qid)
+            and item.english.text != "[NULL]"
+        ]
+        return selected, "canonical_dex_text", f"canonical rb.dex_text entry {expected}; excluded dex_entries Species and scoped NULL rows"
+
+    canonical_prefix = {
+        "move_names": "rb.names.MoveNames.",
+        "item_names": "rb.names.ItemNames.",
+        "trainer_names": "rb.names.TrainerNames.",
+    }.get(catalog)
+    if canonical_prefix:
+        selected = [item for item in candidates if item.qid.startswith(canonical_prefix)]
+        return _same_value(selected), f"canonical_{catalog}", f"selected {canonical_prefix} catalogue"
+
+    return candidates, None, None
+
+
+def _anchor_row(items: list[Alignment], qid: str | None, role: str = "prefix") -> tuple[Alignment | None, str]:
+    """Return exactly one usable aligned row for a terminology anchor.
+
+    We intentionally reject duplicate rows even when their values happen to
+    be equal.  A duplicated qid means the corpus cannot prove which source
+    record should drive a generated display, so callers must fall back to the
+    ordinary worksheet join instead of manufacturing coverage.
+    """
+    if not qid:
+        return None, "qid_missing"
+    rows = [item for item in items if item.qid == qid]
+    if len(rows) != 1:
+        return None, "qid_absent" if not rows else "qid_ambiguous"
+    value = rows[0].translation
+    if value is None or not str(value).strip():
+        return None, "prefix_empty" if role == "prefix" else "style_empty"
+    return rows[0], "ok"
+
+
+def _digit_sequence(value: str) -> str | None:
+    """Extract the first two-digit decimal sequence (ASCII or fullwidth)."""
+    match = re.search(r"[0-9０-９]{2}", value or "")
+    return match.group(0) if match else None
+
+
+def _quantity_style(row: Alignment | None, extraction: dict | None = None) -> tuple[str, str]:
+    """Infer number glyph style from the aligned InitialQuantityText row.
+
+    A style is proven only when both English and target contain a two-digit
+    quantity and the target represents the English sample ``01``.  Mixed,
+    malformed, or missing samples deliberately fall back to ASCII.
+    """
+    if row is None or row.translation is None:
+        return "ascii", "style_unproven"
+    extraction = extraction if isinstance(extraction, dict) else {}
+    sample = str(extraction.get("sample", "01"))
+    source = _digit_sequence(row.english.text)
+    target = _digit_sequence(str(row.translation))
+    if source != sample or target is None:
+        return "ascii", "style_unproven"
+    ascii_digits = all("0" <= char <= "9" for char in target)
+    fullwidth_digits = all("０" <= char <= "９" for char in target)
+    if ascii_digits and target == "01":
+        return "ascii", "style_proven_ascii"
+    if fullwidth_digits and target == "０１":
+        return "fullwidth", "style_proven_fullwidth"
+    # Do not infer a style from a mixed or non-01 sample: this is precisely
+    # the case where silently claiming all 55 entries would create coverage.
+    return "ascii", "style_unproven"
+
+
+def _machine_terminology(items: list[Alignment], anchors: dict) -> dict:
+    """Derive localized TM/HM displays from corpus terminology anchors."""
+    anchor_map = anchors.get("anchors", anchors) if isinstance(anchors, dict) else {}
+    technical = anchor_map.get("technical_prefix", {})
+    hidden = anchor_map.get("hidden_prefix", {})
+    quantity = anchor_map.get("quantity_style", {})
+    technical_row, technical_status = _anchor_row(items, technical.get("qid") if isinstance(technical, dict) else None)
+    hidden_row, hidden_status = _anchor_row(items, hidden.get("qid") if isinstance(hidden, dict) else None)
+    quantity_row, quantity_status = _anchor_row(items, quantity.get("qid") if isinstance(quantity, dict) else None, "quantity")
+    style, style_status = _quantity_style(quantity_row, quantity.get("extraction") if isinstance(quantity, dict) else None)
+    # The qid itself is not enough proof: the English corpus value must match
+    # the terminology role described by the anchor.
+    if technical_status == "ok" and _norm(technical_row.english.text).upper() != "TM":
+        technical_status = "role_mismatch"
+    if hidden_status == "ok" and _norm(hidden_row.english.text).upper() != "HM":
+        hidden_status = "role_mismatch"
+    sample = quantity.get("extraction", {}).get("sample", "01") if isinstance(quantity, dict) else "01"
+    if quantity_status == "ok" and _digit_sequence(quantity_row.english.text) != sample:
+        quantity_status = "role_mismatch"
+        style, style_status = "ascii", "style_unproven"
+    # Keep the compact anchor view consistent with the role-level statuses.
+    details_anchor_status = {
+        "technical_prefix": technical_status,
+        "hidden_prefix": hidden_status,
+        "quantity_style": quantity_status,
+    }
+    technical_value = corpus_to_engine(str(technical_row.translation).strip()) if technical_row else ""
+    hidden_value = corpus_to_engine(str(hidden_row.translation).strip()) if hidden_row else ""
+    details = {
+        "technical_prefix": technical_value,
+        "hidden_prefix": hidden_value,
+        "anchors": {
+            "technical_prefix": {"qid": technical.get("qid") if isinstance(technical, dict) else None, "status": details_anchor_status["technical_prefix"]},
+            "hidden_prefix": {"qid": hidden.get("qid") if isinstance(hidden, dict) else None, "status": details_anchor_status["hidden_prefix"]},
+            "quantity_style": {"qid": quantity.get("qid") if isinstance(quantity, dict) else None, "status": details_anchor_status["quantity_style"]},
+        },
+        "number_style": style,
+        "number_style_status": style_status,
+    }
+    style_ready = style_status in {"style_proven_ascii", "style_proven_fullwidth"}
+    details["technical_status"] = technical_status
+    details["hidden_status"] = hidden_status
+    details["quantity_status"] = quantity_status
+    details["technical_ready"] = technical_status == "ok" and style_ready
+    details["hidden_ready"] = hidden_status == "ok" and style_ready
+    if details["technical_ready"] and details["hidden_ready"]:
+        details["status"] = "ready"
+    elif details["technical_ready"] or details["hidden_ready"]:
+        details["status"] = "partial"
+    else:
+        details["status"] = "fallback"
+    return details
+
+
+def _format_machine_number(number: str, style: str) -> str:
+    if style != "fullwidth":
+        return number
+    return number.translate(str.maketrans("0123456789", "０１２３４５６７８９"))
+
+
+def join_catalogs(items: list[Alignment], worksheets: dict[str, list[WorksheetEntry]], target_lang: str = "fr", terminology_anchors: str | Path | dict | None = None) -> tuple[dict[str, dict[str, str]], dict]:
+    items = list(items)
+    output = {name: {} for name in CATALOGS}
+    report = {"matched": {}, "unmatched": {}, "ambiguous": {}, "strategies": {}, "reasons": {}}
+    anchors = _validate_terminology_anchors(terminology_anchors) if isinstance(terminology_anchors, dict) else _load_terminology_anchors(terminology_anchors)
+    machine_details = _machine_terminology(items, anchors)
+    report["machine_display"] = machine_details
+    by_english = defaultdict(list); by_symbol = defaultdict(list)
+    for item in items:
+        by_english[_norm(item.english.text)].append(item)
+        for symbol in _symbols(item.qid): by_symbol[symbol].append(item)
+    for catalog, entries in worksheets.items():
+        for entry in entries:
+            report["strategies"].setdefault(catalog, {})
+            report["reasons"].setdefault(catalog, {})
+
+            # Gen 1's item menu displays the localized machine family and
+            # number, not the move name.  The worksheet English identifier is
+            # the ROM/engine proof for the number (TM01..TM50, HM01..HM05).
+            machine = re.fullmatch(r"(TM|HM)([0-9]{2})", entry.english.strip().upper())
+            if catalog == "item_names" and entry.key.startswith(("TM_", "HM_")) and machine:
+                prefix = machine_details.get("technical_prefix", "") if machine.group(1) == "TM" else machine_details.get("hidden_prefix", "")
+                # Prefix values are populated from the exact corpus anchors;
+                # absent/ambiguous/empty anchors intentionally fall through to
+                # ordinary matching and therefore remain unmatched.
+                family_ready = machine_details.get("technical_ready" if machine.group(1) == "TM" else "hidden_ready", False)
+                if not prefix or not family_ready:
+                    family_status = machine_details.get(
+                        "technical_status" if machine.group(1) == "TM" else "hidden_status",
+                        "style_unproven",
+                    )
+                    # Report the actual blocker for this family: an invalid
+                    # prefix/role takes precedence; when that is valid, an
+                    # unproven number style is the reason coverage falls back.
+                    report["machine_display"]["last_fallback"] = (
+                        family_status
+                        if family_status != "ok"
+                        else machine_details.get("number_style_status", "style_unproven")
+                    )
+                    prefix = ""
+                if not prefix:
+                    # Continue with generic symbol/English candidates.
+                    pass
+                else:
+                    number = _format_machine_number(machine.group(2), machine_details.get("number_style", "ascii"))
+                    expected_key_prefix = "TM_" if machine.group(1) == "TM" else "HM_"
+                    if entry.key.startswith(expected_key_prefix):
+                        output[catalog][entry.key] = f"{prefix}{number}"
+                        report["matched"].setdefault(catalog, 0); report["matched"][catalog] += 1
+                        # Keep the legacy strategy label for consumers while
+                        # recording corpus provenance and style in the report.
+                        report["strategies"][catalog][entry.key] = "official_machine_display"
+                        report["reasons"][catalog][entry.key] = (
+                            f"corpus terminology anchor {machine.group(1)} prefix; "
+                            f"number style {report['machine_display'].get('number_style_status')}"
+                        )
+                        continue
+
+            symbol_candidates = list(by_symbol.get(entry.key, []))
+            strategy = "symbol"
+            english_candidates = list(by_english.get(_norm(entry.english), []))
+            # Symbol is authoritative. If several game variants share it, the
+            # imported English selects the variant represented by this
+            # worksheet.
+            candidates = symbol_candidates
+            if len(candidates) > 1:
+                narrowed = [item for item in candidates if _norm(item.english.text) == _norm(entry.english)]
+                if narrowed:
+                    candidates = narrowed
+            if not candidates:
+                candidates = english_candidates
+                strategy = "english"
+            # De-duplicate a record matching both symbol and English.
+            unique = {id(item): item for item in candidates}.values()
+            candidates = list(unique)
+            candidates, canonical_strategy, canonical_reason = _canonical_candidates(catalog, entry.key, candidates)
+            if canonical_strategy:
+                strategy = canonical_strategy
+                report["reasons"][catalog][entry.key] = canonical_reason
+            if len(candidates) > 1:
+                collapsed = _same_value(candidates)
+                if len(collapsed) == 1:
+                    candidates = collapsed
+                    strategy = f"{strategy}_equivalent"
+                    report["reasons"][catalog][entry.key] = "multiple canonical qids have identical translated value"
+            if len(candidates) == 1 and candidates[0].translation is not None:
+                output[catalog][entry.key] = corpus_to_engine(candidates[0].translation)
+                report["matched"].setdefault(catalog, 0); report["matched"][catalog] += 1
+                report["strategies"][catalog][entry.key] = strategy
+            elif len(candidates) == 0 or (len(candidates) == 1 and candidates[0].translation is None):
+                output[catalog][entry.key] = ""
+                report["unmatched"].setdefault(catalog, []).append(entry.key)
+                report["strategies"][catalog][entry.key] = "manual_review"
+                reason = f"canonical candidate has no {target_lang} translation" if candidates else "no canonical candidate"
+                report["reasons"][catalog].setdefault(entry.key, f"{reason}; manual review required")
+            else:
+                output[catalog][entry.key] = ""
+                report["ambiguous"].setdefault(catalog, {})[entry.key] = [x.qid for x in candidates]
+                report["strategies"][catalog][entry.key] = "manual_review"
+                report["reasons"][catalog].setdefault(entry.key, "multiple canonical candidates with different translated values")
+    return output, report

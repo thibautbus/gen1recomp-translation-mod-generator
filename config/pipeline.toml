@@ -1,0 +1,22 @@
+[corpus]
+# Local checkout or archive of poke-corpus. Never commit this directory.
+path = "../poke-corpus"
+source = "https://github.com/abcboy101/poke-corpus.git"
+revision = "aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
+format = "corpus/RedBlue/{qid,en,<target_lang>}_msg.txt (UTF-8 parallel lines)"
+target_lang = "fr"
+
+[gen1recomp]
+# Immutable engine source used by the interactive builder and Modkit.
+source = "https://github.com/bryanthaboi/gen1recomp.git"
+revision = "5a48a61f2ed20aee80951aeb1e41b7ec084b350f"
+
+[rom.red]
+sha1 = "ea9bcae617fdf159b045185467ae58b2e4a48b9a"
+
+[rom.blue]
+sha1 = "d7037c83e1ae5b39bde3c30787637ba1d4c48ce2"
+
+[output]
+language_dir = "lang"
+overrides = "review/{target_lang}/overrides.json (fr uses review/overrides.json)"

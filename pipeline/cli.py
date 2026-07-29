@@ -1,0 +1,95 @@
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+from .align import align, apply_overrides
+from .corpus import load_corpus, parse_redblue, canonical_language
+from .generate import generate_lua
+from .validate import release_gate, validate
+from .roms import catalog_roms, import_rom, import_all
+from .mod import generate_mod
+
+
+def main(argv=None) -> int:
+    p = argparse.ArgumentParser(prog="fr-pipeline")
+    sub = p.add_subparsers(dest="command", required=True)
+    parse = sub.add_parser("parse"); parse.add_argument("corpus"); parse.add_argument("-o", "--output", required=True); parse.add_argument("--target-lang", default="fr")
+    al = sub.add_parser("align"); al.add_argument("records"); al.add_argument("-o", "--output", required=True); al.add_argument("--target-lang", default="fr"); al.add_argument("--overrides", "--worksheet", dest="overrides")
+    gen = sub.add_parser("generate"); gen.add_argument("aligned"); gen.add_argument("-o", "--output", required=True); gen.add_argument("--mod-id", default=None); gen.add_argument("--target-name", default=None); gen.add_argument("--target-lang", default=None); gen.add_argument("--overrides", "--worksheet", dest="overrides"); gen.add_argument("--modkit-worksheet"); gen.add_argument("--engine-catalog"); gen.add_argument("--engine-overrides", default=None); gen.add_argument("--semantic-anchors"); gen.add_argument("--report")
+    refresh = sub.add_parser("refresh"); refresh.add_argument("aligned"); refresh.add_argument("--mod", required=True); refresh.add_argument("--overrides", "--worksheet", dest="overrides")
+    val = sub.add_parser("validate"); val.add_argument("aligned"); val.add_argument("--release", action="store_true"); val.add_argument("--version", choices=("red", "blue")); val.add_argument("--report"); val.add_argument("--charmap", help="JSON glyph->byte map required for release"); val.add_argument("--coverage", help="modkit join coverage JSON required for release")
+    cat = sub.add_parser("catalog"); cat.add_argument("--red", required=True); cat.add_argument("--blue", required=True); cat.add_argument("-o", "--output", required=True)
+    imp = sub.add_parser("import"); imp.add_argument("version", choices=("red", "blue")); imp.add_argument("rom"); imp.add_argument("--gen1recomp", required=True); imp.add_argument("--out", required=True); imp.add_argument("--assets", required=True)
+    all_imp = sub.add_parser("import-all"); all_imp.add_argument("--red", required=True); all_imp.add_argument("--blue", required=True); all_imp.add_argument("--gen1recomp", required=True); all_imp.add_argument("--cache-root", required=True)
+    args = p.parse_args(argv)
+    if args.command == "catalog":
+        catalog_roms({"red": args.red, "blue": args.blue}, args.output); return 0
+    if args.command == "import":
+        import_rom(args.version, args.rom, args.gen1recomp, args.out, args.assets); return 0
+    if args.command == "import-all":
+        import_all({"red": args.red, "blue": args.blue}, args.gen1recomp, args.cache_root); return 0
+    if args.command == "parse":
+        records = parse_redblue(args.corpus, canonical_language(args.target_lang))
+        Path(args.output).write_text(json.dumps([r.__dict__ for r in records], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        return 0
+    raw = json.loads(Path(args.records if hasattr(args, "records") else args.aligned).read_text(encoding="utf-8"))
+    if args.command == "align":
+        from .model import CorpusRecord
+        def record(row):
+            known = {k: row[k] for k in ("qid", "language", "text", "game", "source", "english", "override") if k in row}
+            return CorpusRecord(**known)
+        target_lang = canonical_language(args.target_lang)
+        items = apply_overrides(align((record(r) for r in raw), target_lang=target_lang), args.overrides)
+        Path(args.output).write_text(json.dumps([x.as_dict() for x in items], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        return 0
+    from .model import Alignment, CorpusRecord
+    items = []
+    inferred_lang = None
+    for row in raw:
+        en = CorpusRecord(row.get("qid"), "en", row.get("english", ""), row.get("game", "red"))
+        lang = row.get("target_lang") or ("fr" if "french" in row else None) or "fr"
+        if inferred_lang is None: inferred_lang = lang
+        if lang != inferred_lang:
+            raise ValueError(f"aligned JSON contains mixed target languages: {inferred_lang} and {lang}")
+        value = row.get("translation", row.get("french"))
+        target = CorpusRecord(row.get("qid"), lang, value, row.get("game", "red")) if value is not None else None
+        items.append(Alignment(row.get("qid", ""), row.get("game", "red"), en, target, row.get("method", "qid"), row.get("override"), lang, row.get("provenance", {})))
+    requested_lang = canonical_language(args.target_lang) if getattr(args, "target_lang", None) else None
+    if requested_lang and inferred_lang and requested_lang != canonical_language(inferred_lang):
+        raise ValueError(f"aligned JSON target language {inferred_lang!r} does not match requested {requested_lang!r}")
+    if args.command in {"generate", "refresh"}:
+        items = apply_overrides(items, args.overrides)
+    if args.command == "generate":
+        output = Path(args.output)
+        if output.suffix == ".lua":
+            generate_lua(items, output, inferred_lang or "fr")
+        else:
+            target_lang = canonical_language(args.target_lang or inferred_lang or "fr")
+            generate_mod(items, output, args.mod_id or f"translation-{target_lang.lower()}", language=target_lang, modkit_worksheet=args.modkit_worksheet, report_path=args.report,
+                         engine_catalog=args.engine_catalog, engine_overrides=args.engine_overrides or (f"review/{target_lang}/engine_overrides.json" if target_lang != "fr" else "review/engine_overrides.json"),
+                         semantic_anchors=args.semantic_anchors,
+                         target_name=args.target_name,
+                         strict_engine=bool(args.modkit_worksheet or args.engine_catalog))
+        return 0
+    if args.command == "refresh":
+        # Refresh is deliberately non-destructive: merge qid overrides into
+        # newly aligned rows, then rewrite only the generated catalogs.
+        generate_mod(items, args.mod)
+        return 0
+    charmap = json.loads(Path(args.charmap).read_text(encoding="utf-8")) if args.charmap else None
+    findings = validate(items, glyphs=charmap, expected_version=getattr(args, "version", None))
+    if args.release:
+        coverage = json.loads(Path(args.coverage).read_text(encoding="utf-8")) if args.coverage else None
+        ok, summary = release_gate(items, findings, charmap, coverage); report = {"ok": ok, **summary, "findings": findings}
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        if args.report: Path(args.report).write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        return 0 if ok else 1
+    print(json.dumps(findings, ensure_ascii=False, indent=2))
+    if args.report: Path(args.report).write_text(json.dumps({"ok": not findings, "findings": findings}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return 1 if findings else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

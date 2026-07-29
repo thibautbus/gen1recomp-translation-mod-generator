@@ -1,0 +1,5 @@
+rb.text.TMCharText
+rb.text.PlacePKMNText^B
+rb.title.VersionOnTitleScreenText^B
+rb.title.CopyrightTextString^RG
+rb.dex_entries.PorygonDexEntry^RG.Species

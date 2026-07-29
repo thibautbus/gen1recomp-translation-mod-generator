@@ -1,0 +1,152 @@
+{
+  "schema": "gen1recomp-translation-mods/semantic-anchors",
+  "version": 1,
+  "description": "Stable qid/extraction anchors; translations are read from the selected corpus language.",
+  "anchors": {
+    "FIGHT": {"qid": "rb.text_boxes.BattleMenuText", "extraction": {"kind": "token", "index": 0}},
+    "RUN": {"qid": "rb.text_boxes.BattleMenuText", "extraction": {"kind": "token", "index": 3}},
+    "YES": {"qid": "rb.yes_no_menu_strings.TwoOptionMenuStrings.YesNoMenu", "extraction": {"kind": "segment", "index": 0}},
+    "NO": {"qid": "rb.yes_no_menu_strings.TwoOptionMenuStrings.YesNoMenu", "extraction": {"kind": "segment", "index": 1}},
+    "MONEY": {"qid": "rb.text_boxes.MoneyText", "extraction": {"kind": "segment", "index": 0}},
+    "TIME": {"qid": "rb.start_sub_menus.TrainerInfo_NameMoneyTimeText", "extraction": {"kind": "segment", "index": 2}},
+    "NAME": {"qid": "rb.start_sub_menus.TrainerInfo_NameMoneyTimeText", "extraction": {"kind": "segment", "index": 0}},
+    "ATTACK": {"qid": "rb.stat_names.VitaminStats.2", "extraction": {"kind": "segment", "index": 0}},
+    "SPEED": {"qid": "rb.stat_names.VitaminStats.4", "extraction": {"kind": "segment", "index": 0}},
+
+    "TOSS": {"qid": "rb.text_boxes.UseTossText", "extraction": {"kind": "segment", "index": 1}},
+    "BUY": {"qid": "rb.text_boxes.BuySellQuitText", "extraction": {"kind": "segment", "index": 0}},
+    "SELL": {"qid": "rb.text_boxes.BuySellQuitText", "extraction": {"kind": "segment", "index": 1}},
+    "QUIT": {"qid": "rb.pokedex.PokedexMenuItemsText", "extraction": {"kind": "segment", "index": 3}},
+    "DATA": {"qid": "rb.pokedex.PokedexMenuItemsText", "extraction": {"kind": "segment", "index": 0}},
+    "CRY": {"qid": "rb.pokedex.PokedexMenuItemsText", "extraction": {"kind": "segment", "index": 1}},
+    "BAIT": {"qid": "rb.text_boxes.SafariZoneBattleMenuText", "extraction": {"kind": "token", "index": 1}},
+
+    "Go right ahead!": {
+      "qid": "rb.Route22Gate.Route22GateGuardGoRightAheadText",
+      "extraction": {"kind": "span", "index": 5, "count": 3,
+        "targets": {
+          "fr": {"kind": "span", "index": 6, "count": 3},
+          "de": {"kind": "span", "index": 5, "count": 4},
+          "es": {"kind": "span", "index": 6, "count": 2},
+          "it": {"kind": "span", "index": 7, "count": 2},
+          "ja-Hrkt": {"kind": "span", "index": 4, "count": 3}
+        }}
+    },
+    "You don't have the\nBOULDERBADGE yet!": {
+      "qid": "rb.Route22Gate.Route22GateGuardNoBoulderbadgeText",
+      "extraction": {"kind": "span", "index": 7, "count": 6,
+        "targets": {
+          "fr": {"kind": "span", "index": 6, "count": 6},
+          "de": {"kind": "span", "index": 6, "count": 7},
+          "es": {"kind": "span", "index": 6, "count": 6},
+          "it": {"kind": "span", "index": 6, "count": 6},
+          "ja-Hrkt": {"kind": "span", "index": 6, "count": 5}
+        }}
+    },
+    "Oh! That is the\n{RAM}!": {
+      "qid": "rb.Route23.Route23OhThatIsTheBadgeText",
+      "extraction": {"kind": "span", "index": 10, "count": 5,
+        "targets": {
+          "fr": {"kind": "span", "index": 8, "count": 5},
+          "de": {"kind": "span", "index": 10, "count": 5},
+          "es": {"kind": "span", "index": 8, "count": 5},
+          "it": {"kind": "span", "index": 7, "count": 5},
+          "ja-Hrkt": {"kind": "span", "index": 8, "count": 4}
+        }}
+    },
+    "Welcome to our\nPOKéMON CENTER!": {
+      "qid": "rb.text_4.PokemonCenterWelcomeText",
+      "extraction": {"kind": "span", "index": 0, "count": 5,
+        "targets": {
+          "fr": {"kind": "span", "index": 0, "count": 5},
+          "de": {"kind": "span", "index": 0, "count": 3},
+          "es": {"kind": "span", "index": 0, "count": 5},
+          "it": {"kind": "span", "index": 0, "count": 4},
+          "ja-Hrkt": {"kind": "span", "index": 0, "count": 2}
+        }}
+    },
+    "Your POKéMON are\nfighting fit!": {
+      "qid": "rb.text_4.PokemonFightingFitText",
+      "extraction": {"kind": "span", "index": 2, "count": 5,
+        "targets": {
+          "fr": {"kind": "span", "index": 1, "count": 6},
+          "de": {"kind": "span", "index": 1, "count": 5},
+          "es": {"kind": "span", "index": 1, "count": 6},
+          "it": {"kind": "span", "index": 1, "count": 7},
+          "ja-Hrkt": {"kind": "span", "index": 1, "count": 5}
+        }}
+    },
+    "{RIVAL}: Yeah! Am\nI great or what?": {
+      "qid": "rb.text_2.Rival1WinText",
+      "extraction": {"kind": "full", "index": 0}
+    },
+    "An elevator!": {
+      "qid": "rb.text_2.ElevatorText",
+      "source_aliases": ["An elevator!"],
+      "extraction": {"kind": "full", "index": 0}
+    },
+    "There's a slew of\nPOKéMON stuff!": {
+      "qid": "rb.text_2.PokemonStuffText",
+      "source_aliases": ["There's a slew of\nPOKéMON stuff!"],
+      "extraction": {"kind": "full", "index": 0}
+    },
+    "POKéMON LEAGUE HQ": {
+      "qid": "rb.text_2.IndigoPlateauHQText",
+      "source_aliases": ["POKéMON LEAGUE HQ"],
+      "extraction": {"kind": "span", "index": 2, "count": 3,
+        "targets": {
+          "fr": {"kind": "span", "index": 2, "count": 6},
+          "de": {"kind": "span", "index": 2, "count": 2},
+          "es": {"kind": "span", "index": 5, "count": 5},
+          "it": {"kind": "span", "index": 2, "count": 4},
+          "ja-Hrkt": {"kind": "span", "index": 1, "count": 2}
+        }}
+    },
+    "Hey! There's a\nswitch under the\ntrash!\fThe 1st electric\nlock opened!": {
+      "qid": "rb.text_2.VermilionGymTrashSuccessText1",
+      "extraction": {
+        "kind": "parts",
+        "parts": [0, 1, 2, 4, 5],
+        "separators": ["\n", "\n", "\f", "\n"]
+      }
+    },
+    "POKéDEX comp-\nletion is:\f{NUM:hDexRatingNumMonsSeen} POKéMON seen\n{NUM:hDexRatingNumMonsOwned} POKéMON owned\fPROF.OAK's\nRating:": {
+      "qid": "rb.pokedex_ratings.DexCompletionText",
+      "extraction": {"kind": "full"}
+    },
+    "You don't have the\n{RAM} yet!": {
+      "qid": "rb.Route23.Route23YouDontHaveTheBadgeYetText",
+      "extraction": {
+        "kind": "span", "index": 10, "count": 6,
+        "targets": {
+          "fr": {"kind": "span", "index": 8, "count": 5},
+          "de": {"kind": "span", "index": 7, "count": 6},
+          "es": {"kind": "span", "index": 8, "count": 5},
+          "it": {"kind": "span", "index": 7, "count": 5},
+          "ja-Hrkt": {"kind": "span", "index": 8, "count": 6}
+        }
+      }
+    },
+    "You need a\nBICYCLE for the\nCycling Road!": {
+      "qid": "rb.Route18Gate1F.Route18Gate1FGuardYouNeedABicycleText",
+      "source_aliases": ["You need a BICYCLE\nfor CYCLING ROAD!", "You need a\nBICYCLE for the\nCycling Road!"],
+      "extraction": {"kind": "full"}
+    },
+    "PA: You're out of\nSAFARI BALLs!": {
+      "qid": "rb.text_2.OutOfSafariBallsText",
+      "source_aliases": ["PA: You're out of\nSAFARI BALLs!"],
+      "extraction": {
+        "kind": "parts", "parts": [1, 2], "separators": ["\n"]
+      }
+    },
+    "%s got off\nthe BICYCLE.": {
+      "parts": [
+        {"qid": "rb.text_7.GotOffBicycleText1", "extraction": {"kind": "full"}},
+        {"qid": "rb.text_7.GotOffBicycleText2", "extraction": {"kind": "full"}},
+        {"qid": "rb.names.ItemNames.6", "extraction": {"kind": "full"}, "include": false}
+      ],
+      "join": "\n",
+      "placeholders": {"{PLAYER}": "%s", "{RAM:wStringBuffer}": {"part": 2}}
+    }
+  }
+}
