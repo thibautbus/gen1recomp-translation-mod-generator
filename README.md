@@ -20,10 +20,16 @@ extracts. Import verifies the canonical SHA-1 values before reading a ROM.
 Imported data, catalogs, worksheets, reports, and other rebuildable material
 stay in the private, git-ignored `.cache/` tree.
 
-`config/pipeline.toml` records the expected ROM fingerprints and the pinned
-Gen1Recomp and `poke-corpus` revisions. The interactive builder clones those
-exact revisions into the ignored, private `.cache/` directory after asking
-for permission.
+Western builds also require exactly one user-owned localized Red **or** Blue
+ROM as a font source. A localized whole-ROM SHA-1 is intentionally not pinned:
+the extractor verifies only the SHA-256 fingerprint of the reviewed font-tile
+region. The source ROM remains private and is never copied into the archive.
+
+`config/pipeline.toml` records the canonical US Red/Blue SHA-1 values and the
+pinned Gen1Recomp and `poke-corpus` revisions. Reviewed localized font-region
+fingerprints live in `pipeline/localized_font.py`. The interactive builder
+clones the pinned revisions into the ignored, private `.cache/` directory
+after asking for permission.
 
 ## Languages and source data
 
@@ -33,20 +39,42 @@ empty generated value leaves the original English string visible. The
 interactive builder always requires an explicit target-language selection;
 there is no default language.
 
-> **Warning:** The Japanese translation does not currently display correctly
-> in game. The builder also shows this warning when Japanese is selected.
+> **Warning:** Japanese localized-font extraction is not supported yet, and
+> the Japanese translation does not currently display correctly in game. The
+> builder does not request a Japanese ROM and shows this warning when Japanese
+> is selected.
 
 > **Font warning:** Some special or language-specific characters may not
 > display correctly in game when they are missing from the generated font or
 > charmap. Always verify accented characters, punctuation, and non-Latin
 > scripts in game before publishing a translation.
 
+### Localized font support
+
+The Western extractor uses the same 1bpp extraction and compact Modkit page
+for every language. The table summarizes the generated pages:
+
+| Target | Packaged glyphs | Font family |
+| --- | ---: | --- |
+| French (`fr`) | 19 | French/German |
+| German (`de`) | 19 | French/German |
+| Spanish (`es`) | 32 | Spanish/Italian + `¿`/`¡` |
+| Italian (`it`) | 30 | Spanish/Italian |
+| Japanese (`ja-Hrkt`) | — | Unsupported |
+
+French and German share one reviewed 19-glyph ROM region. Spanish and Italian
+share a reviewed 30-glyph region; Spanish `¿` and `¡` are generated locally by
+rotating the same ROM's vanilla `?` and `!` faces. The resulting one-row
+`assets/font/localized.png` contains only the required glyphs, never the full
+ROM font.
+
 Gen1Recomp/modkit worksheets are private, ROM-derived references generated
 from the imported dataset. They contain the six Red/Blue catalogs
 (`dialogue`, `species_names`, `move_names`, `item_names`, `trainer_names`, and
-`status_labels`) plus the empty 533-key engine `strings.lua` catalog. The ROMs are
-needed to build and catalog these keys (and to validate the real vanilla ID
-space), but neither the ROMs nor the worksheets are committed or packaged.
+`status_labels`) plus the empty 533-key engine `strings.lua` catalog. The
+canonical and localized source ROMs, worksheets, and complete extracted fonts
+are never committed or packaged. Only the compact generated glyph sheet and
+its Lua registration files are included in a Western translation ZIP.
 
 ## Translation coverage
 
@@ -123,21 +151,25 @@ environment's interpreter. If a shell alias bypasses it, run
 `venv\Scripts\python.exe build_translation.py` on Windows.
 
 The assistant asks for the full paths to the canonical US Pokémon Red and
-Blue ROM dumps, offers the supported language menu, verifies both SHA-1
-fingerprints, and asks before cloning anything. It then:
+Blue ROM dumps and offers the supported language menu. For French, German,
+Spanish, or Italian builds, it also asks for one localized Red **or** Blue ROM
+as a font source. It verifies the
+US SHA-1 fingerprints and asks before cloning anything. It then:
 
 1. clones the pinned Gen1Recomp revision and only the required
    `poke-corpus/corpus/RedBlue` subtree under `.cache/`;
 2. extracts both ROMs into private, ignored directories;
 3. creates the complete Modkit worksheet;
 4. matches the ROM and engine catalogs against the selected corpus language;
-5. preserves Modkit's font, charmap, and naming integration;
-6. applies optional editorial overrides;
-7. runs Modkit's strict validation and ROM-content lint while packing;
-8. scans a private candidate archive before atomically publishing it to `dist/`.
+5. for Western builds, extracts a compact one-row 1bpp glyph sheet and emits
+   the official `lang/font.lua`/`lang/charmap.lua` extension-page files;
+6. preserves Modkit's font, charmap, and naming integration;
+7. applies optional editorial overrides;
+8. runs Modkit's strict validation and ROM-content lint while packing;
+9. scans a private candidate archive before atomically publishing it to `dist/`.
 
 The final file is written to `dist/translation-<lang>-<version>.zip`, for
-example `dist/translation-fr-0.1.0.zip`. The command prints its absolute path.
+example `dist/translation-fr-0.2.0.zip`. The command prints its absolute path.
 The `.zip` extension is intentional: Gen1Recomp's mod importer accepts ZIP
 files, while Modkit writes the same deterministic ZIP format.
 Immediately before the final path, the builder prints the separate ROM-catalog
@@ -146,6 +178,9 @@ and engine-catalog match percentages.
 All cloned repositories, extracted data, worksheets, and reports remain in
 ignored directories. Only the final mod archive is intended for use, and
 `dist/` is also ignored so publishing it is always an explicit action.
+Inside that archive, `assets/font/localized.png` is relative to the mod root;
+the generated runtime resolves it with `mod.assets:path(...)` before
+registering the page. Japanese builds skip this localized-font stage.
 
 Editorial corrections live in the versioned files under `review/` and are
 applied automatically by the builder. Corpus sources and generated private
@@ -177,6 +212,7 @@ The command-line wrapper in `scripts/pipeline.py` delegates to the modules in
 | `pipeline/mod.py` | Writes the final Modkit-compatible Lua catalogs, manifest, worksheet outputs, and ROM/engine coverage report. |
 | `pipeline/validate.py` | Checks placeholders, glyph coverage, version consistency, and the separate ROM/engine release gates. |
 | `pipeline/roms.py` | Verifies canonical ROM hashes and orchestrates private Red/Blue imports into ignored local caches. |
+| `pipeline/localized_font.py` | Validates reviewed Western font regions, extracts compact language glyph pages, and generates the Modkit font/charmap catalogs. |
 
 Supporting compatibility helpers live in `pipeline/generate.py` and
 `pipeline/worksheet.py`. `build_translation.py` is the normal interactive
@@ -216,14 +252,18 @@ state machines, or would require unsafe runtime placeholder assumptions.
 
 ## Provenance, publication, and limitations
 
-Keep local ROM paths, SHA-1 results, corpus revision, import logs, worksheets,
-catalogs, and coverage reports private: they can contain source text or local
-filesystem information. A publication may contain the generated translation
-mod and English documentation after a no-ROM-content inspection. Do not claim
-ROM redistribution or provide download instructions.
+Keep canonical and localized ROM paths, fingerprints, corpus revisions,
+import logs, worksheets, catalogs, complete extracted fonts, and coverage
+reports private: they can contain source text or local filesystem
+information. A publication may contain the generated translation mod,
+including its compact localized glyph page, and English documentation after
+a no-ROM-content inspection. Do not claim ROM redistribution or provide
+download instructions.
 
-Known limitations are incomplete glyph/charmap coverage, special characters
-that may not render correctly in game, UI-width constraints (especially
-Japanese), the need for in-game tests, and incomplete engine coverage. The
-pipeline's fallback keeps an unfinished mod playable; it does not make those
-strings translated.
+Known limitations are incomplete localized glyph/charmap coverage: the
+reviewed Western pages contain 19 FR/DE faces, 30 IT faces, and 32 ES faces,
+while apostrophe ligatures remain on the vanilla page. Japanese font
+extraction remains unsupported. Other special characters may still render
+incorrectly, and UI-width constraints, in-game testing, and incomplete engine
+coverage remain relevant. The pipeline's fallback keeps an unfinished mod
+playable; it does not make those strings translated.

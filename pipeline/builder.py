@@ -15,6 +15,7 @@ import zipfile
 from .align import align, apply_overrides
 from .corpus import canonical_language, parse_redblue
 from .mod import generate_mod
+from .localized_font import extract_localized_font, validate_localized_rom
 from .project import ROOT, project_config, project_version
 from .roms import import_rom, verify_rom
 
@@ -26,6 +27,7 @@ LANGUAGES = (
     ("it", "Italian"),
     ("ja-Hrkt", "Japanese"),
 )
+WESTERN_FONT_LANGUAGES = {"fr", "de", "es", "it"}
 
 FORBIDDEN_ARCHIVE_SUFFIXES = {
     ".gb", ".gbc", ".rom", ".ips", ".bps", ".ups", ".patch", ".diff",
@@ -177,8 +179,9 @@ def _prompt_language(input_fn: Callable[[str], str]) -> tuple[str, str]:
 def _print_language_warning(language: str) -> None:
     if canonical_language(language) == "ja-Hrkt":
         print(
-            "\nWarning: the Japanese translation does not currently display "
-            "correctly in game."
+            "\nWarning: Japanese localized-font extraction is not supported, "
+            "and the Japanese translation does not currently display "
+            "correctly in game. No Japanese ROM will be requested."
         )
 
 
@@ -228,6 +231,23 @@ def preserve_scaffold_support(scaffold: Path, mod: Path) -> None:
     # proven; without the runtime file vanilla behavior remains untouched.
     runtime = mod / "lang" / "literal_handlers.lua"
     scaffold_main = main.read_text(encoding="utf-8")
+    # Font images live inside the mod archive. LOVE resolves a plain relative
+    # path against the game root, so turn mod-owned paths into asset paths
+    # before registering the page. Without this, every localized glyph is
+    # registered but renders as a blank cell.
+    font_registration = "    mod.content.font:register(id, page)"
+    font_path_fix = (
+        '    if type(page) == "table" and type(page.image) == "string"\n'
+        "        and mod:read(page.image) then\n"
+        "      page.image = mod.assets:path(page.image)\n"
+        "    end\n"
+    )
+    if font_registration in scaffold_main and "mod.assets:path(page.image)" not in scaffold_main:
+        scaffold_main = scaffold_main.replace(
+            font_registration,
+            font_path_fix + font_registration,
+            1,
+        )
     if runtime.is_file():
         marker = '  local literal_body = mod:read("lang/literal_handlers.lua")'
         if marker not in scaffold_main:
@@ -322,11 +342,24 @@ def build(
     language: str,
     language_name: str,
     luajit: str,
+    localized_rom: Path | None = None,
 ) -> Path:
     """Execute the complete private extraction, translation, and pack flow."""
     language = canonical_language(language)
     verify_rom(red_rom, "red")
     verify_rom(blue_rom, "blue")
+    if language in WESTERN_FONT_LANGUAGES and localized_rom is None:
+        raise BuildError(
+            f"A {language_name} Pokémon Red or Blue ROM is required as the font source."
+        )
+    if language == "ja-Hrkt" and localized_rom is not None:
+        raise BuildError(
+            "Localized font extraction is not yet supported for Japanese."
+        )
+    if localized_rom is not None:
+        # Localized dumps are user-owned inputs.  We validate their basic
+        # cartridge structure but deliberately do not enforce a SHA-1.
+        validate_localized_rom(localized_rom)
 
     dependency_root = ROOT / ".cache" / "dependencies"
     gen1recomp = dependency_root / "gen1recomp"
@@ -396,6 +429,13 @@ def build(
         strict_engine=True,
     )
     preserve_scaffold_support(scaffold, mod)
+    if localized_rom is not None:
+        extract_localized_font(
+            localized_rom,
+            mod,
+            language=language,
+            manifest=gen1recomp / "tools" / "rom_manifest.json",
+        )
 
     version = project_version()
     output = ROOT / "dist" / f"translation-{language.lower()}-{version}.zip"
@@ -429,13 +469,30 @@ def main(input_fn: Callable[[str], str] = input) -> int:
             input_fn,
         )
         language, language_name = _prompt_language(input_fn)
+        localized = None
+        if canonical_language(language) in WESTERN_FONT_LANGUAGES:
+            language_name = dict(LANGUAGES)[language]
+            localized = _prompt_path(
+                f"Please specify one localized {language_name} Pokémon Red or Blue ROM for its font "
+                "(full path, e.g. /Games/PokemonLocalized.gb): ",
+                input_fn,
+            )
         _print_language_warning(language)
         verify_rom(red, "red")
         verify_rom(blue, "blue")
+        if localized is not None:
+            validate_localized_rom(localized)
         if not _confirm(input_fn):
             print("\nBuild cancelled. No repositories were cloned.")
             return 0
-        output = build(red, blue, language, language_name, luajit)
+        output = build(
+            red,
+            blue,
+            language,
+            language_name,
+            luajit,
+            localized_rom=localized,
+        )
     except (BuildError, ValueError, OSError) as error:
         print(f"\nError: {error}", file=sys.stderr)
         return 1

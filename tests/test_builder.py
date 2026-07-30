@@ -30,14 +30,47 @@ class BuilderTests(unittest.TestCase):
         with patch("builtins.print"), self.assertRaises(builder.BuildError):
             builder._prompt_language(lambda _: "99")
 
+    def test_french_build_requires_localized_font_rom(self):
+        with (
+            patch.object(builder, "verify_rom"),
+            self.assertRaisesRegex(builder.BuildError, "French Pokémon Red or Blue"),
+        ):
+            builder.build(
+                Path("red.gb"), Path("blue.gb"), "fr", "French", "luajit"
+            )
+
+    def test_western_languages_require_localized_font_rom(self):
+        with (
+            patch.object(builder, "verify_rom"),
+            self.assertRaisesRegex(builder.BuildError, "German Pokémon Red or Blue"),
+        ):
+            builder.build(
+                Path("red.gb"),
+                Path("blue.gb"),
+                "de",
+                "German",
+                "luajit",
+            )
+
+    def test_japanese_rejects_localized_font_rom(self):
+        with (
+            patch.object(builder, "verify_rom"),
+            self.assertRaisesRegex(builder.BuildError, "not yet supported for Japanese"),
+        ):
+            builder.build(
+                Path("red.gb"), Path("blue.gb"), "ja-Hrkt", "Japanese", "luajit",
+                localized_rom=Path("japanese.gb"),
+            )
+
     def test_japanese_language_warning(self):
         output = io.StringIO()
         with redirect_stdout(output):
             builder._print_language_warning("ja")
         self.assertIn(
-            "Japanese translation does not currently display correctly in game",
+            "Japanese localized-font extraction is not supported",
             output.getvalue(),
         )
+        self.assertIn("No Japanese ROM will be requested", output.getvalue())
 
     def test_other_languages_have_no_display_warning(self):
         output = io.StringIO()
@@ -152,6 +185,35 @@ class BuilderTests(unittest.TestCase):
             self.assertTrue((mod / "lang" / "charmap.lua").is_file())
             self.assertTrue((mod / "assets" / "font" / "target.png").is_file())
             self.assertFalse((mod / "assets" / "font" / "README.md").exists())
+
+    def test_scaffold_font_image_is_resolved_inside_mod_archive(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            scaffold = root / "scaffold"
+            mod = root / "mod"
+            (scaffold / "lang").mkdir(parents=True)
+            (scaffold / "assets" / "font").mkdir(parents=True)
+            (mod / "lang").mkdir(parents=True)
+            (scaffold / "main.lua").write_text(
+                "return function(mod)\n"
+                "  for id, page in pairs({}) do\n"
+                "    mod.content.font:register(id, page)\n"
+                "  end\n"
+                "end\n",
+                encoding="utf-8",
+            )
+            for name in ("font.lua", "charmap.lua", "naming.lua"):
+                (scaffold / "lang" / name).write_text("return {}", encoding="utf-8")
+
+            builder.preserve_scaffold_support(scaffold, mod)
+
+            main = (mod / "main.lua").read_text(encoding="utf-8")
+            self.assertIn("mod:read(page.image)", main)
+            self.assertIn("page.image = mod.assets:path(page.image)", main)
+            self.assertLess(
+                main.index("mod.assets:path(page.image)"),
+                main.index("mod.content.font:register(id, page)"),
+            )
 
     def test_rejected_candidate_does_not_replace_final_archive(self):
         with tempfile.TemporaryDirectory() as directory:
