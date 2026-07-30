@@ -10,6 +10,7 @@ from .generate import generate_lua
 from .validate import release_gate, validate
 from .roms import catalog_roms, import_rom, import_all
 from .mod import generate_mod
+from .disassembly_audit import run_audit
 
 
 def main(argv=None) -> int:
@@ -23,6 +24,7 @@ def main(argv=None) -> int:
     cat = sub.add_parser("catalog"); cat.add_argument("--red", required=True); cat.add_argument("--blue", required=True); cat.add_argument("-o", "--output", required=True)
     imp = sub.add_parser("import"); imp.add_argument("version", choices=("red", "blue")); imp.add_argument("rom"); imp.add_argument("--gen1recomp", required=True); imp.add_argument("--out", required=True); imp.add_argument("--assets", required=True)
     all_imp = sub.add_parser("import-all"); all_imp.add_argument("--red", required=True); all_imp.add_argument("--blue", required=True); all_imp.add_argument("--gen1recomp", required=True); all_imp.add_argument("--cache-root", required=True)
+    sub.add_parser("audit-disassemblies", help="developer-only private localized disassembly audit")
     args = p.parse_args(argv)
     if args.command == "catalog":
         catalog_roms({"red": args.red, "blue": args.blue}, args.output); return 0
@@ -30,6 +32,9 @@ def main(argv=None) -> int:
         import_rom(args.version, args.rom, args.gen1recomp, args.out, args.assets); return 0
     if args.command == "import-all":
         import_all({"red": args.red, "blue": args.blue}, args.gen1recomp, args.cache_root); return 0
+    if args.command == "audit-disassemblies":
+        run_audit()
+        return 0
     if args.command == "parse":
         records = parse_redblue(args.corpus, canonical_language(args.target_lang))
         Path(args.output).write_text(json.dumps([r.__dict__ for r in records], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

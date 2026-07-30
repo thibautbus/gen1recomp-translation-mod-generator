@@ -11,6 +11,30 @@ target_lang = "fr"
 source = "https://github.com/bryanthaboi/gen1recomp.git"
 revision = "5a48a61f2ed20aee80951aeb1e41b7ec084b350f"
 
+# Optional developer audit sources.  These repositories are never needed by
+# build_translation.py and are cloned only by ``audit-disassemblies`` into the
+# ignored .cache/audit tree.  IT is retained as an untrusted comparison source:
+# the snapshot is known to contain German text.
+[disassemblies.fr]
+source = "https://github.com/einstein95/pokered-fr.git"
+revision = "7ddc547e22e4c84f3e492a3c04a92c26f7f2e877"
+trusted = true
+
+[disassemblies.de]
+source = "https://github.com/einstein95/pokered-de.git"
+revision = "f6a2c0cdc557e4c8c1886743629341848ff5bc40"
+trusted = true
+
+[disassemblies.es]
+source = "https://github.com/einstein95/pokered-es.git"
+revision = "6caaf44d56f87db76cbf72c54afd5ec4af8c2fa3"
+trusted = true
+
+[disassemblies.it]
+source = "https://github.com/einstein95/pokered-it.git"
+revision = "df6e3e8121cc0831e4b15c3a17b5bdb266e02414"
+trusted = false
+
 [rom.red]
 sha1 = "ea9bcae617fdf159b045185467ae58b2e4a48b9a"
 

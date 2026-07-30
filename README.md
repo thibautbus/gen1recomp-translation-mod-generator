@@ -186,6 +186,26 @@ Editorial corrections live in the versioned files under `review/` and are
 applied automatically by the builder. Corpus sources and generated private
 catalogs are never rewritten.
 
+### Developer-only disassembly audit
+
+Maintainers can compare the localized `einstein95` disassembly snapshots with
+PokeCorpus using:
+
+```sh
+python scripts/pipeline.py audit-disassemblies
+```
+
+This command is not part of `build_translation.py`. It fetches only the pinned
+audit repositories, checks them out under `.cache/audit/disassemblies/`, and
+writes private JSON and Markdown reports under `.cache/audit/reports/`. Reports
+include label/qid matches, divergences, missing entries, script callsites, and
+candidate context. They may contain copyrighted source text and local paths;
+never commit or publish them. The Italian snapshot is intentionally marked
+untrusted because it is detected as German, and its candidates are excluded
+from recommendations. Existing per-language interactive coverage reports are
+used only to enrich audit context; the audit still succeeds when they are
+absent.
+
 ## Data flow and matching
 
 The pipeline follows one direction:
@@ -213,6 +233,7 @@ The command-line wrapper in `scripts/pipeline.py` delegates to the modules in
 | `pipeline/validate.py` | Checks placeholders, glyph coverage, version consistency, and the separate ROM/engine release gates. |
 | `pipeline/roms.py` | Verifies canonical ROM hashes and orchestrates private Red/Blue imports into ignored local caches. |
 | `pipeline/localized_font.py` | Validates reviewed Western font regions, extracts compact language glyph pages, and generates the Modkit font/charmap catalogs. |
+| `pipeline/disassembly_audit.py` | Developer-only parser for private localized disassembly snapshots; emits match/divergence/callsite reports without editing anchors or review files. |
 
 Supporting compatibility helpers live in `pipeline/generate.py` and
 `pipeline/worksheet.py`. `build_translation.py` is the normal interactive
