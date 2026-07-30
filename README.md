@@ -206,6 +206,27 @@ from recommendations. Existing per-language interactive coverage reports are
 used only to enrich audit context; the audit still succeeds when they are
 absent.
 
+### Developer-only engine backlog
+
+Maintainers can inventory unresolved and ambiguous engine keys from cached
+build artifacts with:
+
+```sh
+python scripts/pipeline.py engine-backlog --language fr
+```
+
+The command scans the private cached Gen1Recomp checkout for every literal
+`Strings(...)` callsite, records relative path/line/context, classifies modern,
+link/import/core, UI, and credible original-game surfaces, and conservatively
+marks RBY eligibility for review. It also records placeholder signatures,
+matcher fallback reasons, and deterministic PokeCorpus qid candidates. Fuzzy
+suggestions are advisory only and never count as translated. JSON and Markdown
+reports are written to the ignored
+`.cache/audit/engine-backlog/<language>.{json,md}` paths; anchors, overrides,
+and catalogs are never modified. A cached coverage report whose engine key
+universe and total match the selected catalog is required; stale or missing
+snapshots fail with an English error.
+
 ## Data flow and matching
 
 The pipeline follows one direction:
@@ -234,6 +255,7 @@ The command-line wrapper in `scripts/pipeline.py` delegates to the modules in
 | `pipeline/roms.py` | Verifies canonical ROM hashes and orchestrates private Red/Blue imports into ignored local caches. |
 | `pipeline/localized_font.py` | Validates reviewed Western font regions, extracts compact language glyph pages, and generates the Modkit font/charmap catalogs. |
 | `pipeline/disassembly_audit.py` | Developer-only parser for private localized disassembly snapshots; emits match/divergence/callsite reports without editing anchors or review files. |
+| `pipeline/engine_backlog.py` | Read-only developer analyzer for unresolved/ambiguous engine keys, literal Gen1Recomp callsites, conservative RBY eligibility, placeholders, fallback reasons, and PokeCorpus qid suggestions. |
 
 Supporting compatibility helpers live in `pipeline/generate.py` and
 `pipeline/worksheet.py`. `build_translation.py` is the normal interactive

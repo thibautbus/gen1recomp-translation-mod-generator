@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import sys
 
 from .align import align, apply_overrides
 from .corpus import load_corpus, parse_redblue, canonical_language
@@ -11,6 +12,7 @@ from .validate import release_gate, validate
 from .roms import catalog_roms, import_rom, import_all
 from .mod import generate_mod
 from .disassembly_audit import run_audit
+from .engine_backlog import run_backlog
 
 
 def main(argv=None) -> int:
@@ -25,6 +27,12 @@ def main(argv=None) -> int:
     imp = sub.add_parser("import"); imp.add_argument("version", choices=("red", "blue")); imp.add_argument("rom"); imp.add_argument("--gen1recomp", required=True); imp.add_argument("--out", required=True); imp.add_argument("--assets", required=True)
     all_imp = sub.add_parser("import-all"); all_imp.add_argument("--red", required=True); all_imp.add_argument("--blue", required=True); all_imp.add_argument("--gen1recomp", required=True); all_imp.add_argument("--cache-root", required=True)
     sub.add_parser("audit-disassemblies", help="developer-only private localized disassembly audit")
+    backlog = sub.add_parser("engine-backlog", help="developer-only private unresolved engine-string backlog")
+    backlog.add_argument("--language", "--target-lang", dest="language", default=None)
+    backlog.add_argument("--checkout", help="private Gen1Recomp checkout (defaults to .cache/dependencies/gen1recomp)")
+    backlog.add_argument("--corpus-root", help="private PokeCorpus checkout")
+    backlog.add_argument("--coverage", dest="coverage_path", help="cached coverage JSON")
+    backlog.add_argument("--engine-catalog", help="cached strings.lua scaffold")
     args = p.parse_args(argv)
     if args.command == "catalog":
         catalog_roms({"red": args.red, "blue": args.blue}, args.output); return 0
@@ -34,6 +42,20 @@ def main(argv=None) -> int:
         import_all({"red": args.red, "blue": args.blue}, args.gen1recomp, args.cache_root); return 0
     if args.command == "audit-disassemblies":
         run_audit()
+        return 0
+    if args.command == "engine-backlog":
+        try:
+            report = run_backlog(
+                language=args.language,
+                checkout=args.checkout,
+                corpus_root=args.corpus_root,
+                coverage_path=args.coverage_path,
+                engine_catalog=args.engine_catalog,
+            )
+        except (FileNotFoundError, ValueError, OSError) as exc:
+            print(f"engine-backlog: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps({"language": report["language"], "stats": report["stats"]}, ensure_ascii=False, indent=2))
         return 0
     if args.command == "parse":
         records = parse_redblue(args.corpus, canonical_language(args.target_lang))
