@@ -85,9 +85,140 @@
       "source_aliases": ["An elevator!"],
       "extraction": {"kind": "full", "index": 0}
     },
+    "All sleeping\nPOKéMON woke up!": {
+      "qid": "rb.text_6.FluteWokeUpText",
+      "source_aliases": ["All sleeping\nPOKéMON woke up."],
+      "extraction": {"kind": "full", "index": 0}
+    },
     "There's a slew of\nPOKéMON stuff!": {
       "qid": "rb.text_2.PokemonStuffText",
       "source_aliases": ["There's a slew of\nPOKéMON stuff!"],
+      "extraction": {"kind": "full", "index": 0}
+    },
+    "Crammed full of\nPOKéMON books!": {
+      "qid": "rb.text_2.PokemonBooksText",
+      "extraction": {"kind": "full", "index": 0}
+    },
+    "INDIGO PLATEAU": {
+      "qid": "rb.text_2.IndigoPlateauStatuesText1",
+      "extraction": {"kind": "full", "index": 0}
+    },
+    "A COIN CASE is\nrequired!": {
+      "qid": "rb.text_2.GameCornerCoinCaseText",
+      "extraction": {"kind": "full", "index": 0}
+    },
+    "%s\nlearned\n%s!": {
+      "qid": "rb.text_3.MimicLearnedMoveText",
+      "extraction": {"kind": "full", "index": 0}
+    },
+    "%s's\n%s rose!": {
+      "parts": [
+        {"qid": "rb.text_3.MonsStatsRoseText", "extraction": {"kind": "full", "preserve_edges": true}},
+        {"qid": "rb.text_3.RoseText", "extraction": {"kind": "full", "preserve_edges": true}}
+      ],
+      "separators": [""],
+      "placeholders": {"{USER}": "%s", "{RAM:wStringBuffer}": "%s"}
+    },
+    "%s's\n%s\ngreatly rose!": {
+      "parts": [
+        {"qid": "rb.text_3.MonsStatsRoseText", "extraction": {"kind": "full", "preserve_edges": true}},
+        {"qid": "rb.text_3.GreatlyRoseText", "extraction": {"kind": "full"}},
+        {"qid": "rb.text_3.RoseText", "extraction": {"kind": "full", "preserve_edges": true}}
+      ],
+      "separators": ["\n", ""],
+      "placeholders": {"{USER}": "%s", "{RAM:wStringBuffer}": "%s"}
+    },
+    "%s's\n%s fell!": {
+      "parts": [
+        {"qid": "rb.text_3.MonsStatsFellText", "extraction": {"kind": "full", "preserve_edges": true}},
+        {"qid": "rb.text_3.FellText", "extraction": {"kind": "full", "preserve_edges": true}}
+      ],
+      "separators": [""],
+      "placeholders": {"{TARGET}": "%s", "{RAM:wStringBuffer}": "%s"}
+    },
+    "%s's\n%s\ngreatly fell!": {
+      "parts": [
+        {"qid": "rb.text_3.MonsStatsFellText", "extraction": {"kind": "full", "preserve_edges": true}},
+        {"qid": "rb.text_3.GreatlyFellText", "extraction": {"kind": "full"}},
+        {"qid": "rb.text_3.FellText", "extraction": {"kind": "full", "preserve_edges": true}}
+      ],
+      "separators": ["\n", ""],
+      "placeholders": {"{TARGET}": "%s", "{RAM:wStringBuffer}": "%s"}
+    },
+    "%s learned\n%s!": {
+      "qid": "rb.text_4.LearnedMove1Text",
+      "extraction": {"kind": "full", "index": 0}
+    },
+    "1, 2 and... Poof!\f%s forgot\n%s!\fAnd...\f%s learned\n%s!": {
+      "parts": [
+        {"qid": "rb.text_4.OneTwoAndText", "extraction": {"kind": "full", "index": 0, "preserve_edges": true}},
+        {"qid": "rb.text_4.PoofText", "extraction": {"kind": "full", "index": 0, "preserve_edges": true}},
+        {"qid": "rb.text_4.ForgotAndText", "extraction": {"kind": "full", "index": 0, "preserve_edges": true}},
+        {"qid": "rb.text_4.LearnedMove1Text", "extraction": {"kind": "full", "index": 0, "preserve_edges": true}}
+      ],
+      "separators": ["", "", "\f"],
+      "placeholders": {
+        "{RAM:wLearnMoveMonName}": "%s",
+        "{RAM:wNameBuffer}": "%s",
+        "{RAM:wStringBuffer}": "%s"
+      }
+    },
+    "%s\nmade a whirlwind!": {
+      "parts": [
+        {"qid": "rb.text_3.ChargeMoveEffectText", "extraction": {"kind": "full", "index": 0}},
+        {"qid": "rb.text_3.MadeWhirlwindText", "extraction": {"kind": "full", "index": 0}}
+      ],
+      "join": "\n",
+      "placeholders": {"{USER}": "%s"}
+    },
+    "%s\ntook in sunlight!": {
+      "parts": [
+        {"qid": "rb.text_3.ChargeMoveEffectText", "extraction": {"kind": "full", "index": 0}},
+        {"qid": "rb.text_3.TookInSunlightText", "extraction": {"kind": "full", "index": 0}}
+      ],
+      "join": "\n",
+      "placeholders": {"{USER}": "%s"}
+    },
+    "%s\nlowered its head!": {
+      "parts": [
+        {"qid": "rb.text_3.ChargeMoveEffectText", "extraction": {"kind": "full", "index": 0}},
+        {"qid": "rb.text_3.LoweredItsHeadText", "extraction": {"kind": "full", "index": 0}}
+      ],
+      "join": "\n",
+      "placeholders": {"{USER}": "%s"}
+    },
+    "%s\nflew up high!": {
+      "parts": [
+        {"qid": "rb.text_3.ChargeMoveEffectText", "extraction": {"kind": "full", "index": 0}},
+        {"qid": "rb.text_3.FlewUpHighText", "extraction": {"kind": "full", "index": 0}}
+      ],
+      "join": "\n",
+      "placeholders": {"{USER}": "%s"}
+    },
+    "%s\ndug a hole!": {
+      "parts": [
+        {"qid": "rb.text_3.ChargeMoveEffectText", "extraction": {"kind": "full", "index": 0}},
+        {"qid": "rb.text_3.DugAHoleText", "extraction": {"kind": "full", "index": 0}}
+      ],
+      "join": "\n",
+      "placeholders": {"{USER}": "%s"}
+    },
+    "%s\nis storing energy!": {
+      "qid": "rb.text_2.SavingEnergyText",
+      "source_aliases": ["{USER}\nis saving energy!"],
+      "extraction": {"kind": "full", "index": 0}
+    },
+    "%s\nsnapped out of\nconfusion!": {
+      "qid": "rb.text_2.ConfusedNoMoreText",
+      "source_aliases": ["{USER}'s\nconfused no more!"],
+      "extraction": {"kind": "full", "index": 0}
+    },
+    "%s\nwoke up!": {
+      "qid": "rb.text_2.WokeUpText",
+      "extraction": {"kind": "full", "index": 0}
+    },
+    "%s found\n%d coins!": {
+      "qid": "rb.text_2.FoundHiddenCoinsText",
       "extraction": {"kind": "full", "index": 0}
     },
     "POKéMON LEAGUE HQ": {

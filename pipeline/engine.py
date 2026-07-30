@@ -11,6 +11,7 @@ import ast
 import json
 from pathlib import Path
 import re
+import unicodedata
 from typing import Iterable, Mapping
 
 from .model import Alignment, CorpusRecord
@@ -19,6 +20,21 @@ from .tokens import DYNAMIC_TOKEN_RE, corpus_to_engine
 ENGINE_SCHEMA = "gen1recomp-translation-mods/engine-overrides"
 ANCHOR_SCHEMA = "gen1recomp-translation-mods/semantic-anchors"
 ROM_CATALOGS = ("dialogue", "species_names", "move_names", "item_names", "trainer_names", "status_labels")
+_SAFE_SEPARATOR_CONTROLS = {"\n", "\v", "\f"}
+
+
+def _valid_separator(value: object) -> bool:
+    """Return whether a parts boundary is safe to inject into engine text.
+
+    Separators are structural bytes, not translations.  Permit ordinary
+    printable whitespace/text (including the empty separator) and the control
+    bytes emitted by the corpus, while rejecting NUL/other non-printing bytes
+    that could corrupt a generated string table.
+    """
+    return (isinstance(value, str) and
+            all(char in _SAFE_SEPARATOR_CONTROLS or
+                not unicodedata.category(char).startswith("C")
+                for char in value))
 
 
 @dataclass(frozen=True)
@@ -338,13 +354,19 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
     if not isinstance(data, dict):
         raise ValueError("semantic anchors anchors must be an object")
 
-    def validate_extraction(spec: object, label: str) -> None:
+    def validate_extraction(spec: object, label: str, inherited_kind: str | None = None,
+                            inherited_preserve_edges: bool = False) -> None:
         if not isinstance(spec, dict):
             raise ValueError(f"{label} extraction must be an object")
-        kind = spec.get("kind", "segment")
+        kind = spec.get("kind", inherited_kind or "segment")
         index = spec.get("index", 0)
         if kind not in {"segment", "token", "span", "full", "parts"}:
             raise ValueError(f"unsupported extraction kind for {label}")
+        if "preserve_edges" in spec and not isinstance(spec["preserve_edges"], bool):
+            raise ValueError(f"{label} preserve_edges must be boolean")
+        preserve_edges = spec.get("preserve_edges", inherited_preserve_edges)
+        if preserve_edges and kind != "full":
+            raise ValueError(f"{label} preserve_edges requires full extraction")
         if isinstance(index, bool) or not isinstance(index, int) or index < 0:
             raise ValueError(f"invalid extraction index for {label}")
         if kind == "span" and (isinstance(spec.get("count"), bool) or not isinstance(spec.get("count"), int) or spec["count"] <= 0):
@@ -355,7 +377,7 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
             if (not isinstance(indexes, list) or not indexes or
                     any(isinstance(value, bool) or not isinstance(value, int) or value < 0 for value in indexes) or
                     not isinstance(separators, list) or len(separators) != len(indexes) - 1 or
-                    not all(isinstance(separator, str) for separator in separators)):
+                    not all(_valid_separator(separator) for separator in separators)):
                 raise ValueError(f"{label} parts is malformed")
         targets = spec.get("targets", {})
         if targets is not None and not isinstance(targets, dict):
@@ -363,7 +385,7 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
         for language, target in (targets or {}).items():
             if not isinstance(language, str) or not language:
                 raise ValueError(f"{label} target language must be non-empty")
-            validate_extraction(target, f"{label} target {language!r}")
+            validate_extraction(target, f"{label} target {language!r}", kind, preserve_edges)
 
     result = {}
     for key, row in data.items():
@@ -403,7 +425,15 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
                     target_index = target.get("index", 0)
                     if target_kind not in {"segment", "token", "span", "full", "parts"} or isinstance(target_index, bool) or not isinstance(target_index, int) or target_index < 0:
                         raise ValueError(f"semantic anchor {key!r} has invalid part target extraction")
-            if not isinstance(row.get("join", ""), str):
+            if "separators" in row and "join" in row:
+                raise ValueError(f"semantic anchor {key!r} parts cannot define both separators and join")
+            if "separators" in row:
+                separators = row.get("separators")
+                if (not isinstance(separators, list) or
+                        len(separators) != len(parts) - 1 or
+                        not all(_valid_separator(separator) for separator in separators)):
+                    raise ValueError(f"semantic anchor {key!r} parts separators must join each part")
+            elif not isinstance(row.get("join", ""), str) or not _valid_separator(row.get("join", "")):
                 raise ValueError(f"semantic anchor {key!r} join must be a string")
             placeholders = row.get("placeholders", {})
             if not isinstance(placeholders, dict):
@@ -411,7 +441,10 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
             for token, ref in placeholders.items():
                 if not isinstance(token, str) or not token or (ref != "%s" and not (isinstance(ref, dict) and isinstance(ref.get("part"), int) and not isinstance(ref.get("part"), bool) and 0 <= ref["part"] < len(parts))):
                     raise ValueError(f"semantic anchor {key!r} has invalid placeholder mapping")
-            result[key] = {**row, "parts": parts, "join": row.get("join", ""), "placeholders": placeholders}
+            normalized = {**row, "parts": parts, "placeholders": placeholders}
+            if "separators" not in row:
+                normalized["join"] = row.get("join", "")
+            result[key] = normalized
             continue
         if not isinstance(qid, str) or not qid or not isinstance(extraction, dict):
             raise ValueError(f"semantic anchor {key!r} requires qid and extraction")
@@ -430,7 +463,7 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
                         for part in parts)):
                 raise ValueError(f"semantic anchor {key!r} parts requires non-negative segment indexes")
             separators = extraction.get("separators", [])
-            if not isinstance(separators, list) or len(separators) != len(parts) - 1 or not all(isinstance(separator, str) for separator in separators):
+            if not isinstance(separators, list) or len(separators) != len(parts) - 1 or not all(_valid_separator(separator) for separator in separators):
                 raise ValueError(f"semantic anchor {key!r} parts separators must join each segment")
         targets = extraction.get("targets", {})
         if targets is not None and not isinstance(targets, dict):
@@ -452,7 +485,7 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
                             for part in parts)):
                     raise ValueError(f"semantic anchor {key!r} target parts requires non-negative segment indexes")
                 separators = target_extraction.get("separators", [])
-                if not isinstance(separators, list) or len(separators) != len(parts) - 1 or not all(isinstance(separator, str) for separator in separators):
+                if not isinstance(separators, list) or len(separators) != len(parts) - 1 or not all(_valid_separator(separator) for separator in separators):
                     raise ValueError(f"semantic anchor {key!r} target parts separators must join each segment")
         result[key] = {**row, "qid": qid, "extraction": {**extraction, "kind": kind}}
     return result
@@ -467,7 +500,18 @@ def _extract_anchor(text: str, extraction: Mapping, language: str | None = None)
     the selectors contain no translations.
     """
     if language and isinstance(extraction.get("targets"), Mapping):
-        extraction = extraction.get("targets", {}).get(language, extraction)
+        parent_kind = extraction.get("kind", "segment")
+        parent_preserve_edges = extraction.get("preserve_edges", False)
+        selected = extraction.get("targets", {}).get(language, extraction)
+        if isinstance(selected, Mapping):
+            inherited = {}
+            if "kind" not in selected:
+                inherited["kind"] = parent_kind
+            if "preserve_edges" not in selected and parent_preserve_edges:
+                inherited["preserve_edges"] = True
+            if inherited:
+                selected = {**inherited, **selected}
+        extraction = selected
     kind = extraction.get("kind", "segment")
     index = extraction.get("index", 0)
     if isinstance(index, bool) or not isinstance(index, int) or index < 0:
@@ -511,6 +555,12 @@ def _extract_anchor(text: str, extraction: Mapping, language: str | None = None)
     elif kind == "full":
         converted = corpus_to_engine(text)
         converted = re.sub(r"<[^>]*>", " ", converted).replace("@", "").replace("/", "")
+        # Composite anchors may intentionally rely on a corpus row's leading
+        # or trailing whitespace/control byte as a boundary.  Keep those
+        # edges only when explicitly requested; legacy full anchors retain the
+        # historical trimmed behavior.
+        if extraction.get("preserve_edges", False):
+            return converted or None
         return converted.strip() or None
     else:
         return None
@@ -580,13 +630,22 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
         return None
 
     def unique_anchor_row(qid: str):
-        values = {(source_text, target_text) for source_text, target_text in anchor_rows.get(qid, [])
-                  if source_text and target_text not in (None, "")}
-        return next(iter(values)) if len(values) == 1 else None
+        # A qid is an explicit provenance proof, so it must identify exactly
+        # one corpus row.  Do not collapse duplicate identical rows: repeated
+        # or malformed records are ambiguous and must fail closed just like
+        # conflicting translations.
+        rows_for_qid = anchor_rows.get(qid, [])
+        if len(rows_for_qid) != 1:
+            return None
+        source_text, target_text = rows_for_qid[0]
+        if not source_text or target_text in (None, ""):
+            return None
+        return source_text, target_text
 
     def resolve_parts(source: str, anchor: Mapping):
         """Compose a proven multi-qid anchor (used for split item messages)."""
         parts = anchor.get("parts", [])
+        boundary_separators = anchor.get("separators")
         joiner = anchor.get("join", "")
         placeholders = anchor.get("placeholders", {})
         source_pieces, target_pieces = [], []
@@ -606,14 +665,51 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
                 visible_source.append(source_piece)
                 visible_target.append(target_piece)
 
+        if boundary_separators is not None:
+            # Separators are declared per original part boundary.  Keep the
+            # include=false compatibility behavior by applying boundaries
+            # only between adjacent visible pieces.
+            def compose(values: list[str]) -> str:
+                out: list[str] = []
+                visible_indexes = [index for index, part in enumerate(parts)
+                                   if part.get("include", True)]
+                for position, value in enumerate(values):
+                    out.append(value)
+                    if position + 1 < len(values):
+                        left = visible_indexes[position]
+                        right = visible_indexes[position + 1]
+                        if right == left + 1:
+                            out.append(boundary_separators[left])
+                return "".join(out)
+            source_joined = compose(visible_source)
+            target_joined = compose(visible_target)
+        else:
+            source_joined = joiner.join(visible_source)
+            target_joined = joiner.join(visible_target)
+
+        # Placeholder declarations are an explicit contract for composite
+        # printf keys.  Require every dynamic corpus token in the composed
+        # English source to be declared, and reject stale/extra declarations
+        # instead of silently producing a misleading match.
+        source_dynamic = DYNAMIC_TOKEN_RE.findall(corpus_to_engine(source_joined))
+        declared_dynamic = set(placeholders)
+        if set(source_dynamic) != declared_dynamic:
+            return None, set()
+        target_dynamic = DYNAMIC_TOKEN_RE.findall(corpus_to_engine(target_joined))
+        # Runtime printf arguments are positional.  Require every localized
+        # part to retain the exact token identity and multiplicity/order from
+        # English; type-only matching would silently substitute names.
+        if target_dynamic != source_dynamic:
+            return None, set()
+
         def replace(text: str, values: list[str]) -> str:
             for token, ref in placeholders.items():
                 value = "%s" if ref == "%s" else values[ref["part"]]
                 text = text.replace(token, value)
             return text
 
-        source_value = replace(joiner.join(visible_source), source_pieces)
-        target_value = replace(joiner.join(visible_target), target_pieces)
+        source_value = replace(source_joined, source_pieces)
+        target_value = replace(target_joined, target_pieces)
         aliases = {str(alias) for alias in anchor.get("source_aliases", []) if isinstance(alias, str)}
         if source_value not in ({source} | aliases):
             return None, set()
@@ -627,20 +723,50 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
             return resolve_parts(source, anchor)
         extraction = anchor.get("extraction", {})
         semantic_values: set[str] = set(); semantic_error = False
-        for source_text, target_text in anchor_rows.get(anchor["qid"], []):
+        # Explicit qid anchors are valid only when exactly one row is present.
+        # This check happens before extraction so duplicate identical rows and
+        # malformed+valid duplicates cannot be deduplicated into a success.
+        qid_rows = anchor_rows.get(anchor["qid"], [])
+        if len(qid_rows) != 1:
+            return None, set()
+        for source_text, target_text in qid_rows:
             source_piece = _extract_anchor(source_text, extraction, "en")
             target_piece = target_text
             if source_piece is None or target_piece in (None, ""):
                 semantic_error = True; continue
             target_piece = _extract_anchor(target_piece, extraction, target_lang)
             aliases = {str(alias) for alias in anchor.get("source_aliases", []) if isinstance(alias, str)}
+            alias_norms = {_normal(alias) for alias in aliases}
             source_matches = (
                 _normal(source_piece) == _normal(source)
                 or _structural_form(source_piece) == _structural_form(source)
-                or _normal(source) in {_normal(alias) for alias in aliases}
+                # A source alias may describe the punctuation/control-token
+                # spelling present in the corpus row.  This is useful for
+                # stable engine messages whose generated key differs only in
+                # terminal punctuation (for example ``woke up.`` vs
+                # ``woke up!``); aliases remain explicit and qid-scoped.
+                or _normal(source_piece) in alias_norms
+                or _normal(source) in alias_norms
             )
             if target_piece is None or not source_matches:
                 semantic_error = True; continue
+            # Engine catalogue keys use printf directives while corpus rows
+            # carry typed runtime tokens (for example ``{USER}``,
+            # ``{RAM:...}``, and ``{NUM:...}``).  For printf-bearing keys,
+            # reuse the same conservative structural conversion used by the
+            # global structural matcher so the exact source directives (and
+            # their formatting) are restored in the localized value.  Keep
+            # the legacy dynamic-token equality path for keys that contain no
+            # printf directives; those anchors may intentionally use dynamic
+            # corpus syntax in the engine key itself.
+            source_printf = [directive for directive in printf_directives(source)
+                             if directive != "%%"]
+            if source_printf:
+                structural_value = _structural_translation(source, target_piece)
+                if structural_value is None:
+                    semantic_error = True; continue
+                semantic_values.add(structural_value)
+                continue
             if check_printf_directives(source, target_piece) or _placeholder_tokens(source) != _placeholder_tokens(target_piece):
                 semantic_error = True; continue
             semantic_values.add(corpus_to_engine(target_piece))

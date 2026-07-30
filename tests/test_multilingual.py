@@ -5,7 +5,7 @@ from pathlib import Path
 
 from pipeline.align import align, apply_overrides
 from pipeline.corpus import parse_redblue, canonical_language
-from pipeline.engine import load_semantic_anchors, match_engine_catalog, _extract_anchor
+from pipeline.engine import load_engine_overrides, load_semantic_anchors, match_engine_catalog, _extract_anchor, printf_directives, read_engine_catalog
 from pipeline.model import Alignment, CorpusRecord
 from pipeline.mod import generate_mod
 from pipeline.cli import main as cli_main
@@ -184,6 +184,7 @@ class MultilingualTests(unittest.TestCase):
                 "rb.Route23.Route23YouDontHaveTheBadgeYetText",
             "You need a\nBICYCLE for the\nCycling Road!":
                 "rb.Route18Gate1F.Route18Gate1FGuardYouNeedABicycleText",
+            "All sleeping\nPOKéMON woke up!": "rb.text_6.FluteWokeUpText",
             "PA: You're out of\nSAFARI BALLs!": "rb.text_2.OutOfSafariBallsText",
         }
         for language in ("fr", "de", "es", "it", "ja-Hrkt"):
@@ -197,6 +198,459 @@ class MultilingualTests(unittest.TestCase):
                 self.assertTrue(output[key], (language, qid))
                 self.assertEqual(report["provenance"][key]["qid"], qid)
 
+    def test_real_corpus_direct_engine_anchor_batch_all_languages(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        keys = {
+            "Crammed full of\nPOKéMON books!": "rb.text_2.PokemonBooksText",
+            "INDIGO PLATEAU": "rb.text_2.IndigoPlateauStatuesText1",
+            "A COIN CASE is\nrequired!": "rb.text_2.GameCornerCoinCaseText",
+        }
+        anchors = load_semantic_anchors()
+        for key, qid in keys.items():
+            self.assertEqual(
+                anchors[key],
+                {"qid": qid, "extraction": {"kind": "full", "index": 0}},
+            )
+        for language in ("fr", "de", "es", "it", "ja-Hrkt"):
+            items = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog(
+                {key: "" for key in keys}, items,
+                semantic_anchors=anchors,
+                target_lang=language,
+            )
+            self.assertEqual(report["translated"], len(keys), language)
+            self.assertEqual(report["auto_semantic"], len(keys), language)
+            self.assertFalse(report["ambiguous"], language)
+            for key, qid in keys.items():
+                self.assertTrue(output[key], (language, qid))
+                self.assertEqual(report["details"][key], "semantic", language)
+                self.assertEqual(report["provenance"][key]["qid"], qid, language)
+
+    def test_real_corpus_printf_engine_anchor_batch_all_languages(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        keys = {
+            "%s\nlearned\n%s!": "rb.text_3.MimicLearnedMoveText",
+            "%s learned\n%s!": "rb.text_4.LearnedMove1Text",
+            "%s\nwoke up!": "rb.text_2.WokeUpText",
+            "%s found\n%d coins!": "rb.text_2.FoundHiddenCoinsText",
+        }
+        anchors = load_semantic_anchors()
+        for key, qid in keys.items():
+            self.assertEqual(
+                anchors[key],
+                {"qid": qid, "extraction": {"kind": "full", "index": 0}},
+            )
+        expected = {
+            "fr": {
+                "%s\nlearned\n%s!": "%s\napprend\v%s!",
+                "%s learned\n%s!": "%s\napprend...\v%s!",
+                "%s\nwoke up!": "%s\nse réveille!",
+                "%s found\n%d coins!": "%s trouve\n%d jetons!",
+            },
+            "de": {
+                "%s\nlearned\n%s!": "%s hat\n%s\x0bgelernt!",
+                "%s learned\n%s!": "%s lernt\n%s!",
+                "%s\nwoke up!": "%s\nist aufgewacht!",
+                "%s found\n%d coins!": "%s findet\n%d Münzen!",
+            },
+            "es": {
+                "%s\nlearned\n%s!": "¡%s\naprendió\v%s!",
+                "%s learned\n%s!": "¡%s\naprendió\v%s!",
+                "%s\nwoke up!": "¡%s\nse despertó!",
+                "%s found\n%d coins!": "¡%s\nencontró\v%d fichas!",
+            },
+            "it": {
+                "%s\nlearned\n%s!": "%s\nha imparato\v%s!",
+                "%s learned\n%s!": "%s impara\n%s!",
+                "%s\nwoke up!": "%s\nsi è svegliato!",
+                "%s found\n%d coins!": "%s trova\n%d gettoni!",
+            },
+            "ja-Hrkt": {
+                "%s\nlearned\n%s!": "%sは\n%sを　おぼえた！",
+                "%s learned\n%s!": "%sは　あたらしく\n%sを　おぼえた！",
+                "%s\nwoke up!": "%sは　めをさました！",
+                "%s found\n%d coins!": "%sは\nコインを　%dまい　みつけた！",
+            },
+        }
+        for language in ("fr", "de", "es", "it", "ja-Hrkt"):
+            items = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog(
+                {key: "" for key in keys}, items,
+                semantic_anchors=anchors,
+                target_lang=language,
+            )
+            self.assertEqual(report["translated"], len(keys), language)
+            self.assertEqual(report["auto_semantic"], len(keys), language)
+            self.assertFalse(report["ambiguous"], language)
+            for key, qid in keys.items():
+                self.assertEqual(output[key], expected[language][key], (language, qid))
+                self.assertEqual(report["details"][key], "semantic", language)
+                self.assertEqual(report["provenance"][key]["qid"], qid, language)
+
+    def test_real_corpus_move_learn_menu_composite_all_languages(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        key = "1, 2 and... Poof!\f%s forgot\n%s!\fAnd...\f%s learned\n%s!"
+        expected = {
+            "fr": "1, 2 et...Pouêt!\f%s oublie\n%s!\fEt...\f%s\napprend...\v%s!",
+            "de": "1, 2, schwupp!\f%s hat\n%s\vvergessen!\fUnd...\f%s lernt\n%s!",
+            "es": "1, 2 y... ¡Puf!\f¡%s olvidó\n%s!\fY...\f¡%s\naprendió\v%s!",
+            "it": "1, 2 e......puff!\f%s scorda\n%s!\fE...\f%s impara\n%s!",
+            "ja-Hrkt": "１\u3000２の\u3000……\u3000ポカン！\f%sは\u3000%sの\nつかいかたを\u3000きれいに\u3000わすれた！\fそして……！\f%sは\u3000あたらしく\n%sを\u3000おぼえた！",
+        }
+        anchors = load_semantic_anchors()
+        self.assertEqual(len(anchors[key]["parts"]), 4)
+        self.assertEqual(anchors[key]["separators"], ["", "", "\f"])
+        for language in ("fr", "de", "es", "it", "ja-Hrkt"):
+            items = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog({key: ""}, items, semantic_anchors=anchors, target_lang=language)
+            self.assertEqual(output[key], expected[language], language)
+            self.assertEqual(report["details"][key], "semantic", language)
+            self.assertEqual(report["provenance"][key]["qids"], [
+                "rb.text_4.OneTwoAndText", "rb.text_4.PoofText",
+                "rb.text_4.ForgotAndText", "rb.text_4.LearnedMove1Text",
+            ], language)
+    def test_real_corpus_battle_charge_anchor_batch_all_languages(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        keys = {
+            "%s\nmade a whirlwind!": [
+                "rb.text_3.ChargeMoveEffectText", "rb.text_3.MadeWhirlwindText",
+            ],
+            "%s\ntook in sunlight!": [
+                "rb.text_3.ChargeMoveEffectText", "rb.text_3.TookInSunlightText",
+            ],
+            "%s\nlowered its head!": [
+                "rb.text_3.ChargeMoveEffectText", "rb.text_3.LoweredItsHeadText",
+            ],
+            "%s\nflew up high!": [
+                "rb.text_3.ChargeMoveEffectText", "rb.text_3.FlewUpHighText",
+            ],
+            "%s\ndug a hole!": [
+                "rb.text_3.ChargeMoveEffectText", "rb.text_3.DugAHoleText",
+            ],
+            "%s\nis storing energy!": ["rb.text_2.SavingEnergyText"],
+            "%s\nsnapped out of\nconfusion!": ["rb.text_2.ConfusedNoMoreText"],
+        }
+        expected = {
+            "fr": {
+                "%s\nmade a whirlwind!": "%s\ncrée un cyclone!",
+                "%s\ntook in sunlight!": "%s\nrayonne!",
+                "%s\nlowered its head!": "%s\nprend du recul!",
+                "%s\nflew up high!": "%s\ns'envole!",
+                "%s\ndug a hole!": "%s\ncreuse un trou!",
+                "%s\nis storing energy!": "%s\nse concentre!",
+                "%s\nsnapped out of\nconfusion!": "%s\nse sent mieux!",
+            },
+            "de": {
+                "%s\nmade a whirlwind!": "%s\nerz. WIRBELWIND!",
+                "%s\ntook in sunlight!": "%s\nbadet im Licht!",
+                "%s\nlowered its head!": "%s\nduckt sich!",
+                "%s\nflew up high!": "%s\nfliegt empor!",
+                "%s\ndug a hole!": "%s\ngräbt sich ein!",
+                "%s\nis storing energy!": "%s\nsammelt Kräfte!",
+                "%s\nsnapped out of\nconfusion!": "%s\nist nicht mehr\x0bverwirrt!",
+            },
+            "es": {
+                "%s\nmade a whirlwind!": "¡%s\ncreó un remolino!",
+                "%s\ntook in sunlight!": "¡%s\nrecogió luz-sol!",
+                "%s\nlowered its head!": "¡%s\nbajó su cabeza!",
+                "%s\nflew up high!": "¡%s\nvoló muy alto!",
+                "%s\ndug a hole!": "¡%s\ncavó un hoyo!",
+                "%s\nis storing energy!": "¡%s\nguarda energía!",
+                "%s\nsnapped out of\nconfusion!": "¡%s\nno está confuso!",
+            },
+            "it": {
+                "%s\nmade a whirlwind!": "%s\ngenera TURBINE!",
+                "%s\ntook in sunlight!": "%s\nassorbe la luce!",
+                "%s\nlowered its head!": "%s\nabbassa la testa!",
+                "%s\nflew up high!": "%s\nè volato in alto!",
+                "%s\ndug a hole!": "%s\nscava una fossa!",
+                "%s\nis storing energy!": "%s\naccumula energia!",
+                "%s\nsnapped out of\nconfusion!": "%s\nnon è più confuso",
+            },
+            "ja-Hrkt": {
+                "%s\nmade a whirlwind!": "%s\nの　まわりで\nくうきが　うずを　まく！",
+                "%s\ntook in sunlight!": "%s\nは\nひかりを　きゅうしゅうした！",
+                "%s\nlowered its head!": "%s\nは\nくびを　ひっこめた！",
+                "%s\nflew up high!": "%s\nは\nそらたかく　とびあがった！",
+                "%s\ndug a hole!": "%s\nは\nあなをほって　ちちゅうに　もぐった！",
+                "%s\nis storing energy!": "%sは　がまんしている",
+                "%s\nsnapped out of\nconfusion!": "%sの\nこんらんが　とけた！",
+            },
+        }
+        anchors = load_semantic_anchors()
+        for language in expected:
+            items = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog(
+                {key: "" for key in keys}, items,
+                semantic_anchors=anchors, target_lang=language,
+            )
+            self.assertEqual(report["translated"], len(keys), language)
+            self.assertEqual(report["auto_semantic"], len(keys), language)
+            self.assertFalse(report["ambiguous"], language)
+            for key, qids in keys.items():
+                self.assertEqual(output[key], expected[language][key], (language, key))
+                self.assertEqual(report["details"][key], "semantic", (language, key))
+                provenance = report["provenance"][key]
+                if len(qids) == 1:
+                    self.assertEqual(provenance["qid"], qids[0], (language, key))
+                else:
+                    self.assertEqual(provenance["qids"], qids, (language, key))
+
+    def test_real_corpus_stat_stage_anchor_batch_preserves_runtime_stat_label(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        keys = (
+            "%s's\n%s rose!", "%s's\n%s\ngreatly rose!",
+            "%s's\n%s fell!", "%s's\n%s\ngreatly fell!",
+        )
+        qids = {
+            keys[0]: ["rb.text_3.MonsStatsRoseText", "rb.text_3.RoseText"],
+            keys[1]: ["rb.text_3.MonsStatsRoseText", "rb.text_3.GreatlyRoseText", "rb.text_3.RoseText"],
+            keys[2]: ["rb.text_3.MonsStatsFellText", "rb.text_3.FellText"],
+            keys[3]: ["rb.text_3.MonsStatsFellText", "rb.text_3.GreatlyFellText", "rb.text_3.FellText"],
+        }
+        expected = {
+            "fr": {
+                keys[0]: "%s\ngagne %s!",
+                keys[1]: "%s\ngagne %s\nà fond!",
+                keys[2]: "%s\nperd %s!",
+                keys[3]: "%s\nperd %s\nà fond!",
+            },
+            "de": {
+                keys[0]: "%ss\n%s nimmt zu!",
+                # FellText's corpus row has a trailing space; preserve_edges
+                # keeps it as an intentional boundary byte.
+                keys[2]: "%ss\n%s sinkt! ",
+            },
+            "ja-Hrkt": {
+                keys[0]: "%sの\n%sが　あがった！",
+                keys[1]: "%sの\n%sが\nぐーんと　あがった！",
+                keys[2]: "%sの\n%sが　さがった！",
+                keys[3]: "%sの\n%sが\nがくっと　さがった！",
+            },
+        }
+        resolved = {
+            "fr": set(keys), "de": {keys[0], keys[2]},
+            "es": set(), "it": set(), "ja-Hrkt": set(keys),
+        }
+        anchors = load_semantic_anchors()
+        for language in ("fr", "de", "es", "it", "ja-Hrkt"):
+            items = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog(
+                {key: "" for key in keys}, items,
+                semantic_anchors=anchors, target_lang=language,
+            )
+            self.assertEqual(report["translated"], len(resolved[language]), language)
+            self.assertEqual(report["auto_semantic"], len(resolved[language]), language)
+            for key in keys:
+                if key in resolved[language]:
+                    self.assertEqual(output[key], expected[language][key], (language, key))
+                    self.assertEqual(report["details"][key], "semantic", (language, key))
+                    self.assertEqual(report["provenance"][key]["qids"], qids[key], (language, key))
+                    self.assertEqual(printf_directives(output[key]), ["%s", "%s"], (language, key))
+                else:
+                    self.assertEqual(output[key], "", (language, key))
+                    self.assertEqual(report["details"][key], "semantic_unresolved", (language, key))
+                    self.assertEqual(report["provenance"][key]["qids"], qids[key], (language, key))
+            if language in {"fr", "de", "ja-Hrkt"}:
+                rendered = output[keys[0]] % ("PIKACHU", "ATTACK")
+                self.assertIn("ATTACK", rendered, language)
+
+    def test_real_corpus_es_it_stat_stage_editorial_overrides_are_language_scoped(self):
+        """Editorial stat strings use the real qid corpus only for the anchor set.
+
+        The four ES/IT entries are deliberately not qid-derived: overrides win
+        over semantic anchors and report editorial provenance without a qid.
+        Other languages must continue through their normal semantic/fallback
+        paths, proving that the per-language review files do not leak.
+        """
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        keys = (
+            "%s's\n%s rose!", "%s's\n%s\ngreatly rose!",
+            "%s's\n%s fell!", "%s's\n%s\ngreatly fell!",
+        )
+        expected = {
+            "es": {
+                keys[0]: "¡%s\nsu %s subió!",
+                keys[1]: "¡%s\nsu %s\nsubió mucho!",
+                keys[2]: "¡%s\nsu %s bajó!",
+                keys[3]: "¡%s\nsu %s\nbajó mucho!",
+            },
+            "it": {
+                keys[0]: "%s\n%s sale!",
+                keys[1]: "%s\n%s\nsale molto!",
+                keys[2]: "%s\n%s cala!",
+                keys[3]: "%s\n%s\ncala molto!",
+            },
+        }
+        anchors = load_semantic_anchors()
+        for language in ("es", "it"):
+            items = align(parse_redblue(root, language), target_lang=language)
+            override_path = Path("review") / language / "engine_overrides.json"
+            overrides = load_engine_overrides(override_path)
+            self.assertEqual(set(overrides), set(keys))
+            self.assertTrue(all(entry.get("source") == "editorial" for entry in overrides.values()), language)
+            self.assertTrue(all("provenance" in entry for entry in overrides.values()), language)
+            output, report = match_engine_catalog(
+                {key: "" for key in keys}, items, overrides,
+                semantic_anchors=anchors, target_lang=language,
+            )
+            self.assertEqual(report["translated"], 4, language)
+            self.assertEqual(report["override"], 4, language)
+            for key in keys:
+                self.assertEqual(output[key], expected[language][key], (language, key))
+                self.assertEqual(report["details"][key], "override", (language, key))
+                provenance = report["provenance"][key]
+                self.assertEqual(provenance, {"method": "override", "target_lang": language})
+                self.assertNotIn("qid", provenance)
+                self.assertEqual(printf_directives(output[key]), ["%s", "%s"], (language, key))
+                self.assertEqual(output[key] % ("PIKACHU", "ATTACK"),
+                                 expected[language][key] % ("PIKACHU", "ATTACK"), (language, key))
+            # Ensure the actual language package scaffold contains the exact
+            # source keys consumed by generation, including their line breaks.
+            scaffold = Path(".cache/build") / language / "mod-worksheet" / "strings.lua"
+            if not scaffold.is_file():
+                self.skipTest(f"cached {language} engine scaffold is unavailable")
+            catalog = read_engine_catalog(scaffold)
+            self.assertTrue(set(keys) <= set(catalog), language)
+
+        # FR/DE/JA do not load ES/IT review files. Their proven semantic paths
+        # therefore remain untouched and never report editorial overrides.
+        for language in ("fr", "de", "ja-Hrkt"):
+            items = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog(
+                {key: "" for key in keys}, items,
+                semantic_anchors=anchors, target_lang=language,
+            )
+            self.assertEqual(report["override"], 0, language)
+            self.assertTrue(all(report["details"][key] != "override" for key in keys), language)
+
+    def test_stat_stage_composite_anchor_fails_closed_on_duplicate_or_missing_qid(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        key = "%s's\n%s rose!"
+        anchors = load_semantic_anchors()
+        items = align(parse_redblue(root, "fr"), target_lang="fr")
+        first_qid = anchors[key]["parts"][0]["qid"]
+        duplicate = next(item for item in items if item.qid == first_qid)
+        output, report = match_engine_catalog(
+            {key: ""}, items + [duplicate], semantic_anchors=anchors, target_lang="fr",
+        )
+        self.assertEqual(output[key], "")
+        self.assertEqual(report["details"][key], "semantic_unresolved")
+        self.assertEqual(report["fallback_english"], 1)
+
+        missing = json.loads(json.dumps(anchors))
+        missing[key]["parts"][0]["qid"] = "rb.text_3.MissingMonsStatsRoseText"
+        output, report = match_engine_catalog(
+            {key: ""}, items, semantic_anchors=missing, target_lang="fr",
+        )
+        self.assertEqual(output[key], "")
+        self.assertEqual(report["details"][key], "semantic_unresolved")
+        self.assertEqual(report["fallback_english"], 1)
+
+    def test_battle_charge_anchor_batch_fails_closed_on_duplicate_qids(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        keys = (
+            "%s\nmade a whirlwind!", "%s\ntook in sunlight!",
+            "%s\nlowered its head!", "%s\nflew up high!",
+            "%s\ndug a hole!", "%s\nis storing energy!",
+            "%s\nsnapped out of\nconfusion!",
+        )
+        anchors = load_semantic_anchors()
+        items = align(parse_redblue(root, "fr"), target_lang="fr")
+        for key in keys:
+            qids = anchors[key].get("parts") or [anchors[key]]
+            qid = qids[0]["qid"] if isinstance(qids[0], dict) else qids[0]
+            row = next(item for item in items if item.qid == qid)
+            output, report = match_engine_catalog(
+                {key: ""}, items + [row], semantic_anchors=anchors, target_lang="fr",
+            )
+            self.assertEqual(output[key], "", key)
+            self.assertEqual(report["details"][key], "semantic_unresolved", key)
+            self.assertEqual(report["fallback_english"], 1, key)
+
+    def test_real_corpus_normal_and_mimic_learned_keys_are_distinct_semantic_anchors(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        anchors = load_semantic_anchors()
+        ordinary = "%s learned\n%s!"
+        mimic = "%s\nlearned\n%s!"
+        expected = {
+            "fr": {
+                ordinary: "%s\napprend...\x0b%s!",
+                mimic: "%s\napprend\x0b%s!",
+            },
+            "de": {
+                ordinary: "%s lernt\n%s!",
+                mimic: "%s hat\n%s\x0bgelernt!",
+            },
+            "es": {
+                ordinary: "¡%s\naprendió\x0b%s!",
+                mimic: "¡%s\naprendió\x0b%s!",
+            },
+            "it": {
+                ordinary: "%s impara\n%s!",
+                mimic: "%s\nha imparato\x0b%s!",
+            },
+            "ja-Hrkt": {
+                ordinary: "%sは　あたらしく\n%sを　おぼえた！",
+                mimic: "%sは\n%sを　おぼえた！",
+            },
+        }
+        self.assertEqual(
+            anchors[ordinary],
+            {"qid": "rb.text_4.LearnedMove1Text", "extraction": {"kind": "full", "index": 0}},
+        )
+        self.assertEqual(
+            anchors[mimic],
+            {"qid": "rb.text_3.MimicLearnedMoveText", "extraction": {"kind": "full", "index": 0}},
+        )
+        self.assertNotEqual(anchors[ordinary]["qid"], anchors[mimic]["qid"])
+        for language, language_expected in expected.items():
+            items = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog(
+                {ordinary: "", mimic: ""}, items,
+                semantic_anchors=anchors, target_lang=language,
+            )
+            self.assertEqual(report["translated"], 2, language)
+            self.assertEqual(report["auto_semantic"], 2, language)
+            self.assertFalse(report["ambiguous"], language)
+            for key, qid in ((ordinary, "rb.text_4.LearnedMove1Text"),
+                             (mimic, "rb.text_3.MimicLearnedMoveText")):
+                self.assertEqual(output[key], language_expected[key], (language, key))
+                self.assertEqual(printf_directives(output[key]), ["%s", "%s"], (language, key))
+                self.assertEqual(report["details"][key], "semantic", (language, key))
+                self.assertEqual(report["provenance"][key]["qid"], qid, (language, key))
+
+        # A repeated qid is not proof of a unique source/translation pair;
+        # semantic resolution must fail closed instead of selecting a row.
+        items = align(parse_redblue(root, "fr"), target_lang="fr")
+        normal_row = next(item for item in items if item.qid == anchors[ordinary]["qid"])
+        output, report = match_engine_catalog(
+            {ordinary: ""}, items + [normal_row],
+            semantic_anchors=anchors, target_lang="fr",
+        )
+        self.assertEqual(output[ordinary], "")
+        self.assertEqual(report["details"][ordinary], "semantic_unresolved")
+        self.assertEqual(report["provenance"][ordinary]["qid"], "rb.text_4.LearnedMove1Text")
+        self.assertEqual(report["fallback_english"], 1)
+
     def test_semantic_span_reflows_by_target_language_without_literals(self):
         row = Alignment(
             "q", "both", CorpusRecord("q", "en", "A B C D"),
@@ -209,6 +663,47 @@ class MultilingualTests(unittest.TestCase):
         output, report = match_engine_catalog({"B C": ""}, [row], semantic_anchors=anchor, target_lang="de")
         self.assertEqual(output["B C"], "ZWEI DREI")
         self.assertEqual(report["details"]["B C"], "semantic")
+
+    def test_semantic_anchor_accepts_explicit_corpus_punctuation_alias(self):
+        row = Alignment(
+            "rb.text_6.FluteWokeUpText", "both",
+            CorpusRecord("rb.text_6.FluteWokeUpText", "en", "{text_start}All sleeping<LINE>#MON woke up.<PROMPT>"),
+            CorpusRecord("rb.text_6.FluteWokeUpText", "fr", "{text_start}Tous les #MON<LINE>endormis se<CONT>réveillent.<PROMPT>"),
+            "qid", target_lang="fr",
+        )
+        key = "All sleeping\nPOKéMON woke up!"
+        output, report = match_engine_catalog(
+            {key: ""}, [row], semantic_anchors={key: {
+                "qid": row.qid,
+                "source_aliases": ["All sleeping\nPOKéMON woke up."],
+                "extraction": {"kind": "full"},
+            }}, target_lang="fr",
+        )
+        self.assertEqual(output[key], "Tous les POKéMON\nendormis se\x0bréveillent.")
+        self.assertEqual(report["details"][key], "semantic")
+
+    def test_sleeping_message_uses_flute_wakeup_qid(self):
+        anchors = load_semantic_anchors()
+        sleep = anchors["All sleeping\nPOKéMON woke up!"]
+        self.assertEqual(sleep["qid"], "rb.text_6.FluteWokeUpText")
+
+    def test_semantic_anchor_rejects_unlisted_corpus_spelling(self):
+        row = Alignment(
+            "rb.text_6.FluteWokeUpText", "both",
+            CorpusRecord("rb.text_6.FluteWokeUpText", "en", "{text_start}A different message.<PROMPT>"),
+            CorpusRecord("rb.text_6.FluteWokeUpText", "fr", "{text_start}Un autre message.<PROMPT>"),
+            "qid", target_lang="fr",
+        )
+        key = "All sleeping\nPOKéMON woke up!"
+        output, report = match_engine_catalog(
+            {key: ""}, [row], semantic_anchors={key: {
+                "qid": row.qid,
+                "source_aliases": ["All sleeping\nPOKéMON woke up."],
+                "extraction": {"kind": "full"},
+            }}, target_lang="fr",
+        )
+        self.assertEqual(output[key], "")
+        self.assertEqual(report["details"][key], "semantic_unresolved")
 
     def test_semantic_anchor_fails_closed_on_placeholder_loss(self):
         row = Alignment("q", "both", CorpusRecord("q", "en", "A {RAM:x}"), CorpusRecord("q", "de", "EINS"), "qid", target_lang="de")

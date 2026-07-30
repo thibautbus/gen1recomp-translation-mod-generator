@@ -86,11 +86,11 @@ imports and corpus (corpus and pipeline revisions affect the numbers):
 
 | Target | ROM catalogs (6) | Literal handlers | ROM aggregate | Engine catalog |
 | --- | ---: | ---: | ---: | ---: |
-| `fr` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 244/533 (45.78%) |
-| `de` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 243/533 (45.59%) |
-| `es` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 245/533 (45.97%) |
-| `it` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 245/533 (45.97%) |
-| `ja-Hrkt` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 234/533 (43.90%) |
+| `fr` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 259/533 (48.59%) |
+| `de` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 257/533 (48.22%) |
+| `es` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 260/533 (48.78%) |
+| `it` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 260/533 (48.78%) |
+| `ja-Hrkt` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 254/533 (47.65%) |
 
 Collectively, the 5/5 literal-handler results are backed by 15/15 unique
 corpus qids; those handlers are included in the ROM aggregate above. Engine
@@ -117,6 +117,17 @@ deliberately remains English:
   although the dismount message is translated.
 - Engine-authored paraphrases with no corpus source include “the boulder fell
   through the hole,” “not near water,” and “Town Map unreadable.”
+- Four ES and four IT stat-stage strings are editorial overrides, not
+  PokeCorpus/qid-derived translations. They retain the raw English stat-label
+  argument (`ATTACK`, `DEFENSE`, `SPEED`, `SPECIAL`, `ACCURACY`, or `EVADE`),
+  preserve the runtime Pokémon-first/stat-label-second argument order, and are
+  counted in the engine coverage above. The reviewed entries are versioned in
+  [`review/es/engine_overrides.json`](review/es/engine_overrides.json) and
+  [`review/it/engine_overrides.json`](review/it/engine_overrides.json). Other
+  stat-message variants (including the alternate line-break form) remain
+  English and fall back at runtime. Full stat-label localization still
+  requires an upstream localization hook; no `engine_internals` monkeypatch is
+  used.
 - Ambiguous, missing, or placeholder-incompatible mappings deliberately fall
   back to English.
 

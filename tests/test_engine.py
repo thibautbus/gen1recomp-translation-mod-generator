@@ -9,6 +9,7 @@ from pipeline.engine import (
     load_semantic_anchors,
     load_engine_overrides,
     match_engine_catalog,
+    _extract_anchor,
     printf_directives,
     read_engine_catalog,
 )
@@ -60,6 +61,80 @@ class EngineTests(unittest.TestCase):
             load_semantic_anchors({"X": {"parts": [{"qid": "a", "extraction": {"kind": "full"}}, {"qid": "a", "extraction": {"kind": "full"}}]}})
         with self.assertRaises(ValueError):
             load_semantic_anchors({"X": {"parts": [{"qid": "a", "extraction": {"kind": "segment", "index": True}}]}})
+
+    def test_parts_separators_are_boundary_specific_and_schema_safe(self):
+        valid = {"X": {"parts": [
+            {"qid": "a", "extraction": {"kind": "full", "preserve_edges": True}},
+            {"qid": "b", "extraction": {"kind": "full", "preserve_edges": True}},
+        ], "separators": ["\f"], "placeholders": {}}}
+        self.assertIn("separators", load_semantic_anchors(valid)["X"])
+        for separators in (("\f",), ["\f", "\n"], [1]):
+            with self.assertRaises(ValueError):
+                load_semantic_anchors({"X": {**valid["X"], "separators": separators}})
+        for unsafe in ("\x00", "\x7f", "\u0085", "\u202e", "\ud800", "\ue000"):
+            with self.assertRaises(ValueError):
+                load_semantic_anchors({"X": {**valid["X"], "separators": [unsafe]}})
+        with self.assertRaises(ValueError):
+            load_semantic_anchors({"X": {**valid["X"], "separators": ["\f"], "join": "\n"}})
+
+    def test_full_extraction_can_preserve_edges_explicitly(self):
+        self.assertEqual(_extract_anchor(" A<PARA>@", {"kind": "full"}), "A")
+        self.assertEqual(_extract_anchor(" A<PARA>@", {"kind": "full", "preserve_edges": True}), " A\f")
+
+    def test_target_extraction_inherits_kind_and_edge_policy(self):
+        base = {"qid": "q", "extraction": {
+            "kind": "full", "preserve_edges": True,
+            "targets": {"fr": {"index": 0}},
+        }}
+        self.assertEqual(load_semantic_anchors({"X": base})["X"]["extraction"]["kind"], "full")
+        with self.assertRaises(ValueError):
+            load_semantic_anchors({"X": {"qid": "q", "extraction": {
+                "kind": "full", "preserve_edges": True,
+                "targets": {"fr": {"kind": "segment", "index": 0}},
+            }}})
+        self.assertEqual(load_semantic_anchors({"X": {"qid": "q", "extraction": {
+            "kind": "full", "preserve_edges": True,
+            "targets": {"fr": {"kind": "full", "preserve_edges": False}},
+        }}})["X"]["extraction"]["targets"]["fr"]["kind"], "full")
+
+    def test_parts_dynamic_identity_order_and_multiplicity_fail_closed(self):
+        def rows(target_a, target_b):
+            return [
+                Alignment("a", "both", CorpusRecord("a", "en", "A {RAM:x} {RAM:y}"), CorpusRecord("a", "fr", target_a), "qid"),
+                Alignment("b", "both", CorpusRecord("b", "en", "B {RAM:x}"), CorpusRecord("b", "fr", target_b), "qid"),
+            ]
+        anchor = {"parts": [
+            {"qid": "a", "extraction": {"kind": "full", "preserve_edges": True}},
+            {"qid": "b", "extraction": {"kind": "full", "preserve_edges": True}},
+        ], "separators": [" "], "placeholders": {"{RAM:x}": "%s", "{RAM:y}": "%s"}}
+        source = "A %s %s B %s"
+        good, report = match_engine_catalog({source: ""}, rows("A {RAM:x} {RAM:y}", "B {RAM:x}"), semantic_anchors={source: anchor}, target_lang="fr")
+        self.assertEqual(good[source], source)
+        self.assertEqual(report["details"][source], "semantic")
+        for target_a, target_b in (("A {RAM:y} {RAM:x}", "B {RAM:x}"),
+                                   ("A {RAM:x} {RAM:x}", "B {RAM:x}"),
+                                   ("A {RAM:x}", "B {RAM:x}"),
+                                   ("A {RAM:x} {RAM:y} {RAM:z}", "B {RAM:x}"),
+                                   ("A {RAM:x} {RAM:z}", "B {RAM:x}")):
+            output, details = match_engine_catalog({source: ""}, rows(target_a, target_b), semantic_anchors={source: anchor}, target_lang="fr")
+            self.assertEqual(output[source], "")
+            self.assertEqual(details["details"][source], "semantic_unresolved")
+
+    def test_parts_placeholder_contract_fails_closed_on_extra_or_missing_token(self):
+        rows = [
+            Alignment("a", "both", CorpusRecord("a", "en", "A {RAM:x}"), CorpusRecord("a", "fr", "A {RAM:x}"), "qid"),
+            Alignment("b", "both", CorpusRecord("b", "en", "B"), CorpusRecord("b", "fr", "B"), "qid"),
+        ]
+        base = {"parts": [
+            {"qid": "a", "extraction": {"kind": "full", "preserve_edges": True}},
+            {"qid": "b", "extraction": {"kind": "full", "preserve_edges": True}},
+        ], "separators": [" "], "placeholders": {"{RAM:x}": "%s"}}
+        output, report = match_engine_catalog({"A %s B": ""}, rows, semantic_anchors={"A %s B": base}, target_lang="fr")
+        self.assertEqual(output["A %s B"], "A %s B")
+        self.assertEqual(report["details"]["A %s B"], "semantic")
+        output, report = match_engine_catalog({"A %s B": ""}, rows, semantic_anchors={"A %s B": {**base, "placeholders": {}}}, target_lang="fr")
+        self.assertEqual(output["A %s B"], "")
+        self.assertEqual(report["details"]["A %s B"], "semantic_unresolved")
 
     def test_real_corpus_bicycle_off_anchor_all_languages(self):
         root = Path(".cache/build")
@@ -166,6 +241,101 @@ class EngineTests(unittest.TestCase):
             report["auto_structural"],
             sum(value == "structural" for value in report["details"].values()),
         )
+
+    def test_semantic_printf_anchor_converts_typed_dynamic_tokens(self):
+        source = "%s\nlearned\n%d!"
+        english = "{text_start}<USER><LINE>learned<CONT>@{text_decimal hNum}{text_start}!<PROMPT>"
+        french = "{text_start}<USER><LINE>a appris<CONT>@{text_decimal hNum}{text_start}!<PROMPT>"
+        qid = "rb.test.SemanticPrintf"
+        row_value = Alignment(
+            qid, "both", CorpusRecord(qid, "en", english),
+            CorpusRecord(qid, "fr", french), "qid", target_lang="fr",
+        )
+        anchors = {source: {"qid": qid, "extraction": {"kind": "full", "index": 0}}}
+        output, report = match_engine_catalog({source: ""}, [row_value], semantic_anchors=anchors, target_lang="fr")
+        self.assertEqual(output[source], "%s\na appris\v%d!")
+        self.assertEqual(report["details"][source], "semantic")
+        self.assertEqual(report["provenance"][source]["qid"], qid)
+
+    def test_semantic_printf_anchor_restores_literal_percent_and_exact_formatting(self):
+        source = "%% %s\nlearned\n%03d!"
+        english = "{text_start}%% <USER><LINE>learned<CONT>@{text_decimal hNum}{text_start}!<PROMPT>"
+        french = "{text_start}%% <USER><LINE>a appris<CONT>@{text_decimal hNum}{text_start}!<PROMPT>"
+        qid = "rb.test.SemanticPrintfFormatting"
+        row_value = Alignment(
+            qid, "both", CorpusRecord(qid, "en", english),
+            CorpusRecord(qid, "fr", french), "qid", target_lang="fr",
+        )
+        anchors = {source: {"qid": qid, "extraction": {"kind": "full", "index": 0}}}
+        output, report = match_engine_catalog({source: ""}, [row_value], semantic_anchors=anchors, target_lang="fr")
+        self.assertEqual(output[source], "%% %s\na appris\v%03d!")
+        self.assertEqual(printf_directives(output[source]), ["%%", "%s", "%03d"])
+        self.assertEqual(check_printf_directives(source, output[source]), [])
+        self.assertEqual(report["details"][source], "semantic")
+
+    def test_semantic_printf_anchor_fails_closed_on_type_order_cardinality_mixed_and_unknown(self):
+        source = "%s\nlearned\n%d!"
+        english = "{text_start}<USER><LINE>learned<CONT>@{text_decimal hNum}{text_start}!<PROMPT>"
+        anchors = {source: {"qid": "q", "extraction": {"kind": "full", "index": 0}}}
+        targets = {
+            "type": "{text_start}{text_decimal hNum}<LINE>appris<CONT>@{text_decimal hNum}{text_start}!<PROMPT>",
+            "order": "{text_start}{text_decimal hNum}<LINE>appris<CONT>@{text_ram wName}{text_start}!<PROMPT>",
+            "cardinality": "{text_start}<USER><LINE>appris<CONT>@{text_start}!<PROMPT>",
+            "mixed": "{text_start}<USER><LINE>appris<CONT>@{text_decimal hNum}{text_start}! %s<PROMPT>",
+            "unknown": "{text_start}{UNKNOWN}<LINE>appris<CONT>@{text_decimal hNum}{text_start}!<PROMPT>",
+        }
+        for label, target in targets.items():
+            row_value = Alignment(
+                "q", "both", CorpusRecord("q", "en", english),
+                CorpusRecord("q", "fr", target), "qid", target_lang="fr",
+            )
+            output, report = match_engine_catalog({source: ""}, [row_value], semantic_anchors=anchors, target_lang="fr")
+            self.assertEqual(output[source], "", label)
+            self.assertEqual(report["details"][source], "semantic_unresolved", label)
+
+    def test_semantic_dynamic_anchor_keeps_legacy_placeholder_path(self):
+        source = "A {RAM:x}"
+        row_value = Alignment(
+            "q.dynamic", "both",
+            CorpusRecord("q.dynamic", "en", "A {text_ram x}"),
+            CorpusRecord("q.dynamic", "fr", "Un {text_ram x}"),
+            "qid", target_lang="fr",
+        )
+        anchors = {source: {"qid": "q.dynamic", "extraction": {"kind": "full", "index": 0}}}
+        output, report = match_engine_catalog({source: ""}, [row_value], semantic_anchors=anchors, target_lang="fr")
+        self.assertEqual(output[source], "Un {RAM:x}")
+        self.assertEqual(report["details"][source], "semantic")
+
+    def test_semantic_anchor_qid_duplicates_fail_closed_even_when_identical(self):
+        source = "FIGHT"
+        anchor = {source: {"qid": "q.duplicate", "extraction": {"kind": "full", "index": 0}}}
+        rows = [
+            Alignment("q.duplicate", "both", CorpusRecord("q.duplicate", "en", "FIGHT"), CorpusRecord("q.duplicate", "fr", "COMBAT"), "qid"),
+            Alignment("q.duplicate", "both", CorpusRecord("q.duplicate", "en", "FIGHT"), CorpusRecord("q.duplicate", "fr", "COMBAT"), "qid"),
+        ]
+        output, report = match_engine_catalog({source: ""}, rows, semantic_anchors=anchor, target_lang="fr")
+        self.assertEqual(output[source], "")
+        self.assertEqual(report["details"][source], "semantic_unresolved")
+        self.assertEqual(report["fallback_english"], 1)
+
+    def test_semantic_anchor_qid_conflicting_and_malformed_duplicates_fail_closed(self):
+        source = "FIGHT"
+        anchor = {source: {"qid": "q.duplicate", "extraction": {"kind": "full", "index": 0}}}
+        cases = (
+            [
+                Alignment("q.duplicate", "both", CorpusRecord("q.duplicate", "en", "FIGHT"), CorpusRecord("q.duplicate", "fr", "COMBAT"), "qid"),
+                Alignment("q.duplicate", "both", CorpusRecord("q.duplicate", "en", "FIGHT"), CorpusRecord("q.duplicate", "fr", "KAMPF"), "qid"),
+            ],
+            [
+                Alignment("q.duplicate", "both", CorpusRecord("q.duplicate", "en", "FIGHT"), CorpusRecord("q.duplicate", "fr", None), "qid"),
+                Alignment("q.duplicate", "both", CorpusRecord("q.duplicate", "en", "FIGHT"), CorpusRecord("q.duplicate", "fr", "COMBAT"), "qid"),
+            ],
+        )
+        for rows in cases:
+            output, report = match_engine_catalog({source: ""}, rows, semantic_anchors=anchor, target_lang="fr")
+            self.assertEqual(output[source], "")
+            self.assertEqual(report["details"][source], "semantic_unresolved")
+            self.assertEqual(report["fallback_english"], 1)
 
     def test_structural_matching_requires_order_and_type_compatibility(self):
         source = "Value %s costs %03d"

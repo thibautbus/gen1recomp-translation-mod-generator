@@ -1,0 +1,26 @@
+{
+  "schema": "gen1recomp-translation-mods/engine-overrides",
+  "version": 1,
+  "entries": {
+    "%s's\n%s rose!": {
+      "override": "%s\n%s sale!",
+      "source": "editorial",
+      "provenance": "editorial stat-stage wording; raw English stat label retained"
+    },
+    "%s's\n%s\ngreatly rose!": {
+      "override": "%s\n%s\nsale molto!",
+      "source": "editorial",
+      "provenance": "editorial stat-stage wording; raw English stat label retained"
+    },
+    "%s's\n%s fell!": {
+      "override": "%s\n%s cala!",
+      "source": "editorial",
+      "provenance": "editorial stat-stage wording; raw English stat label retained"
+    },
+    "%s's\n%s\ngreatly fell!": {
+      "override": "%s\n%s\ncala molto!",
+      "source": "editorial",
+      "provenance": "editorial stat-stage wording; raw English stat label retained"
+    }
+  }
+}
