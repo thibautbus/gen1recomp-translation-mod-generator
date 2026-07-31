@@ -1,6 +1,8 @@
+import io
 import json
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
@@ -17,6 +19,31 @@ from pipeline.worksheet import dump, load
 
 
 class PipelineTests(unittest.TestCase):
+    def test_cli_release_engine_warning_is_printed_without_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            aligned = root / "aligned.json"
+            aligned.write_text(json.dumps([{
+                "qid": "a", "game": "red", "english": "A", "translation": "Un",
+            }]), encoding="utf-8")
+            charmap = root / "charmap.json"
+            charmap.write_text(json.dumps({"U": 1, "n": 2}), encoding="utf-8")
+            coverage = root / "coverage.json"
+            coverage.write_text(json.dumps({
+                "unmatched": {}, "ambiguous": {},
+                "rom": {"translated": 1, "total": 1, "percent": 100.0},
+                "engine": {"translated": 1, "total": 2, "percent": 50.0, "unmatched": ["X"]},
+            }), encoding="utf-8")
+            output = io.StringIO()
+            with redirect_stdout(output):
+                result = cli_main([
+                    "validate", str(aligned), "--release",
+                    "--charmap", str(charmap), "--coverage", str(coverage),
+                ])
+        self.assertEqual(result, 0)
+        report = json.loads(output.getvalue())
+        self.assertTrue(report["ok"])
+        self.assertTrue(any(f["rule"] == "coverage-engine-unmatched" for f in report["findings"]))
     def test_cli_generate_defaults_engine_overrides_to_language_tree(self):
         for language, expected in (
             ("fr", "overrides/engine_overrides.json"),

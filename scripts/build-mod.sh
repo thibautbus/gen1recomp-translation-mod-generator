@@ -7,6 +7,7 @@ ROOT_DIR=$(CDPATH= cd "$SCRIPT_DIR/.." && pwd)
 
 POKE_CORPUS=${POKE_CORPUS:-"$ROOT_DIR/../poke-corpus"}
 MODKIT_WORKSHEET=${MODKIT_WORKSHEET:-"$ROOT_DIR/.cache/complete-modkit-worksheet"}
+ENGINE_SOURCE=${ENGINE_SOURCE:-"$ROOT_DIR/.cache/dependencies/gen1recomp/src"}
 TARGET_LANG=${TARGET_LANG:-fr}
 case "$TARGET_LANG" in
   ja|JA|jpn|JPN|ja-Hrkt|ja-hrkt) TARGET_LANG=ja-Hrkt ;;
@@ -70,6 +71,7 @@ printf '%s\n' "Generating mod: $MOD"
 set -- --target-lang "$TARGET_LANG" --modkit-worksheet "$MODKIT_WORKSHEET" --report "$COVERAGE"
 [ -n "$OVERRIDES" ] && set -- "$@" --overrides "$OVERRIDES"
 [ -n "$ENGINE_OVERRIDES" ] && set -- "$@" --engine-overrides "$ENGINE_OVERRIDES"
+[ -d "$ENGINE_SOURCE" ] && set -- "$@" --engine-source "$ENGINE_SOURCE" --engine-scope "$ROOT_DIR/config/engine_scope.json"
 [ -n "$MOD_ID" ] && set -- "$@" --mod-id "$MOD_ID"
 [ -n "$TARGET_NAME" ] && set -- "$@" --target-name "$TARGET_NAME"
 python3 "$PIPELINE" generate "$ALIGNED" -o "$MOD" "$@"
@@ -90,5 +92,9 @@ for name in ("rom", "engine"):
     translated = section.get("translated", 0)
     total = section.get("total", 0)
     percent = section.get("percent", 0.0)
-    print("  %-7s : %s/%s (%.2f%%)" % (name, translated, total, percent))
+    label = "ROM catalog" if name == "rom" else "All engine strings"
+    print("  %-28s : %s/%s (%.2f%%)" % (label, translated, total, percent))
+if report.get("engine_rby"):
+    section = report["engine_rby"]
+    print("  %-28s : %s/%s (%.2f%%)" % ("RBY-related engine strings", section.get("translated", 0), section.get("total", 0), section.get("percent", 0.0)))
 PY

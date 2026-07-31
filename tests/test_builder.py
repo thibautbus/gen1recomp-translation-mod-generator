@@ -290,7 +290,7 @@ class BuilderTests(unittest.TestCase):
             with redirect_stdout(output):
                 builder.print_coverage(report)
         self.assertIn("ROM catalog: 3101/3101 (100.00%)", output.getvalue())
-        self.assertIn("Engine catalog: 220/533 (41.28%)", output.getvalue())
+        self.assertIn("All engine strings: 220/533 (41.28%)", output.getvalue())
 
     def test_prerequisite_message_is_actionable(self):
         with (

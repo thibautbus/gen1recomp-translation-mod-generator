@@ -1,0 +1,130 @@
+import tempfile
+import subprocess
+import json
+import unittest
+from pathlib import Path
+
+from pipeline.engine_scope import classify_callsites, load_scope, validate_catalog_universe, verified_source
+
+
+class EngineScopeTests(unittest.TestCase):
+    def _load_mutated(self, mutate):
+        data = load_scope(); mutate(data)
+        with tempfile.NamedTemporaryFile("w", suffix=".json") as handle:
+            json.dump(data, handle); handle.flush()
+            with self.assertRaises(ValueError): load_scope(handle.name)
+
+    def test_manifest_rejects_schema_revision_path_and_fields(self):
+        for mutate in [lambda d: d.pop("schema"), lambda d: d.update(schema="wrong"), lambda d: d.update(classifier_version=2), lambda d: d.update(gen1recomp_revision="abc"), lambda d: d.update(gen1recomp_revision="A" * 40), lambda d: d.update(gen1recomp_revision="g" * 40), lambda d: d.update(source_subdir="/tmp"), lambda d: d.update(source_subdir="../src"), lambda d: d.update(source_subdir="other"), lambda d: d.update(extra=1)]:
+            self._load_mutated(mutate)
+
+    def test_manifest_rejects_list_types_duplicates_and_overlaps(self):
+        for field in ("rby_paths", "rby_ui_modules", "ui_review_modules", "link_modules", "modern_ui_modules", "rby_ui_keys", "link_ui_keys", "modern_ui_keys"):
+            self._load_mutated(lambda d, f=field: d.update({f: "bad"}))
+            self._load_mutated(lambda d, f=field: d[f].append(d[f][0]))
+        self._load_mutated(lambda d: d["rby_ui_modules"].__setitem__(0, "NoSuffix"))
+        self._load_mutated(lambda d: d["rby_ui_modules"].append(d["ui_review_modules"][0]))
+        self._load_mutated(lambda d: d["rby_ui_keys"].append(d["link_ui_keys"][0]))
+
+    def _git_fixture(self):
+        tmp = tempfile.TemporaryDirectory(); root = Path(tmp.name)
+        (root / "src" / "battle").mkdir(parents=True)
+        (root / "src" / "battle" / "One.lua").write_text('Strings("one")', encoding="utf-8")
+        subprocess.run(["git", "init", "-q", str(root)], check=True)
+        subprocess.run(["git", "-C", str(root), "config", "user.email", "test@example.invalid"], check=True)
+        subprocess.run(["git", "-C", str(root), "config", "user.name", "Test"], check=True)
+        subprocess.run(["git", "-C", str(root), "add", "src"], check=True)
+        subprocess.run(["git", "-C", str(root), "commit", "-qm", "fixture"], check=True)
+        revision = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+        scope = load_scope(); scope["gen1recomp_revision"] = revision
+        return tmp, root, scope
+
+    def test_verified_source_accepts_clean_root_and_src_but_rejects_dirty_src(self):
+        tmp, root, scope = self._git_fixture()
+        try:
+            self.assertEqual(verified_source(root, scope)[0], root / "src")
+            self.assertEqual(verified_source(root / "src", scope)[0], root / "src")
+            (root / "src" / "battle" / "Dirty.lua").write_text('Strings("dirty")', encoding="utf-8")
+            with self.assertRaises(ValueError): verified_source(root, scope)
+        finally: tmp.cleanup()
+    def test_manifest_and_lua_suffix_rules(self):
+        scope = load_scope()
+        self.assertEqual(scope["gen1recomp_revision"], "5a48a61f2ed20aee80951aeb1e41b7ec084b350f")
+        self.assertEqual(
+            classify_callsites([{"source": "x", "path": "ui/BagMenu.lua", "line": 1}])["x"]["eligibility"],
+            "eligible",
+        )
+        self.assertEqual(
+            classify_callsites([{"source": "x", "path": "ui/BagMenu", "line": 1}])["x"]["eligibility"],
+            "review",
+        )
+
+    def test_any_rby_without_link_and_link_review(self):
+        rows = [
+            {"source": "ok", "path": "ui/BagMenu.lua", "line": 1},
+            {"source": "ok", "path": "ui/ChoiceBox.lua", "line": 2},
+            {"source": "link", "path": "battle/BattleState.lua", "line": 1},
+            {"source": "link", "path": "link/LinkBattle.lua", "line": 2},
+        ]
+        result = classify_callsites(rows)
+        self.assertEqual(result["ok"]["eligibility"], "eligible")
+        self.assertEqual(result["link"]["eligibility"], "review")
+
+    def test_catalog_universe_mismatch(self):
+        tmp, root, scope = self._git_fixture()
+        try:
+            with self.assertRaises(ValueError): validate_catalog_universe({"other"}, root)
+        finally: tmp.cleanup()
+
+    def test_universe_extra_and_missing(self):
+        tmp, root, scope = self._git_fixture()
+        try:
+            with self.assertRaises(ValueError): validate_catalog_universe({"one", "extra"}, root)
+            with self.assertRaises(ValueError): validate_catalog_universe(set(), root)
+            (root / "outside.txt").write_text("ok")
+            self.assertEqual(verified_source(root, scope)[0], root / "src")
+        finally: tmp.cleanup()
+
+    def test_no_git_or_src_layout_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d); (root / "tests").mkdir()
+            with self.assertRaises(ValueError): verified_source(root)
+
+    def test_staged_and_untracked_source_rejected(self):
+        for mode in ("staged", "untracked"):
+            tmp, root, scope = self._git_fixture()
+            try:
+                target = root / "src" / "battle" / ("One.lua" if mode == "staged" else "Extra.lua")
+                if mode == "staged":
+                    target.write_text('Strings("changed")', encoding="utf-8")
+                    subprocess.run(["git", "-C", str(root), "add", "src"], check=True)
+                else:
+                    target.write_text('Strings("extra")', encoding="utf-8")
+                with self.assertRaises(ValueError): verified_source(root, scope)
+            finally: tmp.cleanup()
+
+    def test_cached_production_scope_counts(self):
+        checkout = Path(".cache/dependencies/gen1recomp")
+        if not checkout.is_dir():
+            self.skipTest("cached Gen1Recomp unavailable")
+        from pipeline.engine_scope import iter_callsites
+        from collections import Counter
+        result = classify_callsites(iter_callsites(checkout))
+        self.assertEqual(len(result), 533)
+        self.assertEqual(Counter(v["eligibility"] for v in result.values()), Counter(eligible=383, review=4, ineligible=146))
+
+    def test_generate_mod_rejects_invalid_engine_source_before_report(self):
+        from pipeline.mod import generate_mod
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d); ws = root / "ws"; ws.mkdir()
+            for name in ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels"):
+                (ws / f"{name}.txt").write_text("# header\n", encoding="utf-8")
+            (ws / "strings.lua").write_text('return { ["one"] = "" }\n', encoding="utf-8")
+            report = root / "coverage.json"
+            with self.assertRaises(ValueError):
+                generate_mod([], root / "mod", modkit_worksheet=ws, report_path=report, strict_engine=True, engine_source=root / "not-a-checkout")
+            self.assertFalse(report.exists())
+
+
+if __name__ == "__main__":
+    unittest.main()

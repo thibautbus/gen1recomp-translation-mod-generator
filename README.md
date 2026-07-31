@@ -84,19 +84,45 @@ aggregate` column is the release-gate value: it includes the six catalogs and
 the literal handlers. These are current reports generated from the cached ROM
 imports and corpus (corpus and pipeline revisions affect the numbers):
 
-| Target | ROM catalogs (6) | Literal handlers | ROM aggregate | Engine catalog |
-| --- | ---: | ---: | ---: | ---: |
-| `fr` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 259/533 (48.59%) |
-| `de` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 257/533 (48.22%) |
-| `es` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 260/533 (48.78%) |
-| `it` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 260/533 (48.78%) |
-| `ja-Hrkt` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 254/533 (47.65%) |
+| Target | ROM catalogs | Literal handlers | ROM aggregate | RBY-related engine strings | All engine strings |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `fr` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 254/383 (66.32%) | 259/533 (48.59%) |
+| `de` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 252/383 (65.80%) | 257/533 (48.22%) |
+| `es` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 255/383 (66.58%) | 260/533 (48.78%) |
+| `it` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 255/383 (66.58%) | 260/533 (48.78%) |
+| `ja-Hrkt` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 249/383 (65.01%) | 254/533 (47.65%) |
+
+Column definitions: **ROM catalogs** covers the six extracted Red/Blue
+catalogs—`dialogue`, `species_names`, `move_names`, `item_names`,
+`trainer_names`, and `status_labels`. **Literal handlers** covers the five
+corpus-backed handlers (five reachable handlers backed by 15 unique corpus
+qids). **ROM aggregate** is the sum of those six catalogs and handlers; it is
+the sole 100% completeness gate for a release. **RBY-related engine strings**
+counts the 383 keys from Gen1Recomp's 533-key engine string catalog whose
+production callsites reproduce original Red/Blue gameplay or interfaces. It
+is a classified set of engine strings, not a separate RBY engine. **All engine
+strings** covers the complete 533-key catalog, including modern Gen1Recomp
+surfaces. Each `x/y` value means
+translated entries out of the total eligible entries, followed by the
+percentage. Untranslated engine entries remain playable because Gen1Recomp
+falls back to the original English string.
 
 Collectively, the 5/5 literal-handler results are backed by 15/15 unique
 corpus qids; those handlers are included in the ROM aggregate above. Engine
-fallback entries are not counted as translated. A release still needs both
-the ROM aggregate and engine catalog at 100%; these snapshot metrics are not
-a promise of complete translation.
+fallback entries are not counted as translated, and the two engine columns are
+informational only.
+
+The RBY-related engine-string scope is computed by the versioned [`engine_scope.json`](config/engine_scope.json)
+classifier (revision `5a48a61f2ed20aee80951aeb1e41b7ec084b350f`) over production
+Gen1Recomp `src` callsites only. Its denominator is 383 eligible keys (379
+RBY-category plus four eligible mixed keys); four shared/link or UI-only keys
+require review and 146 modern, network/link-only, import, core, or other
+ineligible keys are excluded. Any original-RBY callsite qualifies unless the
+same key also has a link callsite. Modern mod-manager/desktop surfaces,
+network/tournament flows, imports, and shared link+RBY keys are therefore not
+silently counted as RBY coverage. The table comes from isolated clean rebuilds
+using the pinned corpus/engine snapshots; ROM aggregate is 3106/3106 for every
+language.
 
 ## Currently untranslated content
 
@@ -183,8 +209,10 @@ The final file is written to `dist/translation-<lang>-<version>.zip`, for
 example `dist/translation-fr-0.2.0.zip`. The command prints its absolute path.
 The `.zip` extension is intentional: Gen1Recomp's mod importer accepts ZIP
 files, while Modkit writes the same deterministic ZIP format.
-Immediately before the final path, the builder prints the separate ROM-catalog
-and engine-catalog match percentages.
+Immediately before the final path, the builder prints ROM, RBY-related engine
+string, and all-engine-string match percentages. If the pinned engine
+source is unavailable, the report omits RBY coverage and records a warning
+instead of guessing a denominator.
 
 All cloned repositories, extracted data, worksheets, and reports remain in
 ignored directories. Only the final mod archive is intended for use, and
@@ -238,6 +266,10 @@ and catalogs are never modified. A cached coverage report whose engine key
 universe and total match the selected catalog is required; stale or missing
 snapshots fail with an English error.
 
+Backlog classification imports the same versioned `pipeline/engine_scope.py`
+rules and production-`src` scanner used by coverage, including exact `.lua`
+module handling; it cannot silently invent a second RBY definition.
+
 ## Data flow and matching
 
 The pipeline follows one direction:
@@ -251,6 +283,11 @@ parse corpus -> align by qid -> join the ROM worksheet catalogs -> fill engine s
 The command-line wrapper in `scripts/pipeline.py` delegates to the modules in
 `pipeline/`. The main workflow is split as follows:
 
+The existing `strict_engine` generation option is intentionally retained: it
+requires the engine catalog/scaffold files to be present, but does not require
+all engine entries to be translated. Unmatched entries use Gen1Recomp's
+English fallback.
+
 | Module | Responsibility |
 | --- | --- |
 | `pipeline/cli.py` | Defines the `parse`, `align`, `generate`, `validate`, and ROM import commands and connects their inputs and outputs. |
@@ -259,14 +296,15 @@ The command-line wrapper in `scripts/pipeline.py` delegates to the modules in
 | `pipeline/align.py` | Pairs English and target-language records by stable qid, applies qid-based editorial overrides, and writes the aligned intermediate representation. |
 | `pipeline/join.py` | Joins aligned records to the exact ROM-derived Modkit worksheet keys, including catalog-specific rules and corpus-backed TM/HM terminology. |
 | `pipeline/engine.py` | Matches the 533 engine strings using overrides, semantic anchors, exact/normalized text, and structural placeholders; unmatched entries remain empty. |
+| `pipeline/engine_scope.py` / `config/engine_scope.json` | Versioned informational RBY classifier and pinned Gen1Recomp revision; scans only production `src` callsites and records eligibility/category counts. |
 | `pipeline/literals.py` | Generates qid-driven Mod API handlers for ROM dialogue that Gen1Recomp carries as Lua literals instead of extracted text keys. |
 | `pipeline/tokens.py` | Converts `poke-corpus` control tokens to Gen1Recomp notation and validates dynamic placeholders. |
 | `pipeline/mod.py` | Writes the final Modkit-compatible Lua catalogs, manifest, worksheet outputs, and ROM/engine coverage report. |
-| `pipeline/validate.py` | Checks placeholders, glyph coverage, version consistency, and the separate ROM/engine release gates. |
+| `pipeline/validate.py` | Checks placeholders, glyph coverage, version consistency, the ROM aggregate release gate, and informational engine diagnostics. |
 | `pipeline/roms.py` | Verifies canonical ROM hashes and orchestrates private Red/Blue imports into ignored local caches. |
 | `pipeline/localized_font.py` | Validates reviewed Western font regions, extracts compact language glyph pages, and generates the Modkit font/charmap catalogs. |
 | `pipeline/disassembly_audit.py` | Developer-only parser for private localized disassembly snapshots; emits match/divergence/callsite reports without editing anchors or review files. |
-| `pipeline/engine_backlog.py` | Read-only developer analyzer for unresolved/ambiguous engine keys, literal Gen1Recomp callsites, conservative RBY eligibility, placeholders, fallback reasons, and PokeCorpus qid suggestions. |
+| `pipeline/engine_backlog.py` | Read-only developer analyzer for unresolved/ambiguous engine keys, shared engine-scope categories, placeholders, fallback reasons, and PokeCorpus qid suggestions. |
 
 Supporting compatibility helpers live in `pipeline/generate.py` and
 `pipeline/worksheet.py`. `build_translation.py` is the normal interactive

@@ -325,15 +325,20 @@ def publish_archive(candidate: Path, output: Path) -> Path:
 
 
 def print_coverage(path: Path) -> None:
-    """Print the separate ROM and engine match percentages."""
+    """Print ROM-gated and informational engine match percentages."""
     report = json.loads(path.read_text(encoding="utf-8"))
     print("\nTranslation coverage:")
-    for key, label in (("rom", "ROM catalog"), ("engine", "Engine catalog")):
+    for key, label in (("rom", "ROM catalog"), ("engine", "All engine strings")):
         section = report.get(key) or {}
         translated = int(section.get("translated", 0))
         total = int(section.get("total", 0))
         percent = float(section.get("percent", 0.0))
         print(f"  {label}: {translated}/{total} ({percent:.2f}%)")
+    section = report.get("engine_rby") or {}
+    if section.get("available", True) and section.get("total"):
+        print(f"  RBY-related engine strings: {int(section.get('translated', 0))}/{int(section.get('total', 0))} ({float(section.get('percent', 0.0)):.2f}%)")
+    elif report.get("engine_rby_warning"):
+        print(f"  RBY-related engine strings: unavailable ({report['engine_rby_warning']})")
 
 
 def build(
@@ -427,6 +432,8 @@ def build(
         engine_overrides=_override_path(language, "engine_overrides.json"),
         semantic_anchors=ROOT / "config" / "semantic_anchors.json",
         strict_engine=True,
+        engine_source=gen1recomp / "src",
+        engine_scope=ROOT / "config" / "engine_scope.json",
     )
     preserve_scaffold_support(scaffold, mod)
     if localized_rom is not None:

@@ -27,6 +27,7 @@ from .engine import (
 )
 from .project import ROOT, project_config
 from .tokens import corpus_to_engine
+from .engine_scope import classify_callsites, load_scope, coverage_metadata
 
 
 SCHEMA = "gen1recomp-translation-mods/engine-backlog"
@@ -179,8 +180,11 @@ def iter_literal_strings_callsites(checkout: str | Path) -> list[dict[str, Any]]
     root = Path(checkout)
     if not root.is_dir():
         raise FileNotFoundError(f"Gen1Recomp checkout missing: {root}")
+    # Production scope is src/ only.  Keep paths relative to the supplied
+    # checkout for backwards-compatible backlog reports (src/foo.lua).
+    scan_root = root / "src" if (root / "src").is_dir() else root
     result: list[dict[str, Any]] = []
-    paths = sorted(path for path in root.rglob("*.lua") if ".git" not in path.parts)
+    paths = sorted(path for path in scan_root.rglob("*.lua") if ".git" not in path.parts)
     for path in paths:
         raw = path.read_text(encoding="utf-8", errors="replace")
         cleaned = _strip_lua_comments(raw)
@@ -220,21 +224,9 @@ def iter_literal_strings_callsites(checkout: str | Path) -> list[dict[str, Any]]
 
 
 def _classify_path(path: str) -> tuple[str, str]:
-    parts = {part.casefold() for part in Path(path).parts}
-    lowered = path.casefold()
-    if "link" in parts or "online" in lowered or "tournament" in lowered:
-        return "link", "ineligible"
-    if "import" in parts or "romimporter" in lowered:
-        return "import", "ineligible"
-    if "core" in parts:
-        return "core", "ineligible"
-    if any(part in parts for part in {"mod", "mods", "mobile", "desktop"}) or any(token in lowered for token in ("modmanager", "discord", "updater")):
-        return "modern", "ineligible"
-    if "ui" in parts:
-        return "ui", "review"
-    if any(part in parts for part in {"battle", "field", "overworld", "world", "inventory", "data", "text", "map", "maps", "game", "games", "script", "scripts", "pokemon"}):
-        return "rby", "eligible"
-    return "unknown", "review"
+    from .engine_scope import classify_path
+    category = classify_path(path)
+    return category, "eligible" if category == "rby" else "ineligible" if category in {"link", "import", "core", "modern"} else "review"
 
 
 def _placeholder_signature(text: str) -> dict[str, Any]:
@@ -445,24 +437,19 @@ def analyze_engine_backlog(
     unmatched_set = {str(key) for key in (unmatched if isinstance(unmatched, list) else unmatched.keys() if isinstance(unmatched, dict) else [])}
     ambiguous_map = {str(key): value for key, value in ambiguous.items()} if isinstance(ambiguous, dict) else {}
     keys = sorted(set(catalog) & (unmatched_set | set(ambiguous_map)) or (unmatched_set | set(ambiguous_map)))
+    classified = classify_callsites(iter_literal_strings_callsites(checkout), load_scope())
     callsites = defaultdict(list)
-    for item in iter_literal_strings_callsites(checkout):
-        callsites[item["source"]].append({key: value for key, value in item.items() if key != "source"})
+    for key, info in classified.items():
+        callsites[key].extend({k: v for k, v in row.items() if k not in {"source", "category"}} for row in info["callsites"])
     candidates = _corpus_candidates(corpus_root, language, keys)
     anchors = load_semantic_anchors(root / "config" / "semantic_anchors.json")
     entries: list[dict[str, Any]] = []
     for key in keys:
         sites = sorted(callsites.get(key, []), key=lambda item: (item["path"], item["line"], item["kind"], item["context"]))
-        categories = sorted({_classify_path(item["path"])[0] for item in sites})
-        eligibility = "eligible" if categories and set(categories) == {"rby"} else "ineligible" if categories and not ({"rby", "ui", "unknown"} & set(categories)) else "review"
-        if not sites:
-            category = "unknown"
-            eligibility = "review"
-        elif len(categories) == 1:
-            category = categories[0]
-        else:
-            category = "mixed"
-            eligibility = "review"
+        scope_info = classified.get(key, {"category": "unknown", "eligibility": "review"})
+        categories = scope_info.get("categories", [])
+        category = scope_info.get("category", "unknown") if sites else "unknown"
+        eligibility = scope_info.get("eligibility", "review") if sites else "review"
         for candidate in candidates.get(key, []):
             candidate["eligible"] = bool(eligibility == "eligible" and candidate["method"] != "fuzzy" and candidate["placeholder_compatible"] is not False and candidate.get("translation"))
         provenance = (engine_report.get("provenance", {}) or {}).get(key, {}) if isinstance(engine_report, dict) else {}
@@ -474,6 +461,7 @@ def analyze_engine_backlog(
             "key": key,
             "status": status,
             "category": category,
+            "classifier_version": coverage_metadata(load_scope())["classifier_version"],
             "provenance": "gen1recomp_literal" if sites else "engine_catalog",
             "provenance_kind": "gen1recomp_literal" if sites else "engine_catalog",
             "coverage_provenance": provenance,
@@ -515,6 +503,7 @@ def analyze_engine_backlog(
             "The report reflects the selected cached coverage snapshot and does not mutate review data.",
         ],
         "stats": stats,
+        "classifier": coverage_metadata(load_scope()),
         "entries": entries,
     }
 

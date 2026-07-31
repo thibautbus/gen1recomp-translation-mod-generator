@@ -375,24 +375,137 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(output[source], "")
         self.assertIn(source, report["ambiguous"])
 
-    def test_release_requires_rom_and_engine_coverage_separately(self):
+    def test_release_requires_rom_coverage_engine_is_informational(self):
         item = row("A", "Un")
         charmap = {"U": 1, "n": 2}
         incomplete = {"unmatched": {}, "ambiguous": {},
                       "rom": {"translated": 1, "total": 2, "percent": 50.0},
                       "engine": {"translated": 1, "total": 2, "percent": 50.0}}
-        self.assertFalse(release_gate([item], [], charmap, incomplete)[0])
+        findings = []
+        self.assertFalse(release_gate([item], findings, charmap, incomplete)[0])
+        self.assertTrue(any(f["rule"] == "coverage-engine-incomplete" and f["severity"] == "warning"
+                            for f in findings))
         complete = {"unmatched": {}, "ambiguous": {},
                     "rom": {"translated": 2, "total": 2, "percent": 100.0},
                     "engine": {"translated": 2, "total": 2, "percent": 100.0}}
         self.assertTrue(release_gate([item], [], charmap, complete)[0])
+        informational = {**complete, "engine": {"translated": 1, "total": 2, "percent": 50.0, "unmatched": ["X"]}}
+        findings = []
+        self.assertTrue(release_gate([item], findings, charmap, informational)[0])
+        self.assertTrue(any(f["rule"] == "coverage-engine-unmatched" and f["severity"] == "warning"
+                            for f in findings))
+        self.assertTrue(any(f["rule"] == "coverage-engine-incomplete" and f["severity"] == "warning"
+                            for f in findings))
         for bad in (
             {"translated": True, "total": 1, "percent": 100.0},
             {"translated": 1, "total": 1, "percent": math.nan},
             {"translated": 1, "total": 1, "percent": math.inf},
+            {"translated": 1, "total": 1, "percent": 10 ** 1000},
         ):
             coverage = {"unmatched": {}, "ambiguous": {}, "rom": complete["rom"], "engine": bad}
-            self.assertFalse(release_gate([item], [], charmap, coverage)[0])
+            self.assertTrue(release_gate([item], [], charmap, coverage)[0])
+
+        for status, bad in (("unmatched", {"key": "not-an-array"}), ("ambiguous", "not-a-map")):
+            coverage = {"unmatched": {}, "ambiguous": {}, "rom": complete["rom"],
+                        "engine": {"translated": 1, "total": 1, "percent": 100.0, status: bad}}
+            findings = []
+            self.assertTrue(release_gate([item], findings, charmap, coverage)[0])
+            self.assertTrue(any(f["rule"] == f"coverage-engine-{status}-invalid" and f["severity"] == "warning"
+                                for f in findings))
+
+    def test_malformed_rby_is_non_gating_warning(self):
+        item = row("A", "Un")
+        coverage = {
+            "unmatched": {}, "ambiguous": {},
+            "rom": {"translated": 1, "total": 1, "percent": 100.0},
+            "engine": {"translated": 1, "total": 2, "percent": 50.0, "unmatched": ["X"]},
+            "engine_rby": {"translated": "bad", "total": 383, "percent": 0},
+        }
+        findings = []
+        ok, _ = release_gate([item], findings, {"U": 1, "n": 2}, coverage)
+        self.assertTrue(ok)
+        self.assertTrue(any(f["rule"] == "coverage-engine-rby-invalid" for f in findings))
+
+    def test_rby_optional_diagnostics_are_non_gating(self):
+        item = row("A", "Un")
+        base = {
+            "unmatched": {}, "ambiguous": {},
+            "rom": {"translated": 1, "total": 1, "percent": 100.0},
+            "engine": {"translated": 1, "total": 1, "percent": 100.0},
+        }
+        findings = []
+        self.assertTrue(release_gate([item], findings, {"U": 1, "n": 2}, base)[0])
+        self.assertTrue(any(f["rule"] == "coverage-engine-rby-missing" for f in findings))
+
+        rby = {"translated": 1, "total": 2, "percent": 50.0,
+               "unmatched": ["A"], "ambiguous": {"B": ["candidate"]}}
+        findings = []
+        self.assertTrue(release_gate([item], findings, {"U": 1, "n": 2}, {**base, "engine_rby": rby})[0])
+        self.assertTrue(any(f["rule"] == "coverage-engine-rby-unmatched" for f in findings))
+        self.assertTrue(any(f["rule"] == "coverage-engine-rby-ambiguous" for f in findings))
+        self.assertTrue(any(f["rule"] == "coverage-engine-rby-incomplete" for f in findings))
+
+        malformed = {"translated": 1, "total": 1, "percent": 100.0,
+                     "ambiguous": "not-a-map"}
+        findings = []
+        self.assertTrue(release_gate([item], findings, {"U": 1, "n": 2}, {**base, "engine_rby": malformed})[0])
+        self.assertTrue(any(f["rule"] == "coverage-engine-rby-ambiguous-invalid" for f in findings))
+
+        findings = []
+        with_warning = {**base, "engine_rby_warning": "source unavailable"}
+        self.assertTrue(release_gate([item], findings, {"U": 1, "n": 2}, with_warning)[0])
+        self.assertTrue(any(f["rule"] == "coverage-engine-rby-warning" for f in findings))
+        self.assertFalse(any(f["rule"] == "coverage-engine-rby-missing" for f in findings))
+
+    def test_rom_join_maps_are_required_and_nested_shapes_are_strict(self):
+        item = row("A", "Un")
+        base = {
+            "unmatched": {}, "ambiguous": {},
+            "rom": {"translated": 1, "total": 1, "percent": 100.0},
+            "engine": {"translated": 1, "total": 1, "percent": 100.0},
+        }
+        self.assertTrue(release_gate([item], [], {"U": 1, "n": 2}, base)[0])
+        for status in ("unmatched", "ambiguous"):
+            for bad in (None, [], {"dialogue": "not-an-array"}):
+                coverage = dict(base)
+                coverage[status] = bad
+                ok, summary = release_gate([item], [], {"U": 1, "n": 2}, coverage)
+                self.assertFalse(ok)
+                self.assertTrue(any(f["rule"] == f"coverage-{status}-invalid" for f in summary["findings"]))
+
+            coverage = dict(base)
+            coverage.pop(status)
+            ok, summary = release_gate([item], [], {"U": 1, "n": 2}, coverage)
+            self.assertFalse(ok)
+            self.assertTrue(any(f["rule"] == f"coverage-{status}-invalid" for f in summary["findings"]))
+
+    def test_release_summary_returns_diagnostics_for_any_findings_iterable(self):
+        item = row("A", "Un")
+        coverage = {
+            "unmatched": {}, "ambiguous": {},
+            "rom": {"translated": 1, "total": 1, "percent": 100.0},
+            "engine": {"translated": 1, "total": 2, "percent": 50.0},
+        }
+        for initial in ([], (), ({"rule": "pre-existing", "severity": "warning"},), (x for x in ())):
+            ok, summary = release_gate([item], initial, {"U": 1, "n": 2}, coverage)
+            self.assertTrue(ok)
+            self.assertIsInstance(summary["findings"], list)
+            self.assertEqual(summary["finding_count"], len(summary["findings"]))
+            self.assertTrue(any(f["rule"] == "coverage-engine-incomplete" for f in summary["findings"]))
+
+    def test_missing_report_and_charmap_are_independent_release_errors(self):
+        item = row("A", "Un")
+        coverage = {
+            "unmatched": {}, "ambiguous": {},
+            "rom": {"translated": 1, "total": 1, "percent": 100.0},
+            "engine": {"translated": 1, "total": 1, "percent": 100.0},
+        }
+        findings = []
+        self.assertFalse(release_gate([item], findings, {"U": 1, "n": 2}, None)[0])
+        self.assertTrue(any(f["rule"] == "coverage-required" for f in findings))
+        findings = []
+        self.assertFalse(release_gate([item], findings, None, coverage)[0])
+        self.assertTrue(any(f["rule"] == "charmap-required" for f in findings))
 
 
 if __name__ == "__main__":

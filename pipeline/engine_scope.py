@@ -1,0 +1,200 @@
+"""Pinned, informational Gen1Recomp engine scope classification.
+
+The classifier is deliberately pure: callsites are supplied by the caller and
+the result depends only on the versioned scope manifest.  It is shared by the
+coverage report and the private engine backlog so the two cannot drift.
+"""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+import re
+import subprocess
+from typing import Any, Iterable, Mapping
+
+ROOT = Path(__file__).resolve().parents[1]
+CONFIG_PATH = ROOT / "config" / "engine_scope.json"
+
+
+def load_scope(path: str | Path = CONFIG_PATH) -> dict[str, Any]:
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("engine scope config must be an object")
+    required = ("schema", "classifier_version", "gen1recomp_revision", "source_subdir", "rby_paths", "rby_ui_modules", "ui_review_modules", "link_modules", "modern_ui_modules", "rby_ui_keys", "link_ui_keys", "modern_ui_keys")
+    if set(data) != set(required):
+        raise ValueError("engine scope config has unknown or missing fields")
+    if data["schema"] != "gen1recomp-translation-mods/engine-scope" or data["classifier_version"] != 1:
+        raise ValueError("unsupported engine scope schema/version")
+    missing = [key for key in required if key not in data]
+    if missing:
+        raise ValueError(f"engine scope config missing fields: {', '.join(missing)}")
+    if not isinstance(data["classifier_version"], int) or isinstance(data["classifier_version"], bool):
+        raise ValueError("engine scope classifier_version must be an integer")
+    if not isinstance(data["gen1recomp_revision"], str) or not re.fullmatch(r"[0-9a-f]{40}", data["gen1recomp_revision"]):
+        raise ValueError("engine scope gen1recomp_revision must be a revision string")
+    if data["source_subdir"] != "src":
+        raise ValueError("engine scope source_subdir must be src")
+    for key in required[4:]:
+        if not isinstance(data[key], list) or not all(isinstance(value, str) and value for value in data[key]):
+            raise ValueError(f"engine scope {key} must be a list of strings")
+        if len(data[key]) != len(set(data[key])):
+            raise ValueError(f"engine scope {key} contains duplicates")
+    for key in ("rby_ui_modules", "ui_review_modules", "link_modules", "modern_ui_modules"):
+        if any(not value.endswith(".lua") or "/" in value or "\\" in value for value in data[key]):
+            raise ValueError(f"engine scope {key} contains an invalid module")
+    module_sets = [set(data[key]) for key in ("rby_ui_modules", "ui_review_modules", "link_modules", "modern_ui_modules")]
+    if any(module_sets[i] & module_sets[j] for i in range(4) for j in range(i + 1, 4)):
+        raise ValueError("engine scope module sets overlap")
+    key_sets = [set(data[key]) for key in ("rby_ui_keys", "link_ui_keys", "modern_ui_keys")]
+    if any(key_sets[i] & key_sets[j] for i in range(3) for j in range(i + 1, 3)):
+        raise ValueError("engine scope UI key sets overlap")
+    return data
+
+
+def source_root(checkout: str | Path, scope: Mapping[str, Any] | None = None) -> Path:
+    root = Path(checkout)
+    scope = scope or load_scope()
+    subdir = str(scope.get("source_subdir", "src"))
+    # Accept either a checkout root or an already-selected src root.
+    candidate = root / subdir
+    if candidate.is_dir() and (root / ".git").exists():
+        return candidate
+    if root.name == subdir and root.is_dir() and (root.parent / ".git").exists():
+        return root
+    raise ValueError(f"engine source must be checkout root containing {subdir}/ or that exact source directory: {root}")
+
+
+def verified_source(checkout: str | Path, scope: Mapping[str, Any] | None = None) -> tuple[Path, Path, str]:
+    scope = scope or load_scope()
+    src = source_root(checkout, scope)
+    git_root = src.parent
+    try:
+        revision = subprocess.check_output(["git", "-C", str(git_root), "rev-parse", "HEAD"], text=True, stderr=subprocess.STDOUT).strip()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise ValueError(f"unable to verify Gen1Recomp git checkout: {git_root}") from exc
+    if revision != scope["gen1recomp_revision"]:
+        raise ValueError(f"Gen1Recomp revision mismatch: expected {scope['gen1recomp_revision']}, got {revision}")
+    try:
+        dirty = subprocess.check_output(
+            ["git", "-C", str(git_root), "status", "--porcelain", "--untracked-files=all", "--", str(scope["source_subdir"])],
+            text=True,
+            stderr=subprocess.STDOUT,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise ValueError(f"unable to inspect Gen1Recomp source status: {git_root}") from exc
+    if dirty.strip():
+        raise ValueError(f"Gen1Recomp production source is dirty: {git_root / scope['source_subdir']}")
+    return src, git_root, revision
+
+
+def iter_callsites(checkout: str | Path) -> list[dict[str, Any]]:
+    """Collect production ``Strings`` callsites, excluding tests and tooling."""
+    # Imported lazily to keep this module independent of backlog analysis.
+    from .engine_backlog import iter_literal_strings_callsites
+    src = source_root(checkout)
+    return iter_literal_strings_callsites(src)
+
+
+def _module(path: str) -> str:
+    return Path(path).name
+
+
+def classify_path(path: str, key: str | None = None, scope: Mapping[str, Any] | None = None) -> str:
+    scope = scope or load_scope()
+    parts = [part.casefold() for part in Path(path).parts]
+    if parts and parts[0] == "src":
+        parts = parts[1:]
+    lowered = path.casefold()
+    module = _module(path)
+    if "link" in parts or "online" in lowered or "tournament" in lowered:
+        return "link"
+    if "import" in parts or "romimporter" in lowered:
+        return "import"
+    if "core" in parts:
+        return "core"
+    if "mods" in parts or any(token in lowered for token in ("modmanager", "discord", "updater")):
+        return "modern"
+    if parts and parts[0] == "ui":
+        if module in set(scope.get("link_modules", ())):
+            return "link"
+        if module in set(scope.get("ui_review_modules", ())):
+            return "ui"
+        if module in set(scope.get("modern_ui_modules", ())):
+            return "modern"
+        # OptionsMenu/StartMenu rows not explicitly audited are modern.
+        if module in {"OptionsMenu.lua", "StartMenu.lua"}:
+            if key in set(scope.get("link_ui_keys", ())):
+                return "link"
+            if key in set(scope.get("rby_ui_keys", ())):
+                return "rby"
+            if key in set(scope.get("modern_ui_keys", ())):
+                return "modern"
+            return "modern"
+        if module in set(scope.get("rby_ui_modules", ())):
+            return "rby"
+        return "ui"
+    if parts and parts[0] in set(scope.get("rby_paths", ())):
+        return "rby"
+    return "unknown"
+
+
+def classify_callsites(callsites: Iterable[Mapping[str, Any]], scope: Mapping[str, Any] | None = None) -> dict[str, dict[str, Any]]:
+    """Classify each key using the audited any-RBY/no-link inclusion rule."""
+    scope = scope or load_scope()
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for item in callsites:
+        key = str(item.get("source", ""))
+        if not key:
+            continue
+        row = dict(item)
+        row["category"] = classify_path(str(row.get("path", "")), key, scope)
+        grouped.setdefault(key, []).append(row)
+    result: dict[str, dict[str, Any]] = {}
+    for key in sorted(grouped):
+        rows = sorted(grouped[key], key=lambda row: (str(row.get("path", "")), int(row.get("line", 0)), str(row.get("kind", ""))))
+        categories = {str(row["category"]) for row in rows}
+        has_rby, has_link = "rby" in categories, "link" in categories
+        if has_rby and not has_link:
+            eligibility = "eligible"
+        elif has_link and has_rby:
+            eligibility = "review"
+        elif categories & {"ui", "unknown"}:
+            eligibility = "review"
+        else:
+            eligibility = "ineligible"
+        # Eligible keys with additional non-link rows remain in the RBY bucket;
+        # mixed denotes an explicit audited cross-surface key (or link review).
+        if eligibility == "eligible" and categories == {"rby"}:
+            category = "rby"
+        elif eligibility == "eligible" and categories - {"rby"}:
+            category = "mixed"
+        elif len(categories) == 1:
+            category = next(iter(categories))
+        else:
+            category = "mixed"
+        result[key] = {"category": category, "categories": sorted(categories), "eligibility": eligibility, "callsites": rows}
+    return result
+
+
+def classify_catalog(keys: Iterable[str], callsites: Iterable[Mapping[str, Any]], scope: Mapping[str, Any] | None = None) -> dict[str, dict[str, Any]]:
+    result = classify_callsites(callsites, scope)
+    for key in keys:
+        result.setdefault(str(key), {"category": "unknown", "categories": [], "eligibility": "review", "callsites": []})
+    return {key: result[key] for key in sorted(result)}
+
+
+def validate_catalog_universe(catalog_keys: Iterable[str], checkout: str | Path) -> dict[str, int]:
+    """Assert that a production checkout and catalog describe the same keys."""
+    catalog = {str(key) for key in catalog_keys}
+    calls = iter_callsites(checkout)
+    source = {str(row.get("source", "")) for row in calls if row.get("source")}
+    if source != catalog:
+        missing = sorted(catalog - source)
+        extra = sorted(source - catalog)
+        raise ValueError(f"engine catalog/source key universe mismatch (missing={len(missing)}, extra={len(extra)})")
+    return {"catalog_total": len(catalog), "source_keys": len(source), "callsites": len(calls)}
+
+
+def coverage_metadata(scope: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    scope = scope or load_scope()
+    return {"classifier_version": scope.get("classifier_version", 1), "source_revision": scope.get("gen1recomp_revision"), "source_subdir": scope.get("source_subdir", "src"), "scope_config": "config/engine_scope.json"}

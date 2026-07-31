@@ -77,7 +77,12 @@ end
 '''
 
 
-def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: str = "translation-fr", language: str = "fr", modkit_worksheet: str | Path | None = None, report_path: str | Path | None = None, engine_catalog: str | Path | None = None, engine_overrides: str | Path | None = None, strict_engine: bool = False, semantic_anchors: str | Path | None = None, target_name: str | None = None, literal_handlers: str | Path | None = None, target_description: str | None = None) -> Path:
+def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: str = "translation-fr", language: str = "fr", modkit_worksheet: str | Path | None = None, report_path: str | Path | None = None, engine_catalog: str | Path | None = None, engine_overrides: str | Path | None = None, strict_engine: bool = False, semantic_anchors: str | Path | None = None, target_name: str | None = None, literal_handlers: str | Path | None = None, target_description: str | None = None, engine_source: str | Path | None = None, engine_scope: str | Path | None = None) -> Path:
+    """Generate a mod; ``strict_engine`` requires scaffold/catalog presence only.
+
+    It does not require complete engine translations: unresolved entries remain
+    empty and the game uses its English fallback.
+    """
     language = canonical_language(language)
     destination = Path(destination); destination.mkdir(parents=True, exist_ok=True)
     rows = list(items)
@@ -180,5 +185,28 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         report["rom"] = {"translated": rom_translated, "total": rom_total, "percent": round(rom_translated * 100 / rom_total, 2) if rom_total else 100.0, "details": rom_details}
         if engine_report is not None:
             report["engine"] = engine_report
+            if engine_source:
+                from .engine_scope import classify_catalog, coverage_metadata, iter_callsites, load_scope, validate_catalog_universe, verified_source
+                scope = load_scope(engine_scope) if engine_scope else load_scope()
+                source_path, _, _ = verified_source(engine_source, scope)
+                validate_catalog_universe(catalog.keys(), source_path)
+                classified = classify_catalog(catalog.keys(), iter_callsites(source_path), scope)
+                eligible = {key for key, info in classified.items() if info["eligibility"] == "eligible"}
+                translated_keys = {key for key, value in engine_values.items() if isinstance(value, str) and value}
+                translated = len(eligible & translated_keys)
+                categories = {}
+                for info in classified.values():
+                    categories[info["category"]] = categories.get(info["category"], 0) + 1
+                report["engine_rby"] = {
+                    **coverage_metadata(scope),
+                    "translated": translated,
+                    "total": len(eligible),
+                    "percent": round(translated * 100 / len(eligible), 2) if eligible else 100.0,
+                    "eligibility": {"eligible": len(eligible), "review": sum(i["eligibility"] == "review" for i in classified.values()), "ineligible": sum(i["eligibility"] == "ineligible" for i in classified.values())},
+                    "categories": categories,
+                    "catalog_total": len(catalog),
+                }
+            else:
+                report["engine_rby_warning"] = "Gen1Recomp engine source unavailable; RBY engine coverage omitted."
         Path(report_path).write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return destination
