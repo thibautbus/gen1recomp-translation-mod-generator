@@ -39,6 +39,59 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(report["details"]["%s got off\nthe BICYCLE."], "semantic")
         self.assertEqual(report["provenance"]["%s got off\nthe BICYCLE."]["qids"], ["off1", "off2", "bike"])
 
+    def test_multi_qid_parts_typed_printf_mapping_restores_numeric_format(self):
+        source = "%s gained\n%03d EXP. Points!"
+        qid_a, qid_b = "rb.test.Gained", "rb.test.ExpPoints"
+        rows = [
+            Alignment(qid_a, "both", CorpusRecord(qid_a, "en", "{text_ram wNameBuffer}{text_start} gained@"),
+                      CorpusRecord(qid_a, "fr", "{text_ram wNameBuffer}{text_start} gagne@"), "qid"),
+            Alignment(qid_b, "both", CorpusRecord(qid_b, "en", "{text_decimal wExpAmountGained, 2, 4}{text_start} EXP. Points!@"),
+                      CorpusRecord(qid_b, "fr", "{text_decimal wExpAmountGained, 2, 4}{text_start} points d'EXP!@"), "qid"),
+        ]
+        anchor = {"parts": [
+            {"qid": qid_a, "extraction": {"kind": "full", "preserve_edges": True}},
+            {"qid": qid_b, "extraction": {"kind": "full", "preserve_edges": True}},
+        ], "separators": ["\n"], "placeholders": {
+            "{RAM:wNameBuffer}": {"printf": 0},
+            "{NUM:wExpAmountGained}": {"printf": 1},
+        }}
+        output, report = match_engine_catalog({source: ""}, rows,
+            semantic_anchors={source: anchor}, target_lang="fr")
+        self.assertEqual(output[source], "%s gagne\n%03d points d'EXP!")
+        self.assertEqual(report["details"][source], "semantic")
+
+    def test_multi_qid_typed_printf_schema_rejects_invalid_type_and_ref(self):
+        base = {"parts": [
+            {"qid": "a", "extraction": {"kind": "full"}},
+            {"qid": "b", "extraction": {"kind": "full"}},
+        ], "separators": ["\n"]}
+        with self.assertRaises(ValueError):
+            load_semantic_anchors({"%s\n%d": {**base, "placeholders": {
+                "{RAM:x}": "%d", "{NUM:y}": "%s"}}})
+        with self.assertRaises(ValueError):
+            load_semantic_anchors({"%s\n%d": {**base, "placeholders": {
+                "{RAM:x}": {"printf": 2}, "{NUM:y}": {"printf": 1}}}})
+
+    def test_multi_qid_typed_printf_rejects_mixed_target_printf(self):
+        source = "%s gained\n%d EXP. Points!"
+        rows = [
+            Alignment("a", "both", CorpusRecord("a", "en", "{text_ram wNameBuffer} gained@"),
+                      CorpusRecord("a", "fr", "{text_ram wNameBuffer} gagne %s@"), "qid"),
+            Alignment("b", "both", CorpusRecord("b", "en", "{text_decimal wExpAmountGained, 2, 4} EXP. Points!@"),
+                      CorpusRecord("b", "fr", "{text_decimal wExpAmountGained, 2, 4} points!@"), "qid"),
+        ]
+        anchor = {"parts": [
+            {"qid": "a", "extraction": {"kind": "full"}},
+            {"qid": "b", "extraction": {"kind": "full"}},
+        ], "separators": ["\n"], "placeholders": {
+            "{RAM:wNameBuffer}": {"printf": 0},
+            "{NUM:wExpAmountGained}": {"printf": 1},
+        }}
+        output, report = match_engine_catalog({source: ""}, rows,
+            semantic_anchors={source: anchor}, target_lang="fr")
+        self.assertEqual(output[source], "")
+        self.assertEqual(report["details"][source], "semantic_unresolved")
+
     def test_multi_qid_parts_anchor_fails_closed_on_missing_or_ambiguous_part(self):
         anchor = {"X": {"parts": [
             {"qid": "a", "extraction": {"kind": "full"}},

@@ -5,10 +5,11 @@ from pathlib import Path
 
 from pipeline.align import align, apply_overrides
 from pipeline.corpus import parse_redblue, canonical_language
-from pipeline.engine import load_engine_overrides, load_semantic_anchors, match_engine_catalog, _extract_anchor, printf_directives, read_engine_catalog
+from pipeline.engine import check_printf_directives, load_engine_overrides, load_semantic_anchors, match_engine_catalog, _extract_anchor, printf_directives, read_engine_catalog
 from pipeline.model import Alignment, CorpusRecord
 from pipeline.mod import generate_mod
 from pipeline.cli import main as cli_main
+from pipeline.engine_scope import classify_callsites, iter_callsites
 
 
 class MultilingualTests(unittest.TestCase):
@@ -61,6 +62,113 @@ class MultilingualTests(unittest.TestCase):
         self.assertEqual(output, {"FIGHT": "KAMPF", "RUN": "FLUCHT", "MONEY": "GELD"})
         self.assertEqual(report["translated"], 3)
         self.assertEqual(report["auto_semantic"], 3)
+
+    def test_rby_numeric_experience_and_status_anchor_batch_all_languages(self):
+        root = Path("../poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        keys = [
+            "%s gained\n%d EXP. Points!",
+            "%s gained\nwith EXP.ALL,\x0b%d EXP. Points!",
+            "%s gained\na boosted\x0b%d EXP. Points!",
+            "%s grew\nto level %d!",
+            "EXP POINTS", "LEVEL UP", "%s\nis glowing!",
+        ]
+        expected = {
+            "fr": ["%s gagne\n%d points d'EXP!", "%s gagne\navec MULTI EXP,\x0b%d points d'EXP!", "%s gagne\nun bonus de\x0b%d points d'EXP!", "%s monte\nau niveau %d!", "PTS EXP.", "PROCH.NIV.", "%s\nbrille!"],
+            "de": ["%s erhält\n%d EP!", "%s erhält\nmittels EP-TEILER\x0b%d EP!", "%s erhält\nspezielle\x0b%d EP!", "%s\nerreicht\x0bLevel %d!", "EP-PUNKTE", "LEVEL UP", "%s\nleuchtet!"],
+            "es": ["¡%s ganó\n%d Puntos EXP.!", "¡%s ganó\ncon REPARTIR EXP,\x0b%d Puntos EXP.!", "¡%s ganó\nun extra de\x0b%d Puntos EXP.!", "¡%s subió\nal nivel %d!", "PUNTOS EXP", "SIG.NIVEL", "¡%s\nestá brillando!"],
+            "it": ["%s riceve\n%d Punti ESP.!", "%s riceve\ncon DISTRIB. ESP,\x0b%d Punti ESP.!", "%s riceve\nben\x0b%d Punti ESP.!", "%s sale\nal livello %d!", "PUNTI ESP.", "LIV. SUP.", "%s\nsta brillando!"],
+            "ja-Hrkt": ["%sは\n%d　けいけんちを　もらった！", "%sは\nがくしゅうそうちで\x0b%d　けいけんちを　もらった！", "%sは\nおおめに\x0b%d　けいけんちを　もらった！", "%sは\nレベル%d　に　あがった！", "けいけんち", "あと", "%s\nを\nはげしい　ひかりが　つつむ！"],
+        }
+        anchors = load_semantic_anchors()
+        for language, language_expected in expected.items():
+            items = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog({key: "" for key in keys}, items,
+                semantic_anchors=anchors, target_lang=language)
+            self.assertEqual(report["translated"], len(keys), language)
+            self.assertEqual(report["auto_semantic"], len(keys), language)
+            for key, value in zip(keys, language_expected):
+                self.assertEqual(output[key], value, (language, key))
+                self.assertEqual(report["details"][key], "semantic", (language, key))
+                self.assertEqual(report["provenance"][key].get("target_lang"), language)
+                self.assertNotRegex(value, r"[<>@]", (language, key))
+
+    def test_real_corpus_rby_safe_anchor_batch_exact_outputs_and_provenance(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        keys = [
+            "TYPE/", "TYPE1/", "TYPE2/", "OT/", "LEVEL/", "BALLx", "THROW ROCK",
+            "STATS", "SWITCH", "CHANGE BOX", "SEE YA!", "WITHDRAW ITEM",
+            "DEPOSIT ITEM", "TOSS ITEM", "%s's PP\nincreased!",
+            "You don't have\nenough money.", "BATTLE ANIMATION",
+            "When you change a\nPOKéMON BOX, data\nwill be saved. OK?",
+        ]
+        qids = {
+            "TYPE/": "rb.core.TypeText",
+            "TYPE1/": "rb.status_screen.TypesIDNoOTText",
+            "TYPE2/": "rb.status_screen.TypesIDNoOTText",
+            "OT/": "rb.status_screen.TypesIDNoOTText",
+            "LEVEL/": "rb.hall_of_fame.HoFMonInfoText",
+            "BALLx": "rb.text_boxes.SafariZoneBattleMenuText",
+            "THROW ROCK": "rb.text_boxes.SafariZoneBattleMenuText",
+            "STATS": "rb.text_box.PokemonMenuEntries",
+            "SWITCH": "rb.text_box.PokemonMenuEntries",
+            "CHANGE BOX": "rb.bills_pc.BillsPCMenuText",
+            "SEE YA!": "rb.bills_pc.BillsPCMenuText",
+            "WITHDRAW ITEM": "rb.players_pc.PlayersPCMenuEntries",
+            "DEPOSIT ITEM": "rb.players_pc.PlayersPCMenuEntries",
+            "TOSS ITEM": "rb.players_pc.PlayersPCMenuEntries",
+            "%s's PP\nincreased!": "rb.text_6.PPIncreasedText",
+            "You don't have\nenough money.": "rb.text_4.PokemartNotEnoughMoneyText",
+            "BATTLE ANIMATION": "rb.main_menu.BattleAnimationOptionText",
+            "When you change a\nPOKéMON BOX, data\nwill be saved. OK?": "rb.text_3.WhenYouChangeBoxText",
+        }
+        expected = {
+            "fr": ["TYPE", "TYPE1", "TYPE2", "DO", "NIVEAU", "BALL×", "CAILLOU", "STATS", "ORDRE", "CHANGER BOITE", "SALUT!", "RETIRER OBJET", "STOCKER OBJET", "JETER OBJET", "PP de %s\naugmentés.", "Ah! Pas d'argent,\npas d'copains!", "ANIMATION COMBAT", "En activant\nune autre boîte\x0bde POKéMON, les\x0bdonnées seront\x0bsauvegardées.\x0cEtes-vous\nd'accord?"],
+            "de": ["TYP", "TYP1", "TYP2", "OT", "LEVEL", "BALL×", "STEIN", "STATUS", "TAUSCH", "BOX WECHSELN", "TSCHÜSS!", "ITEM AUFNEHMEN", "ITEM ABLEGEN", "ITEM WEGWERFEN", "Die AP von\n%s\x0bsind gestiegen.", "Du hast nicht\ngenug Geld.", "KAMPFANIMATION", "Vor einem Wechsel\nder POKéMON-BOX\x0bwird das Spiel\x0bgesichert!\x0cEinverstanden?"],
+            "es": ["TIPO", "TIPO1", "TIPO2", "EO", "NIVEL", "BALL×", "LANZA ROCA", "ESTAD.", "CAMBIO", "CAMBIA CAJA", "¡NOS VEMOS!", "SACAR OBJETO", "DEJAR OBJETO", "TIRAR OBJETO", "PP de %s\naumentados.", "No tienes\ntanto dinero.", "ANIMACIÓN BATALLA", "Si cambias una\nCAJA de POKéMON,\x0bsus datos serán\x0bguardados.\x0c¿Estás de\nacuerdo?"],
+            "it": ["TIPO", "TIPO1", "TIPO2", "AO", "LIVELLO", "BALL×", "TIRA SASSO", "STAT.", "ORDINA", "CAMBIA BOX", "CIAO!", "RITIRA STRUM.", "DEPOSITA STRUM.", "BUTTA STRUM.", "PP di %s\naumentati.", "Non hai\nabbastanza soldi.", "ANIMAZIONE LOTTA", "Al cambio del\nPOKéMON BOX\x0bil gioco verrà\x0bsalvato!\x0cD'accordo?"],
+            "ja-Hrkt": ["わざタイプ", "タイプ１", "タイプ２", "おや", "レベル", "サファリボール×", "いしをなげる", "つよさをみる", "ならびかえ", "ボックスを　かえる", "さようなら", "どうぐを　ひきだす", "どうぐを　あずける", "どうぐを　すてる", "%sの\nわざポイントが　ふえた！", "おかねが　たりないようですね", "せんとう　アニメーション", "POKé　ボックスを　かえると\nどうじに　レポートが　かかれます\x0c……　それでも　いいですか？"],
+        }
+        anchors = load_semantic_anchors()
+        for key in keys:
+            self.assertEqual(anchors[key]["qid"], qids[key])
+        self.assertEqual(anchors["TYPE/"]["source_aliases"], ["TYPE"])
+        self.assertEqual(anchors["BALLx"]["source_aliases"], ["BALL×"])
+        self.assertEqual(anchors["BATTLE ANIMATION"]["source_aliases"], ["BATTLE ANIMATION"])
+        self.assertEqual(anchors["When you change a\nPOKéMON BOX, data\nwill be saved. OK?"]["source_aliases"], [
+            "When you change a\nPOKéMON BOX, data\u000bwill be saved.\u000cIs that okay?",
+        ])
+        for language, values in expected.items():
+            items = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog({key: "" for key in keys}, items, semantic_anchors=anchors, target_lang=language)
+            self.assertEqual(report["translated"], len(keys), language)
+            self.assertEqual(report["auto_semantic"], len(keys), language)
+            self.assertFalse(report["ambiguous"], language)
+            for key, value in zip(keys, values):
+                self.assertEqual(output[key], value, (language, key))
+                self.assertEqual(report["details"][key], "semantic", (language, key))
+                self.assertEqual(report["provenance"][key]["qid"], qids[key], (language, key))
+
+    def test_rby_safe_anchor_batch_fails_closed_on_duplicate_or_missing_qid(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        anchors = load_semantic_anchors()
+        items = align(parse_redblue(root, "fr"), target_lang="fr")
+        for key in ("TYPE/", "THROW ROCK", "%s's PP\nincreased!", "BATTLE ANIMATION", "When you change a\nPOKéMON BOX, data\nwill be saved. OK?"):
+            qid = anchors[key]["qid"]
+            row = next(item for item in items if item.qid == qid)
+            output, report = match_engine_catalog({key: ""}, items + [row], semantic_anchors=anchors, target_lang="fr")
+            self.assertEqual(output[key], "", key)
+            self.assertEqual(report["details"][key], "semantic_unresolved", key)
+            missing = json.loads(json.dumps(anchors))
+            missing[key]["qid"] = "rb.missing.Anchor"
+            output, report = match_engine_catalog({key: ""}, items, semantic_anchors=missing, target_lang="fr")
+            self.assertEqual(output[key], "", key)
+            self.assertEqual(report["details"][key], "semantic_unresolved", key)
 
     def test_yes_no_are_extracted_from_corpus_menu_order(self):
         row = Alignment(
@@ -157,6 +265,94 @@ class MultilingualTests(unittest.TestCase):
         self.assertEqual(output[source], "")
         self.assertEqual(report["details"][source], "semantic_unresolved")
         self.assertEqual(report["fallback_english"], 1)
+
+    def test_real_corpus_dex_seen_owned_anchor_all_languages(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        source = "SEEN %d  OWNED %d"
+        expected = {
+            "fr": "Vus:%d  Pris:%d",
+            "de": "Gesehen: %d  Besitz: %d",
+            "es": "Has visto: %d  Atrapaste: %d",
+            "it": "Visti:%d  Presi:%d",
+            "ja-Hrkt": "みつけたかず%d  つかまえたかず%d",
+        }
+        anchors = load_semantic_anchors()
+        self.assertEqual(anchors[source]["qid"], "rb.text_2.DexSeenOwnedText")
+        self.assertEqual(anchors[source]["extraction"]["selector"], "rby_dex_seen_owned")
+        for language, value in expected.items():
+            items = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog({source: ""}, items,
+                semantic_anchors=anchors, target_lang=language)
+            self.assertEqual(output[source], value, language)
+            self.assertEqual(report["details"][source], "semantic", language)
+            self.assertEqual(report["provenance"][source]["qid"], "rb.text_2.DexSeenOwnedText", language)
+            self.assertEqual(printf_directives(output[source]), ["%d", "%d"], language)
+            self.assertEqual(check_printf_directives(source, output[source]), [], language)
+
+    def test_dex_seen_owned_anchor_fails_closed_on_bad_selector_or_qid(self):
+        source = "SEEN %d  OWNED %d"
+        with self.assertRaises(ValueError):
+            load_semantic_anchors({source: {"qid": "q", "extraction": {
+                "kind": "dex_counter", "selector": "broad"}}})
+        rows = [Alignment(
+            "q.dex", "both",
+            CorpusRecord("q.dex", "en", "{text_start}#DEX Seen:@{text_decimal seen}{text_start}<LINE>Owned:@{text_decimal owned}@"),
+            CorpusRecord("q.dex", "fr", "{text_start}#DEX Vus:@{text_decimal seen}{text_start}<LINE>Pris:@{text_decimal owned}@"),
+            "qid", target_lang="fr")]
+        anchor = {source: {"qid": "q.dex", "extraction": {
+            "kind": "dex_counter", "selector": "rby_dex_seen_owned"}}}
+        output, report = match_engine_catalog({source: ""}, rows,
+            semantic_anchors=anchor, target_lang="fr")
+        self.assertEqual(output[source], "Vus:%d  Pris:%d")
+        duplicate, duplicate_report = match_engine_catalog({source: ""}, rows + [rows[0]],
+            semantic_anchors=anchor, target_lang="fr")
+        self.assertEqual(duplicate[source], "")
+        self.assertEqual(duplicate_report["details"][source], "semantic_unresolved")
+        missing, missing_report = match_engine_catalog({source: ""}, rows,
+            semantic_anchors={source: {"qid": "q.missing", "extraction": {
+                "kind": "dex_counter", "selector": "rby_dex_seen_owned"}}}, target_lang="fr")
+        self.assertEqual(missing[source], "")
+        self.assertEqual(missing_report["details"][source], "semantic_unresolved")
+        incompatible = Alignment(
+            "q.dex", "both", rows[0].english,
+            CorpusRecord("q.dex", "fr", "{text_start}#DEX Vus:@{text_decimal owned}{text_start}<LINE>Pris:@{text_decimal seen}@"),
+            "qid", target_lang="fr")
+        failed, failed_report = match_engine_catalog({source: ""}, [incompatible],
+            semantic_anchors=anchor, target_lang="fr")
+        self.assertEqual(failed[source], "")
+        self.assertEqual(failed_report["details"][source], "semantic_unresolved")
+
+    def test_dex_seen_owned_selector_rejects_unaudited_regions(self):
+        source = "SEEN %d  OWNED %d"
+        anchor = {source: {"qid": "q.dex", "extraction": {
+            "kind": "dex_counter", "selector": "rby_dex_seen_owned"}}}
+        english = "{text_start}#DEX Seen:@{text_decimal seen}{text_start}<LINE>Owned:@{text_decimal owned}@"
+        french = "{text_start}#DEX Vus:@{text_decimal seen}{text_start}<LINE>Pris:@{text_decimal owned}@"
+        cases = {
+            # Text between the first number and the audited line boundary is
+            # not a suffix variant from any of the five corpus rows.
+            "unknown_first_suffix": english.replace("{text_start}<LINE>Owned", " UNKNOWN{text_start}<LINE>Owned"),
+            # A second heading/control line before the first number is never
+            # part of DexSeenOwnedText's reviewed shape.
+            "extra_heading_line": english.replace("#DEX Seen", "#DEX<LINE>Extra Seen"),
+            # PKMN is audited only as a paired German suffix, not generically
+            # on one counter or one localized target row.
+            "generic_pkmn_suffix": french.replace("{text_decimal owned}@", "{text_decimal owned} PKMN@"),
+            "generic_pkmn_pair": french.replace(
+                "{text_start}<LINE>", " PKMN{text_start}<LINE>"
+            ).replace("{text_decimal owned}@", "{text_decimal owned} PKMN@"),
+        }
+        for label, mutated in cases.items():
+            target = mutated if label != "generic_pkmn_suffix" else mutated
+            rows = [Alignment(
+                "q.dex", "both", CorpusRecord("q.dex", "en", english),
+                CorpusRecord("q.dex", "fr", target), "qid", target_lang="fr")]
+            output, report = match_engine_catalog({source: ""}, rows,
+                semantic_anchors=anchor, target_lang="fr")
+            self.assertEqual(output[source], "", label)
+            self.assertEqual(report["details"][source], "semantic_unresolved", label)
 
     def test_raw_parallel_records_can_resolve_semantic_anchor(self):
         records = [CorpusRecord("q", "en", "FIGHT ITEM RUN"), CorpusRecord("q", "de", "KAMPF ITEM FLUCHT", english="FIGHT ITEM RUN")]
@@ -298,6 +494,132 @@ class MultilingualTests(unittest.TestCase):
                 self.assertEqual(output[key], expected[language][key], (language, qid))
                 self.assertEqual(report["details"][key], "semantic", language)
                 self.assertEqual(report["provenance"][key]["qid"], qid, language)
+
+    def test_real_corpus_rby_anchor_batch_exact_outputs_and_provenance(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        keys = (
+            "%s is out of\nuseable POKéMON!",
+            "%s blacked\nout!",
+            "It dodged the\nthrown BALL!",
+            "It contained\n%s!",
+        )
+        qids = {
+            keys[0]: "rb.text_2.PlayerBlackedOutText2",
+            keys[1]: "rb.text_2.PlayerBlackedOutText2",
+            keys[2]: "rb.text_6.ItemUseBallText00",
+            keys[3]: "rb.text_6.TeachMachineMoveText",
+        }
+        expected = {
+            "fr": {
+                keys[0]: "%s n'a plus\nde POKéMON!",
+                keys[1]: "%s est\nhors-jeu!",
+                keys[2]: "Il évite la BALL!",
+                keys[3]: "Elle contient:\n%s!",
+            },
+            "de": {
+                keys[0]: "Alle POKéMON von\n%s wurden\x0bbesiegt!",
+                keys[1]: "%s fällt\nin Ohnmacht!",
+                keys[2]: "Es weicht dem\nBALL aus!",
+                keys[3]: "Sie enthält\n%s!",
+            },
+            "es": {
+                keys[0]: "¡%s no tiene\nmás POKéMON!",
+                keys[1]: "¡%s perdió\nel conocimiento!",
+                keys[2]: "¡Esquivó la bola\nque le tiraron!",
+                keys[3]: "¡Ésta contiene\n%s!",
+            },
+            "it": {
+                keys[0]: "%s non ha più\nPOKéMON utili!",
+                keys[1]: "%s è\ncrollato!",
+                keys[2]: "Ha schivato la\nBALL!",
+                keys[3]: "Contiene\n%s!",
+            },
+            "ja-Hrkt": {
+                keys[0]: "%sの　てもとには\nたたかえる　POKéが　いない！",
+                keys[1]: "%sは\nめのまえが　まっくらに　なった！",
+                keys[2]: "よけられた！",
+                keys[3]: "なかには　%sが\nきろくされていた！",
+            },
+        }
+        anchors = load_semantic_anchors()
+        for key in keys:
+            self.assertEqual(anchors[key]["qid"], qids[key])
+            self.assertEqual(anchors[key]["extraction"]["kind"], "parts")
+            self.assertEqual(anchors[key]["extraction"]["separators"], ["\n"])
+            self.assertEqual(set(anchors[key]["extraction"]["targets"]), {"fr", "de", "es", "it", "ja-Hrkt"})
+        self.assertEqual(anchors[keys[3]]["placeholders"], {"{RAM:wStringBuffer}": "%s"})
+        for language, language_expected in expected.items():
+            items = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog(
+                {key: "" for key in keys}, items,
+                semantic_anchors=anchors, target_lang=language,
+            )
+            self.assertEqual(report["translated"], len(keys), language)
+            self.assertEqual(report["auto_semantic"], len(keys), language)
+            self.assertFalse(report["ambiguous"], language)
+            for key in keys:
+                self.assertEqual(output[key], language_expected[key], (language, key))
+                self.assertEqual(report["details"][key], "semantic", (language, key))
+                self.assertEqual(report["provenance"][key]["qid"], qids[key], (language, key))
+                self.assertNotRegex(output[key], r"[<>@]", (language, key))
+            self.assertEqual(printf_directives(output[keys[0]]), ["%s"], language)
+            self.assertEqual(printf_directives(output[keys[1]]), ["%s"], language)
+            self.assertEqual(printf_directives(output[keys[2]]), [], language)
+            self.assertEqual(printf_directives(output[keys[3]]), ["%s"], language)
+
+    def test_rby_anchor_batch_fails_closed_on_duplicate_or_missing_qids(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        keys = (
+            "%s is out of\nuseable POKéMON!",
+            "%s blacked\nout!",
+            "It dodged the\nthrown BALL!",
+            "It contained\n%s!",
+        )
+        anchors = load_semantic_anchors()
+        items = align(parse_redblue(root, "fr"), target_lang="fr")
+        for key in keys:
+            qid = anchors[key]["qid"]
+            row = next(item for item in items if item.qid == qid)
+            output, report = match_engine_catalog(
+                {key: ""}, items + [row], semantic_anchors=anchors, target_lang="fr",
+            )
+            self.assertEqual(output[key], "", key)
+            self.assertEqual(report["details"][key], "semantic_unresolved", key)
+            self.assertEqual(report["fallback_english"], 1, key)
+            missing = json.loads(json.dumps(anchors))
+            missing[key]["qid"] = "rb.missing.Anchor"
+            output, report = match_engine_catalog(
+                {key: ""}, items, semantic_anchors=missing, target_lang="fr",
+            )
+            self.assertEqual(output[key], "", key)
+            self.assertEqual(report["details"][key], "semantic_unresolved", key)
+            self.assertEqual(report["fallback_english"], 1, key)
+
+    def test_rby_anchor_callsites_are_unique_and_contextually_eligible(self):
+        checkout = Path(".cache/dependencies/gen1recomp")
+        if not checkout.is_dir():
+            self.skipTest("cached Gen1Recomp checkout is unavailable")
+        keys = {
+            "SEEN %d  OWNED %d": {"ui/PokedexMenu.lua"},
+            "%s is out of\nuseable POKéMON!": {"battle/BattleState.lua"},
+            "%s blacked\nout!": {"battle/BattleState.lua", "world/OverworldController.lua"},
+            "It dodged the\nthrown BALL!": {"battle/BattleState.lua"},
+            "It contained\n%s!": {"ui/BagMenu.lua"},
+            "BATTLE ANIMATION": {"ui/OptionsMenu.lua"},
+            "When you change a\nPOKéMON BOX, data\nwill be saved. OK?": {"ui/BoxMenu.lua"},
+        }
+        catalog = classify_callsites(iter_callsites(checkout))
+        for key, paths in keys.items():
+            self.assertIn(key, catalog)
+            row = catalog[key]
+            self.assertEqual(row["eligibility"], "eligible", key)
+            self.assertEqual(row["category"], "rby", key)
+            self.assertEqual({call["path"] for call in row["callsites"]}, paths, key)
+            self.assertTrue(all("Strings(" in call["context"] for call in row["callsites"]), key)
 
     def test_real_corpus_move_learn_menu_composite_all_languages(self):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")

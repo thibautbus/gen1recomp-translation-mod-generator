@@ -21,6 +21,11 @@ ENGINE_SCHEMA = "gen1recomp-translation-mods/engine-overrides"
 ANCHOR_SCHEMA = "gen1recomp-translation-mods/semantic-anchors"
 ROM_CATALOGS = ("dialogue", "species_names", "move_names", "item_names", "trainer_names", "status_labels")
 _SAFE_SEPARATOR_CONTROLS = {"\n", "\v", "\f"}
+_DEX_COUNTER_SELECTOR = "rby_dex_seen_owned"
+# Only the German PokeCorpus row appends ``PKMN`` to both counters.  These
+# labels whitelist that audited shape; they are a validation guard, not
+# translations used by the other languages.
+_DEX_COUNTER_PKMN_LABELS = {"gesehen:", "besitz:"}
 
 
 def _valid_separator(value: object) -> bool:
@@ -185,6 +190,14 @@ def _dynamic_marker_type(token: str) -> str | None:
     if token in {"{PLAYER}", "{RIVAL}", "{TARGET}", "{USER}", "{ID}"}:
         return "string"
     return None
+
+
+def _dynamic_identity(token: str) -> str:
+    """Return the runtime-variable identity, ignoring NUM formatting args."""
+    if token.startswith("{NUM:"):
+        name = token[5:-1].split(",", 1)[0].strip()
+        return "{NUM:" + name + "}"
+    return token
 
 
 def _placeholder_tokens(text: str) -> list[tuple[str, str]]:
@@ -360,8 +373,10 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
             raise ValueError(f"{label} extraction must be an object")
         kind = spec.get("kind", inherited_kind or "segment")
         index = spec.get("index", 0)
-        if kind not in {"segment", "token", "span", "full", "parts"}:
+        if kind not in {"segment", "token", "span", "full", "parts", "dex_counter"}:
             raise ValueError(f"unsupported extraction kind for {label}")
+        if kind == "dex_counter" and spec.get("selector") != _DEX_COUNTER_SELECTOR:
+            raise ValueError(f"{label} dex_counter requires audited selector {_DEX_COUNTER_SELECTOR!r}")
         if "preserve_edges" in spec and not isinstance(spec["preserve_edges"], bool):
             raise ValueError(f"{label} preserve_edges must be boolean")
         preserve_edges = spec.get("preserve_edges", inherited_preserve_edges)
@@ -385,6 +400,8 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
         for language, target in (targets or {}).items():
             if not isinstance(language, str) or not language:
                 raise ValueError(f"{label} target language must be non-empty")
+            if kind == "dex_counter" and "selector" not in target:
+                target = {**target, "selector": spec.get("selector")}
             validate_extraction(target, f"{label} target {language!r}", kind, preserve_edges)
 
     result = {}
@@ -438,9 +455,47 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
             placeholders = row.get("placeholders", {})
             if not isinstance(placeholders, dict):
                 raise ValueError(f"semantic anchor {key!r} placeholders must be an object")
+            # Composite anchors map corpus runtime tokens to either a legacy
+            # ``%s`` formatter, a source part (``{part:n}``), or an exact
+            # source printf directive (``%d``/``%03d``) or directive index
+            # (``{printf:n}``).  Validate the typed contract while loading so
+            # malformed anchors fail closed before a corpus is resolved.
+            source_directives = [directive for directive in printf_directives(key)
+                                 if directive != "%%"]
+            printf_refs: list[tuple[str, str, int | None]] = []
             for token, ref in placeholders.items():
-                if not isinstance(token, str) or not token or (ref != "%s" and not (isinstance(ref, dict) and isinstance(ref.get("part"), int) and not isinstance(ref.get("part"), bool) and 0 <= ref["part"] < len(parts))):
+                if (not isinstance(token, str) or
+                        DYNAMIC_TOKEN_RE.fullmatch(corpus_to_engine(token)) is None):
+                    raise ValueError(f"semantic anchor {key!r} has invalid placeholder token")
+                marker_type = _dynamic_marker_type(corpus_to_engine(token))
+                if ref == "%s":
+                    directive = "%s"
+                    printf_refs.append((token, directive, None))
+                elif isinstance(ref, str):
+                    match = _PRINTF.fullmatch(ref)
+                    if (not match or ref == "%%" or
+                            ref not in source_directives):
+                        raise ValueError(f"semantic anchor {key!r} has invalid placeholder mapping")
+                    printf_refs.append((token, ref, None))
+                elif isinstance(ref, dict) and "part" in ref:
+                    if (set(ref) != {"part"} or isinstance(ref["part"], bool) or
+                            not isinstance(ref["part"], int) or
+                            not 0 <= ref["part"] < len(parts)):
+                        raise ValueError(f"semantic anchor {key!r} has invalid placeholder mapping")
+                    continue
+                elif isinstance(ref, dict) and "printf" in ref:
+                    if (set(ref) != {"printf"} or isinstance(ref["printf"], bool) or
+                            not isinstance(ref["printf"], int) or ref["printf"] < 0 or
+                            ref["printf"] >= len(source_directives)):
+                        raise ValueError(f"semantic anchor {key!r} has invalid placeholder mapping")
+                    printf_refs.append((token, source_directives[ref["printf"]], ref["printf"]))
+                else:
                     raise ValueError(f"semantic anchor {key!r} has invalid placeholder mapping")
+                conversion = _printf_marker_type(printf_refs[-1][1])
+                if marker_type == "number" and conversion != "number":
+                    raise ValueError(f"semantic anchor {key!r} maps NUM token to non-numeric printf")
+                if marker_type == "string" and conversion != "string":
+                    raise ValueError(f"semantic anchor {key!r} maps string token to non-string printf")
             normalized = {**row, "parts": parts, "placeholders": placeholders}
             if "separators" not in row:
                 normalized["join"] = row.get("join", "")
@@ -450,7 +505,7 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
             raise ValueError(f"semantic anchor {key!r} requires qid and extraction")
         validate_extraction(extraction, f"semantic anchor {key!r}")
         kind = extraction.get("kind", "segment")
-        if kind not in {"segment", "token", "span", "full", "parts"}:
+        if kind not in {"segment", "token", "span", "full", "parts", "dex_counter"}:
             raise ValueError(f"unsupported extraction kind for {key!r}")
         if isinstance(extraction.get("index", 0), bool) or not isinstance(extraction.get("index", 0), int) or extraction.get("index", 0) < 0:
             raise ValueError(f"invalid extraction index for {key!r}")
@@ -472,8 +527,10 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
             if not isinstance(language, str) or not isinstance(target_extraction, dict):
                 raise ValueError(f"invalid semantic anchor target for {key!r}")
             target_kind = target_extraction.get("kind", kind)
-            if target_kind not in {"segment", "token", "span", "full", "parts"}:
+            if target_kind not in {"segment", "token", "span", "full", "parts", "dex_counter"}:
                 raise ValueError(f"unsupported target extraction kind for {key!r}")
+            if target_kind == "dex_counter" and target_extraction.get("selector", extraction.get("selector")) != _DEX_COUNTER_SELECTOR:
+                raise ValueError(f"semantic anchor {key!r} target dex_counter requires audited selector {_DEX_COUNTER_SELECTOR!r}")
             if isinstance(target_extraction.get("index", 0), bool) or not isinstance(target_extraction.get("index", 0), int) or target_extraction.get("index", 0) < 0:
                 raise ValueError(f"invalid target extraction index for {key!r}")
             if target_kind == "span" and (isinstance(target_extraction.get("count"), bool) or not isinstance(target_extraction.get("count"), int) or target_extraction["count"] <= 0):
@@ -489,6 +546,90 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
                     raise ValueError(f"semantic anchor {key!r} target parts separators must join each segment")
         result[key] = {**row, "qid": qid, "extraction": {**extraction, "kind": kind}}
     return result
+
+
+def _extract_dex_counter(text: str, extraction: Mapping, language: str | None = None) -> str | None:
+    """Extract the audited RBY Pokédex footer from its corpus message.
+
+    ``DexSeenOwnedText`` contains a ROM-only heading (``#DEX``), a line break,
+    and in German a trailing ``PKMN`` label.  The engine footer has only the
+    two localized label/number pairs.  Keep this selector deliberately narrow:
+    exactly two numeric runtime tokens, one control boundary, no extra runtime
+    values, and the known RBY selector are required.  The English extraction
+    is normalized to the engine's compact shape for alias matching; target
+    labels retain their localized punctuation and spacing.
+    """
+    if extraction.get("selector") != _DEX_COUNTER_SELECTOR:
+        return None
+    converted = corpus_to_engine(text)
+    dynamic = list(DYNAMIC_TOKEN_RE.finditer(converted))
+    if len(dynamic) != 2 or any(not match.group(0).startswith("{NUM:") for match in dynamic):
+        return None
+    first, second = dynamic
+    between = converted[first.end():second.start()]
+    # The audited message has exactly one line boundary between counters.
+    boundaries = list(re.finditer(r"[\n\f\v\r]", between))
+    if len(boundaries) != 1:
+        return None
+    prefix = converted[:first.start()]
+    suffix = converted[second.end():]
+    # The prefix is one corpus line.  This rejects unaudited extra heading
+    # lines rather than silently selecting the final line before the number.
+    if re.search(r"[\n\f\v\r]", prefix) or re.search(r"[\n\f\v\r]", suffix):
+        return None
+    # German carries `` PKMN`` after both numbers.  Other audited languages
+    # carry only spacing around those regions.  Require the first and final
+    # suffix regions to have the same exact structural kind; this prevents a
+    # generic/unaudited PKMN suffix from being accepted on just one side.
+    first_suffix = between[:boundaries[0].start()]
+    second_prefix = between[boundaries[0].end():]
+    def suffix_kind(value: str) -> str | None:
+        if value.strip() == "":
+            return "none"
+        if value.strip() == "PKMN" and value.startswith(" "):
+            return "pkmn"
+        return None
+    first_kind = suffix_kind(first_suffix)
+    final_kind = suffix_kind(suffix)
+    if first_kind is None or final_kind is None or first_kind != final_kind:
+        return None
+    def line_tail(value: str) -> tuple[str, str]:
+        raw = re.split(r"[\n\f\v\r]", value)[-1].lstrip()
+        stripped = raw.rstrip()
+        return stripped, raw[len(stripped):]
+    label_one, spacing_one = line_tail(prefix)
+    label_two, spacing_two = line_tail(second_prefix)
+    if not label_one or not label_two:
+        return None
+    # The only audited PKMN-bearing target row is German's Gesehen/Besitz
+    # variant.  Keep this explicit so a generic suffix cannot become a new
+    # accepted shape merely because it appears on both sides.
+    if first_kind == "pkmn":
+        if language == "en" or {label_one.casefold(), label_two.casefold()} != _DEX_COUNTER_PKMN_LABELS:
+            return None
+    # ``#`` expands to POKé in corpus_to_engine.  Remove only the audited
+    # heading prefix; localized labels are otherwise taken verbatim.
+    label_one = re.sub(r"^POKéDEX\s*[:：]?\s*", "", label_one, flags=re.IGNORECASE)
+    if label_one == label_two:
+        return None
+    # Japanese uses a full-width colon in the heading and has no ASCII
+    # ``POKéDEX`` spelling.  Its first label follows that colon.
+    if label_one.startswith("POKé") and (":" in label_one or "：" in label_one):
+        label_one = re.split(r"[:：]", label_one, maxsplit=1)[1].strip()
+    if not label_one or not label_two:
+        return None
+    token_one, token_two = first.group(0), second.group(0)
+    if language == "en":
+        # Match the engine key's compact English shape even though the corpus
+        # includes a colon and a ROM line break.
+        pair_one = re.sub(r"[:：]\s*$", "", label_one).rstrip() + " " + token_one
+        pair_two = re.sub(r"[:：]\s*$", "", label_two).rstrip() + " " + token_two
+    else:
+        # Preserve localized label punctuation and any intentional spacing
+        # immediately before the number; normalize only the ROM line break.
+        pair_one = label_one + spacing_one + token_one
+        pair_two = label_two + spacing_two + token_two
+    return pair_one + "  " + pair_two
 
 
 def _extract_anchor(text: str, extraction: Mapping, language: str | None = None) -> str | None:
@@ -509,6 +650,8 @@ def _extract_anchor(text: str, extraction: Mapping, language: str | None = None)
                 inherited["kind"] = parent_kind
             if "preserve_edges" not in selected and parent_preserve_edges:
                 inherited["preserve_edges"] = True
+            if parent_kind == "dex_counter" and "selector" not in selected:
+                inherited["selector"] = extraction.get("selector")
             if inherited:
                 selected = {**inherited, **selected}
         extraction = selected
@@ -516,6 +659,8 @@ def _extract_anchor(text: str, extraction: Mapping, language: str | None = None)
     index = extraction.get("index", 0)
     if isinstance(index, bool) or not isinstance(index, int) or index < 0:
         return None
+    if kind == "dex_counter":
+        return _extract_dex_counter(text, extraction, language)
     if kind in {"segment", "token", "span", "parts"}:
         # RedBlue composite labels contain control bytes such as <NEXT> and
         # trailing @ markers. Controls are boundaries; punctuation in labels
@@ -690,26 +835,86 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
         # Placeholder declarations are an explicit contract for composite
         # printf keys.  Require every dynamic corpus token in the composed
         # English source to be declared, and reject stale/extra declarations
-        # instead of silently producing a misleading match.
-        source_dynamic = DYNAMIC_TOKEN_RE.findall(corpus_to_engine(source_joined))
-        declared_dynamic = set(placeholders)
+        # instead of silently producing a misleading match.  Localizations
+        # must preserve token identity, multiplicity, and order: printf
+        # arguments are positional in LuaJIT's string.format.
+        source_converted = corpus_to_engine(source_joined)
+        target_converted = corpus_to_engine(target_joined)
+        source_dynamic_raw = DYNAMIC_TOKEN_RE.findall(source_converted)
+        source_dynamic = [_dynamic_identity(token) for token in source_dynamic_raw]
+        declared_dynamic = set(_dynamic_identity(corpus_to_engine(token)) for token in placeholders)
         if set(source_dynamic) != declared_dynamic:
             return None, set()
-        target_dynamic = DYNAMIC_TOKEN_RE.findall(corpus_to_engine(target_joined))
-        # Runtime printf arguments are positional.  Require every localized
-        # part to retain the exact token identity and multiplicity/order from
-        # English; type-only matching would silently substitute names.
+        target_dynamic = [_dynamic_identity(token) for token in DYNAMIC_TOKEN_RE.findall(target_converted)]
         if target_dynamic != source_dynamic:
+            return None, set()
+        target_tokens = _placeholder_tokens(target_converted)
+        # A target containing both corpus dynamics and explicit printf tokens
+        # is ambiguous (the latter could be prose or a substituted argument).
+        if any(kind == "printf" for kind, _ in target_tokens):
+            return None, set()
+
+        source_directives = [directive for directive in printf_directives(source)
+                             if directive != "%%"]
+        occurrence_refs: list[tuple[str, object]] = []
+        printf_index = 0
+        used_printf_indexes: list[int] = []
+        mapped_printf_count = 0
+        for token in source_dynamic:
+            ref = placeholders.get(token)
+            if ref is None:
+                # Config keys may use a legacy spelling that converts to the
+                # same engine token; normalize before looking up the ref.
+                ref = next((candidate for candidate, candidate_ref in placeholders.items()
+                            if _dynamic_identity(corpus_to_engine(candidate)) == token), None)
+                if ref is None:
+                    return None, set()
+                ref = placeholders[ref]
+            if isinstance(ref, dict) and "part" in ref:
+                occurrence_refs.append(("part", ref["part"]))
+                continue
+            if isinstance(ref, dict) and "printf" in ref:
+                index = ref["printf"]
+                if index in used_printf_indexes or index != printf_index:
+                    return None, set()
+                if index >= len(source_directives):
+                    return None, set()
+                directive = source_directives[index]
+                used_printf_indexes.append(index)
+            elif isinstance(ref, str):
+                directive = ref
+                if printf_index >= len(source_directives) or directive != source_directives[printf_index]:
+                    return None, set()
+            else:
+                return None, set()
+            occurrence_refs.append(("printf", directive))
+            printf_index += 1
+            mapped_printf_count += 1
+        if printf_index != len(source_directives) or mapped_printf_count != len(source_directives):
             return None, set()
 
         def replace(text: str, values: list[str]) -> str:
-            for token, ref in placeholders.items():
-                value = "%s" if ref == "%s" else values[ref["part"]]
-                text = text.replace(token, value)
-            return text
+            converted = corpus_to_engine(text)
+            out: list[str] = []
+            cursor = 0
+            occurrence = 0
+            for match in DYNAMIC_TOKEN_RE.finditer(converted):
+                out.append(converted[cursor:match.start()])
+                if occurrence >= len(occurrence_refs):
+                    return ""
+                kind, value = occurrence_refs[occurrence]
+                out.append(values[value] if kind == "part" else value)
+                occurrence += 1
+                cursor = match.end()
+            out.append(converted[cursor:])
+            if occurrence != len(occurrence_refs):
+                return ""
+            return "".join(out)
 
         source_value = replace(source_joined, source_pieces)
         target_value = replace(target_joined, target_pieces)
+        if not source_value or not target_value:
+            return None, set()
         aliases = {str(alias) for alias in anchor.get("source_aliases", []) if isinstance(alias, str)}
         if source_value not in ({source} | aliases):
             return None, set()
@@ -750,6 +955,11 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
             )
             if target_piece is None or not source_matches:
                 semantic_error = True; continue
+            if extraction.get("kind") == "dex_counter":
+                source_dynamic = [_dynamic_identity(token) for token in DYNAMIC_TOKEN_RE.findall(corpus_to_engine(source_piece))]
+                target_dynamic = [_dynamic_identity(token) for token in DYNAMIC_TOKEN_RE.findall(corpus_to_engine(target_piece))]
+                if source_dynamic != target_dynamic:
+                    semantic_error = True; continue
             # Engine catalogue keys use printf directives while corpus rows
             # carry typed runtime tokens (for example ``{USER}``,
             # ``{RAM:...}``, and ``{NUM:...}``).  For printf-bearing keys,
