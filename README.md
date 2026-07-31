@@ -193,6 +193,36 @@ Spanish, or Italian builds, it also asks for one localized Red **or** Blue ROM
 as a font source. It verifies the
 US SHA-1 fingerprints and asks before cloning anything. It then:
 
+### Optional local path configuration
+
+To avoid re-entering paths, copy
+[`config/rom_paths.example.toml`](config/rom_paths.example.toml) to the ignored
+`config/rom_paths.toml` and edit it. The supported schema is:
+
+```toml
+[rom]
+red = "/absolute/path/to/PokemonRed.gb"
+blue = "/absolute/path/to/PokemonBlue.gb"
+
+[localized]
+fr = "/absolute/path/to/PokemonFrench.gb"
+de = "/absolute/path/to/PokemonGerman.gb"
+es = "/absolute/path/to/PokemonSpanish.gb"
+it = "/absolute/path/to/PokemonItalian.gb"
+```
+
+The Red and Blue entries may be supplied independently. Localized entries are
+optional and may be partial; Japanese has no localized-ROM entry because its
+font extraction is unsupported. `~` is expanded, and relative paths are
+resolved relative to `config/rom_paths.toml`; absolute paths are recommended.
+On Windows, either use forward slashes (`C:/Games/PokemonRed.gb`) or TOML
+literal single-quoted paths such as `red = 'C:\Games\PokemonRed.gb'` (a
+double-quoted TOML string must double each backslash).
+When a configured path applies, the builder asks whether to use it and still
+performs its normal file, SHA-1, and localized-font validation. Choosing No,
+or correcting a missing configured file, returns to the usual path prompt.
+The actual file is ignored by Git and must remain private.
+
 1. clones the pinned Gen1Recomp revision and only the required
    `poke-corpus/corpus/RedBlue` subtree under `.cache/`;
 2. extracts both ROMs into private, ignored directories;
@@ -347,7 +377,8 @@ state machines, or would require unsafe runtime placeholder assumptions.
 Keep canonical and localized ROM paths, fingerprints, corpus revisions,
 import logs, worksheets, catalogs, complete extracted fonts, and coverage
 reports private: they can contain source text or local filesystem
-information. A publication may contain the generated translation mod,
+information. `config/rom_paths.toml` is ignored for this reason; never commit
+it or replace the tracked example with your personal paths. A publication may contain the generated translation mod,
 including its compact localized glyph page, and English documentation after
 a no-ROM-content inspection. Do not claim ROM redistribution or provide
 download instructions.

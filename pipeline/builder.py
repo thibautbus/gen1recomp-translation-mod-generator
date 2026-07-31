@@ -18,6 +18,7 @@ from .mod import generate_mod
 from .localized_font import extract_localized_font, validate_localized_rom
 from .project import ROOT, project_config, project_version
 from .roms import import_rom, verify_rom
+from .rom_paths import configured_path, load_rom_paths
 
 
 LANGUAGES = (
@@ -163,6 +164,33 @@ def _prompt_path(prompt: str, input_fn: Callable[[str], str]) -> Path:
     if not path.is_file():
         raise BuildError(f"File not found: {path}")
     return path.resolve()
+
+
+def _prompt_configured_path(
+    prompt: str,
+    configured: Path | None,
+    input_fn: Callable[[str], str],
+) -> Path:
+    """Offer a configured path, falling back to the regular path prompt."""
+    if configured is None:
+        return _prompt_path(prompt, input_fn)
+    while True:
+        answer = input_fn(
+            f"Path found in config: {configured}. Use this path? [Y/n]: "
+        ).strip().lower()
+        if answer in {"", "y", "yes"}:
+            break
+        if answer in {"n", "no"}:
+            return _prompt_path(prompt, input_fn)
+        print("Please answer y/yes or n/no.")
+    try:
+        # Keep the same existence/type validation as a directly entered path.
+        if not configured.is_file():
+            raise BuildError(f"File not found: {configured}")
+        return configured.resolve()
+    except (OSError, BuildError) as error:
+        print(f"Configured path is not usable: {error}")
+        return _prompt_path(prompt, input_fn)
 
 
 def _prompt_language(input_fn: Callable[[str], str]) -> tuple[str, str]:
@@ -465,23 +493,29 @@ def main(input_fn: Callable[[str], str] = input) -> int:
     print("Gen1Recomp translation mod builder\n")
     try:
         luajit = check_prerequisites()
-        red = _prompt_path(
+        rom_paths = load_rom_paths(ROOT / "config" / "rom_paths.toml")
+        red_prompt = (
             "Please specify the location of your Pokemon Red ROM "
-            "(full path, e.g. C:\\Games\\PokemonRed.gb): ",
-            input_fn,
+            "(full path, e.g. C:\\Games\\PokemonRed.gb): "
         )
-        blue = _prompt_path(
+        blue_prompt = (
             "Please specify the location of your Pokemon Blue ROM "
-            "(full path, e.g. C:\\Games\\PokemonBlue.gb): ",
-            input_fn,
+            "(full path, e.g. C:\\Games\\PokemonBlue.gb): "
+        )
+        red = _prompt_configured_path(
+            red_prompt, configured_path(rom_paths, "rom", "red"), input_fn
+        )
+        blue = _prompt_configured_path(
+            blue_prompt, configured_path(rom_paths, "rom", "blue"), input_fn
         )
         language, language_name = _prompt_language(input_fn)
         localized = None
         if canonical_language(language) in WESTERN_FONT_LANGUAGES:
             language_name = dict(LANGUAGES)[language]
-            localized = _prompt_path(
+            localized = _prompt_configured_path(
                 f"Please specify one localized {language_name} Pokémon Red or Blue ROM for its font "
                 "(full path, e.g. /Games/PokemonLocalized.gb): ",
+                configured_path(rom_paths, "localized", language),
                 input_fn,
             )
         _print_language_warning(language)

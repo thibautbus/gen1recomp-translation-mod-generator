@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import io
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -11,9 +12,196 @@ import zipfile
 
 from pipeline import builder
 from pipeline.project import project_version
+from pipeline.rom_paths import load_rom_paths
 
 
 class BuilderTests(unittest.TestCase):
+    def test_absent_rom_path_config_is_empty(self):
+        with tempfile.TemporaryDirectory() as directory:
+            paths = load_rom_paths(Path(directory) / "rom_paths.toml")
+        self.assertEqual(paths, {"rom": {}, "localized": {}})
+
+    def test_partial_config_resolves_relative_quoted_and_tilde_paths(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = root / "config" / "rom_paths.toml"
+            config.parent.mkdir()
+            config.write_text(
+                "[rom]\nred = '../roms/Red.gb'\n"
+                "[localized]\nfr = '~/French.gb'\n",
+                encoding="utf-8",
+            )
+            paths = load_rom_paths(config)
+        self.assertEqual(paths["rom"]["red"], (root / "roms" / "Red.gb").resolve())
+        self.assertEqual(paths["localized"]["fr"], (Path.home() / "French.gb").resolve())
+        self.assertNotIn("blue", paths["rom"])
+
+    def test_full_config_accepts_supported_localized_languages(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "rom_paths.toml"
+            config.write_text(
+                "[rom]\nred = \"red.gb\"\nblue = \"blue.gb\"\n"
+                "[localized]\nfr = \"fr.gb\"\nde = \"de.gb\"\n"
+                "es = \"es.gb\"\nit = \"it.gb\"\n",
+                encoding="utf-8",
+            )
+            paths = load_rom_paths(config)
+        self.assertEqual(set(paths["rom"]), {"red", "blue"})
+        self.assertEqual(set(paths["localized"]), {"fr", "de", "es", "it"})
+
+    def test_windows_literal_path_is_parsed_without_posix_absolute_assumption(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "rom_paths.toml"
+            config.write_text("[rom]\nred = 'C:\\Games\\PokemonRed.gb'\n", encoding="utf-8")
+            paths = load_rom_paths(config)
+        if os.name == "nt":
+            self.assertEqual(str(paths["rom"]["red"]), r"C:\Games\PokemonRed.gb")
+        else:
+            self.assertEqual(
+                paths["rom"]["red"],
+                (config.parent / r"C:\Games\PokemonRed.gb").resolve(),
+            )
+
+    def test_config_validation_errors_are_concise(self):
+        cases = {
+            "malformed": ("[rom\nred = 'x'", "Unable to load ROM path configuration"),
+            "unknown key": ("[rom]\ngreen = 'x'", "Unsupported keys in [rom]: green"),
+            "unknown localized": ("[localized]\nja-Hrkt = 'x'", "Unsupported keys in [localized]: ja-Hrkt"),
+            "wrong type": ("[rom]\nred = 1", "[rom].red must be a string path."),
+            "wrong table": ("rom = 'red.gb'", "[rom] must be a TOML table."),
+        }
+        for name, (contents, message) in cases.items():
+            with self.subTest(config=name), tempfile.TemporaryDirectory() as directory:
+                config = Path(directory) / "rom_paths.toml"
+                config.write_text(contents, encoding="utf-8")
+                with self.assertRaises(ValueError) as raised:
+                    load_rom_paths(config)
+                self.assertIn(message, str(raised.exception))
+
+    def test_configured_path_accept_and_replace(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            configured = root / "configured.gb"
+            replacement = root / "replacement.gb"
+            configured.write_bytes(b"rom")
+            replacement.write_bytes(b"rom")
+            prompts = iter(["", str(replacement)])
+            accepted = builder._prompt_configured_path(
+                "replacement: ", configured, lambda _: next(prompts)
+            )
+            self.assertEqual(accepted, configured.resolve())
+            prompts = iter(["n", str(replacement)])
+            replaced = builder._prompt_configured_path(
+                "replacement: ", configured, lambda _: next(prompts)
+            )
+            self.assertEqual(replaced, replacement.resolve())
+
+    def test_configured_prompt_accepts_yes_and_rejects_no_variants(self):
+        with tempfile.TemporaryDirectory() as directory:
+            configured = Path(directory) / "configured.gb"
+            replacement = Path(directory) / "replacement.gb"
+            configured.write_bytes(b"rom")
+            replacement.write_bytes(b"rom")
+            for answer in ("y", "yes", "n", "no"):
+                with self.subTest(answer=answer):
+                    prompts = iter([answer] if answer in {"y", "yes"} else [answer, str(replacement)])
+                    result = builder._prompt_configured_path(
+                        "replacement: ", configured, lambda _: next(prompts)
+                    )
+                    expected = configured if answer in {"y", "yes"} else replacement
+                    self.assertEqual(result, expected.resolve())
+
+    def test_configured_prompt_retries_invalid_response(self):
+        with tempfile.TemporaryDirectory() as directory:
+            configured = Path(directory) / "configured.gb"
+            configured.write_bytes(b"rom")
+            prompts = iter(["maybe", "YES"])
+            with patch("builtins.print") as printed:
+                result = builder._prompt_configured_path(
+                    "replacement: ", configured, lambda _: next(prompts)
+                )
+            self.assertEqual(result, configured.resolve())
+            printed.assert_called_once_with("Please answer y/yes or n/no.")
+
+    def test_missing_configured_path_allows_correction(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            replacement = root / "replacement.gb"
+            replacement.write_bytes(b"rom")
+            prompts = iter(["", str(replacement)])
+            with patch("builtins.print"):
+                result = builder._prompt_configured_path(
+                    "replacement: ", root / "missing.gb", lambda _: next(prompts)
+                )
+            self.assertEqual(result, replacement.resolve())
+
+    def test_japanese_does_not_consult_localized_config(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            localized = root / "japanese.gb"
+            localized.write_bytes(b"rom")
+            paths = {"rom": {}, "localized": {"fr": localized}}
+            from pipeline.rom_paths import configured_path
+            self.assertIsNone(configured_path(paths, "localized", "ja-Hrkt"))
+
+    def test_main_autoloads_red_blue_and_selected_localized_key(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            red, blue, fr, de = (root / name for name in ("red.gb", "blue.gb", "fr.gb", "de.gb"))
+            for rom in (red, blue, fr, de):
+                rom.write_bytes(b"rom")
+            configured = {"rom": {"red": red, "blue": blue}, "localized": {"fr": fr, "de": de}}
+            prompts = []
+            answers = iter(("", "", "2", ""))
+            events = []
+
+            def input_fn(prompt):
+                prompts.append(prompt)
+                return next(answers)
+
+            def verify(path, version):
+                events.append(("verify", version, path))
+
+            def validate(path):
+                events.append(("localized", path))
+
+            with (
+                patch.object(builder, "check_prerequisites", return_value="luajit"),
+                patch.object(builder, "load_rom_paths", return_value=configured) as load,
+                patch.object(builder, "configured_path", wraps=builder.configured_path) as configured_lookup,
+                patch.object(builder, "verify_rom", side_effect=verify),
+                patch.object(builder, "validate_localized_rom", side_effect=validate),
+                patch.object(builder, "_confirm", return_value=True),
+                patch.object(builder, "build", return_value=root / "out.zip"),
+            ):
+                self.assertEqual(builder.main(input_fn), 0)
+            load.assert_called_once_with(builder.ROOT / "config" / "rom_paths.toml")
+            self.assertEqual([call.args for call in configured_lookup.call_args_list],
+                             [(configured, "rom", "red"), (configured, "rom", "blue"), (configured, "localized", "de")])
+            self.assertEqual([event[0:2] for event in events], [("verify", "red"), ("verify", "blue"), ("localized", de)])
+            self.assertTrue(any(str(de) in prompt for prompt in prompts))
+            self.assertFalse(any(str(fr) in prompt for prompt in prompts))
+
+    def test_main_japanese_does_not_consult_localized_config(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            red, blue, fr = (root / name for name in ("red.gb", "blue.gb", "fr.gb"))
+            for rom in (red, blue, fr):
+                rom.write_bytes(b"rom")
+            configured = {"rom": {"red": red, "blue": blue}, "localized": {"fr": fr}}
+            answers = iter(("", "", "5"))
+            with (
+                patch.object(builder, "check_prerequisites", return_value="luajit"),
+                patch.object(builder, "load_rom_paths", return_value=configured),
+                patch.object(builder, "configured_path", wraps=builder.configured_path) as configured_lookup,
+                patch.object(builder, "verify_rom"),
+                patch.object(builder, "_confirm", return_value=True),
+                patch.object(builder, "build", return_value=root / "out.zip"),
+            ):
+                self.assertEqual(builder.main(lambda prompt: next(answers)), 0)
+            self.assertEqual([call.args for call in configured_lookup.call_args_list],
+                             [(configured, "rom", "red"), (configured, "rom", "blue")])
+
     def test_project_version_comes_from_pyproject(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

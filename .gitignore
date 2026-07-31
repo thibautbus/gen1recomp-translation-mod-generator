@@ -21,6 +21,7 @@ data/generated/
 assets/generated/
 catalog.json
 /config/charmap.json
+/config/rom_paths.toml
 
 # Worksheets containing ROM references or temporary catalogs.
 *-worksheet/

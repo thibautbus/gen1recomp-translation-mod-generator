@@ -1,0 +1,18 @@
+# Optional local ROM paths for build_translation.py.
+# This example is tracked; copy it to rom_paths.toml and edit the paths.
+# Relative paths are resolved relative to this configuration file.
+
+[rom]
+red = "/absolute/path/to/PokemonRed.gb"
+blue = "/absolute/path/to/PokemonBlue.gb"
+# On Windows, TOML literal strings keep backslashes readable:
+# red = 'C:\Games\PokemonRed.gb'
+# blue = 'D:\Games\PokemonBlue.gb'
+
+# Western builds need one localized Red or Blue ROM for font extraction.
+# Leave a language out when it is not configured. Japanese is unsupported.
+[localized]
+# fr = "/absolute/path/to/PokemonFrench.gb"
+# de = "/absolute/path/to/PokemonGerman.gb"
+# es = "/absolute/path/to/PokemonSpanish.gb"
+# it = "/absolute/path/to/PokemonItalian.gb"
