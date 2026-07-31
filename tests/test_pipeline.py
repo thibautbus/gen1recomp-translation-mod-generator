@@ -2,6 +2,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from pipeline.align import align, apply_overrides
 from pipeline.cli import main as cli_main
@@ -16,6 +17,27 @@ from pipeline.worksheet import dump, load
 
 
 class PipelineTests(unittest.TestCase):
+    def test_cli_generate_defaults_engine_overrides_to_language_tree(self):
+        for language, expected in (
+            ("fr", "overrides/engine_overrides.json"),
+            ("es", "overrides/es/engine_overrides.json"),
+        ):
+            with tempfile.TemporaryDirectory() as tmp:
+                aligned = Path(tmp) / "aligned.json"
+                aligned.write_text(json.dumps([{
+                    "qid": "example", "game": "red", "english": "HELLO",
+                    "target_lang": language, "translation": "BONJOUR",
+                }]), encoding="utf-8")
+                output = Path(tmp) / "mod"
+                with patch("pipeline.cli.generate_mod") as generate:
+                    self.assertEqual(cli_main([
+                        "generate", str(aligned), "-o", str(output),
+                        "--target-lang", language,
+                    ]), 0)
+                self.assertEqual(
+                    generate.call_args.kwargs["engine_overrides"], expected,
+                )
+
     def test_corpus_json_and_qid_alignment(self):
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "redblue.jsonl"

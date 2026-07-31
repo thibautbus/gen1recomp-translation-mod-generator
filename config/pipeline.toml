@@ -43,4 +43,4 @@ sha1 = "d7037c83e1ae5b39bde3c30787637ba1d4c48ce2"
 
 [output]
 language_dir = "lang"
-overrides = "review/{target_lang}/overrides.json (fr uses review/overrides.json)"
+overrides = "overrides/{target_lang}/overrides.json (fr uses overrides/overrides.json)"

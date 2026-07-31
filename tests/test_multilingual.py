@@ -12,6 +12,14 @@ from pipeline.cli import main as cli_main
 
 
 class MultilingualTests(unittest.TestCase):
+    def test_es_it_engine_override_files_load_from_overrides_tree(self):
+        for language in ("es", "it"):
+            path = Path("overrides") / language / "engine_overrides.json"
+            self.assertTrue(path.is_file())
+            overrides = load_engine_overrides(path)
+            self.assertEqual(len(overrides), 4)
+            self.assertTrue(all(entry.get("source") == "editorial" for entry in overrides.values()))
+
     def test_cli_ja_alias_serializes_canonical_target(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); (root / "qid_msg.txt").write_text("q\n", encoding="utf-8"); (root / "en_msg.txt").write_text("HELLO\n", encoding="utf-8"); (root / "ja-Hrkt_msg.txt").write_text("こんにちは\n", encoding="utf-8")
@@ -471,7 +479,7 @@ class MultilingualTests(unittest.TestCase):
         The four ES/IT entries are deliberately not qid-derived: overrides win
         over semantic anchors and report editorial provenance without a qid.
         Other languages must continue through their normal semantic/fallback
-        paths, proving that the per-language review files do not leak.
+        paths, proving that the per-language override files do not leak.
         """
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
         if not (root / "qid_msg.txt").is_file():
@@ -497,7 +505,7 @@ class MultilingualTests(unittest.TestCase):
         anchors = load_semantic_anchors()
         for language in ("es", "it"):
             items = align(parse_redblue(root, language), target_lang=language)
-            override_path = Path("review") / language / "engine_overrides.json"
+            override_path = Path("overrides") / language / "engine_overrides.json"
             overrides = load_engine_overrides(override_path)
             self.assertEqual(set(overrides), set(keys))
             self.assertTrue(all(entry.get("source") == "editorial" for entry in overrides.values()), language)
@@ -525,7 +533,7 @@ class MultilingualTests(unittest.TestCase):
             catalog = read_engine_catalog(scaffold)
             self.assertTrue(set(keys) <= set(catalog), language)
 
-        # FR/DE/JA do not load ES/IT review files. Their proven semantic paths
+        # FR/DE/JA do not load ES/IT override files. Their proven semantic paths
         # therefore remain untouched and never report editorial overrides.
         for language in ("fr", "de", "ja-Hrkt"):
             items = align(parse_redblue(root, language), target_lang=language)

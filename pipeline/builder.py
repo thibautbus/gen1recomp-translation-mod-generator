@@ -195,9 +195,9 @@ def _confirm(input_fn: Callable[[str], str]) -> bool:
 
 def _override_path(language: str, filename: str) -> Path | None:
     path = (
-        ROOT / "review" / filename
+        ROOT / "overrides" / filename
         if language == "fr"
-        else ROOT / "review" / language / filename
+        else ROOT / "overrides" / language / filename
     )
     return path if path.is_file() else None
 

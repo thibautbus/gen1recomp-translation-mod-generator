@@ -78,6 +78,21 @@ class BuilderTests(unittest.TestCase):
             builder._print_language_warning("fr")
         self.assertEqual(output.getvalue(), "")
 
+    def test_override_defaults_use_french_root_and_language_subdirectories(self):
+        self.assertEqual(
+            builder._override_path("fr", "overrides.json"),
+            builder.ROOT / "overrides" / "overrides.json",
+        )
+        self.assertEqual(
+            builder._override_path("es", "engine_overrides.json"),
+            builder.ROOT / "overrides" / "es" / "engine_overrides.json",
+        )
+        self.assertTrue(builder._override_path("fr", "overrides.json").is_file())
+        self.assertTrue(builder._override_path("it", "engine_overrides.json").is_file())
+
+    def test_legacy_review_directory_is_not_present(self):
+        self.assertFalse((builder.ROOT / "review").exists())
+
     def test_confirmation_defaults_to_yes(self):
         self.assertTrue(builder._confirm(lambda _: ""))
         self.assertTrue(builder._confirm(lambda _: "YES"))

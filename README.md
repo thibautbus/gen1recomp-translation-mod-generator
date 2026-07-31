@@ -122,8 +122,8 @@ deliberately remains English:
   argument (`ATTACK`, `DEFENSE`, `SPEED`, `SPECIAL`, `ACCURACY`, or `EVADE`),
   preserve the runtime Pokémon-first/stat-label-second argument order, and are
   counted in the engine coverage above. The reviewed entries are versioned in
-  [`review/es/engine_overrides.json`](review/es/engine_overrides.json) and
-  [`review/it/engine_overrides.json`](review/it/engine_overrides.json). Other
+  [`overrides/es/engine_overrides.json`](overrides/es/engine_overrides.json) and
+  [`overrides/it/engine_overrides.json`](overrides/it/engine_overrides.json). Other
   stat-message variants (including the alternate line-break form) remain
   English and fall back at runtime. Full stat-label localization still
   requires an upstream localization hook; no `engine_internals` monkeypatch is
@@ -193,7 +193,7 @@ Inside that archive, `assets/font/localized.png` is relative to the mod root;
 the generated runtime resolves it with `mod.assets:path(...)` before
 registering the page. Japanese builds skip this localized-font stage.
 
-Editorial corrections live in the versioned files under `review/` and are
+Editorial corrections live in the versioned files under `overrides/` and are
 applied automatically by the builder. Corpus sources and generated private
 catalogs are never rewritten.
 

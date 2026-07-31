@@ -20,12 +20,12 @@ MOD_ID=${MOD_ID:-}
 
 if [ "$TARGET_LANG" = fr ]; then
     LANG_DIR="$ROOT_DIR/.cache/build"
-    OVERRIDES="$ROOT_DIR/review/overrides.json"
-    ENGINE_OVERRIDES="$ROOT_DIR/review/engine_overrides.json"
+    OVERRIDES=${OVERRIDES:-"$ROOT_DIR/overrides/overrides.json"}
+    ENGINE_OVERRIDES=${ENGINE_OVERRIDES:-"$ROOT_DIR/overrides/engine_overrides.json"}
 else
     LANG_DIR="$ROOT_DIR/.cache/build/$TARGET_LANG"
-    OVERRIDES=${OVERRIDES:-"$ROOT_DIR/review/$TARGET_LANG/overrides.json"}
-    ENGINE_OVERRIDES=${ENGINE_OVERRIDES:-"$ROOT_DIR/review/$TARGET_LANG/engine_overrides.json"}
+    OVERRIDES=${OVERRIDES:-"$ROOT_DIR/overrides/$TARGET_LANG/overrides.json"}
+    ENGINE_OVERRIDES=${ENGINE_OVERRIDES:-"$ROOT_DIR/overrides/$TARGET_LANG/engine_overrides.json"}
 fi
 
 BUILD_DIR=${BUILD_DIR:-"$LANG_DIR"}
