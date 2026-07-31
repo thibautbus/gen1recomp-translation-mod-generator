@@ -12,6 +12,12 @@
     "NAME": {"qid": "rb.start_sub_menus.TrainerInfo_NameMoneyTimeText", "extraction": {"kind": "segment", "index": 0}},
     "ATTACK": {"qid": "rb.stat_names.VitaminStats.2", "extraction": {"kind": "segment", "index": 0}},
     "SPEED": {"qid": "rb.stat_names.VitaminStats.4", "extraction": {"kind": "segment", "index": 0}},
+    "AREA": {"qid": "rb.pokedex.PokedexMenuItemsText", "extraction": {"kind": "segment", "index": 2}},
+    "BATTLE STYLE": {"qid": "rb.main_menu.BattleStyleOptionText", "extraction": {"kind": "segment", "index": 0}},
+    "TEXT SPEED": {"qid": "rb.main_menu.TextSpeedOptionText", "extraction": {"kind": "segment", "index": 0}},
+    "NEW GAME": {"qid": "rb.main_menu.NewGameText", "extraction": {"kind": "segment", "index": 0}},
+    "Which move should": {"qid": "rb.text_4.WhichMoveToForgetText", "extraction": {"kind": "segment", "index": 0}},
+    "be forgotten?": {"qid": "rb.text_4.WhichMoveToForgetText", "extraction": {"kind": "segment", "index": 1}},
 
     "TOSS": {"qid": "rb.text_boxes.UseTossText", "extraction": {"kind": "segment", "index": 1}},
     "USE": {"qid": "rb.text_boxes.UseTossText", "extraction": {"kind": "segment", "index": 0}},

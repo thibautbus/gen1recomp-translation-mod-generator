@@ -86,11 +86,11 @@ imports and corpus (corpus and pipeline revisions affect the numbers):
 
 | Target | ROM catalogs | Literal handlers | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 285/383 (74.41%) | 290/533 (54.41%) |
-| `de` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 283/383 (73.89%) | 288/533 (54.03%) |
-| `es` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 285/383 (74.41%) | 290/533 (54.41%) |
-| `it` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 285/383 (74.41%) | 290/533 (54.41%) |
-| `ja-Hrkt` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 281/383 (73.37%) | 286/533 (53.66%) |
+| `fr` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 291/383 (75.98%) | 296/533 (55.53%) |
+| `de` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 289/383 (75.46%) | 294/533 (55.16%) |
+| `es` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 291/383 (75.98%) | 296/533 (55.53%) |
+| `it` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 291/383 (75.98%) | 296/533 (55.53%) |
+| `ja-Hrkt` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 287/383 (74.93%) | 292/533 (54.78%) |
 
 Column definitions: **ROM catalogs** covers the six extracted Red/Blue
 catalogs—`dialogue`, `species_names`, `move_names`, `item_names`,
@@ -373,6 +373,21 @@ snapshots fail with an English error.
 Backlog classification imports the same versioned `pipeline/engine_scope.py`
 rules and production-`src` scanner used by coverage, including exact `.lua`
 module handling; it cannot silently invent a second RBY definition.
+
+For a reproducible cross-language view, use the private matrix command (the
+default language set is `fr,de,es,it,ja-Hrkt`):
+
+```sh
+python scripts/pipeline.py engine-backlog-matrix
+```
+
+It validates each cached coverage/catalog snapshot through the same analyzer
+and writes `.cache/audit/engine-backlog/matrix.{json,md}` with source paths,
+classifier/snapshot metadata, per-language candidates and callsites, key
+commonality, and conservative triage labels. Use `--coverage-dir` and
+`--engine-catalog-dir` (or repeat `--coverage LANG=PATH` and
+`--engine-catalog LANG=PATH`) to select explicit private snapshots; no config,
+catalog, or review file is modified.
 
 ## Data flow and matching
 

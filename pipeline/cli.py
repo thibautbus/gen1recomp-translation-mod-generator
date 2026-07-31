@@ -12,7 +12,7 @@ from .validate import release_gate, validate
 from .roms import catalog_roms, import_rom, import_all
 from .mod import generate_mod
 from .disassembly_audit import run_audit
-from .engine_backlog import run_backlog
+from .engine_backlog import MATRIX_LANGUAGES, run_backlog, run_backlog_matrix
 
 
 def main(argv=None) -> int:
@@ -33,6 +33,14 @@ def main(argv=None) -> int:
     backlog.add_argument("--corpus-root", help="private PokeCorpus checkout")
     backlog.add_argument("--coverage", dest="coverage_path", help="cached coverage JSON")
     backlog.add_argument("--engine-catalog", help="cached strings.lua scaffold")
+    matrix = sub.add_parser("engine-backlog-matrix", help="developer-only private multilingual engine backlog matrix")
+    matrix.add_argument("--languages", default="fr,de,es,it,ja-Hrkt", help="comma-separated canonical languages")
+    matrix.add_argument("--checkout", help="private Gen1Recomp checkout (defaults to .cache/dependencies/gen1recomp)")
+    matrix.add_argument("--corpus-root", help="private PokeCorpus checkout")
+    matrix.add_argument("--coverage-dir", help="directory/template for per-language coverage.json snapshots")
+    matrix.add_argument("--engine-catalog-dir", help="directory/template for per-language strings.lua scaffolds")
+    matrix.add_argument("--coverage", action="append", metavar="LANG=PATH", help="explicit per-language coverage snapshot (repeatable)")
+    matrix.add_argument("--engine-catalog", action="append", metavar="LANG=PATH", help="explicit per-language strings.lua scaffold (repeatable)")
     args = p.parse_args(argv)
     if args.command == "catalog":
         catalog_roms({"red": args.red, "blue": args.blue}, args.output); return 0
@@ -56,6 +64,43 @@ def main(argv=None) -> int:
             print(f"engine-backlog: {exc}", file=sys.stderr)
             return 2
         print(json.dumps({"language": report["language"], "stats": report["stats"]}, ensure_ascii=False, indent=2))
+        return 0
+    if args.command == "engine-backlog-matrix":
+        try:
+            def matrix_paths(values, label):
+                result = {}
+                for value in values or []:
+                    if "=" not in value:
+                        raise ValueError("matrix paths must use LANG=PATH")
+                    raw_language, path = value.split("=", 1)
+                    language = canonical_language(raw_language, "")
+                    if language not in MATRIX_LANGUAGES:
+                        raise ValueError(f"unsupported {label} language {raw_language!r}")
+                    if not path:
+                        raise ValueError(f"missing {label} path for language {raw_language!r}")
+                    if language in result:
+                        raise ValueError(f"duplicate {label} language mapping for {language!r}")
+                    result[language] = path
+                return result or None
+            coverage_paths = matrix_paths(args.coverage, "coverage")
+            catalog_paths = matrix_paths(args.engine_catalog, "engine catalog")
+            if coverage_paths is not None and args.coverage_dir:
+                raise ValueError("cannot combine --coverage mappings with --coverage-dir")
+            if catalog_paths is not None and args.engine_catalog_dir:
+                raise ValueError("cannot combine --engine-catalog mappings with --engine-catalog-dir")
+            report = run_backlog_matrix(
+                languages=args.languages,
+                checkout=args.checkout,
+                corpus_root=args.corpus_root,
+                coverage_paths=coverage_paths,
+                engine_catalog_paths=catalog_paths,
+                coverage_dir=args.coverage_dir,
+                engine_catalog_dir=args.engine_catalog_dir,
+            )
+        except (FileNotFoundError, ValueError, OSError) as exc:
+            print(f"engine-backlog-matrix: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps({"languages": report["languages"], "stats": report["stats"]}, ensure_ascii=False, indent=2))
         return 0
     if args.command == "parse":
         records = parse_redblue(args.corpus, canonical_language(args.target_lang))

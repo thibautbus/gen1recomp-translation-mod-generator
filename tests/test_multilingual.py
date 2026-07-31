@@ -432,6 +432,41 @@ class MultilingualTests(unittest.TestCase):
                 self.assertEqual(report["details"][key], "semantic", language)
                 self.assertEqual(report["provenance"][key]["qid"], qid, language)
 
+    def test_real_corpus_proven_rby_ui_anchor_batch_all_languages(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        keys = {
+            "AREA": "rb.pokedex.PokedexMenuItemsText",
+            "BATTLE STYLE": "rb.main_menu.BattleStyleOptionText",
+            "TEXT SPEED": "rb.main_menu.TextSpeedOptionText",
+            "NEW GAME": "rb.main_menu.NewGameText",
+            "Which move should": "rb.text_4.WhichMoveToForgetText",
+            "be forgotten?": "rb.text_4.WhichMoveToForgetText",
+        }
+        anchors = load_semantic_anchors()
+        for key, qid in keys.items():
+            self.assertEqual(anchors[key]["qid"], qid)
+            self.assertEqual(anchors[key]["extraction"]["kind"], "segment")
+            self.assertIsInstance(anchors[key]["extraction"]["index"], int)
+        for language in ("fr", "de", "es", "it", "ja-Hrkt"):
+            items = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog(
+                {key: "" for key in keys}, items,
+                semantic_anchors=anchors, target_lang=language,
+            )
+            self.assertEqual(report["translated"], len(keys), language)
+            self.assertEqual(report["auto_semantic"], len(keys), language)
+            self.assertFalse(report["ambiguous"], language)
+            for key, qid in keys.items():
+                rows = [row for row in parse_redblue(root, language) if row.qid == qid and row.language == language]
+                self.assertEqual(len(rows), 1, (language, key))
+                expected = _extract_anchor(rows[0].text, anchors[key]["extraction"], language)
+                self.assertTrue(expected, (language, key))
+                self.assertEqual(output[key], expected, (language, key))
+                self.assertEqual(report["details"][key], "semantic", (language, key))
+                self.assertEqual(report["provenance"][key]["qid"], qid, (language, key))
+
     def test_real_corpus_printf_engine_anchor_batch_all_languages(self):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
         if not (root / "qid_msg.txt").is_file():

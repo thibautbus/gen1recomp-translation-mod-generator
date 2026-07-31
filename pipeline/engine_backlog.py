@@ -13,6 +13,7 @@ from difflib import SequenceMatcher
 import json
 from pathlib import Path
 import re
+from string import Formatter
 from typing import Any, Iterable, Mapping
 
 from .corpus import canonical_language, parse_redblue
@@ -32,6 +33,9 @@ from .engine_scope import classify_callsites, load_scope, coverage_metadata
 
 SCHEMA = "gen1recomp-translation-mods/engine-backlog"
 VERSION = 1
+MATRIX_SCHEMA = "gen1recomp-translation-mods/engine-backlog-matrix"
+MATRIX_VERSION = 1
+MATRIX_LANGUAGES = ("fr", "de", "es", "it", "ja-Hrkt")
 _CALL_RE = re.compile(r"\bStrings(?:\.source)?\s*\(")
 _LANGUAGE_CODES = {"fr", "de", "es", "it", "ja-Hrkt"}
 
@@ -531,4 +535,284 @@ def run_backlog(root: str | Path = ROOT, language: str | None = None, **kwargs: 
     return report
 
 
+def _matrix_language_path(
+    value: str | Path | Mapping[str, str | Path] | None,
+    language: str,
+    *,
+    filename: str,
+) -> Path | None:
+    """Resolve an optional per-language snapshot/catalog path.
+
+    Matrix callers may provide an explicit mapping, a ``{language}`` template,
+    or a directory containing ``<language>/<filename>`` (and, for convenience,
+    ``<language>.<suffix>``).  Returning ``None`` delegates to the analyzer's
+    existing deterministic cache lookup rules.
+    """
+    selected: str | Path | None
+    if isinstance(value, Mapping):
+        selected = value.get(language)
+    else:
+        selected = value
+    if selected is None:
+        return None
+    template = str(selected)
+    if "{" in template or "}" in template:
+        try:
+            fields = list(Formatter().parse(template))
+        except ValueError as exc:
+            raise ValueError(f"invalid matrix path template {template!r}: {exc}") from exc
+        invalid = [field for _, field, spec, conversion in fields
+                   if field not in (None, "language") or spec or conversion]
+        if invalid or any(field is None and (literal.count("{") or literal.count("}"))
+                          for literal, field, _, _ in fields):
+            raise ValueError("matrix path templates may use only the {language} placeholder")
+        template = template.replace("{language}", language)
+    path = Path(template)
+    if path.is_dir():
+        nested = path / language / filename
+        if nested.is_file():
+            return nested
+        suffix = Path(filename).suffix
+        sibling = path / f"{language}{suffix}"
+        if sibling.is_file():
+            return sibling
+        # Let the analyzer produce its normal English missing-file error.
+        return nested
+    return path
+
+
+def _matrix_languages(values: Iterable[str] | str | None) -> tuple[str, ...]:
+    if values is None:
+        return MATRIX_LANGUAGES
+    if isinstance(values, str):
+        values = values.split(",")
+    result: list[str] = []
+    for value in values:
+        language = canonical_language(value)
+        if language not in MATRIX_LANGUAGES:
+            raise ValueError(
+                f"unsupported engine backlog matrix language {language!r}; choose one of {', '.join(MATRIX_LANGUAGES)}"
+            )
+        if language in result:
+            raise ValueError(f"duplicate engine backlog matrix language {language!r}")
+        result.append(language)
+    if not result:
+        raise ValueError("engine backlog matrix requires at least one language")
+    # Reports use the pinned canonical order, independent of caller input
+    # ordering, so equivalent invocations produce byte-identical artifacts.
+    selected = set(result)
+    return tuple(language for language in MATRIX_LANGUAGES if language in selected)
+
+
+def _canonical_matrix_mapping(
+    value: Mapping[str, str | Path] | str | Path | None,
+    *,
+    selected_languages: tuple[str, ...],
+    label: str,
+) -> Mapping[str, str | Path] | str | Path | None:
+    """Canonicalize and validate explicit per-language path mappings."""
+    if not isinstance(value, Mapping):
+        return value
+    canonical: dict[str, str | Path] = {}
+    for raw_language, path in value.items():
+        language = canonical_language(raw_language, "")
+        if language not in MATRIX_LANGUAGES:
+            raise ValueError(f"unsupported {label} language {raw_language!r}")
+        if language in canonical:
+            raise ValueError(f"duplicate {label} language aliases for {language!r}")
+        if path is None or str(path) == "":
+            raise ValueError(f"missing {label} mapping for language: {language}")
+        canonical[language] = path
+    missing = [language for language in selected_languages if language not in canonical]
+    if missing:
+        raise ValueError(f"missing {label} mapping for language(s): {', '.join(missing)}")
+    extra = [language for language in canonical if language not in selected_languages]
+    if extra:
+        raise ValueError(f"{label} mapping contains unselected language(s): {', '.join(extra)}")
+    return canonical
+
+
+def analyze_engine_backlog_matrix(
+    *,
+    root: str | Path = ROOT,
+    languages: Iterable[str] | str | None = None,
+    checkout: str | Path | None = None,
+    corpus_root: str | Path | None = None,
+    coverage_paths: Mapping[str, str | Path] | str | Path | None = None,
+    engine_catalog_paths: Mapping[str, str | Path] | str | Path | None = None,
+    coverage_dir: str | Path | None = None,
+    engine_catalog_dir: str | Path | None = None,
+) -> dict[str, Any]:
+    """Analyze the canonical language backlogs and join them by engine key.
+
+    Every language is validated by :func:`analyze_engine_backlog`; no config,
+    catalog, or review file is written.  The returned structure is stable for
+    reproducible private audit reports and intentionally retains only metadata
+    plus unresolved/ambiguous key details from each per-language report.
+    """
+    root = Path(root)
+    selected_languages = _matrix_languages(languages)
+    coverage_paths = _canonical_matrix_mapping(
+        coverage_paths, selected_languages=selected_languages, label="coverage"
+    )
+    engine_catalog_paths = _canonical_matrix_mapping(
+        engine_catalog_paths, selected_languages=selected_languages, label="engine catalog"
+    )
+    reports: dict[str, dict[str, Any]] = {}
+    for language in selected_languages:
+        coverage_value = coverage_paths if coverage_paths is not None else coverage_dir
+        catalog_value = engine_catalog_paths if engine_catalog_paths is not None else engine_catalog_dir
+        coverage_path = _matrix_language_path(coverage_value, language, filename="coverage.json")
+        catalog_path = _matrix_language_path(catalog_value, language, filename="strings.lua")
+        reports[language] = analyze_engine_backlog(
+            language,
+            root=root,
+            checkout=checkout,
+            corpus_root=corpus_root,
+            coverage_path=coverage_path,
+            engine_catalog=catalog_path,
+        )
+
+    by_language = {
+        language: {entry["key"]: entry for entry in reports[language]["entries"]}
+        for language in selected_languages
+    }
+    keys = sorted({key for entries in by_language.values() for key in entries})
+    matrix_entries: list[dict[str, Any]] = []
+    for key in keys:
+        language_rows: dict[str, dict[str, Any]] = {}
+        present = 0
+        eligible = 0
+        for language in selected_languages:
+            entry = by_language[language].get(key)
+            if entry is None:
+                # The selected catalog may contain a resolved key, or the key
+                # can be absent from a language-specific snapshot.  The
+                # analyzer's snapshot validation guarantees a known universe,
+                # but deliberately does not expose resolved values.
+                language_rows[language] = {
+                    "status": "resolved_or_absent",
+                    "candidates": [],
+                    "placeholders": _placeholder_signature(key)["tokens"],
+                    "placeholder_signature": _placeholder_signature(key),
+                    "callsites": [],
+                    "rby_eligibility": None,
+                    "rby_eligible": None,
+                }
+                continue
+            present += 1
+            eligible += int(entry.get("rby_eligible") is True)
+            language_rows[language] = {
+                "status": entry["status"],
+                "category": entry.get("category"),
+                "candidates": entry.get("qid_candidates", []),
+                "placeholders": entry.get("placeholders", []),
+                "placeholder_signature": entry.get("placeholder_signature", {}),
+                "callsites": entry.get("callsites", []),
+                "rby_eligibility": entry.get("rby_eligibility"),
+                "rby_eligible": entry.get("rby_eligible"),
+                "fallback_reason": entry.get("fallback_reason"),
+                "coverage_provenance": entry.get("coverage_provenance", {}),
+                "semantic_anchor": entry.get("semantic_anchor"),
+            }
+        if eligible:
+            triage = "common-rby" if present == len(selected_languages) and eligible == len(selected_languages) else "rby-review"
+        elif present > 1:
+            triage = "common-review"
+        elif present == 1:
+            triage = "language-specific"
+        else:  # Defensive; keys is built from ``present`` rows.
+            triage = "unseen"
+        matrix_entries.append({
+            "key": key,
+            "languages": language_rows,
+            "commonality": {
+                "languages_present": present,
+                "language_count": len(selected_languages),
+                "all_languages": present == len(selected_languages),
+                "fraction": round(present / len(selected_languages), 6),
+            },
+            "triage": triage,
+            "triage_classification": triage,
+            "placeholders": _placeholder_signature(key),
+        })
+
+    language_metadata = {
+        language: {
+            "sources": reports[language]["sources"],
+            "coverage_snapshot": reports[language]["coverage_snapshot"],
+            "classifier": reports[language]["classifier"],
+            "stats": reports[language]["stats"],
+        }
+        for language in selected_languages
+    }
+    return {
+        "schema": MATRIX_SCHEMA,
+        "version": MATRIX_VERSION,
+        "languages": list(selected_languages),
+        "sources": {language: metadata["sources"] for language, metadata in language_metadata.items()},
+        "coverage_snapshots": {language: metadata["coverage_snapshot"] for language, metadata in language_metadata.items()},
+        "classifiers": {language: metadata["classifier"] for language, metadata in language_metadata.items()},
+        "language_reports": language_metadata,
+        "entries": matrix_entries,
+        "stats": {
+            "languages": len(selected_languages),
+            "keys": len(matrix_entries),
+            "common_keys": sum(item["commonality"]["all_languages"] for item in matrix_entries),
+            "rby_keys": sum(item["triage"] in {"common-rby", "rby-review"} for item in matrix_entries),
+            "triage": {
+                value: sum(item["triage"] == value for item in matrix_entries)
+                for value in ("common-rby", "rby-review", "common-review", "language-specific", "unseen")
+            },
+        },
+        "limitations": [
+            "Per-language rows are unresolved/ambiguous backlog entries; resolved keys are represented as resolved_or_absent.",
+            "Fuzzy qid suggestions remain advisory and never count as translated.",
+            "The matrix reflects the selected cached snapshots and does not mutate review data, catalogs, or configuration.",
+        ],
+    }
+
+
+def _markdown_matrix(report: Mapping[str, Any]) -> str:
+    stats = report["stats"]
+    languages = report["languages"]
+    lines = [
+        "# Engine backlog matrix",
+        "",
+        "Private developer report; no review data, catalogs, or configuration were modified.",
+        "",
+        f"Languages: {', '.join(f'`{language}`' for language in languages)}",
+        "",
+        "## Statistics",
+        "",
+        "| keys | common keys | RBY triage |",
+        "| ---: | ---: | ---: |",
+        f"| {stats['keys']} | {stats['common_keys']} | {stats['rby_keys']} |",
+        "",
+        "## Entries",
+        "",
+        "| key | commonality | triage | per-language status |",
+        "| --- | ---: | --- | --- |",
+    ]
+    for item in report["entries"]:
+        key = str(item["key"]).replace("|", "\\|")
+        statuses = ", ".join(f"{language}:{item['languages'][language]['status']}" for language in languages)
+        lines.append(f"| `{key}` | {item['commonality']['languages_present']}/{item['commonality']['language_count']} | {item['triage']} | {statuses} |")
+    return "\n".join(lines) + "\n"
+
+
+def run_backlog_matrix(root: str | Path = ROOT, **kwargs: Any) -> dict[str, Any]:
+    """Write deterministic private multilingual matrix JSON and Markdown."""
+    root = Path(root)
+    report = analyze_engine_backlog_matrix(root=root, **kwargs)
+    output = root / ".cache" / "audit" / "engine-backlog"
+    output.mkdir(parents=True, exist_ok=True)
+    (output / "matrix.json").write_text(
+        json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    (output / "matrix.md").write_text(_markdown_matrix(report), encoding="utf-8")
+    return report
+
+
 engine_backlog = analyze_engine_backlog
+engine_backlog_matrix = analyze_engine_backlog_matrix
