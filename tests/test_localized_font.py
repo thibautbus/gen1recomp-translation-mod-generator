@@ -68,13 +68,17 @@ class LocalizedFontTests(unittest.TestCase):
                 self.assertEqual(image.getpixel((0, 0)), (0, 0, 0, 255))
                 self.assertEqual(image.getpixel((7, 0)), (0, 0, 0, 0))
                 self.assertEqual(image.getpixel((7, 7)), (0, 0, 0, 255))
-            self.assertIn("base = 0x100", (root / "mod/lang/font.lua").read_text())
+            self.assertEqual(result["glyphs"]["à"], 0x100)
+            self.assertIn("base = 0x100", (root / "mod/lang/font.lua").read_text(encoding="utf-8"))
             self.assertIn(
                 "glyphsPerRow = 19",
-                (root / "mod/lang/font.lua").read_text(),
+                (root / "mod/lang/font.lua").read_text(encoding="utf-8"),
             )
             self.assertEqual(len(result["glyphs"]), 19)
-            charmap = (root / "mod/lang/charmap.lua").read_text()
+            charmap = (root / "mod/lang/charmap.lua").read_text(encoding="utf-8")
+            self.assertNotIn("\ufffd", charmap)
+            self.assertNotIn("\u00a0", charmap)
+            self.assertIn('["à"] = 0x100', charmap)
             self.assertIn('["é"] = 0x102', charmap)
 
     def test_localized_whole_rom_sha_is_not_required(self):

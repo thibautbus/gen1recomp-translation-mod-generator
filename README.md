@@ -276,7 +276,41 @@ The actual file is ignored by Git and must remain private.
 9. scans a private candidate archive before atomically publishing it to `dist/`.
 
 The final file is written to `dist/translation-<lang>-<version>.zip`, for
-example `dist/translation-fr-0.2.0.zip`. The command prints its absolute path.
+example `dist/translation-fr-0.3.0.zip`. The command prints its absolute path.
+
+## Windows standalone executable
+
+The repository includes a pinned/repeatable GitHub Actions workflow and local
+`packaging/build_windows_executable.ps1` script for producing a Windows x64
+one-file executable. The workflow is available, but no EXE is published until
+a release workflow run is performed. The build compiles official LuaJIT at
+the pinned commit, bundles Pillow and checked-in configuration, and runs tests
+plus `--self-check` before uploading the versioned artifact.
+
+For users, download the versioned EXE and double-click it from the directory
+where the output should be written. The prompts are the same as the manual
+CLI: provide paths to your own Red and Blue ROMs, select a language, and (for
+Western languages) provide one localized font ROM. The EXE requires network
+access to download the pinned Gen1Recomp archive and seven pinned PokeCorpus
+files. It never bundles or uploads ROMs. Downloads and all intermediate data
+are kept privately in `.cache/` under the current working directory; the final
+ZIP is written directly there as `translation-<lang>-<version>.zip`.
+
+Archive URLs, commit revisions, and SHA-256 pins are checked before
+extraction. Traversal, symlink, duplicate, and corrupt entries are rejected,
+and a marker permits safe reuse of a verified cache. Do not place
+`config/rom_paths.toml` or ROM files in the bundled application directory.
+
+Maintainers can rebuild the EXE on Windows with:
+
+```powershell
+./packaging/build_windows_executable.ps1
+```
+
+This dedicated packaging command does not alter the manual developer flow:
+running `python build_translation.py` unfrozen still checks installed Python,
+Git, LuaJIT, and Pillow, clones pinned repositories into the repository's
+`.cache/`, and writes output under `dist/`.
 The `.zip` extension is intentional: Gen1Recomp's mod importer accepts ZIP
 files, while Modkit writes the same deterministic ZIP format.
 Immediately before the final path, the builder prints ROM, RBY-related engine

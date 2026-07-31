@@ -1,10 +1,12 @@
 import hashlib
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from pipeline.project import project_config
-from pipeline.roms import CANONICAL, verify_rom
+from pipeline.roms import CANONICAL, import_rom, verify_rom
 
 
 class RomConfigTests(unittest.TestCase):
@@ -108,6 +110,49 @@ class RomConfigTests(unittest.TestCase):
                 verify_rom(rom, "green")
             with self.assertRaisesRegex(ValueError, rf"red ROM SHA-1 mismatch: {actual} \(expected {'0' * 40}\)"):
                 verify_rom(rom, "red", config_root=root)
+
+    def test_import_rom_uses_internal_worker_when_frozen(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rom = root / "red.gb"
+            out = root / "out"
+            assets = root / "assets"
+            (root / "tools").mkdir()
+            script = root / "tools" / "build_rom_data.py"
+            script.write_text("# test fixture\n", encoding="utf-8")
+            with (
+                patch("pipeline.roms.verify_rom"),
+                patch("pipeline.roms.is_frozen", return_value=True),
+                patch("pipeline.roms.sys.executable", r"C:\bundle\builder.exe"),
+                patch("pipeline.roms.subprocess.run") as run,
+            ):
+                import_rom("red", rom, root, out, assets, only=["text"])
+            command = run.call_args.args[0]
+            self.assertEqual(command[:2], [r"C:\bundle\builder.exe", "--internal-worker"])
+            self.assertTrue(os.path.samefile(command[2], script))
+            self.assertIn("--only", command)
+            self.assertTrue(os.path.samefile(run.call_args.kwargs["cwd"], root / "tools"))
+
+    def test_import_rom_keeps_python_script_dispatch_when_unfrozen(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rom = root / "red.gb"
+            out = root / "out"
+            assets = root / "assets"
+            (root / "tools").mkdir()
+            script = root / "tools" / "build_rom_data.py"
+            script.write_text("# test fixture\n", encoding="utf-8")
+            with (
+                patch("pipeline.roms.verify_rom"),
+                patch("pipeline.roms.is_frozen", return_value=False),
+                patch("pipeline.roms.sys.executable", "/venv/bin/python"),
+                patch("pipeline.roms.subprocess.run") as run,
+            ):
+                import_rom("red", rom, root, out, assets)
+            command = run.call_args.args[0]
+            self.assertEqual(command[0], "/venv/bin/python")
+            self.assertTrue(os.path.samefile(command[1], script))
+            self.assertNotIn("--internal-worker", command)
 
 
 if __name__ == "__main__":

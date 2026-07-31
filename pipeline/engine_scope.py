@@ -59,13 +59,46 @@ def source_root(checkout: str | Path, scope: Mapping[str, Any] | None = None) ->
     candidate = root / subdir
     if candidate.is_dir() and (root / ".git").exists():
         return candidate
-    if root.name == subdir and root.is_dir() and (root.parent / ".git").exists():
+    if root.name == subdir and root.is_dir() and ((root.parent / ".git").exists() or (root.parent / ".archive-marker.json").is_file()):
         return root
     raise ValueError(f"engine source must be checkout root containing {subdir}/ or that exact source directory: {root}")
 
 
 def verified_source(checkout: str | Path, scope: Mapping[str, Any] | None = None) -> tuple[Path, Path, str]:
     scope = scope or load_scope()
+    root = Path(checkout)
+    archive_root = root.parent if root.name == str(scope.get("source_subdir", "src")) and (root.parent / ".archive-marker.json").is_file() else root
+    marker = archive_root / ".archive-marker.json"
+    if marker.is_file():
+        try:
+            metadata = json.loads(marker.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise ValueError(f"unable to read archive marker: {marker}") from exc
+        revision = metadata.get("revision")
+        if revision != scope["gen1recomp_revision"]:
+            raise ValueError(f"Gen1Recomp revision mismatch: expected {scope['gen1recomp_revision']}, got {revision}")
+        archive_hash = str(metadata.get("sha256", ""))
+        if not re.fullmatch(r"[0-9a-f]{64}", archive_hash):
+            raise ValueError("Gen1Recomp archive marker has an invalid SHA-256 pin")
+        if not str(metadata.get("url", "")).startswith("https://"):
+            raise ValueError("Gen1Recomp archive marker URL is not HTTPS")
+        try:
+            from .project import project_config
+            engine_cfg = project_config()["gen1recomp"]
+            expected_tree = str(engine_cfg["archive_tree_sha256"])
+        except (KeyError, OSError, ValueError) as exc:
+            raise ValueError("missing trusted Gen1Recomp archive tree pin") from exc
+        if metadata.get("tree_sha256") != expected_tree:
+            raise ValueError("Gen1Recomp archive source tree digest mismatch")
+        if metadata.get("url") != engine_cfg.get("archive_url") or metadata.get("sha256") != engine_cfg.get("archive_sha256"):
+            raise ValueError("Gen1Recomp archive marker does not match configured archive pin")
+        src = archive_root / str(scope.get("source_subdir", "src"))
+        if not src.is_dir():
+            raise ValueError(f"engine archive has no {scope.get('source_subdir', 'src')}/ directory: {root}")
+        from .dependencies import _tree_digest
+        if _tree_digest(src) != expected_tree:
+            raise ValueError("Gen1Recomp archive source tree was modified")
+        return src, archive_root, revision
     src = source_root(checkout, scope)
     git_root = src.parent
     try:

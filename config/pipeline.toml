@@ -3,13 +3,31 @@
 path = "../poke-corpus"
 source = "https://github.com/abcboy101/poke-corpus.git"
 revision = "aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
+# Standalone mode downloads only these exact files from the pinned commit.
+archive_base_url = "https://raw.githubusercontent.com/abcboy101/poke-corpus/aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
 format = "corpus/RedBlue/{qid,en,<target_lang>}_msg.txt (UTF-8 parallel lines)"
 target_lang = "fr"
+
+[corpus.archive_files]
+"corpus/RedBlue/qid_msg.txt" = "babd38232ca7f4e6062a5a5ad01a35b78f8e429db831a1e564ce62f274ecd160"
+"corpus/RedBlue/en_msg.txt" = "086f6d43962e5dbda10cd0bed5e882b8916f8846e7419d5a0d45c1b805cb66a6"
+"corpus/RedBlue/fr_msg.txt" = "f0b939641fcf005785ebb866f659dbaade4ba1600f6e57817d41c3e0c8e24b2e"
+"corpus/RedBlue/de_msg.txt" = "e78cfd1eb4462e704d4180c39ad082d049f1823eb09658d59bbf9db42f9bfbb1"
+"corpus/RedBlue/es_msg.txt" = "fd75dcaace7aee5beb339be4b70f9fbf0a8622084a419448add7119542d455c2"
+"corpus/RedBlue/it_msg.txt" = "3d441d30243404ce0b545bb79b7480f76ca4f8dedcb6b863d286d611892bfa48"
+"corpus/RedBlue/ja-Hrkt_msg.txt" = "6c60e4cefd326cdfe399c635db67ee8fcddbe20e9b665f373d7550dd2d980db7"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
 source = "https://github.com/bryanthaboi/gen1recomp.git"
 revision = "5a48a61f2ed20aee80951aeb1e41b7ec084b350f"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/5a48a61f2ed20aee80951aeb1e41b7ec084b350f"
+archive_sha256 = "3e10ad2eb8bd0c2553c68ae3efc2ea310fc80264801fbb9e7ec7fc309dc0d747"
+archive_tree_sha256 = "3a59a8760f556a802c659d266b45ee1640e37f024add26704278dd56ac77a7a0"
+
+[luajit]
+source = "https://luajit.org/git/luajit.git"
+revision = "faaf663340347a78b22ed94c63c24fe090bd9784"
 
 # Optional developer audit sources.  These repositories are never needed by
 # build_translation.py and are cloned only by ``audit-disassemblies`` into the

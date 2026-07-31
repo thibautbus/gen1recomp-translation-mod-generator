@@ -178,7 +178,9 @@ class BuilderTests(unittest.TestCase):
             load.assert_called_once_with(builder.ROOT / "config" / "rom_paths.toml")
             self.assertEqual([call.args for call in configured_lookup.call_args_list],
                              [(configured, "rom", "red"), (configured, "rom", "blue"), (configured, "localized", "de")])
-            self.assertEqual([event[0:2] for event in events], [("verify", "red"), ("verify", "blue"), ("localized", de)])
+            self.assertEqual([event[0] for event in events], ["verify", "verify", "localized"])
+            self.assertEqual([event[1] for event in events[:2]], ["red", "blue"])
+            self.assertTrue(os.path.samefile(events[2][1], de))
             self.assertTrue(any(str(de) in prompt for prompt in prompts))
             self.assertFalse(any(str(fr) in prompt for prompt in prompts))
 
@@ -516,8 +518,10 @@ class BuilderTests(unittest.TestCase):
             patch("pipeline.builder.platform.system", return_value="Linux"),
         ):
             hint = builder._pillow_install_hint()
-        self.assertIn("active virtual environment is /workspace/venv", hint)
-        self.assertIn('"/workspace/venv/bin/python" build_translation.py', hint)
+        environment = Path("/workspace/venv").absolute()
+        expected = environment / "bin" / "python"
+        self.assertIn(f"active virtual environment is {environment}", hint)
+        self.assertIn(f'"{expected}" build_translation.py', hint)
 
 
 if __name__ == "__main__":

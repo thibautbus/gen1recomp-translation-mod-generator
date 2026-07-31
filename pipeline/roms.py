@@ -10,7 +10,7 @@ import sys
 from types import MappingProxyType
 from typing import Any
 
-from .project import project_config
+from .project import is_frozen, project_config
 
 
 # Product support is intentionally limited to the canonical US Red/Blue pair;
@@ -114,7 +114,15 @@ def import_rom(version: str, rom: str | Path, gen1recomp: str | Path, out: str |
         python = str(windows_venv_python)
     else:
         python = sys.executable
-    command = [python, str(root / "tools" / "build_rom_data.py"), "--rom", str(rom), "--manifest", str(manifest), "--out", str(out), "--assets", str(assets), "--clean"]
+    script = str(root / "tools" / "build_rom_data.py")
+    if is_frozen():
+        # The frozen executable is an app dispatcher, not a Python runtime.
+        # Route the extractor through its internal-worker entry point instead
+        # of recursively launching the interactive builder.
+        command = [sys.executable, "--internal-worker", script]
+    else:
+        command = [python, script]
+    command.extend(["--rom", str(rom), "--manifest", str(manifest), "--out", str(out), "--assets", str(assets), "--clean"])
     for dataset in only or []:
         command.extend(["--only", dataset])
     subprocess.run(command, cwd=root / "tools", check=True)
