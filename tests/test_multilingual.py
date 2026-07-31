@@ -569,6 +569,110 @@ class MultilingualTests(unittest.TestCase):
             self.assertEqual(printf_directives(output[keys[2]]), [], language)
             self.assertEqual(printf_directives(output[keys[3]]), ["%s"], language)
 
+    def test_real_corpus_item_use_anchor_exact_outputs_and_provenance_all_languages(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        key = "USE"
+        qid = "rb.text_boxes.UseTossText"
+        expected = {
+            "fr": "UTIL.",
+            "de": "OK",
+            "es": "USAR",
+            "it": "USA",
+            "ja-Hrkt": "つかう",
+        }
+        anchors = load_semantic_anchors()
+        self.assertEqual(anchors[key]["qid"], qid)
+        self.assertEqual(anchors[key]["extraction"], {"kind": "segment", "index": 0})
+        for language, value in expected.items():
+            items = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog({key: ""}, items, semantic_anchors=anchors, target_lang=language)
+            self.assertEqual(output[key], value, language)
+            self.assertEqual(report["details"][key], "semantic", language)
+            self.assertEqual(report["provenance"][key]["qid"], qid, language)
+            self.assertEqual(report["provenance"][key]["extraction"], {"kind": "segment", "index": 0}, language)
+
+    def test_item_use_anchor_fails_closed_on_missing_or_ambiguous_qid(self):
+        key = "USE"
+        anchor = load_semantic_anchors()[key]
+        source = "USE<NEXT>TOSS@"
+        good = Alignment(
+            "rb.text_boxes.UseTossText", "both",
+            CorpusRecord("rb.text_boxes.UseTossText", "en", source),
+            CorpusRecord("rb.text_boxes.UseTossText", "fr", "UTIL.<NEXT>JETER@"), "qid",
+        )
+        output, report = match_engine_catalog({key: ""}, [good], semantic_anchors={key: anchor}, target_lang="fr")
+        self.assertEqual(output[key], "UTIL.")
+        self.assertEqual(report["details"][key], "semantic")
+        missing = dict(anchor, qid="rb.missing.UseTossText")
+        output, report = match_engine_catalog({key: ""}, [good], semantic_anchors={key: missing}, target_lang="fr")
+        self.assertEqual(output[key], "")
+        self.assertEqual(report["details"][key], "semantic_unresolved")
+        self.assertEqual(report["fallback_english"], 1)
+        duplicate = Alignment(
+            "rb.text_boxes.UseTossText", "both",
+            CorpusRecord("rb.text_boxes.UseTossText", "en", source),
+            CorpusRecord("rb.text_boxes.UseTossText", "fr", "VERWENDEN<NEXT>JETER@"), "qid",
+        )
+        output, report = match_engine_catalog({key: ""}, [good, duplicate], semantic_anchors={key: anchor}, target_lang="fr")
+        self.assertEqual(output[key], "")
+        self.assertEqual(report["details"][key], "semantic_unresolved")
+
+    def test_real_corpus_item_carry_period_anchor_exact_outputs_and_provenance_all_languages(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout unavailable")
+        key = "You can't carry\nany more items."
+        expected = {
+            "fr": "Votre inventaire\nest plein.",
+            "de": "Du kannst keine\nweiteren Items\vtragen.",
+            "es": "No puedes llevar\nmás objetos.",
+            "it": "Non puoi portare\naltri strumenti.",
+            "ja-Hrkt": "どうぐが　いっぱいです\nもう　もてません！",
+        }
+        qid = "rb.text_2.CantCarryMoreText"
+        anchors = load_semantic_anchors()
+        self.assertEqual(anchors[key], {"qid": qid, "extraction": {"kind": "full"}})
+        for language, value in expected.items():
+            items = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog({key: ""}, items, semantic_anchors=anchors, target_lang=language)
+            self.assertEqual(output[key], value, language)
+            self.assertEqual(report["details"][key], "semantic", language)
+            self.assertEqual(report["provenance"][key]["qid"], qid, language)
+            self.assertEqual(report["provenance"][key]["extraction"], {"kind": "full"}, language)
+
+    def test_item_carry_period_anchor_fails_closed_and_exclamation_variant_is_untranslated(self):
+        key = "You can't carry\nany more items."
+        anchor = load_semantic_anchors()[key]
+        good = Alignment(
+            "rb.text_2.CantCarryMoreText", "both",
+            CorpusRecord("rb.text_2.CantCarryMoreText", "en", "{text_start}You can't carry<LINE>any more items.<PROMPT>"),
+            CorpusRecord("rb.text_2.CantCarryMoreText", "fr", "{text_start}Votre inventaire<LINE>est plein.<PROMPT>"),
+            "qid", target_lang="fr",
+        )
+        output, report = match_engine_catalog({key: ""}, [good], semantic_anchors={key: anchor}, target_lang="fr")
+        self.assertEqual(output[key], "Votre inventaire\nest plein.")
+        self.assertEqual(report["details"][key], "semantic")
+        missing = dict(anchor, qid="rb.missing.CantCarryMoreText")
+        output, report = match_engine_catalog({key: ""}, [good], semantic_anchors={key: missing}, target_lang="fr")
+        self.assertEqual(output[key], "")
+        self.assertEqual(report["details"][key], "semantic_unresolved")
+        self.assertEqual(report["fallback_english"], 1)
+        duplicate = Alignment(
+            "rb.text_2.CantCarryMoreText", "both",
+            CorpusRecord("rb.text_2.CantCarryMoreText", "en", "{text_start}You can't carry<LINE>any more items.<PROMPT>"),
+            CorpusRecord("rb.text_2.CantCarryMoreText", "fr", "Duplikat"),
+            "qid", target_lang="fr",
+        )
+        output, report = match_engine_catalog({key: ""}, [good, duplicate], semantic_anchors={key: anchor}, target_lang="fr")
+        self.assertEqual(output[key], "")
+        self.assertEqual(report["details"][key], "semantic_unresolved")
+        exclamation = "You can't carry\nany more items!"
+        output, report = match_engine_catalog({exclamation: ""}, [good], semantic_anchors={key: anchor}, target_lang="fr")
+        self.assertEqual(output[exclamation], "")
+        self.assertEqual(report["details"][exclamation], "english_fallback")
+
     def test_rby_anchor_batch_fails_closed_on_duplicate_or_missing_qids(self):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
         if not (root / "qid_msg.txt").is_file():
@@ -604,6 +708,8 @@ class MultilingualTests(unittest.TestCase):
         if not checkout.is_dir():
             self.skipTest("cached Gen1Recomp checkout is unavailable")
         keys = {
+            "USE": {"ui/BagMenu.lua"},
+            "You can't carry\nany more items.": {"ui/PlayerPC.lua", "ui/ShopMenu.lua"},
             "SEEN %d  OWNED %d": {"ui/PokedexMenu.lua"},
             "%s is out of\nuseable POKéMON!": {"battle/BattleState.lua"},
             "%s blacked\nout!": {"battle/BattleState.lua", "world/OverworldController.lua"},

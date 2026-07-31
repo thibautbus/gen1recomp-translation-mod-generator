@@ -86,11 +86,11 @@ imports and corpus (corpus and pipeline revisions affect the numbers):
 
 | Target | ROM catalogs | Literal handlers | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 283/383 (73.89%) | 288/533 (54.03%) |
-| `de` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 281/383 (73.37%) | 286/533 (53.66%) |
-| `es` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 284/383 (74.15%) | 289/533 (54.22%) |
-| `it` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 284/383 (74.15%) | 289/533 (54.22%) |
-| `ja-Hrkt` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 279/383 (72.85%) | 284/533 (53.28%) |
+| `fr` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 285/383 (74.41%) | 290/533 (54.41%) |
+| `de` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 283/383 (73.89%) | 288/533 (54.03%) |
+| `es` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 285/383 (74.41%) | 290/533 (54.41%) |
+| `it` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 285/383 (74.41%) | 290/533 (54.41%) |
+| `ja-Hrkt` | 3101/3101 (100%) | 5/5 (100%) | 3106/3106 (100%) | 281/383 (73.37%) | 286/533 (53.66%) |
 
 Column definitions: **ROM catalogs** covers the six extracted Red/Blue
 catalogs—`dialogue`, `species_names`, `move_names`, `item_names`,
@@ -124,6 +124,37 @@ silently counted as RBY coverage. The table comes from isolated clean rebuilds
 using the pinned corpus/engine snapshots; ROM aggregate is 3106/3106 for every
 language.
 
+## Strings requiring upstream Gen1Recomp/source changes
+
+Some strings cannot be translated safely from the current engine callsites and
+corpus interface. Resolving these gaps requires a change in the pinned
+Gen1Recomp source (and then a regenerated engine catalogue), rather than a new
+anchor or override in this repository:
+
+- `How many?` is assigned directly to the quantity-selector footer in
+  `PlayerPC.lua` (`list.footer = "How many?"`), not routed through
+  `Strings(...)`. The Red/Blue corpus has operation-specific qids
+  `DepositHowManyText`, `WithdrawHowManyText`, and `TossHowManyText`; Japanese
+  supplies distinct variants (`いくつ　あずけますか？`, `いくつ　ひきだしますか？`,
+  and `いくつ　すてますか？`). An upstream change must route each operation
+  through a context-aware `Strings(...)` key (or another explicit
+  localization hook) before those variants can be selected safely.
+- `QUIT` is a shared, context-free key in three different menus. The French
+  Red/Blue localization uses `RET` in the narrow Pokédex menu, `SALUT!` in the
+  shop, and `RETOUR` for the start-menu `EXIT` entry. Gen1Recomp currently
+  calls `Strings("QUIT")` for the Pokédex, shop, and start menu, so a translation
+  mod can provide only one global value. The current anchor keeps the compact
+  Pokédex form (`RET` in French) because `RETOUR` does not fit safely in that
+  menu. Correct per-menu translations require distinct upstream contexts such
+  as `Strings("QUIT", "pokedex")`, `Strings("QUIT", "shop")`, and
+  `Strings("QUIT", "start_menu")`, followed by context-aware catalogue
+  generation.
+- The hidden-item inventory-full message uses the exclamation key
+  `You can't carry\nany more items!`, which is intentionally not aliased to the
+  period form because it has different gameplay context. Translating it safely
+  requires a reviewed hidden-item qid/context mapping in Gen1Recomp or the
+  source corpus.
+
 ## Currently untranslated content
 
 The `ROM aggregate` can be 100% without providing 100% engine/UI coverage;
@@ -137,8 +168,17 @@ deliberately remains English:
 - A Route 3 trainer override is avoided because it risks disabling the
   sight-trigger battle; gym statues use internal pre-/post-badge logic that is
   not safely exposed.
-- Generic found/received/reward/bag-full strings vary by context and are not
+- Other generic found/received/reward/bag-full strings vary by context and are not
   safely overridable.
+- The item-menu `USE` label is anchored to the proven
+  `rb.text_boxes.UseTossText` segment and is translated in all five releases.
+  The plain-key period form of `You can't carry\nany more items.` is anchored
+  to the generic inventory-full qid `rb.text_2.CantCarryMoreText` and translated
+  in all five releases. That generic wording intentionally covers both PC
+  withdrawal and shop purchase; the shop-specific qid
+  `rb.text_4.PokemartItemBagFullText` is not selected. The exclamation/hidden-
+  item variant remains outside the safe scope (see the upstream-change section
+  above).
 - The bicycle mount corpus is split in a way that does not align safely,
   although the dismount message is translated.
 - Engine-authored paraphrases with no corpus source include “the boulder fell

@@ -14,6 +14,7 @@
     "SPEED": {"qid": "rb.stat_names.VitaminStats.4", "extraction": {"kind": "segment", "index": 0}},
 
     "TOSS": {"qid": "rb.text_boxes.UseTossText", "extraction": {"kind": "segment", "index": 1}},
+    "USE": {"qid": "rb.text_boxes.UseTossText", "extraction": {"kind": "segment", "index": 0}},
     "BUY": {"qid": "rb.text_boxes.BuySellQuitText", "extraction": {"kind": "segment", "index": 0}},
     "SELL": {"qid": "rb.text_boxes.BuySellQuitText", "extraction": {"kind": "segment", "index": 1}},
     "QUIT": {"qid": "rb.pokedex.PokedexMenuItemsText", "extraction": {"kind": "segment", "index": 3}},
@@ -471,6 +472,10 @@
     },
     "You don't have\nenough money.": {
       "qid": "rb.text_4.PokemartNotEnoughMoneyText",
+      "extraction": {"kind": "full"}
+    },
+    "You can't carry\nany more items.": {
+      "qid": "rb.text_2.CantCarryMoreText",
       "extraction": {"kind": "full"}
     },
     "BATTLE ANIMATION": {
