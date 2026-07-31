@@ -16,7 +16,8 @@ from .align import align, apply_overrides
 from .corpus import canonical_language, parse_redblue
 from .mod import generate_mod
 from .localized_font import extract_localized_font, validate_localized_rom
-from .project import ROOT, project_config, project_version
+from .project import ROOT, is_frozen, project_config, project_version, resource_root, work_root
+from .dependencies import DependencyError, fetch_archive, fetch_files
 from .roms import import_rom, verify_rom
 from .rom_paths import configured_path, load_rom_paths
 
@@ -47,10 +48,18 @@ def _which_luajit() -> str | None:
     if configured:
         path = Path(configured).expanduser()
         return str(path.resolve()) if path.is_file() else None
+    if is_frozen():
+        root = resource_root()
+        for candidate in (root / "luajit" / "luajit.exe", root / "luajit" / "bin" / "luajit.exe", root / "luajit.exe"):
+            runtime_dir = candidate.parent
+            if candidate.is_file() and (runtime_dir / "lua51.dll").is_file() and (runtime_dir / "jit").is_dir():
+                return str(candidate)
     return shutil.which("luajit") or shutil.which("luajit.exe")
 
 
 def _luajit_install_hint() -> str:
+    if is_frozen():
+        return "the bundled LuaJIT runtime is missing or damaged; re-download the standalone EXE"
     system = platform.system()
     if system == "Darwin" and shutil.which("brew"):
         return "run: brew install luajit"
@@ -92,14 +101,14 @@ def _pillow_install_hint() -> str:
 def check_prerequisites() -> str:
     """Fail with actionable installation guidance and return the LuaJIT path."""
     missing: list[str] = []
-    if sys.version_info < (3, 11):
+    if not is_frozen() and sys.version_info < (3, 11):
         missing.append("Python 3.11 or newer (https://www.python.org/downloads/)")
-    if not shutil.which("git"):
+    if not is_frozen() and not shutil.which("git"):
         missing.append("Git (https://git-scm.com/downloads)")
     luajit = _which_luajit()
     if not luajit:
         missing.append(f"LuaJIT ({_luajit_install_hint()})")
-    if importlib.util.find_spec("PIL") is None:
+    if not is_frozen() and importlib.util.find_spec("PIL") is None:
         missing.append(f"Pillow ({_pillow_install_hint()})")
     if missing:
         details = "\n".join(f"  - {item}" for item in missing)
@@ -124,6 +133,37 @@ def _run(
         raise BuildError(
             f"Command failed with exit code {error.returncode}: {printable}"
         ) from error
+
+
+def _modkit_command(modkit: Path, *args: str) -> list[str]:
+    """Dispatch Modkit through the embedded interpreter when frozen."""
+    if is_frozen():
+        return [sys.executable, "--internal-worker", str(modkit), *args]
+    return [sys.executable, str(modkit), *args]
+
+
+def _ensure_dependency(config: dict, destination: Path, *, selective_prefix: str | None = None) -> Path:
+    if is_frozen():
+        if config.get("archive_files"):
+            try:
+                return fetch_files(
+                    str(config.get("archive_base_url", "")),
+                    dict(config["archive_files"]),
+                    destination,
+                    revision=str(config.get("revision", "")),
+                )
+            except (DependencyError, TypeError, ValueError) as error:
+                raise BuildError(f"Unable to download pinned dependency files: {error}") from error
+        url = str(config.get("archive_url", ""))
+        digest = str(config.get("archive_sha256", ""))
+        if not url or not digest:
+            raise BuildError("Pinned archive URL and SHA-256 are required in config/pipeline.toml for standalone mode.")
+        try:
+            return fetch_archive(url, digest, destination, revision=str(config.get("revision", "")), selective_prefix=selective_prefix, immutable_prefixes=("src",), trusted_tree_sha256=str(config.get("archive_tree_sha256", "")))
+        except DependencyError as error:
+            raise BuildError(f"Unable to download pinned dependency: {error}") from error
+    ensure_checkout(config["source"], config["revision"], destination, sparse_paths=((selective_prefix,) if selective_prefix else ()))
+    return destination
 
 
 def ensure_checkout(
@@ -214,8 +254,9 @@ def _print_language_warning(language: str) -> None:
 
 
 def _confirm(input_fn: Callable[[str], str]) -> bool:
+    action = "downloaded" if is_frozen() else "cloned"
     answer = input_fn(
-        "\nGen1Recomp and poke-corpus are about to be cloned locally into "
+        f"\nGen1Recomp and poke-corpus are about to be {action} locally into "
         "the private .cache directory.\nDo you wish to continue? [Y/n]: "
     )
     return answer.strip().lower() in {"", "y", "yes"}
@@ -223,9 +264,9 @@ def _confirm(input_fn: Callable[[str], str]) -> bool:
 
 def _override_path(language: str, filename: str) -> Path | None:
     path = (
-        ROOT / "overrides" / filename
+        resource_root() / "overrides" / filename
         if language == "fr"
-        else ROOT / "overrides" / language / filename
+        else resource_root() / "overrides" / language / filename
     )
     return path if path.is_file() else None
 
@@ -394,21 +435,14 @@ def build(
         # cartridge structure but deliberately do not enforce a SHA-1.
         validate_localized_rom(localized_rom)
 
-    dependency_root = ROOT / ".cache" / "dependencies"
+    dependency_root = work_root() / ".cache" / "dependencies"
     gen1recomp = dependency_root / "gen1recomp"
     corpus = dependency_root / "poke-corpus"
     config = project_config()
     engine_source = config["gen1recomp"]
     corpus_source = config["corpus"]
-    ensure_checkout(
-        engine_source["source"], engine_source["revision"], gen1recomp
-    )
-    ensure_checkout(
-        corpus_source["source"],
-        corpus_source["revision"],
-        corpus,
-        sparse_paths=("corpus/RedBlue",),
-    )
+    _ensure_dependency(engine_source, gen1recomp)
+    _ensure_dependency(corpus_source, corpus, selective_prefix="corpus/RedBlue")
 
     print("\nExtracting private ROM data...")
     import_rom(
@@ -422,18 +456,18 @@ def build(
         gen1recomp / "blue" / "assets" / "generated",
     )
 
-    build_root = ROOT / ".cache" / "interactive" / language
+    build_root = work_root() / ".cache" / "interactive" / language
     scaffold = build_root / "translation_source"
     modkit = gen1recomp / "tools" / "modkit.py"
     env = dict(os.environ)
     env["MODKIT_LUAJIT"] = luajit
     env["LUA"] = luajit
-    _run(
-        [
-            sys.executable, str(modkit), "--repo", str(gen1recomp),
+    if is_frozen():
+        lua_dir = str(Path(luajit).resolve().parent)
+        env["PATH"] = lua_dir + os.pathsep + env.get("PATH", "")
+    _run(_modkit_command(modkit, "--repo", str(gen1recomp),
             "translation", "translation_source", "--language", language_name,
-            "--base", "imported", "--dest", str(build_root), "--force",
-        ],
+            "--base", "imported", "--dest", str(build_root), "--force"),
         cwd=gen1recomp,
         env=env,
     )
@@ -458,10 +492,10 @@ def build(
         modkit_worksheet=worksheet,
         report_path=coverage,
         engine_overrides=_override_path(language, "engine_overrides.json"),
-        semantic_anchors=ROOT / "config" / "semantic_anchors.json",
+        semantic_anchors=resource_root() / "config" / "semantic_anchors.json",
         strict_engine=True,
         engine_source=gen1recomp / "src",
-        engine_scope=ROOT / "config" / "engine_scope.json",
+        engine_scope=resource_root() / "config" / "engine_scope.json",
     )
     preserve_scaffold_support(scaffold, mod)
     if localized_rom is not None:
@@ -473,14 +507,11 @@ def build(
         )
 
     version = project_version()
-    output = ROOT / "dist" / f"translation-{language.lower()}-{version}.zip"
+    output = work_root() / (f"translation-{language.lower()}-{version}.zip" if is_frozen() else f"dist/translation-{language.lower()}-{version}.zip")
     candidate = build_root / f"translation-{language.lower()}-{version}.candidate.zip"
     candidate.unlink(missing_ok=True)
-    _run(
-        [
-            sys.executable, str(modkit), "--repo", str(gen1recomp),
-            "pack", str(mod), "-o", str(candidate), "--base", "imported",
-        ],
+    _run(_modkit_command(modkit, "--repo", str(gen1recomp),
+            "pack", str(mod), "-o", str(candidate), "--base", "imported"),
         cwd=gen1recomp,
         env=env,
     )
@@ -493,7 +524,7 @@ def main(input_fn: Callable[[str], str] = input) -> int:
     print("Gen1Recomp translation mod builder\n")
     try:
         luajit = check_prerequisites()
-        rom_paths = load_rom_paths(ROOT / "config" / "rom_paths.toml")
+        rom_paths = load_rom_paths(resource_root() / "config" / "rom_paths.toml")
         red_prompt = (
             "Please specify the location of your Pokemon Red ROM "
             "(full path, e.g. C:\\Games\\PokemonRed.gb): "
@@ -524,7 +555,10 @@ def main(input_fn: Callable[[str], str] = input) -> int:
         if localized is not None:
             validate_localized_rom(localized)
         if not _confirm(input_fn):
-            print("\nBuild cancelled. No repositories were cloned.")
+            if is_frozen():
+                print("\nBuild cancelled. No dependency downloads were performed.")
+            else:
+                print("\nBuild cancelled. No repositories were cloned.")
             return 0
         output = build(
             red,

@@ -3,16 +3,19 @@ import subprocess
 import json
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from pipeline.engine_scope import classify_callsites, load_scope, validate_catalog_universe, verified_source
+from pipeline.dependencies import _tree_digest
 
 
 class EngineScopeTests(unittest.TestCase):
     def _load_mutated(self, mutate):
         data = load_scope(); mutate(data)
-        with tempfile.NamedTemporaryFile("w", suffix=".json") as handle:
-            json.dump(data, handle); handle.flush()
-            with self.assertRaises(ValueError): load_scope(handle.name)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "mutated.json"
+            path.write_text(json.dumps(data), encoding="utf-8")
+            with self.assertRaises(ValueError): load_scope(path)
 
     def test_manifest_rejects_schema_revision_path_and_fields(self):
         for mutate in [lambda d: d.pop("schema"), lambda d: d.update(schema="wrong"), lambda d: d.update(classifier_version=2), lambda d: d.update(gen1recomp_revision="abc"), lambda d: d.update(gen1recomp_revision="A" * 40), lambda d: d.update(gen1recomp_revision="g" * 40), lambda d: d.update(source_subdir="/tmp"), lambda d: d.update(source_subdir="../src"), lambda d: d.update(source_subdir="other"), lambda d: d.update(extra=1)]:
@@ -47,6 +50,44 @@ class EngineScopeTests(unittest.TestCase):
             (root / "src" / "battle" / "Dirty.lua").write_text('Strings("dirty")', encoding="utf-8")
             with self.assertRaises(ValueError): verified_source(root, scope)
         finally: tmp.cleanup()
+
+    def test_verified_source_accepts_archive_root_and_src_and_rejects_spoofed_tree_pin(self):
+        scope = load_scope()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "gen1recomp"
+            source = root / "src"
+            (source / "battle").mkdir(parents=True)
+            (source / "battle" / "One.lua").write_text('Strings("one")', encoding="utf-8")
+            trusted_tree = _tree_digest(source)
+            config = {
+                "gen1recomp": {
+                    "archive_url": "https://example.invalid/gen1recomp.zip",
+                    "archive_sha256": "a" * 64,
+                    "archive_tree_sha256": trusted_tree,
+                }
+            }
+            marker = root / ".archive-marker.json"
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.write_text(json.dumps({
+                "revision": scope["gen1recomp_revision"],
+                "url": config["gen1recomp"]["archive_url"],
+                "sha256": config["gen1recomp"]["archive_sha256"],
+                "tree_sha256": trusted_tree,
+            }), encoding="utf-8")
+
+            with patch("pipeline.project.project_config", return_value=config):
+                from_root = verified_source(root, scope)
+                from_src = verified_source(source, scope)
+                self.assertEqual(from_root, from_src)
+                self.assertEqual(from_root, (source, root, scope["gen1recomp_revision"]))
+
+                (source / "battle" / "One.lua").write_text('Strings("tampered")', encoding="utf-8")
+                marker_data = json.loads(marker.read_text(encoding="utf-8"))
+                marker_data["tree_sha256"] = _tree_digest(source)
+                marker.write_text(json.dumps(marker_data), encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "archive source tree digest mismatch"):
+                    verified_source(root, scope)
+
     def test_manifest_and_lua_suffix_rules(self):
         scope = load_scope()
         self.assertEqual(scope["gen1recomp_revision"], "5a48a61f2ed20aee80951aeb1e41b7ec084b350f")
