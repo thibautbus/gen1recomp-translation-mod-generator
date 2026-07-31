@@ -29,11 +29,11 @@ jobs:
       contents: write
       actions: read
     steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e
         with:
           name: gen1recomp-translation-builder-windows-x64
           path: release
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Validate tag and publish release asset
         env: {GH_TOKEN: "${{ github.token }}"}
         shell: bash

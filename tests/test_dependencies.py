@@ -74,6 +74,17 @@ class DependencyTests(unittest.TestCase):
         self.assertIn('$Spec = Join-Path $Root "packaging/translation_builder.spec"', script)
         self.assertIn("PyInstaller --clean --noconfirm $Spec", script)
 
+    def test_windows_release_downloads_artifact_after_checkout(self):
+        workflow = (Path(__file__).parents[1] / ".github/workflows/windows-executable.yml").read_text()
+        release = workflow.split("\n  release:\n", 1)[1]
+        checkout = release.index("actions/checkout@")
+        download = release.index("actions/download-artifact@")
+        validate = release.index("Validate tag and publish release asset")
+        self.assertLess(checkout, download)
+        self.assertLess(download, validate)
+        self.assertIn("path: release", release)
+        self.assertIn("release/*.exe", release)
+
     def test_spec_luajit_layout_is_not_double_nested(self):
         spec = Path(__file__).parents[1] / "packaging/translation_builder.spec"
         with tempfile.TemporaryDirectory() as directory:
