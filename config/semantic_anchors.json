@@ -320,6 +320,248 @@
       "extraction": {
         "kind": "full"
       }
+    },
+    "Move to where?": {
+      "qid": "rb.text_2.PartyMenuSwapMonText",
+      "source_aliases": [
+        "Move #MON\nwhere?"
+      ],
+      "extraction": {
+        "kind": "full"
+      }
+    },
+    "POKéMON": {
+      "qid": "rb.draw_start_menu.StartMenuPokemonText",
+      "extraction": {
+        "kind": "full"
+      }
+    },
+    "SOFTBOILED": {
+      "qid": "rb.field_move_names.FieldMoveNames.9",
+      "extraction": {
+        "kind": "full"
+      }
+    },
+    "%s ran from\nthe battle!": {
+      "qid": "rb.text_3.RanFromBattleText",
+      "source_aliases": [
+        "{USER}\nran from battle!"
+      ],
+      "extraction": {
+        "kind": "full"
+      }
+    },
+    "%s used\n%s!": {
+      "parts": [
+        {
+          "qid": "rb.text_7.ItemUseText001",
+          "extraction": {
+            "kind": "full"
+          }
+        },
+        {
+          "qid": "rb.text_7.ItemUseText002",
+          "extraction": {
+            "kind": "full"
+          }
+        }
+      ],
+      "join": "\n",
+      "placeholders": {
+        "{PLAYER}": "%s",
+        "{RAM:wStringBuffer}": "%s"
+      }
+    },
+    "%s used\nSAFARI BALL!": {
+      "parts": [
+        {
+          "qid": "rb.text_7.ItemUseText001",
+          "extraction": {
+            "kind": "full"
+          }
+        },
+        {
+          "qid": "rb.names.ItemNames.8",
+          "extraction": {
+            "kind": "full"
+          },
+          "include": false
+        },
+        {
+          "qid": "rb.text_7.ItemUseText002",
+          "extraction": {
+            "kind": "full"
+          }
+        }
+      ],
+      "join": "\n",
+      "placeholders": {
+        "{PLAYER}": "%s",
+        "{RAM:wStringBuffer}": {
+          "part": 1
+        }
+      }
+    },
+    "%s used\nPOKé BALL!": {
+      "parts": [
+        {
+          "qid": "rb.text_7.ItemUseText001",
+          "extraction": {
+            "kind": "full"
+          }
+        },
+        {
+          "qid": "rb.names.ItemNames.4",
+          "extraction": {
+            "kind": "full"
+          },
+          "include": false
+        },
+        {
+          "qid": "rb.text_7.ItemUseText002",
+          "extraction": {
+            "kind": "full"
+          }
+        }
+      ],
+      "join": "\n",
+      "placeholders": {
+        "{PLAYER}": "%s",
+        "{RAM:wStringBuffer}": {
+          "part": 1
+        }
+      }
+    },
+    "ABLE": {
+      "qid": "rb.party_menu.RedrawPartyMenu_.ableToLearnMoveText",
+      "extraction": {
+        "kind": "full"
+      }
+    },
+    "BOX No.%d": {
+      "parts": [
+        {
+          "qid": "rb.bills_pc.BoxNoPCText",
+          "extraction": {
+            "kind": "full"
+          }
+        },
+        {
+          "printf": 0
+        }
+      ],
+      "join": "",
+      "placeholders": {}
+    },
+    "NOT ABLE": {
+      "qid": "rb.party_menu.RedrawPartyMenu_.notAbleToLearnMoveText",
+      "extraction": {
+        "kind": "full"
+      }
+    },
+    "%s!": {
+      "parts": [
+        {
+          "qid": "rb.text_2.PlayerMon1Text",
+          "extraction": {
+            "kind": "full"
+          }
+        }
+      ],
+      "join": "",
+      "placeholders": {
+        "{RAM:wBattleMonNick}": "%s"
+      }
+    },
+    "CANCEL": {
+      "qid": "rb.list_menu.ListMenuCancelText",
+      "extraction": {
+        "kind": "full"
+      }
+    },
+    "Go! %s!": {
+      "parts": [
+        {
+          "qid": "rb.text_2.GoText",
+          "extraction": {
+            "kind": "full",
+            "preserve_edges": true
+          }
+        },
+        {
+          "qid": "rb.text_2.PlayerMon1Text",
+          "extraction": {
+            "kind": "full"
+          }
+        }
+      ],
+      "join": "",
+      "placeholders": {
+        "{RAM:wBattleMonNick}": "%s"
+      }
+    },
+    "Do it! %s!": {
+      "parts": [
+        {
+          "qid": "rb.text_2.DoItText",
+          "extraction": {
+            "kind": "full",
+            "preserve_edges": true
+          }
+        },
+        {
+          "qid": "rb.text_2.PlayerMon1Text",
+          "extraction": {
+            "kind": "full"
+          }
+        }
+      ],
+      "join": "",
+      "placeholders": {
+        "{RAM:wBattleMonNick}": "%s"
+      }
+    },
+    "Get'm! %s!": {
+      "parts": [
+        {
+          "qid": "rb.text_2.GetmText",
+          "extraction": {
+            "kind": "full",
+            "preserve_edges": true
+          }
+        },
+        {
+          "qid": "rb.text_2.PlayerMon1Text",
+          "extraction": {
+            "kind": "full"
+          }
+        }
+      ],
+      "join": "",
+      "placeholders": {
+        "{RAM:wBattleMonNick}": "%s"
+      }
+    },
+    "The enemy's weak!\nGet'm! %s!": {
+      "parts": [
+        {
+          "qid": "rb.text_2.EnemysWeakText",
+          "extraction": {
+            "kind": "full",
+            "preserve_edges": true
+          }
+        },
+        {
+          "qid": "rb.text_2.PlayerMon1Text",
+          "extraction": {
+            "kind": "full"
+          }
+        }
+      ],
+      "join": "",
+      "placeholders": {
+        "{RAM:wBattleMonNick}": "%s"
+      }
     }
   }
 }

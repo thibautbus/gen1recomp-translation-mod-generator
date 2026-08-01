@@ -15,15 +15,19 @@ from typing import Any, Iterable, Mapping
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "config" / "engine_scope.json"
 
+_SCOPE_CATEGORIES = {"rby", "ui", "link", "import", "core", "modern", "unknown", "mixed"}
+_SCOPE_ELIGIBILITIES = {"eligible", "review", "ineligible"}
+_SCOPE_REASONS = {"modern", "diagnostic", "engine-fallback", "fallback-only", "covered-by-rom", "defensive", "dead"}
+
 
 def load_scope(path: str | Path = CONFIG_PATH) -> dict[str, Any]:
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise ValueError("engine scope config must be an object")
-    required = ("schema", "classifier_version", "gen1recomp_revision", "source_subdir", "rby_paths", "rby_ui_modules", "ui_review_modules", "link_modules", "modern_ui_modules", "rby_ui_keys", "link_ui_keys", "modern_ui_keys")
+    required = ("schema", "classifier_version", "gen1recomp_revision", "source_subdir", "rby_paths", "rby_ui_modules", "ui_review_modules", "link_modules", "modern_ui_modules", "rby_ui_keys", "link_ui_keys", "modern_ui_keys", "key_scope_overrides")
     if set(data) != set(required):
         raise ValueError("engine scope config has unknown or missing fields")
-    if data["schema"] != "gen1recomp-translation-mods/engine-scope" or data["classifier_version"] != 1:
+    if data["schema"] != "gen1recomp-translation-mods/engine-scope" or data["classifier_version"] != 2:
         raise ValueError("unsupported engine scope schema/version")
     missing = [key for key in required if key not in data]
     if missing:
@@ -34,7 +38,7 @@ def load_scope(path: str | Path = CONFIG_PATH) -> dict[str, Any]:
         raise ValueError("engine scope gen1recomp_revision must be a revision string")
     if data["source_subdir"] != "src":
         raise ValueError("engine scope source_subdir must be src")
-    for key in required[4:]:
+    for key in required[4:-1]:
         if not isinstance(data[key], list) or not all(isinstance(value, str) and value for value in data[key]):
             raise ValueError(f"engine scope {key} must be a list of strings")
         if len(data[key]) != len(set(data[key])):
@@ -48,6 +52,23 @@ def load_scope(path: str | Path = CONFIG_PATH) -> dict[str, Any]:
     key_sets = [set(data[key]) for key in ("rby_ui_keys", "link_ui_keys", "modern_ui_keys")]
     if any(key_sets[i] & key_sets[j] for i in range(3) for j in range(i + 1, 3)):
         raise ValueError("engine scope UI key sets overlap")
+    overrides = data["key_scope_overrides"]
+    if not isinstance(overrides, dict):
+        raise ValueError("engine scope key_scope_overrides must be an object")
+    configured_ui_keys = set().union(*(set(data[key]) for key in ("rby_ui_keys", "link_ui_keys", "modern_ui_keys")))
+    if set(overrides) & configured_ui_keys:
+        raise ValueError("engine scope key_scope_overrides overlap configured UI keys")
+    for key, value in overrides.items():
+        if not isinstance(key, str) or not key:
+            raise ValueError("engine scope key_scope_overrides keys must be non-empty strings")
+        if not isinstance(value, dict) or set(value) != {"category", "eligibility", "reason"}:
+            raise ValueError(f"engine scope override for {key!r} has unknown or missing fields")
+        if not isinstance(value["category"], str) or value["category"] not in _SCOPE_CATEGORIES:
+            raise ValueError(f"engine scope override for {key!r} has an invalid category")
+        if not isinstance(value["eligibility"], str) or value["eligibility"] not in _SCOPE_ELIGIBILITIES:
+            raise ValueError(f"engine scope override for {key!r} has an invalid eligibility")
+        if not isinstance(value["reason"], str) or value["reason"] not in _SCOPE_REASONS:
+            raise ValueError(f"engine scope override for {key!r} has an invalid reason")
     return data
 
 
@@ -205,14 +226,34 @@ def classify_callsites(callsites: Iterable[Mapping[str, Any]], scope: Mapping[st
             category = next(iter(categories))
         else:
             category = "mixed"
-        result[key] = {"category": category, "categories": sorted(categories), "eligibility": eligibility, "callsites": rows}
+        result[key] = {
+            "category": category,
+            "categories": sorted(categories),
+            "eligibility": eligibility,
+            "callsites": rows,
+            "raw_callsites": list(rows),
+            "raw_category": category,
+            "raw_eligibility": eligibility,
+        }
+    for key, override in scope.get("key_scope_overrides", {}).items():
+        if key not in result:
+            continue
+        result[key].update({
+            "category": override["category"],
+            "eligibility": override["eligibility"],
+            "reason": override["reason"],
+        })
     return result
 
 
 def classify_catalog(keys: Iterable[str], callsites: Iterable[Mapping[str, Any]], scope: Mapping[str, Any] | None = None) -> dict[str, dict[str, Any]]:
+    scope = scope or load_scope()
     result = classify_callsites(callsites, scope)
     for key in keys:
-        result.setdefault(str(key), {"category": "unknown", "categories": [], "eligibility": "review", "callsites": []})
+        result.setdefault(str(key), {"category": "unknown", "categories": [], "eligibility": "review", "callsites": [], "raw_callsites": [], "raw_category": "unknown", "raw_eligibility": "review"})
+    for key, override in scope.get("key_scope_overrides", {}).items():
+        if key in result:
+            result[key].update({"category": override["category"], "eligibility": override["eligibility"], "reason": override["reason"]})
     return {key: result[key] for key in sorted(result)}
 
 

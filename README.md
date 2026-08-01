@@ -143,25 +143,28 @@ cached ROM imports and corpus snapshots, so revisions can change these values.
 
 | Target | ROM catalogs | Literal handlers | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 293/395 (74.18%) | 298/576 (51.74%) |
-| `de` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 291/395 (73.67%) | 296/576 (51.39%) |
-| `es` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 293/395 (74.18%) | 298/576 (51.74%) |
-| `it` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 293/395 (74.18%) | 298/576 (51.74%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 289/395 (73.16%) | 294/576 (51.04%) |
+| `fr` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 321/360 (89.17%) | 333/576 (57.81%) |
+| `de` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 319/360 (88.61%) | 332/576 (57.64%) |
+| `es` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 322/360 (89.44%) | 334/576 (57.99%) |
+| `it` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 320/360 (88.89%) | 333/576 (57.81%) |
+| `ja-Hrkt` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 320/360 (88.89%) | 333/576 (57.81%) |
 
 The five handlers are backed by 15/15 unique corpus qids. `RBY-related engine
-strings` counts 395 keys from Gen1Recomp's 576-key catalog whose production
+strings` counts 360 keys from Gen1Recomp's 576-key catalog whose production
 callsites reproduce original Red/Blue gameplay or interfaces; `All engine
 strings` covers the complete catalog, including modern surfaces. The
 versioned [`engine_scope.json`](config/engine_scope.json) classifier (revision
 `898bf0c71ed0a9fa9af596aeea80825f79c7eff3`) scans production `src` callsites:
-391 RBY-category keys plus four eligible mixed keys form the denominator; eight
-shared/link or UI-only keys require review, while 173 modern, network/link,
-import, core, or other ineligible keys are excluded. Coverage comes from
+360 keys form the eligible denominator, eight require review, and 208 modern,
+network/link, import, core, diagnostic, defensive, fallback-only, or
+ROM/generated-path keys are ineligible. Coverage comes from
 isolated clean rebuilds using pinned snapshots; if the engine source is
 unavailable, the report omits RBY coverage and warns instead of guessing. Each
 `x/y` value is translated entries out of eligible entries, followed by a
 percentage; fallback entries are not counted as translated.
+Versioned per-key scope overrides preserve the original callsites in private
+audits while excluding proven modern, diagnostic, unreachable-vanilla, or
+ROM/generated-path fallbacks from the RBY denominator.
 An original-RBY callsite qualifies unless the same key also has a link callsite;
 modern mod-manager/desktop surfaces, network/tournament flows, imports, and
 shared link+RBY keys are therefore not silently counted as RBY coverage.
