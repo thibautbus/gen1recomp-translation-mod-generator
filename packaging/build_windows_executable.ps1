@@ -51,9 +51,9 @@ try {
   if ($pe -ne 0x8664) { throw "LuaJIT executable is not x64" }
 
   Invoke-Native { & $Python -m PyInstaller --clean --noconfirm $Spec } "PyInstaller"
-  Invoke-Native { & (Join-Path $Root "dist/gen1recomp-translation-builder.exe") --self-check } "self-check"
+  Invoke-Native { & (Join-Path $Root "dist/gen1recomp-translation-mod-generator.exe") --self-check } "self-check"
   $VersionFile = Join-Path $TempRoot "version.txt"
   Invoke-Native { & $Python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])" | Out-File -Encoding ascii $VersionFile } "version lookup"
   $Version = (Get-Content $VersionFile -Raw).Trim()
-  Copy-Item (Join-Path $Root "dist/gen1recomp-translation-builder.exe") (Join-Path $Root "dist/gen1recomp-translation-builder-$Version.exe")
+  Copy-Item (Join-Path $Root "dist/gen1recomp-translation-mod-generator.exe") (Join-Path $Root "dist/gen1recomp-translation-mod-generator-$Version.exe")
 } finally { Pop-Location }
