@@ -90,7 +90,7 @@ class EngineScopeTests(unittest.TestCase):
 
     def test_manifest_and_lua_suffix_rules(self):
         scope = load_scope()
-        self.assertEqual(scope["gen1recomp_revision"], "5a48a61f2ed20aee80951aeb1e41b7ec084b350f")
+        self.assertEqual(scope["gen1recomp_revision"], "898bf0c71ed0a9fa9af596aeea80825f79c7eff3")
         self.assertEqual(
             classify_callsites([{"source": "x", "path": "ui/BagMenu.lua", "line": 1}])["x"]["eligibility"],
             "eligible",
@@ -99,6 +99,16 @@ class EngineScopeTests(unittest.TestCase):
             classify_callsites([{"source": "x", "path": "ui/BagMenu", "line": 1}])["x"]["eligibility"],
             "review",
         )
+
+    def test_new_ui_module_scope_classification(self):
+        result = classify_callsites([
+            {"source": "diploma", "path": "ui/Diploma.lua", "line": 1},
+            {"source": "surfing", "path": "ui/SurfingMinigame.lua", "line": 1},
+        ])
+        self.assertEqual(result["diploma"]["eligibility"], "eligible")
+        self.assertEqual(result["diploma"]["category"], "rby")
+        self.assertEqual(result["surfing"]["eligibility"], "review")
+        self.assertEqual(result["surfing"]["category"], "ui")
 
     def test_any_rby_without_link_and_link_review(self):
         rows = [

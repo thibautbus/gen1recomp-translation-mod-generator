@@ -472,7 +472,7 @@ class EngineTests(unittest.TestCase):
             "unmatched": {}, "ambiguous": {},
             "rom": {"translated": 1, "total": 1, "percent": 100.0},
             "engine": {"translated": 1, "total": 2, "percent": 50.0, "unmatched": ["X"]},
-            "engine_rby": {"translated": "bad", "total": 383, "percent": 0},
+            "engine_rby": {"translated": "bad", "total": 2, "percent": 0},
         }
         findings = []
         ok, _ = release_gate([item], findings, {"U": 1, "n": 2}, coverage)
