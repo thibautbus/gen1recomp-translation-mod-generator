@@ -4,22 +4,22 @@
   "entries": {
     "%s's\n%s rose!": {
       "override": "¡%s\nsu %s subió!",
-      "source": "editorial",
+      "reason": "editorial-correction",
       "provenance": "editorial stat-stage wording; raw English stat label retained"
     },
     "%s's\n%s\ngreatly rose!": {
       "override": "¡%s\nsu %s\nsubió mucho!",
-      "source": "editorial",
+      "reason": "editorial-correction",
       "provenance": "editorial stat-stage wording; raw English stat label retained"
     },
     "%s's\n%s fell!": {
       "override": "¡%s\nsu %s bajó!",
-      "source": "editorial",
+      "reason": "editorial-correction",
       "provenance": "editorial stat-stage wording; raw English stat label retained"
     },
     "%s's\n%s\ngreatly fell!": {
       "override": "¡%s\nsu %s\nbajó mucho!",
-      "source": "editorial",
+      "reason": "editorial-correction",
       "provenance": "editorial stat-stage wording; raw English stat label retained"
     }
   }

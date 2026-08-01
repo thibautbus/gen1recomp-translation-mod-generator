@@ -19,6 +19,9 @@ from .tokens import DYNAMIC_TOKEN_RE, corpus_to_engine
 
 ENGINE_SCHEMA = "gen1recomp-translation-mods/engine-overrides"
 ANCHOR_SCHEMA = "gen1recomp-translation-mods/semantic-anchors"
+DECISION_ANCHOR_SCHEMA = "gen1recomp-translation-mods/semantic-anchor-decisions"
+_CANONICAL_LANGUAGES = {"fr", "de", "es", "it", "ja-Hrkt"}
+_DECISION_TYPES = {"source_alias", "target_extraction", "composition", "contextual"}
 ROM_CATALOGS = ("dialogue", "species_names", "move_names", "item_names", "trainer_names", "status_labels")
 _SAFE_SEPARATOR_CONTROLS = {"\n", "\v", "\f"}
 _DEX_COUNTER_SELECTOR = "rby_dex_seen_owned"
@@ -45,6 +48,14 @@ def _valid_separator(value: object) -> bool:
 @dataclass(frozen=True)
 class EngineEntry:
     source: str
+
+
+class SemanticAnchorCatalog(dict):
+    """Validated anchor mapping carrying optional decision provenance."""
+
+    def __init__(self, *args, decision_provenance: Mapping[str, Mapping] | None = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.decision_provenance = dict(decision_provenance or {})
 
 
 def _lua_unquote(value: str) -> str:
@@ -347,6 +358,8 @@ def load_engine_overrides(path: str | Path | None) -> dict[str, dict]:
 
 def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str, dict]:
     """Load conservative qid/extraction anchors (anchors contain no translations)."""
+    implicit_default = path is None
+    inherited_provenance = getattr(path, "decision_provenance", {}) if isinstance(path, Mapping) else {}
     if path is None:
         path = Path(__file__).resolve().parents[1] / "config" / "semantic_anchors.json"
     if isinstance(path, Mapping):
@@ -545,7 +558,136 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
                 if not isinstance(separators, list) or len(separators) != len(parts) - 1 or not all(_valid_separator(separator) for separator in separators):
                     raise ValueError(f"semantic anchor {key!r} target parts separators must join each segment")
         result[key] = {**row, "qid": qid, "extraction": {**extraction, "kind": kind}}
+    # Keep the historical no-argument API useful to callers while the on-disk
+    # deterministic catalogue remains strictly limited to deterministic rows.
+    # The matching pipeline itself loads both files explicitly so conflicts
+    # are validated before they can affect a build.
+    if implicit_default:
+        decisions_path = Path(__file__).resolve().parents[1] / "config" / "semantic_anchor_decisions.json"
+        if decisions_path.is_file():
+            decisions = load_semantic_anchor_decisions(decisions_path)
+            overlap = set(result).intersection(decisions)
+            if overlap:
+                raise ValueError("semantic anchor decisions overlap deterministic anchors: " + ", ".join(sorted(overlap)))
+            result.update({key: row["anchor"] for key, row in decisions.items()})
+            return SemanticAnchorCatalog(result, decision_provenance=decisions)
+    return SemanticAnchorCatalog(result, decision_provenance=inherited_provenance)
+
+
+def _anchor_qids(anchor: Mapping) -> list[str]:
+    """Return qids referenced by an executable anchor in declaration order."""
+    if "parts" in anchor:
+        return [part["qid"] for part in anchor.get("parts", []) if isinstance(part, Mapping) and isinstance(part.get("qid"), str)]
+    qid = anchor.get("qid")
+    return [qid] if isinstance(qid, str) else []
+
+
+def load_semantic_anchor_decisions(path: str | Path | Mapping | None = None) -> dict[str, dict]:
+    """Load reviewed executable anchors and their traceable decision metadata.
+
+    Decision files deliberately wrap the executable ``anchor`` spec so they
+    can be validated by :func:`load_semantic_anchors` without duplicating its
+    extraction grammar.  Returned rows contain ``anchor`` and metadata.
+    """
+    if path is None:
+        path = Path(__file__).resolve().parents[1] / "config" / "semantic_anchor_decisions.json"
+    if isinstance(path, Mapping):
+        data = dict(path)
+    else:
+        path = Path(path)
+        if not path.exists():
+            raise FileNotFoundError(f"semantic anchor decisions file missing: {path}")
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"invalid semantic anchor decisions JSON: {path}") from exc
+    if not isinstance(data, dict):
+        raise ValueError("semantic anchor decisions must be a JSON object")
+    if set(data) - {"schema", "version", "description", "decisions"} or "decisions" not in data:
+        raise ValueError("semantic anchor decisions require a wrapped schema/version/decisions object")
+    if data.get("schema") != DECISION_ANCHOR_SCHEMA:
+        raise ValueError("unsupported semantic anchor decisions schema")
+    if data.get("version") != 1:
+        raise ValueError("unsupported semantic anchor decisions version")
+    data = data["decisions"]
+    if not isinstance(data, dict):
+        raise ValueError("semantic anchor decisions decisions must be an object")
+    result: dict[str, dict] = {}
+    for key, row in data.items():
+        if not isinstance(key, str) or not key or not isinstance(row, dict):
+            raise ValueError(f"invalid semantic anchor decision for {key!r}")
+        allowed_fields = {"anchor", "decision_type", "rationale", "languages", "languages_verified", "qids", "alternatives", "evidence", "callsites", "trace_status"}
+        unknown_fields = set(row) - allowed_fields
+        if unknown_fields:
+            raise ValueError(f"semantic anchor decision {key!r} has unknown metadata: {', '.join(sorted(unknown_fields))}")
+        anchor = row.get("anchor")
+        if not isinstance(anchor, dict):
+            raise ValueError(f"semantic anchor decision {key!r} requires an anchor object")
+        decision_type = row.get("decision_type")
+        rationale = row.get("rationale")
+        languages = row.get("languages")
+        if decision_type not in _DECISION_TYPES:
+            raise ValueError(f"semantic anchor decision {key!r} has invalid decision_type")
+        if not isinstance(rationale, str) or not rationale.strip():
+            raise ValueError(f"semantic anchor decision {key!r} requires a non-empty rationale")
+        languages_verified = row.get("languages_verified", False)
+        if not isinstance(languages_verified, bool):
+            raise ValueError(f"semantic anchor decision {key!r} languages_verified must be boolean")
+        if (not isinstance(languages, list) or
+                any(not isinstance(language, str) or language not in _CANONICAL_LANGUAGES for language in languages) or
+                len(set(languages)) != len(languages)):
+            raise ValueError(f"semantic anchor decision {key!r} has invalid canonical languages")
+        if languages_verified and not languages:
+            raise ValueError(f"semantic anchor decision {key!r} verified languages cannot be empty")
+        trace_status = row.get("trace_status")
+        if trace_status not in {"known-limitation", "reviewed"}:
+            raise ValueError(f"semantic anchor decision {key!r} requires trace_status")
+        validated = load_semantic_anchors({key: anchor})[key]
+        expected_qids = _anchor_qids(validated)
+        if "qids" not in row:
+            raise ValueError(f"semantic anchor decision {key!r} requires declared qids")
+        qids = row["qids"]
+        if (not isinstance(qids, list) or qids != expected_qids or
+                any(not isinstance(qid, str) or not qid for qid in qids)):
+            raise ValueError(f"semantic anchor decision {key!r} qids do not match anchor")
+        metadata = {field: row[field] for field in ("decision_type", "rationale", "languages", "languages_verified", "qids", "trace_status")}
+        for field in ("alternatives", "evidence", "callsites"):
+            if field in row:
+                if not isinstance(row[field], list):
+                    raise ValueError(f"semantic anchor decision {key!r} {field} must be a list")
+                metadata[field] = row[field]
+        result[key] = {"anchor": validated, **metadata}
     return result
+
+
+def merge_semantic_anchors(
+    deterministic: Mapping[str, Mapping],
+    decisions: Mapping[str, Mapping] | None = None,
+) -> tuple[dict[str, dict], dict[str, dict]]:
+    """Merge deterministic and reviewed anchors, rejecting key collisions."""
+    merged = {str(key): dict(value) for key, value in deterministic.items()}
+    occupied = set(merged)
+    for row in merged.values():
+        for field in ("source_aliases", "engine_keys", "context_keys"):
+            occupied.update(value for value in row.get(field, []) if isinstance(value, str))
+    provenance: dict[str, dict] = {}
+    for key, row in (decisions or {}).items():
+        if key in occupied:
+            raise ValueError(f"semantic anchor decision overlaps deterministic anchor: {key!r}")
+        if not isinstance(row, Mapping) or not isinstance(row.get("anchor"), Mapping):
+            raise ValueError(f"invalid semantic anchor decision for {key!r}")
+        anchor = dict(row["anchor"])
+        decision_identifiers = {key}
+        for field in ("source_aliases", "engine_keys", "context_keys"):
+            decision_identifiers.update(value for value in anchor.get(field, []) if isinstance(value, str))
+        overlap = occupied.intersection(decision_identifiers)
+        if overlap:
+            raise ValueError("semantic anchor decision overlaps deterministic anchor: " + ", ".join(sorted(overlap)))
+        anchor["_decision"] = dict(row)
+        merged[key] = anchor
+        occupied.update(decision_identifiers)
+        provenance[key] = {field: row[field] for field in ("decision_type", "rationale", "languages", "languages_verified", "qids", "trace_status") if field in row}
+    return merged, provenance
 
 
 def _extract_dex_counter(text: str, extraction: Mapping, language: str | None = None) -> str | None:
@@ -711,7 +853,7 @@ def _extract_anchor(text: str, extraction: Mapping, language: str | None = None)
         return None
 
 
-def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable[Alignment | CorpusRecord], overrides: Mapping[str, Mapping] | None = None, semantic_anchors: str | Path | Mapping | None = None, target_lang: str | None = None) -> tuple[dict[str, str], dict]:
+def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable[Alignment | CorpusRecord], overrides: Mapping[str, Mapping] | None = None, semantic_anchors: str | Path | Mapping | None = None, target_lang: str | None = None, semantic_anchor_decisions: str | Path | Mapping | None = None) -> tuple[dict[str, str], dict]:
     """Match catalogue sources to corpus translations with auditable methods."""
     if isinstance(catalog, Mapping):
         entries = [EngineEntry(str(x)) for x in catalog.keys()]
@@ -726,7 +868,17 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
     if target_lang is None:
         target_lang = next((r.language for r in rows if isinstance(r, CorpusRecord) and r.language != "en"), "fr")
     raw_target = [candidate for candidate in rows if isinstance(candidate, CorpusRecord) and candidate.language == target_lang]
-    anchors = load_semantic_anchors(semantic_anchors)
+    if semantic_anchors is None:
+        deterministic_path = Path(__file__).resolve().parents[1] / "config" / "semantic_anchors.json"
+        deterministic = load_semantic_anchors(deterministic_path)
+        decisions_path = semantic_anchor_decisions if semantic_anchor_decisions is not None else Path(__file__).resolve().parents[1] / "config" / "semantic_anchor_decisions.json"
+        decisions = load_semantic_anchor_decisions(decisions_path)
+    else:
+        deterministic = load_semantic_anchors(semantic_anchors)
+        decisions = load_semantic_anchor_decisions(semantic_anchor_decisions) if semantic_anchor_decisions is not None else {}
+    anchors, decision_provenance = merge_semantic_anchors(deterministic, decisions)
+    if not decisions:
+        decision_provenance.update(getattr(deterministic, "decision_provenance", {}))
     anchor_rows: dict[str, list[tuple[str, str | None]]] = defaultdict(list)
     for row in rows:
         if isinstance(row, Alignment) and row.qid:
@@ -763,7 +915,8 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
     out: dict[str, str] = {}
     report = {"translated": 0, "total": len(entries), "auto_exact": 0, "auto_normalized": 0,
               "auto_structural": 0, "auto_semantic": 0, "fallback_english": 0,
-              "override": 0, "unmatched": [], "ambiguous": {}, "details": {}, "provenance": {}}
+              "override": 0, "unmatched": [], "ambiguous": {}, "details": {}, "provenance": {},
+              "decision_provenance": {}}
     overrides = overrides or {}
     def anchor_for(source: str):
         anchor = anchors.get(source)
@@ -1009,6 +1162,11 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
                     provenance["qids"] = [part["qid"] for part in declared_anchor["parts"]]
                 else:
                     provenance.update({"qid": declared_anchor["qid"], "extraction": declared_anchor.get("extraction", {})})
+                decision_meta = declared_anchor.get("_decision") or decision_provenance.get(source)
+                if decision_meta is not None:
+                    provenance["origin"] = "decision"
+                    provenance.update({field: decision_meta[field] for field in ("decision_type", "rationale", "languages", "languages_verified", "qids", "trace_status") if field in decision_meta})
+                    report["decision_provenance"][source] = dict(provenance)
                 report["details"][source] = "semantic"; report["provenance"][source] = provenance
                 continue
             out[source] = ""
@@ -1026,6 +1184,11 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
                 provenance["qids"] = [part["qid"] for part in declared_anchor["parts"]]
             else:
                 provenance.update({"qid": declared_anchor.get("qid"), "extraction": declared_anchor.get("extraction", {})})
+            decision_meta = declared_anchor.get("_decision") or decision_provenance.get(source)
+            if decision_meta is not None:
+                provenance["origin"] = "decision"
+                provenance.update({field: decision_meta[field] for field in ("decision_type", "rationale", "languages", "languages_verified", "qids", "trace_status") if field in decision_meta})
+                report["decision_provenance"][source] = dict(provenance)
             report["provenance"][source] = provenance
             continue
         candidates = candidates_exact.get(corpus_to_engine(source), [])

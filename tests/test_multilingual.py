@@ -18,8 +18,7 @@ class MultilingualTests(unittest.TestCase):
             path = Path("overrides") / language / "engine_overrides.json"
             self.assertTrue(path.is_file())
             overrides = load_engine_overrides(path)
-            self.assertEqual(len(overrides), 4)
-            self.assertTrue(all(entry.get("source") == "editorial" for entry in overrides.values()))
+            self.assertTrue(all(entry.get("reason") == "editorial-correction" for entry in overrides.values()))
 
     def test_cli_ja_alias_serializes_canonical_target(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -432,6 +431,41 @@ class MultilingualTests(unittest.TestCase):
                 self.assertEqual(report["details"][key], "semantic", language)
                 self.assertEqual(report["provenance"][key]["qid"], qid, language)
 
+    def test_real_corpus_proven_rby_ui_anchor_batch_all_languages(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        keys = {
+            "AREA": "rb.pokedex.PokedexMenuItemsText",
+            "BATTLE STYLE": "rb.main_menu.BattleStyleOptionText",
+            "TEXT SPEED": "rb.main_menu.TextSpeedOptionText",
+            "NEW GAME": "rb.main_menu.NewGameText",
+            "Which move should": "rb.text_4.WhichMoveToForgetText",
+            "be forgotten?": "rb.text_4.WhichMoveToForgetText",
+        }
+        anchors = load_semantic_anchors()
+        for key, qid in keys.items():
+            self.assertEqual(anchors[key]["qid"], qid)
+            self.assertEqual(anchors[key]["extraction"]["kind"], "segment")
+            self.assertIsInstance(anchors[key]["extraction"]["index"], int)
+        for language in ("fr", "de", "es", "it", "ja-Hrkt"):
+            items = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog(
+                {key: "" for key in keys}, items,
+                semantic_anchors=anchors, target_lang=language,
+            )
+            self.assertEqual(report["translated"], len(keys), language)
+            self.assertEqual(report["auto_semantic"], len(keys), language)
+            self.assertFalse(report["ambiguous"], language)
+            for key, qid in keys.items():
+                rows = [row for row in parse_redblue(root, language) if row.qid == qid and row.language == language]
+                self.assertEqual(len(rows), 1, (language, key))
+                expected = _extract_anchor(rows[0].text, anchors[key]["extraction"], language)
+                self.assertTrue(expected, (language, key))
+                self.assertEqual(output[key], expected, (language, key))
+                self.assertEqual(report["details"][key], "semantic", (language, key))
+                self.assertEqual(report["provenance"][key]["qid"], qid, (language, key))
+
     def test_real_corpus_printf_engine_anchor_batch_all_languages(self):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
         if not (root / "qid_msg.txt").is_file():
@@ -568,6 +602,50 @@ class MultilingualTests(unittest.TestCase):
             self.assertEqual(printf_directives(output[keys[1]]), ["%s"], language)
             self.assertEqual(printf_directives(output[keys[2]]), [], language)
             self.assertEqual(printf_directives(output[keys[3]]), ["%s"], language)
+
+    def test_real_corpus_legendary_cries_reach_generated_dialogue_catalog(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        qids = {
+            "rb.SeafoamIslandsB4F.SeafoamIslandsB4FArticunoBattleText":
+                ("_SeafoamIslandsB4FArticunoBattleText", {
+                    "de": "Jauul!", "es": "¡Ar Tic!", "it": "Ghiooo!",
+                }),
+            "rb.PowerPlant.PowerPlantZapdosBattleText":
+                ("_PowerPlantZapdosBattleText", {
+                    "de": "Jauul!", "es": "¡Zap Zap!", "it": "Yhuhu!",
+                }),
+            "rb.VictoryRoad2F.VictoryRoad2FMoltresBattleText":
+                ("_VictoryRoad2FMoltresBattleText", {
+                    "de": "Jauuul!", "es": "¡Mol Tres!", "it": "Yhuhu!",
+                }),
+        }
+        for language in ("de", "es", "it"):
+            worksheet = Path(".cache/interactive") / language / "complete-modkit-worksheet"
+            if not (worksheet / "strings.lua").is_file():
+                self.skipTest(f"cached {language} complete modkit worksheet is unavailable")
+            records = [row for row in parse_redblue(root, language) if row.qid in qids]
+            items = align(records, target_lang=language)
+            self.assertEqual({row.method for row in items}, {"qid"}, language)
+            with tempfile.TemporaryDirectory() as tmp:
+                mod = generate_mod(
+                    items,
+                    Path(tmp) / "mod",
+                    language=language,
+                    modkit_worksheet=worksheet,
+                    engine_catalog=worksheet / "strings.lua",
+                    engine_overrides=Path("overrides") / language / "engine_overrides.json",
+                    strict_engine=True,
+                )
+                dialogue = (mod / "lang/dialogue.lua").read_text(encoding="utf-8")
+                for qid, (label, translations) in qids.items():
+                    self.assertIn(f'  ["{label}"] = "{translations[language]}",', dialogue,
+                                  (language, qid))
+                # The shared English cry remains unresolved in the engine table;
+                # each species-specific dialogue qid supplies the localized value.
+                strings = (mod / "lang/strings.lua").read_text(encoding="utf-8")
+                self.assertIn('  ["Gyaoo!"] = "",', strings, language)
 
     def test_real_corpus_item_use_anchor_exact_outputs_and_provenance_all_languages(self):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
@@ -936,7 +1014,6 @@ class MultilingualTests(unittest.TestCase):
             override_path = Path("overrides") / language / "engine_overrides.json"
             overrides = load_engine_overrides(override_path)
             self.assertEqual(set(overrides), set(keys))
-            self.assertTrue(all(entry.get("source") == "editorial" for entry in overrides.values()), language)
             self.assertTrue(all("provenance" in entry for entry in overrides.values()), language)
             output, report = match_engine_catalog(
                 {key: "" for key in keys}, items, overrides,

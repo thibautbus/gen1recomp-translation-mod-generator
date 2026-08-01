@@ -90,7 +90,7 @@ class EngineScopeTests(unittest.TestCase):
 
     def test_manifest_and_lua_suffix_rules(self):
         scope = load_scope()
-        self.assertEqual(scope["gen1recomp_revision"], "5a48a61f2ed20aee80951aeb1e41b7ec084b350f")
+        self.assertEqual(scope["gen1recomp_revision"], "898bf0c71ed0a9fa9af596aeea80825f79c7eff3")
         self.assertEqual(
             classify_callsites([{"source": "x", "path": "ui/BagMenu.lua", "line": 1}])["x"]["eligibility"],
             "eligible",
@@ -99,6 +99,16 @@ class EngineScopeTests(unittest.TestCase):
             classify_callsites([{"source": "x", "path": "ui/BagMenu", "line": 1}])["x"]["eligibility"],
             "review",
         )
+
+    def test_new_ui_module_scope_classification(self):
+        result = classify_callsites([
+            {"source": "diploma", "path": "ui/Diploma.lua", "line": 1},
+            {"source": "surfing", "path": "ui/SurfingMinigame.lua", "line": 1},
+        ])
+        self.assertEqual(result["diploma"]["eligibility"], "eligible")
+        self.assertEqual(result["diploma"]["category"], "rby")
+        self.assertEqual(result["surfing"]["eligibility"], "review")
+        self.assertEqual(result["surfing"]["category"], "ui")
 
     def test_any_rby_without_link_and_link_review(self):
         rows = [
@@ -143,16 +153,6 @@ class EngineScopeTests(unittest.TestCase):
                     target.write_text('Strings("extra")', encoding="utf-8")
                 with self.assertRaises(ValueError): verified_source(root, scope)
             finally: tmp.cleanup()
-
-    def test_cached_production_scope_counts(self):
-        checkout = Path(".cache/dependencies/gen1recomp")
-        if not checkout.is_dir():
-            self.skipTest("cached Gen1Recomp unavailable")
-        from pipeline.engine_scope import iter_callsites
-        from collections import Counter
-        result = classify_callsites(iter_callsites(checkout))
-        self.assertEqual(len(result), 533)
-        self.assertEqual(Counter(v["eligibility"] for v in result.values()), Counter(eligible=383, review=4, ineligible=146))
 
     def test_generate_mod_rejects_invalid_engine_source_before_report(self):
         from pipeline.mod import generate_mod

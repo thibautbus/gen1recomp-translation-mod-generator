@@ -18,8 +18,8 @@ jobs:
       - name: Upload versioned executable
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: gen1recomp-translation-builder-windows-x64
-          path: dist/gen1recomp-translation-builder-*.exe
+          name: gen1recomp-translation-mod-generator-windows-x64
+          path: dist/gen1recomp-translation-mod-generator-*.exe
 
   release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -32,7 +32,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e
         with:
-          name: gen1recomp-translation-builder-windows-x64
+          name: gen1recomp-translation-mod-generator-windows-x64
           path: release
       - name: Validate tag and publish release asset
         env: {GH_TOKEN: "${{ github.token }}"}

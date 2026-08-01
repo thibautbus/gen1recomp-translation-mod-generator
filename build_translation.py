@@ -23,12 +23,18 @@ def _internal_worker() -> int:
 
 def _self_check() -> int:
     from pipeline.builder import BuildError, _modkit_command, _which_luajit, is_frozen, project_config, project_version, resource_root, work_root
+    from pipeline.engine import load_semantic_anchors, load_semantic_anchor_decisions, merge_semantic_anchors
     import importlib.util
     try:
         config = project_config(resource_root())
         version = project_version(resource_root())
         if not version or "gen1recomp" not in config:
             raise BuildError("bundled project metadata is incomplete")
+        anchors_path = resource_root() / "config" / "semantic_anchors.json"
+        decisions_path = resource_root() / "config" / "semantic_anchor_decisions.json"
+        deterministic = load_semantic_anchors(anchors_path)
+        decisions = load_semantic_anchor_decisions(decisions_path)
+        merge_semantic_anchors(deterministic, decisions)
         if importlib.util.find_spec("PIL") is None:
             raise BuildError("bundled Pillow is missing")
         corpus = config["corpus"]

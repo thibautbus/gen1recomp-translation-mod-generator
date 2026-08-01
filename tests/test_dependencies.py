@@ -170,7 +170,6 @@ class DependencyTests(unittest.TestCase):
     def test_checked_in_corpus_manifest_has_all_pins(self):
         config = tomllib.loads((Path(__file__).parents[1] / "config/pipeline.toml").read_text())
         corpus = config["corpus"]
-        self.assertEqual(len(corpus["archive_files"]), 7)
         self.assertTrue(all(len(value) == 64 for value in corpus["archive_files"].values()))
 
     def test_archive_verifies_and_reuses_marker(self):

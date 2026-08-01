@@ -11,7 +11,7 @@ ROOT = spec_dir.parent
 runtime = ROOT / "packaging" / "runtime" / "luajit"
 datas = []
 for relative in (
-    "config/pipeline.toml", "config/engine_scope.json", "config/semantic_anchors.json",
+    "config/pipeline.toml", "config/engine_scope.json", "config/semantic_anchors.json", "config/semantic_anchor_decisions.json",
     "config/terminology_anchors.json", "config/literal_handlers.json",
     "config/rom_paths.example.toml",
     "pyproject.toml",
@@ -37,7 +37,7 @@ a = Analysis(
 pyz = PYZ(a.pure)
 exe = EXE(
     pyz, a.scripts, a.binaries, a.datas, [],
-    name="gen1recomp-translation-builder",
+    name="gen1recomp-translation-mod-generator",
     debug=False, bootloader_ignore_signals=False, strip=False, upx=False,
     console=True,
 )

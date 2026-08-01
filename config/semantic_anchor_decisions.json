@@ -1,0 +1,1846 @@
+{
+  "schema": "gen1recomp-translation-mods/semantic-anchor-decisions",
+  "version": 1,
+  "description": "Reviewed executable anchors with traceable language evidence; known-limitation rows explicitly document unresolved limitations.",
+  "decisions": {
+    "QUIT": {
+      "anchor": {
+        "qid": "rb.pokedex.PokedexMenuItemsText",
+        "extraction": {
+          "kind": "segment",
+          "index": 3
+        }
+      },
+      "decision_type": "contextual",
+      "rationale": "Known limitation: QUIT is one context-free engine key reused by the Pokédex, shop, and start menu: localized French uses RET, SALUT!, and RETOUR respectively. The executable anchor deliberately keeps the compact Pokédex segment; a context-aware upstream split is required before one value can represent all three menus.",
+      "languages": [],
+      "qids": [
+        "rb.pokedex.PokedexMenuItemsText"
+      ],
+      "trace_status": "known-limitation",
+      "languages_verified": false
+    },
+    "Go right ahead!": {
+      "anchor": {
+        "qid": "rb.Route22Gate.Route22GateGuardGoRightAheadText",
+        "extraction": {
+          "kind": "span",
+          "index": 5,
+          "count": 3,
+          "targets": {
+            "fr": {
+              "kind": "span",
+              "index": 6,
+              "count": 3
+            },
+            "de": {
+              "kind": "span",
+              "index": 5,
+              "count": 4
+            },
+            "es": {
+              "kind": "span",
+              "index": 6,
+              "count": 2
+            },
+            "it": {
+              "kind": "span",
+              "index": 7,
+              "count": 2
+            },
+            "ja-Hrkt": {
+              "kind": "span",
+              "index": 4,
+              "count": 3
+            }
+          }
+        }
+      },
+      "decision_type": "target_extraction",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. The qid rb.Route22Gate.Route22GateGuardGoRightAheadText contains surrounding gate dialogue; each selected language span isolates only the permission phrase “Go right ahead!” despite line reflow.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.Route22Gate.Route22GateGuardGoRightAheadText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "You don't have the\nBOULDERBADGE yet!": {
+      "anchor": {
+        "qid": "rb.Route22Gate.Route22GateGuardNoBoulderbadgeText",
+        "extraction": {
+          "kind": "span",
+          "index": 7,
+          "count": 6,
+          "targets": {
+            "fr": {
+              "kind": "span",
+              "index": 6,
+              "count": 6
+            },
+            "de": {
+              "kind": "span",
+              "index": 6,
+              "count": 7
+            },
+            "es": {
+              "kind": "span",
+              "index": 6,
+              "count": 6
+            },
+            "it": {
+              "kind": "span",
+              "index": 6,
+              "count": 6
+            },
+            "ja-Hrkt": {
+              "kind": "span",
+              "index": 6,
+              "count": 5
+            }
+          }
+        }
+      },
+      "decision_type": "target_extraction",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. Spans from qid rb.Route22Gate.Route22GateGuardNoBoulderbadgeText isolate the localized missing-Boulderbadge sentence from the larger gate message, with per-language line wrapping preserved.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.Route22Gate.Route22GateGuardNoBoulderbadgeText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "Oh! That is the\n{RAM}!": {
+      "anchor": {
+        "qid": "rb.Route23.Route23OhThatIsTheBadgeText",
+        "extraction": {
+          "kind": "span",
+          "index": 10,
+          "count": 5,
+          "targets": {
+            "fr": {
+              "kind": "span",
+              "index": 8,
+              "count": 5
+            },
+            "de": {
+              "kind": "span",
+              "index": 10,
+              "count": 5
+            },
+            "es": {
+              "kind": "span",
+              "index": 8,
+              "count": 5
+            },
+            "it": {
+              "kind": "span",
+              "index": 7,
+              "count": 5
+            },
+            "ja-Hrkt": {
+              "kind": "span",
+              "index": 8,
+              "count": 4
+            }
+          }
+        }
+      },
+      "decision_type": "target_extraction",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. The qid rb.Route23.Route23OhThatIsTheBadgeText span selects the exact badge-identification phrase and keeps its {RAM} placeholder while excluding adjacent qid/reflow text.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.Route23.Route23OhThatIsTheBadgeText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "Welcome to our\nPOKéMON CENTER!": {
+      "anchor": {
+        "qid": "rb.text_4.PokemonCenterWelcomeText",
+        "extraction": {
+          "kind": "span",
+          "index": 0,
+          "count": 5,
+          "targets": {
+            "fr": {
+              "kind": "span",
+              "index": 0,
+              "count": 5
+            },
+            "de": {
+              "kind": "span",
+              "index": 0,
+              "count": 3
+            },
+            "es": {
+              "kind": "span",
+              "index": 0,
+              "count": 5
+            },
+            "it": {
+              "kind": "span",
+              "index": 0,
+              "count": 4
+            },
+            "ja-Hrkt": {
+              "kind": "span",
+              "index": 0,
+              "count": 2
+            }
+          }
+        }
+      },
+      "decision_type": "target_extraction",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. Per-language spans in rb.text_4.PokemonCenterWelcomeText isolate the welcome sentence from the full Center message; differing line breaks and segment lengths are intentional reflow.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_4.PokemonCenterWelcomeText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "Your POKéMON are\nfighting fit!": {
+      "anchor": {
+        "qid": "rb.text_4.PokemonFightingFitText",
+        "extraction": {
+          "kind": "span",
+          "index": 2,
+          "count": 5,
+          "targets": {
+            "fr": {
+              "kind": "span",
+              "index": 1,
+              "count": 6
+            },
+            "de": {
+              "kind": "span",
+              "index": 1,
+              "count": 5
+            },
+            "es": {
+              "kind": "span",
+              "index": 1,
+              "count": 6
+            },
+            "it": {
+              "kind": "span",
+              "index": 1,
+              "count": 7
+            },
+            "ja-Hrkt": {
+              "kind": "span",
+              "index": 1,
+              "count": 5
+            }
+          }
+        }
+      },
+      "decision_type": "target_extraction",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. Spans in rb.text_4.PokemonFightingFitText isolate the exact fighting-fit sentence from surrounding healing dialogue, including each release’s distinct reflow.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_4.PokemonFightingFitText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "An elevator!": {
+      "anchor": {
+        "qid": "rb.text_2.ElevatorText",
+        "source_aliases": [
+          "An elevator!"
+        ],
+        "extraction": {
+          "kind": "full",
+          "index": 0
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed source alias: rb.text_2.ElevatorText is the elevator-observation line used by the engine callsite, so its localized equivalent is safe; unrelated elevator event strings are not substituted.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.ElevatorText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "All sleeping\nPOKéMON woke up!": {
+      "anchor": {
+        "qid": "rb.text_6.FluteWokeUpText",
+        "source_aliases": [
+          "All sleeping\nPOKéMON woke up."
+        ],
+        "extraction": {
+          "kind": "full",
+          "index": 0
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed source alias: rb.text_6.FluteWokeUpText is the flute wake-all message. Its corpus text ends with a period while the engine key uses an exclamation mark; the alias records that punctuation-equivalent source without conflating the generic “%s woke up!” battle line.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_6.FluteWokeUpText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "There's a slew of\nPOKéMON stuff!": {
+      "anchor": {
+        "qid": "rb.text_2.PokemonStuffText",
+        "source_aliases": [
+          "There's a slew of\nPOKéMON stuff!"
+        ],
+        "extraction": {
+          "kind": "full",
+          "index": 0
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed source alias: rb.text_2.PokemonStuffText is the same inventory-observation sentence in the corpus, including its line break and POKéMON token; no other “stuff” qid is a semantic match.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.PokemonStuffText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s's\n%s rose!": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.text_3.MonsStatsRoseText",
+            "extraction": {
+              "kind": "full",
+              "preserve_edges": true
+            }
+          },
+          {
+            "qid": "rb.text_3.RoseText",
+            "extraction": {
+              "kind": "full",
+              "preserve_edges": true
+            }
+          }
+        ],
+        "separators": [
+          ""
+        ],
+        "placeholders": {
+          "{USER}": "%s",
+          "{RAM:wStringBuffer}": "%s"
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Known limitation: stat-stage composition. ES and IT editorial overrides require the runtime argument order Pokémon name first, stat label second; the qid composition alone cannot verify that order across languages. The DE greatly-stage qids are empty, leaving this family without complete evidence.",
+      "languages": [],
+      "qids": [
+        "rb.text_3.MonsStatsRoseText",
+        "rb.text_3.RoseText"
+      ],
+      "trace_status": "known-limitation",
+      "languages_verified": false
+    },
+    "%s's\n%s\ngreatly rose!": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.text_3.MonsStatsRoseText",
+            "extraction": {
+              "kind": "full",
+              "preserve_edges": true
+            }
+          },
+          {
+            "qid": "rb.text_3.GreatlyRoseText",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.text_3.RoseText",
+            "extraction": {
+              "kind": "full",
+              "preserve_edges": true
+            }
+          }
+        ],
+        "separators": [
+          "\n",
+          ""
+        ],
+        "placeholders": {
+          "{USER}": "%s",
+          "{RAM:wStringBuffer}": "%s"
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Known limitation: stat-stage composition. ES/IT overrides preserve Pokémon-first/stat-label-second placeholders, while rb.text_3.GreatlyRoseText is empty in DE, so the three-qid composition lacks complete cross-language evidence.",
+      "languages": [],
+      "qids": [
+        "rb.text_3.MonsStatsRoseText",
+        "rb.text_3.GreatlyRoseText",
+        "rb.text_3.RoseText"
+      ],
+      "trace_status": "known-limitation",
+      "languages_verified": false
+    },
+    "%s's\n%s fell!": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.text_3.MonsStatsFellText",
+            "extraction": {
+              "kind": "full",
+              "preserve_edges": true
+            }
+          },
+          {
+            "qid": "rb.text_3.FellText",
+            "extraction": {
+              "kind": "full",
+              "preserve_edges": true
+            }
+          }
+        ],
+        "separators": [
+          ""
+        ],
+        "placeholders": {
+          "{TARGET}": "%s",
+          "{RAM:wStringBuffer}": "%s"
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Known limitation: stat-stage composition. ES and IT overrides depend on Pokémon-first then stat-label placeholder order; the paired greatly-stage qid is empty in DE, so this composition is not promoted to reviewed.",
+      "languages": [],
+      "qids": [
+        "rb.text_3.MonsStatsFellText",
+        "rb.text_3.FellText"
+      ],
+      "trace_status": "known-limitation",
+      "languages_verified": false
+    },
+    "%s's\n%s\ngreatly fell!": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.text_3.MonsStatsFellText",
+            "extraction": {
+              "kind": "full",
+              "preserve_edges": true
+            }
+          },
+          {
+            "qid": "rb.text_3.GreatlyFellText",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.text_3.FellText",
+            "extraction": {
+              "kind": "full",
+              "preserve_edges": true
+            }
+          }
+        ],
+        "separators": [
+          "\n",
+          ""
+        ],
+        "placeholders": {
+          "{TARGET}": "%s",
+          "{RAM:wStringBuffer}": "%s"
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Known limitation: stat-stage composition. ES/IT require the runtime Pokémon-first/stat-label-second argument order, and rb.text_3.GreatlyFellText is empty in DE; those limitations prevent language verification.",
+      "languages": [],
+      "qids": [
+        "rb.text_3.MonsStatsFellText",
+        "rb.text_3.GreatlyFellText",
+        "rb.text_3.FellText"
+      ],
+      "trace_status": "known-limitation",
+      "languages_verified": false
+    },
+    "1, 2 and... Poof!\f%s forgot\n%s!\fAnd...\f%s learned\n%s!": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.text_4.OneTwoAndText",
+            "extraction": {
+              "kind": "full",
+              "index": 0,
+              "preserve_edges": true
+            }
+          },
+          {
+            "qid": "rb.text_4.PoofText",
+            "extraction": {
+              "kind": "full",
+              "index": 0,
+              "preserve_edges": true
+            }
+          },
+          {
+            "qid": "rb.text_4.ForgotAndText",
+            "extraction": {
+              "kind": "full",
+              "index": 0,
+              "preserve_edges": true
+            }
+          },
+          {
+            "qid": "rb.text_4.LearnedMove1Text",
+            "extraction": {
+              "kind": "full",
+              "index": 0,
+              "preserve_edges": true
+            }
+          }
+        ],
+        "separators": [
+          "",
+          "",
+          "\f"
+        ],
+        "placeholders": {
+          "{RAM:wLearnMoveMonName}": "%s",
+          "{RAM:wNameBuffer}": "%s",
+          "{RAM:wStringBuffer}": "%s"
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed composition of rb.text_4.OneTwoAndText, PoofText, ForgotAndText, and LearnedMove1Text in qid order. Empty joins retain source edges and a form-feed separator preserves the four-part callsite sequence; the three named placeholders map to the runtime Pokémon and move arguments.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_4.OneTwoAndText",
+        "rb.text_4.PoofText",
+        "rb.text_4.ForgotAndText",
+        "rb.text_4.LearnedMove1Text"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s\nmade a whirlwind!": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.text_3.ChargeMoveEffectText",
+            "extraction": {
+              "kind": "full",
+              "index": 0
+            }
+          },
+          {
+            "qid": "rb.text_3.MadeWhirlwindText",
+            "extraction": {
+              "kind": "full",
+              "index": 0
+            }
+          }
+        ],
+        "join": "\n",
+        "placeholders": {
+          "{USER}": "%s"
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed composition: rb.text_3.ChargeMoveEffectText plus MadeWhirlwindText, joined with one newline, reproduces the battle callsite’s %s user-name placeholder and exact effect sentence.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_3.ChargeMoveEffectText",
+        "rb.text_3.MadeWhirlwindText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s\ntook in sunlight!": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.text_3.ChargeMoveEffectText",
+            "extraction": {
+              "kind": "full",
+              "index": 0
+            }
+          },
+          {
+            "qid": "rb.text_3.TookInSunlightText",
+            "extraction": {
+              "kind": "full",
+              "index": 0
+            }
+          }
+        ],
+        "join": "\n",
+        "placeholders": {
+          "{USER}": "%s"
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed composition: rb.text_3.ChargeMoveEffectText plus TookInSunlightText, joined with one newline; the callsite supplies the single {USER} → %s argument.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_3.ChargeMoveEffectText",
+        "rb.text_3.TookInSunlightText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s\nlowered its head!": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.text_3.ChargeMoveEffectText",
+            "extraction": {
+              "kind": "full",
+              "index": 0
+            }
+          },
+          {
+            "qid": "rb.text_3.LoweredItsHeadText",
+            "extraction": {
+              "kind": "full",
+              "index": 0
+            }
+          }
+        ],
+        "join": "\n",
+        "placeholders": {
+          "{USER}": "%s"
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed composition: rb.text_3.ChargeMoveEffectText plus LoweredItsHeadText, joined with one newline, keeps the battle callsite’s user-name placeholder and localized effect wording together.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_3.ChargeMoveEffectText",
+        "rb.text_3.LoweredItsHeadText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s\nflew up high!": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.text_3.ChargeMoveEffectText",
+            "extraction": {
+              "kind": "full",
+              "index": 0
+            }
+          },
+          {
+            "qid": "rb.text_3.FlewUpHighText",
+            "extraction": {
+              "kind": "full",
+              "index": 0
+            }
+          }
+        ],
+        "join": "\n",
+        "placeholders": {
+          "{USER}": "%s"
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed composition: rb.text_3.ChargeMoveEffectText plus FlewUpHighText, joined with one newline; qid order and the {USER} → %s placeholder match the charge-move callsite.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_3.ChargeMoveEffectText",
+        "rb.text_3.FlewUpHighText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s\ndug a hole!": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.text_3.ChargeMoveEffectText",
+            "extraction": {
+              "kind": "full",
+              "index": 0
+            }
+          },
+          {
+            "qid": "rb.text_3.DugAHoleText",
+            "extraction": {
+              "kind": "full",
+              "index": 0
+            }
+          }
+        ],
+        "join": "\n",
+        "placeholders": {
+          "{USER}": "%s"
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed composition: rb.text_3.ChargeMoveEffectText plus DugAHoleText, joined with one newline, isolates the shared user prefix and localized effect while preserving the single %s argument.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_3.ChargeMoveEffectText",
+        "rb.text_3.DugAHoleText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s\nis storing energy!": {
+      "anchor": {
+        "qid": "rb.text_2.SavingEnergyText",
+        "source_aliases": [
+          "{USER}\nis saving energy!"
+        ],
+        "extraction": {
+          "kind": "full",
+          "index": 0
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed source alias: rb.text_2.SavingEnergyText is the battle charge-state sentence with the runtime Pokémon-name placeholder; the alias follows that callsite rather than a generic storage message.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.SavingEnergyText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s\nsnapped out of\nconfusion!": {
+      "anchor": {
+        "qid": "rb.text_2.ConfusedNoMoreText",
+        "source_aliases": [
+          "{USER}'s\nconfused no more!"
+        ],
+        "extraction": {
+          "kind": "full",
+          "index": 0
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed source alias: rb.text_2.ConfusedNoMoreText is the battle status-recovery sentence and supplies the same %s battler placeholder; unrelated wake-up text is rejected.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.ConfusedNoMoreText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "POKéMON LEAGUE HQ": {
+      "anchor": {
+        "qid": "rb.text_2.IndigoPlateauHQText",
+        "source_aliases": [
+          "POKéMON LEAGUE HQ"
+        ],
+        "extraction": {
+          "kind": "span",
+          "index": 2,
+          "count": 3,
+          "targets": {
+            "fr": {
+              "kind": "span",
+              "index": 2,
+              "count": 6
+            },
+            "de": {
+              "kind": "span",
+              "index": 2,
+              "count": 2
+            },
+            "es": {
+              "kind": "span",
+              "index": 5,
+              "count": 5
+            },
+            "it": {
+              "kind": "span",
+              "index": 2,
+              "count": 4
+            },
+            "ja-Hrkt": {
+              "kind": "span",
+              "index": 1,
+              "count": 2
+            }
+          }
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed source alias: rb.text_2.IndigoPlateauHQText is the localized Indigo Plateau heading used for the League HQ callsite, semantically equivalent despite the engine’s shorter label.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.IndigoPlateauHQText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "You don't have the\n{RAM} yet!": {
+      "anchor": {
+        "qid": "rb.Route23.Route23YouDontHaveTheBadgeYetText",
+        "extraction": {
+          "kind": "span",
+          "index": 10,
+          "count": 6,
+          "targets": {
+            "fr": {
+              "kind": "span",
+              "index": 8,
+              "count": 5
+            },
+            "de": {
+              "kind": "span",
+              "index": 7,
+              "count": 6
+            },
+            "es": {
+              "kind": "span",
+              "index": 8,
+              "count": 5
+            },
+            "it": {
+              "kind": "span",
+              "index": 7,
+              "count": 5
+            },
+            "ja-Hrkt": {
+              "kind": "span",
+              "index": 8,
+              "count": 6
+            }
+          }
+        }
+      },
+      "decision_type": "target_extraction",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. The span from rb.Route23.Route23YouDontHaveTheBadgeYetText isolates the generic missing-badge sentence, retaining {RAM} while excluding the surrounding Route 23 message and its release-specific reflow.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.Route23.Route23YouDontHaveTheBadgeYetText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "You need a\nBICYCLE for the\nCycling Road!": {
+      "anchor": {
+        "qid": "rb.Route18Gate1F.Route18Gate1FGuardYouNeedABicycleText",
+        "source_aliases": [
+          "You need a BICYCLE\nfor CYCLING ROAD!",
+          "You need a\nBICYCLE for the\nCycling Road!"
+        ],
+        "extraction": {
+          "kind": "full"
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed source alias: rb.Route18Gate1F.Route18Gate1FGuardYouNeedABicycleText is the gate requirement sentence for Cycling Road; its localized wording and three-line context are semantically exact.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.Route18Gate1F.Route18Gate1FGuardYouNeedABicycleText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "PA: You're out of\nSAFARI BALLs!": {
+      "anchor": {
+        "qid": "rb.text_2.OutOfSafariBallsText",
+        "source_aliases": [
+          "PA: You're out of\nSAFARI BALLs!"
+        ],
+        "extraction": {
+          "kind": "parts",
+          "parts": [
+            1,
+            2
+          ],
+          "separators": [
+            "\n"
+          ]
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Known limitation: source alias. Localized corpora do not consistently retain the announcer prefix PA: and reflow the Safari-ball exhaustion line. Keeping the executable anchor without language claims avoids inventing a prefix mapping.",
+      "languages": [],
+      "qids": [
+        "rb.text_2.OutOfSafariBallsText"
+      ],
+      "trace_status": "known-limitation",
+      "languages_verified": false
+    },
+    "%s got off\nthe BICYCLE.": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.text_7.GotOffBicycleText1",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.text_7.GotOffBicycleText2",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.names.ItemNames.6",
+            "extraction": {
+              "kind": "full"
+            },
+            "include": false
+          }
+        ],
+        "join": "\n",
+        "placeholders": {
+          "{PLAYER}": "%s",
+          "{RAM:wStringBuffer}": {
+            "part": 2
+          }
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed composition of rb.text_7.GotOffBicycleText1 and GotOffBicycleText2 joined with a newline; the excluded item-name part resolves the BICYCLE token, and {PLAYER} maps to the single %s callsite argument. The corresponding got-on message is rejected because its ROM split places the line break inside a qid and cannot be composed safely.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_7.GotOffBicycleText1",
+        "rb.text_7.GotOffBicycleText2",
+        "rb.names.ItemNames.6"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s is out of\nuseable POKéMON!": {
+      "anchor": {
+        "qid": "rb.text_2.PlayerBlackedOutText2",
+        "extraction": {
+          "kind": "parts",
+          "parts": [
+            0,
+            1
+          ],
+          "separators": [
+            "\n"
+          ],
+          "targets": {
+            "fr": {
+              "kind": "parts",
+              "parts": [
+                0,
+                1
+              ],
+              "separators": [
+                "\n"
+              ]
+            },
+            "de": {
+              "kind": "parts",
+              "parts": [
+                0,
+                1,
+                2
+              ],
+              "separators": [
+                "\n",
+                "\u000b"
+              ]
+            },
+            "es": {
+              "kind": "parts",
+              "parts": [
+                0,
+                1
+              ],
+              "separators": [
+                "\n"
+              ]
+            },
+            "it": {
+              "kind": "parts",
+              "parts": [
+                0,
+                1
+              ],
+              "separators": [
+                "\n"
+              ]
+            },
+            "ja-Hrkt": {
+              "kind": "parts",
+              "parts": [
+                0,
+                1
+              ],
+              "separators": [
+                "\n"
+              ]
+            }
+          }
+        },
+        "placeholders": {
+          "{PLAYER}": "%s"
+        }
+      },
+      "decision_type": "target_extraction",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. The span from rb.text_2.PlayerBlackedOutText2 selects only the “out of useable POKéMON” clause from a larger blackout qid, including per-language reflow.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.PlayerBlackedOutText2"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s blacked\nout!": {
+      "anchor": {
+        "qid": "rb.text_2.PlayerBlackedOutText2",
+        "extraction": {
+          "kind": "parts",
+          "parts": [
+            2,
+            3
+          ],
+          "separators": [
+            "\n"
+          ],
+          "targets": {
+            "fr": {
+              "kind": "parts",
+              "parts": [
+                2,
+                3
+              ],
+              "separators": [
+                "\n"
+              ]
+            },
+            "de": {
+              "kind": "parts",
+              "parts": [
+                3,
+                4
+              ],
+              "separators": [
+                "\n"
+              ]
+            },
+            "es": {
+              "kind": "parts",
+              "parts": [
+                2,
+                3
+              ],
+              "separators": [
+                "\n"
+              ]
+            },
+            "it": {
+              "kind": "parts",
+              "parts": [
+                2,
+                3
+              ],
+              "separators": [
+                "\n"
+              ]
+            },
+            "ja-Hrkt": {
+              "kind": "parts",
+              "parts": [
+                2,
+                3
+              ],
+              "separators": [
+                "\n"
+              ]
+            }
+          }
+        },
+        "placeholders": {
+          "{PLAYER}": "%s"
+        }
+      },
+      "decision_type": "target_extraction",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. A separate span of rb.text_2.PlayerBlackedOutText2 isolates the short blackout phrase, preventing the larger qid’s preceding game-over text from being captured.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.PlayerBlackedOutText2"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "It dodged the\nthrown BALL!": {
+      "anchor": {
+        "qid": "rb.text_6.ItemUseBallText00",
+        "extraction": {
+          "kind": "parts",
+          "parts": [
+            0,
+            1
+          ],
+          "separators": [
+            "\n"
+          ],
+          "targets": {
+            "fr": {
+              "kind": "segment",
+              "index": 0
+            },
+            "de": {
+              "kind": "parts",
+              "parts": [
+                0,
+                1
+              ],
+              "separators": [
+                "\n"
+              ]
+            },
+            "es": {
+              "kind": "parts",
+              "parts": [
+                0,
+                1
+              ],
+              "separators": [
+                "\n"
+              ]
+            },
+            "it": {
+              "kind": "parts",
+              "parts": [
+                0,
+                1
+              ],
+              "separators": [
+                "\n"
+              ]
+            },
+            "ja-Hrkt": {
+              "kind": "segment",
+              "index": 0
+            }
+          }
+        }
+      },
+      "decision_type": "target_extraction",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. The rb.text_6.ItemUseBallText00 span isolates the exact failed-capture sentence from the item-use message and follows each translation’s line reflow.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_6.ItemUseBallText00"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "It contained\n%s!": {
+      "anchor": {
+        "qid": "rb.text_6.TeachMachineMoveText",
+        "extraction": {
+          "kind": "parts",
+          "parts": [
+            0,
+            1
+          ],
+          "separators": [
+            "\n"
+          ],
+          "targets": {
+            "fr": {
+              "kind": "parts",
+              "parts": [
+                0,
+                1
+              ],
+              "separators": [
+                "\n"
+              ]
+            },
+            "de": {
+              "kind": "parts",
+              "parts": [
+                0,
+                1
+              ],
+              "separators": [
+                "\n"
+              ]
+            },
+            "es": {
+              "kind": "parts",
+              "parts": [
+                0,
+                1
+              ],
+              "separators": [
+                "\n"
+              ]
+            },
+            "it": {
+              "kind": "parts",
+              "parts": [
+                0,
+                1
+              ],
+              "separators": [
+                "\n"
+              ]
+            },
+            "ja-Hrkt": {
+              "kind": "parts",
+              "parts": [
+                0,
+                1
+              ],
+              "separators": [
+                "\n"
+              ]
+            }
+          }
+        },
+        "placeholders": {
+          "{RAM:wStringBuffer}": "%s"
+        }
+      },
+      "decision_type": "target_extraction",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. The span in rb.text_6.TeachMachineMoveText keeps the contained-move phrase and its %s move placeholder while excluding adjacent teaching text.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_6.TeachMachineMoveText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s gained\n%d EXP. Points!": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.text_2.GainedText",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.text_2.ExpPointsText",
+            "extraction": {
+              "kind": "full"
+            }
+          }
+        ],
+        "separators": [
+          "\n"
+        ],
+        "placeholders": {
+          "{RAM:wNameBuffer}": {
+            "printf": 0
+          },
+          "{NUM:wExpAmountGained}": {
+            "printf": 1
+          }
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed composition of rb.text_2.GainedText and ExpPointsText with a newline separator. The callsite mapping keeps {RAM:wNameBuffer} at printf argument 0 and {NUM:wExpAmountGained} at argument 1.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.GainedText",
+        "rb.text_2.ExpPointsText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s gained\nwith EXP.ALL,\u000b%d EXP. Points!": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.text_2.GainedText",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.text_2.WithExpAllText",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.text_2.ExpPointsText",
+            "extraction": {
+              "kind": "full"
+            }
+          }
+        ],
+        "separators": [
+          "\n",
+          "\u000b"
+        ],
+        "placeholders": {
+          "{RAM:wNameBuffer}": {
+            "printf": 0
+          },
+          "{NUM:wExpAmountGained}": {
+            "printf": 1
+          }
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed composition of GainedText, WithExpAllText, and ExpPointsText in qid order. Newline then vertical-tab separators match the callsite, with the name and EXP amount bound to printf arguments 0 and 1.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.GainedText",
+        "rb.text_2.WithExpAllText",
+        "rb.text_2.ExpPointsText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s gained\na boosted\u000b%d EXP. Points!": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.text_2.GainedText",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.text_2.BoostedText",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.text_2.ExpPointsText",
+            "extraction": {
+              "kind": "full"
+            }
+          }
+        ],
+        "separators": [
+          "\n",
+          "\u000b"
+        ],
+        "placeholders": {
+          "{RAM:wNameBuffer}": {
+            "printf": 0
+          },
+          "{NUM:wExpAmountGained}": {
+            "printf": 1
+          }
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed composition of GainedText, BoostedText, and ExpPointsText. The newline/vertical-tab separators preserve the boosted EXP layout and the two printf placeholder positions.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.GainedText",
+        "rb.text_2.BoostedText",
+        "rb.text_2.ExpPointsText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s\nis glowing!": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.text_3.ChargeMoveEffectText",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.text_3.SkyAttackGlowingText",
+            "extraction": {
+              "kind": "full"
+            }
+          }
+        ],
+        "join": "\n",
+        "placeholders": {
+          "{USER}": "%s"
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed composition of rb.text_3.ChargeMoveEffectText and SkyAttackGlowingText joined with a newline; {USER} maps to the single %s battler argument at the glowing callsite.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_3.ChargeMoveEffectText",
+        "rb.text_3.SkyAttackGlowingText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "TYPE/": {
+      "anchor": {
+        "qid": "rb.core.TypeText",
+        "source_aliases": [
+          "TYPE"
+        ],
+        "extraction": {
+          "kind": "full"
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed source alias: rb.core.TypeText is the base status-screen TYPE/ label; preserving the slash and this qid avoids substituting the distinct TYPE1/ and TYPE2/ slots.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.core.TypeText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "TYPE1/": {
+      "anchor": {
+        "qid": "rb.status_screen.TypesIDNoOTText",
+        "source_aliases": [
+          "TYPE1"
+        ],
+        "extraction": {
+          "kind": "segment",
+          "index": 0
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed source alias: rb.status_screen.TypesIDNoOTText supplies the first type slot label with its slash; the alias is slot-specific rather than the generic TYPE/ label.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.status_screen.TypesIDNoOTText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "TYPE2/": {
+      "anchor": {
+        "qid": "rb.status_screen.TypesIDNoOTText",
+        "source_aliases": [
+          "TYPE2"
+        ],
+        "extraction": {
+          "kind": "segment",
+          "index": 1
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed source alias: rb.status_screen.TypesIDNoOTText supplies the second type slot label with its slash; slot identity is retained even though TYPE1/ shares the qid.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.status_screen.TypesIDNoOTText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "OT/": {
+      "anchor": {
+        "qid": "rb.status_screen.TypesIDNoOTText",
+        "source_aliases": [
+          "OT"
+        ],
+        "extraction": {
+          "kind": "segment",
+          "index": 3
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed source alias: rb.status_screen.TypesIDNoOTText supplies the original-trainer label and slash in the status-screen layout; no unrelated OT qid is selected.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.status_screen.TypesIDNoOTText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "LEVEL/": {
+      "anchor": {
+        "qid": "rb.hall_of_fame.HoFMonInfoText",
+        "source_aliases": [
+          "LEVEL"
+        ],
+        "extraction": {
+          "kind": "segment",
+          "index": 0
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed source alias: rb.hall_of_fame.HoFMonInfoText contains the Hall of Fame level label; the alias follows that layout context and preserves the slash.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.hall_of_fame.HoFMonInfoText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "BALLx": {
+      "anchor": {
+        "qid": "rb.text_boxes.SafariZoneBattleMenuText",
+        "source_aliases": [
+          "BALL×"
+        ],
+        "extraction": {
+          "kind": "token",
+          "index": 0
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed source alias: rb.text_boxes.SafariZoneBattleMenuText contains the Safari battle BALLx counter label; the alias is tied to that menu context, not generic ball inventory text.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_boxes.SafariZoneBattleMenuText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "THROW ROCK": {
+      "anchor": {
+        "qid": "rb.text_boxes.SafariZoneBattleMenuText",
+        "extraction": {
+          "kind": "span",
+          "index": 2,
+          "count": 2,
+          "targets": {
+            "fr": {
+              "kind": "span",
+              "index": 2,
+              "count": 1
+            },
+            "de": {
+              "kind": "span",
+              "index": 2,
+              "count": 1
+            },
+            "es": {
+              "kind": "span",
+              "index": 2,
+              "count": 2
+            },
+            "it": {
+              "kind": "span",
+              "index": 2,
+              "count": 2
+            },
+            "ja-Hrkt": {
+              "kind": "span",
+              "index": 2,
+              "count": 1
+            }
+          }
+        }
+      },
+      "decision_type": "target_extraction",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. The span from rb.text_boxes.SafariZoneBattleMenuText isolates the exact Safari battle THROW ROCK command from the larger battle-menu qid.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_boxes.SafariZoneBattleMenuText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s's PP\nincreased!": {
+      "anchor": {
+        "qid": "rb.text_6.PPIncreasedText",
+        "source_aliases": [
+          "{RAM:wStringBuffer}'s PP\nincreased."
+        ],
+        "extraction": {
+          "kind": "full"
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed source alias: rb.text_6.PPIncreasedText is the battle PP-increase sentence with the runtime Pokémon-name placeholder; its context disambiguates it from other stat-change messages.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_6.PPIncreasedText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "You can't carry\nany more items.": {
+      "anchor": {
+        "qid": "rb.text_2.CantCarryMoreText",
+        "extraction": {
+          "kind": "full"
+        }
+      },
+      "decision_type": "contextual",
+      "rationale": "Reviewed contextual alias to rb.text_2.CantCarryMoreText, the generic inventory-full qid used by this period-form callsite. The shop-specific rb.text_4.PokemartItemBagFullText and the hidden-item exclamation key are rejected because their contexts differ.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.CantCarryMoreText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "BATTLE ANIMATION": {
+      "anchor": {
+        "qid": "rb.main_menu.BattleAnimationOptionText",
+        "source_aliases": [
+          "BATTLE ANIMATION"
+        ],
+        "extraction": {
+          "kind": "segment",
+          "index": 0
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed source alias: rb.main_menu.BattleAnimationOptionText is the settings-menu label and matches the engine option context exactly.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.main_menu.BattleAnimationOptionText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "When you change a\nPOKéMON BOX, data\nwill be saved. OK?": {
+      "anchor": {
+        "qid": "rb.text_3.WhenYouChangeBoxText",
+        "source_aliases": [
+          "When you change a\nPOKéMON BOX, data\u000bwill be saved.\fIs that okay?"
+        ],
+        "extraction": {
+          "kind": "full"
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed source alias: rb.text_3.WhenYouChangeBoxText is the save-confirmation prompt for the box-change callsite; its multiline reflow and OK prompt are semantically equivalent.",
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_3.WhenYouChangeBoxText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    }
+  }
+}

@@ -3,490 +3,323 @@
   "version": 1,
   "description": "Stable qid/extraction anchors; translations are read from the selected corpus language.",
   "anchors": {
-    "FIGHT": {"qid": "rb.text_boxes.BattleMenuText", "extraction": {"kind": "token", "index": 0}},
-    "RUN": {"qid": "rb.text_boxes.BattleMenuText", "extraction": {"kind": "token", "index": 3}},
-    "YES": {"qid": "rb.yes_no_menu_strings.TwoOptionMenuStrings.YesNoMenu", "extraction": {"kind": "segment", "index": 0}},
-    "NO": {"qid": "rb.yes_no_menu_strings.TwoOptionMenuStrings.YesNoMenu", "extraction": {"kind": "segment", "index": 1}},
-    "MONEY": {"qid": "rb.text_boxes.MoneyText", "extraction": {"kind": "segment", "index": 0}},
-    "TIME": {"qid": "rb.start_sub_menus.TrainerInfo_NameMoneyTimeText", "extraction": {"kind": "segment", "index": 2}},
-    "NAME": {"qid": "rb.start_sub_menus.TrainerInfo_NameMoneyTimeText", "extraction": {"kind": "segment", "index": 0}},
-    "ATTACK": {"qid": "rb.stat_names.VitaminStats.2", "extraction": {"kind": "segment", "index": 0}},
-    "SPEED": {"qid": "rb.stat_names.VitaminStats.4", "extraction": {"kind": "segment", "index": 0}},
-
-    "TOSS": {"qid": "rb.text_boxes.UseTossText", "extraction": {"kind": "segment", "index": 1}},
-    "USE": {"qid": "rb.text_boxes.UseTossText", "extraction": {"kind": "segment", "index": 0}},
-    "BUY": {"qid": "rb.text_boxes.BuySellQuitText", "extraction": {"kind": "segment", "index": 0}},
-    "SELL": {"qid": "rb.text_boxes.BuySellQuitText", "extraction": {"kind": "segment", "index": 1}},
-    "QUIT": {"qid": "rb.pokedex.PokedexMenuItemsText", "extraction": {"kind": "segment", "index": 3}},
-    "DATA": {"qid": "rb.pokedex.PokedexMenuItemsText", "extraction": {"kind": "segment", "index": 0}},
-    "CRY": {"qid": "rb.pokedex.PokedexMenuItemsText", "extraction": {"kind": "segment", "index": 1}},
-    "BAIT": {"qid": "rb.text_boxes.SafariZoneBattleMenuText", "extraction": {"kind": "token", "index": 1}},
-
-    "Go right ahead!": {
-      "qid": "rb.Route22Gate.Route22GateGuardGoRightAheadText",
-      "extraction": {"kind": "span", "index": 5, "count": 3,
-        "targets": {
-          "fr": {"kind": "span", "index": 6, "count": 3},
-          "de": {"kind": "span", "index": 5, "count": 4},
-          "es": {"kind": "span", "index": 6, "count": 2},
-          "it": {"kind": "span", "index": 7, "count": 2},
-          "ja-Hrkt": {"kind": "span", "index": 4, "count": 3}
-        }}
+    "FIGHT": {
+      "qid": "rb.text_boxes.BattleMenuText",
+      "extraction": {
+        "kind": "token",
+        "index": 0
+      }
     },
-    "You don't have the\nBOULDERBADGE yet!": {
-      "qid": "rb.Route22Gate.Route22GateGuardNoBoulderbadgeText",
-      "extraction": {"kind": "span", "index": 7, "count": 6,
-        "targets": {
-          "fr": {"kind": "span", "index": 6, "count": 6},
-          "de": {"kind": "span", "index": 6, "count": 7},
-          "es": {"kind": "span", "index": 6, "count": 6},
-          "it": {"kind": "span", "index": 6, "count": 6},
-          "ja-Hrkt": {"kind": "span", "index": 6, "count": 5}
-        }}
+    "RUN": {
+      "qid": "rb.text_boxes.BattleMenuText",
+      "extraction": {
+        "kind": "token",
+        "index": 3
+      }
     },
-    "Oh! That is the\n{RAM}!": {
-      "qid": "rb.Route23.Route23OhThatIsTheBadgeText",
-      "extraction": {"kind": "span", "index": 10, "count": 5,
-        "targets": {
-          "fr": {"kind": "span", "index": 8, "count": 5},
-          "de": {"kind": "span", "index": 10, "count": 5},
-          "es": {"kind": "span", "index": 8, "count": 5},
-          "it": {"kind": "span", "index": 7, "count": 5},
-          "ja-Hrkt": {"kind": "span", "index": 8, "count": 4}
-        }}
+    "YES": {
+      "qid": "rb.yes_no_menu_strings.TwoOptionMenuStrings.YesNoMenu",
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
     },
-    "Welcome to our\nPOKéMON CENTER!": {
-      "qid": "rb.text_4.PokemonCenterWelcomeText",
-      "extraction": {"kind": "span", "index": 0, "count": 5,
-        "targets": {
-          "fr": {"kind": "span", "index": 0, "count": 5},
-          "de": {"kind": "span", "index": 0, "count": 3},
-          "es": {"kind": "span", "index": 0, "count": 5},
-          "it": {"kind": "span", "index": 0, "count": 4},
-          "ja-Hrkt": {"kind": "span", "index": 0, "count": 2}
-        }}
+    "NO": {
+      "qid": "rb.yes_no_menu_strings.TwoOptionMenuStrings.YesNoMenu",
+      "extraction": {
+        "kind": "segment",
+        "index": 1
+      }
     },
-    "Your POKéMON are\nfighting fit!": {
-      "qid": "rb.text_4.PokemonFightingFitText",
-      "extraction": {"kind": "span", "index": 2, "count": 5,
-        "targets": {
-          "fr": {"kind": "span", "index": 1, "count": 6},
-          "de": {"kind": "span", "index": 1, "count": 5},
-          "es": {"kind": "span", "index": 1, "count": 6},
-          "it": {"kind": "span", "index": 1, "count": 7},
-          "ja-Hrkt": {"kind": "span", "index": 1, "count": 5}
-        }}
+    "MONEY": {
+      "qid": "rb.text_boxes.MoneyText",
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
+    },
+    "TIME": {
+      "qid": "rb.start_sub_menus.TrainerInfo_NameMoneyTimeText",
+      "extraction": {
+        "kind": "segment",
+        "index": 2
+      }
+    },
+    "NAME": {
+      "qid": "rb.start_sub_menus.TrainerInfo_NameMoneyTimeText",
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
+    },
+    "ATTACK": {
+      "qid": "rb.stat_names.VitaminStats.2",
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
+    },
+    "SPEED": {
+      "qid": "rb.stat_names.VitaminStats.4",
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
+    },
+    "AREA": {
+      "qid": "rb.pokedex.PokedexMenuItemsText",
+      "extraction": {
+        "kind": "segment",
+        "index": 2
+      }
+    },
+    "BATTLE STYLE": {
+      "qid": "rb.main_menu.BattleStyleOptionText",
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
+    },
+    "TEXT SPEED": {
+      "qid": "rb.main_menu.TextSpeedOptionText",
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
+    },
+    "NEW GAME": {
+      "qid": "rb.main_menu.NewGameText",
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
+    },
+    "Which move should": {
+      "qid": "rb.text_4.WhichMoveToForgetText",
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
+    },
+    "be forgotten?": {
+      "qid": "rb.text_4.WhichMoveToForgetText",
+      "extraction": {
+        "kind": "segment",
+        "index": 1
+      }
+    },
+    "TOSS": {
+      "qid": "rb.text_boxes.UseTossText",
+      "extraction": {
+        "kind": "segment",
+        "index": 1
+      }
+    },
+    "USE": {
+      "qid": "rb.text_boxes.UseTossText",
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
+    },
+    "BUY": {
+      "qid": "rb.text_boxes.BuySellQuitText",
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
+    },
+    "SELL": {
+      "qid": "rb.text_boxes.BuySellQuitText",
+      "extraction": {
+        "kind": "segment",
+        "index": 1
+      }
+    },
+    "DATA": {
+      "qid": "rb.pokedex.PokedexMenuItemsText",
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
+    },
+    "CRY": {
+      "qid": "rb.pokedex.PokedexMenuItemsText",
+      "extraction": {
+        "kind": "segment",
+        "index": 1
+      }
+    },
+    "BAIT": {
+      "qid": "rb.text_boxes.SafariZoneBattleMenuText",
+      "extraction": {
+        "kind": "token",
+        "index": 1
+      }
     },
     "{RIVAL}: Yeah! Am\nI great or what?": {
       "qid": "rb.text_2.Rival1WinText",
-      "extraction": {"kind": "full", "index": 0}
-    },
-    "An elevator!": {
-      "qid": "rb.text_2.ElevatorText",
-      "source_aliases": ["An elevator!"],
-      "extraction": {"kind": "full", "index": 0}
-    },
-    "All sleeping\nPOKéMON woke up!": {
-      "qid": "rb.text_6.FluteWokeUpText",
-      "source_aliases": ["All sleeping\nPOKéMON woke up."],
-      "extraction": {"kind": "full", "index": 0}
-    },
-    "There's a slew of\nPOKéMON stuff!": {
-      "qid": "rb.text_2.PokemonStuffText",
-      "source_aliases": ["There's a slew of\nPOKéMON stuff!"],
-      "extraction": {"kind": "full", "index": 0}
+      "extraction": {
+        "kind": "full",
+        "index": 0
+      }
     },
     "Crammed full of\nPOKéMON books!": {
       "qid": "rb.text_2.PokemonBooksText",
-      "extraction": {"kind": "full", "index": 0}
+      "extraction": {
+        "kind": "full",
+        "index": 0
+      }
     },
     "INDIGO PLATEAU": {
       "qid": "rb.text_2.IndigoPlateauStatuesText1",
-      "extraction": {"kind": "full", "index": 0}
+      "extraction": {
+        "kind": "full",
+        "index": 0
+      }
     },
     "A COIN CASE is\nrequired!": {
       "qid": "rb.text_2.GameCornerCoinCaseText",
-      "extraction": {"kind": "full", "index": 0}
+      "extraction": {
+        "kind": "full",
+        "index": 0
+      }
     },
     "%s\nlearned\n%s!": {
       "qid": "rb.text_3.MimicLearnedMoveText",
-      "extraction": {"kind": "full", "index": 0}
-    },
-    "%s's\n%s rose!": {
-      "parts": [
-        {"qid": "rb.text_3.MonsStatsRoseText", "extraction": {"kind": "full", "preserve_edges": true}},
-        {"qid": "rb.text_3.RoseText", "extraction": {"kind": "full", "preserve_edges": true}}
-      ],
-      "separators": [""],
-      "placeholders": {"{USER}": "%s", "{RAM:wStringBuffer}": "%s"}
-    },
-    "%s's\n%s\ngreatly rose!": {
-      "parts": [
-        {"qid": "rb.text_3.MonsStatsRoseText", "extraction": {"kind": "full", "preserve_edges": true}},
-        {"qid": "rb.text_3.GreatlyRoseText", "extraction": {"kind": "full"}},
-        {"qid": "rb.text_3.RoseText", "extraction": {"kind": "full", "preserve_edges": true}}
-      ],
-      "separators": ["\n", ""],
-      "placeholders": {"{USER}": "%s", "{RAM:wStringBuffer}": "%s"}
-    },
-    "%s's\n%s fell!": {
-      "parts": [
-        {"qid": "rb.text_3.MonsStatsFellText", "extraction": {"kind": "full", "preserve_edges": true}},
-        {"qid": "rb.text_3.FellText", "extraction": {"kind": "full", "preserve_edges": true}}
-      ],
-      "separators": [""],
-      "placeholders": {"{TARGET}": "%s", "{RAM:wStringBuffer}": "%s"}
-    },
-    "%s's\n%s\ngreatly fell!": {
-      "parts": [
-        {"qid": "rb.text_3.MonsStatsFellText", "extraction": {"kind": "full", "preserve_edges": true}},
-        {"qid": "rb.text_3.GreatlyFellText", "extraction": {"kind": "full"}},
-        {"qid": "rb.text_3.FellText", "extraction": {"kind": "full", "preserve_edges": true}}
-      ],
-      "separators": ["\n", ""],
-      "placeholders": {"{TARGET}": "%s", "{RAM:wStringBuffer}": "%s"}
+      "extraction": {
+        "kind": "full",
+        "index": 0
+      }
     },
     "%s learned\n%s!": {
       "qid": "rb.text_4.LearnedMove1Text",
-      "extraction": {"kind": "full", "index": 0}
-    },
-    "1, 2 and... Poof!\f%s forgot\n%s!\fAnd...\f%s learned\n%s!": {
-      "parts": [
-        {"qid": "rb.text_4.OneTwoAndText", "extraction": {"kind": "full", "index": 0, "preserve_edges": true}},
-        {"qid": "rb.text_4.PoofText", "extraction": {"kind": "full", "index": 0, "preserve_edges": true}},
-        {"qid": "rb.text_4.ForgotAndText", "extraction": {"kind": "full", "index": 0, "preserve_edges": true}},
-        {"qid": "rb.text_4.LearnedMove1Text", "extraction": {"kind": "full", "index": 0, "preserve_edges": true}}
-      ],
-      "separators": ["", "", "\f"],
-      "placeholders": {
-        "{RAM:wLearnMoveMonName}": "%s",
-        "{RAM:wNameBuffer}": "%s",
-        "{RAM:wStringBuffer}": "%s"
+      "extraction": {
+        "kind": "full",
+        "index": 0
       }
-    },
-    "%s\nmade a whirlwind!": {
-      "parts": [
-        {"qid": "rb.text_3.ChargeMoveEffectText", "extraction": {"kind": "full", "index": 0}},
-        {"qid": "rb.text_3.MadeWhirlwindText", "extraction": {"kind": "full", "index": 0}}
-      ],
-      "join": "\n",
-      "placeholders": {"{USER}": "%s"}
-    },
-    "%s\ntook in sunlight!": {
-      "parts": [
-        {"qid": "rb.text_3.ChargeMoveEffectText", "extraction": {"kind": "full", "index": 0}},
-        {"qid": "rb.text_3.TookInSunlightText", "extraction": {"kind": "full", "index": 0}}
-      ],
-      "join": "\n",
-      "placeholders": {"{USER}": "%s"}
-    },
-    "%s\nlowered its head!": {
-      "parts": [
-        {"qid": "rb.text_3.ChargeMoveEffectText", "extraction": {"kind": "full", "index": 0}},
-        {"qid": "rb.text_3.LoweredItsHeadText", "extraction": {"kind": "full", "index": 0}}
-      ],
-      "join": "\n",
-      "placeholders": {"{USER}": "%s"}
-    },
-    "%s\nflew up high!": {
-      "parts": [
-        {"qid": "rb.text_3.ChargeMoveEffectText", "extraction": {"kind": "full", "index": 0}},
-        {"qid": "rb.text_3.FlewUpHighText", "extraction": {"kind": "full", "index": 0}}
-      ],
-      "join": "\n",
-      "placeholders": {"{USER}": "%s"}
-    },
-    "%s\ndug a hole!": {
-      "parts": [
-        {"qid": "rb.text_3.ChargeMoveEffectText", "extraction": {"kind": "full", "index": 0}},
-        {"qid": "rb.text_3.DugAHoleText", "extraction": {"kind": "full", "index": 0}}
-      ],
-      "join": "\n",
-      "placeholders": {"{USER}": "%s"}
-    },
-    "%s\nis storing energy!": {
-      "qid": "rb.text_2.SavingEnergyText",
-      "source_aliases": ["{USER}\nis saving energy!"],
-      "extraction": {"kind": "full", "index": 0}
-    },
-    "%s\nsnapped out of\nconfusion!": {
-      "qid": "rb.text_2.ConfusedNoMoreText",
-      "source_aliases": ["{USER}'s\nconfused no more!"],
-      "extraction": {"kind": "full", "index": 0}
     },
     "%s\nwoke up!": {
       "qid": "rb.text_2.WokeUpText",
-      "extraction": {"kind": "full", "index": 0}
+      "extraction": {
+        "kind": "full",
+        "index": 0
+      }
     },
     "%s found\n%d coins!": {
       "qid": "rb.text_2.FoundHiddenCoinsText",
-      "extraction": {"kind": "full", "index": 0}
-    },
-    "POKéMON LEAGUE HQ": {
-      "qid": "rb.text_2.IndigoPlateauHQText",
-      "source_aliases": ["POKéMON LEAGUE HQ"],
-      "extraction": {"kind": "span", "index": 2, "count": 3,
-        "targets": {
-          "fr": {"kind": "span", "index": 2, "count": 6},
-          "de": {"kind": "span", "index": 2, "count": 2},
-          "es": {"kind": "span", "index": 5, "count": 5},
-          "it": {"kind": "span", "index": 2, "count": 4},
-          "ja-Hrkt": {"kind": "span", "index": 1, "count": 2}
-        }}
+      "extraction": {
+        "kind": "full",
+        "index": 0
+      }
     },
     "Hey! There's a\nswitch under the\ntrash!\fThe 1st electric\nlock opened!": {
       "qid": "rb.text_2.VermilionGymTrashSuccessText1",
       "extraction": {
         "kind": "parts",
-        "parts": [0, 1, 2, 4, 5],
-        "separators": ["\n", "\n", "\f", "\n"]
+        "parts": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ],
+        "separators": [
+          "\n",
+          "\n",
+          "\f",
+          "\n"
+        ]
       }
     },
     "POKéDEX comp-\nletion is:\f{NUM:hDexRatingNumMonsSeen} POKéMON seen\n{NUM:hDexRatingNumMonsOwned} POKéMON owned\fPROF.OAK's\nRating:": {
       "qid": "rb.pokedex_ratings.DexCompletionText",
-      "extraction": {"kind": "full"}
+      "extraction": {
+        "kind": "full"
+      }
     },
     "SEEN %d  OWNED %d": {
       "qid": "rb.text_2.DexSeenOwnedText",
-      "extraction": {"kind": "dex_counter", "selector": "rby_dex_seen_owned"}
-    },
-    "You don't have the\n{RAM} yet!": {
-      "qid": "rb.Route23.Route23YouDontHaveTheBadgeYetText",
       "extraction": {
-        "kind": "span", "index": 10, "count": 6,
-        "targets": {
-          "fr": {"kind": "span", "index": 8, "count": 5},
-          "de": {"kind": "span", "index": 7, "count": 6},
-          "es": {"kind": "span", "index": 8, "count": 5},
-          "it": {"kind": "span", "index": 7, "count": 5},
-          "ja-Hrkt": {"kind": "span", "index": 8, "count": 6}
-        }
-      }
-    },
-    "You need a\nBICYCLE for the\nCycling Road!": {
-      "qid": "rb.Route18Gate1F.Route18Gate1FGuardYouNeedABicycleText",
-      "source_aliases": ["You need a BICYCLE\nfor CYCLING ROAD!", "You need a\nBICYCLE for the\nCycling Road!"],
-      "extraction": {"kind": "full"}
-    },
-    "PA: You're out of\nSAFARI BALLs!": {
-      "qid": "rb.text_2.OutOfSafariBallsText",
-      "source_aliases": ["PA: You're out of\nSAFARI BALLs!"],
-      "extraction": {
-        "kind": "parts", "parts": [1, 2], "separators": ["\n"]
-      }
-    },
-    "%s got off\nthe BICYCLE.": {
-      "parts": [
-        {"qid": "rb.text_7.GotOffBicycleText1", "extraction": {"kind": "full"}},
-        {"qid": "rb.text_7.GotOffBicycleText2", "extraction": {"kind": "full"}},
-        {"qid": "rb.names.ItemNames.6", "extraction": {"kind": "full"}, "include": false}
-      ],
-      "join": "\n",
-      "placeholders": {"{PLAYER}": "%s", "{RAM:wStringBuffer}": {"part": 2}}
-    },
-    "%s is out of\nuseable POKéMON!": {
-      "qid": "rb.text_2.PlayerBlackedOutText2",
-      "extraction": {
-        "kind": "parts", "parts": [0, 1], "separators": ["\n"],
-        "targets": {
-          "fr": {"kind": "parts", "parts": [0, 1], "separators": ["\n"]},
-          "de": {"kind": "parts", "parts": [0, 1, 2], "separators": ["\n", "\u000b"]},
-          "es": {"kind": "parts", "parts": [0, 1], "separators": ["\n"]},
-          "it": {"kind": "parts", "parts": [0, 1], "separators": ["\n"]},
-          "ja-Hrkt": {"kind": "parts", "parts": [0, 1], "separators": ["\n"]}
-        }
-      },
-      "placeholders": {"{PLAYER}": "%s"}
-    },
-    "%s blacked\nout!": {
-      "qid": "rb.text_2.PlayerBlackedOutText2",
-      "extraction": {
-        "kind": "parts", "parts": [2, 3], "separators": ["\n"],
-        "targets": {
-          "fr": {"kind": "parts", "parts": [2, 3], "separators": ["\n"]},
-          "de": {"kind": "parts", "parts": [3, 4], "separators": ["\n"]},
-          "es": {"kind": "parts", "parts": [2, 3], "separators": ["\n"]},
-          "it": {"kind": "parts", "parts": [2, 3], "separators": ["\n"]},
-          "ja-Hrkt": {"kind": "parts", "parts": [2, 3], "separators": ["\n"]}
-        }
-      },
-      "placeholders": {"{PLAYER}": "%s"}
-    },
-    "It dodged the\nthrown BALL!": {
-      "qid": "rb.text_6.ItemUseBallText00",
-      "extraction": {
-        "kind": "parts", "parts": [0, 1], "separators": ["\n"],
-        "targets": {
-          "fr": {"kind": "segment", "index": 0},
-          "de": {"kind": "parts", "parts": [0, 1], "separators": ["\n"]},
-          "es": {"kind": "parts", "parts": [0, 1], "separators": ["\n"]},
-          "it": {"kind": "parts", "parts": [0, 1], "separators": ["\n"]},
-          "ja-Hrkt": {"kind": "segment", "index": 0}
-        }
-      }
-    },
-    "It contained\n%s!": {
-      "qid": "rb.text_6.TeachMachineMoveText",
-      "extraction": {
-        "kind": "parts", "parts": [0, 1], "separators": ["\n"],
-        "targets": {
-          "fr": {"kind": "parts", "parts": [0, 1], "separators": ["\n"]},
-          "de": {"kind": "parts", "parts": [0, 1], "separators": ["\n"]},
-          "es": {"kind": "parts", "parts": [0, 1], "separators": ["\n"]},
-          "it": {"kind": "parts", "parts": [0, 1], "separators": ["\n"]},
-          "ja-Hrkt": {"kind": "parts", "parts": [0, 1], "separators": ["\n"]}
-        }
-      },
-      "placeholders": {"{RAM:wStringBuffer}": "%s"}
-    },
-    "%s gained\n%d EXP. Points!": {
-      "parts": [
-        {"qid": "rb.text_2.GainedText", "extraction": {"kind": "full"}},
-        {"qid": "rb.text_2.ExpPointsText", "extraction": {"kind": "full"}}
-      ],
-      "separators": ["\n"],
-      "placeholders": {
-        "{RAM:wNameBuffer}": {"printf": 0},
-        "{NUM:wExpAmountGained}": {"printf": 1}
-      }
-    },
-    "%s gained\nwith EXP.ALL,\u000b%d EXP. Points!": {
-      "parts": [
-        {"qid": "rb.text_2.GainedText", "extraction": {"kind": "full"}},
-        {"qid": "rb.text_2.WithExpAllText", "extraction": {"kind": "full"}},
-        {"qid": "rb.text_2.ExpPointsText", "extraction": {"kind": "full"}}
-      ],
-      "separators": ["\n", "\u000b"],
-      "placeholders": {
-        "{RAM:wNameBuffer}": {"printf": 0},
-        "{NUM:wExpAmountGained}": {"printf": 1}
-      }
-    },
-    "%s gained\na boosted\u000b%d EXP. Points!": {
-      "parts": [
-        {"qid": "rb.text_2.GainedText", "extraction": {"kind": "full"}},
-        {"qid": "rb.text_2.BoostedText", "extraction": {"kind": "full"}},
-        {"qid": "rb.text_2.ExpPointsText", "extraction": {"kind": "full"}}
-      ],
-      "separators": ["\n", "\u000b"],
-      "placeholders": {
-        "{RAM:wNameBuffer}": {"printf": 0},
-        "{NUM:wExpAmountGained}": {"printf": 1}
+        "kind": "dex_counter",
+        "selector": "rby_dex_seen_owned"
       }
     },
     "%s grew\nto level %d!": {
       "qid": "rb.text_2.GrewLevelText",
-      "extraction": {"kind": "full", "index": 0}
+      "extraction": {
+        "kind": "full",
+        "index": 0
+      }
     },
     "EXP POINTS": {
       "qid": "rb.status_screen.StatusScreenExpText",
-      "extraction": {"kind": "segment", "index": 0}
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
     },
     "LEVEL UP": {
       "qid": "rb.status_screen.StatusScreenExpText",
-      "extraction": {"kind": "segment", "index": 1}
-    },
-    "%s\nis glowing!": {
-      "parts": [
-        {"qid": "rb.text_3.ChargeMoveEffectText", "extraction": {"kind": "full"}},
-        {"qid": "rb.text_3.SkyAttackGlowingText", "extraction": {"kind": "full"}}
-      ],
-      "join": "\n",
-      "placeholders": {"{USER}": "%s"}
-    },
-    "TYPE/": {
-      "qid": "rb.core.TypeText",
-      "source_aliases": ["TYPE"],
-      "extraction": {"kind": "full"}
-    },
-    "TYPE1/": {
-      "qid": "rb.status_screen.TypesIDNoOTText",
-      "source_aliases": ["TYPE1"],
-      "extraction": {"kind": "segment", "index": 0}
-    },
-    "TYPE2/": {
-      "qid": "rb.status_screen.TypesIDNoOTText",
-      "source_aliases": ["TYPE2"],
-      "extraction": {"kind": "segment", "index": 1}
-    },
-    "OT/": {
-      "qid": "rb.status_screen.TypesIDNoOTText",
-      "source_aliases": ["OT"],
-      "extraction": {"kind": "segment", "index": 3}
-    },
-    "LEVEL/": {
-      "qid": "rb.hall_of_fame.HoFMonInfoText",
-      "source_aliases": ["LEVEL"],
-      "extraction": {"kind": "segment", "index": 0}
-    },
-    "BALLx": {
-      "qid": "rb.text_boxes.SafariZoneBattleMenuText",
-      "source_aliases": ["BALL×"],
-      "extraction": {"kind": "token", "index": 0}
-    },
-    "THROW ROCK": {
-      "qid": "rb.text_boxes.SafariZoneBattleMenuText",
       "extraction": {
-        "kind": "span", "index": 2, "count": 2,
-        "targets": {
-          "fr": {"kind": "span", "index": 2, "count": 1},
-          "de": {"kind": "span", "index": 2, "count": 1},
-          "es": {"kind": "span", "index": 2, "count": 2},
-          "it": {"kind": "span", "index": 2, "count": 2},
-          "ja-Hrkt": {"kind": "span", "index": 2, "count": 1}
-        }
+        "kind": "segment",
+        "index": 1
       }
     },
     "STATS": {
       "qid": "rb.text_box.PokemonMenuEntries",
-      "extraction": {"kind": "segment", "index": 0}
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
     },
     "SWITCH": {
       "qid": "rb.text_box.PokemonMenuEntries",
-      "extraction": {"kind": "segment", "index": 1}
+      "extraction": {
+        "kind": "segment",
+        "index": 1
+      }
     },
     "CHANGE BOX": {
       "qid": "rb.bills_pc.BillsPCMenuText",
-      "extraction": {"kind": "segment", "index": 3}
+      "extraction": {
+        "kind": "segment",
+        "index": 3
+      }
     },
     "SEE YA!": {
       "qid": "rb.bills_pc.BillsPCMenuText",
-      "extraction": {"kind": "segment", "index": 4}
+      "extraction": {
+        "kind": "segment",
+        "index": 4
+      }
     },
     "WITHDRAW ITEM": {
       "qid": "rb.players_pc.PlayersPCMenuEntries",
-      "extraction": {"kind": "segment", "index": 0}
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
     },
     "DEPOSIT ITEM": {
       "qid": "rb.players_pc.PlayersPCMenuEntries",
-      "extraction": {"kind": "segment", "index": 1}
+      "extraction": {
+        "kind": "segment",
+        "index": 1
+      }
     },
     "TOSS ITEM": {
       "qid": "rb.players_pc.PlayersPCMenuEntries",
-      "extraction": {"kind": "segment", "index": 2}
-    },
-    "%s's PP\nincreased!": {
-      "qid": "rb.text_6.PPIncreasedText",
-      "source_aliases": ["{RAM:wStringBuffer}'s PP\nincreased."],
-      "extraction": {"kind": "full"}
+      "extraction": {
+        "kind": "segment",
+        "index": 2
+      }
     },
     "You don't have\nenough money.": {
       "qid": "rb.text_4.PokemartNotEnoughMoneyText",
-      "extraction": {"kind": "full"}
-    },
-    "You can't carry\nany more items.": {
-      "qid": "rb.text_2.CantCarryMoreText",
-      "extraction": {"kind": "full"}
-    },
-    "BATTLE ANIMATION": {
-      "qid": "rb.main_menu.BattleAnimationOptionText",
-      "source_aliases": ["BATTLE ANIMATION"],
-      "extraction": {"kind": "segment", "index": 0}
-    },
-    "When you change a\nPOKéMON BOX, data\nwill be saved. OK?": {
-      "qid": "rb.text_3.WhenYouChangeBoxText",
-      "source_aliases": ["When you change a\nPOKéMON BOX, data\u000bwill be saved.\u000cIs that okay?"],
-      "extraction": {"kind": "full"}
+      "extraction": {
+        "kind": "full"
+      }
     }
   }
 }
