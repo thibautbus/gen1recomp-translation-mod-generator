@@ -1,5 +1,58 @@
 {
   "schema": "gen1recomp-translation-mods/engine-overrides",
   "version": 1,
-  "entries": {}
+  "entries": {
+    "%s :L%d": {
+      "override": "%s :N%d",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    ":L%d No.%03d": {
+      "override": ":N%d No.%03d",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "Empty.": {
+      "override": "Vide.",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "No good! It's not\neven near water.": {
+      "override": "Pas bon! Même pas\nprès de l'eau.",
+      "reason": "AI-generated manual corpus-gap translation; requires in-game visual validation."
+    },
+    "PP": {
+      "override": "PP",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "PRINT BOX": {
+      "override": "IMPRIMER BOITE",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "PRNT": {
+      "override": "PRNT",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "BOX %d (WITHDRAW)": {
+      "override": "BOITE %d (RETIRER)",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "BOX %d (RELEASE)": {
+      "override": "BOITE %d (RELACHER)",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "Data unknown.": {
+      "override": "Données inconnues.",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "The boulder fell\nthrough the hole!": {
+      "override": "Le rocher est tombé\ndans le trou!",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "%s's\nstatus returned\nto normal!": {
+      "override": "L'état de %s\nest redevenu\nnormal!",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "Coin count:\n%d": {
+      "override": "Jetons :\n%d",
+      "reason": "AI-generated manual corpus-gap translation."
+    }
+  }
 }

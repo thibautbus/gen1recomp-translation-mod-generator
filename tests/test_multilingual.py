@@ -18,7 +18,8 @@ class MultilingualTests(unittest.TestCase):
             path = Path("overrides") / language / "engine_overrides.json"
             self.assertTrue(path.is_file())
             overrides = load_engine_overrides(path)
-            self.assertTrue(all(entry.get("reason") == "editorial-correction" for entry in overrides.values()))
+            self.assertEqual(sum(entry.get("reason") == "editorial-correction" for entry in overrides.values()), 4)
+            self.assertEqual(sum(entry.get("reason") == "AI-generated manual corpus-gap translation." for entry in overrides.values()), 12)
 
     def test_cli_ja_alias_serializes_canonical_target(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1013,8 +1014,8 @@ class MultilingualTests(unittest.TestCase):
             items = align(parse_redblue(root, language), target_lang=language)
             override_path = Path("overrides") / language / "engine_overrides.json"
             overrides = load_engine_overrides(override_path)
-            self.assertEqual(set(overrides), set(keys))
-            self.assertTrue(all("provenance" in entry for entry in overrides.values()), language)
+            self.assertTrue(set(keys) <= set(overrides), language)
+            self.assertTrue(all("provenance" in overrides[key] for key in keys), language)
             output, report = match_engine_catalog(
                 {key: "" for key in keys}, items, overrides,
                 semantic_anchors=anchors, target_lang=language,

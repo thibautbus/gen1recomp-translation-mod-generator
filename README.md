@@ -143,11 +143,11 @@ cached ROM imports and corpus snapshots, so revisions can change these values.
 
 | Target | ROM catalogs | Literal handlers | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 321/360 (89.17%) | 333/576 (57.81%) |
-| `de` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 319/360 (88.61%) | 332/576 (57.64%) |
-| `es` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 322/360 (89.44%) | 334/576 (57.99%) |
-| `it` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 320/360 (88.89%) | 333/576 (57.81%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 320/360 (88.89%) | 333/576 (57.81%) |
+| `fr` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 334/360 (92.78%) | 346/576 (60.07%) |
+| `de` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 332/360 (92.22%) | 345/576 (59.90%) |
+| `es` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 335/360 (93.06%) | 347/576 (60.24%) |
+| `it` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 333/360 (92.50%) | 346/576 (60.07%) |
+| `ja-Hrkt` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 333/360 (92.50%) | 346/576 (60.07%) |
 
 The five handlers are backed by 15/15 unique corpus qids. `RBY-related engine
 strings` counts 360 keys from Gen1Recomp's 576-key catalog whose production
@@ -187,6 +187,9 @@ Every translated engine string remains traceable:
 This taxonomy is exhaustive, but the affected strings evolve with engine and
 corpus revisions. Generated coverage reports are the authoritative inventory
 of unmatched and ambiguous strings for a given build.
+
+The 13 manual corpus-gap entries per language are AI-generated; marked entries
+additionally require in-game visual validation.
 
 Manual overrides include a concrete provenance explanation. Do not add one just
 to raise coverage: a shared key or missing runtime argument can make a value

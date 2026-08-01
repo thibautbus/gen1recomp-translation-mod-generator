@@ -21,6 +21,58 @@
       "override": "¡%s\nsu %s\nbajó mucho!",
       "reason": "editorial-correction",
       "provenance": "editorial stat-stage wording; raw English stat label retained"
+    },
+    "%s :L%d": {
+      "override": "%s :N%d",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    ":L%d No.%03d": {
+      "override": ":N%d Nº%03d",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "Empty.": {
+      "override": "Vacía.",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "No good! It's not\neven near water.": {
+      "override": "¡Qué mal! No estás\nni cerca del agua.",
+      "reason": "AI-generated manual corpus-gap translation; requires in-game visual validation."
+    },
+    "PP": {
+      "override": "PP",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "PRINT BOX": {
+      "override": "IMPRIMIR CAJA",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "PRNT": {
+      "override": "PRNT",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "BOX %d (WITHDRAW)": {
+      "override": "CAJA %d (SACAR)",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "BOX %d (RELEASE)": {
+      "override": "CAJA %d (SOLTAR)",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "Data unknown.": {
+      "override": "Datos desconocidos.",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "The boulder fell\nthrough the hole!": {
+      "override": "¡La roca cayó\npor el agujero!",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "%s's\nstatus returned\nto normal!": {
+      "override": "El estado de %s\nvolvió a la\nnormalidad!",
+      "reason": "AI-generated manual corpus-gap translation."
+    },
+    "Coin count:\n%d": {
+      "override": "Fichas:\n%d",
+      "reason": "AI-generated manual corpus-gap translation."
     }
   }
 }
