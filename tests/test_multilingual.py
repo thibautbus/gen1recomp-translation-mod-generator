@@ -603,6 +603,50 @@ class MultilingualTests(unittest.TestCase):
             self.assertEqual(printf_directives(output[keys[2]]), [], language)
             self.assertEqual(printf_directives(output[keys[3]]), ["%s"], language)
 
+    def test_real_corpus_legendary_cries_reach_generated_dialogue_catalog(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        qids = {
+            "rb.SeafoamIslandsB4F.SeafoamIslandsB4FArticunoBattleText":
+                ("_SeafoamIslandsB4FArticunoBattleText", {
+                    "de": "Jauul!", "es": "¡Ar Tic!", "it": "Ghiooo!",
+                }),
+            "rb.PowerPlant.PowerPlantZapdosBattleText":
+                ("_PowerPlantZapdosBattleText", {
+                    "de": "Jauul!", "es": "¡Zap Zap!", "it": "Yhuhu!",
+                }),
+            "rb.VictoryRoad2F.VictoryRoad2FMoltresBattleText":
+                ("_VictoryRoad2FMoltresBattleText", {
+                    "de": "Jauuul!", "es": "¡Mol Tres!", "it": "Yhuhu!",
+                }),
+        }
+        for language in ("de", "es", "it"):
+            worksheet = Path(".cache/interactive") / language / "complete-modkit-worksheet"
+            if not (worksheet / "strings.lua").is_file():
+                self.skipTest(f"cached {language} complete modkit worksheet is unavailable")
+            records = [row for row in parse_redblue(root, language) if row.qid in qids]
+            items = align(records, target_lang=language)
+            self.assertEqual({row.method for row in items}, {"qid"}, language)
+            with tempfile.TemporaryDirectory() as tmp:
+                mod = generate_mod(
+                    items,
+                    Path(tmp) / "mod",
+                    language=language,
+                    modkit_worksheet=worksheet,
+                    engine_catalog=worksheet / "strings.lua",
+                    engine_overrides=Path("overrides") / language / "engine_overrides.json",
+                    strict_engine=True,
+                )
+                dialogue = (mod / "lang/dialogue.lua").read_text(encoding="utf-8")
+                for qid, (label, translations) in qids.items():
+                    self.assertIn(f'  ["{label}"] = "{translations[language]}",', dialogue,
+                                  (language, qid))
+                # The shared English cry remains unresolved in the engine table;
+                # each species-specific dialogue qid supplies the localized value.
+                strings = (mod / "lang/strings.lua").read_text(encoding="utf-8")
+                self.assertIn('  ["Gyaoo!"] = "",', strings, language)
+
     def test_real_corpus_item_use_anchor_exact_outputs_and_provenance_all_languages(self):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
         if not (root / "qid_msg.txt").is_file():
