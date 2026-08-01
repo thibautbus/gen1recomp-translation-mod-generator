@@ -70,7 +70,7 @@ VISUAL_KEYS["de"].update(("BOX %d (WITHDRAW)", "BOX %d (RELEASE)"))
 class ManualCorpusGapOverrideTests(unittest.TestCase):
     def test_all_languages_have_exact_manual_corpus_gap_values(self):
         for language, values in EXPECTED.items():
-            path = Path("overrides/engine_overrides.json") if language == "fr" else Path("overrides") / language / "engine_overrides.json"
+            path = Path("overrides") / language / "engine_overrides.json"
             overrides = load_engine_overrides(path)
             self.assertTrue(set(KEYS) <= set(overrides), language)
             for source, expected in zip(KEYS, values):

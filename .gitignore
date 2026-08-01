@@ -27,8 +27,8 @@ catalog.json
 *-worksheet/
 worksheet/
 
-# overrides/overrides.json contains original editorial corrections.
-# Do not ignore overrides/overrides.json.
+# overrides/fr/overrides.json contains original editorial corrections.
+# Do not ignore overrides/fr/overrides.json.
 
 # Local saves and configuration.
 save.lua
