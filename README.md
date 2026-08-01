@@ -472,6 +472,25 @@ state machines, or would require unsafe runtime placeholder assumptions.
 
 ## Provenance, publication, and limitations
 
+Every translated engine string should remain traceable to how it was obtained:
+
+| Origin | Meaning | Recorded in |
+| --- | --- | --- |
+| Automatic match | An exact, normalized, or structural match proved by the generator. | Generation report |
+| Deterministic anchor | A reliable PokeCorpus qid, composition, or extraction rule. | `config/semantic_anchors.json` |
+| Human-reviewed anchor | A contextual choice or language-specific extraction reviewed by a maintainer; the translation still comes from PokeCorpus. | `config/semantic_anchor_decisions.json` |
+| Manual translation — engine contract gap | PokeCorpus has the relevant text, but Gen1Recomp merges contexts or does not expose the parameters needed to use it faithfully. | `overrides/<language>/engine_overrides.json` with `reason: "engine-contract-gap"` |
+| Manual translation — engine original | The text is specific to the engine and has no Red/Blue PokeCorpus source. | `overrides/<language>/engine_overrides.json` with `reason: "engine-original"` |
+| Editorial correction | A manual formulation is deliberately preferred to the available corpus result. | `overrides/<language>/engine_overrides.json` with `reason: "editorial-correction"` |
+| Known limitation | An active anchor or override is knowingly imperfect in at least one context or language. This is a status, not a translation origin. | Anchor decision metadata or override provenance |
+| English fallback | No sufficiently reliable translation is available; the runtime keeps the original English string. | Generation report |
+
+Manual engine overrides also carry a `reason` category and a concrete
+`provenance` explanation. Do not add a manual override merely to increase coverage: a shared
+key or missing runtime argument may make one translation wrong in another
+context. In that case, keep the English fallback unless the limitation is
+explicitly accepted and documented.
+
 Keep canonical and localized ROM paths, fingerprints, corpus revisions,
 import logs, worksheets, catalogs, complete extracted fonts, and coverage
 reports private: they can contain source text or local filesystem
