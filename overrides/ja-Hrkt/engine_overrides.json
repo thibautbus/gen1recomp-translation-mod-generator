@@ -2,6 +2,11 @@
   "schema": "gen1recomp-translation-mods/engine-overrides",
   "version": 1,
   "entries": {
+    "%s's\nhits will never\nmiss!": {
+      "override": "%sは\nぜったいに\nはずれない！",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; requires in-game visual validation."
+    },
     "%s :L%d": {
       "override": "%s :L%d",
       "reason": "AI-generated manual corpus-gap translation."
@@ -53,6 +58,156 @@
     "Coin count:\n%d": {
       "override": "コイン\n%dまい",
       "reason": "AI-generated manual corpus-gap translation."
+    },
+    "%s can't\nlearn that move!": {
+      "override": "%sは\nその　わざを　おぼえられない！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary source with context-specific arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s defeated\n%s!": {
+      "override": "%sは\n%sに　かった！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is reordered battle arguments across callsites; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s is\nabout to use": {
+      "override": "%sは\nつぎに　つかう",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary source split from the following move argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s lined up!\nScored %d coins!": {
+      "override": "%sが　そろった！\nコイン%dまい　かくとく！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is missing slot-machine context around the reordered arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s was\ntransferred to\n%s!": {
+      "override": "%sは\n%sへ\nてんそうされた！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is context-specific transfer arguments with a fragmentary source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s's\nSUBSTITUTE broke!": {
+      "override": "%sの　ぶんしんは\nきえてしまった！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a missing battle-substitute context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s's\nhurt by poison!": {
+      "override": "%sは\nどくで　くるしんでいる！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary status-effect source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s's\nhurt by the burn!": {
+      "override": "%sは\nやけどで　くるしんでいる！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary status-effect source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s's %s\nrose!": {
+      "override": "%sの %sが\nあがった！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is reordered stat arguments at shared callsites; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s's PP\nwas restored!": {
+      "override": "%sの PPが\nかいふくした！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation retaining the technical PP token; concrete engine contract limitation is a fragmentary PP source without the original context; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "Converted type to\n%s's!": {
+      "override": "タイプを\n%sのものに　へんこう！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a missing type-context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "It didn't affect\n%s!": {
+      "override": "%sには\nこうかが　ない！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a missing target-context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "It knows that\nmove already!": {
+      "override": "その\nわざは　もう　おぼえている！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary move-learning source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "Once released,\n%s is\ngone forever. OK?": {
+      "override": "いちど　にがすと、\n%sは\nにどと　もどらない。OK？",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is reordered release-confirmation context around one argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "PLAYER %s\nBADGES    %d\nPOKéDEX %3d\nTIME %6d:%02d": {
+      "override": "しゅじんこう %s\nバッジ      %d\nPOKéDEX %3d\nプレイじかん %6d:%02d",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a technical status fragment with reordered display arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "BADGES": {
+      "override": "バッジ",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary standalone status label; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "HT %d′%02d″": {
+      "override": "HT %d′%02d″",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation retained as a technical height format; concrete engine contract limitation is missing unit context around numeric arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "The wild POKéMON\nran away!": {
+      "override": "やせいの　POKéMONは\nにげてしまった！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary battle-result source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "This POKéMON\ncan't be caught!": {
+      "override": "この　POKéMONは\nつかまえられない！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary capture-result source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "Use on which one?": {
+      "override": "だれに　つかう？",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a missing target-selection argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "WT %.1flb": {
+      "override": "WT %.1flb",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation retained as a technical weight format; concrete engine contract limitation is a missing unit-context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "Will %s\nchange POKéMON?": {
+      "override": "%sは\nPOKéMONを　かえる？",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a missing choice-context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "evolving!": {
+      "override": "しんかちゅう！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary evolution source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%sBOX %2d": {
+      "override": "%sボックス %2d",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is reordered box-name and numeric arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s\nfainted!": {
+      "override": "%sは\nたおれた！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated neutral translation (ja-Hrkt); shared incompatible contexts are rb.text_2.EnemyMonFaintedText, rb.text_2.PlayerMonFaintedText, and rb.text_4.PokemonFaintedText; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+    },
+    "%s\nused %s!": {
+      "override": "%sは\n%sを　つかった！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated neutral translation (ja-Hrkt); shared incompatible contexts are battle move use and TrainerAI item use (rb.text_2.Used1Text/rb.text_2.Used2Text); could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+    },
+    "%s found\n%s!": {
+      "override": "%sは\n%sを　みつけた！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated neutral translation (ja-Hrkt); shared incompatible contexts are rb.text_1.FoundItemText and rb.text_2.FoundHiddenItemText across item and hidden-item callsites; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+    },
+    "%s's HP\nwas restored!": {
+      "override": "%sの HPが\nかいふくした！",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated neutral translation (ja-Hrkt); shared incompatible contexts are src/inventory/ItemEffects.lua and src/ui/PartyMenu.lua item-healing callsites with different target presentation; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+    },
+    "It won't have\nany effect.": {
+      "override": "こうかは\nないようだ。",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated neutral translation (ja-Hrkt); shared incompatible contexts are rb.text_6.VitaminNoEffectText, rb.text_6.ItemUseNoEffectText, src/inventory/ItemEffects.lua, and src/ui/PartyMenu.lua item failures; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+    },
+    "POKéDEX": {
+      "override": "ずかん",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated neutral translation (ja-Hrkt); shared incompatible contexts are src/ui/StartMenu.lua, src/ui/PokedexMenu.lua, src/ui/TitleState.lua, and src/ui/HallOfFame.lua labels, with no single upstream qid; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
     }
   }
 }

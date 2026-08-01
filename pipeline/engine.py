@@ -395,6 +395,13 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
         preserve_edges = spec.get("preserve_edges", inherited_preserve_edges)
         if preserve_edges and kind != "full":
             raise ValueError(f"{label} preserve_edges requires full extraction")
+        wrapper = spec.get("wrapper")
+        if wrapper is not None:
+            if kind != "full" or not isinstance(wrapper, dict) or set(wrapper) != {"prefix", "suffix"}:
+                raise ValueError(f"{label} wrapper requires exact prefix/suffix on full extraction")
+            if (not all(isinstance(value, str) and value for value in wrapper.values()) or
+                    wrapper["prefix"] != wrapper["suffix"]):
+                raise ValueError(f"{label} wrapper prefix/suffix must be the same non-empty string")
         suffix = spec.get("suffix", "")
         if not isinstance(suffix, str) or (suffix and (kind != "span" or not _valid_separator(suffix))):
             raise ValueError(f"{label} suffix requires a safe span separator")
@@ -818,6 +825,8 @@ def _extract_anchor(text: str, extraction: Mapping, language: str | None = None)
                 inherited["preserve_edges"] = True
             if "suffix" not in selected and parent_suffix:
                 inherited["suffix"] = parent_suffix
+            if "wrapper" not in selected and extraction.get("wrapper") is not None:
+                inherited["wrapper"] = extraction["wrapper"]
             if parent_kind == "dex_counter" and "selector" not in selected:
                 inherited["selector"] = extraction.get("selector")
             if inherited:
@@ -868,6 +877,12 @@ def _extract_anchor(text: str, extraction: Mapping, language: str | None = None)
     elif kind == "full":
         converted = corpus_to_engine(text)
         converted = re.sub(r"<[^>]*>", " ", converted).replace("@", "").replace("/", "")
+        wrapper = extraction.get("wrapper")
+        if wrapper is not None:
+            prefix, suffix = wrapper["prefix"], wrapper["suffix"]
+            if not converted.startswith(prefix) or not converted.endswith(suffix):
+                return None
+            converted = converted[len(prefix):len(converted) - len(suffix)]
         # Composite anchors may intentionally rely on a corpus row's leading
         # or trailing whitespace/control byte as a boundary.  Keep those
         # edges only when explicitly requested; legacy full anchors retain the

@@ -2764,6 +2764,38 @@
       ],
       "trace_status": "reviewed",
       "languages_verified": true
+    },
+    "<Diploma>": {
+      "anchor": {
+        "qid": "rb.diploma.DiplomaText",
+        "source_aliases": [
+          "Diploma"
+        ],
+        "extraction": {
+          "kind": "full",
+          "wrapper": {
+            "prefix": "\\x70",
+            "suffix": "\\x70"
+          }
+        }
+      },
+      "decision_type": "target_extraction",
+      "rationale": "Reviewed Diploma.lua:32 against rb.diploma.DiplomaText in all five target catalogues. The qid is wrapped by the exact control escape \\x70 on both sides; strip only that verified pair before matching the engine marker.",
+      "callsites": [
+        "src/ui/Diploma.lua:32"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.diploma.DiplomaText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
     }
   }
 }

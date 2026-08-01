@@ -143,11 +143,11 @@ cached ROM imports and corpus snapshots, so revisions can change these values.
 
 | Target | ROM catalogs | Literal handlers | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 334/360 (92.78%) | 346/576 (60.07%) |
-| `de` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 332/360 (92.22%) | 345/576 (59.90%) |
-| `es` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 335/360 (93.06%) | 347/576 (60.24%) |
-| `it` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 333/360 (92.50%) | 346/576 (60.07%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 333/360 (92.50%) | 346/576 (60.07%) |
+| `fr` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 359/360 (99.72%) | 371/576 (64.41%) |
+| `de` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 359/360 (99.72%) | 372/576 (64.58%) |
+| `es` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 359/360 (99.72%) | 371/576 (64.41%) |
+| `it` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 359/360 (99.72%) | 372/576 (64.58%) |
+| `ja-Hrkt` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 359/360 (99.72%) | 372/576 (64.58%) |
 
 The five handlers are backed by 15/15 unique corpus qids. `RBY-related engine
 strings` counts 360 keys from Gen1Recomp's 576-key catalog whose production
@@ -168,6 +168,10 @@ ROM/generated-path fallbacks from the RBY denominator.
 An original-RBY callsite qualifies unless the same key also has a link callsite;
 modern mod-manager/desktop surfaces, network/tournament flows, imports, and
 shared link+RBY keys are therefore not silently counted as RBY coverage.
+The one remaining eligible RBY fallback is `%s\nis refusing!` at
+`inventory/ItemEffects.lua:363`, guarded to Yellow's starter Pikachu stone
+refusal; it is intentionally outside Red/Blue and accounts for the expected
+359/360 RBY-related result.
 
 ## Translation provenance
 
@@ -188,8 +192,25 @@ This taxonomy is exhaustive, but the affected strings evolve with engine and
 corpus revisions. Generated coverage reports are the authoritative inventory
 of unmatched and ambiguous strings for a given build.
 
-The 13 manual corpus-gap entries per language are AI-generated; marked entries
-additionally require in-game visual validation.
+The existing 13 manual corpus-gap entries per language remain AI-generated.
+In addition, the 30 `engine-contract-gap` entries per language are AI-generated
+and each requires in-game visual validation. They are the shared keys below
+(look them up directly in every `overrides/<language>/engine_overrides.json`):
+
+```text
+%s can't\nlearn that move! · %s defeated\n%s! · %s is\nabout to use · %s lined up!\nScored %d coins! · %s was\ntransferred to\n%s! · %s's\nSUBSTITUTE broke! · %s's\nhurt by poison! · %s's\nhurt by the burn! · %s's %s\nrose! · %s's PP\nwas restored! · Converted type to\n%s's! · It didn't affect\n%s! · It knows that\nmove already! · Once released,\n%s is\ngone forever. OK? · PLAYER %s\nBADGES    %d\nPOKéDEX %3d\nTIME %6d:%02d · BADGES · HT %d′%02d″ · The wild POKéMON\nran away! · This POKéMON\ncan't be caught! · Use on which one? · WT %.1flb · Will %s\nchange POKéMON? · evolving! · %sBOX %2d · %s\nfainted! · %s\nused %s! · %s found\n%s! · %s's HP\nwas restored! · It won't have\nany effect. · POKéDEX
+```
+
+The six additional collision keys are `%s\nfainted!`, `%s\nused %s!`,
+`%s found\n%s!`, `%s's HP\nwas restored!`, `It won't have\nany effect.`, and
+`POKéDEX`. They are deliberate multi-context compromises: each shared key
+combines incompatible callsites and should be split upstream for ROM-faithful
+wording.
+
+The `reason` field is exactly `engine-contract-gap`; provenance records the
+concrete argument/source limitation, the upstream improvement path, and the
+need for visual validation. Technical labels and formats are retained where
+changing them would break the engine contract.
 
 Manual overrides include a concrete provenance explanation. Do not add one just
 to raise coverage: a shared key or missing runtime argument can make a value

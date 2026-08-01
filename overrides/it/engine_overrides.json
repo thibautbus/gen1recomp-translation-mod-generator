@@ -2,6 +2,11 @@
   "schema": "gen1recomp-translation-mods/engine-overrides",
   "version": 1,
   "entries": {
+    "%s's\nhits will never\nmiss!": {
+      "override": "%s\nnon sbaglia mai!",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; requires in-game visual validation."
+    },
     "%s's\n%s rose!": {
       "override": "%s\n%s sale!",
       "reason": "editorial-correction",
@@ -73,6 +78,156 @@
     "Coin count:\n%d": {
       "override": "Gettoni:\n%d",
       "reason": "AI-generated manual corpus-gap translation."
+    },
+    "%s can't\nlearn that move!": {
+      "override": "%s non può\nimparare quella mossa!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary source with context-specific arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s defeated\n%s!": {
+      "override": "%s ha sconfitto\n%s!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is reordered battle arguments across callsites; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s is\nabout to use": {
+      "override": "%s sta per\nusare",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary source split from the following move argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s lined up!\nScored %d coins!": {
+      "override": "%s allineato!\nHa vinto %d gettoni!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is missing slot-machine context around the reordered arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s was\ntransferred to\n%s!": {
+      "override": "%s è stato\ntrasferito a\n%s!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is context-specific transfer arguments with a fragmentary source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s's\nSUBSTITUTE broke!": {
+      "override": "SOSTITUTO di %s\nè rotto!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a missing battle-substitute context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s's\nhurt by poison!": {
+      "override": "%s\nè ferito dal veleno!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary status-effect source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s's\nhurt by the burn!": {
+      "override": "%s\nè ferito dalla bruciatura!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary status-effect source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s's %s\nrose!": {
+      "override": "%s fa\nsalire %s!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is reordered stat arguments at shared callsites; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s's PP\nwas restored!": {
+      "override": "I PP di %s\nsono stati ripristinati!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation retaining the technical PP token; concrete engine contract limitation is a fragmentary PP source without the original context; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "Converted type to\n%s's!": {
+      "override": "Tipo convertito in quello\ndi %s!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a missing type-context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "It didn't affect\n%s!": {
+      "override": "Non ha effetto su\n%s!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a missing target-context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "It knows that\nmove already!": {
+      "override": "Conosce già\nquesta mossa!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary move-learning source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "Once released,\n%s is\ngone forever. OK?": {
+      "override": "Una volta liberato,\n%s sarà\nperso per sempre. OK?",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is reordered release-confirmation context around one argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "PLAYER %s\nBADGES    %d\nPOKéDEX %3d\nTIME %6d:%02d": {
+      "override": "GIOCA %s\nMEDAGLIE   %d\nPOKéDEX %3d\nTEMPO %6d:%02d",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a technical status fragment with reordered display arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "BADGES": {
+      "override": "MEDAGLIE",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary standalone status label; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "HT %d′%02d″": {
+      "override": "HT %d′%02d″",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation retained as a technical height format; concrete engine contract limitation is missing unit context around numeric arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "The wild POKéMON\nran away!": {
+      "override": "Il POKéMON selvatico\nè fuggito!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary battle-result source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "This POKéMON\ncan't be caught!": {
+      "override": "Questo POKéMON\nnon può essere catturato!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary capture-result source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "Use on which one?": {
+      "override": "Usare su quale?",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a missing target-selection argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "WT %.1flb": {
+      "override": "WT %.1flb",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation retained as a technical weight format; concrete engine contract limitation is a missing unit-context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "Will %s\nchange POKéMON?": {
+      "override": "%s cambierà\nPOKéMON?",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a missing choice-context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "evolving!": {
+      "override": "in evoluzione!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary evolution source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%sBOX %2d": {
+      "override": "%sBOX %2d",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation retained as the technical BOX label; concrete engine contract limitation is reordered box-name and numeric arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s\nfainted!": {
+      "override": "%s\nè esausto!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated neutral translation (it); shared incompatible contexts are rb.text_2.EnemyMonFaintedText, rb.text_2.PlayerMonFaintedText, and rb.text_4.PokemonFaintedText; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+    },
+    "%s\nused %s!": {
+      "override": "%s\nusa %s!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated neutral translation (it); shared incompatible contexts are battle move use and TrainerAI item use (rb.text_2.Used1Text/rb.text_2.Used2Text); could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+    },
+    "%s found\n%s!": {
+      "override": "%s trova\n%s!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated neutral translation (it); shared incompatible contexts are rb.text_1.FoundItemText and rb.text_2.FoundHiddenItemText across item and hidden-item callsites; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+    },
+    "%s's HP\nwas restored!": {
+      "override": "I PS di %s\nsono stati ripristinati!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated neutral translation (it); shared incompatible contexts are src/inventory/ItemEffects.lua and src/ui/PartyMenu.lua item-healing callsites with different target presentation; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+    },
+    "It won't have\nany effect.": {
+      "override": "Non avrà alcun\neffetto.",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated neutral translation (it); shared incompatible contexts are rb.text_6.VitaminNoEffectText, rb.text_6.ItemUseNoEffectText, src/inventory/ItemEffects.lua, and src/ui/PartyMenu.lua item failures; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+    },
+    "POKéDEX": {
+      "override": "POKéDEX",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated neutral translation (it); shared incompatible contexts are src/ui/StartMenu.lua, src/ui/PokedexMenu.lua, src/ui/TitleState.lua, and src/ui/HallOfFame.lua labels, with no single upstream qid; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
     }
   }
 }
