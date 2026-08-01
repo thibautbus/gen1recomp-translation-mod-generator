@@ -395,6 +395,9 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
         preserve_edges = spec.get("preserve_edges", inherited_preserve_edges)
         if preserve_edges and kind != "full":
             raise ValueError(f"{label} preserve_edges requires full extraction")
+        suffix = spec.get("suffix", "")
+        if not isinstance(suffix, str) or (suffix and (kind != "span" or not _valid_separator(suffix))):
+            raise ValueError(f"{label} suffix requires a safe span separator")
         if isinstance(index, bool) or not isinstance(index, int) or index < 0:
             raise ValueError(f"invalid extraction index for {label}")
         if kind == "span" and (isinstance(spec.get("count"), bool) or not isinstance(spec.get("count"), int) or spec["count"] <= 0):
@@ -432,8 +435,19 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
             if qid is not None or extraction is not None or not isinstance(parts, list) or not parts:
                 raise ValueError(f"semantic anchor {key!r} parts require a non-empty parts list")
             seen_qids = set()
+            seen_printf_indexes = set()
             for part in parts:
-                if not isinstance(part, dict) or not isinstance(part.get("qid"), str) or not part["qid"] or not isinstance(part.get("extraction"), dict):
+                if isinstance(part, dict) and "printf" in part:
+                    if (set(part) != {"printf"} or isinstance(part["printf"], bool) or
+                            not isinstance(part["printf"], int) or part["printf"] < 0 or
+                            part["printf"] >= len([d for d in printf_directives(key) if d != "%%"])):
+                        raise ValueError(f"semantic anchor {key!r} has invalid printf part")
+                    if part["printf"] in seen_printf_indexes:
+                        raise ValueError(f"semantic anchor {key!r} printf parts may not repeat indexes")
+                    seen_printf_indexes.add(part["printf"])
+                    continue
+                if (not isinstance(part, dict) or not isinstance(part.get("qid"), str) or
+                        not part["qid"] or not isinstance(part.get("extraction"), dict)):
                     raise ValueError(f"semantic anchor {key!r} parts require qid and extraction")
                 validate_extraction(part["extraction"], f"semantic anchor {key!r} part")
                 if part["qid"] in seen_qids:
@@ -441,6 +455,14 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
                 seen_qids.add(part["qid"])
                 if "include" in part and not isinstance(part["include"], bool):
                     raise ValueError(f"semantic anchor {key!r} part include must be boolean")
+                if "target_languages" in part:
+                    target_languages = part["target_languages"]
+                    if (not isinstance(target_languages, list) or not target_languages or
+                            any(not isinstance(language, str) or
+                                language not in _CANONICAL_LANGUAGES
+                                for language in target_languages) or
+                            len(set(target_languages)) != len(target_languages)):
+                        raise ValueError(f"semantic anchor {key!r} part target_languages must be a non-empty list of unique canonical languages")
                 part_kind = part["extraction"].get("kind", "segment")
                 part_index = part["extraction"].get("index", 0)
                 if part_kind not in {"segment", "token", "span", "full", "parts"} or isinstance(part_index, bool) or not isinstance(part_index, int) or part_index < 0:
@@ -577,7 +599,8 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
 def _anchor_qids(anchor: Mapping) -> list[str]:
     """Return qids referenced by an executable anchor in declaration order."""
     if "parts" in anchor:
-        return [part["qid"] for part in anchor.get("parts", []) if isinstance(part, Mapping) and isinstance(part.get("qid"), str)]
+        return [part["qid"] for part in anchor.get("parts", [])
+                if isinstance(part, Mapping) and isinstance(part.get("qid"), str)]
     qid = anchor.get("qid")
     return [qid] if isinstance(qid, str) else []
 
@@ -785,6 +808,7 @@ def _extract_anchor(text: str, extraction: Mapping, language: str | None = None)
     if language and isinstance(extraction.get("targets"), Mapping):
         parent_kind = extraction.get("kind", "segment")
         parent_preserve_edges = extraction.get("preserve_edges", False)
+        parent_suffix = extraction.get("suffix", "")
         selected = extraction.get("targets", {}).get(language, extraction)
         if isinstance(selected, Mapping):
             inherited = {}
@@ -792,6 +816,8 @@ def _extract_anchor(text: str, extraction: Mapping, language: str | None = None)
                 inherited["kind"] = parent_kind
             if "preserve_edges" not in selected and parent_preserve_edges:
                 inherited["preserve_edges"] = True
+            if "suffix" not in selected and parent_suffix:
+                inherited["suffix"] = parent_suffix
             if parent_kind == "dex_counter" and "selector" not in selected:
                 inherited["selector"] = extraction.get("selector")
             if inherited:
@@ -838,7 +864,7 @@ def _extract_anchor(text: str, extraction: Mapping, language: str | None = None)
         count = extraction.get("count")
         if isinstance(count, bool) or not isinstance(count, int) or count <= 0 or index + count > len(matches):
             return None
-        return converted[matches[index].start():matches[index + count - 1].end()]
+        return converted[matches[index].start():matches[index + count - 1].end()] + extraction.get("suffix", "")
     elif kind == "full":
         converted = corpus_to_engine(text)
         converted = re.sub(r"<[^>]*>", " ", converted).replace("@", "").replace("/", "")
@@ -946,9 +972,25 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
         boundary_separators = anchor.get("separators")
         joiner = anchor.get("join", "")
         placeholders = anchor.get("placeholders", {})
+        source_directives = [directive for directive in printf_directives(source)
+                             if directive != "%%"]
         source_pieces, target_pieces = [], []
         visible_source, visible_target = [], []
+        source_indexes, target_indexes = [], []
         for part in parts:
+            if "printf" in part:
+                index = part["printf"]
+                if (isinstance(index, bool) or not isinstance(index, int) or
+                        index < 0 or index >= len(source_directives)):
+                    return None, set()
+                source_piece = target_piece = source_directives[index]
+                source_pieces.append(source_piece)
+                target_pieces.append(target_piece)
+                visible_source.append(source_piece)
+                visible_target.append(target_piece)
+                source_indexes.append(len(source_pieces) - 1)
+                target_indexes.append(len(target_pieces) - 1)
+                continue
             pair = unique_anchor_row(part["qid"])
             if pair is None:
                 return None, set()
@@ -957,20 +999,24 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
             target_piece = _extract_anchor(pair[1], extraction, target_lang)
             if source_piece is None or target_piece is None:
                 return None, set()
+            if any(kind == "printf" for kind, _ in _placeholder_tokens(target_piece)):
+                return None, set()
             source_pieces.append(source_piece)
             target_pieces.append(target_piece)
             if part.get("include", True):
                 visible_source.append(source_piece)
-                visible_target.append(target_piece)
+                source_indexes.append(len(source_pieces) - 1)
+                target_languages = part.get("target_languages")
+                if target_languages is None or target_lang in target_languages:
+                    visible_target.append(target_piece)
+                    target_indexes.append(len(target_pieces) - 1)
 
         if boundary_separators is not None:
             # Separators are declared per original part boundary.  Keep the
             # include=false compatibility behavior by applying boundaries
             # only between adjacent visible pieces.
-            def compose(values: list[str]) -> str:
+            def compose(values: list[str], visible_indexes: list[int]) -> str:
                 out: list[str] = []
-                visible_indexes = [index for index, part in enumerate(parts)
-                                   if part.get("include", True)]
                 for position, value in enumerate(values):
                     out.append(value)
                     if position + 1 < len(values):
@@ -979,8 +1025,8 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
                         if right == left + 1:
                             out.append(boundary_separators[left])
                 return "".join(out)
-            source_joined = compose(visible_source)
-            target_joined = compose(visible_target)
+            source_joined = compose(visible_source, source_indexes)
+            target_joined = compose(visible_target, target_indexes)
         else:
             source_joined = joiner.join(visible_source)
             target_joined = joiner.join(visible_target)
@@ -1004,14 +1050,14 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
         target_tokens = _placeholder_tokens(target_converted)
         # A target containing both corpus dynamics and explicit printf tokens
         # is ambiguous (the latter could be prose or a substituted argument).
-        if any(kind == "printf" for kind, _ in target_tokens):
+        if (any(kind == "printf" for kind, _ in target_tokens) and
+                not any("printf" in part for part in parts)):
             return None, set()
 
-        source_directives = [directive for directive in printf_directives(source)
-                             if directive != "%%"]
         occurrence_refs: list[tuple[str, object]] = []
-        printf_index = 0
-        used_printf_indexes: list[int] = []
+        used_printf_indexes: set[int] = {
+            part["printf"] for part in parts if "printf" in part
+        }
         mapped_printf_count = 0
         for token in source_dynamic:
             ref = placeholders.get(token)
@@ -1028,22 +1074,25 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
                 continue
             if isinstance(ref, dict) and "printf" in ref:
                 index = ref["printf"]
-                if index in used_printf_indexes or index != printf_index:
-                    return None, set()
-                if index >= len(source_directives):
+                if (isinstance(index, bool) or not isinstance(index, int) or
+                        index < 0 or index in used_printf_indexes or
+                        index >= len(source_directives)):
                     return None, set()
                 directive = source_directives[index]
-                used_printf_indexes.append(index)
+                used_printf_indexes.add(index)
             elif isinstance(ref, str):
                 directive = ref
-                if printf_index >= len(source_directives) or directive != source_directives[printf_index]:
+                index = next((candidate for candidate, value in enumerate(source_directives)
+                              if candidate not in used_printf_indexes and value == directive), None)
+                if index is None:
                     return None, set()
             else:
                 return None, set()
             occurrence_refs.append(("printf", directive))
-            printf_index += 1
+            used_printf_indexes.add(index)
             mapped_printf_count += 1
-        if printf_index != len(source_directives) or mapped_printf_count != len(source_directives):
+        if (used_printf_indexes != set(range(len(source_directives))) or
+                mapped_printf_count + len([part for part in parts if "printf" in part]) != len(source_directives)):
             return None, set()
 
         def replace(text: str, values: list[str]) -> str:
@@ -1068,6 +1117,22 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
         target_value = replace(target_joined, target_pieces)
         if not source_value or not target_value:
             return None, set()
+        # A direct printf part leaves the key's literal edge text outside the
+        # qid fragments. Preserve those official edges (notably the terminal
+        # ``!`` in ``%s vs %s!``) in both reconstructed values.
+        if any("printf" in part for part in parts):
+            first = next((match.start() for match in _PRINTF.finditer(source)), None)
+            last = None
+            for match in _PRINTF.finditer(source):
+                last = match.end()
+            prefix = source[:first] if first is not None else ""
+            suffix = source[last:] if last is not None else ""
+            if prefix and not source_value.startswith(prefix):
+                source_value = prefix + source_value
+                target_value = prefix + target_value
+            if suffix and not source_value.endswith(suffix):
+                source_value += suffix
+                target_value += suffix
         aliases = {str(alias) for alias in anchor.get("source_aliases", []) if isinstance(alias, str)}
         if source_value not in ({source} | aliases):
             return None, set()
@@ -1159,7 +1224,7 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
                 out[source] = value; report["translated"] += 1; report["auto_semantic"] += 1
                 provenance = {"method": "semantic", "target_lang": target_lang}
                 if "parts" in declared_anchor:
-                    provenance["qids"] = [part["qid"] for part in declared_anchor["parts"]]
+                    provenance["qids"] = _anchor_qids(declared_anchor)
                 else:
                     provenance.update({"qid": declared_anchor["qid"], "extraction": declared_anchor.get("extraction", {})})
                 decision_meta = declared_anchor.get("_decision") or decision_provenance.get(source)
@@ -1181,7 +1246,7 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
                 method = "semantic_unresolved"
             provenance = {"method": method}
             if "parts" in declared_anchor:
-                provenance["qids"] = [part["qid"] for part in declared_anchor["parts"]]
+                provenance["qids"] = _anchor_qids(declared_anchor)
             else:
                 provenance.update({"qid": declared_anchor.get("qid"), "extraction": declared_anchor.get("extraction", {})})
             decision_meta = declared_anchor.get("_decision") or decision_provenance.get(source)

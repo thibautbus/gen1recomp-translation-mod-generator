@@ -143,7 +143,7 @@ def main(argv=None) -> int:
         else:
             target_lang = canonical_language(args.target_lang or inferred_lang or "fr")
             generate_mod(items, output, args.mod_id or f"translation-{target_lang.lower()}", language=target_lang, modkit_worksheet=args.modkit_worksheet, report_path=args.report,
-                         engine_catalog=args.engine_catalog, engine_overrides=args.engine_overrides or (f"overrides/{target_lang}/engine_overrides.json" if target_lang != "fr" else "overrides/engine_overrides.json"),
+                         engine_catalog=args.engine_catalog, engine_overrides=args.engine_overrides or f"overrides/{target_lang}/engine_overrides.json",
                          semantic_anchors=args.semantic_anchors,
                          semantic_anchor_decisions=args.semantic_anchor_decisions,
                          engine_source=args.engine_source, engine_scope=args.engine_scope,

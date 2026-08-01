@@ -3,6 +3,141 @@
   "version": 1,
   "description": "Reviewed executable anchors with traceable language evidence; known-limitation rows explicitly document unresolved limitations.",
   "decisions": {
+    "NAME/%s": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.start_sub_menus.TrainerInfo_NameMoneyTimeText",
+            "extraction": {
+              "kind": "span",
+              "index": 0,
+              "count": 1,
+              "suffix": "/",
+              "targets": {
+                "fr": {"kind": "span", "index": 0, "count": 1, "suffix": "/"},
+                "de": {"kind": "span", "index": 0, "count": 1, "suffix": "/"},
+                "es": {"kind": "span", "index": 0, "count": 1, "suffix": "/"},
+                "it": {"kind": "span", "index": 0, "count": 1, "suffix": "/"},
+                "ja-Hrkt": {"kind": "span", "index": 0, "count": 1, "suffix": ""}
+              }
+            }
+          },
+          {
+            "printf": 0
+          }
+        ],
+        "separators": [
+          ""
+        ],
+        "placeholders": {}
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed across all six Red/Blue language catalogues: the first <NEXT>-delimited segment of rb.start_sub_menus.TrainerInfo_NameMoneyTimeText is the localized NAME/ label; printf part 0 is the player name passed by TrainerCard.lua:123.",
+      "callsites": [
+        "src/ui/TrainerCard.lua:123"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.start_sub_menus.TrainerInfo_NameMoneyTimeText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "OT/%s": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.trade2.Trade_MonInfoText",
+            "extraction": {
+              "kind": "span",
+              "index": 1,
+              "count": 1,
+              "suffix": "/",
+              "targets": {
+                "fr": {"kind": "span", "index": 1, "count": 1, "suffix": "/"},
+                "de": {"kind": "span", "index": 1, "count": 1, "suffix": "/"},
+                "es": {"kind": "span", "index": 1, "count": 1, "suffix": "/"},
+                "it": {"kind": "span", "index": 1, "count": 1, "suffix": "/"},
+                "ja-Hrkt": {"kind": "span", "index": 1, "count": 1, "suffix": ""}
+              }
+            }
+          },
+          {
+            "printf": 0
+          }
+        ],
+        "separators": [
+          ""
+        ],
+        "placeholders": {}
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed across all six Red/Blue language catalogues: after the two leading line controls, segment 1 of rb.trade2.Trade_MonInfoText is the localized OT/ label (DO/, OT/, EO/, AO/, or おや／); printf part 0 is the original-trainer value passed by TradeAnim.lua:348.",
+      "callsites": [
+        "src/ui/TradeAnim.lua:348"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.trade2.Trade_MonInfoText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s vs %s!": {
+      "anchor": {
+        "source_aliases": [
+          "%s ＶＳ %s!"
+        ],
+        "parts": [
+          {
+            "printf": 0
+          },
+          {
+            "qid": "rb.link_battle_versus_text.DisplayLinkBattleVersusTextBox",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "printf": 1
+          }
+        ],
+        "separators": [
+          " ",
+          " "
+        ],
+        "placeholders": {}
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed across all six Red/Blue language catalogues and LinkBattle.lua:723. printf parts 0 and 1 are the host and guest names, while rb.link_battle_versus_text.DisplayLinkBattleVersusTextBox supplies the localized connector; the key's official spaces and terminal exclamation are retained.",
+      "callsites": [
+        "src/link/LinkBattle.lua:723"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.link_battle_versus_text.DisplayLinkBattleVersusTextBox"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
     "QUIT": {
       "anchor": {
         "qid": "rb.pokedex.PokedexMenuItemsText",
@@ -1838,6 +1973,794 @@
       ],
       "qids": [
         "rb.text_3.WhenYouChangeBoxText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s is\nprotected by MIST!": {
+      "anchor": {
+        "qid": "rb.text_3.ShroudedInMistText",
+        "source_aliases": [
+          "{USER}'s\nshrouded in mist!"
+        ],
+        "extraction": {
+          "kind": "full"
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for MoveEffects.lua:40. rb.text_3.ShroudedInMistText is the battle move-effect callsite for the runtime user's mist protection; its localized wording is semantically equivalent to the engine key despite the English phrasing difference.",
+      "callsites": [
+        "MoveEffects.lua:40"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_3.ShroudedInMistText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "Items can't be\nused in a link\nbattle!": {
+      "anchor": {
+        "qid": "rb.text_2.ItemsCantBeUsedHereText",
+        "source_aliases": [
+          "Items can't be\nused here."
+        ],
+        "extraction": {
+          "kind": "full"
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for LinkBattle.lua:534. rb.text_2.ItemsCantBeUsedHereText is the single link-battle item-use rejection callsite; the corpus wording is generic but the localized sentence is the correct context-specific equivalent.",
+      "callsites": [
+        "LinkBattle.lua:534"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.ItemsCantBeUsedHereText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "The link was\nbroken.": {
+      "anchor": {
+        "qid": "rb.text_2.LinkCanceledText",
+        "source_aliases": [
+          "The link was\ncanceled."
+        ],
+        "extraction": {
+          "kind": "full"
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for LinkState.lua:231. rb.text_2.LinkCanceledText is the single disconnect path; localized canceled/disconnected wording is the exact user-facing equivalent for the broken-link engine key.",
+      "callsites": [
+        "LinkState.lua:231"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.LinkCanceledText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "The GHOST\nappeared!": {
+      "anchor": {
+        "source_aliases": [
+          "GHOST\nappeared!"
+        ],
+        "parts": [
+          {
+            "qid": "rb.text_2.EnemyAppearedText",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.core.InitWildBattle.isGhost",
+            "extraction": {
+              "kind": "full"
+            },
+            "include": false
+          }
+        ],
+        "join": "",
+        "placeholders": {
+          "{RAM:wEnemyMonNick}": {
+            "part": 1
+          }
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for BattleState.makeGhost. rb.text_2.EnemyAppearedText supplies each language's complete appearance sentence, while rb.core.InitWildBattle.isGhost supplies the localized ghost name used by the original encounter. The source alias accounts for Gen1Recomp's added English article without carrying it into languages whose grammar differs.",
+      "callsites": [
+        "src/battle/BattleState.lua:658"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.EnemyAppearedText",
+        "rb.core.InitWildBattle.isGhost"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s is\ntrying to learn\u000b%s!\fBut, %s\ncan't learn more\u000bthan 4 moves!\f": {
+      "anchor": {
+        "qid": "rb.text_4.TryingToLearnText",
+        "extraction": {
+          "kind": "span",
+          "index": 0,
+          "count": 14,
+          "suffix": "\f",
+          "targets": {
+            "fr": {
+              "kind": "span",
+              "index": 0,
+              "count": 11
+            },
+            "de": {
+              "kind": "span",
+              "index": 0,
+              "count": 14
+            },
+            "es": {
+              "kind": "span",
+              "index": 0,
+              "count": 13
+            },
+            "it": {
+              "kind": "span",
+              "index": 0,
+              "count": 14
+            },
+            "ja-Hrkt": {
+              "kind": "span",
+              "index": 0,
+              "count": 10
+            }
+          }
+        }
+      },
+      "decision_type": "target_extraction",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for MoveLearnMenu.enter. Gen1Recomp splits rb.text_4.TryingToLearnText into two engine keys; this extraction selects the first two semantic paragraphs and preserves their Pokémon, move, Pokémon placeholder order.",
+      "callsites": [
+        "src/ui/MoveLearnMenu.lua:47"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_4.TryingToLearnText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "Delete an older\nmove to make room\u000bfor %s?": {
+      "anchor": {
+        "qid": "rb.text_4.TryingToLearnText",
+        "extraction": {
+          "kind": "span",
+          "index": 14,
+          "count": 9,
+          "targets": {
+            "fr": {
+              "kind": "span",
+              "index": 11,
+              "count": 6
+            },
+            "de": {
+              "kind": "span",
+              "index": 14,
+              "count": 9
+            },
+            "es": {
+              "kind": "span",
+              "index": 13,
+              "count": 9
+            },
+            "it": {
+              "kind": "span",
+              "index": 14,
+              "count": 9
+            },
+            "ja-Hrkt": {
+              "kind": "span",
+              "index": 10,
+              "count": 5
+            }
+          }
+        }
+      },
+      "decision_type": "target_extraction",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for MoveLearnMenu.enter. Gen1Recomp splits rb.text_4.TryingToLearnText into two engine keys; this extraction selects the final forget-an-old-move question and its move placeholder.",
+      "callsites": [
+        "src/ui/MoveLearnMenu.lua:49"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_4.TryingToLearnText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "The trade was\ncancelled.": {
+      "anchor": {
+        "qid": "rb.cable_club.TradeCanceled",
+        "source_aliases": [
+          "The trade was\ncancelled."
+        ],
+        "extraction": {
+          "kind": "full"
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for the cancellation paths in LinkState. Gen1Recomp shortened the original message to a cancellation sentence; rb.cable_club.TradeCanceled restores the complete localized Red/Blue message, including its regret preamble. The untranslated engine fallback remains unchanged.",
+      "callsites": [
+        "src/link/LinkState.lua:540",
+        "src/link/LinkState.lua:596"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.cable_club.TradeCanceled"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "You need at least\none POKéMON!": {
+      "anchor": {
+        "qid": "rb.text_2.CantDepositLastMonText",
+        "source_aliases": [
+          "You can't deposit\nthe last POKéMON!"
+        ],
+        "extraction": {
+          "kind": "full"
+        }
+      },
+      "decision_type": "contextual",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for BoxMenu's last-party-member guard. rb.text_2.CantDepositLastMonText expresses the same original Red/Blue restriction: depositing the selected Pokémon would leave the party empty.",
+      "callsites": [
+        "src/ui/BoxMenu.lua:120"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.CantDepositLastMonText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "Toss %s?": {
+      "anchor": {
+        "qid": "rb.text_7.IsItOKToTossItemText",
+        "source_aliases": [
+          "Is it OK to toss\n{RAM:wStringBuffer}?"
+        ],
+        "extraction": {
+          "kind": "full"
+        }
+      },
+      "decision_type": "contextual",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for PlayerPC's post-quantity confirmation. rb.text_7.IsItOKToTossItemText is the original Red/Blue confirmation prompt and preserves the selected-item placeholder; rb.text_2.WhatToTossText is rejected because it asks which item to choose and has no placeholder.",
+      "callsites": [
+        "src/ui/PlayerPC.lua:144"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_7.IsItOKToTossItemText"
+      ],
+      "alternatives": [
+        "rb.text_2.WhatToTossText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s got on\nthe BICYCLE!": {
+      "anchor": {
+        "source_aliases": [
+          "%s got on the\nBICYCLE!"
+        ],
+        "parts": [
+          {
+            "qid": "rb.text_7.GotOnBicycleText1",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.text_7.GotOnBicycleText2",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.names.ItemNames.6",
+            "extraction": {
+              "kind": "full"
+            },
+            "include": false
+          }
+        ],
+        "join": "\n",
+        "placeholders": {
+          "{PLAYER}": "%s",
+          "{RAM:wStringBuffer}": {
+            "part": 2
+          }
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for BagMenu's bicycle-use success path. The two original Red/Blue fragments retain each language's article and word order; the hidden item-name qid supplies BICYCLE. A source alias accounts only for Gen1Recomp placing the English line break before 'the'.",
+      "callsites": [
+        "src/ui/BagMenu.lua:134"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_7.GotOnBicycleText1",
+        "rb.text_7.GotOnBicycleText2",
+        "rb.names.ItemNames.6"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "Congratulations!\nYour %s\nevolved into\n%s!": {
+      "anchor": {
+        "source_aliases": [
+          "%s evolved\ninto %s!"
+        ],
+        "parts": [
+          {
+            "qid": "rb.text_3.EvolvedText",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.text_3.IntoText",
+            "extraction": {
+              "kind": "full",
+              "preserve_edges": true
+            }
+          }
+        ],
+        "join": "",
+        "placeholders": {
+          "{RAM:wStringBuffer}": "%s",
+          "{RAM:wNameBuffer}": "%s"
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for EvolutionState's completion message. EvolvedText and IntoText form the complete original localized result and preserve old-species/new-species placeholder order; the source alias replaces Gen1Recomp's expanded English-only wording.",
+      "callsites": [
+        "src/ui/EvolutionState.lua:110"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_3.EvolvedText",
+        "rb.text_3.IntoText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "What?\n%s is\nevolving!\fCongratulations!\nYour %s\nevolved into\n%s!": {
+      "anchor": {
+        "source_aliases": [
+          "What? %s\nis evolving!\f%s evolved\ninto %s!"
+        ],
+        "parts": [
+          {
+            "qid": "rb.text_3.IsEvolvingText",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.text_3.EvolvedText",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.text_3.IntoText",
+            "extraction": {
+              "kind": "full",
+              "preserve_edges": true
+            }
+          }
+        ],
+        "separators": [
+          "\f",
+          ""
+        ],
+        "placeholders": {
+          "{RAM:wStringBuffer}": "%s",
+          "{RAM:wNameBuffer}": "%s"
+        }
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for Evolution.evolve. IsEvolvingText followed by EvolvedText and IntoText reconstructs the original two-page evolution flow; the repeated old-species placeholder and final new-species placeholder remain in runtime order.",
+      "callsites": [
+        "src/pokemon/Evolution.lua:164"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_3.IsEvolvingText",
+        "rb.text_3.EvolvedText",
+        "rb.text_3.IntoText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "PA: You're out of\nSAFARI BALLs!\nGame over!": {
+      "anchor": {
+        "source_aliases": [
+          "PA: Ding-dong!\fYou are out of\nSAFARI BALLs!\fPA: Your SAFARI\nGAME is over!"
+        ],
+        "parts": [
+          {
+            "qid": "rb.text_2.OutOfSafariBallsText",
+            "extraction": {
+              "kind": "full"
+            }
+          },
+          {
+            "qid": "rb.text_2.GameOverText",
+            "extraction": {
+              "kind": "full"
+            }
+          }
+        ],
+        "separators": [
+          "\f"
+        ],
+        "placeholders": {}
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for BattleState's exhausted-Safari-Balls exit. The two original Red/Blue announcements restore the localized out-of-balls message followed by the localized Safari-game-over message; Gen1Recomp had compressed both into one English fallback.",
+      "callsites": [
+        "src/battle/BattleState.lua:1502"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.OutOfSafariBallsText",
+        "rb.text_2.GameOverText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "%s's\nprotected against\nstat changes!": {
+      "anchor": {
+        "qid": "rb.text_3.ShroudedInMistText",
+        "source_aliases": [
+          "{USER}'s shrouded in mist!"
+        ],
+        "extraction": {
+          "kind": "full"
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for TrainerAI.lua:119 and ItemEffects.lua:217. The qid rb.text_3.ShroudedInMistText is the shared Mist/Guard Spec protection message; its localized wording is the reviewed semantic equivalent of the engine key. This decision is separate from the existing MIST decision because the same qid serves two engine messages.",
+      "callsites": [
+        "src/battle/TrainerAI.lua:119",
+        "src/items/ItemEffects.lua:217"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_3.ShroudedInMistText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "DEPOSIT <PK><MN>": {
+      "anchor": {
+        "qid": "rb.bills_pc.BillsPCMenuText",
+        "source_aliases": [
+          "DEPOSIT POKéMON"
+        ],
+        "extraction": {
+          "kind": "segment",
+          "index": 1
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for src/ui/BoxMenu.lua:265. Segment 1 of rb.bills_pc.BillsPCMenuText is the localized deposit action; the explicit source alias bridges the engine's <PK><MN> spelling to the corpus POKéMON token.",
+      "callsites": [
+        "src/ui/BoxMenu.lua:265"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.bills_pc.BillsPCMenuText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "RELEASE <PK><MN>": {
+      "anchor": {
+        "qid": "rb.bills_pc.BillsPCMenuText",
+        "source_aliases": [
+          "RELEASE POKéMON"
+        ],
+        "extraction": {
+          "kind": "segment",
+          "index": 2
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for src/ui/BoxMenu.lua:267. Segment 2 of rb.bills_pc.BillsPCMenuText is the localized release action; the explicit source alias bridges the engine's <PK><MN> spelling to the corpus POKéMON token.",
+      "callsites": [
+        "src/ui/BoxMenu.lua:267"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.bills_pc.BillsPCMenuText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "WITHDRAW <PK><MN>": {
+      "anchor": {
+        "qid": "rb.bills_pc.BillsPCMenuText",
+        "source_aliases": [
+          "WITHDRAW POKéMON"
+        ],
+        "extraction": {
+          "kind": "segment",
+          "index": 0
+        }
+      },
+      "decision_type": "source_alias",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for src/ui/BoxMenu.lua:263. Segment 0 of rb.bills_pc.BillsPCMenuText is the localized withdraw action; the explicit source alias bridges the engine's <PK><MN> spelling to the corpus POKéMON token.",
+      "callsites": [
+        "src/ui/BoxMenu.lua:263"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.bills_pc.BillsPCMenuText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "You can't carry\nany more items!": {
+      "anchor": {
+        "qid": "rb.text_2.CantCarryMoreText",
+        "source_aliases": [
+          "You can't carry any more items."
+        ],
+        "extraction": {
+          "kind": "full"
+        }
+      },
+      "decision_type": "contextual",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for src/commands/Commands.lua:220 and src/world/OverworldController.lua:1807,2427. The generic rb.text_2.CantCarryMoreText qid is reused for the exclamation-form fallback; the existing period-form decision remains distinct, and generated _BagFullText may still win before this path.",
+      "callsites": [
+        "src/commands/Commands.lua:220",
+        "src/world/OverworldController.lua:1807",
+        "src/world/OverworldController.lua:2427"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_2.CantCarryMoreText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "But every BOX\nis full!": {
+      "anchor": {
+        "qid": "rb.text_5.BoxIsFullText",
+        "source_aliases": [
+          "There's no more\nroom for #MON!\fThe #MON BOX\nis full and can't\naccept any more!\fChange the BOX at\na #MON CENTER!"
+        ],
+        "extraction": {
+          "kind": "full"
+        }
+      },
+      "decision_type": "contextual",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for the normal all-boxes-full path at src/battle/BattleState.lua:3899-3912. rb.text_5.BoxIsFullText is a full-message alias: it restores the canonical localized recovery guidance even though the engine key names only the final English sentence. The generated _BoxIsFullText lookup is not used by this callsite.",
+      "callsites": [
+        "src/battle/BattleState.lua:3899-3912"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.text_5.BoxIsFullText"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "YOUR NAME?": {
+      "anchor": {
+        "parts": [
+          {
+            "qid": "rb.naming_screen.YourTextString",
+            "extraction": {
+              "kind": "full",
+              "preserve_edges": true
+            }
+          },
+          {
+            "qid": "rb.naming_screen.NameTextString",
+            "extraction": {
+              "kind": "full"
+            },
+            "target_languages": [
+              "de",
+              "ja-Hrkt"
+            ]
+          }
+        ],
+        "join": "",
+        "placeholders": {}
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. The English naming-screen fragments compose YOUR NAME?; French, Spanish, and Italian YourTextString already contain the localized name label, while German and Japanese require NameTextString as a second target fragment.",
+      "callsites": [
+        "src/ui/NamingScreen.lua:68",
+        "src/ui/OakSpeech.lua:151"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.naming_screen.YourTextString",
+        "rb.naming_screen.NameTextString"
+      ],
+      "trace_status": "reviewed",
+      "languages_verified": true
+    },
+    "HIS NAME?": {
+      "anchor": {
+        "source_aliases": [
+          "RIVAL's NAME?"
+        ],
+        "parts": [
+          {
+            "qid": "rb.naming_screen.RivalsTextString",
+            "extraction": {
+              "kind": "full",
+              "preserve_edges": true
+            }
+          },
+          {
+            "qid": "rb.naming_screen.NameTextString",
+            "extraction": {
+              "kind": "full"
+            },
+            "target_languages": [
+              "de",
+              "ja-Hrkt"
+            ]
+          }
+        ],
+        "join": "",
+        "placeholders": {}
+      },
+      "decision_type": "composition",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. The English corpus composes RIVAL's NAME?, which is declared as a source alias for the HIS NAME? engine key; French, Spanish, and Italian RivalsTextString already contain the localized name label, while German and Japanese require NameTextString as a second target fragment.",
+      "callsites": [
+        "src/ui/OakSpeech.lua:165"
+      ],
+      "languages": [
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja-Hrkt"
+      ],
+      "qids": [
+        "rb.naming_screen.RivalsTextString",
+        "rb.naming_screen.NameTextString"
       ],
       "trace_status": "reviewed",
       "languages_verified": true

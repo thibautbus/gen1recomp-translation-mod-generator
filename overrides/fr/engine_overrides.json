@@ -2,40 +2,20 @@
   "schema": "gen1recomp-translation-mods/engine-overrides",
   "version": 1,
   "entries": {
-    "%s's\n%s rose!": {
-      "override": "%s\n%s sale!",
-      "reason": "editorial-correction",
-      "provenance": "editorial stat-stage wording; raw English stat label retained"
-    },
-    "%s's\n%s\ngreatly rose!": {
-      "override": "%s\n%s\nsale molto!",
-      "reason": "editorial-correction",
-      "provenance": "editorial stat-stage wording; raw English stat label retained"
-    },
-    "%s's\n%s fell!": {
-      "override": "%s\n%s cala!",
-      "reason": "editorial-correction",
-      "provenance": "editorial stat-stage wording; raw English stat label retained"
-    },
-    "%s's\n%s\ngreatly fell!": {
-      "override": "%s\n%s\ncala molto!",
-      "reason": "editorial-correction",
-      "provenance": "editorial stat-stage wording; raw English stat label retained"
-    },
     "%s :L%d": {
-      "override": "%s :L%d",
+      "override": "%s :N%d",
       "reason": "AI-generated manual corpus-gap translation."
     },
     ":L%d No.%03d": {
-      "override": ":L%d Nº%03d",
+      "override": ":N%d No.%03d",
       "reason": "AI-generated manual corpus-gap translation."
     },
     "Empty.": {
-      "override": "Vuoto.",
+      "override": "Vide.",
       "reason": "AI-generated manual corpus-gap translation."
     },
     "No good! It's not\neven near water.": {
-      "override": "Niente da fare!\nLontano dall'acqua.",
+      "override": "Pas bon! Même pas\nprès de l'eau.",
       "reason": "AI-generated manual corpus-gap translation; requires in-game visual validation."
     },
     "PP": {
@@ -43,7 +23,7 @@
       "reason": "AI-generated manual corpus-gap translation."
     },
     "PRINT BOX": {
-      "override": "STAMPA BOX",
+      "override": "IMPRIMER BOITE",
       "reason": "AI-generated manual corpus-gap translation."
     },
     "PRNT": {
@@ -51,27 +31,27 @@
       "reason": "AI-generated manual corpus-gap translation."
     },
     "BOX %d (WITHDRAW)": {
-      "override": "BOX %d (RITIRA)",
+      "override": "BOITE %d (RETIRER)",
       "reason": "AI-generated manual corpus-gap translation."
     },
     "BOX %d (RELEASE)": {
-      "override": "BOX %d (LIBERA)",
+      "override": "BOITE %d (RELACHER)",
       "reason": "AI-generated manual corpus-gap translation."
     },
     "Data unknown.": {
-      "override": "Dati sconosciuti.",
+      "override": "Données inconnues.",
       "reason": "AI-generated manual corpus-gap translation."
     },
     "The boulder fell\nthrough the hole!": {
-      "override": "Il masso è caduto\nnel buco!",
+      "override": "Le rocher est tombé\ndans le trou!",
       "reason": "AI-generated manual corpus-gap translation."
     },
     "%s's\nstatus returned\nto normal!": {
-      "override": "Lo stato di %s\nè tornato\nnormale!",
+      "override": "L'état de %s\nest redevenu\nnormal!",
       "reason": "AI-generated manual corpus-gap translation."
     },
     "Coin count:\n%d": {
-      "override": "Gettoni:\n%d",
+      "override": "Jetons :\n%d",
       "reason": "AI-generated manual corpus-gap translation."
     }
   }

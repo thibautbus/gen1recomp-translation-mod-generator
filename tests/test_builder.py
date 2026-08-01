@@ -268,10 +268,10 @@ class BuilderTests(unittest.TestCase):
             builder._print_language_warning("fr")
         self.assertEqual(output.getvalue(), "")
 
-    def test_override_defaults_use_french_root_and_language_subdirectories(self):
+    def test_override_defaults_use_language_subdirectories(self):
         self.assertEqual(
             builder._override_path("fr", "overrides.json"),
-            builder.ROOT / "overrides" / "overrides.json",
+            builder.ROOT / "overrides" / "fr" / "overrides.json",
         )
         self.assertEqual(
             builder._override_path("es", "engine_overrides.json"),

@@ -21,13 +21,11 @@ MOD_ID=${MOD_ID:-}
 
 if [ "$TARGET_LANG" = fr ]; then
     LANG_DIR="$ROOT_DIR/.cache/build"
-    OVERRIDES=${OVERRIDES:-"$ROOT_DIR/overrides/overrides.json"}
-    ENGINE_OVERRIDES=${ENGINE_OVERRIDES:-"$ROOT_DIR/overrides/engine_overrides.json"}
 else
     LANG_DIR="$ROOT_DIR/.cache/build/$TARGET_LANG"
-    OVERRIDES=${OVERRIDES:-"$ROOT_DIR/overrides/$TARGET_LANG/overrides.json"}
-    ENGINE_OVERRIDES=${ENGINE_OVERRIDES:-"$ROOT_DIR/overrides/$TARGET_LANG/engine_overrides.json"}
 fi
+OVERRIDES=${OVERRIDES:-"$ROOT_DIR/overrides/$TARGET_LANG/overrides.json"}
+ENGINE_OVERRIDES=${ENGINE_OVERRIDES:-"$ROOT_DIR/overrides/$TARGET_LANG/engine_overrides.json"}
 
 BUILD_DIR=${BUILD_DIR:-"$LANG_DIR"}
 if [ -n "${REPORT_DIR:-}" ]; then :; elif [ "$TARGET_LANG" = fr ]; then REPORT_DIR="$ROOT_DIR/.cache/reports"; else REPORT_DIR="$ROOT_DIR/.cache/reports/$TARGET_LANG"; fi

@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from pipeline.engine_scope import classify_callsites, load_scope, validate_catalog_universe, verified_source
+from pipeline.engine_scope import classify_callsites, classify_catalog, load_scope, validate_catalog_universe, verified_source
 from pipeline.dependencies import _tree_digest
 
 
@@ -18,7 +18,7 @@ class EngineScopeTests(unittest.TestCase):
             with self.assertRaises(ValueError): load_scope(path)
 
     def test_manifest_rejects_schema_revision_path_and_fields(self):
-        for mutate in [lambda d: d.pop("schema"), lambda d: d.update(schema="wrong"), lambda d: d.update(classifier_version=2), lambda d: d.update(gen1recomp_revision="abc"), lambda d: d.update(gen1recomp_revision="A" * 40), lambda d: d.update(gen1recomp_revision="g" * 40), lambda d: d.update(source_subdir="/tmp"), lambda d: d.update(source_subdir="../src"), lambda d: d.update(source_subdir="other"), lambda d: d.update(extra=1)]:
+        for mutate in [lambda d: d.pop("schema"), lambda d: d.update(schema="wrong"), lambda d: d.update(classifier_version=3), lambda d: d.update(gen1recomp_revision="abc"), lambda d: d.update(gen1recomp_revision="A" * 40), lambda d: d.update(gen1recomp_revision="g" * 40), lambda d: d.update(source_subdir="/tmp"), lambda d: d.update(source_subdir="../src"), lambda d: d.update(source_subdir="other"), lambda d: d.update(extra=1)]:
             self._load_mutated(mutate)
 
     def test_manifest_rejects_list_types_duplicates_and_overlaps(self):
@@ -28,6 +28,43 @@ class EngineScopeTests(unittest.TestCase):
         self._load_mutated(lambda d: d["rby_ui_modules"].__setitem__(0, "NoSuffix"))
         self._load_mutated(lambda d: d["rby_ui_modules"].append(d["ui_review_modules"][0]))
         self._load_mutated(lambda d: d["rby_ui_keys"].append(d["link_ui_keys"][0]))
+
+    def test_scope_overrides_are_versioned_and_strict(self):
+        scope = load_scope()
+        self.assertEqual(scope["classifier_version"], 2)
+        self.assertEqual(len(scope["key_scope_overrides"]), 35)
+        self.assertNotIn("But every BOX\nis full!", scope["key_scope_overrides"])
+        self.assertIn("Printed %s's\ndata!\fSaved as\n%s\vin the save\nfolder.", scope["key_scope_overrides"])
+        self.assertIn("Printed BOX %d!\fSaved as\n%s\vin the save\nfolder.", scope["key_scope_overrides"])
+        for mutate in (
+            lambda d: d["key_scope_overrides"].update({"x": {"category": "rby", "eligibility": "ineligible", "reason": "bad"}}),
+            lambda d: d["key_scope_overrides"].update({"x": {"category": "rby", "eligibility": "ineligible"}}),
+            lambda d: d["key_scope_overrides"].update({"x": {"category": "rby", "eligibility": "ineligible", "reason": "dead", "extra": 1}}),
+            lambda d: d["key_scope_overrides"].update({"x": {"category": "bogus", "eligibility": "ineligible", "reason": "dead"}}),
+            lambda d: d.update(key_scope_overrides=[]),
+        ):
+            self._load_mutated(mutate)
+
+    def test_scope_override_wins_after_raw_callsite_classification(self):
+        scope = load_scope()
+        scope["key_scope_overrides"] = {
+            "x": {"category": "modern", "eligibility": "ineligible", "reason": "diagnostic"}
+        }
+        result = classify_callsites([{"source": "x", "path": "battle/BattleState.lua", "line": 1}], scope)
+        self.assertEqual(result["x"]["category"], "modern")
+        self.assertEqual(result["x"]["eligibility"], "ineligible")
+        self.assertEqual(result["x"]["reason"], "diagnostic")
+        self.assertEqual(result["x"]["raw_category"], "rby")
+        self.assertEqual(result["x"]["callsites"][0]["category"], "rby")
+        self.assertEqual(result["x"]["raw_callsites"], result["x"]["callsites"])
+
+    def test_scope_override_applies_to_catalog_keys_without_callsites(self):
+        scope = load_scope()
+        result = classify_catalog(["Creatures inc.", "But every BOX\nis full!"], [], scope)
+        self.assertEqual(result["Creatures inc."]["eligibility"], "ineligible")
+        self.assertEqual(result["Creatures inc."]["reason"], "covered-by-rom")
+        self.assertEqual(result["Creatures inc."]["raw_eligibility"], "review")
+        self.assertEqual(result["But every BOX\nis full!"]["eligibility"], "review")
 
     def _git_fixture(self):
         tmp = tempfile.TemporaryDirectory(); root = Path(tmp.name)

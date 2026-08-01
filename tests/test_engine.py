@@ -134,6 +134,13 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(_extract_anchor(" A<PARA>@", {"kind": "full"}), "A")
         self.assertEqual(_extract_anchor(" A<PARA>@", {"kind": "full", "preserve_edges": True}), " A\f")
 
+    def test_span_suffix_is_a_safe_string(self):
+        extraction = {"kind": "span", "index": 0, "count": 1, "suffix": "\f"}
+        self.assertEqual(_extract_anchor("A B", extraction), "A\f")
+        for suffix in (None, False, 0, []):
+            with self.assertRaises(ValueError):
+                load_semantic_anchors({"X": {"qid": "q", "extraction": {**extraction, "suffix": suffix}}})
+
     def test_target_extraction_inherits_kind_and_edge_policy(self):
         base = {"qid": "q", "extraction": {
             "kind": "full", "preserve_edges": True,

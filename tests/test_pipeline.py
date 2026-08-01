@@ -46,7 +46,7 @@ class PipelineTests(unittest.TestCase):
         self.assertTrue(any(f["rule"] == "coverage-engine-unmatched" for f in report["findings"]))
     def test_cli_generate_defaults_engine_overrides_to_language_tree(self):
         for language, expected in (
-            ("fr", "overrides/engine_overrides.json"),
+            ("fr", "overrides/fr/engine_overrides.json"),
             ("es", "overrides/es/engine_overrides.json"),
         ):
             with tempfile.TemporaryDirectory() as tmp:
