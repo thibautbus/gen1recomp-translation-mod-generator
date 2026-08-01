@@ -20,7 +20,7 @@ def main(argv=None) -> int:
     sub = p.add_subparsers(dest="command", required=True)
     parse = sub.add_parser("parse"); parse.add_argument("corpus"); parse.add_argument("-o", "--output", required=True); parse.add_argument("--target-lang", default="fr")
     al = sub.add_parser("align"); al.add_argument("records"); al.add_argument("-o", "--output", required=True); al.add_argument("--target-lang", default="fr"); al.add_argument("--overrides", "--worksheet", dest="overrides")
-    gen = sub.add_parser("generate"); gen.add_argument("aligned"); gen.add_argument("-o", "--output", required=True); gen.add_argument("--mod-id", default=None); gen.add_argument("--target-name", default=None); gen.add_argument("--target-lang", default=None); gen.add_argument("--overrides", "--worksheet", dest="overrides"); gen.add_argument("--modkit-worksheet"); gen.add_argument("--engine-catalog"); gen.add_argument("--engine-overrides", default=None); gen.add_argument("--engine-source"); gen.add_argument("--engine-scope"); gen.add_argument("--semantic-anchors"); gen.add_argument("--report")
+    gen = sub.add_parser("generate"); gen.add_argument("aligned"); gen.add_argument("-o", "--output", required=True); gen.add_argument("--mod-id", default=None); gen.add_argument("--target-name", default=None); gen.add_argument("--target-lang", default=None); gen.add_argument("--overrides", "--worksheet", dest="overrides"); gen.add_argument("--modkit-worksheet"); gen.add_argument("--engine-catalog"); gen.add_argument("--engine-overrides", default=None); gen.add_argument("--engine-source"); gen.add_argument("--engine-scope"); gen.add_argument("--semantic-anchors"); gen.add_argument("--semantic-anchor-decisions"); gen.add_argument("--report")
     refresh = sub.add_parser("refresh"); refresh.add_argument("aligned"); refresh.add_argument("--mod", required=True); refresh.add_argument("--overrides", "--worksheet", dest="overrides")
     val = sub.add_parser("validate"); val.add_argument("aligned"); val.add_argument("--release", action="store_true"); val.add_argument("--version", choices=("red", "blue")); val.add_argument("--report"); val.add_argument("--charmap", help="JSON glyph->byte map required for release"); val.add_argument("--coverage", help="modkit join coverage JSON required for release")
     cat = sub.add_parser("catalog"); cat.add_argument("--red", required=True); cat.add_argument("--blue", required=True); cat.add_argument("-o", "--output", required=True)
@@ -134,6 +134,9 @@ def main(argv=None) -> int:
     if args.command in {"generate", "refresh"}:
         items = apply_overrides(items, args.overrides)
     if args.command == "generate":
+        for option, value in (("--semantic-anchors", args.semantic_anchors), ("--semantic-anchor-decisions", args.semantic_anchor_decisions)):
+            if value and not Path(value).is_file():
+                raise ValueError(f"{option} file not found: {value}")
         output = Path(args.output)
         if output.suffix == ".lua":
             generate_lua(items, output, inferred_lang or "fr")
@@ -142,6 +145,7 @@ def main(argv=None) -> int:
             generate_mod(items, output, args.mod_id or f"translation-{target_lang.lower()}", language=target_lang, modkit_worksheet=args.modkit_worksheet, report_path=args.report,
                          engine_catalog=args.engine_catalog, engine_overrides=args.engine_overrides or (f"overrides/{target_lang}/engine_overrides.json" if target_lang != "fr" else "overrides/engine_overrides.json"),
                          semantic_anchors=args.semantic_anchors,
+                         semantic_anchor_decisions=args.semantic_anchor_decisions,
                          engine_source=args.engine_source, engine_scope=args.engine_scope,
                          target_name=args.target_name,
                          strict_engine=bool(args.modkit_worksheet or args.engine_catalog))

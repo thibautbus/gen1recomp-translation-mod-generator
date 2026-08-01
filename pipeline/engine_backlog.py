@@ -24,6 +24,8 @@ from .engine import (
     _structural_form,
     printf_directives,
     load_semantic_anchors,
+    load_semantic_anchor_decisions,
+    merge_semantic_anchors,
     read_engine_catalog,
 )
 from .project import ROOT, project_config
@@ -446,7 +448,11 @@ def analyze_engine_backlog(
     for key, info in classified.items():
         callsites[key].extend({k: v for k, v in row.items() if k not in {"source", "category"}} for row in info["callsites"])
     candidates = _corpus_candidates(corpus_root, language, keys)
-    anchors = load_semantic_anchors(root / "config" / "semantic_anchors.json")
+    decisions_path = root / "config" / "semantic_anchor_decisions.json"
+    anchors, _ = merge_semantic_anchors(
+        load_semantic_anchors(root / "config" / "semantic_anchors.json"),
+        load_semantic_anchor_decisions(decisions_path) if decisions_path.is_file() else {},
+    )
     entries: list[dict[str, Any]] = []
     for key in keys:
         sites = sorted(callsites.get(key, []), key=lambda item: (item["path"], item["line"], item["kind"], item["context"]))

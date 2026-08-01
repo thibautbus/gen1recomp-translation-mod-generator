@@ -11,7 +11,7 @@ ROOT = spec_dir.parent
 runtime = ROOT / "packaging" / "runtime" / "luajit"
 datas = []
 for relative in (
-    "config/pipeline.toml", "config/engine_scope.json", "config/semantic_anchors.json",
+    "config/pipeline.toml", "config/engine_scope.json", "config/semantic_anchors.json", "config/semantic_anchor_decisions.json",
     "config/terminology_anchors.json", "config/literal_handlers.json",
     "config/rom_paths.example.toml",
     "pyproject.toml",

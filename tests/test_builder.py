@@ -280,9 +280,6 @@ class BuilderTests(unittest.TestCase):
         self.assertTrue(builder._override_path("fr", "overrides.json").is_file())
         self.assertTrue(builder._override_path("it", "engine_overrides.json").is_file())
 
-    def test_legacy_review_directory_is_not_present(self):
-        self.assertFalse((builder.ROOT / "review").exists())
-
     def test_confirmation_defaults_to_yes(self):
         self.assertTrue(builder._confirm(lambda _: ""))
         self.assertTrue(builder._confirm(lambda _: "YES"))
@@ -463,14 +460,14 @@ class BuilderTests(unittest.TestCase):
                 json.dumps(
                     {
                         "rom": {
-                            "translated": 3101,
-                            "total": 3101,
-                            "percent": 100,
+                            "translated": 3,
+                            "total": 4,
+                            "percent": 75,
                         },
                         "engine": {
-                            "translated": 220,
-                            "total": 533,
-                            "percent": 41.28,
+                            "translated": 1,
+                            "total": 2,
+                            "percent": 50,
                         },
                     }
                 ),
@@ -479,8 +476,8 @@ class BuilderTests(unittest.TestCase):
             output = io.StringIO()
             with redirect_stdout(output):
                 builder.print_coverage(report)
-        self.assertIn("ROM catalog: 3101/3101 (100.00%)", output.getvalue())
-        self.assertIn("All engine strings: 220/533 (41.28%)", output.getvalue())
+        self.assertIn("ROM catalog: 3/4 (75.00%)", output.getvalue())
+        self.assertIn("All engine strings: 1/2 (50.00%)", output.getvalue())
 
     def test_prerequisite_message_is_actionable(self):
         with (

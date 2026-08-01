@@ -493,6 +493,7 @@ def build(
         report_path=coverage,
         engine_overrides=_override_path(language, "engine_overrides.json"),
         semantic_anchors=resource_root() / "config" / "semantic_anchors.json",
+        semantic_anchor_decisions=resource_root() / "config" / "semantic_anchor_decisions.json",
         strict_engine=True,
         engine_source=gen1recomp / "src",
         engine_scope=resource_root() / "config" / "engine_scope.json",

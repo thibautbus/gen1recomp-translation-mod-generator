@@ -438,8 +438,17 @@ explicit override > semantic anchor > exact > normalized
 > structural placeholder match > empty entry (runtime English fallback)
 ```
 
-`config/semantic_anchors.json` contains only stable qids and extraction rules;
-it contains no translations. `config/terminology_anchors.json` is likewise
+`config/semantic_anchors.json` contains only deterministic stable qids and
+extraction rules; it contains no translations. Reviewed executable anchors
+that depend on contextual, localized, or editorial decisions live in
+`config/semantic_anchor_decisions.json`. Each decision records an allowed
+decision category, non-empty rationale, trace status, and the qids selected by
+the executable anchor. Known-limitation rows explicitly mark language evidence
+as unavailable rather than claiming verification. The engine validates both
+files, rejects key overlap, and reports decision provenance separately from the
+existing matcher details.
+Private manual candidates remain in the ignored review cache and are not
+executable configuration. `config/terminology_anchors.json` is likewise
 corpus-only. It proves the prefixes and digit style used for the 50 TM and
 5 HM displays instead of hard-coding a language. Examples are FR `CT`/`CS`,
 DE `TM`/`VM`, ES `MT`/`MO`, IT `MT`/`MN`, and Japanese prefixes with Japanese

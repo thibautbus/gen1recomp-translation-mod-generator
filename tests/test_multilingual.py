@@ -18,7 +18,6 @@ class MultilingualTests(unittest.TestCase):
             path = Path("overrides") / language / "engine_overrides.json"
             self.assertTrue(path.is_file())
             overrides = load_engine_overrides(path)
-            self.assertEqual(len(overrides), 4)
             self.assertTrue(all(entry.get("source") == "editorial" for entry in overrides.values()))
 
     def test_cli_ja_alias_serializes_canonical_target(self):

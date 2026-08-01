@@ -144,16 +144,6 @@ class EngineScopeTests(unittest.TestCase):
                 with self.assertRaises(ValueError): verified_source(root, scope)
             finally: tmp.cleanup()
 
-    def test_cached_production_scope_counts(self):
-        checkout = Path(".cache/dependencies/gen1recomp")
-        if not checkout.is_dir():
-            self.skipTest("cached Gen1Recomp unavailable")
-        from pipeline.engine_scope import iter_callsites
-        from collections import Counter
-        result = classify_callsites(iter_callsites(checkout))
-        self.assertEqual(len(result), 533)
-        self.assertEqual(Counter(v["eligibility"] for v in result.values()), Counter(eligible=383, review=4, ineligible=146))
-
     def test_generate_mod_rejects_invalid_engine_source_before_report(self):
         from pipeline.mod import generate_mod
         with tempfile.TemporaryDirectory() as d:

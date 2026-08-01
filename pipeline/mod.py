@@ -77,7 +77,7 @@ end
 '''
 
 
-def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: str = "translation-fr", language: str = "fr", modkit_worksheet: str | Path | None = None, report_path: str | Path | None = None, engine_catalog: str | Path | None = None, engine_overrides: str | Path | None = None, strict_engine: bool = False, semantic_anchors: str | Path | None = None, target_name: str | None = None, literal_handlers: str | Path | None = None, target_description: str | None = None, engine_source: str | Path | None = None, engine_scope: str | Path | None = None) -> Path:
+def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: str = "translation-fr", language: str = "fr", modkit_worksheet: str | Path | None = None, report_path: str | Path | None = None, engine_catalog: str | Path | None = None, engine_overrides: str | Path | None = None, strict_engine: bool = False, semantic_anchors: str | Path | None = None, semantic_anchor_decisions: str | Path | None = None, target_name: str | None = None, literal_handlers: str | Path | None = None, target_description: str | None = None, engine_source: str | Path | None = None, engine_scope: str | Path | None = None) -> Path:
     """Generate a mod; ``strict_engine`` requires scaffold/catalog presence only.
 
     It does not require complete engine translations: unresolved entries remain
@@ -97,7 +97,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
             engine_catalog = Path(modkit_worksheet) / "strings.lua"
     if engine_catalog:
         catalog = read_engine_catalog(engine_catalog)
-        engine_values, engine_report = match_engine_catalog(catalog, rows, load_engine_overrides(engine_overrides), semantic_anchors=semantic_anchors, target_lang=language)
+        engine_values, engine_report = match_engine_catalog(catalog, rows, load_engine_overrides(engine_overrides), semantic_anchors=semantic_anchors, semantic_anchor_decisions=semantic_anchor_decisions, target_lang=language)
     (destination / "lang").mkdir(exist_ok=True)
     for name in CATALOGS:
         if name == "strings" and engine_report is not None:
