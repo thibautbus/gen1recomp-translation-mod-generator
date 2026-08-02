@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from pipeline.engine_scope import classify_callsites, classify_catalog, load_scope, validate_catalog_universe, verified_source
+from pipeline.engine_scope import classify_callsites, classify_catalog, forced_dynamic_keys, load_scope, validate_catalog_universe, verified_source
 from pipeline.dependencies import _tree_digest
 
 
@@ -18,7 +18,7 @@ class EngineScopeTests(unittest.TestCase):
             with self.assertRaises(ValueError): load_scope(path)
 
     def test_manifest_rejects_schema_revision_path_and_fields(self):
-        for mutate in [lambda d: d.pop("schema"), lambda d: d.update(schema="wrong"), lambda d: d.update(classifier_version=3), lambda d: d.update(gen1recomp_revision="abc"), lambda d: d.update(gen1recomp_revision="A" * 40), lambda d: d.update(gen1recomp_revision="g" * 40), lambda d: d.update(source_subdir="/tmp"), lambda d: d.update(source_subdir="../src"), lambda d: d.update(source_subdir="other"), lambda d: d.update(extra=1)]:
+        for mutate in [lambda d: d.pop("schema"), lambda d: d.update(schema="wrong"), lambda d: d.update(classifier_version=4), lambda d: d.update(gen1recomp_revision="abc"), lambda d: d.update(gen1recomp_revision="A" * 40), lambda d: d.update(gen1recomp_revision="g" * 40), lambda d: d.update(source_subdir="/tmp"), lambda d: d.update(source_subdir="../src"), lambda d: d.update(source_subdir="other"), lambda d: d.update(extra=1)]:
             self._load_mutated(mutate)
 
     def test_manifest_rejects_list_types_duplicates_and_overlaps(self):
@@ -31,7 +31,10 @@ class EngineScopeTests(unittest.TestCase):
 
     def test_scope_overrides_are_versioned_and_strict(self):
         scope = load_scope()
-        self.assertEqual(scope["classifier_version"], 2)
+        self.assertEqual(scope["classifier_version"], 3)
+        self.assertEqual(forced_dynamic_keys(scope), {"NAME", "ATTACK", "DEFENSE", "SPEED", "SPECIAL"})
+        self.assertEqual(scope["forced_dynamic_keys"]["DEFENSE"]["qid"], "rb.stat_names.VitaminStats.3")
+        self.assertEqual(scope["forced_dynamic_keys"]["SPECIAL"]["qid"], "rb.stat_names.VitaminStats.5")
         self.assertIn("_OakSpeechText2A", scope["key_scope_overrides"])
         self.assertEqual(
             scope["key_scope_overrides"]["_OakSpeechText2A"],
@@ -40,6 +43,9 @@ class EngineScopeTests(unittest.TestCase):
         for key_set in ("rby_ui_keys", "link_ui_keys", "modern_ui_keys"):
             self.assertNotIn("_OakSpeechText2A", scope[key_set])
         self.assertNotIn("But every BOX\nis full!", scope["key_scope_overrides"])
+        for key in ("Crammed full of\nPOKéMON books!", "INDIGO PLATEAU", "POKéDEX comp-\nletion is:\f{NUM:hDexRatingNumMonsSeen} POKéMON seen\n{NUM:hDexRatingNumMonsOwned} POKéMON owned\fPROF.OAK's\nRating:", "{RIVAL}: Yeah! Am\nI great or what?", "Welcome to our\nPOKéMON CENTER!", "Your POKéMON are\nfighting fit!"):
+            self.assertEqual(scope["key_scope_overrides"][key]["reason"], "covered-by-rom")
+            self.assertTrue(scope["key_scope_overrides"][key]["engine_empty"])
         self.assertIn("Printed %s's\ndata!\fSaved as\n%s\vin the save\nfolder.", scope["key_scope_overrides"])
         self.assertIn("Printed BOX %d!\fSaved as\n%s\vin the save\nfolder.", scope["key_scope_overrides"])
         for mutate in (
@@ -50,6 +56,12 @@ class EngineScopeTests(unittest.TestCase):
             lambda d: d.update(key_scope_overrides=[]),
         ):
             self._load_mutated(mutate)
+
+    def test_forced_dynamic_keys_are_rby_eligible_with_provenance(self):
+        result = classify_catalog([], [], load_scope())
+        self.assertEqual(result["NAME"]["provenance"], "forced_dynamic")
+        self.assertEqual(result["NAME"]["eligibility"], "eligible")
+        self.assertIn("compatibility/engine-contract workaround", result["NAME"]["callsite"])
 
     def test_scope_override_wins_after_raw_callsite_classification(self):
         scope = load_scope()
@@ -170,6 +182,8 @@ class EngineScopeTests(unittest.TestCase):
         tmp, root, scope = self._git_fixture()
         try:
             with self.assertRaises(ValueError): validate_catalog_universe({"other"}, root)
+            report = validate_catalog_universe({"one", *forced_dynamic_keys(scope)}, root, scope)
+            self.assertEqual(report["forced_dynamic"], 5)
         finally: tmp.cleanup()
 
     def test_universe_extra_and_missing(self):

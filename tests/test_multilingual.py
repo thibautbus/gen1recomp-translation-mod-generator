@@ -8,13 +8,56 @@ from pipeline.corpus import parse_redblue, canonical_language
 from pipeline.engine import check_printf_directives, load_engine_overrides, load_semantic_anchors, match_engine_catalog, _extract_anchor, printf_directives, read_engine_catalog
 from pipeline.generate import lua_string
 from pipeline.model import Alignment, CorpusRecord
-from pipeline.mod import generate_mod
+from pipeline.mod import generate_mod, validate_commands_show_text_collisions
 from pipeline.cli import main as cli_main
 from pipeline.engine_scope import classify_callsites, iter_callsites
 from pipeline.tokens import corpus_to_engine
 
 
 class MultilingualTests(unittest.TestCase):
+    def test_commands_show_text_collision_guard_is_narrow_and_pre_format(self):
+        with self.assertRaisesRegex(ValueError, "double lookup.*upstream Commands.show_text API limitation"):
+            validate_commands_show_text_collisions(
+                {"{PLAYER} got\n%s!": "_BagFullText"}, {"_BagFullText"},
+            )
+        validate_commands_show_text_collisions(
+            {"{PLAYER} got\n%s!": "Vous avez reçu %s !"}, {"_BagFullText"},
+        )
+
+    def test_summary_menu_dynamic_labels_match_all_languages(self):
+        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout unavailable")
+        keys = {"NAME": "rb.start_sub_menus.TrainerInfo_NameMoneyTimeText", "ATTACK": "rb.stat_names.VitaminStats.2", "DEFENSE": "rb.stat_names.VitaminStats.3", "SPEED": "rb.stat_names.VitaminStats.4", "SPECIAL": "rb.stat_names.VitaminStats.5"}
+        anchors = load_semantic_anchors()
+        for language in ("fr", "de", "es", "it", "ja-Hrkt"):
+            items = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog(keys, items, semantic_anchors=anchors, target_lang=language)
+            self.assertTrue(all(output[key] for key in keys), language)
+            self.assertTrue(all(report["details"][key] == "semantic" for key in keys), language)
+
+    def test_generated_strings_include_dynamic_labels_and_empty_rom_owned_keys(self):
+        corpus_root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (corpus_root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout unavailable")
+        worksheets = Path(".cache/interactive/fr/complete-modkit-worksheet")
+        if not (worksheets / "strings.lua").is_file():
+            self.skipTest("cached modkit worksheet unavailable")
+        rom_keys = ("Crammed full of\nPOKéMON books!", "INDIGO PLATEAU", "POKéDEX comp-\nletion is:\f{NUM:hDexRatingNumMonsSeen} POKéMON seen\n{NUM:hDexRatingNumMonsOwned} POKéMON owned\fPROF.OAK's\nRating:", "{RIVAL}: Yeah! Am\nI great or what?", "Welcome to our\nPOKéMON CENTER!", "Your POKéMON are\nfighting fit!")
+        from tempfile import TemporaryDirectory
+        for language in ("fr", "de", "es", "it", "ja-Hrkt"):
+            worksheet = Path(".cache/interactive") / language / "complete-modkit-worksheet"
+            if not (worksheet / "strings.lua").is_file():
+                self.skipTest(f"cached {language} worksheet unavailable")
+            rows = align(parse_redblue(corpus_root, language), target_lang=language)
+            with TemporaryDirectory() as tmp:
+                mod = generate_mod(rows, Path(tmp) / "mod", language=language, modkit_worksheet=worksheet, engine_catalog=worksheet / "strings.lua", engine_overrides=Path("overrides") / language / "engine_overrides.json", strict_engine=True)
+                strings = (mod / "lang/strings.lua").read_text(encoding="utf-8")
+                for key in ("NAME", "ATTACK", "DEFENSE", "SPEED", "SPECIAL"):
+                    self.assertIn(f'  ["{key}"] = ', strings, language)
+                for key in rom_keys:
+                    self.assertIn(f'  [{lua_string(key)}] = "",', strings, language)
+                self.assertIn('  ["_PokemonBooksText"] = ', (mod / "lang/dialogue.lua").read_text(encoding="utf-8"), language)
     def test_oak_speech_rom_symbol_stays_empty_engine_and_dialogue_localized(self):
         source = "{text_start}This world is<LINE>inhabited by<CONT>creatures called<CONT>#MON!@@"
         qid = "rb.text_2.OakSpeechText2A"
@@ -453,8 +496,8 @@ class MultilingualTests(unittest.TestCase):
         )
         self.assertEqual(output["BUY"], "かいに　きた")
         self.assertEqual(output["SELL"], "うりに　きた")
-        self.assertNotIn("ここでは", output["Welcome to our\nPOKéMON CENTER!"])
-        self.assertEqual(report["details"]["Welcome to our\nPOKéMON CENTER!"], "semantic")
+        self.assertEqual(output["Welcome to our\nPOKéMON CENTER!"], "")
+        self.assertEqual(report["details"]["Welcome to our\nPOKéMON CENTER!"], "english_fallback")
 
     def test_real_corpus_story_engine_anchor_batch_all_languages(self):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
@@ -463,8 +506,6 @@ class MultilingualTests(unittest.TestCase):
         keys = {
             "Hey! There's a\nswitch under the\ntrash!\fThe 1st electric\nlock opened!":
                 "rb.text_2.VermilionGymTrashSuccessText1",
-            "POKéDEX comp-\nletion is:\f{NUM:hDexRatingNumMonsSeen} POKéMON seen\n{NUM:hDexRatingNumMonsOwned} POKéMON owned\fPROF.OAK's\nRating:":
-                "rb.pokedex_ratings.DexCompletionText",
             "You don't have the\n{RAM} yet!":
                 "rb.Route23.Route23YouDontHaveTheBadgeYetText",
             "You need a\nBICYCLE for the\nCycling Road!":
@@ -487,11 +528,7 @@ class MultilingualTests(unittest.TestCase):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
         if not (root / "qid_msg.txt").is_file():
             self.skipTest("canonical local poke-corpus checkout is unavailable")
-        keys = {
-            "Crammed full of\nPOKéMON books!": "rb.text_2.PokemonBooksText",
-            "INDIGO PLATEAU": "rb.text_2.IndigoPlateauStatuesText1",
-            "A COIN CASE is\nrequired!": "rb.text_2.GameCornerCoinCaseText",
-        }
+        keys = {"A COIN CASE is\nrequired!": "rb.text_2.GameCornerCoinCaseText"}
         anchors = load_semantic_anchors()
         for key, qid in keys.items():
             self.assertEqual(

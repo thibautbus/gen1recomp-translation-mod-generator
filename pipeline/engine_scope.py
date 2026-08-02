@@ -17,17 +17,17 @@ CONFIG_PATH = ROOT / "config" / "engine_scope.json"
 
 _SCOPE_CATEGORIES = {"rby", "ui", "link", "import", "core", "modern", "unknown", "mixed"}
 _SCOPE_ELIGIBILITIES = {"eligible", "review", "ineligible"}
-_SCOPE_REASONS = {"modern", "diagnostic", "engine-fallback", "fallback-only", "covered-by-rom", "defensive", "dead"}
+_SCOPE_REASONS = {"modern", "diagnostic", "engine-fallback", "engine-contract-gap", "fallback-only", "covered-by-rom", "defensive", "dead"}
 
 
 def load_scope(path: str | Path = CONFIG_PATH) -> dict[str, Any]:
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise ValueError("engine scope config must be an object")
-    required = ("schema", "classifier_version", "gen1recomp_revision", "source_subdir", "rby_paths", "rby_ui_modules", "ui_review_modules", "link_modules", "modern_ui_modules", "rby_ui_keys", "link_ui_keys", "modern_ui_keys", "key_scope_overrides")
+    required = ("schema", "classifier_version", "gen1recomp_revision", "source_subdir", "rby_paths", "rby_ui_modules", "ui_review_modules", "link_modules", "modern_ui_modules", "rby_ui_keys", "link_ui_keys", "modern_ui_keys", "forced_dynamic_keys", "key_scope_overrides")
     if set(data) != set(required):
         raise ValueError("engine scope config has unknown or missing fields")
-    if data["schema"] != "gen1recomp-translation-mods/engine-scope" or data["classifier_version"] != 2:
+    if data["schema"] != "gen1recomp-translation-mods/engine-scope" or data["classifier_version"] != 3:
         raise ValueError("unsupported engine scope schema/version")
     missing = [key for key in required if key not in data]
     if missing:
@@ -38,7 +38,7 @@ def load_scope(path: str | Path = CONFIG_PATH) -> dict[str, Any]:
         raise ValueError("engine scope gen1recomp_revision must be a revision string")
     if data["source_subdir"] != "src":
         raise ValueError("engine scope source_subdir must be src")
-    for key in required[4:-1]:
+    for key in ("rby_paths", "rby_ui_modules", "ui_review_modules", "link_modules", "modern_ui_modules", "rby_ui_keys", "link_ui_keys", "modern_ui_keys"):
         if not isinstance(data[key], list) or not all(isinstance(value, str) and value for value in data[key]):
             raise ValueError(f"engine scope {key} must be a list of strings")
         if len(data[key]) != len(set(data[key])):
@@ -52,16 +52,32 @@ def load_scope(path: str | Path = CONFIG_PATH) -> dict[str, Any]:
     key_sets = [set(data[key]) for key in ("rby_ui_keys", "link_ui_keys", "modern_ui_keys")]
     if any(key_sets[i] & key_sets[j] for i in range(3) for j in range(i + 1, 3)):
         raise ValueError("engine scope UI key sets overlap")
+    forced = data["forced_dynamic_keys"]
+    if not isinstance(forced, dict):
+        raise ValueError("engine scope forced_dynamic_keys must be an object")
+    configured_ui_keys = set().union(*(set(data[key]) for key in ("rby_ui_keys", "link_ui_keys", "modern_ui_keys")))
+    if set(forced) & configured_ui_keys:
+        raise ValueError("engine scope forced_dynamic_keys overlap configured UI keys")
+    for key, value in forced.items():
+        if not isinstance(key, str) or not key:
+            raise ValueError("engine scope forced_dynamic_keys keys must be non-empty strings")
+        if not isinstance(value, dict) or set(value) != {"category", "eligibility", "reason", "provenance", "callsite", "qid"}:
+            raise ValueError(f"engine scope forced dynamic entry for {key!r} has unknown or missing fields")
+        if value["category"] != "rby" or value["eligibility"] != "eligible":
+            raise ValueError(f"engine scope forced dynamic entry for {key!r} must be eligible RBY")
+        if value["reason"] not in _SCOPE_REASONS or value["provenance"] != "forced_dynamic":
+            raise ValueError(f"engine scope forced dynamic entry for {key!r} has invalid provenance/reason")
+        if not all(isinstance(value[field], str) and value[field] for field in ("callsite", "qid")):
+            raise ValueError(f"engine scope forced dynamic entry for {key!r} requires callsite/qid")
     overrides = data["key_scope_overrides"]
     if not isinstance(overrides, dict):
         raise ValueError("engine scope key_scope_overrides must be an object")
-    configured_ui_keys = set().union(*(set(data[key]) for key in ("rby_ui_keys", "link_ui_keys", "modern_ui_keys")))
     if set(overrides) & configured_ui_keys:
         raise ValueError("engine scope key_scope_overrides overlap configured UI keys")
     for key, value in overrides.items():
         if not isinstance(key, str) or not key:
             raise ValueError("engine scope key_scope_overrides keys must be non-empty strings")
-        if not isinstance(value, dict) or set(value) != {"category", "eligibility", "reason"}:
+        if not isinstance(value, dict) or set(value) not in ({"category", "eligibility", "reason"}, {"category", "eligibility", "reason", "engine_empty"}):
             raise ValueError(f"engine scope override for {key!r} has unknown or missing fields")
         if not isinstance(value["category"], str) or value["category"] not in _SCOPE_CATEGORIES:
             raise ValueError(f"engine scope override for {key!r} has an invalid category")
@@ -69,7 +85,15 @@ def load_scope(path: str | Path = CONFIG_PATH) -> dict[str, Any]:
             raise ValueError(f"engine scope override for {key!r} has an invalid eligibility")
         if not isinstance(value["reason"], str) or value["reason"] not in _SCOPE_REASONS:
             raise ValueError(f"engine scope override for {key!r} has an invalid reason")
+        if "engine_empty" in value and (value["reason"] != "covered-by-rom" or value["engine_empty"] is not True):
+            raise ValueError(f"engine scope override for {key!r} has an invalid engine_empty marker")
+    if set(forced) & set(overrides):
+        raise ValueError("engine scope forced_dynamic_keys overlap key_scope_overrides")
     return data
+
+
+def forced_dynamic_keys(scope: Mapping[str, Any] | None = None) -> set[str]:
+    return set((scope or load_scope()).get("forced_dynamic_keys", {}))
 
 
 def source_root(checkout: str | Path, scope: Mapping[str, Any] | None = None) -> Path:
@@ -243,6 +267,26 @@ def classify_callsites(callsites: Iterable[Mapping[str, Any]], scope: Mapping[st
             "eligibility": override["eligibility"],
             "reason": override["reason"],
         })
+        if "engine_empty" in override:
+            result[key]["engine_empty"] = True
+    for key, dynamic in scope.get("forced_dynamic_keys", {}).items():
+        result.setdefault(key, {
+            "category": dynamic["category"],
+            "categories": [dynamic["category"]],
+            "eligibility": dynamic["eligibility"],
+            "callsites": [],
+            "raw_callsites": [],
+            "raw_category": "unknown",
+            "raw_eligibility": "review",
+        })
+        result[key].update({
+            "category": dynamic["category"],
+            "eligibility": dynamic["eligibility"],
+            "reason": dynamic["reason"],
+            "provenance": dynamic["provenance"],
+            "callsite": dynamic["callsite"],
+            "qid": dynamic["qid"],
+        })
     return result
 
 
@@ -251,22 +295,40 @@ def classify_catalog(keys: Iterable[str], callsites: Iterable[Mapping[str, Any]]
     result = classify_callsites(callsites, scope)
     for key in keys:
         result.setdefault(str(key), {"category": "unknown", "categories": [], "eligibility": "review", "callsites": [], "raw_callsites": [], "raw_category": "unknown", "raw_eligibility": "review"})
+    for key in scope.get("forced_dynamic_keys", {}):
+        result.setdefault(key, {"category": "unknown", "categories": [], "eligibility": "review", "callsites": [], "raw_callsites": [], "raw_category": "unknown", "raw_eligibility": "review"})
+    for key, dynamic in scope.get("forced_dynamic_keys", {}).items():
+        if key in result:
+            result[key].update({
+                "category": dynamic["category"],
+                "categories": [dynamic["category"]],
+                "eligibility": dynamic["eligibility"],
+                "reason": dynamic["reason"],
+                "provenance": dynamic["provenance"],
+                "callsite": dynamic["callsite"],
+                "qid": dynamic["qid"],
+            })
     for key, override in scope.get("key_scope_overrides", {}).items():
         if key in result:
             result[key].update({"category": override["category"], "eligibility": override["eligibility"], "reason": override["reason"]})
+            if "engine_empty" in override:
+                result[key]["engine_empty"] = True
     return {key: result[key] for key in sorted(result)}
 
 
-def validate_catalog_universe(catalog_keys: Iterable[str], checkout: str | Path) -> dict[str, int]:
+def validate_catalog_universe(catalog_keys: Iterable[str], checkout: str | Path, scope: Mapping[str, Any] | None = None) -> dict[str, int]:
     """Assert that a production checkout and catalog describe the same keys."""
     catalog = {str(key) for key in catalog_keys}
     calls = iter_callsites(checkout)
     source = {str(row.get("source", "")) for row in calls if row.get("source")}
-    if source != catalog:
-        missing = sorted(catalog - source)
-        extra = sorted(source - catalog)
+    scope = scope or load_scope()
+    dynamic = forced_dynamic_keys(scope)
+    source_with_dynamic = source | dynamic
+    if source_with_dynamic != catalog:
+        missing = sorted(catalog - source_with_dynamic)
+        extra = sorted(source_with_dynamic - catalog)
         raise ValueError(f"engine catalog/source key universe mismatch (missing={len(missing)}, extra={len(extra)})")
-    return {"catalog_total": len(catalog), "source_keys": len(source), "callsites": len(calls)}
+    return {"catalog_total": len(catalog), "source_keys": len(source_with_dynamic), "callsites": len(calls), "forced_dynamic": len(dynamic)}
 
 
 def coverage_metadata(scope: Mapping[str, Any] | None = None) -> dict[str, Any]:
