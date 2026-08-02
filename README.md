@@ -46,7 +46,7 @@ before cloning pinned repositories. After validation, it:
    candidate archive, and atomically publishes it to `dist/`.
 
 The final file is `dist/translation-<lang>-<version>.zip` (for example
-`dist/translation-fr-0.4.1.zip`); the command prints its absolute path.
+`dist/translation-fr-0.4.2.zip`); the command prints its absolute path.
 
 ### Optional local path configuration
 
@@ -233,29 +233,41 @@ wrong elsewhere. Keep English unless the limitation is explicitly accepted.
 
 ## Windows/Linux standalone executables
 
-The GitHub Actions workflow builds versioned one-file executables for Windows
-x64 and Linux x86_64. Linux builds target Ubuntu 22.04 (glibc) and
+The GitHub Actions workflow builds CLI and graphical Tkinter executables for
+Windows x64 and Linux x86_64:
+
+- `gen1recomp-translation-mod-generator-<version>-<cli|gui>-windows-x64.exe`
+- `gen1recomp-translation-mod-generator-<version>-<cli|gui>-linux-x86_64.tar.gz`
+
+Linux builds target Ubuntu 22.04 (glibc) and
 newer compatible systems; other architectures and libc implementations are
 not supported. No executable is published until a release workflow run
-occurs. Both builds compile official LuaJIT at a pinned commit, bundle
-Pillow and checked-in configuration, and run tests plus `--self-check` before
-uploading the versioned artifact.
+occurs. Both platform builds compile official LuaJIT at a pinned commit, bundle
+Pillow and checked-in configuration, and validate the CLI and GUI before
+uploading the four versioned artifacts.
 
-Windows users download the versioned EXE and double-click it from the output
-directory. Linux users extract the tarball and ensure the binary is executable:
+The CLI keeps the terminal prompts documented above. The GUI provides file
+pickers for both US ROMs, the target language, the localized font ROM when
+required, and the output directory. It runs the same matching and packaging
+pipeline in the background, with a build status and collapsible log. Closing
+the GUI is blocked while a build is active to avoid interrupting private
+extraction or dependency downloads.
+
+Windows users download the preferred versioned EXE. Linux users extract the
+matching CLI or GUI tarball and run its binary, for example:
 
 ```sh
-tar -xzf gen1recomp-translation-mod-generator-<version>-linux-x86_64.tar.gz
-chmod +x gen1recomp-translation-mod-generator-<version>-linux-x86_64
-./gen1recomp-translation-mod-generator-<version>-linux-x86_64
+tar -xzf gen1recomp-translation-mod-generator-<version>-gui-linux-x86_64.tar.gz
+chmod +x gen1recomp-translation-mod-generator-<version>-gui-linux-x86_64
+./gen1recomp-translation-mod-generator-<version>-gui-linux-x86_64
 ```
 
-Prompts match the CLI: own Red/Blue paths, language, and (for Western
-languages) one localized font ROM. The standalone executable needs network access for
+Each standalone executable needs network access for
 the pinned Gen1Recomp archive and seven pinned PokeCorpus files; it never
-bundles/uploads ROMs. Downloads/intermediate data stay in `.cache/` under the
-current working directory; the final ZIP is written there as
-`translation-<lang>-<version>.zip`. Archive URLs, revisions, and SHA-256 pins
+bundles/uploads ROMs. The CLI keeps downloads and intermediate data in
+`.cache/` under the current working directory and writes the final ZIP there.
+The GUI stores them in `.cache/` under the selected output directory and writes
+the ZIP directly into that directory. Archive URLs, revisions, and SHA-256 pins
 are checked; traversal, symlink, duplicate, and corrupt entries are rejected,
 and a marker permits reuse of a verified cache. Keep `config/rom_paths.toml`
 and ROM files out of the bundled application directory.
@@ -270,7 +282,7 @@ Maintainers rebuild locally with:
 ./packaging/build_linux_executable.sh
 ```
 
-Tag pushes (`v<version>`) build both artifacts and publish one release after
+Tag pushes (`v<version>`) build all four artifacts and publish one release after
 validating the tag against `pyproject.toml`; `workflow_dispatch` performs the
 builds without publishing a release.
 

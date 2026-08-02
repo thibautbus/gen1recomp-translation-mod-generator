@@ -129,11 +129,29 @@ def _run(
     *,
     cwd: Path | None = None,
     env: dict[str, str] | None = None,
+    log_fn: Callable[[str], None] | None = None,
 ) -> None:
     printable = " ".join(command)
-    print(f"\n> {printable}")
+    line = f"\n> {printable}"
+    print(line)
+    if log_fn:
+        log_fn(line)
     try:
-        subprocess.run(command, cwd=cwd, env=env, check=True)
+        if log_fn is None:
+            subprocess.run(command, cwd=cwd, env=env, check=True)
+        else:
+            process = subprocess.Popen(
+                command, cwd=cwd, env=env, text=True, errors="replace",
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            )
+            assert process.stdout is not None
+            for output_line in process.stdout:
+                output_line = output_line.rstrip("\r\n")
+                print(output_line)
+                log_fn(output_line)
+            returncode = process.wait()
+            if returncode:
+                raise subprocess.CalledProcessError(returncode, command)
     except subprocess.CalledProcessError as error:
         raise BuildError(
             f"Command failed with exit code {error.returncode}: {printable}"
@@ -402,21 +420,29 @@ def publish_archive(candidate: Path, output: Path) -> Path:
     return output.resolve()
 
 
-def print_coverage(path: Path) -> None:
+def print_coverage(
+    path: Path,
+    *,
+    log_fn: Callable[[str], None] | None = None,
+) -> None:
     """Print ROM-gated and informational engine match percentages."""
     report = json.loads(path.read_text(encoding="utf-8"))
-    print("\nTranslation coverage:")
+    lines = ["\nTranslation coverage:"]
     for key, label in (("rom", "ROM catalog"), ("engine", "All engine strings")):
         section = report.get(key) or {}
         translated = int(section.get("translated", 0))
         total = int(section.get("total", 0))
         percent = float(section.get("percent", 0.0))
-        print(f"  {label}: {translated}/{total} ({percent:.2f}%)")
+        lines.append(f"  {label}: {translated}/{total} ({percent:.2f}%)")
     section = report.get("engine_rby") or {}
     if section.get("available", True) and section.get("total"):
-        print(f"  RBY-related engine strings: {int(section.get('translated', 0))}/{int(section.get('total', 0))} ({float(section.get('percent', 0.0)):.2f}%)")
+        lines.append(f"  RBY-related engine strings: {int(section.get('translated', 0))}/{int(section.get('total', 0))} ({float(section.get('percent', 0.0)):.2f}%)")
     elif report.get("engine_rby_warning"):
-        print(f"  RBY-related engine strings: unavailable ({report['engine_rby_warning']})")
+        lines.append(f"  RBY-related engine strings: unavailable ({report['engine_rby_warning']})")
+    for line in lines:
+        print(line)
+        if log_fn:
+            log_fn(line)
 
 
 def build(
@@ -426,9 +452,29 @@ def build(
     language_name: str,
     luajit: str,
     localized_rom: Path | None = None,
+    workspace_root: Path | None = None,
+    output_dir: Path | None = None,
+    log_fn: Callable[[str], None] | None = None,
+    status_fn: Callable[[str], None] | None = None,
 ) -> Path:
     """Execute the complete private extraction, translation, and pack flow."""
+    def status(message: str) -> None:
+        if status_fn:
+            status_fn(message)
+
+    def log(message: str) -> None:
+        print(message)
+        if log_fn:
+            log_fn(message)
+
     language = canonical_language(language)
+    workspace = Path(workspace_root) if workspace_root is not None else work_root() / ".cache"
+    destination = Path(output_dir) if output_dir is not None else (
+        work_root() if is_frozen() else work_root() / "dist"
+    )
+    workspace = workspace.resolve()
+    destination = destination.resolve()
+    status("Validating ROMs")
     verify_rom(red_rom, "red")
     verify_rom(blue_rom, "blue")
     if language in WESTERN_FONT_LANGUAGES and localized_rom is None:
@@ -444,16 +490,18 @@ def build(
         # cartridge structure but deliberately do not enforce a SHA-1.
         validate_localized_rom(localized_rom)
 
-    dependency_root = work_root() / ".cache" / "dependencies"
+    dependency_root = workspace / "dependencies"
     gen1recomp = dependency_root / "gen1recomp"
     corpus = dependency_root / "poke-corpus"
     config = project_config()
     engine_source = config["gen1recomp"]
     corpus_source = config["corpus"]
+    status("Preparing dependencies")
     _ensure_dependency(engine_source, gen1recomp)
     _ensure_dependency(corpus_source, corpus, selective_prefix="corpus/RedBlue")
 
-    print("\nExtracting private ROM data...")
+    log("\nExtracting private ROM data...")
+    status("Extracting private ROM data")
     import_rom(
         "red", red_rom, gen1recomp,
         gen1recomp / "data" / "generated",
@@ -465,7 +513,7 @@ def build(
         gen1recomp / "blue" / "assets" / "generated",
     )
 
-    build_root = work_root() / ".cache" / "interactive" / language
+    build_root = workspace / "interactive" / language
     scaffold = build_root / "translation_source"
     modkit = gen1recomp / "tools" / "modkit.py"
     env = dict(os.environ)
@@ -479,12 +527,14 @@ def build(
             "--base", "imported", "--dest", str(build_root), "--force"),
         cwd=gen1recomp,
         env=env,
+        log_fn=log_fn,
     )
     worksheet = assemble_worksheet(
         scaffold, build_root / "complete-modkit-worksheet"
     )
 
-    print("\nMatching poke-corpus translations...")
+    log("\nMatching poke-corpus translations...")
+    status("Matching poke-corpus translations")
     records = parse_redblue(corpus, language)
     rows = align(records, target_lang=language)
     corpus_overrides = _corpus_overrides_path(language)
@@ -517,16 +567,20 @@ def build(
         )
 
     version = project_version()
-    output = work_root() / (f"translation-{language.lower()}-{version}.zip" if is_frozen() else f"dist/translation-{language.lower()}-{version}.zip")
+    destination.mkdir(parents=True, exist_ok=True)
+    output = destination / f"translation-{language.lower()}-{version}.zip"
     candidate = build_root / f"translation-{language.lower()}-{version}.candidate.zip"
     candidate.unlink(missing_ok=True)
+    status("Packaging translation mod")
     _run(_modkit_command(modkit, "--repo", str(gen1recomp),
             "pack", str(mod), "-o", str(candidate), "--base", "imported"),
         cwd=gen1recomp,
         env=env,
+        log_fn=log_fn,
     )
     published = publish_archive(candidate, output)
-    print_coverage(coverage)
+    status("Build complete")
+    print_coverage(coverage, log_fn=log_fn)
     return published
 
 
