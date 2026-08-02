@@ -15,6 +15,24 @@ from .literals import load_recipes, generate_handlers
 CATALOGS = ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels")
 # Keep every language at the same priority; language choice must not affect load order.
 TRANSLATION_MOD_PRIORITY = 100
+COMMANDS_SHOW_TEXT_KEYS = {
+    "You can't carry\nany more items!",
+    "{PLAYER} got\n%s!",
+    "Do you want to\ngive a nickname\nto %s?",
+}
+
+
+def validate_commands_show_text_collisions(engine_values: dict[str, str], dialogue_keys: Iterable[str]) -> None:
+    """Reject the three known Commands.show_text double-lookups before formatting."""
+    keys = {str(key) for key in dialogue_keys}
+    for source in COMMANDS_SHOW_TEXT_KEYS:
+        value = engine_values.get(source, "")
+        if value and value in keys:
+            raise ValueError(
+                f"Commands.show_text double lookup collision for {source!r}: "
+                f"translated value {value!r} is a dialogue/Data.text key; "
+                "upstream Commands.show_text API limitation"
+            )
 
 
 def catalog_for(qid: str) -> str:
@@ -89,15 +107,46 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
     joined = None
     join_report = None
     engine_report = None
+    worksheets = None
     if modkit_worksheet and strict_engine:
         require_worksheets(modkit_worksheet)
     if modkit_worksheet:
-        joined, join_report = join_catalogs(rows, read_worksheets(modkit_worksheet), language)
+        worksheets = read_worksheets(modkit_worksheet)
+        joined, join_report = join_catalogs(rows, worksheets, language)
         if engine_catalog is None and strict_engine:
             engine_catalog = Path(modkit_worksheet) / "strings.lua"
     if engine_catalog:
+        from .engine_scope import forced_dynamic_keys, load_scope
+        scope = load_scope(engine_scope) if engine_scope else load_scope()
         catalog = read_engine_catalog(engine_catalog)
+        for key in forced_dynamic_keys(scope):
+            catalog.setdefault(key, "")
         engine_values, engine_report = match_engine_catalog(catalog, rows, load_engine_overrides(engine_overrides), semantic_anchors=semantic_anchors, semantic_anchor_decisions=semantic_anchor_decisions, target_lang=language)
+        for key, dynamic in scope.get("forced_dynamic_keys", {}).items():
+            if key in engine_values:
+                engine_report["details"][key] = "forced_dynamic"
+                engine_report["provenance"][key] = {
+                    **engine_report["provenance"].get(key, {}),
+                    "provenance": dynamic["provenance"],
+                    "reason": dynamic["reason"],
+                    "callsite": dynamic["callsite"],
+                    "qid": dynamic["qid"],
+                }
+        empty_keys = {key for key, info in scope.get("key_scope_overrides", {}).items() if info.get("engine_empty")}
+        for key in empty_keys & set(engine_values):
+            was_unmatched = key in engine_report.get("unmatched", [])
+            if engine_values[key]:
+                engine_report["translated"] -= 1
+            engine_report["details"][key] = "covered_by_rom"
+            engine_report["provenance"][key] = {"method": "covered-by-rom", "reason": "ROM/Data.text dialogue owns localized text"}
+            engine_report["unmatched"] = [item for item in engine_report.get("unmatched", []) if item != key]
+            engine_report.get("ambiguous", {}).pop(key, None)
+            if was_unmatched:
+                engine_report["fallback_english"] = max(0, engine_report.get("fallback_english", 0) - 1)
+            engine_values[key] = ""
+        engine_report["percent"] = round(engine_report["translated"] * 100 / engine_report["total"], 2) if engine_report["total"] else 100.0
+        if worksheets is not None:
+            validate_commands_show_text_collisions(engine_values, (entry.key for entry in worksheets.get("dialogue", ())))
     (destination / "lang").mkdir(exist_ok=True)
     for name in CATALOGS:
         if name == "strings" and engine_report is not None:
@@ -186,10 +235,9 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         if engine_report is not None:
             report["engine"] = engine_report
             if engine_source:
-                from .engine_scope import classify_catalog, coverage_metadata, iter_callsites, load_scope, validate_catalog_universe, verified_source
-                scope = load_scope(engine_scope) if engine_scope else load_scope()
+                from .engine_scope import classify_catalog, coverage_metadata, iter_callsites, validate_catalog_universe, verified_source
                 source_path, _, _ = verified_source(engine_source, scope)
-                validate_catalog_universe(catalog.keys(), source_path)
+                validate_catalog_universe(catalog.keys(), source_path, scope)
                 classified = classify_catalog(catalog.keys(), iter_callsites(source_path), scope)
                 eligible = {key for key, info in classified.items() if info["eligibility"] == "eligible"}
                 translated_keys = {key for key, value in engine_values.items() if isinstance(value, str) and value}

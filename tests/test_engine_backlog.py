@@ -89,6 +89,27 @@ class EngineBacklogTests(unittest.TestCase):
         finally:
             tmp.cleanup()
 
+    def test_forced_dynamic_backlog_entry_keeps_top_level_provenance(self):
+        tmp, root, checkout, corpus, coverage, catalog = self._fixture()
+        try:
+            dynamic = ("NAME", "ATTACK", "DEFENSE", "SPEED", "SPECIAL")
+            catalog.write_text("return {\n" + "".join(f'  ["{key}"] = "",\n' for key in ("%s woke!", "Link only", "UI only", *dynamic)) + "}\n", encoding="utf-8")
+            keys = ["%s woke!", "Link only", "UI only", *dynamic]
+            coverage.write_text(json.dumps({"engine": {
+                "total": len(keys), "unmatched": ["NAME"], "ambiguous": {},
+                "details": {key: "english_fallback" for key in keys},
+                "provenance": {"NAME": {"method": "english_fallback"}},
+            }}), encoding="utf-8")
+            report = analyze_engine_backlog("fr", root=root, checkout=checkout, corpus_root=corpus,
+                                            coverage_path=coverage, engine_catalog=catalog)
+            entry = next(item for item in report["entries"] if item["key"] == "NAME")
+            self.assertEqual(entry["provenance"], "forced_dynamic")
+            self.assertEqual(entry["provenance_kind"], "forced_dynamic")
+            self.assertEqual(entry["coverage_provenance"]["qid"], "rb.start_sub_menus.TrainerInfo_NameMoneyTimeText")
+            self.assertIn("SummaryMenu.lua", entry["coverage_provenance"]["callsite"])
+        finally:
+            tmp.cleanup()
+
     def test_language_and_snapshot_validation(self):
         tmp, root, checkout, corpus, coverage, catalog = self._fixture()
         try:

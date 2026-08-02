@@ -59,8 +59,22 @@
         "index": 0
       }
     },
+    "DEFENSE": {
+      "qid": "rb.stat_names.VitaminStats.3",
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
+    },
     "SPEED": {
       "qid": "rb.stat_names.VitaminStats.4",
+      "extraction": {
+        "kind": "segment",
+        "index": 0
+      }
+    },
+    "SPECIAL": {
+      "qid": "rb.stat_names.VitaminStats.5",
       "extraction": {
         "kind": "segment",
         "index": 0
@@ -157,27 +171,6 @@
         "index": 1
       }
     },
-    "{RIVAL}: Yeah! Am\nI great or what?": {
-      "qid": "rb.text_2.Rival1WinText",
-      "extraction": {
-        "kind": "full",
-        "index": 0
-      }
-    },
-    "Crammed full of\nPOKéMON books!": {
-      "qid": "rb.text_2.PokemonBooksText",
-      "extraction": {
-        "kind": "full",
-        "index": 0
-      }
-    },
-    "INDIGO PLATEAU": {
-      "qid": "rb.text_2.IndigoPlateauStatuesText1",
-      "extraction": {
-        "kind": "full",
-        "index": 0
-      }
-    },
     "A COIN CASE is\nrequired!": {
       "qid": "rb.text_2.GameCornerCoinCaseText",
       "extraction": {
@@ -230,12 +223,6 @@
           "\f",
           "\n"
         ]
-      }
-    },
-    "POKéDEX comp-\nletion is:\f{NUM:hDexRatingNumMonsSeen} POKéMON seen\n{NUM:hDexRatingNumMonsOwned} POKéMON owned\fPROF.OAK's\nRating:": {
-      "qid": "rb.pokedex_ratings.DexCompletionText",
-      "extraction": {
-        "kind": "full"
       }
     },
     "SEEN %d  OWNED %d": {

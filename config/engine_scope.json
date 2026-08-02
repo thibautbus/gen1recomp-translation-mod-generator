@@ -1,6 +1,6 @@
 {
   "schema": "gen1recomp-translation-mods/engine-scope",
-  "classifier_version": 2,
+  "classifier_version": 3,
   "gen1recomp_revision": "898bf0c71ed0a9fa9af596aeea80825f79c7eff3",
   "source_subdir": "src",
   "rby_paths": ["battle", "field", "overworld", "world", "inventory", "data", "text", "map", "maps", "game", "scripts", "script", "pokemon"],
@@ -11,6 +11,13 @@
   "modern_ui_keys": ["%d INSTALLED", "BATTLE LAYOUT", "COLORS", "CONTROLS", "GAME SPEED", "GBC FX", "MAX FPS", "MUSIC FILTER", "MUSIC VOL", "MODS", "RETURN TO MAIN\nMENU?", "RULESET", "SFX VOL", "TILT", "VIDEO MODE", "VOID FILL", "ZOOM"],
   "link_ui_keys": ["LINK"],
   "rby_ui_keys": ["\fWould you like to\nSAVE the game?", "%s saved\nthe game!", "BALL", "BATTLE ANIMATION", "BATTLE STYLE", "ITEM", "Now saving...", "OPTION", "PLAYER %s\nBADGES    %d\nPOKéDEX %3d\nTIME %6d:%02d", "POKéDEX", "POKéMON", "SAVE", "TEXT SPEED"],
+  "forced_dynamic_keys": {
+    "NAME": {"category": "rby", "eligibility": "eligible", "reason": "engine-contract-gap", "provenance": "forced_dynamic", "callsite": "src/ui/SummaryMenu.lua:156 (runtime table; compatibility/engine-contract workaround; no literal callsite at 898bf)", "qid": "rb.start_sub_menus.TrainerInfo_NameMoneyTimeText"},
+    "ATTACK": {"category": "rby", "eligibility": "eligible", "reason": "engine-contract-gap", "provenance": "forced_dynamic", "callsite": "src/ui/SummaryMenu.lua:150-157 (runtime table; literal scanner cannot see s[1])", "qid": "rb.stat_names.VitaminStats.2"},
+    "DEFENSE": {"category": "rby", "eligibility": "eligible", "reason": "engine-contract-gap", "provenance": "forced_dynamic", "callsite": "src/ui/SummaryMenu.lua:150-157 (runtime table; literal scanner cannot see s[1])", "qid": "rb.stat_names.VitaminStats.3"},
+    "SPEED": {"category": "rby", "eligibility": "eligible", "reason": "engine-contract-gap", "provenance": "forced_dynamic", "callsite": "src/ui/SummaryMenu.lua:150-157 (runtime table; literal scanner cannot see s[1])", "qid": "rb.stat_names.VitaminStats.4"},
+    "SPECIAL": {"category": "rby", "eligibility": "eligible", "reason": "engine-contract-gap", "provenance": "forced_dynamic", "callsite": "src/ui/SummaryMenu.lua:150-157 (runtime table; literal scanner cannot see s[1])", "qid": "rb.stat_names.VitaminStats.5"}
+  },
   "key_scope_overrides": {
     " [%s %s.%s]": {"category": "modern", "eligibility": "ineligible", "reason": "diagnostic"},
     " do?": {"category": "modern", "eligibility": "ineligible", "reason": "modern"},
@@ -32,6 +39,12 @@
     "%s received\n%s!": {"category": "rby", "eligibility": "ineligible", "reason": "fallback-only"},
     "%s received\nthe %s!": {"category": "rby", "eligibility": "ineligible", "reason": "fallback-only"},
     "{PLAYER} got\n%s!": {"category": "rby", "eligibility": "ineligible", "reason": "fallback-only"},
+    "Crammed full of\nPOKéMON books!": {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom", "engine_empty": true},
+    "INDIGO PLATEAU": {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom", "engine_empty": true},
+    "POKéDEX comp-\nletion is:\f{NUM:hDexRatingNumMonsSeen} POKéMON seen\n{NUM:hDexRatingNumMonsOwned} POKéMON owned\fPROF.OAK's\nRating:": {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom", "engine_empty": true},
+    "{RIVAL}: Yeah! Am\nI great or what?": {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom", "engine_empty": true},
+    "Welcome to our\nPOKéMON CENTER!": {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom", "engine_empty": true},
+    "Your POKéMON are\nfighting fit!": {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom", "engine_empty": true},
     "%s is\ntaken out.\u000bGot %s.": {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom"},
     "Creatures inc.": {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom"},
     "GAME FREAK inc.": {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom"},
