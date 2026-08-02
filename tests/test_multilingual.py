@@ -6,13 +6,63 @@ from pathlib import Path
 from pipeline.align import align, apply_overrides
 from pipeline.corpus import parse_redblue, canonical_language
 from pipeline.engine import check_printf_directives, load_engine_overrides, load_semantic_anchors, match_engine_catalog, _extract_anchor, printf_directives, read_engine_catalog
+from pipeline.generate import lua_string
 from pipeline.model import Alignment, CorpusRecord
 from pipeline.mod import generate_mod
 from pipeline.cli import main as cli_main
 from pipeline.engine_scope import classify_callsites, iter_callsites
+from pipeline.tokens import corpus_to_engine
 
 
 class MultilingualTests(unittest.TestCase):
+    def test_oak_speech_rom_symbol_stays_empty_engine_and_dialogue_localized(self):
+        source = "{text_start}This world is<LINE>inhabited by<CONT>creatures called<CONT>#MON!@@"
+        qid = "rb.text_2.OakSpeechText2A"
+        self.assertNotIn("_OakSpeechText2A", load_semantic_anchors())
+        translations = {
+            "fr": "{text_start}Ce monde est<LINE>peuplé de<CONT>créatures du nom<CONT>de #MON!@@",
+            "de": "{text_start}Diese Welt wird<LINE>von Wesen<CONT>bewohnt, die man<CONT>#MON nennt!@@",
+            "es": "{text_start}¡Este mundo está<LINE>habitado por unas<CONT>criaturas<CONT>llamadas #MON!@@",
+            "it": "{text_start}Questo mondo è<LINE>abitato da<CONT>creature<CONT>chiamate #MON!@@",
+            "ja-Hrkt": "{text_start}この　せかいには<LINE>ポケット　モンスターと　よばれる<PARA>いきもの　たちが<LINE>いたるところに　すんでいる！@",
+        }
+        oak_source = Path(".cache/dependencies/gen1recomp/src/ui/OakSpeech.lua")
+        if not oak_source.is_file():
+            self.skipTest("pinned Gen1Recomp checkout is unavailable")
+        oak_runtime = oak_source.read_text(encoding="utf-8")
+        self.assertIn('Strings.source("This world is\\ninhabited by\\vcreatures called\\vPOKéMON!")', oak_runtime)
+        self.assertIn('self:say(Strings("_OakSpeechText2A")', oak_runtime)
+        for language, target in translations.items():
+            with tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                worksheet = root / "worksheet"
+                worksheet.mkdir()
+                for name in ("dialogue", "species_names", "move_names", "item_names", "trainer_names", "status_labels"):
+                    (worksheet / f"{name}.txt").write_text("# header\n", encoding="utf-8")
+                (worksheet / "dialogue.txt").write_text(
+                    '"_OakSpeechText2A"\t"This world is\\ninhabited by\\11creatures called\\11POKéMON!"\n',
+                    encoding="utf-8",
+                )
+                (worksheet / "strings.lua").write_text(
+                    'return {\n  ["_OakSpeechText2A"] = "",\n}\n', encoding="utf-8"
+                )
+                row = Alignment(
+                    qid, "both", CorpusRecord(qid, "en", source),
+                    CorpusRecord(qid, language, target), "qid", target_lang=language,
+                )
+                mod = generate_mod(
+                    [row], root / "mod", language=language,
+                    modkit_worksheet=worksheet, engine_catalog=worksheet / "strings.lua",
+                    strict_engine=True,
+                )
+                dialogue = (mod / "lang/dialogue.lua").read_text(encoding="utf-8")
+                strings = (mod / "lang/strings.lua").read_text(encoding="utf-8")
+                self.assertIn(
+                    f'  ["_OakSpeechText2A"] = {lua_string(corpus_to_engine(target))},',
+                    dialogue, language,
+                )
+                self.assertIn('  ["_OakSpeechText2A"] = "",', strings, language)
+
     def test_es_it_engine_override_files_load_from_overrides_tree(self):
         for language in ("es", "it"):
             path = Path("overrides") / language / "engine_overrides.json"

@@ -143,19 +143,19 @@ cached ROM imports and corpus snapshots, so revisions can change these values.
 
 | Target | ROM catalogs | Literal handlers | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 359/360 (99.72%) | 371/576 (64.41%) |
-| `de` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 359/360 (99.72%) | 372/576 (64.58%) |
-| `es` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 359/360 (99.72%) | 371/576 (64.41%) |
-| `it` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 359/360 (99.72%) | 372/576 (64.58%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 359/360 (99.72%) | 372/576 (64.58%) |
+| `fr` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 358/359 (99.72%) | 370/576 (64.24%) |
+| `de` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 358/359 (99.72%) | 371/576 (64.41%) |
+| `es` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 358/359 (99.72%) | 370/576 (64.24%) |
+| `it` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 358/359 (99.72%) | 371/576 (64.41%) |
+| `ja-Hrkt` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 358/359 (99.72%) | 371/576 (64.41%) |
 
 The five handlers are backed by 15/15 unique corpus qids. `RBY-related engine
-strings` counts 360 keys from Gen1Recomp's 576-key catalog whose production
+strings` counts 359 keys from Gen1Recomp's 576-key catalog whose production
 callsites reproduce original Red/Blue gameplay or interfaces; `All engine
 strings` covers the complete catalog, including modern surfaces. The
 versioned [`engine_scope.json`](config/engine_scope.json) classifier (revision
 `898bf0c71ed0a9fa9af596aeea80825f79c7eff3`) scans production `src` callsites:
-360 keys form the eligible denominator, eight require review, and 208 modern,
+359 keys form the eligible denominator, eight require review, and 209 modern,
 network/link, import, core, diagnostic, defensive, fallback-only, or
 ROM/generated-path keys are ineligible. Coverage comes from
 isolated clean rebuilds using pinned snapshots; if the engine source is
@@ -168,10 +168,13 @@ ROM/generated-path fallbacks from the RBY denominator.
 An original-RBY callsite qualifies unless the same key also has a link callsite;
 modern mod-manager/desktop surfaces, network/tournament flows, imports, and
 shared link+RBY keys are therefore not silently counted as RBY coverage.
-The one remaining eligible RBY fallback is `%s\nis refusing!` at
+`_OakSpeechText2A` is intentionally excluded from the engine denominator: its
+localized text is supplied by the ROM/Data.text dialogue catalog, while the
+engine symbol remains empty to avoid OakSpeech's double lookup. The one
+remaining eligible RBY fallback is `%s\nis refusing!` at
 `inventory/ItemEffects.lua:363`, guarded to Yellow's starter Pikachu stone
 refusal; it is intentionally outside Red/Blue and accounts for the expected
-359/360 RBY-related result.
+358/359 RBY-related result.
 
 ## Translation provenance
 
