@@ -38,33 +38,31 @@ def align(records: Iterable[CorpusRecord], source_lang: str = "en", target_lang:
     return result
 
 
-def apply_overrides(items: list[Alignment], overrides: str | Path | None) -> list[Alignment]:
-    """Apply versioned, non-destructive qid overrides to aligned rows.
+CORPUS_OVERRIDES_SCHEMA = "gen1recomp-translation-mods/corpus-overrides"
 
-    New files contain ``entries: {qid: text}``.  The reader also accepts the
-    former worksheet shape so existing local files can be migrated without
-    copying corpus text into the versioned overrides file.
-    """
-    if not overrides or not Path(overrides).exists():
+
+def apply_corpus_overrides(items: list[Alignment], corpus_overrides: str | Path | None) -> list[Alignment]:
+    """Apply qid-indexed corpus corrections without changing source records."""
+    if not corpus_overrides or not Path(corpus_overrides).exists():
         return items
-    data = json.loads(Path(overrides).read_text(encoding="utf-8"))
-    if not isinstance(data, (dict, list)):
-        raise ValueError("overrides must be a JSON object")
-    schema = data.get("schema") if isinstance(data, dict) else None
-    version = data.get("version") if isinstance(data, dict) else None
-    if schema and schema not in {"gen1recomp-translation-mods/overrides", "gen1recomp-translation-mods/worksheet"}:
-        raise ValueError("unsupported overrides schema")
-    if schema == "gen1recomp-translation-mods/overrides" and version not in (None, 1):
-        raise ValueError("unsupported overrides schema version")
-    if schema == "gen1recomp-translation-mods/worksheet" and version not in (None, 2):
-        raise ValueError("unsupported legacy worksheet schema version")
-    entries = data.get("overrides", data.get("entries", data)) if isinstance(data, dict) else data
+    data = json.loads(Path(corpus_overrides).read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("corpus overrides must be a JSON object")
+    schema = data.get("schema")
+    version = data.get("version")
+    if schema != CORPUS_OVERRIDES_SCHEMA:
+        raise ValueError("unsupported corpus overrides schema")
+    if version != 1:
+        raise ValueError("unsupported corpus overrides schema version")
+    entries = data.get("entries")
+    if not isinstance(entries, dict):
+        raise ValueError("corpus overrides entries must be an object")
     for item in items:
-        row = entries.get(item.qid) if isinstance(entries, dict) else next((x for x in entries if x.get("qid") == item.qid), None)
+        row = entries.get(item.qid)
         if row is None:
             continue
         if isinstance(row, dict):
-            # Legacy worksheet rows and optional justification-bearing rows.
+            # Optional justification-bearing rows keep the value under override.
             value = row.get("override")
         else:
             value = row
@@ -73,18 +71,10 @@ def apply_overrides(items: list[Alignment], overrides: str | Path | None) -> lis
     return items
 
 
-def apply_worksheet(items: list[Alignment], worksheet: str | Path | None) -> list[Alignment]:
-    """Backward-compatible alias for callers still using the old name."""
-    return apply_overrides(items, worksheet)
-
-
-def worksheet(items: Iterable[Alignment]) -> dict:
-    """Return the minimal serializable overrides document."""
-    return {"schema": "gen1recomp-translation-mods/overrides", "version": 1,
+def corpus_overrides(items: Iterable[Alignment]) -> dict:
+    """Return a qid-indexed corpus-overrides document."""
+    return {"schema": CORPUS_OVERRIDES_SCHEMA, "version": 1,
             # Only discovered overrides are persisted. Values contain only an
             # override (and may carry a short justification), never review
             # status or notes.
             "entries": {x.qid: {"override": x.override} for x in items if x.override is not None}}
-
-
-overrides = worksheet

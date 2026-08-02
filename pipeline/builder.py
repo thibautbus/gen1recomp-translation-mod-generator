@@ -12,7 +12,7 @@ import sys
 from typing import Callable
 import zipfile
 
-from .align import align, apply_overrides
+from .align import align, apply_corpus_overrides
 from .corpus import canonical_language, parse_redblue
 from .mod import generate_mod
 from .localized_font import extract_localized_font, validate_localized_rom
@@ -262,9 +262,17 @@ def _confirm(input_fn: Callable[[str], str]) -> bool:
     return answer.strip().lower() in {"", "y", "yes"}
 
 
-def _override_path(language: str, filename: str) -> Path | None:
+def _language_override_path(language: str, filename: str) -> Path | None:
     path = resource_root() / "overrides" / language / filename
     return path if path.is_file() else None
+
+
+def _corpus_overrides_path(language: str) -> Path | None:
+    return _language_override_path(language, "corpus_overrides.json")
+
+
+def _engine_overrides_path(language: str) -> Path | None:
+    return _language_override_path(language, "engine_overrides.json")
 
 
 def assemble_worksheet(scaffold: Path, destination: Path) -> Path:
@@ -474,9 +482,9 @@ def build(
     print("\nMatching poke-corpus translations...")
     records = parse_redblue(corpus, language)
     rows = align(records, target_lang=language)
-    overrides = _override_path(language, "overrides.json")
-    if overrides:
-        rows = apply_overrides(rows, overrides)
+    corpus_overrides = _corpus_overrides_path(language)
+    if corpus_overrides:
+        rows = apply_corpus_overrides(rows, corpus_overrides)
     mod = build_root / "mod"
     coverage = build_root / "coverage.json"
     generate_mod(
@@ -487,7 +495,7 @@ def build(
         target_name=f"{language_name} translation",
         modkit_worksheet=worksheet,
         report_path=coverage,
-        engine_overrides=_override_path(language, "engine_overrides.json"),
+        engine_overrides=_engine_overrides_path(language),
         semantic_anchors=resource_root() / "config" / "semantic_anchors.json",
         semantic_anchor_decisions=resource_root() / "config" / "semantic_anchor_decisions.json",
         strict_engine=True,

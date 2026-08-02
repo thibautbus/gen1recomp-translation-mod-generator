@@ -268,17 +268,17 @@ class BuilderTests(unittest.TestCase):
             builder._print_language_warning("fr")
         self.assertEqual(output.getvalue(), "")
 
-    def test_override_defaults_use_language_subdirectories(self):
+    def test_corpus_and_engine_override_defaults_use_language_subdirectories(self):
         self.assertEqual(
-            builder._override_path("fr", "overrides.json"),
-            builder.ROOT / "overrides" / "fr" / "overrides.json",
+            builder._corpus_overrides_path("fr"),
+            builder.ROOT / "overrides" / "fr" / "corpus_overrides.json",
         )
         self.assertEqual(
-            builder._override_path("es", "engine_overrides.json"),
+            builder._engine_overrides_path("es"),
             builder.ROOT / "overrides" / "es" / "engine_overrides.json",
         )
-        self.assertTrue(builder._override_path("fr", "overrides.json").is_file())
-        self.assertTrue(builder._override_path("it", "engine_overrides.json").is_file())
+        self.assertTrue(builder._corpus_overrides_path("fr").is_file())
+        self.assertTrue(builder._engine_overrides_path("it").is_file())
 
     def test_confirmation_defaults_to_yes(self):
         self.assertTrue(builder._confirm(lambda _: ""))

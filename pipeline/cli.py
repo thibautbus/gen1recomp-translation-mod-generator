@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import sys
 
-from .align import align, apply_overrides
+from .align import align, apply_corpus_overrides
 from .corpus import load_corpus, parse_redblue, canonical_language
 from .generate import generate_lua
 from .validate import release_gate, validate
@@ -19,9 +19,10 @@ def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="fr-pipeline")
     sub = p.add_subparsers(dest="command", required=True)
     parse = sub.add_parser("parse"); parse.add_argument("corpus"); parse.add_argument("-o", "--output", required=True); parse.add_argument("--target-lang", default="fr")
-    al = sub.add_parser("align"); al.add_argument("records"); al.add_argument("-o", "--output", required=True); al.add_argument("--target-lang", default="fr"); al.add_argument("--overrides", "--worksheet", dest="overrides")
-    gen = sub.add_parser("generate"); gen.add_argument("aligned"); gen.add_argument("-o", "--output", required=True); gen.add_argument("--mod-id", default=None); gen.add_argument("--target-name", default=None); gen.add_argument("--target-lang", default=None); gen.add_argument("--overrides", "--worksheet", dest="overrides"); gen.add_argument("--modkit-worksheet"); gen.add_argument("--engine-catalog"); gen.add_argument("--engine-overrides", default=None); gen.add_argument("--engine-source"); gen.add_argument("--engine-scope"); gen.add_argument("--semantic-anchors"); gen.add_argument("--semantic-anchor-decisions"); gen.add_argument("--report")
-    refresh = sub.add_parser("refresh"); refresh.add_argument("aligned"); refresh.add_argument("--mod", required=True); refresh.add_argument("--overrides", "--worksheet", dest="overrides")
+    corpus_overrides_option = ("--corpus-overrides",)
+    al = sub.add_parser("align"); al.add_argument("records"); al.add_argument("-o", "--output", required=True); al.add_argument("--target-lang", default="fr"); al.add_argument(*corpus_overrides_option, dest="corpus_overrides")
+    gen = sub.add_parser("generate"); gen.add_argument("aligned"); gen.add_argument("-o", "--output", required=True); gen.add_argument("--mod-id", default=None); gen.add_argument("--target-name", default=None); gen.add_argument("--target-lang", default=None); gen.add_argument(*corpus_overrides_option, dest="corpus_overrides"); gen.add_argument("--modkit-worksheet"); gen.add_argument("--engine-catalog"); gen.add_argument("--engine-overrides", default=None); gen.add_argument("--engine-source"); gen.add_argument("--engine-scope"); gen.add_argument("--semantic-anchors"); gen.add_argument("--semantic-anchor-decisions"); gen.add_argument("--report")
+    refresh = sub.add_parser("refresh"); refresh.add_argument("aligned"); refresh.add_argument("--mod", required=True); refresh.add_argument(*corpus_overrides_option, dest="corpus_overrides")
     val = sub.add_parser("validate"); val.add_argument("aligned"); val.add_argument("--release", action="store_true"); val.add_argument("--version", choices=("red", "blue")); val.add_argument("--report"); val.add_argument("--charmap", help="JSON glyph->byte map required for release"); val.add_argument("--coverage", help="modkit join coverage JSON required for release")
     cat = sub.add_parser("catalog"); cat.add_argument("--red", required=True); cat.add_argument("--blue", required=True); cat.add_argument("-o", "--output", required=True)
     imp = sub.add_parser("import"); imp.add_argument("version", choices=("red", "blue")); imp.add_argument("rom"); imp.add_argument("--gen1recomp", required=True); imp.add_argument("--out", required=True); imp.add_argument("--assets", required=True)
@@ -113,7 +114,7 @@ def main(argv=None) -> int:
             known = {k: row[k] for k in ("qid", "language", "text", "game", "source", "english", "override") if k in row}
             return CorpusRecord(**known)
         target_lang = canonical_language(args.target_lang)
-        items = apply_overrides(align((record(r) for r in raw), target_lang=target_lang), args.overrides)
+        items = apply_corpus_overrides(align((record(r) for r in raw), target_lang=target_lang), args.corpus_overrides)
         Path(args.output).write_text(json.dumps([x.as_dict() for x in items], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return 0
     from .model import Alignment, CorpusRecord
@@ -132,7 +133,7 @@ def main(argv=None) -> int:
     if requested_lang and inferred_lang and requested_lang != canonical_language(inferred_lang):
         raise ValueError(f"aligned JSON target language {inferred_lang!r} does not match requested {requested_lang!r}")
     if args.command in {"generate", "refresh"}:
-        items = apply_overrides(items, args.overrides)
+        items = apply_corpus_overrides(items, args.corpus_overrides)
     if args.command == "generate":
         for option, value in (("--semantic-anchors", args.semantic_anchors), ("--semantic-anchor-decisions", args.semantic_anchor_decisions)):
             if value and not Path(value).is_file():
