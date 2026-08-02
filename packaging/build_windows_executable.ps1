@@ -55,5 +55,5 @@ try {
   $VersionFile = Join-Path $TempRoot "version.txt"
   Invoke-Native { & $Python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])" | Out-File -Encoding ascii $VersionFile } "version lookup"
   $Version = (Get-Content $VersionFile -Raw).Trim()
-  Copy-Item (Join-Path $Root "dist/gen1recomp-translation-mod-generator.exe") (Join-Path $Root "dist/gen1recomp-translation-mod-generator-$Version.exe")
+  Copy-Item (Join-Path $Root "dist/gen1recomp-translation-mod-generator.exe") (Join-Path $Root "dist/gen1recomp-translation-mod-generator-$Version-windows-x64.exe")
 } finally { Pop-Location }

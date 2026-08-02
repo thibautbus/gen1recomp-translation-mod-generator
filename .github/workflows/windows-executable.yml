@@ -1,30 +1,48 @@
-name: Windows standalone executable
+name: Standalone executables
 on:
   workflow_dispatch:
   push:
     tags: ["v*"]
+
+permissions:
+  contents: read
+
 jobs:
-  build:
+  build-windows:
     runs-on: windows-2022
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38
         with: {python-version: "3.12"}
-      - name: Build pinned x64 executable
+      - name: Build Windows executable
         shell: pwsh
         run: ./packaging/build_windows_executable.ps1
-      - name: Upload versioned executable
+      - name: Upload Windows executable
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: gen1recomp-translation-mod-generator-windows-x64
-          path: dist/gen1recomp-translation-mod-generator-*.exe
+          path: dist/gen1recomp-translation-mod-generator-*-windows-x64.exe
+
+  build-linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install native build tools
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential file
+      - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38
+        with: {python-version: "3.12"}
+      - name: Build Linux executable
+        run: ./packaging/build_linux_executable.sh
+      - name: Upload Linux archive
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: gen1recomp-translation-mod-generator-linux-x86_64
+          path: dist/gen1recomp-translation-mod-generator-*-linux-x86_64.tar.gz
 
   release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    needs: build
-    runs-on: ubuntu-latest
+    needs: [build-windows, build-linux]
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
       actions: read
@@ -32,12 +50,16 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e
         with:
-          name: gen1recomp-translation-mod-generator-windows-x64
+          pattern: gen1recomp-translation-mod-generator-*
           path: release
-      - name: Validate tag and publish release asset
+          merge-multiple: true
+      - name: Validate tag and publish release assets
         env: {GH_TOKEN: "${{ github.token }}"}
         shell: bash
         run: |
+          set -euo pipefail
           version=$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml","rb"))["project"]["version"])')
           test "$GITHUB_REF_NAME" = "v$version"
-          gh release create "$GITHUB_REF_NAME" release/*.exe --verify-tag --generate-notes
+          test "$(find release -maxdepth 1 -type f -name '*.exe' | wc -l)" -eq 1
+          test "$(find release -maxdepth 1 -type f -name '*.tar.gz' | wc -l)" -eq 1
+          gh release create "$GITHUB_REF_NAME" release/*.exe release/*.tar.gz --verify-tag --generate-notes

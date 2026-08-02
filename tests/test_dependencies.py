@@ -85,6 +85,31 @@ class DependencyTests(unittest.TestCase):
         self.assertIn("path: release", release)
         self.assertIn("release/*.exe", release)
 
+    def test_linux_packaging_script_is_pinned_and_cleans_runtime(self):
+        script = (Path(__file__).parents[1] / "packaging/build_linux_executable.sh").read_text()
+        self.assertIn("faaf663340347a78b22ed94c63c24fe090bd9784", script)
+        self.assertIn("file \"$RUNTIME/luajit\"", script)
+        self.assertIn("ldd \"$RUNTIME/luajit\"", script)
+        self.assertIn('! grep -q \'not found\'', script)
+        self.assertIn('"$DIST/gen1recomp-translation-mod-generator" --self-check', script)
+        self.assertIn("linux-x86_64", script)
+        self.assertIn('tar -czf "$VERSIONED.tar.gz"', script)
+        self.assertIn('if [[ -e "$RUNTIME" ]]', script)
+        self.assertIn('refusing to overwrite existing runtime', script)
+        self.assertIn('rm -rf -- "$TMP_ROOT"', script)
+        self.assertIn('rm -rf -- "$RUNTIME"', script)
+
+    def test_standalone_workflow_builds_both_platforms_and_releases_both_assets(self):
+        workflow = (Path(__file__).parents[1] / ".github/workflows/windows-executable.yml").read_text()
+        self.assertIn("build-windows:", workflow)
+        self.assertIn("runs-on: windows-2022", workflow)
+        self.assertIn("build-linux:", workflow)
+        self.assertIn("runs-on: ubuntu-22.04", workflow)
+        self.assertIn("apt-get install --no-install-recommends -y build-essential file", workflow)
+        self.assertIn("needs: [build-windows, build-linux]", workflow)
+        self.assertIn("actions/download-artifact@", workflow)
+        self.assertIn("release/*.exe release/*.tar.gz", workflow)
+
     def test_spec_luajit_layout_is_not_double_nested(self):
         spec = Path(__file__).parents[1] / "packaging/translation_builder.spec"
         with tempfile.TemporaryDirectory() as directory:
@@ -136,6 +161,36 @@ class DependencyTests(unittest.TestCase):
             self.assertEqual(destinations["jit/vm.lua"], Path("luajit").joinpath("jit").as_posix())
             self.assertEqual(destinations["lib/nested/helper.dll"], Path("luajit").joinpath("lib", "nested").as_posix())
             self.assertNotIn("luajit/luajit", " ".join(destinations.values()).replace("\\", "/"))
+
+    def test_spec_places_linux_luajit_in_binaries(self):
+        spec = Path(__file__).parents[1] / "packaging/translation_builder.spec"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "packaging").mkdir()
+            script_target = root / "build_translation.py"
+            script_target.write_text("# test fixture\n")
+            runtime = root / "packaging" / "runtime" / "luajit"
+            (runtime / "jit").mkdir(parents=True)
+            (runtime / "luajit").write_bytes(b"ELF")
+            (runtime / "jit" / "vm.lua").write_bytes(b"jit")
+            captured = {}
+
+            def fake_analysis(*args, **kwargs):
+                captured["binaries"] = kwargs["binaries"]
+                captured["datas"] = kwargs["datas"]
+                return SimpleNamespace(pure=[], scripts=[], binaries=[], datas=[])
+
+            runpy.run_path(
+                str(spec),
+                init_globals={
+                    "SPECPATH": str(root / "packaging"),
+                    "Analysis": fake_analysis,
+                    "PYZ": lambda pure: SimpleNamespace(pure=pure),
+                    "EXE": lambda *args, **kwargs: SimpleNamespace(),
+                },
+            )
+            self.assertIn((str(runtime / "luajit"), "luajit"), captured["binaries"])
+            self.assertIn((str(runtime / "jit" / "vm.lua"), "luajit/jit"), captured["datas"])
 
     def test_archive_failure_closes_temp_download_before_cleanup(self):
         with tempfile.TemporaryDirectory() as tmp:

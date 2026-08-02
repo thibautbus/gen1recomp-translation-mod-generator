@@ -1,6 +1,5 @@
-# PyInstaller one-file Windows x64 build.  Runtime assets are assembled by
-# packaging/build_windows_executable.ps1; ROMs, private config, and caches are
-# intentionally absent.
+# PyInstaller one-file build. Runtime assets are assembled by the platform
+# build scripts; ROMs, private config, and caches are intentionally absent.
 from pathlib import Path
 
 spec_path = Path(SPECPATH).resolve()
@@ -10,6 +9,7 @@ spec_dir = spec_path if spec_path.is_dir() else spec_path.parent
 ROOT = spec_dir.parent
 runtime = ROOT / "packaging" / "runtime" / "luajit"
 datas = []
+binaries = []
 for relative in (
     "config/pipeline.toml", "config/engine_scope.json", "config/semantic_anchors.json", "config/semantic_anchor_decisions.json",
     "config/terminology_anchors.json", "config/literal_handlers.json",
@@ -24,12 +24,18 @@ for source in (ROOT / "overrides").rglob("*"):
 if runtime.is_dir():
     for source in runtime.rglob("*"):
         if source.is_file():
+            # Linux needs the ELF entry point in binaries so one-file
+            # extraction preserves its executable mode. Windows keeps its
+            # existing data layout for compatibility with the EXE build.
+            if source.name == "luajit":
+                binaries.append((str(source), "luajit"))
+                continue
             datas.append((str(source), str(Path("luajit") / source.parent.relative_to(runtime))))
 
 a = Analysis(
     [str(ROOT / "build_translation.py")],
     pathex=[str(ROOT)],
-    binaries=[],
+    binaries=binaries,
     datas=datas,
     hiddenimports=["PIL", "PIL.Image", "PIL.ImageFile", "PIL.PngImagePlugin"],
     hookspath=[], hooksconfig={}, runtime_hooks=[], excludes=[], noarchive=False,
