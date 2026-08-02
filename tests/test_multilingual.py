@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from pipeline.align import align, apply_overrides
+from pipeline.align import align
 from pipeline.corpus import parse_redblue, canonical_language
 from pipeline.engine import check_printf_directives, load_engine_overrides, load_semantic_anchors, match_engine_catalog, _extract_anchor, printf_directives, read_engine_catalog
 from pipeline.generate import lua_string

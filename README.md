@@ -40,8 +40,8 @@ before cloning pinned repositories. After validation, it:
 3. matches ROM and engine catalogs against the selected corpus language;
 4. for Western builds, extracts a compact one-row 1bpp glyph sheet and emits
    the official `lang/font.lua`/`lang/charmap.lua` extension-page files;
-5. preserves Modkit font, charmap, and naming integration and applies optional
-   editorial overrides;
+5. preserves Modkit font, charmap, and naming integration and applies the
+   selected language's optional corpus overrides;
 6. runs strict validation and ROM-content lint while packing, scans a private
    candidate archive, and atomically publishes it to `dist/`.
 
@@ -196,9 +196,10 @@ Every translated engine string remains traceable:
 | Automatic match | Exact, normalized, or structural match proved by the generator. | Generation report |
 | Deterministic anchor | Reliable PokeCorpus qid, composition, or extraction rule. | `config/semantic_anchors.json` |
 | Human-reviewed anchor | Contextual or language-specific extraction reviewed by a maintainer; text still comes from PokeCorpus. | `config/semantic_anchor_decisions.json` |
+| Manual corpus correction | A maintainer corrects one selected-language corpus translation without changing the upstream corpus. Entries are indexed by qid. | `overrides/<language>/corpus_overrides.json` |
 | Manual translation — engine contract gap | PokeCorpus has the text, but Gen1Recomp merges contexts or hides required parameters. | `overrides/<language>/engine_overrides.json`, `reason: "engine-contract-gap"` |
-| Manual translation — engine original | Engine-specific text with no Red/Blue source. | Same file, `reason: "engine-original"` |
-| Editorial correction | Deliberately preferred formulation. | Same file, `reason: "editorial-correction"` |
+| Manual translation — engine original | Engine-specific text with no Red/Blue source. | `overrides/<language>/engine_overrides.json`, `reason: "engine-original"` |
+| Editorial correction | Deliberately preferred engine formulation. | `overrides/<language>/engine_overrides.json`, `reason: "editorial-correction"` |
 | Known limitation | Active anchor/override knowingly imperfect in a context or language; a status, not an origin. | Anchor metadata or override provenance |
 | English fallback | No sufficiently reliable translation; runtime keeps English. | Generation report |
 
@@ -264,8 +265,13 @@ The builder prints ROM, RBY-engine, and all-engine match percentages immediately
 before the final path. `assets/font/localized.png` is resolved from the mod root
 with `mod.assets:path(...)`; Japanese skips this stage. `dist/` is ignored, so
 publishing is explicit.
-Editorial corrections live in versioned `overrides/` files and are applied
-automatically; corpus sources and private generated catalogs are never rewritten.
+Manual engine translations and corpus corrections live in separate versioned
+files and are applied automatically. Each language has a checked-in
+`overrides/<language>/corpus_overrides.json` skeleton as an extension point;
+its `entries` object is keyed by corpus qid and is empty until a real
+correction is needed. `engine_overrides.json` remains reserved for engine
+contract gaps, engine-original strings, and their explicit provenance.
+Corpus sources and private generated catalogs are never rewritten.
 
 ## Maintainer reference
 
@@ -305,7 +311,8 @@ ambiguous recipes leave the English handler active.
 | `pipeline/cli.py` | Defines `parse`, `align`, `generate`, `validate`, and ROM import commands. |
 | `pipeline/corpus.py` | Reads RedBlue files, canonicalizes languages, validates cardinality, and produces records. |
 | `pipeline/model.py` | Shared `CorpusRecord` and `Alignment` structures. |
-| `pipeline/align.py` | Pairs by qid, applies qid overrides, writes aligned data. |
+| `pipeline/align.py` | Pairs by qid, applies `corpus_overrides`, and writes aligned data. |
+| `pipeline/worksheet.py` | Loads and writes versioned `corpus_overrides` documents. |
 | `pipeline/join.py` | Joins aligned records to exact worksheet keys and TM/HM terminology. |
 | `pipeline/engine.py` | Matches 576 engine strings using overrides, anchors, text, and placeholders. |
 | `pipeline/engine_scope.py` / `config/engine_scope.json` | Versioned RBY classifier over production `src` callsites. |
@@ -318,7 +325,7 @@ ambiguous recipes leave the English handler active.
 | `pipeline/disassembly_audit.py` | Parses private localized disassembly snapshots into audit reports. |
 | `pipeline/engine_backlog.py` | Read-only analyzer for unresolved engine keys, scope, placeholders, fallbacks, and qid candidates. |
 
-`pipeline/generate.py` and `pipeline/worksheet.py` provide compatibility
+`pipeline/generate.py` and `pipeline/worksheet.py` provide serialization
 helpers. `build_translation.py` is the normal entry point;
 `scripts/build-mod.sh` remains for maintainers with a private worksheet. Both
 keep intermediates under `.cache/`.

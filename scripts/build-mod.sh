@@ -24,7 +24,7 @@ if [ "$TARGET_LANG" = fr ]; then
 else
     LANG_DIR="$ROOT_DIR/.cache/build/$TARGET_LANG"
 fi
-OVERRIDES=${OVERRIDES:-"$ROOT_DIR/overrides/$TARGET_LANG/overrides.json"}
+CORPUS_OVERRIDES=${CORPUS_OVERRIDES:-"$ROOT_DIR/overrides/$TARGET_LANG/corpus_overrides.json"}
 ENGINE_OVERRIDES=${ENGINE_OVERRIDES:-"$ROOT_DIR/overrides/$TARGET_LANG/engine_overrides.json"}
 
 BUILD_DIR=${BUILD_DIR:-"$LANG_DIR"}
@@ -42,7 +42,7 @@ die() {
 }
 
 [ -d "$POKE_CORPUS" ] || die "corpus not found: $POKE_CORPUS (set POKE_CORPUS)"
-[ -f "$OVERRIDES" ] || OVERRIDES=""
+[ -f "$CORPUS_OVERRIDES" ] || CORPUS_OVERRIDES=""
 [ -f "$ENGINE_OVERRIDES" ] || ENGINE_OVERRIDES=""
 [ -d "$MODKIT_WORKSHEET" ] || die "modkit worksheet not found: $MODKIT_WORKSHEET (set MODKIT_WORKSHEET)"
 
@@ -59,15 +59,15 @@ printf '%s\n' "Parsing corpus: $POKE_CORPUS"
 python3 "$PIPELINE" parse "$POKE_CORPUS" --target-lang "$TARGET_LANG" -o "$RECORDS"
 
 printf '%s\n' "Aligning translations: $RECORDS"
-if [ -n "$OVERRIDES" ]; then
-    python3 "$PIPELINE" align "$RECORDS" --target-lang "$TARGET_LANG" --overrides "$OVERRIDES" -o "$ALIGNED"
+if [ -n "$CORPUS_OVERRIDES" ]; then
+    python3 "$PIPELINE" align "$RECORDS" --target-lang "$TARGET_LANG" --corpus-overrides "$CORPUS_OVERRIDES" -o "$ALIGNED"
 else
     python3 "$PIPELINE" align "$RECORDS" --target-lang "$TARGET_LANG" -o "$ALIGNED"
 fi
 
 printf '%s\n' "Generating mod: $MOD"
 set -- --target-lang "$TARGET_LANG" --modkit-worksheet "$MODKIT_WORKSHEET" --report "$COVERAGE"
-[ -n "$OVERRIDES" ] && set -- "$@" --overrides "$OVERRIDES"
+[ -n "$CORPUS_OVERRIDES" ] && set -- "$@" --corpus-overrides "$CORPUS_OVERRIDES"
 [ -n "$ENGINE_OVERRIDES" ] && set -- "$@" --engine-overrides "$ENGINE_OVERRIDES"
 [ -d "$ENGINE_SOURCE" ] && set -- "$@" --engine-source "$ENGINE_SOURCE" --engine-scope "$ROOT_DIR/config/engine_scope.json"
 [ -n "$MOD_ID" ] && set -- "$@" --mod-id "$MOD_ID"

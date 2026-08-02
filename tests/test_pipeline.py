@@ -6,7 +6,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
-from pipeline.align import align, apply_overrides
+from pipeline.align import CORPUS_OVERRIDES_SCHEMA, align, apply_corpus_overrides
 from pipeline.cli import main as cli_main
 from pipeline.corpus import load_corpus
 from pipeline.generate import generate_lua
@@ -19,6 +19,24 @@ from pipeline.worksheet import dump, load
 
 
 class PipelineTests(unittest.TestCase):
+    def test_corpus_override_skeletons_have_explicit_schema_and_are_empty(self):
+        for language in ("fr", "de", "es", "it", "ja-Hrkt"):
+            with self.subTest(language=language):
+                body = json.loads((Path("overrides") / language / "corpus_overrides.json").read_text(encoding="utf-8"))
+                self.assertEqual(body, {"schema": CORPUS_OVERRIDES_SCHEMA, "version": 1, "entries": {}})
+
+    def test_corpus_overrides_are_qid_scoped_and_empty_file_is_noop(self):
+        rows = align([
+            CorpusRecord("a", "en", "A"), CorpusRecord("a", "fr", "Un"),
+            CorpusRecord("b", "en", "B"), CorpusRecord("b", "fr", "Deux"),
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "corpus_overrides.json"
+            path.write_text(json.dumps({"schema": CORPUS_OVERRIDES_SCHEMA, "version": 1, "entries": {}}), encoding="utf-8")
+            self.assertEqual([row.translation for row in apply_corpus_overrides(rows, path)], ["Un", "Deux"])
+            path.write_text(json.dumps({"schema": CORPUS_OVERRIDES_SCHEMA, "version": 1, "entries": {"a": {"override": "Une"}, "orphan": {"override": "X"}}}), encoding="utf-8")
+            self.assertEqual([row.translation for row in apply_corpus_overrides(rows, path)], ["Une", "Deux"])
+
     def test_cli_release_engine_warning_is_printed_without_failure(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -83,22 +101,17 @@ class PipelineTests(unittest.TestCase):
         records = [CorpusRecord("a", "en", "A"), CorpusRecord("a", "fr", "Un")]
         items = align(records)
         with tempfile.TemporaryDirectory() as tmp:
-            sheet = Path(tmp) / "overrides.json"
+            sheet = Path(tmp) / "corpus_overrides.json"
             dump(items, sheet, "fixture")
             body = json.loads(sheet.read_text())
             body["entries"]["a"] = {"override": "Une", "justification": "in-game spelling"}
             sheet.write_text(json.dumps(body), encoding="utf-8")
-            apply_overrides(items, sheet)
+            apply_corpus_overrides(items, sheet)
             dumped = load(sheet)
             self.assertEqual(items[0].translation, "Une")
             self.assertNotIn("english", dumped)
             self.assertNotIn("reviewed", dumped["entries"]["a"])
             self.assertNotIn("notes", dumped["entries"]["a"])
-            legacy = Path(tmp) / "legacy.json"
-            legacy.write_text(json.dumps({"schema": "gen1recomp-translation-mods/worksheet", "version": 2,
-                                          "entries": {"a": {"override": "Une", "review": {"reviewed": True}}}}), encoding="utf-8")
-            migrated = load(legacy)
-            self.assertEqual(migrated["entries"]["a"], {"override": "Une"})
         findings = validate(items)
         self.assertFalse(release_gate(items, findings)[0])
         coverage = {"unmatched": {}, "ambiguous": {},
@@ -116,7 +129,7 @@ class PipelineTests(unittest.TestCase):
             }]), encoding="utf-8")
             overrides = root / "overrides.json"
             original = {
-                "schema": "gen1recomp-translation-mods/overrides",
+                "schema": "gen1recomp-translation-mods/corpus-overrides",
                 "version": 1,
                 "entries": {
                     "a": {"override": "Une", "justification": "test ingame"},
@@ -127,7 +140,7 @@ class PipelineTests(unittest.TestCase):
             before = overrides.read_bytes()
             self.assertEqual(cli_main([
                 "generate", str(aligned), "-o", str(root / "fr.lua"),
-                "--overrides", str(overrides),
+                "--corpus-overrides", str(overrides),
             ]), 0)
             self.assertEqual(overrides.read_bytes(), before)
 
