@@ -46,7 +46,7 @@ before cloning pinned repositories. After validation, it:
    candidate archive, and atomically publishes it to `dist/`.
 
 The final file is `dist/translation-<lang>-<version>.zip` (for example
-`dist/translation-fr-0.4.0.zip`); the command prints its absolute path.
+`dist/translation-fr-0.4.1.zip`); the command prints its absolute path.
 
 ### Optional local path configuration
 
@@ -231,18 +231,27 @@ Manual overrides include a concrete provenance explanation. Do not add one just
 to raise coverage: a shared key or missing runtime argument can make a value
 wrong elsewhere. Keep English unless the limitation is explicitly accepted.
 
-## Windows standalone executable
+## Windows/Linux standalone executables
 
-The pinned GitHub Actions workflow and
-`packaging/build_windows_executable.ps1` produce a repeatable Windows x64
-one-file executable. No EXE is published until a release workflow run occurs.
-The build compiles official LuaJIT at the pinned commit, bundles Pillow and
-checked-in configuration, and runs tests plus `--self-check` before uploading
-the versioned artifact.
+The GitHub Actions workflow builds versioned one-file executables for Windows
+x64 and Linux x86_64. Linux builds target Ubuntu 22.04 (glibc) and
+newer compatible systems; other architectures and libc implementations are
+not supported. No executable is published until a release workflow run
+occurs. Both builds compile official LuaJIT at a pinned commit, bundle
+Pillow and checked-in configuration, and run tests plus `--self-check` before
+uploading the versioned artifact.
 
-Users download the versioned EXE and double-click it from the output
-directory. Prompts match the CLI: own Red/Blue paths, language, and (for
-Western languages) one localized font ROM. The EXE needs network access for
+Windows users download the versioned EXE and double-click it from the output
+directory. Linux users extract the tarball and ensure the binary is executable:
+
+```sh
+tar -xzf gen1recomp-translation-mod-generator-<version>-linux-x86_64.tar.gz
+chmod +x gen1recomp-translation-mod-generator-<version>-linux-x86_64
+./gen1recomp-translation-mod-generator-<version>-linux-x86_64
+```
+
+Prompts match the CLI: own Red/Blue paths, language, and (for Western
+languages) one localized font ROM. The standalone executable needs network access for
 the pinned Gen1Recomp archive and seven pinned PokeCorpus files; it never
 bundles/uploads ROMs. Downloads/intermediate data stay in `.cache/` under the
 current working directory; the final ZIP is written there as
@@ -251,11 +260,19 @@ are checked; traversal, symlink, duplicate, and corrupt entries are rejected,
 and a marker permits reuse of a verified cache. Keep `config/rom_paths.toml`
 and ROM files out of the bundled application directory.
 
-Maintainers rebuild on Windows with:
+Maintainers rebuild locally with:
 
 ```powershell
 ./packaging/build_windows_executable.ps1
 ```
+
+```sh
+./packaging/build_linux_executable.sh
+```
+
+Tag pushes (`v<version>`) build both artifacts and publish one release after
+validating the tag against `pyproject.toml`; `workflow_dispatch` performs the
+builds without publishing a release.
 
 This does not alter the manual flow: unfrozen `python build_translation.py`
 still checks Python, Git, LuaJIT, and Pillow, clones pinned repositories into

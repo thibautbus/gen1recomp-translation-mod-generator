@@ -50,9 +50,14 @@ def _which_luajit() -> str | None:
         return str(path.resolve()) if path.is_file() else None
     if is_frozen():
         root = resource_root()
-        for candidate in (root / "luajit" / "luajit.exe", root / "luajit" / "bin" / "luajit.exe", root / "luajit.exe"):
+        if platform.system() == "Windows":
+            candidates = (root / "luajit" / "luajit.exe", root / "luajit" / "bin" / "luajit.exe", root / "luajit.exe")
+        else:
+            candidates = (root / "luajit" / "luajit", root / "luajit" / "bin" / "luajit", root / "luajit")
+        for candidate in candidates:
             runtime_dir = candidate.parent
-            if candidate.is_file() and (runtime_dir / "lua51.dll").is_file() and (runtime_dir / "jit").is_dir():
+            runtime_ok = (runtime_dir / "lua51.dll").is_file() if platform.system() == "Windows" else True
+            if candidate.is_file() and runtime_ok and (runtime_dir / "jit").is_dir():
                 return str(candidate)
     return shutil.which("luajit") or shutil.which("luajit.exe")
 

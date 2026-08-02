@@ -504,6 +504,29 @@ class BuilderTests(unittest.TestCase):
                 "run: sudo apt install luajit",
             )
 
+    def test_frozen_luajit_resolver_uses_platform_runtime_layout(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            linux = root / "luajit"
+            (linux / "jit").mkdir(parents=True)
+            (linux / "luajit").write_bytes(b"ELF")
+            with (
+                patch.object(builder, "is_frozen", return_value=True),
+                patch.object(builder, "resource_root", return_value=root),
+                patch.object(builder.platform, "system", return_value="Linux"),
+            ):
+                self.assertTrue(os.path.samefile(builder._which_luajit(), linux / "luajit"))
+
+            windows = root / "luajit"
+            (windows / "luajit.exe").write_bytes(b"MZ")
+            (windows / "lua51.dll").write_bytes(b"DLL")
+            with (
+                patch.object(builder, "is_frozen", return_value=True),
+                patch.object(builder, "resource_root", return_value=root),
+                patch.object(builder.platform, "system", return_value="Windows"),
+            ):
+                self.assertTrue(os.path.samefile(builder._which_luajit(), windows / "luajit.exe"))
+
     def test_pillow_hint_detects_bypassed_virtual_environment(self):
         with (
             patch.dict(
