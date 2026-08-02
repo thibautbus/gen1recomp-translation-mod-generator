@@ -3,15 +3,6 @@
   "version": 1,
   "description": "Stable qid/extraction anchors; translations are read from the selected corpus language.",
   "anchors": {
-    "_OakSpeechText2A": {
-      "qid": "rb.text_2.OakSpeechText2A",
-      "source_aliases": [
-        "This world is\ninhabited by\u000bcreatures called\u000bPOKéMON!"
-      ],
-      "extraction": {
-        "kind": "full"
-      }
-    },
     "FIGHT": {
       "qid": "rb.text_boxes.BattleMenuText",
       "extraction": {

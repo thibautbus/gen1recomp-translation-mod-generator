@@ -32,7 +32,13 @@ class EngineScopeTests(unittest.TestCase):
     def test_scope_overrides_are_versioned_and_strict(self):
         scope = load_scope()
         self.assertEqual(scope["classifier_version"], 2)
-        self.assertEqual(len(scope["key_scope_overrides"]), 35)
+        self.assertIn("_OakSpeechText2A", scope["key_scope_overrides"])
+        self.assertEqual(
+            scope["key_scope_overrides"]["_OakSpeechText2A"],
+            {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom"},
+        )
+        for key_set in ("rby_ui_keys", "link_ui_keys", "modern_ui_keys"):
+            self.assertNotIn("_OakSpeechText2A", scope[key_set])
         self.assertNotIn("But every BOX\nis full!", scope["key_scope_overrides"])
         self.assertIn("Printed %s's\ndata!\fSaved as\n%s\vin the save\nfolder.", scope["key_scope_overrides"])
         self.assertIn("Printed BOX %d!\fSaved as\n%s\vin the save\nfolder.", scope["key_scope_overrides"])
@@ -60,10 +66,12 @@ class EngineScopeTests(unittest.TestCase):
 
     def test_scope_override_applies_to_catalog_keys_without_callsites(self):
         scope = load_scope()
-        result = classify_catalog(["Creatures inc.", "But every BOX\nis full!"], [], scope)
+        result = classify_catalog(["Creatures inc.", "_OakSpeechText2A", "But every BOX\nis full!"], [], scope)
         self.assertEqual(result["Creatures inc."]["eligibility"], "ineligible")
         self.assertEqual(result["Creatures inc."]["reason"], "covered-by-rom")
         self.assertEqual(result["Creatures inc."]["raw_eligibility"], "review")
+        self.assertEqual(result["_OakSpeechText2A"]["eligibility"], "ineligible")
+        self.assertEqual(result["_OakSpeechText2A"]["reason"], "covered-by-rom")
         self.assertEqual(result["But every BOX\nis full!"]["eligibility"], "review")
 
     def _git_fixture(self):

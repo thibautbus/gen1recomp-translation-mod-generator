@@ -46,6 +46,7 @@
     "POKéMON RED": {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom"},
     "SLOT MACHINE": {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom"},
     "T H E  E N D": {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom"},
-    "{RAM}\nPOKéMON GYM\nLEADER: {RAM}": {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom"}
+    "{RAM}\nPOKéMON GYM\nLEADER: {RAM}": {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom"},
+    "_OakSpeechText2A": {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom"}
   }
 }
