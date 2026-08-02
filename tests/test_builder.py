@@ -13,9 +13,41 @@ import zipfile
 from pipeline import builder
 from pipeline.project import project_version
 from pipeline.rom_paths import load_rom_paths
+from pipeline.gui import coverage_lines, language_code, validate_inputs
 
 
 class BuilderTests(unittest.TestCase):
+    def test_run_streams_subprocess_output_to_log(self):
+        class Process:
+            stdout = iter(("first\n", "second\n"))
+
+            @staticmethod
+            def wait():
+                return 0
+
+        messages = []
+        with patch("pipeline.builder.subprocess.Popen", return_value=Process()):
+            builder._run(["tool"], log_fn=messages.append)
+        self.assertEqual(messages, ["\n> tool", "first", "second"])
+
+    def test_gui_language_and_coverage_helpers(self):
+        self.assertEqual(language_code("French (fr)"), "fr")
+        self.assertEqual(language_code("ja-Hrkt"), "ja-Hrkt")
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / "coverage.json"
+            report.write_text(json.dumps({"rom": {"translated": 2, "total": 4, "percent": 50}, "engine": {"translated": 1, "total": 2, "percent": 50}, "engine_rby": {"translated": 3, "total": 4, "percent": 75}}), encoding="utf-8")
+            self.assertEqual(coverage_lines(report), ["ROM catalog: 2/4 (50.00%)", "All engine strings: 1/2 (50.00%)", "RBY-related engine strings: 3/4 (75.00%)"])
+
+    def test_gui_validation_requires_output_and_localized_western_rom(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            red, blue = root / "red.gb", root / "blue.gb"
+            red.write_bytes(b"red")
+            blue.write_bytes(b"blue")
+            with patch.object(builder, "verify_rom"), self.assertRaisesRegex(builder.BuildError, "output directory"):
+                validate_inputs(red, blue, "fr", None, "")
+            with patch.object(builder, "verify_rom"), self.assertRaisesRegex(builder.BuildError, "font source"):
+                validate_inputs(red, blue, "fr", None, root / "out")
     def test_absent_rom_path_config_is_empty(self):
         with tempfile.TemporaryDirectory() as directory:
             paths = load_rom_paths(Path(directory) / "rom_paths.toml")

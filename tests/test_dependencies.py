@@ -28,6 +28,15 @@ class _Response:
 
 
 class DependencyTests(unittest.TestCase):
+    @staticmethod
+    def _paths_equivalent(left, right):
+        """Compare paths across Windows short names and POSIX spellings."""
+        try:
+            return os.path.samefile(left, right)
+        except (AttributeError, OSError):
+            canonical = lambda value: os.path.normcase(os.path.realpath(os.path.abspath(os.fspath(value))))
+            return canonical(left) == canonical(right)
+
     def test_tree_digest_order_is_portable_across_path_flavours(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "src"
@@ -73,6 +82,9 @@ class DependencyTests(unittest.TestCase):
         self.assertNotIn("&& call src\\msvcbuild.bat", script)
         self.assertIn('$Spec = Join-Path $Root "packaging/translation_builder.spec"', script)
         self.assertIn("PyInstaller --clean --noconfirm $Spec", script)
+        self.assertNotIn("tomllib", script)
+        self.assertIn('foreach ($Variant in @("cli", "gui"))', script)
+        self.assertIn('$Version-$Variant-windows-x64.exe', script)
 
     def test_windows_release_downloads_artifact_after_checkout(self):
         workflow = (Path(__file__).parents[1] / ".github/workflows/windows-executable.yml").read_text()
@@ -91,9 +103,15 @@ class DependencyTests(unittest.TestCase):
         self.assertIn("file \"$RUNTIME/luajit\"", script)
         self.assertIn("ldd \"$RUNTIME/luajit\"", script)
         self.assertIn('! grep -q \'not found\'', script)
-        self.assertIn('"$DIST/gen1recomp-translation-mod-generator" --self-check', script)
+        self.assertIn('for variant in cli gui; do', script)
+        self.assertIn('GEN1RECOMP_VARIANT="$variant"', script)
+        self.assertIn('"$binary" --self-check', script)
+        self.assertIn('"$binary" --gui-self-check', script)
+        self.assertIn('xvfb-run -a "$binary" --gui-self-check', script)
         self.assertIn("linux-x86_64", script)
-        self.assertIn('tar -czf "$VERSIONED.tar.gz"', script)
+        self.assertIn('versioned="$DIST/gen1recomp-translation-mod-generator-${VERSION}-$variant-linux-x86_64"', script)
+        self.assertIn('tar -czf "$versioned.tar.gz"', script)
+        self.assertNotIn("tomllib", script)
         self.assertIn('if [[ -e "$RUNTIME" ]]', script)
         self.assertIn('refusing to overwrite existing runtime', script)
         self.assertIn('rm -rf -- "$TMP_ROOT"', script)
@@ -105,10 +123,16 @@ class DependencyTests(unittest.TestCase):
         self.assertIn("runs-on: windows-2022", workflow)
         self.assertIn("build-linux:", workflow)
         self.assertIn("runs-on: ubuntu-22.04", workflow)
-        self.assertIn("apt-get install --no-install-recommends -y build-essential file", workflow)
+        self.assertIn("apt-get install --no-install-recommends -y build-essential file python3-tk xvfb xauth", workflow)
         self.assertIn("needs: [build-windows, build-linux]", workflow)
         self.assertIn("actions/download-artifact@", workflow)
         self.assertIn("release/*.exe release/*.tar.gz", workflow)
+        self.assertEqual(workflow.count("actions/upload-artifact@"), 4)
+        self.assertIn("-eq 2", workflow)
+        self.assertIn("dist/gen1recomp-translation-mod-generator-*-cli-windows-x64.exe", workflow)
+        self.assertIn("dist/gen1recomp-translation-mod-generator-*-gui-windows-x64.exe", workflow)
+        self.assertIn("dist/gen1recomp-translation-mod-generator-*-cli-linux-x86_64.tar.gz", workflow)
+        self.assertIn("dist/gen1recomp-translation-mod-generator-*-gui-linux-x86_64.tar.gz", workflow)
 
     def test_spec_luajit_layout_is_not_double_nested(self):
         spec = Path(__file__).parents[1] / "packaging/translation_builder.spec"
@@ -146,7 +170,7 @@ class DependencyTests(unittest.TestCase):
             self.assertEqual(len(captured["scripts"]), 1)
             # Windows may spell the same temp directory with an 8.3 short
             # name in `root`; compare the actual files rather than strings.
-            self.assertTrue(os.path.samefile(captured["scripts"][0], script_target))
+            self.assertTrue(self._paths_equivalent(captured["scripts"][0], script_target))
             runtime = os.path.normcase(os.path.realpath(runtime))
             destinations = {}
             for source, destination in captured["datas"]:
@@ -191,17 +215,42 @@ class DependencyTests(unittest.TestCase):
             )
             self.assertTrue(
                 any(
-                    destination == "luajit" and os.path.samefile(source, runtime / "luajit")
+                    destination == "luajit" and self._paths_equivalent(source, runtime / "luajit")
                     for source, destination in captured["binaries"]
                 )
             )
             self.assertTrue(
                 any(
                     Path(destination).parts == ("luajit", "jit")
-                    and os.path.samefile(source, runtime / "jit" / "vm.lua")
+                    and self._paths_equivalent(source, runtime / "jit" / "vm.lua")
                     for source, destination in captured["datas"]
                 )
             )
+
+    def test_spec_selects_gui_entrypoint_without_console(self):
+        spec = Path(__file__).parents[1] / "packaging/translation_builder.spec"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "packaging").mkdir()
+            (root / "build_translation_gui.py").write_text("# test fixture\n")
+            captured = {}
+
+            def fake_analysis(*args, **kwargs):
+                captured["scripts"] = args[0]
+                return SimpleNamespace(pure=[], scripts=[], binaries=[], datas=[])
+
+            with patch.dict(os.environ, {"GEN1RECOMP_VARIANT": "gui"}):
+                runpy.run_path(
+                    str(spec),
+                    init_globals={
+                        "SPECPATH": str(root / "packaging"),
+                        "Analysis": fake_analysis,
+                        "PYZ": lambda pure: SimpleNamespace(pure=pure),
+                        "EXE": lambda *args, **kwargs: captured.setdefault("exe", kwargs) or SimpleNamespace(),
+                    },
+                )
+            self.assertTrue(self._paths_equivalent(captured["scripts"][0], root / "build_translation_gui.py"))
+            self.assertFalse(captured["exe"]["console"])
 
     def test_archive_failure_closes_temp_download_before_cleanup(self):
         with tempfile.TemporaryDirectory() as tmp:

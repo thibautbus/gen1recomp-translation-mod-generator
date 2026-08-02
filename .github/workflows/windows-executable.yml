@@ -17,27 +17,37 @@ jobs:
       - name: Build Windows executable
         shell: pwsh
         run: ./packaging/build_windows_executable.ps1
-      - name: Upload Windows executable
+      - name: Upload Windows CLI executable
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: gen1recomp-translation-mod-generator-windows-x64
-          path: dist/gen1recomp-translation-mod-generator-*-windows-x64.exe
+          name: gen1recomp-translation-mod-generator-cli-windows-x64
+          path: dist/gen1recomp-translation-mod-generator-*-cli-windows-x64.exe
+      - name: Upload Windows GUI executable
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: gen1recomp-translation-mod-generator-gui-windows-x64
+          path: dist/gen1recomp-translation-mod-generator-*-gui-windows-x64.exe
 
   build-linux:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Install native build tools
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential file
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential file python3-tk xvfb xauth
       - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38
         with: {python-version: "3.12"}
       - name: Build Linux executable
         run: ./packaging/build_linux_executable.sh
-      - name: Upload Linux archive
+      - name: Upload Linux CLI archive
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: gen1recomp-translation-mod-generator-linux-x86_64
-          path: dist/gen1recomp-translation-mod-generator-*-linux-x86_64.tar.gz
+          name: gen1recomp-translation-mod-generator-cli-linux-x86_64
+          path: dist/gen1recomp-translation-mod-generator-*-cli-linux-x86_64.tar.gz
+      - name: Upload Linux GUI archive
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: gen1recomp-translation-mod-generator-gui-linux-x86_64
+          path: dist/gen1recomp-translation-mod-generator-*-gui-linux-x86_64.tar.gz
 
   release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -60,6 +70,6 @@ jobs:
           set -euo pipefail
           version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' pyproject.toml)
           test "$GITHUB_REF_NAME" = "v$version"
-          test "$(find release -maxdepth 1 -type f -name '*.exe' | wc -l)" -eq 1
-          test "$(find release -maxdepth 1 -type f -name '*.tar.gz' | wc -l)" -eq 1
+          test "$(find release -maxdepth 1 -type f -name '*.exe' | wc -l)" -eq 2
+          test "$(find release -maxdepth 1 -type f -name '*.tar.gz' | wc -l)" -eq 2
           gh release create "$GITHUB_REF_NAME" release/*.exe release/*.tar.gz --verify-tag --generate-notes

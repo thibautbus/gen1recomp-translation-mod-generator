@@ -44,11 +44,20 @@ file "$RUNTIME/luajit" | grep -Eq 'ELF 64-bit.*x86-64'
 ldd "$RUNTIME/luajit" | tee "$TMP_ROOT/ldd.txt"
 ! grep -q 'not found' "$TMP_ROOT/ldd.txt"
 
-"$PYTHON" -m PyInstaller --clean --noconfirm "$SPEC"
-"$DIST/gen1recomp-translation-mod-generator" --self-check
-VERSION=$("$PYTHON" -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
-VERSIONED="$DIST/gen1recomp-translation-mod-generator-${VERSION}-linux-x86_64"
-cp "$DIST/gen1recomp-translation-mod-generator" "$VERSIONED"
-chmod 0755 "$VERSIONED"
-tar -czf "$VERSIONED.tar.gz" -C "$DIST" "$(basename "$VERSIONED")"
-echo "Built $VERSIONED.tar.gz"
+VERSION=$(sed -n 's/^version[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' pyproject.toml | head -n 1)
+[[ -n "$VERSION" ]]
+
+for variant in cli gui; do
+  GEN1RECOMP_VARIANT="$variant" "$PYTHON" -m PyInstaller --clean --noconfirm "$SPEC"
+  binary="$DIST/gen1recomp-translation-mod-generator-$variant"
+  "$binary" --self-check
+  if [[ "$variant" == gui ]]; then
+    xvfb-run -a "$binary" --gui-self-check
+  fi
+  versioned="$DIST/gen1recomp-translation-mod-generator-${VERSION}-$variant-linux-x86_64"
+  rm -f -- "$versioned" "$versioned.tar.gz"
+  cp "$binary" "$versioned"
+  chmod 0755 "$versioned"
+  tar -czf "$versioned.tar.gz" -C "$DIST" "$(basename "$versioned")"
+  echo "Built $versioned.tar.gz"
+done

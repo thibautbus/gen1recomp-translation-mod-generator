@@ -1,12 +1,17 @@
 # PyInstaller one-file build. Runtime assets are assembled by the platform
 # build scripts; ROMs, private config, and caches are intentionally absent.
 from pathlib import Path
+import os
 
 spec_path = Path(SPECPATH).resolve()
 # PyInstaller sets SPECPATH to the spec directory.  Accept a file path too so
 # this spec remains easy to exercise directly, without depending on cwd.
 spec_dir = spec_path if spec_path.is_dir() else spec_path.parent
 ROOT = spec_dir.parent
+variant = os.environ.get("GEN1RECOMP_VARIANT", "cli").strip().lower()
+if variant not in {"cli", "gui"}:
+    raise SystemExit(f"GEN1RECOMP_VARIANT must be cli or gui, got {variant!r}")
+entrypoint = ROOT / ("build_translation_gui.py" if variant == "gui" else "build_translation.py")
 runtime = ROOT / "packaging" / "runtime" / "luajit"
 datas = []
 binaries = []
@@ -33,7 +38,7 @@ if runtime.is_dir():
             datas.append((str(source), str(Path("luajit") / source.parent.relative_to(runtime))))
 
 a = Analysis(
-    [str(ROOT / "build_translation.py")],
+    [str(entrypoint)],
     pathex=[str(ROOT)],
     binaries=binaries,
     datas=datas,
@@ -43,7 +48,7 @@ a = Analysis(
 pyz = PYZ(a.pure)
 exe = EXE(
     pyz, a.scripts, a.binaries, a.datas, [],
-    name="gen1recomp-translation-mod-generator",
+    name=f"gen1recomp-translation-mod-generator-{variant}",
     debug=False, bootloader_ignore_signals=False, strip=False, upx=False,
-    console=True,
+    console=False if variant == "gui" else True,
 )

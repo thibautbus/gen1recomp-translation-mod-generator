@@ -50,10 +50,24 @@ try {
   $pe = [BitConverter]::ToUInt16($bytes, [BitConverter]::ToInt32($bytes, 0x3c) + 4)
   if ($pe -ne 0x8664) { throw "LuaJIT executable is not x64" }
 
-  Invoke-Native { & $Python -m PyInstaller --clean --noconfirm $Spec } "PyInstaller"
-  Invoke-Native { & (Join-Path $Root "dist/gen1recomp-translation-mod-generator.exe") --self-check } "self-check"
   $VersionFile = Join-Path $TempRoot "version.txt"
-  Invoke-Native { & $Python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])" | Out-File -Encoding ascii $VersionFile } "version lookup"
+  $Version = (Get-Content (Join-Path $Root "pyproject.toml") |
+    Select-String '^version\s*=\s*"([^"]+)"' |
+    Select-Object -First 1).Matches.Groups[1].Value
+  if (-not $Version) { throw "project version is missing from pyproject.toml" }
+  Set-Content -Path $VersionFile -Value $Version -Encoding ascii
   $Version = (Get-Content $VersionFile -Raw).Trim()
-  Copy-Item (Join-Path $Root "dist/gen1recomp-translation-mod-generator.exe") (Join-Path $Root "dist/gen1recomp-translation-mod-generator-$Version-windows-x64.exe")
+  foreach ($Variant in @("cli", "gui")) {
+    $env:GEN1RECOMP_VARIANT = $Variant
+    Invoke-Native { & $Python -m PyInstaller --clean --noconfirm $Spec } "PyInstaller $Variant"
+    $Binary = Join-Path $Root "dist/gen1recomp-translation-mod-generator-$Variant.exe"
+    Invoke-Native { & $Binary --self-check } "self-check $Variant"
+    if ($Variant -eq "gui") {
+      Invoke-Native { & $Binary --gui-self-check } "GUI smoke check"
+    }
+    $Artifact = Join-Path $Root "dist/gen1recomp-translation-mod-generator-$Version-$Variant-windows-x64.exe"
+    if (Test-Path $Artifact) { Remove-Item -Force $Artifact }
+    Copy-Item $Binary $Artifact
+  }
+  Remove-Item Env:GEN1RECOMP_VARIANT -ErrorAction SilentlyContinue
 } finally { Pop-Location }
