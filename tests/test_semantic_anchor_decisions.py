@@ -14,6 +14,8 @@ from pipeline.engine import (
     match_engine_catalog,
     merge_semantic_anchors,
 )
+from pipeline.align import align
+from pipeline.corpus import parse_redblue
 from pipeline.model import Alignment, CorpusRecord
 
 
@@ -171,6 +173,50 @@ class SemanticAnchorDecisionTests(unittest.TestCase):
         output, report = match_engine_catalog({"QUIT": ""}, rows, semantic_anchors=catalog, target_lang="fr")
         self.assertEqual(output["QUIT"], "QUITTER")
         self.assertEqual(report["decision_provenance"]["QUIT"]["trace_status"], "known-limitation")
+
+    def test_diploma_wrapper_anchor_strips_only_verified_escape(self):
+        root = Path("../poke-corpus/corpus/RedBlue")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        deterministic = load_semantic_anchors(ROOT / "config/semantic_anchors.json")
+        decisions = load_semantic_anchor_decisions(ROOT / "config/semantic_anchor_decisions.json")
+        anchors, _ = merge_semantic_anchors(deterministic, decisions)
+        expected = {"fr": "Diplôme", "de": "Diplom", "es": "Diploma", "it": "Diploma", "ja-Hrkt": "しょうじょう"}
+        for language, value in expected.items():
+            rows = align(parse_redblue(root, language), target_lang=language)
+            output, report = match_engine_catalog({"<Diploma>": ""}, rows, semantic_anchors=anchors, target_lang=language)
+            self.assertEqual(output["<Diploma>"], value, language)
+            self.assertEqual(report["details"]["<Diploma>"], "semantic", language)
+            self.assertEqual(report["provenance"]["<Diploma>"]["qid"], "rb.diploma.DiplomaText", language)
+            self.assertEqual(report["provenance"]["<Diploma>"]["extraction"]["wrapper"], {"prefix": "\\x70", "suffix": "\\x70"}, language)
+
+    def test_diploma_wrapper_anchor_positive_without_external_corpus(self):
+        qid = "rb.diploma.DiplomaText"
+        rows = [Alignment(qid, "both", CorpusRecord(qid, "en", r"\x70Diploma\x70@"), CorpusRecord(qid, "fr", r"\x70Diplôme\x70@"), "qid")]
+        anchor = {
+            "<Diploma>": {
+                "qid": qid,
+                "source_aliases": ["Diploma"],
+                "extraction": {"kind": "full", "wrapper": {"prefix": r"\x70", "suffix": r"\x70"}},
+            }
+        }
+        output, report = match_engine_catalog({"<Diploma>": ""}, rows, semantic_anchors=anchor, target_lang="fr")
+        self.assertEqual(output["<Diploma>"], "Diplôme")
+        self.assertEqual(report["details"]["<Diploma>"], "semantic")
+
+    def test_diploma_wrapper_anchor_rejects_unexpected_escape(self):
+        qid = "rb.diploma.DiplomaText"
+        rows = [Alignment(qid, "both", CorpusRecord(qid, "en", r"\x71Diploma\x71@"), CorpusRecord(qid, "fr", r"\x71Diplôme\x71@"), "qid")]
+        anchor = {
+            "<Diploma>": {
+                "qid": qid,
+                "source_aliases": ["Diploma"],
+                "extraction": {"kind": "full", "wrapper": {"prefix": r"\x70", "suffix": r"\x70"}},
+            }
+        }
+        output, report = match_engine_catalog({"<Diploma>": ""}, rows, semantic_anchors=anchor, target_lang="fr")
+        self.assertEqual(output["<Diploma>"], "")
+        self.assertEqual(report["details"]["<Diploma>"], "semantic_unresolved")
 
     def test_ghost_appearance_composition_uses_encounter_name(self):
         key = "The GHOST\nappeared!"

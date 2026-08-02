@@ -21,6 +21,37 @@ class MultilingualTests(unittest.TestCase):
             self.assertEqual(sum(entry.get("reason") == "editorial-correction" for entry in overrides.values()), 4)
             self.assertEqual(sum(entry.get("reason") == "AI-generated manual corpus-gap translation." for entry in overrides.values()), 12)
 
+    def test_engine_original_editorial_overrides_are_scoped_and_printf_safe(self):
+        key = "%s's\nhits will never\nmiss!"
+        expected = {
+            "fr": "%s\nne ratera\njamais!",
+            "de": "%ss\ntrifft immer!",
+            "es": "¡%s\nsiempre acierta!",
+            "it": "%s\nnon sbaglia mai!",
+            "ja-Hrkt": "%sは\nぜったいに\nはずれない！",
+        }
+        for language, value in expected.items():
+            overrides = load_engine_overrides(Path("overrides") / language / "engine_overrides.json")
+            self.assertEqual(overrides[key]["override"], value, language)
+            self.assertEqual(overrides[key]["reason"], "engine-original", language)
+            self.assertIn("AI-generated", overrides[key]["provenance"], language)
+            self.assertEqual(printf_directives(key), printf_directives(value), language)
+            output, report = match_engine_catalog({key: ""}, [], overrides, target_lang=language)
+            self.assertEqual(output[key], value, language)
+            self.assertEqual(report["details"][key], "override", language)
+
+    def test_german_greatly_stage_overrides_cover_empty_corpus_fragments(self):
+        expected = {
+            "%s's\n%s\ngreatly rose!": "%ss\n%s nimmt stark zu!",
+            "%s's\n%s\ngreatly fell!": "%ss\n%s sinkt stark!",
+        }
+        overrides = load_engine_overrides(Path("overrides/de/engine_overrides.json"))
+        for key, value in expected.items():
+            self.assertEqual(overrides[key]["override"], value)
+            self.assertEqual(overrides[key]["reason"], "engine-original")
+            self.assertIn("German corpus omits", overrides[key]["provenance"])
+            self.assertEqual(printf_directives(key), printf_directives(value))
+
     def test_cli_ja_alias_serializes_canonical_target(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); (root / "qid_msg.txt").write_text("q\n", encoding="utf-8"); (root / "en_msg.txt").write_text("HELLO\n", encoding="utf-8"); (root / "ja-Hrkt_msg.txt").write_text("こんにちは\n", encoding="utf-8")
