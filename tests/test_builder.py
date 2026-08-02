@@ -515,7 +515,7 @@ class BuilderTests(unittest.TestCase):
                 patch.object(builder, "resource_root", return_value=root),
                 patch.object(builder.platform, "system", return_value="Linux"),
             ):
-                self.assertEqual(builder._which_luajit(), str((linux / "luajit").resolve()))
+                self.assertTrue(os.path.samefile(builder._which_luajit(), linux / "luajit"))
 
             windows = root / "luajit"
             (windows / "luajit.exe").write_bytes(b"MZ")
@@ -525,7 +525,7 @@ class BuilderTests(unittest.TestCase):
                 patch.object(builder, "resource_root", return_value=root),
                 patch.object(builder.platform, "system", return_value="Windows"),
             ):
-                self.assertEqual(builder._which_luajit(), str((windows / "luajit.exe").resolve()))
+                self.assertTrue(os.path.samefile(builder._which_luajit(), windows / "luajit.exe"))
 
     def test_pillow_hint_detects_bypassed_virtual_environment(self):
         with (

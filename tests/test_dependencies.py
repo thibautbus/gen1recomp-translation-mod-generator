@@ -189,8 +189,19 @@ class DependencyTests(unittest.TestCase):
                     "EXE": lambda *args, **kwargs: SimpleNamespace(),
                 },
             )
-            self.assertIn((str(runtime / "luajit"), "luajit"), captured["binaries"])
-            self.assertIn((str(runtime / "jit" / "vm.lua"), "luajit/jit"), captured["datas"])
+            self.assertTrue(
+                any(
+                    destination == "luajit" and os.path.samefile(source, runtime / "luajit")
+                    for source, destination in captured["binaries"]
+                )
+            )
+            self.assertTrue(
+                any(
+                    Path(destination).parts == ("luajit", "jit")
+                    and os.path.samefile(source, runtime / "jit" / "vm.lua")
+                    for source, destination in captured["datas"]
+                )
+            )
 
     def test_archive_failure_closes_temp_download_before_cleanup(self):
         with tempfile.TemporaryDirectory() as tmp:

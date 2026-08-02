@@ -58,7 +58,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version=$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml","rb"))["project"]["version"])')
+          version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' pyproject.toml)
           test "$GITHUB_REF_NAME" = "v$version"
           test "$(find release -maxdepth 1 -type f -name '*.exe' | wc -l)" -eq 1
           test "$(find release -maxdepth 1 -type f -name '*.tar.gz' | wc -l)" -eq 1
