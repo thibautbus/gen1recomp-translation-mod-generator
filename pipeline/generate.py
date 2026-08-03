@@ -9,7 +9,10 @@ from .model import Alignment
 def lua_string(value: str) -> str:
     value = value.replace("\\", "\\\\").replace('"', '\\"')
     value = value.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
-    value = value.replace("\v", "\\11").replace("\f", "\\12")
+    # Pad to three digits: Lua reads \ddd greedily, so "\12" followed by a
+    # digit parses as a single character. French ordinals put a digit right
+    # after a page break, turning "\12" + "1er" into chr(121) + "er".
+    value = value.replace("\v", "\\011").replace("\f", "\\012")
     return '"' + value + '"'
 
 
