@@ -96,6 +96,23 @@ def _unquote(value: str) -> str:
     return re.sub(r"\\([0-7]{1,3})", lambda m: chr(int(m.group(1), 8)), value)
 
 
+def _repair_mojibake(value: str) -> str:
+    """Undo one UTF-8-read-as-cp1252 round trip.
+
+    Modkit emits worksheets whose non-ASCII bytes have already been decoded
+    once as cp1252, so "é" arrives as "Ã©". Keys mangled this way never match
+    the corpus, which silently drops the eleven ROM names carrying accents or
+    gender signs. The repair is self-checking: a string that is not mojibake
+    either lacks the marker or fails the round trip, and is returned untouched.
+    """
+    if not any(c in value for c in "ÃÂ"):
+        return value
+    try:
+        return value.encode("cp1252").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return value
+
+
 def read_worksheets(root: str | Path) -> dict[str, list[WorksheetEntry]]:
     root = Path(root); result = {}
     for catalog in CATALOGS:
@@ -106,7 +123,9 @@ def read_worksheets(root: str | Path) -> dict[str, list[WorksheetEntry]]:
                 if not line or line.startswith("#") or "\t" not in line:
                     continue
                 key, english = line.split("\t", 1)
-                entries.append(WorksheetEntry(_unquote(key), _unquote(english), catalog))
+                entries.append(WorksheetEntry(_repair_mojibake(_unquote(key)),
+                                              _repair_mojibake(_unquote(english)),
+                                              catalog))
         result[catalog] = entries
     return result
 
