@@ -344,12 +344,13 @@ def preserve_scaffold_support(scaffold: Path, mod: Path) -> None:
             font_path_fix + font_registration,
             1,
         )
-    # Type names are engine ``type_chart`` content: the scaffold's catalog
-    # loop has no entry for them, so apply the qid-driven catalog through the
-    # same ``each`` helper.  An empty generated catalog (no corpus TypeNames
-    # rows) has nothing to apply and leaves the scaffold untouched; when
-    # values exist but the scaffold drifts, the failure is loud so a
-    # generated type_names.lua can never be packed without its runtime hook.
+    # Type names are translated at draw time (Font.draw/Font.split) while the
+    # type_chart registry keeps the English names, so third-party mods that
+    # key colors/UI off TypeChart.displayName keep resolving them.  An empty
+    # generated catalog (no corpus TypeNames rows) has nothing to apply and
+    # leaves the scaffold untouched; when values exist but the scaffold
+    # drifts, the failure is loud so a generated type_names.lua can never be
+    # packed without its runtime hook.
     type_catalog = mod / "lang" / "type_names.lua"
     if type_catalog.is_file():
         type_body = type_catalog.read_text(encoding="utf-8")
@@ -361,23 +362,43 @@ def preserve_scaffold_support(scaffold: Path, mod: Path) -> None:
         if has_type_values:
             type_injection = (
                 "\n  -- Injected: localized type display names from generated lang/type_names.lua\n"
-                '  counts.type_names = each("type_names", function(id, value)\n'
-                "    mod.content.type_chart:patch(id, { name = value })\n"
-                "  end)\n"
-                "  -- The engine only calls TypeChart.load at battle start and its\n"
-                "  -- displayName falls back to the English table before that, so type\n"
-                "  -- names stay English on the summary screen until the first battle.\n"
-                "  -- Prime it from the merged data at game.ready instead.\n"
-                '  mod.events:on("game.ready", function(event)\n'
-                "    local game = event and event.game\n"
-                '    local ok, TypeChart = pcall(require, "src.battle.TypeChart")\n'
-                "    if ok and TypeChart and type(TypeChart.load) == \"function\"\n"
-                "        and game and type(game.data) == \"table\" then\n"
-                "      -- TypeChart.load is a plain function (not a method): pass the\n"
-                "      -- data as the single argument, exactly as BattleState does.\n"
-                "      pcall(TypeChart.load, game.data)\n"
+                "  -- Type names stay English in the type_chart registry so third-party\n"
+                "  -- mods that key colors/UI off TypeChart.displayName keep resolving,\n"
+                "  -- and are localized at draw time instead: every engine site renders\n"
+                "  -- the type name as a standalone Font.draw string, which is substituted\n"
+                "  -- below.\n"
+                '  local okType, TypeChart = pcall(require, "src.battle.TypeChart")\n'
+                "  local by_english = {}\n"
+                '  counts.type_names = each("type_names", function(typeId, localized)\n'
+                "    if okType and TypeChart and type(TypeChart.displayName) == \"function\" then\n"
+                "      local canonical = TypeChart.displayName(typeId)\n"
+                "      if type(canonical) == \"string\" and canonical ~= \"\" and canonical ~= localized then\n"
+                "        by_english[canonical] = localized\n"
+                "      end\n"
                 "    end\n"
                 "  end)\n"
+                "  if next(by_english) then\n"
+                '    local okFont, Font = pcall(require, "src.render.Font")\n'
+                "    if okFont and type(Font) == \"table\" then\n"
+                "      local function localize(text)\n"
+                "        if type(text) ~= \"string\" then return text end\n"
+                "        local localized = by_english[text]\n"
+                "        return type(localized) == \"string\" and localized or text\n"
+                "      end\n"
+                "      if type(Font.split) == \"function\" then\n"
+                "        local original_split = Font.split\n"
+                "        Font.split = function(text)\n"
+                "          return original_split(localize(text))\n"
+                "        end\n"
+                "      end\n"
+                "      if type(Font.draw) == \"function\" then\n"
+                "        local original_draw = Font.draw\n"
+                "        Font.draw = function(text, x, y, ...)\n"
+                "          return original_draw(localize(text), x, y, ...)\n"
+                "        end\n"
+                "      end\n"
+                "    end\n"
+                "  end\n"
             )
             if "counts.type_names" not in scaffold_main:
                 type_marker = '  counts.statuses = each("status_labels", function(id, value)\n    mod.content.statuses:patch(id, { label = value })\n  end)'

@@ -81,13 +81,12 @@ ENGINE_ALIASES = {
 
 
 # Type display names are engine content: they live in the ``type_chart``
-# registry (patched via ``mod.content.type_chart``) and have no modkit
-# worksheet, so the join is qid-driven instead of key-driven.  The runtime
-# chart carries exactly 15 records (TypeChart.TYPES).  PSYCHIC_TYPE is the
-# pokered constant species types are stored as, displayed back as "PSYCHIC";
-# Bird is the pokered type the engine never registers, so patching it would
-# trip the loader's orphan check (MK103) and its corpus row is recorded but
-# never emitted.
+# registry (names are translated at draw time, see pipeline/mod.py) and have
+# no modkit worksheet, so the join is qid-driven instead of key-driven.  The
+# runtime chart carries exactly 15 records (TypeChart.TYPES).  PSYCHIC_TYPE is
+# the pokered constant species types are stored as, displayed back as
+# "PSYCHIC"; Bird is the pokered type the engine never registers and nothing
+# displays, so its corpus row is recorded as excluded but never emitted.
 TYPE_NAMES_QID_PREFIX = "rb.names.TypeNames."
 TYPE_NAMES_RUNTIME_IDS = {
     "Normal": "NORMAL", "Fighting": "FIGHTING", "Flying": "FLYING",
@@ -246,7 +245,7 @@ def type_names_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple
         "excluded": {
             "Bird": {
                 "qid": TYPE_NAMES_QID_PREFIX + "Bird",
-                "reason": "the engine registers no Bird type (type_chart has 15 records); patching it would trip the loader orphan check MK103",
+                "reason": "the engine registers no Bird type (type_chart has 15 records) and nothing displays it, so the corpus row is recorded as excluded",
             },
         },
     }

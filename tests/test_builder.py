@@ -477,8 +477,10 @@ class BuilderTests(unittest.TestCase):
 
             main = (mod / "main.lua").read_text(encoding="utf-8")
             self.assertIn('counts.type_names = each("type_names"', main)
-            self.assertIn("mod.content.type_chart:patch(id, { name = value })", main)
-            self.assertIn('pcall(TypeChart.load, game.data)', main)
+            self.assertIn('by_english[canonical] = localized', main)
+            self.assertIn('Font.draw = function(text, x, y, ...)', main)
+            self.assertIn('original_draw(localize(text), x, y, ...)', main)
+            self.assertNotIn('mod.content.type_chart:patch', main)
 
     def test_scaffold_type_names_injection_falls_back_when_block_drifts(self):
         # The exact statuses block is scaffold-owned; if its spacing drifts
@@ -510,8 +512,10 @@ class BuilderTests(unittest.TestCase):
 
             main = (mod / "main.lua").read_text(encoding="utf-8")
             self.assertIn('counts.type_names = each("type_names"', main)
-            self.assertIn("mod.content.type_chart:patch(id, { name = value })", main)
-            self.assertIn('pcall(TypeChart.load, game.data)', main)
+            self.assertIn('by_english[canonical] = localized', main)
+            self.assertIn('Font.draw = function(text, x, y, ...)', main)
+            self.assertIn('original_draw(localize(text), x, y, ...)', main)
+            self.assertNotIn('mod.content.type_chart:patch', main)
             self.assertLess(main.index("counts.type_names"), main.rfind("\nend"))
 
     def test_scaffold_type_names_missing_catalog_keeps_main_untouched(self):

@@ -88,8 +88,9 @@ class MultilingualTests(unittest.TestCase):
                 builder.preserve_scaffold_support(scaffold, mod)
                 main = (mod / "main.lua").read_text(encoding="utf-8")
                 self.assertIn('counts.type_names = each("type_names"', main, language)
-                self.assertIn("mod.content.type_chart:patch(id, { name = value })", main, language)
-                self.assertIn('pcall(TypeChart.load, game.data)', main, language)
+                self.assertIn('by_english[canonical] = localized', main, language)
+                self.assertIn('Font.draw = function(text, x, y, ...)', main, language)
+                self.assertNotIn('mod.content.type_chart:patch', main, language)
 
     def test_oak_speech_rom_symbol_stays_empty_engine_and_dialogue_localized(self):
         source = "{text_start}This world is<LINE>inhabited by<CONT>creatures called<CONT>#MON!@@"

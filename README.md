@@ -136,16 +136,18 @@ glyphs, never the full ROM font. ROM-derived worksheets contain six catalogs
 committed or packaged. Type display names are engine content — the runtime
 `type_chart` registry, not a modkit worksheet — so a seventh `type_names.lua`
 catalog is joined qid-driven from `rb.names.TypeNames.*`: exactly the 15
-types the engine registers, patched at runtime with
-`mod.content.type_chart:patch(id, { name = ... })`. The corpus `Bird` row is
+types the engine registers. The registry keeps the English names and the mod
+localizes them at draw time instead: every engine site renders a type name as
+a standalone `Font.draw` string, which the generated `main.lua` substitutes
+(e.g. `FIRE` → `FEU`) before drawing. This keeps `TypeChart.displayName`
+returning the English name, so third-party mods that key colors or UI off it
+(Kanto Companion's type-color chips) keep working unmodified in every
+language. The substitution is exact-string: any drawn text equal to an
+English type name is localized (a nickname like `FIRE` renders as `FEU`), a
+deliberate side effect of the draw-time approach. The corpus `Bird` row is
 recorded as excluded: Gen 1's unused type id 6 is never registered by the
-engine, and patching it would fail the loader's orphan check. The engine only
-populates its type display state when a battle first starts, so until then
-`TypeChart.displayName` falls back to the hard-coded English table — the mod
-primes it from the merged data at `game.ready` (same call the battle makes),
-so type names are localized from the first frame, summary screen included.
-Western ZIPs include only the compact glyph sheet and its Lua registration
-files.
+engine. Western ZIPs include only the compact glyph sheet and its Lua
+registration files.
 
 ## Translation coverage
 

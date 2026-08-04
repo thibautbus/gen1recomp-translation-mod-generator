@@ -86,20 +86,42 @@ return function(mod)
   each("item_names", function(id, value) mod.content.items:patch(id, {name = value}) end)
   each("trainer_names", function(id, value) mod.content.trainers:patch(id, {name = value}) end)
   each("status_labels", function(id, value) mod.content.statuses:patch(id, {label = value}) end)
-  each("type_names", function(id, value) mod.content.type_chart:patch(id, {name = value}) end)
-  -- The engine only calls TypeChart.load at battle start and its displayName
-  -- falls back to the English table before that, so prime it from the merged
-  -- data at game.ready (same call the battle makes).
-  mod.events:on("game.ready", function(event)
-    local game = event and event.game
-    local ok, TypeChart = pcall(require, "src.battle.TypeChart")
-    if ok and TypeChart and type(TypeChart.load) == "function"
-        and game and type(game.data) == "table" then
-      -- TypeChart.load is a plain function (not a method): pass the data as
-      -- the single argument, exactly as BattleState does.
-      pcall(TypeChart.load, game.data)
+  -- Type names stay English in the type_chart registry so third-party mods
+  -- that key colors/UI off TypeChart.displayName keep resolving, and are
+  -- localized at draw time instead: every engine site renders the type name
+  -- as a standalone Font.draw string, which is substituted below.
+  local okType, TypeChart = pcall(require, "src.battle.TypeChart")
+  local by_english = {}
+  each("type_names", function(typeId, localized)
+    if okType and TypeChart and type(TypeChart.displayName) == "function" then
+      local canonical = TypeChart.displayName(typeId)
+      if type(canonical) == "string" and canonical ~= "" and canonical ~= localized then
+        by_english[canonical] = localized
+      end
     end
   end)
+  if next(by_english) then
+    local okFont, Font = pcall(require, "src.render.Font")
+    if okFont and type(Font) == "table" then
+      local function localize(text)
+        if type(text) ~= "string" then return text end
+        local localized = by_english[text]
+        return type(localized) == "string" and localized or text
+      end
+      if type(Font.split) == "function" then
+        local original_split = Font.split
+        Font.split = function(text)
+          return original_split(localize(text))
+        end
+      end
+      if type(Font.draw) == "function" then
+        local original_draw = Font.draw
+        Font.draw = function(text, x, y, ...)
+          return original_draw(localize(text), x, y, ...)
+        end
+      end
+    end
+  end
   local literal_body = mod:read("lang/literal_handlers.lua")
   if literal_body then
     local chunk, err = loadstring(literal_body, "lang/literal_handlers.lua")

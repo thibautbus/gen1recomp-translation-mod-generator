@@ -319,8 +319,9 @@ class PipelineTests(unittest.TestCase):
             self.assertIn('["PSYCHIC_TYPE"] = "PSY"', body)
             self.assertNotIn("BIRD", body)
             main = (mod / "main.lua").read_text(encoding="utf-8")
-            self.assertIn("mod.content.type_chart:patch(id, {name = value})", main)
-            self.assertIn('pcall(TypeChart.load, game.data)', main)
+            self.assertIn('by_english[canonical] = localized', main)
+            self.assertIn('Font.draw = function(text, x, y, ...)', main)
+            self.assertNotIn('mod.content.type_chart:patch', main)
 
     def test_generate_mod_without_worksheet_uses_runtime_type_ids(self):
         rows = align([
