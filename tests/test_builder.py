@@ -449,6 +449,95 @@ class BuilderTests(unittest.TestCase):
                 main.index("mod.content.font:register(id, page)"),
             )
 
+    def test_scaffold_type_names_injection_applies_generated_catalog(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            scaffold = root / "scaffold"
+            mod = root / "mod"
+            (scaffold / "lang").mkdir(parents=True)
+            (scaffold / "assets" / "font").mkdir(parents=True)
+            (mod / "lang").mkdir(parents=True)
+            (scaffold / "main.lua").write_text(
+                "return function(mod)\n"
+                '  counts.statuses = each("status_labels", function(id, value)\n'
+                "    mod.content.statuses:patch(id, { label = value })\n"
+                "  end)\n"
+                '  mod.events:on("game.ready", function() end)\n'
+                "end\n",
+                encoding="utf-8",
+            )
+            for name in ("font.lua", "charmap.lua", "naming.lua"):
+                (scaffold / "lang" / name).write_text("return {}", encoding="utf-8")
+            (mod / "lang" / "type_names.lua").write_text(
+                'return {\n  ["FIRE"] = "FEU",\n  ["WATER"] = "EAU",\n}\n',
+                encoding="utf-8",
+            )
+
+            builder.preserve_scaffold_support(scaffold, mod)
+
+            main = (mod / "main.lua").read_text(encoding="utf-8")
+            self.assertIn('counts.type_names = each("type_names"', main)
+            self.assertIn("mod.content.type_chart:patch(id, { name = value })", main)
+            self.assertIn('pcall(TypeChart.load, game.data)', main)
+
+    def test_scaffold_type_names_injection_falls_back_when_block_drifts(self):
+        # The exact statuses block is scaffold-owned; if its spacing drifts
+        # upstream, the injection must still land before the closing function
+        # boundary instead of failing the build.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            scaffold = root / "scaffold"
+            mod = root / "mod"
+            (scaffold / "lang").mkdir(parents=True)
+            (scaffold / "assets" / "font").mkdir(parents=True)
+            (mod / "lang").mkdir(parents=True)
+            (scaffold / "main.lua").write_text(
+                "return function(mod)\n"
+                '  counts.statuses = each("status_labels", function(id, value)\n'
+                "    mod.content.statuses:patch(id, { label = value })\n"
+                "  end)\n"
+                '  mod.events:on("game.ready", function() end)\n'
+                "end\n".replace("status_labels\", function(", "status_labels\", function  ("),
+                encoding="utf-8",
+            )
+            for name in ("font.lua", "charmap.lua", "naming.lua"):
+                (scaffold / "lang" / name).write_text("return {}", encoding="utf-8")
+            (mod / "lang" / "type_names.lua").write_text(
+                'return {\n  ["FIRE"] = "FEU",\n}\n', encoding="utf-8"
+            )
+
+            builder.preserve_scaffold_support(scaffold, mod)
+
+            main = (mod / "main.lua").read_text(encoding="utf-8")
+            self.assertIn('counts.type_names = each("type_names"', main)
+            self.assertIn("mod.content.type_chart:patch(id, { name = value })", main)
+            self.assertIn('pcall(TypeChart.load, game.data)', main)
+            self.assertLess(main.index("counts.type_names"), main.rfind("\nend"))
+
+    def test_scaffold_type_names_missing_catalog_keeps_main_untouched(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            scaffold = root / "scaffold"
+            mod = root / "mod"
+            (scaffold / "lang").mkdir(parents=True)
+            (scaffold / "assets" / "font").mkdir(parents=True)
+            (mod / "lang").mkdir(parents=True)
+            (scaffold / "main.lua").write_text(
+                "return function(mod)\n"
+                '  counts.statuses = each("status_labels", function(id, value)\n'
+                "    mod.content.statuses:patch(id, { label = value })\n"
+                "  end)\n"
+                "end\n",
+                encoding="utf-8",
+            )
+            for name in ("font.lua", "charmap.lua", "naming.lua"):
+                (scaffold / "lang" / name).write_text("return {}", encoding="utf-8")
+
+            builder.preserve_scaffold_support(scaffold, mod)
+
+            main = (mod / "main.lua").read_text(encoding="utf-8")
+            self.assertNotIn("type_names", main)
+
     def test_rejected_candidate_does_not_replace_final_archive(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

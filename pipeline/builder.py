@@ -344,6 +344,56 @@ def preserve_scaffold_support(scaffold: Path, mod: Path) -> None:
             font_path_fix + font_registration,
             1,
         )
+    # Type names are engine ``type_chart`` content: the scaffold's catalog
+    # loop has no entry for them, so apply the qid-driven catalog through the
+    # same ``each`` helper.  An empty generated catalog (no corpus TypeNames
+    # rows) has nothing to apply and leaves the scaffold untouched; when
+    # values exist but the scaffold drifts, the failure is loud so a
+    # generated type_names.lua can never be packed without its runtime hook.
+    type_catalog = mod / "lang" / "type_names.lua"
+    if type_catalog.is_file():
+        type_body = type_catalog.read_text(encoding="utf-8")
+        has_type_values = any(
+            line.lstrip().startswith("[") and '= "' in line
+            and not line.rstrip().endswith('"",')
+            for line in type_body.splitlines()
+        )
+        if has_type_values:
+            type_injection = (
+                "\n  -- Injected: localized type display names from generated lang/type_names.lua\n"
+                '  counts.type_names = each("type_names", function(id, value)\n'
+                "    mod.content.type_chart:patch(id, { name = value })\n"
+                "  end)\n"
+                "  -- The engine only calls TypeChart.load at battle start and its\n"
+                "  -- displayName falls back to the English table before that, so type\n"
+                "  -- names stay English on the summary screen until the first battle.\n"
+                "  -- Prime it from the merged data at game.ready instead.\n"
+                '  mod.events:on("game.ready", function(event)\n'
+                "    local game = event and event.game\n"
+                '    local ok, TypeChart = pcall(require, "src.battle.TypeChart")\n'
+                "    if ok and TypeChart and type(TypeChart.load) == \"function\"\n"
+                "        and game and type(game.data) == \"table\" then\n"
+                "      -- TypeChart.load is a plain function (not a method): pass the\n"
+                "      -- data as the single argument, exactly as BattleState does.\n"
+                "      pcall(TypeChart.load, game.data)\n"
+                "    end\n"
+                "  end)\n"
+            )
+            if "counts.type_names" not in scaffold_main:
+                type_marker = '  counts.statuses = each("status_labels", function(id, value)\n    mod.content.statuses:patch(id, { label = value })\n  end)'
+                if type_marker in scaffold_main:
+                    scaffold_main = scaffold_main.replace(type_marker, type_marker + type_injection, 1)
+                elif 'each("status_labels"' in scaffold_main:
+                    # The statuses block drifted from the exact scaffold shape;
+                    # fall back to the closing function boundary like the
+                    # literal-handler injection below (counts and each are in
+                    # scope for the whole function body).
+                    end = scaffold_main.rfind("\nend")
+                    if end < 0:
+                        raise BuildError(f"Modkit scaffold main has no closing function: {main}")
+                    scaffold_main = scaffold_main[:end] + type_injection + scaffold_main[end:]
+                else:
+                    raise BuildError(f"Modkit scaffold main has no statuses block to extend: {main}")
     if runtime.is_file():
         marker = '  local literal_body = mod:read("lang/literal_handlers.lua")'
         if marker not in scaffold_main:

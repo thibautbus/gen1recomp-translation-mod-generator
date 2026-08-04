@@ -58,6 +58,39 @@ class MultilingualTests(unittest.TestCase):
                 for key in rom_keys:
                     self.assertIn(f'  [{lua_string(key)}] = "",', strings, language)
                 self.assertIn('  ["_PokemonBooksText"] = ', (mod / "lang/dialogue.lua").read_text(encoding="utf-8"), language)
+
+    def test_real_corpus_type_names_cover_all_runtime_types(self):
+        corpus_root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (corpus_root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout unavailable")
+        runtime_ids = ("NORMAL", "FIGHTING", "FLYING", "POISON", "GROUND", "ROCK", "BUG", "GHOST", "FIRE", "WATER", "GRASS", "ELECTRIC", "PSYCHIC_TYPE", "ICE", "DRAGON")
+        for language in ("fr", "de", "es", "it", "ja-Hrkt"):
+            worksheet = Path(".cache/interactive") / language / "complete-modkit-worksheet"
+            if not (worksheet / "strings.lua").is_file():
+                self.skipTest(f"cached {language} worksheet unavailable")
+            rows = align(parse_redblue(corpus_root, language), target_lang=language)
+            from tempfile import TemporaryDirectory
+            with TemporaryDirectory() as tmp:
+                mod = generate_mod(rows, Path(tmp) / "mod", language=language, modkit_worksheet=worksheet, engine_catalog=worksheet / "strings.lua", engine_overrides=Path("overrides") / language / "engine_overrides.json", strict_engine=True)
+                body = (mod / "lang/type_names.lua").read_text(encoding="utf-8")
+                for type_id in runtime_ids:
+                    self.assertIn(f'  ["{type_id}"] = ', body, (language, type_id))
+                    self.assertNotIn(f'  ["{type_id}"] = "",', body, (language, type_id))
+                # The corpus Bird row must never reach the catalog: the engine
+                # registers no Bird type, so the patch would fail validation.
+                self.assertNotIn('"BIRD"', body, language)
+                # Drive the real builder path against the modkit scaffold so
+                # the runtime hook lands exactly as an interactive build would.
+                scaffold = Path(".cache/interactive") / language / "translation_source"
+                if not (scaffold / "main.lua").is_file():
+                    self.skipTest(f"cached {language} scaffold unavailable")
+                from pipeline import builder
+                builder.preserve_scaffold_support(scaffold, mod)
+                main = (mod / "main.lua").read_text(encoding="utf-8")
+                self.assertIn('counts.type_names = each("type_names"', main, language)
+                self.assertIn("mod.content.type_chart:patch(id, { name = value })", main, language)
+                self.assertIn('pcall(TypeChart.load, game.data)', main, language)
+
     def test_oak_speech_rom_symbol_stays_empty_engine_and_dialogue_localized(self):
         source = "{text_start}This world is<LINE>inhabited by<CONT>creatures called<CONT>#MON!@@"
         qid = "rb.text_2.OakSpeechText2A"

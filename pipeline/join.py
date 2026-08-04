@@ -80,6 +80,24 @@ ENGINE_ALIASES = {
 }
 
 
+# Type display names are engine content: they live in the ``type_chart``
+# registry (patched via ``mod.content.type_chart``) and have no modkit
+# worksheet, so the join is qid-driven instead of key-driven.  The runtime
+# chart carries exactly 15 records (TypeChart.TYPES).  PSYCHIC_TYPE is the
+# pokered constant species types are stored as, displayed back as "PSYCHIC";
+# Bird is the pokered type the engine never registers, so patching it would
+# trip the loader's orphan check (MK103) and its corpus row is recorded but
+# never emitted.
+TYPE_NAMES_QID_PREFIX = "rb.names.TypeNames."
+TYPE_NAMES_RUNTIME_IDS = {
+    "Normal": "NORMAL", "Fighting": "FIGHTING", "Flying": "FLYING",
+    "Poison": "POISON", "Ground": "GROUND", "Rock": "ROCK", "Bug": "BUG",
+    "Ghost": "GHOST", "Fire": "FIRE", "Water": "WATER", "Grass": "GRASS",
+    "Electric": "ELECTRIC", "Psychic": "PSYCHIC_TYPE", "Ice": "ICE",
+    "Dragon": "DRAGON",
+}
+
+
 @dataclass
 class WorksheetEntry:
     key: str
@@ -194,6 +212,65 @@ def _canonical_candidates(catalog: str, key: str, candidates: list[Alignment]) -
         return _same_value(selected), f"canonical_{catalog}", f"selected {canonical_prefix} catalogue"
 
     return candidates, None, None
+
+
+def _type_name_tail(qid: str) -> str | None:
+    # Scope markers are internal (e.g. ^RG.rb.names.TypeNames.Fire or a
+    # trailing rb.names.TypeNames.Fire^RG), not part of the symbol.
+    cleaned = re.sub(r"\^(?:RG|R|G|B)(?=\.|$)", "", qid).lstrip(".")
+    if not cleaned.startswith(TYPE_NAMES_QID_PREFIX):
+        return None
+    return cleaned[len(TYPE_NAMES_QID_PREFIX):]
+
+
+def type_names_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple[dict[str, str], dict]:
+    """Join the corpus TypeNames rows onto the engine's type_chart ids.
+
+    Every runtime id is emitted, left empty when untranslated (the game then
+    keeps the English name).  When the corpus carries no TypeNames rows at
+    all, an empty catalog is returned so callers without type data keep their
+    prior behavior; ``report["excluded"]`` always records the Bird row and
+    why it is not emitted.
+    """
+    by_tail: dict[str, list[Alignment]] = defaultdict(list)
+    for item in items:
+        tail = _type_name_tail(item.qid)
+        if tail:
+            by_tail[tail].append(item)
+    output: dict[str, str] = {}
+    report = {
+        "translated": 0,
+        "unmatched": [],
+        "strategies": {},
+        "reasons": {},
+        "excluded": {
+            "Bird": {
+                "qid": TYPE_NAMES_QID_PREFIX + "Bird",
+                "reason": "the engine registers no Bird type (type_chart has 15 records); patching it would trip the loader orphan check MK103",
+            },
+        },
+    }
+    if not by_tail:
+        return output, report
+    for tail, runtime_id in TYPE_NAMES_RUNTIME_IDS.items():
+        qid = TYPE_NAMES_QID_PREFIX + tail
+        candidates = _same_value(by_tail.get(tail, []))
+        if len(candidates) == 1 and candidates[0].translation is not None:
+            output[runtime_id] = corpus_to_engine(str(candidates[0].translation))
+            report["translated"] += 1
+            report["strategies"][runtime_id] = "type_name_qid"
+        elif len(candidates) == 1:
+            output[runtime_id] = ""
+            report["unmatched"].append(runtime_id)
+            report["strategies"][runtime_id] = "manual_review"
+            report["reasons"][runtime_id] = f"{qid}: no {target_lang} translation; manual review required"
+        else:
+            output[runtime_id] = ""
+            report["unmatched"].append(runtime_id)
+            report["strategies"][runtime_id] = "manual_review"
+            reason = "no canonical candidate" if not candidates else f"ambiguous {qid}: {[x.qid for x in candidates]}"
+            report["reasons"][runtime_id] = f"{reason}; manual review required"
+    return output, report
 
 
 def _anchor_row(items: list[Alignment], qid: str | None, role: str = "prefix") -> tuple[Alignment | None, str]:
@@ -407,4 +484,16 @@ def join_catalogs(items: list[Alignment], worksheets: dict[str, list[WorksheetEn
                 report["ambiguous"].setdefault(catalog, {})[entry.key] = [x.qid for x in candidates]
                 report["strategies"][catalog][entry.key] = "manual_review"
                 report["reasons"][catalog].setdefault(entry.key, "multiple canonical candidates with different translated values")
+    # Type display names are engine ``type_chart`` content with no modkit
+    # worksheet.  They are joined qid-driven and gated like a catalog when
+    # the corpus provides TypeNames rows; otherwise the catalog stays empty
+    # and English names remain active at runtime.
+    type_values, type_report = type_names_catalog(items, target_lang)
+    output["type_names"] = type_values
+    report["type_names"] = type_report
+    if type_values:
+        report["matched"]["type_names"] = type_report["translated"]
+        report["unmatched"]["type_names"] = type_report["unmatched"]
+        report["strategies"]["type_names"] = type_report["strategies"]
+        report["reasons"]["type_names"] = type_report["reasons"]
     return output, report

@@ -133,23 +133,35 @@ vanilla `?` and `!` faces. `assets/font/localized.png` contains only required
 glyphs, never the full ROM font. ROM-derived worksheets contain six catalogs
 (`dialogue`, `species_names`, `move_names`, `item_names`, `trainer_names`,
 `status_labels`) plus the empty 576-key `strings.lua` catalog; none are
-committed or packaged. Western ZIPs include only the compact glyph sheet and
-its Lua registration files.
+committed or packaged. Type display names are engine content — the runtime
+`type_chart` registry, not a modkit worksheet — so a seventh `type_names.lua`
+catalog is joined qid-driven from `rb.names.TypeNames.*`: exactly the 15
+types the engine registers, patched at runtime with
+`mod.content.type_chart:patch(id, { name = ... })`. The corpus `Bird` row is
+recorded as excluded: Gen 1's unused type id 6 is never registered by the
+engine, and patching it would fail the loader's orphan check. The engine only
+populates its type display state when a battle first starts, so until then
+`TypeChart.displayName` falls back to the hard-coded English table — the mod
+primes it from the merged data at `game.ready` (same call the battle makes),
+so type names are localized from the first frame, summary screen included.
+Western ZIPs include only the compact glyph sheet and its Lua registration
+files.
 
 ## Translation coverage
 
-`ROM aggregate` is the release gate: six ROM-derived catalogs plus five
-corpus-backed literal handlers. Engine columns are informational; English
-fallback keeps untranslated entries playable. Reports are generated from
-cached ROM imports and corpus snapshots, so revisions can change these values.
+`ROM aggregate` is the release gate: six ROM-derived catalogs, fifteen
+corpus-backed type names, plus five corpus-backed literal handlers. Engine
+columns are informational; English fallback keeps untranslated entries
+playable. Reports are generated from cached ROM imports and corpus
+snapshots, so revisions can change these values.
 
-| Target | ROM catalogs | Literal handlers | ROM aggregate | RBY-related engine strings | All engine strings |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 357/358 (99.72%) | 369/581 (63.51%) |
-| `de` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
-| `es` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 357/358 (99.72%) | 369/581 (63.51%) |
-| `it` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 5/5 (100%) | 3107/3107 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
+| Target | ROM catalogs | Type names | Literal handlers | ROM aggregate | RBY-related engine strings | All engine strings |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `fr` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3122/3122 (100%) | 357/358 (99.72%) | 369/581 (63.51%) |
+| `de` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3122/3122 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
+| `es` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3122/3122 (100%) | 357/358 (99.72%) | 369/581 (63.51%) |
+| `it` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3122/3122 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
+| `ja-Hrkt` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3122/3122 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
 
 The five handlers are backed by 15/15 unique corpus qids. `RBY-related engine
 strings` counts 358 keys from Gen1Recomp's 581-key catalog whose production
@@ -344,7 +356,7 @@ ambiguous recipes leave the English handler active.
 | `pipeline/model.py` | Shared `CorpusRecord` and `Alignment` structures. |
 | `pipeline/align.py` | Pairs by qid, applies `corpus_overrides`, and writes aligned data. |
 | `pipeline/worksheet.py` | Loads and writes versioned `corpus_overrides` documents. |
-| `pipeline/join.py` | Joins aligned records to exact worksheet keys and TM/HM terminology. |
+| `pipeline/join.py` | Joins aligned records to exact worksheet keys, TM/HM terminology, and qid-driven type names (`type_names` catalog). |
 | `pipeline/engine.py` | Matches 576 engine strings using overrides, anchors, text, and placeholders. |
 | `pipeline/engine_scope.py` / `config/engine_scope.json` | Versioned RBY classifier over production `src` callsites. |
 | `pipeline/literals.py` | Generates qid-driven handlers for Lua literals. |

@@ -12,7 +12,7 @@ from pipeline.corpus import load_corpus
 from pipeline.generate import generate_lua, lua_string
 from pipeline.model import CorpusRecord
 from pipeline.mod import generate_mod
-from pipeline.join import join_catalogs, read_worksheets, WorksheetEntry
+from pipeline.join import join_catalogs, read_worksheets, type_names_catalog, WorksheetEntry
 from pipeline.tokens import check_placeholders, encode
 from pipeline.validate import release_gate, validate
 from pipeline.worksheet import dump, load
@@ -263,6 +263,75 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(output["dialogue"]["_MissingText"], "")
         self.assertEqual(report["unmatched"]["dialogue"], ["_MissingText"])
         self.assertNotIn("dialogue", report["matched"])
+
+    def test_type_names_join_uses_runtime_ids_and_excludes_bird(self):
+        rows = align([
+            CorpusRecord("rb.names.TypeNames.Fire", "en", "FIRE@"),
+            CorpusRecord("rb.names.TypeNames.Fire", "fr", "FEU@"),
+            CorpusRecord("rb.names.TypeNames.Psychic", "en", "PSYCHIC@"),
+            CorpusRecord("rb.names.TypeNames.Psychic", "fr", "PSY@"),
+            CorpusRecord("rb.names.TypeNames.Bird", "en", "BIRD@"),
+            CorpusRecord("rb.names.TypeNames.Bird", "fr", "OISEAU@"),
+            CorpusRecord("rb.names.TypeNames.Water", "en", "WATER@"),
+        ])
+        worksheets = {name: [] for name in ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels")}
+        output, report = join_catalogs(rows, worksheets)
+        self.assertEqual(output["type_names"]["FIRE"], "FEU")
+        self.assertEqual(output["type_names"]["PSYCHIC_TYPE"], "PSY")
+        # The engine registers no Bird record, so the corpus row is recorded
+        # as excluded instead of emitted.
+        self.assertNotIn("BIRD", output["type_names"])
+        self.assertEqual(report["type_names"]["excluded"]["Bird"]["qid"], "rb.names.TypeNames.Bird")
+        # An English-only row stays empty (runtime English fallback); the
+        # other runtime ids without corpus rows are unmatched too.
+        self.assertEqual(output["type_names"]["WATER"], "")
+        self.assertEqual(report["matched"]["type_names"], 2)
+        self.assertIn("WATER", report["unmatched"]["type_names"])
+        self.assertNotIn("FIRE", report["unmatched"]["type_names"])
+        self.assertEqual(report["strategies"]["type_names"]["FIRE"], "type_name_qid")
+
+    def test_type_names_catalog_is_empty_without_corpus_rows(self):
+        rows = align([
+            CorpusRecord("rb.names.SpeciesNames", "en", "ABRA"),
+            CorpusRecord("rb.names.SpeciesNames", "fr", "ABRA"),
+        ])
+        values, report = type_names_catalog(rows, "fr")
+        self.assertEqual(values, {})
+        self.assertEqual(report["translated"], 0)
+        self.assertIn("Bird", report["excluded"])
+
+    def test_generate_mod_writes_type_names_catalog_and_main_patch(self):
+        rows = align([
+            CorpusRecord("rb.names.TypeNames.Fire", "en", "FIRE@"),
+            CorpusRecord("rb.names.TypeNames.Fire", "fr", "FEU@"),
+            CorpusRecord("rb.names.TypeNames.Psychic", "en", "PSYCHIC@"),
+            CorpusRecord("rb.names.TypeNames.Psychic", "fr", "PSY@"),
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ws = root / "ws"; ws.mkdir()
+            for name in ("dialogue", "species_names", "move_names", "item_names", "trainer_names", "status_labels"):
+                (ws / f"{name}.txt").write_text("# header\n", encoding="utf-8")
+            (ws / "strings.lua").write_text('return { ["X"] = "" }\n', encoding="utf-8")
+            mod = generate_mod(rows, root / "mod", language="fr", modkit_worksheet=ws, strict_engine=True)
+            body = (mod / "lang/type_names.lua").read_text(encoding="utf-8")
+            self.assertIn('["FIRE"] = "FEU"', body)
+            self.assertIn('["PSYCHIC_TYPE"] = "PSY"', body)
+            self.assertNotIn("BIRD", body)
+            main = (mod / "main.lua").read_text(encoding="utf-8")
+            self.assertIn("mod.content.type_chart:patch(id, {name = value})", main)
+            self.assertIn('pcall(TypeChart.load, game.data)', main)
+
+    def test_generate_mod_without_worksheet_uses_runtime_type_ids(self):
+        rows = align([
+            CorpusRecord("rb.names.TypeNames.Fire", "en", "FIRE@"),
+            CorpusRecord("rb.names.TypeNames.Fire", "fr", "FEU@"),
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            mod = generate_mod(rows, Path(tmp) / "mod", language="fr")
+            body = (mod / "lang/type_names.lua").read_text(encoding="utf-8")
+            self.assertIn('["FIRE"] = "FEU"', body)
+            self.assertNotIn("rb.names.TypeNames", body)
 
 
 if __name__ == "__main__":
