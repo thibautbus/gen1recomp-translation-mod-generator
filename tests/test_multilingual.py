@@ -90,7 +90,18 @@ class MultilingualTests(unittest.TestCase):
                 self.assertIn('counts.type_names = each("type_names"', main, language)
                 self.assertIn('by_english[canonical] = localized', main, language)
                 self.assertIn('Font.draw = function(text, x, y, ...)', main, language)
+                self.assertIn('local demo_names = catalog("demo_names")', main, language)
+                self.assertIn('BS.oldManThrow = function(self, ...)', main, language)
+                self.assertIn('localizedDemoName(self, canonical)', main, language)
+                self.assertNotIn('Runtime.hooks:wrap("player.sprite"', main, language)
+                self.assertNotIn('BS.makeOldManDemo = function', main, language)
                 self.assertNotIn('mod.content.type_chart:patch', main, language)
+                # corpus-backed demo name (old-man tutorial literal) translated
+                demo = (mod / "lang/demo_names.lua").read_text(encoding="utf-8")
+                self.assertIn('  ["OLD MAN"] = ', demo, language)
+                self.assertIn('  ["PROF.OAK"] = ', demo, language)
+                self.assertNotIn('  ["OLD MAN"] = "",', demo, language)
+                self.assertNotIn('  ["PROF.OAK"] = "",', demo, language)
 
     def test_oak_speech_rom_symbol_stays_empty_engine_and_dialogue_localized(self):
         source = "{text_start}This world is<LINE>inhabited by<CONT>creatures called<CONT>#MON!@@"

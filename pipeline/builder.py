@@ -415,6 +415,57 @@ def preserve_scaffold_support(scaffold: Path, mod: Path) -> None:
                     scaffold_main = scaffold_main[:end] + type_injection + scaffold_main[end:]
                 else:
                     raise BuildError(f"Modkit scaffold main has no statuses block to extend: {main}")
+    # Yellow's Pallet-intro catch demo and the old-man tutorial show the
+    # thrower name in the translated "%s used POKé BALL!" template
+    # (BattleState.oldManThrow).  demoName must stay the canonical English
+    # literal -- the engine keys Yellow's Pallet-intro sprite selection off
+    # demoName == "PROF.OAK" -- so the translation happens only at the
+    # render site and is reverted right after.
+    if "oldManThrow" not in scaffold_main:
+        demo_injection = (
+            "\n  -- Injected: localize hard-coded demo-battle thrower names\n"
+            '  local demo_names = catalog("demo_names")\n'
+            "  local function localizedDemoName(self, name)\n"
+            "    if type(name) == \"string\" then\n"
+            "      local localized = demo_names and demo_names[name]\n"
+            "      if type(localized) == \"string\" and localized ~= \"\" then\n"
+            "        return localized\n"
+            "      end\n"
+            "      if name == \"PROF.OAK\" then\n"
+            "        local trainers = self and self.game and self.game.data and self.game.data.trainers\n"
+            "        local oak = trainers and trainers.OPP_PROF_OAK\n"
+            "        if oak and type(oak.name) == \"string\" and oak.name ~= \"\" then\n"
+            "          return oak.name\n"
+            "        end\n"
+            "      end\n"
+            "    end\n"
+            "    return nil\n"
+            "  end\n"
+            '  local okDemo, BS = pcall(require, "src.battle.BattleState")\n'
+            "  if okDemo and type(BS) == \"table\" and type(BS.oldManThrow) == \"function\" then\n"
+            "    local original_oldManThrow = BS.oldManThrow\n"
+            "    BS.oldManThrow = function(self, ...)\n"
+            "      if type(self) == \"table\" then\n"
+            "        local canonical = self.demoName\n"
+            "        local localized = localizedDemoName(self, canonical)\n"
+            "        if type(localized) == \"string\" and localized ~= \"\" then\n"
+            "          self.demoName = localized\n"
+            "          local ok, result = pcall(original_oldManThrow, self, ...)\n"
+            "          self.demoName = canonical\n"
+            "          if ok then return result end\n"
+            "          error(result, 0)\n"
+            "        end\n"
+            "      end\n"
+            "      return original_oldManThrow(self, ...)\n"
+            "    end\n"
+            "  end\n"
+            "  -- Injected: the Pallet-intro thrower sprite is NOT overridden; with\n"
+            "  -- demoName kept canonical, the engine itself selects Prof. Oak's back\n"
+            "  -- pic for that demo (vanilla behavior).\n"
+        )
+        end = scaffold_main.rfind("\nend")
+        if end >= 0:
+            scaffold_main = scaffold_main[:end] + demo_injection + scaffold_main[end:]
     if runtime.is_file():
         marker = '  local literal_body = mod:read("lang/literal_handlers.lua")'
         if marker not in scaffold_main:

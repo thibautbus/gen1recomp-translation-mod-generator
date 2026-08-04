@@ -133,7 +133,26 @@ vanilla `?` and `!` faces. `assets/font/localized.png` contains only required
 glyphs, never the full ROM font. ROM-derived worksheets contain six catalogs
 (`dialogue`, `species_names`, `move_names`, `item_names`, `trainer_names`,
 `status_labels`) plus the empty 576-key `strings.lua` catalog; none are
-committed or packaged. Type display names are engine content — the runtime
+committed or packaged. Two engine edges are covered by one dedicated hook:
+Yellow's Pallet-intro catch demo and the old-man tutorial both route the
+hard-coded English thrower names `PROF.OAK` and `OLD MAN` into
+`BattleState.makeOldManDemo` (shown in the translated
+`%s used POKé BALL!` template). Both literals are joined qid-driven into a
+`demo_names` catalog (`rb.core.DisplayBattleMenu.oldManName` and
+`rb.name_pointers.TrainerNamePointers.ProfOakName`) — e.g. `OLD MAN` →
+`VIEILLARD`/`GREIS`/`ANCIANO`/`VECCHIETTO`/`おじいさん`, `PROF.OAK` →
+`PROF.CHEN`/`PROF.EICH`/`PROF. OAK`/`PROF. OAK`/`オーキド`. The engine's
+`BattleState.demoName` stays the canonical English literal — Yellow's
+Pallet intro keys its sprite selection off `demoName == "PROF.OAK"` — so
+the generated `main.lua` swaps in the localized name only at the render
+site, wrapping `BattleState.oldManThrow`'s `%s used POKé BALL!` message
+(and reverting right after; the translated trainer record
+`data.trainers["OPP_PROF_OAK"].name` remains a last-resort fallback).
+The Pallet-intro thrower sprite is deliberately left to the engine: with
+`demoName` kept canonical, the engine itself selects Prof. Oak's back pic
+for that demo, exactly as in vanilla (a `player.sprite` override would
+clobber it with the front trainer pic).
+Type display names are engine content — the runtime
 `type_chart` registry, not a modkit worksheet — so a seventh `type_names.lua`
 catalog is joined qid-driven from `rb.names.TypeNames.*`: exactly the 15
 types the engine registers. The registry keeps the English names and the mod
@@ -152,18 +171,19 @@ registration files.
 ## Translation coverage
 
 `ROM aggregate` is the release gate: six ROM-derived catalogs, fifteen
-corpus-backed type names, plus five corpus-backed literal handlers. Engine
+corpus-backed type names, five corpus-backed literal handlers, and the two
+corpus-backed demo names (`OLD MAN`, `PROF.OAK`). Engine
 columns are informational; English fallback keeps untranslated entries
 playable. Reports are generated from cached ROM imports and corpus
 snapshots, so revisions can change these values.
 
 | Target | ROM catalogs | Type names | Literal handlers | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3122/3122 (100%) | 357/358 (99.72%) | 369/581 (63.51%) |
-| `de` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3122/3122 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
-| `es` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3122/3122 (100%) | 357/358 (99.72%) | 369/581 (63.51%) |
-| `it` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3122/3122 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3122/3122 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
+| `fr` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3124/3124 (100%) | 357/358 (99.72%) | 369/581 (63.51%) |
+| `de` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3124/3124 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
+| `es` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3124/3124 (100%) | 357/358 (99.72%) | 369/581 (63.51%) |
+| `it` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3124/3124 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
+| `ja-Hrkt` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3124/3124 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
 
 The five handlers are backed by 15/15 unique corpus qids. `RBY-related engine
 strings` counts 358 keys from Gen1Recomp's 581-key catalog whose production

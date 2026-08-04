@@ -12,7 +12,7 @@ from pipeline.corpus import load_corpus
 from pipeline.generate import generate_lua, lua_string
 from pipeline.model import CorpusRecord
 from pipeline.mod import generate_mod
-from pipeline.join import join_catalogs, read_worksheets, type_names_catalog, WorksheetEntry
+from pipeline.join import demo_names_catalog, join_catalogs, read_worksheets, type_names_catalog, WorksheetEntry
 from pipeline.tokens import check_placeholders, encode
 from pipeline.validate import release_gate, validate
 from pipeline.worksheet import dump, load
@@ -321,6 +321,12 @@ class PipelineTests(unittest.TestCase):
             main = (mod / "main.lua").read_text(encoding="utf-8")
             self.assertIn('by_english[canonical] = localized', main)
             self.assertIn('Font.draw = function(text, x, y, ...)', main)
+            self.assertIn('local demo_names = catalog("demo_names")', main)
+            self.assertIn('BS.oldManThrow = function(self, ...)', main)
+            self.assertIn('localizedDemoName(self, canonical)', main)
+            self.assertIn('self.demoName = localized', main)
+            self.assertNotIn('Runtime.hooks:wrap("player.sprite"', main)
+            self.assertNotIn('BS.makeOldManDemo = function', main)
             self.assertNotIn('mod.content.type_chart:patch', main)
 
     def test_generate_mod_without_worksheet_uses_runtime_type_ids(self):
@@ -333,6 +339,59 @@ class PipelineTests(unittest.TestCase):
             body = (mod / "lang/type_names.lua").read_text(encoding="utf-8")
             self.assertIn('["FIRE"] = "FEU"', body)
             self.assertNotIn("rb.names.TypeNames", body)
+
+
+    def test_demo_names_join_uses_corpus_literal(self):
+        rows = align([
+            CorpusRecord("rb.core.DisplayBattleMenu.oldManName", "en", "OLD MAN@"),
+            CorpusRecord("rb.core.DisplayBattleMenu.oldManName", "fr", "VIEILLARD@"),
+        ])
+        values, report = demo_names_catalog(rows, "fr")
+        self.assertEqual(values, {"OLD MAN": "VIEILLARD"})
+        self.assertEqual(report["translated"], 1)
+        self.assertEqual(report["unmatched"], ["PROF.OAK"])
+        self.assertEqual(report["strategies"]["OLD MAN"], "demo_name_qid")
+
+    def test_demo_names_catalog_empty_without_corpus_rows(self):
+        values, report = demo_names_catalog([], "fr")
+        self.assertEqual(values, {})
+        self.assertEqual(report["translated"], 0)
+        self.assertEqual(report["unmatched"], ["OLD MAN", "PROF.OAK"])
+
+    def test_demo_names_join_covers_both_engine_literals(self):
+        rows = align([
+            CorpusRecord("rb.core.DisplayBattleMenu.oldManName", "en", "OLD MAN@"),
+            CorpusRecord("rb.core.DisplayBattleMenu.oldManName", "fr", "VIEILLARD@"),
+            CorpusRecord("rb.name_pointers.TrainerNamePointers.ProfOakName", "en", "PROF.OAK@"),
+            CorpusRecord("rb.name_pointers.TrainerNamePointers.ProfOakName", "fr", "PROF.CHEN@"),
+        ])
+        values, report = demo_names_catalog(rows, "fr")
+        self.assertEqual(values, {"OLD MAN": "VIEILLARD", "PROF.OAK": "PROF.CHEN"})
+        self.assertEqual(report["translated"], 2)
+        self.assertEqual(report["unmatched"], [])
+
+    def test_demo_names_join_counts_empty_translation(self):
+        # A corpus row with an empty translation must still be counted by the
+        # gate: the literal is emitted empty (English fallback at runtime) and
+        # the catalog reports it unmatched so rom coverage fails the 100% gate.
+        rows = align([
+            CorpusRecord("rb.core.DisplayBattleMenu.oldManName", "en", "OLD MAN@"),
+            CorpusRecord("rb.core.DisplayBattleMenu.oldManName", "fr", ""),
+        ])
+        values, report = demo_names_catalog(rows, "fr")
+        self.assertEqual(values, {"OLD MAN": ""})
+        self.assertEqual(report["translated"], 0)
+        self.assertEqual(report["unmatched"], ["OLD MAN", "PROF.OAK"])
+
+    def test_generate_mod_writes_demo_names_catalog(self):
+        rows = align([
+            CorpusRecord("rb.core.DisplayBattleMenu.oldManName", "en", "OLD MAN@"),
+            CorpusRecord("rb.core.DisplayBattleMenu.oldManName", "fr", "VIEILLARD@"),
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            mod = generate_mod(rows, Path(tmp) / "mod", language="fr")
+            body = (mod / "lang/demo_names.lua").read_text(encoding="utf-8")
+            self.assertIn('["OLD MAN"] = "VIEILLARD"', body)
 
 
 if __name__ == "__main__":

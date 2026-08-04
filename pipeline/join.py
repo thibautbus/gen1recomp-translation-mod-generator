@@ -96,6 +96,14 @@ TYPE_NAMES_RUNTIME_IDS = {
     "Dragon": "DRAGON",
 }
 
+# Engine demo-battle thrower names that are hard-coded in Lua/scripts
+# (BattleState.makeOldManDemo's "OLD MAN" default, and Yellow's Pallet
+# intro which passes "PROF.OAK").  Corpus qid -> canonical English literal.
+DEMO_NAMES_QIDS = {
+    "OLD MAN": "rb.core.DisplayBattleMenu.oldManName",
+    "PROF.OAK": "rb.name_pointers.TrainerNamePointers.ProfOakName",
+}
+
 
 @dataclass
 class WorksheetEntry:
@@ -213,10 +221,16 @@ def _canonical_candidates(catalog: str, key: str, candidates: list[Alignment]) -
     return candidates, None, None
 
 
+def _base_qid(qid: str) -> str:
+    # Scope markers are internal (e.g. ^RG.rb.names.TypeNames.Fire or a
+    # trailing rb.names.TypeNames.Fire^RG), not part of the symbol.
+    return re.sub(r"\^(?:RG|R|G|B)(?=\.|$)", "", qid).lstrip(".")
+
+
 def _type_name_tail(qid: str) -> str | None:
     # Scope markers are internal (e.g. ^RG.rb.names.TypeNames.Fire or a
     # trailing rb.names.TypeNames.Fire^RG), not part of the symbol.
-    cleaned = re.sub(r"\^(?:RG|R|G|B)(?=\.|$)", "", qid).lstrip(".")
+    cleaned = _base_qid(qid)
     if not cleaned.startswith(TYPE_NAMES_QID_PREFIX):
         return None
     return cleaned[len(TYPE_NAMES_QID_PREFIX):]
@@ -269,6 +283,41 @@ def type_names_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple
             report["strategies"][runtime_id] = "manual_review"
             reason = "no canonical candidate" if not candidates else f"ambiguous {qid}: {[x.qid for x in candidates]}"
             report["reasons"][runtime_id] = f"{reason}; manual review required"
+    return output, report
+
+
+def demo_names_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple[dict[str, str], dict]:
+    """Join the corpus rows for engine hard-coded demo-battle names.
+
+    These literals (e.g. the old-man tutorial's "OLD MAN") are baked into
+    engine Lua/scripts rather than trainer records, so the mod ships them as
+    a small name map read by the makeOldManDemo hook.  An empty catalog is
+    returned when the corpus has no matching rows.
+    """
+    by_qid = {_base_qid(item.qid): item for item in items}
+    output: dict[str, str] = {}
+    report = {"translated": 0, "unmatched": [], "strategies": {}, "reasons": {}, "qids": {}}
+    for literal, qid in DEMO_NAMES_QIDS.items():
+        row = by_qid.get(qid)
+        report["qids"][literal] = qid
+        if row is None:
+            # No corpus rows at all: return an empty catalog (callers without
+            # corpus data keep their prior behavior, like type_names).
+            report["unmatched"].append(literal)
+            report["strategies"][literal] = "manual_review"
+            report["reasons"][literal] = f"{qid}: no {target_lang} translation; manual review required"
+            continue
+        # Emit the literal even when untranslated (empty value) so the
+        # coverage gate counts it: a language missing the translation then
+        # fails the 100% gate instead of silently falling back to English.
+        output[literal] = corpus_to_engine(str(row.translation)) if row.translation else ""
+        if row.translation:
+            report["translated"] += 1
+            report["strategies"][literal] = "demo_name_qid"
+        else:
+            report["unmatched"].append(literal)
+            report["strategies"][literal] = "manual_review"
+            report["reasons"][literal] = f"{qid}: empty {target_lang} translation; manual review required"
     return output, report
 
 
@@ -495,4 +544,14 @@ def join_catalogs(items: list[Alignment], worksheets: dict[str, list[WorksheetEn
         report["unmatched"]["type_names"] = type_report["unmatched"]
         report["strategies"]["type_names"] = type_report["strategies"]
         report["reasons"]["type_names"] = type_report["reasons"]
+    # Engine hard-coded demo-battle names (makeOldManDemo's "OLD MAN") are
+    # joined the same qid-driven way and gated when the corpus provides rows.
+    demo_values, demo_report = demo_names_catalog(items, target_lang)
+    output["demo_names"] = demo_values
+    report["demo_names"] = demo_report
+    if demo_values:
+        report["matched"]["demo_names"] = demo_report["translated"]
+        report["unmatched"]["demo_names"] = demo_report["unmatched"]
+        report["strategies"]["demo_names"] = demo_report["strategies"]
+        report["reasons"]["demo_names"] = demo_report["reasons"]
     return output, report

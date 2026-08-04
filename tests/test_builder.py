@@ -479,7 +479,11 @@ class BuilderTests(unittest.TestCase):
             self.assertIn('counts.type_names = each("type_names"', main)
             self.assertIn('by_english[canonical] = localized', main)
             self.assertIn('Font.draw = function(text, x, y, ...)', main)
-            self.assertIn('original_draw(localize(text), x, y, ...)', main)
+            self.assertIn('local demo_names = catalog("demo_names")', main)
+            self.assertIn('BS.oldManThrow = function(self, ...)', main)
+            self.assertIn('localizedDemoName(self, canonical)', main)
+            self.assertNotIn('Runtime.hooks:wrap("player.sprite"', main)
+            self.assertNotIn('BS.makeOldManDemo = function', main)
             self.assertNotIn('mod.content.type_chart:patch', main)
 
     def test_scaffold_type_names_injection_falls_back_when_block_drifts(self):
@@ -514,9 +518,42 @@ class BuilderTests(unittest.TestCase):
             self.assertIn('counts.type_names = each("type_names"', main)
             self.assertIn('by_english[canonical] = localized', main)
             self.assertIn('Font.draw = function(text, x, y, ...)', main)
-            self.assertIn('original_draw(localize(text), x, y, ...)', main)
+            self.assertIn('local demo_names = catalog("demo_names")', main)
+            self.assertIn('BS.oldManThrow = function(self, ...)', main)
+            self.assertIn('localizedDemoName(self, canonical)', main)
+            self.assertNotIn('Runtime.hooks:wrap("player.sprite"', main)
+            self.assertNotIn('BS.makeOldManDemo = function', main)
             self.assertNotIn('mod.content.type_chart:patch', main)
             self.assertLess(main.index("counts.type_names"), main.rfind("\nend"))
+
+    def test_scaffold_demo_name_hook_is_injected_independently(self):
+        # The PROF.OAK demo-name hook must land even when there is no
+        # type_names catalog: it depends on trainer_names only.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            scaffold = root / "scaffold"
+            mod = root / "mod"
+            (scaffold / "lang").mkdir(parents=True)
+            (scaffold / "assets" / "font").mkdir(parents=True)
+            (mod / "lang").mkdir(parents=True)
+            (scaffold / "main.lua").write_text(
+                "return function(mod)\n"
+                "  local thing = true\n"
+                "end\n",
+                encoding="utf-8",
+            )
+            for name in ("font.lua", "charmap.lua", "naming.lua"):
+                (scaffold / "lang" / name).write_text("return {}", encoding="utf-8")
+
+            builder.preserve_scaffold_support(scaffold, mod)
+
+            main = (mod / "main.lua").read_text(encoding="utf-8")
+            self.assertIn('local demo_names = catalog("demo_names")', main)
+            self.assertIn('BS.oldManThrow = function(self, ...)', main)
+            self.assertIn('localizedDemoName(self, canonical)', main)
+            self.assertIn('name == "PROF.OAK"', main)
+            self.assertNotIn('Runtime.hooks:wrap("player.sprite"', main)
+            self.assertNotIn('BS.makeOldManDemo = function', main)
 
     def test_scaffold_type_names_missing_catalog_keeps_main_untouched(self):
         with tempfile.TemporaryDirectory() as directory:
