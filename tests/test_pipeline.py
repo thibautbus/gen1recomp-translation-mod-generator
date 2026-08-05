@@ -9,7 +9,7 @@ from unittest.mock import patch
 from pipeline.align import CORPUS_OVERRIDES_SCHEMA, align, apply_corpus_overrides
 from pipeline.cli import main as cli_main
 from pipeline.corpus import load_corpus
-from pipeline.generate import generate_lua
+from pipeline.generate import generate_lua, lua_string
 from pipeline.model import CorpusRecord
 from pipeline.mod import generate_mod
 from pipeline.join import join_catalogs, WorksheetEntry
@@ -158,6 +158,10 @@ class PipelineTests(unittest.TestCase):
             self.assertTrue((mod / "main.lua").exists())
             self.assertTrue((mod / "lang/item_names.lua").exists())
             self.assertTrue((Path(str(mod) + "-worksheet") / "item_names.txt").exists())
+
+    def test_lua_string_pads_control_escapes_before_digits(self):
+        self.assertEqual(lua_string("Rapport:\f1er"), '"Rapport:\\0121er"')
+        self.assertEqual(lua_string("Note:\v2e"), '"Note:\\0112e"')
 
     def test_modkit_worksheet_join_preserves_unmatched_keys(self):
         items = align([
