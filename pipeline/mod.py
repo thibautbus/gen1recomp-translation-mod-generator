@@ -15,6 +15,13 @@ from .literals import load_recipes, generate_handlers
 CATALOGS = ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels", "type_names", "demo_names")
 
 
+def ttf_registration(language: str) -> str:
+    """Return the smallest bundled Plain Pixel registration for a language."""
+    if canonical_language(language) == "ja-Hrkt":
+        return '  mod.content.font:register("ttf", { size = 10, tiles = "0123456789/:" })'
+    return '  mod.content.font:register("ttf", {})'
+
+
 def _catalog_scope(classified: dict[str, dict], catalog: Iterable[str]) -> dict[str, dict]:
     """Limit reporting statistics to keys present in the generated catalog."""
     keys = set(catalog)
@@ -79,6 +86,7 @@ def _catalog(rows: list[Alignment], title: str, language: str = "fr") -> str:
 
 MAIN = '''-- Generated translation mod; catalogs are safe to refresh.
 return function(mod)
+__TTF_REGISTRATION__
   local function catalog(name)
     local body = mod:read("lang/" .. name .. ".lua")
     if not body then return {} end
@@ -390,7 +398,10 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         _, generated_handlers = generate_handlers(rows, recipes, runtime)
     elif runtime.exists():
         runtime.unlink()
-    (destination / "main.lua").write_text(MAIN, encoding="utf-8")
+    (destination / "main.lua").write_text(
+        MAIN.replace("__TTF_REGISTRATION__", ttf_registration(language)),
+        encoding="utf-8",
+    )
     worksheet_root = Path(str(destination) + "-worksheet")
     worksheet_root.mkdir(parents=True, exist_ok=True)
     for name in CATALOGS:

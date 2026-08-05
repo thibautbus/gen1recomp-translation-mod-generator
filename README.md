@@ -18,16 +18,16 @@ Download the GUI executable for your platform from the
 [latest release](https://github.com/thibautbus/gen1recomp-translation-mod-generator/releases/latest),
 then select:
 
+![Gen1Recomp translation mod generator GUI](docs/gui.png)
+
 1. your own canonical US Pokémon Red and Blue ROM dumps;
 2. the target language;
-3. one localized Red or Blue ROM as the font source for Western languages;
-4. the output directory.
-
-![Gen1Recomp translation mod generator GUI](docs/gui.png)
+3. the output directory.
 
 The GUI runs the same verified matching and packaging pipeline as the CLI and
 writes the ready-to-import ZIP into the selected directory. The standalone
-application bundles its Python runtime, Pillow, and LuaJIT, so those
+application bundles its Python runtime, Pillow (used by Gen1Recomp's US-ROM
+asset importer), and LuaJIT, so those
 prerequisites do not need to be installed separately. Network access is still
 required to download the pinned Gen1Recomp and PokeCorpus inputs.
 
@@ -52,8 +52,7 @@ With a virtual environment, use its interpreter explicitly, for example
 `venv\Scripts\python.exe build_translation.py` on Windows.
 
 The assistant asks for full paths to canonical US Pokémon Red and Blue ROM
-dumps, then a target language. Western builds also ask for one localized Red
-or Blue ROM as a font source. It verifies US SHA-1 fingerprints and asks
+dumps, then a target language. It verifies US SHA-1 fingerprints and asks
 before cloning pinned repositories. After validation, it:
 
 1. clones the pinned Gen1Recomp revision and required
@@ -61,11 +60,10 @@ before cloning pinned repositories. After validation, it:
 2. extracts both ROMs into private ignored directories and creates the complete
    Modkit worksheet;
 3. matches ROM and engine catalogs against the selected corpus language;
-4. for Western builds, extracts a compact one-row 1bpp glyph sheet and emits
-   the official `lang/font.lua`/`lang/charmap.lua` extension-page files;
-5. preserves Modkit font, charmap, and naming integration and applies the
+4. enables Gen1Recomp's bundled Plain Pixel TTF (keeping macro and tile
+   glyphs on the engine's tile pages) and applies the
    selected language's optional corpus overrides;
-6. runs strict validation and ROM-content lint while packing, scans a private
+5. runs strict validation and ROM-content lint while packing, scans a private
    candidate archive, and atomically publishes it to `dist/`.
 
 The final file is `dist/translation-<lang>-<version>.zip` (for example
@@ -81,20 +79,13 @@ ignored `config/rom_paths.toml` and edit it:
 red = "/absolute/path/to/PokemonRed.gb"
 blue = "/absolute/path/to/PokemonBlue.gb"
 
-[localized]
-fr = "/absolute/path/to/PokemonFrench.gb"
-de = "/absolute/path/to/PokemonGerman.gb"
-es = "/absolute/path/to/PokemonSpanish.gb"
-it = "/absolute/path/to/PokemonItalian.gb"
 ```
 
-Red and Blue entries may be independent; localized entries are optional and
-partial. Japanese has no localized-ROM entry because font extraction is
-unsupported. `~` expands and relative paths resolve relative to this file;
+Red and Blue entries may be independent. `~` expands and relative paths resolve relative to this file;
 absolute paths are recommended. On Windows use forward slashes or TOML
 literal single-quoted paths such as `red = 'C:\Games\PokemonRed.gb'` (a
 double-quoted string must double each backslash). A configured path is still
-validated for existence, SHA-1, and localized-font fingerprints; choosing No
+validated for existence and SHA-1; choosing No
 returns to the normal prompt. The ROM file remains private and Git-ignored.
 
 ## Legal inputs and privacy
@@ -106,19 +97,14 @@ files are local and configurable; the pipeline never downloads, provides, or
 redistributes ROMs, patches, or copyrighted text extracts. Import verifies
 both SHA-1 values before reading.
 
-Western builds require exactly one user-owned localized Red or Blue ROM as a
-font source. Its whole-ROM SHA-1 is intentionally not pinned: extraction
-verifies only the SHA-256 fingerprint of the reviewed font-tile region, and
-the source ROM is never copied into an archive. `config/pipeline.toml` records
+`config/pipeline.toml` records
 the canonical hashes and pinned Gen1Recomp/`poke-corpus` revisions;
-`pipeline/localized_font.py` contains reviewed localized-region fingerprints.
 The builder asks permission before cloning revisions into private ignored
 `.cache/` paths. Imported data, worksheets, catalogs, reports, and complete
 extracted fonts remain there and are never committed or packaged.
 `config/rom_paths.toml` is ignored; never commit it or replace the tracked
 example with personal paths. A publication may contain the generated mod,
-compact localized glyph page, and English documentation only after a
-no-ROM-content inspection. Do not claim ROM redistribution or provide download
+English documentation only after a no-ROM-content inspection. Do not claim ROM redistribution or provide download
 instructions.
 
 ## Languages and fonts
@@ -128,30 +114,10 @@ English is the source language and runtime fallback: an empty generated value
 leaves the original English string visible. The builder always requires an
 explicit target-language selection.
 
-> **Warning:** Japanese localized-font extraction is unsupported and Japanese
-> translation does not currently display correctly in game. Japanese builds
-> do not request a localized ROM, skip the localized-font stage, and show this
-> warning.
-
-> **Font warning:** Characters missing from the generated font or charmap may
-> render incorrectly. Verify accented characters, punctuation, and non-Latin
-> scripts in game before publishing.
-
-The Western extractor uses one 1bpp extraction and compact Modkit page per
-language:
-
-| Target | Packaged glyphs | Font family |
-| --- | ---: | --- |
-| French (`fr`) | 19 | French/German |
-| German (`de`) | 19 | French/German |
-| Spanish (`es`) | 32 | Spanish/Italian + `¿`/`¡` |
-| Italian (`it`) | 30 | Spanish/Italian |
-| Japanese (`ja-Hrkt`) | — | Unsupported |
-
-French/German share a reviewed 19-glyph ROM region. Spanish/Italian share a
-reviewed 30-glyph region; Spanish `¿` and `¡` are generated by rotating the
-vanilla `?` and `!` faces. `assets/font/localized.png` contains only required
-glyphs, never the full ROM font. ROM-derived worksheets contain six catalogs
+All languages use the bundled Plain Pixel TTF. Latin languages register its
+default profile (`{}`). Japanese uses `{ size = 10, tiles = "0123456789/:" }`
+so numeric and punctuation columns retain vanilla tile widths. Macros and
+border/chrome glyphs remain tile-rendered by the engine. ROM-derived worksheets contain six catalogs
 (`dialogue`, `species_names`, `move_names`, `item_names`, `trainer_names`,
 `status_labels`) plus the empty 604-key `strings.lua` scaffold; none are
 committed or packaged. Two engine edges are covered by one dedicated hook:
@@ -364,12 +330,11 @@ Linux builds target Ubuntu 22.04 (glibc) and
 newer compatible systems; other architectures and libc implementations are
 not supported. No executable is published until a release workflow run
 occurs. Both platform builds compile official LuaJIT at a pinned commit, bundle
-Pillow and checked-in configuration, and validate the CLI and GUI before
+checked-in configuration, and validate the CLI and GUI before
 uploading the four versioned artifacts.
 
 The CLI keeps the terminal prompts documented above. The GUI provides file
-pickers for both US ROMs, the target language, the localized font ROM when
-required, and the output directory. It runs the same matching and packaging
+pickers for both US ROMs, the target language, and the output directory. It runs the same matching and packaging
 pipeline in the background, with a build status and collapsible log. Closing
 the GUI is blocked while a build is active to avoid interrupting private
 extraction or dependency downloads.
@@ -412,8 +377,7 @@ still checks Python, Git, LuaJIT, and Pillow, clones pinned repositories into
 the repository `.cache/`, and writes under `dist/`. The `.zip` extension is
 intentional because Gen1Recomp's importer accepts Modkit's deterministic ZIP.
 The builder prints ROM, RBY-engine, and all-engine match percentages immediately
-before the final path. `assets/font/localized.png` is resolved from the mod root
-with `mod.assets:path(...)`; Japanese skips this stage. `dist/` is ignored, so
+before the final path. `dist/` is ignored, so
 publishing is explicit.
 Manual engine translations and corpus corrections live in separate versioned
 files and are applied automatically. Each language has a checked-in
@@ -471,7 +435,6 @@ ambiguous recipes leave the English handler active.
 | `pipeline/mod.py` | Writes Modkit Lua catalogs, manifest, worksheets, and coverage report. |
 | `pipeline/validate.py` | Checks placeholders, glyphs, versions, ROM gate, and engine diagnostics. |
 | `pipeline/roms.py` | Verifies hashes and imports private Red/Blue caches. |
-| `pipeline/localized_font.py` | Validates Western regions and generates font/charmap catalogs. |
 | `pipeline/disassembly_audit.py` | Parses private localized disassembly snapshots into audit reports. |
 | `pipeline/engine_backlog.py` | Read-only analyzer for unresolved engine keys, scope, placeholders, fallbacks, and qid candidates. |
 
@@ -519,8 +482,8 @@ callsites, key commonality, and conservative triage. Use `--coverage-dir`,
 
 ### Remaining limitations
 
-Japanese font extraction is unsupported. UI-width constraints, in-game testing, 
-and incomplete engine coverage remain relevant.
+UI-width constraints, in-game testing, and incomplete engine coverage remain
+relevant; Japanese uses the dedicated Plain Pixel size/tiles profile above.
 
 ## Credits
 

@@ -14,8 +14,7 @@ import zipfile
 
 from .align import align, apply_corpus_overrides
 from .corpus import canonical_language, parse_redblue
-from .mod import generate_mod
-from .localized_font import extract_localized_font, validate_localized_rom
+from .mod import generate_mod, ttf_registration
 from .project import ROOT, is_frozen, project_config, project_version, resource_root, work_root
 from .dependencies import DependencyError, fetch_archive, fetch_files
 from .roms import import_rom, verify_rom
@@ -29,7 +28,6 @@ LANGUAGES = (
     ("it", "Italian"),
     ("ja-Hrkt", "Japanese"),
 )
-WESTERN_FONT_LANGUAGES = {"fr", "de", "es", "it"}
 
 FORBIDDEN_ARCHIVE_SUFFIXES = {
     ".gb", ".gbc", ".rom", ".ips", ".bps", ".ups", ".patch", ".diff",
@@ -267,15 +265,6 @@ def _prompt_language(input_fn: Callable[[str], str]) -> tuple[str, str]:
         raise BuildError(f"Invalid language selection: {raw!r}") from None
 
 
-def _print_language_warning(language: str) -> None:
-    if canonical_language(language) == "ja-Hrkt":
-        print(
-            "\nWarning: Japanese localized-font extraction is not supported, "
-            "and the Japanese translation does not currently display "
-            "correctly in game. No Japanese ROM will be requested."
-        )
-
-
 def _confirm(input_fn: Callable[[str], str]) -> bool:
     action = "downloaded" if is_frozen() else "cloned"
     answer = input_fn(
@@ -317,8 +306,8 @@ def assemble_worksheet(scaffold: Path, destination: Path) -> Path:
     return destination
 
 
-def preserve_scaffold_support(scaffold: Path, mod: Path) -> None:
-    """Keep Modkit's font, charmap, and naming runtime integration."""
+def preserve_scaffold_support(scaffold: Path, mod: Path, language: str = "fr") -> None:
+    """Keep Modkit's runtime hooks while selecting the bundled TTF profile."""
     main = scaffold / "main.lua"
     if not main.is_file():
         raise BuildError(f"Modkit did not generate {main}")
@@ -327,23 +316,19 @@ def preserve_scaffold_support(scaffold: Path, mod: Path) -> None:
     # proven; without the runtime file vanilla behavior remains untouched.
     runtime = mod / "lang" / "literal_handlers.lua"
     scaffold_main = main.read_text(encoding="utf-8")
-    # Font images live inside the mod archive. LOVE resolves a plain relative
-    # path against the game root, so turn mod-owned paths into asset paths
-    # before registering the page. Without this, every localized glyph is
-    # registered but renders as a blank cell.
-    font_registration = "    mod.content.font:register(id, page)"
-    font_path_fix = (
-        '    if type(page) == "table" and type(page.image) == "string"\n'
-        "        and mod:read(page.image) then\n"
-        "      page.image = mod.assets:path(page.image)\n"
-        "    end\n"
-    )
-    if font_registration in scaffold_main and "mod.assets:path(page.image)" not in scaffold_main:
-        scaffold_main = scaffold_main.replace(
-            font_registration,
-            font_path_fix + font_registration,
-            1,
-        )
+    # Always use the engine's bundled Plain Pixel font. Japanese keeps the
+    # numeric/chrome glyphs on the vanilla tile page for layout stability.
+    ttf_line = ttf_registration(language)
+    if 'mod.content.font:register("ttf"' in scaffold_main:
+        scaffold_main = "\n".join(
+            ttf_line if 'mod.content.font:register("ttf"' in line else line
+            for line in scaffold_main.splitlines()
+        ) + ("\n" if scaffold_main.endswith("\n") else "")
+    else:
+        marker = "return function(mod)"
+        if marker not in scaffold_main:
+            raise BuildError(f"Modkit scaffold main has no translation entry point: {main}")
+        scaffold_main = scaffold_main.replace(marker, marker + "\n" + ttf_line, 1)
     # Type names are translated at draw time (Font.draw/Font.split) while the
     # type_chart registry keeps the English names, so third-party mods that
     # key colors/UI off TypeChart.displayName keep resolving them.  An empty
@@ -537,18 +522,21 @@ def preserve_scaffold_support(scaffold: Path, mod: Path) -> None:
                 raise BuildError(f"Modkit scaffold main has no closing function: {main}")
             scaffold_main = scaffold_main[:end] + injection + scaffold_main[end:]
     (mod / "main.lua").write_text(scaffold_main, encoding="utf-8")
-    lang = mod / "lang"
-    for name in ("font.lua", "charmap.lua", "naming.lua"):
-        source = scaffold / "lang" / name
-        if not source.is_file():
-            raise BuildError(f"Modkit did not generate {source}")
-        shutil.copy2(source, lang / name)
-    font_source = scaffold / "assets" / "font"
-    font_destination = mod / "assets" / "font"
-    for source in font_source.glob("*"):
-        if source.is_file() and source.suffix.lower() == ".png":
-            font_destination.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, font_destination / source.name)
+    # TTF mode supplies ordinary Unicode glyphs; ROM-derived font/charmap
+    # catalogs and images are intentionally not copied into the mod.
+    naming = scaffold / "lang" / "naming.lua"
+    if naming.is_file():
+        shutil.copy2(naming, mod / "lang" / "naming.lua")
+
+
+def remove_legacy_font_artifacts(mod: Path) -> None:
+    """Drop stale ROM-derived font files from an incremental build."""
+    for relative in (
+        Path("lang/font.lua"),
+        Path("lang/charmap.lua"),
+        Path("assets/font/localized.png"),
+    ):
+        (mod / relative).unlink(missing_ok=True)
 
 
 def inspect_archive(path: Path) -> None:
@@ -626,7 +614,6 @@ def build(
     language: str,
     language_name: str,
     luajit: str,
-    localized_rom: Path | None = None,
     workspace_root: Path | None = None,
     output_dir: Path | None = None,
     log_fn: Callable[[str], None] | None = None,
@@ -652,18 +639,6 @@ def build(
     status("Validating ROMs")
     verify_rom(red_rom, "red")
     verify_rom(blue_rom, "blue")
-    if language in WESTERN_FONT_LANGUAGES and localized_rom is None:
-        raise BuildError(
-            f"A {language_name} Pokémon Red or Blue ROM is required as the font source."
-        )
-    if language == "ja-Hrkt" and localized_rom is not None:
-        raise BuildError(
-            "Localized font extraction is not yet supported for Japanese."
-        )
-    if localized_rom is not None:
-        # Localized dumps are user-owned inputs.  We validate their basic
-        # cartridge structure but deliberately do not enforce a SHA-1.
-        validate_localized_rom(localized_rom)
 
     dependency_root = workspace / "dependencies"
     gen1recomp = dependency_root / "gen1recomp"
@@ -704,7 +679,7 @@ def build(
         env["PATH"] = lua_dir + os.pathsep + env.get("PATH", "")
     _run(_modkit_command(modkit, "--repo", str(gen1recomp),
             "translation", "translation_source", "--language", language_name,
-            "--base", "imported", "--dest", str(build_root), "--force"),
+            "--base", "imported", "--dest", str(build_root), "--pixel-font", "--force"),
         cwd=gen1recomp,
         env=env,
         log_fn=log_fn,
@@ -722,6 +697,7 @@ def build(
         rows = apply_corpus_overrides(rows, corpus_overrides)
     mod = build_root / "mod"
     coverage = build_root / "coverage.json"
+    remove_legacy_font_artifacts(mod)
     generate_mod(
         rows,
         mod,
@@ -737,14 +713,7 @@ def build(
         engine_source=gen1recomp / "src",
         engine_scope=resource_root() / "config" / "engine_scope.json",
     )
-    preserve_scaffold_support(scaffold, mod)
-    if localized_rom is not None:
-        extract_localized_font(
-            localized_rom,
-            mod,
-            language=language,
-            manifest=gen1recomp / "tools" / "rom_manifest.json",
-        )
+    preserve_scaffold_support(scaffold, mod, language)
 
     version = project_version()
     destination.mkdir(parents=True, exist_ok=True)
@@ -784,20 +753,8 @@ def main(input_fn: Callable[[str], str] = input) -> int:
             blue_prompt, configured_path(rom_paths, "rom", "blue"), input_fn
         )
         language, language_name = _prompt_language(input_fn)
-        localized = None
-        if canonical_language(language) in WESTERN_FONT_LANGUAGES:
-            language_name = dict(LANGUAGES)[language]
-            localized = _prompt_configured_path(
-                f"Please specify one localized {language_name} Pokémon Red or Blue ROM for its font "
-                "(full path, e.g. /Games/PokemonLocalized.gb): ",
-                configured_path(rom_paths, "localized", language),
-                input_fn,
-            )
-        _print_language_warning(language)
         verify_rom(red, "red")
         verify_rom(blue, "blue")
-        if localized is not None:
-            validate_localized_rom(localized)
         if not _confirm(input_fn):
             if is_frozen():
                 print("\nBuild cancelled. No dependency downloads were performed.")
@@ -810,7 +767,6 @@ def main(input_fn: Callable[[str], str] = input) -> int:
             language,
             language_name,
             luajit,
-            localized_rom=localized,
         )
     except (BuildError, ValueError, OSError) as error:
         print(f"\nError: {error}", file=sys.stderr)

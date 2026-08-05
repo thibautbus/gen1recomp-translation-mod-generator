@@ -3,6 +3,7 @@
 
 import runpy
 import sys
+import importlib.util
 from pathlib import Path
 
 from pipeline.builder import main
@@ -24,7 +25,6 @@ def _internal_worker() -> int:
 def _self_check() -> int:
     from pipeline.builder import BuildError, _modkit_command, _which_luajit, is_frozen, project_config, project_version, resource_root, work_root
     from pipeline.engine import load_semantic_anchors, load_semantic_anchor_decisions, merge_semantic_anchors
-    import importlib.util
     try:
         config = project_config(resource_root())
         version = project_version(resource_root())
@@ -36,7 +36,7 @@ def _self_check() -> int:
         decisions = load_semantic_anchor_decisions(decisions_path)
         merge_semantic_anchors(deterministic, decisions)
         if importlib.util.find_spec("PIL") is None:
-            raise BuildError("bundled Pillow is missing")
+            raise BuildError("Pillow is required for private ROM asset extraction")
         corpus = config["corpus"]
         if is_frozen() and not corpus.get("archive_files"):
             raise BuildError("corpus archive manifest is missing")
