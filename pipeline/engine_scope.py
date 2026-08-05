@@ -24,10 +24,10 @@ def load_scope(path: str | Path = CONFIG_PATH) -> dict[str, Any]:
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise ValueError("engine scope config must be an object")
-    required = ("schema", "classifier_version", "gen1recomp_revision", "source_subdir", "rby_paths", "rby_ui_modules", "ui_review_modules", "link_modules", "modern_ui_modules", "rby_ui_keys", "link_ui_keys", "modern_ui_keys", "forced_dynamic_keys", "key_scope_overrides")
+    required = ("schema", "classifier_version", "gen1recomp_revision", "source_subdir", "rby_paths", "rby_ui_modules", "ui_review_modules", "link_modules", "modern_ui_modules", "rby_ui_keys", "link_ui_keys", "modern_ui_keys", "forced_dynamic_keys", "engine_dynamic_values", "key_scope_overrides")
     if set(data) != set(required):
         raise ValueError("engine scope config has unknown or missing fields")
-    if data["schema"] != "gen1recomp-translation-mods/engine-scope" or data["classifier_version"] != 3:
+    if data["schema"] != "gen1recomp-translation-mods/engine-scope" or data["classifier_version"] != 4:
         raise ValueError("unsupported engine scope schema/version")
     missing = [key for key in required if key not in data]
     if missing:
@@ -69,6 +69,24 @@ def load_scope(path: str | Path = CONFIG_PATH) -> dict[str, Any]:
             raise ValueError(f"engine scope forced dynamic entry for {key!r} has invalid provenance/reason")
         if not all(isinstance(value[field], str) and value[field] for field in ("callsite", "qid")):
             raise ValueError(f"engine scope forced dynamic entry for {key!r} requires callsite/qid")
+    dynamic = data["engine_dynamic_values"]
+    if not isinstance(dynamic, dict):
+        raise ValueError("engine scope engine_dynamic_values must be an object")
+    if set(dynamic) & configured_ui_keys:
+        raise ValueError("engine scope engine_dynamic_values overlap configured UI keys")
+    for key, value in dynamic.items():
+        if not isinstance(key, str) or not key:
+            raise ValueError("engine scope engine_dynamic_values keys must be non-empty strings")
+        if not isinstance(value, dict) or set(value) != {"category", "eligibility", "reason", "provenance", "callsite", "qid"}:
+            raise ValueError(f"engine scope engine_dynamic_values entry for {key!r} has unknown or missing fields")
+        if value["category"] not in _SCOPE_CATEGORIES or value["eligibility"] not in _SCOPE_ELIGIBILITIES:
+            raise ValueError(f"engine scope engine_dynamic_values entry for {key!r} has an invalid category/eligibility")
+        if value["reason"] not in _SCOPE_REASONS or value["provenance"] != "engine_dynamic":
+            raise ValueError(f"engine scope engine_dynamic_values entry for {key!r} has invalid provenance/reason")
+        if not all(isinstance(value[field], str) and value[field] for field in ("callsite",)):
+            raise ValueError(f"engine scope engine_dynamic_values entry for {key!r} requires callsite")
+        if not isinstance(value.get("qid", ""), str):
+            raise ValueError(f"engine scope engine_dynamic_values entry for {key!r} qid must be a string")
     overrides = data["key_scope_overrides"]
     if not isinstance(overrides, dict):
         raise ValueError("engine scope key_scope_overrides must be an object")
@@ -94,6 +112,15 @@ def load_scope(path: str | Path = CONFIG_PATH) -> dict[str, Any]:
 
 def forced_dynamic_keys(scope: Mapping[str, Any] | None = None) -> set[str]:
     return set((scope or load_scope()).get("forced_dynamic_keys", {}))
+
+
+def engine_dynamic_values(scope: Mapping[str, Any] | None = None) -> set[str]:
+    """Keys the literal callsite scanner cannot see (dynamic ``Strings``
+    lookups) that are NOT RBY-eligible — e.g. option values returned by
+    label functions (``SPEEDS[...]``, ``Performance.label``).  Unlike
+    ``forced_dynamic_keys`` they may carry any category/eligibility.
+    """
+    return set((scope or load_scope()).get("engine_dynamic_values", {}))
 
 
 def source_root(checkout: str | Path, scope: Mapping[str, Any] | None = None) -> Path:
@@ -308,6 +335,17 @@ def classify_catalog(keys: Iterable[str], callsites: Iterable[Mapping[str, Any]]
                 "callsite": dynamic["callsite"],
                 "qid": dynamic["qid"],
             })
+    for key, dynamic in scope.get("engine_dynamic_values", {}).items():
+        if key in result:
+            result[key].update({
+                "category": dynamic["category"],
+                "categories": [dynamic["category"]],
+                "eligibility": dynamic["eligibility"],
+                "reason": dynamic["reason"],
+                "provenance": dynamic["provenance"],
+                "callsite": dynamic["callsite"],
+                "qid": dynamic.get("qid", ""),
+            })
     for key, override in scope.get("key_scope_overrides", {}).items():
         if key in result:
             result[key].update({"category": override["category"], "eligibility": override["eligibility"], "reason": override["reason"]})
@@ -329,12 +367,12 @@ def validate_catalog_universe(catalog_keys: Iterable[str], checkout: str | Path,
     calls = iter_callsites(checkout)
     source = {str(row.get("source", "")) for row in calls if row.get("source")}
     scope = scope or load_scope()
-    dynamic = forced_dynamic_keys(scope)
+    dynamic = forced_dynamic_keys(scope) | engine_dynamic_values(scope)
     source_with_dynamic = source | dynamic
     missing = sorted(catalog - source_with_dynamic)
     if missing:
         raise ValueError(f"engine catalog/source key universe mismatch (missing={len(missing)})")
-    return {"catalog_total": len(catalog), "source_keys": len(source_with_dynamic), "callsites": len(calls), "forced_dynamic": len(dynamic)}
+    return {"catalog_total": len(catalog), "source_keys": len(source_with_dynamic), "callsites": len(calls), "forced_dynamic": len(forced_dynamic_keys(scope)), "engine_dynamic": len(engine_dynamic_values(scope))}
 
 
 def coverage_metadata(scope: Mapping[str, Any] | None = None) -> dict[str, Any]:

@@ -213,10 +213,12 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         if engine_catalog is None and strict_engine:
             engine_catalog = Path(modkit_worksheet) / "strings.lua"
     if engine_catalog:
-        from .engine_scope import forced_dynamic_keys, load_scope
+        from .engine_scope import engine_dynamic_values, forced_dynamic_keys, load_scope
         scope = load_scope(engine_scope) if engine_scope else load_scope()
         catalog = read_engine_catalog(engine_catalog)
         for key in forced_dynamic_keys(scope):
+            catalog.setdefault(key, "")
+        for key in engine_dynamic_values(scope):
             catalog.setdefault(key, "")
         engine_values, engine_report = match_engine_catalog(catalog, rows, load_engine_overrides(engine_overrides), semantic_anchors=semantic_anchors, semantic_anchor_decisions=semantic_anchor_decisions, target_lang=language)
         for key, dynamic in scope.get("forced_dynamic_keys", {}).items():

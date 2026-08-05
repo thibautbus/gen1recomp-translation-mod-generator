@@ -18,7 +18,7 @@ class EngineScopeTests(unittest.TestCase):
             with self.assertRaises(ValueError): load_scope(path)
 
     def test_manifest_rejects_schema_revision_path_and_fields(self):
-        for mutate in [lambda d: d.pop("schema"), lambda d: d.update(schema="wrong"), lambda d: d.update(classifier_version=4), lambda d: d.update(gen1recomp_revision="abc"), lambda d: d.update(gen1recomp_revision="A" * 40), lambda d: d.update(gen1recomp_revision="g" * 40), lambda d: d.update(source_subdir="/tmp"), lambda d: d.update(source_subdir="../src"), lambda d: d.update(source_subdir="other"), lambda d: d.update(extra=1)]:
+        for mutate in [lambda d: d.pop("schema"), lambda d: d.update(schema="wrong"), lambda d: d.update(classifier_version=5), lambda d: d.update(gen1recomp_revision="abc"), lambda d: d.update(gen1recomp_revision="A" * 40), lambda d: d.update(gen1recomp_revision="g" * 40), lambda d: d.update(source_subdir="/tmp"), lambda d: d.update(source_subdir="../src"), lambda d: d.update(source_subdir="other"), lambda d: d.update(extra=1)]:
             self._load_mutated(mutate)
 
     def test_manifest_rejects_list_types_duplicates_and_overlaps(self):
@@ -31,7 +31,7 @@ class EngineScopeTests(unittest.TestCase):
 
     def test_scope_overrides_are_versioned_and_strict(self):
         scope = load_scope()
-        self.assertEqual(scope["classifier_version"], 3)
+        self.assertEqual(scope["classifier_version"], 4)
         self.assertEqual(forced_dynamic_keys(scope), {"NAME", "ATTACK", "DEFENSE", "SPEED", "SPECIAL"})
         self.assertEqual(scope["forced_dynamic_keys"]["DEFENSE"]["qid"], "rb.stat_names.VitaminStats.3")
         self.assertEqual(scope["forced_dynamic_keys"]["SPECIAL"]["qid"], "rb.stat_names.VitaminStats.5")

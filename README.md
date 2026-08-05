@@ -202,15 +202,21 @@ snapshots, so revisions can change these values.
 > move between revisions because the engine re-channels texts: v0.1.69
 > renders the battle effect messages via `data.text` instead of `Strings`,
 > so the `All engine strings` denominator shrank even as the dialogue
-> catalog grew (2548 → 2582 entries) and kept them translated.
+> catalog grew (2548 → 2582 entries) and kept them translated.  The
+> denominator (615, scope classifier v4) includes eleven option-value keys
+> (`FAST`/`MEDIUM`/`SLOW`, `low`/`balanced`/`high`/`auto`, `AUTO`/
+> `PORTRAIT`/`LANDSCAPE`/`REVERSE LANDSCAPE`) that the literal callsite
+> scanner cannot see (dynamic `Strings` lookups through label functions) —
+> declared in `engine_scope.json` `engine_dynamic_values` so their manual
+> overrides ship.
 
 | Target | ROM catalogs | Corpus-backed extras | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 285/604 (47.19%) |
-| `de` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 285/604 (47.19%) |
-| `es` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 285/604 (47.19%) |
-| `it` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 286/604 (47.35%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 286/604 (47.35%) |
+| `fr` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 307/615 (49.92%) |
+| `de` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 307/615 (49.92%) |
+| `es` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 307/615 (49.92%) |
+| `it` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 308/615 (50.08%) |
+| `ja-Hrkt` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 308/615 (50.08%) |
 
 The corpus-backed extras are fully translated (28/28): fifteen type names,
 five literal handlers (15/15 unique corpus qids), two demo names, the
@@ -227,7 +233,7 @@ es `obtuvo`/`recibió`, it `riceve`), and the twenty-two Options/launcher
 labels (`BATTLE BG` … `VOID FILL`, user-validated 2026-08-05 — they render in the
 in-game Options menu, box of 20 tiles, so values are ≤ 18 characters; `MODS` kept
 as-is, proper noun). `RBY-related engine
-strings` counts 246 keys from Gen1Recomp v0.1.69's 604-key catalog whose
+strings` counts 246 keys from Gen1Recomp v0.1.69's 615-key catalog whose
 production callsites reproduce original Red/Blue gameplay or interfaces; `All
 engine strings` covers the complete catalog, including modern surfaces. The
 versioned [`engine_scope.json`](config/engine_scope.json) classifier (revision

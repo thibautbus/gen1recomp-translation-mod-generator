@@ -1,6 +1,6 @@
 {
   "schema": "gen1recomp-translation-mods/engine-scope",
-  "classifier_version": 3,
+  "classifier_version": 4,
   "gen1recomp_revision": "12a04f418838e09ade97ad3fb36933c9fffb31ec",
   "source_subdir": "src",
   "rby_paths": [
@@ -346,6 +346,96 @@
       "category": "rby",
       "eligibility": "ineligible",
       "reason": "covered-by-rom"
+    }
+  },
+  "engine_dynamic_values": {
+    "FAST": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:126 (SPEEDS table; dynamic Strings lookup)",
+      "qid": "rb.main_menu.TextSpeedOptionText"
+    },
+    "MEDIUM": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:126 (SPEEDS table; dynamic Strings lookup)",
+      "qid": "rb.main_menu.TextSpeedOptionText"
+    },
+    "SLOW": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:126 (SPEEDS table; dynamic Strings lookup)",
+      "qid": "rb.main_menu.TextSpeedOptionText"
+    },
+    "low": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:264 (Performance.label; dynamic Strings lookup)",
+      "qid": ""
+    },
+    "balanced": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:264 (Performance.label; dynamic Strings lookup)",
+      "qid": ""
+    },
+    "high": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:264 (Performance.label; dynamic Strings lookup)",
+      "qid": ""
+    },
+    "auto": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:264 (Performance.label; dynamic Strings lookup)",
+      "qid": ""
+    },
+    "AUTO": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:357 (Orientation.modeLabel; dynamic Strings lookup)",
+      "qid": ""
+    },
+    "PORTRAIT": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:357 (Orientation.modeLabel; dynamic Strings lookup)",
+      "qid": ""
+    },
+    "LANDSCAPE": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:357 (Orientation.modeLabel; dynamic Strings lookup)",
+      "qid": ""
+    },
+    "REVERSE LANDSCAPE": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:357 (Orientation.modeLabel; dynamic Strings lookup)",
+      "qid": ""
     }
   }
 }
