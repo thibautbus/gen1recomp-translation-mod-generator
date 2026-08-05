@@ -1,5 +1,7 @@
 # Gen1Recomp translation mods
 
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+
 This repository reproducibly generates multilingual `Gen1Recomp` translation
 mods. It turns the parallel Red/Blue data in `poke-corpus` into ROM catalogs
 and engine string overrides without storing a ROM or ROM extract here.
@@ -400,3 +402,21 @@ callsites, key commonality, and conservative triage. Use `--coverage-dir`,
 
 Japanese font extraction is unsupported. UI-width constraints, in-game testing, 
 and incomplete engine coverage remain relevant.
+
+## Credits
+
+- [Gen1Recomp](https://github.com/bryanthaboi/gen1recomp) by [bryanthaboi](https://github.com/bryanthaboi), the target game recompilation.
+- [PokéCorpus](https://github.com/abcboy101/poke-corpus) by [abcboy101](https://github.com/abcboy101), the multilingual translation corpus.
+
+## Contributors ✨
+
+Thanks go to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<table>
+  <tr>
+    <td align="center" valign="top" width="14.28%"><a href="https://github.com/antoniman31"><img src="https://avatars.githubusercontent.com/u/268696974?s=100" width="100px;" alt="AntoniMan31"/><br /><sub><b>AntoniMan31</b></sub></a><br /><a href="https://github.com/thibautbus/gen1recomp-translation-mod-generator/pull/10" title="Bug fixes">🐛</a></td>
+  </tr>
+</table>
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
