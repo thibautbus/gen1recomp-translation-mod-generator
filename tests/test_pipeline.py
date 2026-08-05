@@ -12,7 +12,16 @@ from pipeline.corpus import load_corpus
 from pipeline.generate import generate_lua, lua_string
 from pipeline.model import CorpusRecord
 from pipeline.mod import generate_mod
-from pipeline.join import demo_names_catalog, join_catalogs, read_worksheets, type_names_catalog, WorksheetEntry
+from pipeline.join import (
+    SENDOUT_ENGINE_KEYS,
+    WorksheetEntry,
+    _derive_sendout_templates,
+    demo_names_catalog,
+    join_catalogs,
+    read_worksheets,
+    sendout_strings_catalog,
+    type_names_catalog,
+)
 from pipeline.tokens import check_placeholders, encode
 from pipeline.validate import release_gate, validate
 from pipeline.worksheet import dump, load
@@ -392,6 +401,73 @@ class PipelineTests(unittest.TestCase):
             mod = generate_mod(rows, Path(tmp) / "mod", language="fr")
             body = (mod / "lang/demo_names.lua").read_text(encoding="utf-8")
             self.assertIn('["OLD MAN"] = "VIEILLARD"', body)
+
+
+    def test_sendout_templates_derive_all_languages(self):
+        rows = {
+            lang: (SENDOUT_ROW[lang], EXPECTED[lang])
+            for lang in SENDOUT_ROW
+        }
+        for lang, (value, expected) in rows.items():
+            derived = _derive_sendout_templates(value, lang)
+            self.assertEqual(derived, expected, lang)
+            for key, template in derived.items():
+                self.assertEqual(template.count("%s"), key.count("%s"), (lang, key, template))
+
+    def test_sendout_strings_catalog_uses_corpus_row(self):
+        rows = align([
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "en", SENDOUT_ROW["en"]),
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "fr", SENDOUT_ROW["fr"]),
+        ])
+        values, report = sendout_strings_catalog(rows, "fr")
+        self.assertEqual(values, EXPECTED["fr"])
+        self.assertEqual(report["translated"], 4)
+        self.assertEqual(report["unmatched"], [])
+
+    def test_sendout_strings_catalog_gates_empty_translation(self):
+        rows = align([
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "en", SENDOUT_ROW["en"]),
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "fr", ""),
+        ])
+        values, report = sendout_strings_catalog(rows, "fr")
+        self.assertEqual(values, {key: "" for key in SENDOUT_ENGINE_KEYS})
+        self.assertEqual(report["translated"], 0)
+        self.assertEqual(sorted(report["unmatched"]), sorted(SENDOUT_ENGINE_KEYS))
+
+    def test_sendout_strings_catalog_empty_without_corpus_rows(self):
+        values, report = sendout_strings_catalog([], "fr")
+        self.assertEqual(values, {})
+        self.assertEqual(report["translated"], 0)
+
+    def test_generate_mod_writes_sendout_strings(self):
+        rows = align([
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "en", SENDOUT_ROW["en"]),
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "fr", SENDOUT_ROW["fr"]),
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            mod = generate_mod(rows, Path(tmp) / "mod", language="fr")
+            body = (mod / "lang/strings.lua").read_text(encoding="utf-8")
+            self.assertIn('["%s is\\nabout to use"] = "%s\\nva appeler..."', body)
+            self.assertIn('["Will %s\\nchange POKéMON?"] = "%s va-t-il\\nchanger de POKéMON?"', body)
+            self.assertIn('["%s is\\nabout to use\\11%s!"] = "%s\\nva appeler...\\11%s!"', body)
+
+
+SENDOUT_ROW = {
+    "en": "{text_ram wTrainerName}{text_start} is<LINE>about to use<CONT>@{text_ram wEnemyMonNick}{text_start}!<PARA>Will <PLAYER><LINE>change #MON?<DONE>",
+    "fr": "{text_ram wTrainerName}{text_start}<LINE>va appeler...<CONT>@{text_ram wEnemyMonNick}{text_start}!<PARA><PLAYER> va-t-il<LINE>changer de<CONT>#MON?<DONE>",
+    "de": "{text_ram wTrainerName}{text_start} wird<LINE>@{text_ram wEnemyMonNick}{text_start} in den<CONT>Kampf schicken!<PARA>Möchtest Du das<LINE>#MON wechseln?<DONE>",
+    "es": "{text_start}¡@{text_ram wTrainerName}{text_start}<LINE>va a utilizar a<CONT>@{text_ram wEnemyMonNick}{text_start}!<PARA>¿<PLAYER> quiere<LINE>cambiar de<CONT>#MON?<DONE>",
+    "it": "{text_ram wTrainerName}{text_start}<LINE>sta per usare<CONT>@{text_ram wEnemyMonNick}{text_start}!<PARA><PLAYER>, vuoi<LINE>cambiare #MON?<DONE>",
+    "ja-Hrkt": "{text_ram wTrainerName}{text_start}は　@{text_ram wEnemyMonNick}{text_start}を<LINE>くりだそうと　しているようだ<PARA><PLAYER>も　#を<LINE>とりかえますか？<DONE>",
+}
+EXPECTED = {
+    "en": {"%s is\nabout to use": "%s is\nabout to use", "%s!": "%s!", "Will %s\nchange POKéMON?": "Will %s\nchange POKéMON?", "%s is\nabout to use\v%s!": "%s is\nabout to use\v%s!"},
+    "fr": {"%s is\nabout to use": "%s\nva appeler...", "%s!": "%s!", "Will %s\nchange POKéMON?": "%s va-t-il\nchanger de POKéMON?", "%s is\nabout to use\v%s!": "%s\nva appeler...\v%s!"},
+    "de": {"%s is\nabout to use": "%s wird", "%s!": "%s in den\nKampf schicken!", "Will %s\nchange POKéMON?": "%s, Möchtest Du das\nPOKéMON wechseln?", "%s is\nabout to use\v%s!": "%s wird\v%s in den\nKampf schicken!"},
+    "es": {"%s is\nabout to use": "¡%s\nva a utilizar a", "%s!": "%s!", "Will %s\nchange POKéMON?": "¿%s quiere\ncambiar de POKéMON?", "%s is\nabout to use\v%s!": "¡%s\nva a utilizar a\v%s!"},
+    "it": {"%s is\nabout to use": "%s\nsta per usare", "%s!": "%s!", "Will %s\nchange POKéMON?": "%s, vuoi\ncambiare POKéMON?", "%s is\nabout to use\v%s!": "%s\nsta per usare\v%s!"},
+    "ja-Hrkt": {"%s is\nabout to use": "%sは　", "%s!": "%sを\nくりだそうと　しているようだ", "Will %s\nchange POKéMON?": "%sも　#を\nとりかえますか？", "%s is\nabout to use\v%s!": "%sは　\v%sを\nくりだそうと　しているようだ"},
+}
 
 
 if __name__ == "__main__":

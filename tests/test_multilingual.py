@@ -96,6 +96,12 @@ class MultilingualTests(unittest.TestCase):
                 self.assertNotIn('Runtime.hooks:wrap("player.sprite"', main, language)
                 self.assertNotIn('BS.makeOldManDemo = function', main, language)
                 self.assertNotIn('mod.content.type_chart:patch', main, language)
+                # engine send-out templates translated from the corpus row
+                strings = (mod / "lang/strings.lua").read_text(encoding="utf-8")
+                self.assertIn('["%s is\\nabout to use"] = "', strings, language)
+                self.assertNotIn('["%s is\\nabout to use"] = "",', strings, language)
+                self.assertIn('["%s is\\nabout to use\\11%s!"] = "', strings, language)
+                self.assertNotIn('["%s is\\nabout to use\\11%s!"] = "",', strings, language)
                 # corpus-backed demo name (old-man tutorial literal) translated
                 demo = (mod / "lang/demo_names.lua").read_text(encoding="utf-8")
                 self.assertIn('  ["OLD MAN"] = ', demo, language)

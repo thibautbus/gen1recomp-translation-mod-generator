@@ -104,6 +104,114 @@ DEMO_NAMES_QIDS = {
     "PROF.OAK": "rb.name_pointers.TrainerNamePointers.ProfOakName",
 }
 
+# The trainer send-out message: the engine renders it as fixed templates
+# (BattleState.lua TrainerSentOutText) fed from one corpus row:
+#   older engines split it as "%s is\nabout to use" -> "%s!" -> "Will
+#   %s\nchange POKéMON?"; the current engine (commit #565) merged the
+#   first two into "%s is\nabout to use\v%s!" (2 placeholders, \v = wait
+#   for a button press).  The templates are English-structured; fr/es/it
+#   mirror them, de and ja need structural adaptation (see
+#   _derive_sendout_templates).
+SENDOUT_QID = "rb.text_2.TrainerAboutToUseText"
+SENDOUT_ENGINE_KEYS = ("%s is\nabout to use", "%s!", "Will %s\nchange POKéMON?", "%s is\nabout to use\v%s!")
+
+
+def _derive_sendout_templates(value: str, lang: str) -> dict[str, str]:
+    """Derive the engine's three send-out templates from the corpus message.
+
+    The corpus value carries the whole localized message with text control
+    codes; the trainer name, the incoming nick and the player name are RAM
+    placeholders the engine parameterizes.  Structure per language:
+    en/fr/it  "X is about to use<CONT>@NICK!<PARA>Will <PLAYER> change #MON?"
+    es         ¡@X ... (the ¡ precedes the name)
+    de         X wird<LINE>@NICK in den<CONT>Kampf schicken!<PARA>... (nick
+               inline; the change prompt has no <PLAYER>)
+    ja         Xは　@NICKを<LINE>くりだそうとしているようだ<PARA>...
+               (the sentence continues after the nick's を particle)
+    """
+    value = value.replace("<DONE>", "")
+    head, _, tail = value.partition("<PARA>")
+    before_nick, _, nick_suffix = head.partition("{text_ram wEnemyMonNick}")
+    prefix, _, body = before_nick.partition("{text_ram wTrainerName}")
+
+    def clean(text: str, cont: str = " ") -> str:
+        return (text.replace("{text_start}", "").replace("@", "")
+                    .replace("<LINE>", "\n").replace("<CONT>", cont))
+
+    # msg1: the static text glued to the trainer name, cut where the nick
+    # begins (<CONT> in en/fr/es/it, a trailing <LINE> in de, nothing in ja).
+    if "<CONT>" in body:
+        body = body.split("<CONT>", 1)[0]
+    elif "<LINE>" in body:
+        body = body.split("<LINE>", 1)[0]
+    msg1 = clean(prefix) + "%s" + clean(body)
+
+    # msg2: the nick plus its suffix ("!", ja's を particle, de's verb phrase
+    # which must wrap onto a second line to fit the message box).
+    if lang == "de":
+        msg2 = "%s" + clean(nick_suffix, cont="\n")
+    else:
+        msg2 = "%s" + clean(nick_suffix)
+
+    # The current engine (#565) merged msg1+msg2 into one template with a
+    # \v wait marker between the parts; older engines kept them separate.
+    merged12 = msg1 + "\v" + msg2
+
+    # msg3: the change prompt.  <PLAYER> becomes the placeholder; the ROM's
+    # "#MON" symbol renders as POKéMON in the engine template.  de's prompt
+    # addresses the player without a name, so the name is injected (the
+    # engine template requires its %s).
+    prompt = clean(tail).replace("#MON", "POKéMON")
+    if "<PLAYER>" in tail:
+        prompt = prompt.replace("<PLAYER>", "%s")
+    elif lang == "de":
+        prompt = "%s, " + prompt
+
+    return {
+        "%s is\nabout to use": msg1,
+        "%s!": msg2,
+        "Will %s\nchange POKéMON?": prompt,
+        "%s is\nabout to use\v%s!": merged12,
+    }
+
+
+def sendout_strings_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple[dict[str, str], dict]:
+    """Join the engine's trainer send-out templates from the corpus.
+
+    All three engine keys are emitted (left empty when untranslated, like
+    type_names/demo_names) so the coverage gate counts them; an empty
+    catalog is returned when the corpus carries no such row at all.
+    """
+    by_qid = {_base_qid(item.qid): item for item in items}
+    row = by_qid.get(SENDOUT_QID)
+    output: dict[str, str] = {}
+    report = {"translated": 0, "unmatched": [], "strategies": {}, "reasons": {}, "qids": {key: SENDOUT_QID for key in SENDOUT_ENGINE_KEYS}}
+    if row is None:
+        for key in SENDOUT_ENGINE_KEYS:
+            report["unmatched"].append(key)
+            report["strategies"][key] = "manual_review"
+            report["reasons"][key] = f"{SENDOUT_QID}: no {target_lang} translation; manual review required"
+        return output, report
+    if not row.translation:
+        for key in SENDOUT_ENGINE_KEYS:
+            output[key] = ""
+            report["unmatched"].append(key)
+            report["strategies"][key] = "manual_review"
+            report["reasons"][key] = f"{SENDOUT_QID}: empty {target_lang} translation; manual review required"
+        return output, report
+    templates = _derive_sendout_templates(str(row.translation), target_lang)
+    for key in SENDOUT_ENGINE_KEYS:
+        value = templates.get(key) or ""
+        output[key] = value
+        if value:
+            report["translated"] += 1
+            report["strategies"][key] = "sendout_qid"
+        else:
+            report["unmatched"].append(key)
+            report["strategies"][key] = "manual_review"
+            report["reasons"][key] = f"{SENDOUT_QID}: no derivable {target_lang} template; manual review required"
+    return output, report
+
 
 @dataclass
 class WorksheetEntry:
@@ -554,4 +662,14 @@ def join_catalogs(items: list[Alignment], worksheets: dict[str, list[WorksheetEn
         report["unmatched"]["demo_names"] = demo_report["unmatched"]
         report["strategies"]["demo_names"] = demo_report["strategies"]
         report["reasons"]["demo_names"] = demo_report["reasons"]
+    # The trainer send-out templates (strings catalog) are qid-driven too:
+    # one corpus row feeds the engine's three fixed templates.
+    sendout_values, sendout_report = sendout_strings_catalog(items, target_lang)
+    output["strings"].update(sendout_values)
+    report["strings_sendout"] = sendout_report
+    if sendout_values:
+        report["matched"]["strings_sendout"] = sendout_report["translated"]
+        report["unmatched"]["strings_sendout"] = sendout_report["unmatched"]
+        report["strategies"]["strings_sendout"] = sendout_report["strategies"]
+        report["reasons"]["strings_sendout"] = sendout_report["reasons"]
     return output, report

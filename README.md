@@ -152,6 +152,19 @@ The Pallet-intro thrower sprite is deliberately left to the engine: with
 `demoName` kept canonical, the engine itself selects Prof. Oak's back pic
 for that demo, exactly as in vanilla (a `player.sprite` override would
 clobber it with the front trainer pic).
+
+The trainer send-out message (BattleState's TrainerSentOutText) is joined
+qid-driven from the single corpus row `rb.text_2.TrainerAboutToUseText`
+into the `strings` engine catalog. The engine templates are
+English-structured, so the derivation follows each language's ROM
+structure: faithful for fr/es/it (`PIERRE\nva appeler...`, `¡%s\nva a
+utilizar a`), adapted for de (the nick's verb phrase moves into the
+`%s!` message and the player name is injected into the change prompt,
+whose ROM form has no placeholder) and ja (`%sは\u3000` / `%sを...` / `%sも
+\u3000#を...`). Engines since commit #565 merged the first two parts into
+one template (`%s is\nabout to use\v%s!`, two placeholders), so that
+merged key is emitted alongside the split ones — both engine generations
+resolve.
 Type display names are engine content — the runtime
 `type_chart` registry, not a modkit worksheet — so a seventh `type_names.lua`
 catalog is joined qid-driven from `rb.names.TypeNames.*`: exactly the 15
@@ -171,19 +184,21 @@ registration files.
 ## Translation coverage
 
 `ROM aggregate` is the release gate: six ROM-derived catalogs, fifteen
-corpus-backed type names, five corpus-backed literal handlers, and the two
-corpus-backed demo names (`OLD MAN`, `PROF.OAK`). Engine
+corpus-backed type names, five corpus-backed literal handlers, the two
+corpus-backed demo names (`OLD MAN`, `PROF.OAK`) and the four trainer
+send-out templates (`%s is\nabout to use`, `%s!`, `%s is\nabout to
+use\v%s!`, `Will %s\nchange POKéMON?`). Engine
 columns are informational; English fallback keeps untranslated entries
 playable. Reports are generated from cached ROM imports and corpus
 snapshots, so revisions can change these values.
 
 | Target | ROM catalogs | Type names | Literal handlers | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3124/3124 (100%) | 357/358 (99.72%) | 369/581 (63.51%) |
-| `de` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3124/3124 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
-| `es` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3124/3124 (100%) | 357/358 (99.72%) | 369/581 (63.51%) |
-| `it` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3124/3124 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3124/3124 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
+| `fr` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3128/3128 (100%) | 357/358 (99.72%) | 369/581 (63.51%) |
+| `de` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3128/3128 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
+| `es` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3128/3128 (100%) | 357/358 (99.72%) | 369/581 (63.51%) |
+| `it` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3128/3128 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
+| `ja-Hrkt` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3128/3128 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
 
 The five handlers are backed by 15/15 unique corpus qids. `RBY-related engine
 strings` counts 358 keys from Gen1Recomp's 581-key catalog whose production
