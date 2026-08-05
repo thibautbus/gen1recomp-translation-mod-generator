@@ -102,6 +102,8 @@ class MultilingualTests(unittest.TestCase):
                 self.assertNotIn('["%s is\\nabout to use"] = "",', strings, language)
                 self.assertIn('["%s is\\nabout to use\\11%s!"] = "', strings, language)
                 self.assertNotIn('["%s is\\nabout to use\\11%s!"] = "",', strings, language)
+                self.assertIn('["SEEN %3d  OWN %3d"] = "', strings, language)
+                self.assertNotIn('["SEEN %3d  OWN %3d"] = "",', strings, language)
                 # corpus-backed demo name (old-man tutorial literal) translated
                 demo = (mod / "lang/demo_names.lua").read_text(encoding="utf-8")
                 self.assertIn('  ["OLD MAN"] = ', demo, language)

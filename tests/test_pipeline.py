@@ -11,7 +11,7 @@ from pipeline.cli import main as cli_main
 from pipeline.corpus import load_corpus
 from pipeline.generate import generate_lua, lua_string
 from pipeline.model import CorpusRecord
-from pipeline.mod import generate_mod
+from pipeline.mod import ENGINE_KEY_MIGRATIONS, generate_mod, migrate_engine_keys
 from pipeline.join import (
     SENDOUT_ENGINE_KEYS,
     WorksheetEntry,
@@ -469,6 +469,17 @@ EXPECTED = {
     "ja-Hrkt": {"%s is\nabout to use": "%sは　", "%s!": "%sを\nくりだそうと　しているようだ", "Will %s\nchange POKéMON?": "%sも　#を\nとりかえますか？", "%s is\nabout to use\v%s!": "%sは　\v%sを\nくりだそうと　しているようだ"},
 }
 
+
+def test_migrate_engine_keys_derives_changed_key(self):
+        values = migrate_engine_keys({"SEEN %d  OWNED %d": "Vus:%d  Pris:%d"})
+        self.assertEqual(values["SEEN %3d  OWN %3d"], "Vus:%3d  Pris:%3d")
+        self.assertIn("SEEN %d  OWNED %d", values)
+        values2 = migrate_engine_keys({
+            "SEEN %3d  OWN %3d": "Déjà fait",
+            "SEEN %d  OWNED %d": "Vus:%d  Pris:%d",
+        })
+        self.assertEqual(values2["SEEN %3d  OWN %3d"], "Déjà fait")
+        self.assertEqual(migrate_engine_keys({}), {})
 
 if __name__ == "__main__":
     unittest.main()

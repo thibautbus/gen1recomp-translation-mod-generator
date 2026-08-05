@@ -13,6 +13,29 @@ from .project import project_version
 from .literals import load_recipes, generate_handlers
 
 CATALOGS = ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels", "type_names", "demo_names")
+
+# Engine keys that changed after the pinned revision (898bf0c7): the current
+# engine looks up the NEW key, which the pinned worksheet does not carry, so
+# the translation is derived from the OLD key's value.  #639 reworked the
+# Pokédex footer ("SEEN %d  OWNED %d" -> "SEEN %3d  OWN %3d", fixed 3-digit
+# fields and "OWN" instead of "OWNED").
+ENGINE_KEY_MIGRATIONS = {
+    "SEEN %3d  OWN %3d": ("SEEN %d  OWNED %d", lambda value: value.replace("%d", "%3d")),
+}
+
+
+def migrate_engine_keys(values: dict[str, str]) -> dict[str, str]:
+    """Derive translations for engine keys that changed after the pin.
+
+    Each migration maps a HEAD-only key to the pinned key it replaced and a
+    transform of the pinned key's translated value.  The engine's format-
+    directive arity is preserved by the transform.
+    """
+    for new_key, (old_key, transform) in ENGINE_KEY_MIGRATIONS.items():
+        old_value = values.get(old_key)
+        if new_key not in values and isinstance(old_value, str) and old_value:
+            values[new_key] = transform(old_value)
+    return values
 # Keep every language at the same priority; language choice must not affect load order.
 TRANSLATION_MOD_PRIORITY = 100
 COMMANDS_SHOW_TEXT_KEYS = {
@@ -249,6 +272,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
     if engine_values is None:
         engine_values = {}
     engine_values.update(sendout_values)
+    migrate_engine_keys(engine_values)
     (destination / "lang").mkdir(exist_ok=True)
     for name in CATALOGS:
         if name == "strings" and engine_values:

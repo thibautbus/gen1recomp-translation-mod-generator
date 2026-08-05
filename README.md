@@ -164,7 +164,10 @@ whose ROM form has no placeholder) and ja (`%sは\u3000` / `%sを...` / `%sも
 \u3000#を...`). Engines since commit #565 merged the first two parts into
 one template (`%s is\nabout to use\v%s!`, two placeholders), so that
 merged key is emitted alongside the split ones — both engine generations
-resolve.
+resolve. Other key changes after the pin are handled by an engine-key
+migration table (`ENGINE_KEY_MIGRATIONS`): #639 reworked the Pokédex
+footer (`SEEN %d  OWNED %d` → `SEEN %3d  OWN %3d`), whose translation is
+derived from the old key's value with the directive widths preserved.
 Type display names are engine content — the runtime
 `type_chart` registry, not a modkit worksheet — so a seventh `type_names.lua`
 catalog is joined qid-driven from `rb.names.TypeNames.*`: exactly the 15
