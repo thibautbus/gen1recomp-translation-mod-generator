@@ -215,9 +215,9 @@
       "provenance": "Link-battle (Colosseum) opponent-name fallback, engine-authored; user-approved per-language value."
     },
     "BOX %d is full!": {
-      "override": "BOÎTE %d pleine!",
+      "override": "BOITE %d pleine!",
       "reason": "engine-original",
-      "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
+      "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation. Circumflex dropped: fr GB font has no uppercase accents (corpus fr spells BOITE); corpus-checked 2026-08-05."
     },
     "No POKéMON!": {
       "override": "AUCUN POKéMON!",
@@ -255,7 +255,7 @@
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "FAITHFUL RATIO": {
-      "override": "RATIO FIDÈLE",
+      "override": "RATIO FIDèLE",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
@@ -335,9 +335,9 @@
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "VIDEO MODE": {
-      "override": "MODE VIDÉO",
+      "override": "MODE VIDEO",
       "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row. Uppercase accent dropped: fr GB font has no É; matches fr ROM spelling (VIDEO)."
     },
     "VOID FILL": {
       "override": "REMPLISSAGE",
@@ -410,9 +410,9 @@
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "CENTERED": {
-      "override": "CENTRÉ",
+      "override": "CENTRE",
       "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Uppercase accent dropped: fr GB font has no É; matches fr ROM spelling (CENTRE)."
     },
     "low": {
       "override": "BAS",
@@ -420,14 +420,14 @@
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "balanced": {
-      "override": "ÉQUILIBRÉ",
+      "override": "EQUILIBRE",
       "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Uppercase accent dropped: fr GB font has no É."
     },
     "high": {
-      "override": "ÉLEVÉ",
+      "override": "HAUT",
       "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Uppercase accent dropped (ÉLEVÉ unrenderable); HAUT parallels BAS."
     },
     "auto": {
       "override": "AUTO",
@@ -450,9 +450,9 @@
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "REVERSE LANDSCAPE": {
-      "override": "PAYSAGE INVERSÉ",
+      "override": "PAYSAGE INVERSE",
       "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Uppercase accent dropped: fr GB font has no É."
     }
   }
 }

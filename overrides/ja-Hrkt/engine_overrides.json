@@ -235,9 +235,9 @@
       "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
     },
     "BATTLE BG": {
-      "override": "バトル背景",
+      "override": "バトルバック",
       "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "BATTLE LAYOUT": {
       "override": "バトルレイアウト",
@@ -255,9 +255,9 @@
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "FAITHFUL RATIO": {
-      "override": "忠実比",
+      "override": "オリジナルひれい",
       "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "GAME SPEED": {
       "override": "ゲームスピード",
@@ -270,9 +270,9 @@
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "MAX FPS": {
-      "override": "最大FPS",
+      "override": "さいだいFPS",
       "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "MODS": {
       "override": "MODS",
@@ -280,14 +280,14 @@
       "provenance": "User-validated 2026-08-05: kept as-is (proper noun, no translation)."
     },
     "MUSIC FILTER": {
-      "override": "音楽フィルター",
+      "override": "おんがくフィルター",
       "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "MUSIC VOL": {
-      "override": "音楽ボリューム",
+      "override": "おんがくボリューム",
       "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "ON": {
       "override": "オン",
@@ -300,9 +300,9 @@
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "ORIENTATION": {
-      "override": "向き",
+      "override": "むき",
       "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "PERFORMANCE": {
       "override": "パフォーマンス",
@@ -310,19 +310,19 @@
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "RESET DEFAULTS": {
-      "override": "初期設定に戻す",
+      "override": "はじめにもどす",
       "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "SFX VOL": {
-      "override": "効果音ボリューム",
+      "override": "こうかおんボリューム",
       "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "TILT": {
-      "override": "傾き",
+      "override": "かたむき",
       "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "TOUCH PAD": {
       "override": "タッチパッド",
@@ -335,14 +335,14 @@
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "VIDEO MODE": {
-      "override": "画面モード",
+      "override": "がめんモード",
       "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "VOID FILL": {
-      "override": "余白",
+      "override": "よはく",
       "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "FAST": {
       "override": "はやい",
@@ -385,19 +385,19 @@
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "FIXED": {
-      "override": "固定",
+      "override": "こてい",
       "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "BLACK": {
-      "override": "黒",
+      "override": "くろ",
       "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "WHITE": {
-      "override": "白",
+      "override": "しろ",
       "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "WORLD": {
       "override": "ワールド",
@@ -410,49 +410,49 @@
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "CENTERED": {
-      "override": "中央",
+      "override": "ちゅうおう",
       "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "low": {
-      "override": "低",
+      "override": "ひくい",
       "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "balanced": {
-      "override": "標準",
+      "override": "ふつう",
       "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "high": {
-      "override": "高",
+      "override": "たかい",
       "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "auto": {
-      "override": "自動",
+      "override": "じどう",
       "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "AUTO": {
-      "override": "自動",
+      "override": "じどう",
       "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "PORTRAIT": {
-      "override": "縦",
+      "override": "たて",
       "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "LANDSCAPE": {
-      "override": "横",
+      "override": "よこ",
       "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     },
     "REVERSE LANDSCAPE": {
-      "override": "横逆",
+      "override": "よこぎゃく",
       "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
     }
   }
 }
