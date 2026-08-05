@@ -105,7 +105,8 @@ DEMO_NAMES_QIDS = {
 }
 
 # The trainer send-out message: the engine renders it as fixed templates
-# (BattleState.lua TrainerSentOutText) fed from one corpus row:#   older engines split it as "%s is\nabout to use" -> "%s!" -> "Will
+# (BattleState.lua TrainerSentOutText) fed from one corpus row. Older engines
+# split it as "%s is\nabout to use" -> "%s!" -> "Will
 #   %s\nchange POKéMON?"; the current engine (commit #565) merged the
 #   first two into "%s is\nabout to use\v%s!" (2 placeholders, \v = wait
 #   for a button press).  The templates are English-structured; fr/es/it
@@ -118,7 +119,7 @@ SENDOUT_ENGINE_KEYS = ("%s is\nabout to use\v%s!", "Will %s\nchange POKéMON?")
 
 
 def _derive_sendout_templates(value: str, lang: str) -> dict[str, str]:
-    """Derive the engine's three send-out templates from the corpus message.
+    """Derive current and legacy send-out templates from the corpus message.
 
     The corpus value carries the whole localized message with text control
     codes; the trainer name, the incoming nick and the player name are RAM

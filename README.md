@@ -239,10 +239,10 @@ snapshots, so revisions can change these values.
 > `Keep it up!`, `No SURFing here!`), reported as `covered_by_rom` in the
 > per-key breakdown. `fallback_english` counts unmatched keys; ambiguous keys
 > are reported separately, and both keep the runtime's English text. Six
-> corpus-qid keys merged after matching (the two trainer
+> corpus-qid keys are merged after matching (the two trainer
 > send-out, Pokédex footer `SEEN %3d  OWN %3d`, the two romText fallbacks and
-> `Enemy %s`) are synced back into the report as `qid-driven`, so the count
-> matches what ships.
+> `Enemy %s`). Their shipped values are synced back into the report so its
+> count stays accurate; existing semantic or override provenance is retained.
 
 | Target | ROM catalogs | Corpus-derived runtime extras | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -321,8 +321,8 @@ corpus revisions. Generated coverage reports are the authoritative inventory
 of unmatched and ambiguous strings for a given build.
 
 Each language currently contains 19 AI-generated `engine-contract-gap`
-overrides. Eleven legacy manual entries were normalized as `engine-original`
-translations with no compatible PokeCorpus qid. Their per-entry provenance records the limitation,
+overrides. The larger `engine-original` group includes eleven legacy manual
+entries that were normalized during the provenance migration. Their per-entry provenance records the limitation,
 the upstream improvement path where applicable, and the need for in-game
 visual validation. Technical labels and formats are retained where changing
 them would break the engine contract.
