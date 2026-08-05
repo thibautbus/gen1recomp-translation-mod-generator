@@ -453,6 +453,11 @@
       "override": "よこぎゃく",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
+    },
+    "Nothing here.": {
+      "override": "なにもない",
+      "reason": "engine-original",
+      "provenance": "User-validated 2026-08-05; aligned with poke-corpus rb.text_1.NothingHereText phrasing per language; empty-list message (ui/ListMenu.lua:214, direct Strings render, no data.text shadow)."
     }
   }
 }

@@ -463,6 +463,11 @@
       "override": "QUERFORMAT INVERS",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+    },
+    "Nothing here.": {
+      "override": "Nichts hier!",
+      "reason": "engine-original",
+      "provenance": "User-validated 2026-08-05; aligned with poke-corpus rb.text_1.NothingHereText phrasing per language; empty-list message (ui/ListMenu.lua:214, direct Strings render, no data.text shadow)."
     }
   }
 }
