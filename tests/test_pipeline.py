@@ -569,7 +569,7 @@ class PipelineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             mod = generate_mod(rows, Path(tmp) / "mod", language="fr")
             body = (mod / "lang/strings.lua").read_text(encoding="utf-8")
-            self.assertIn('["%s is\\nabout to use\\11%s!"] = "%s\\nva appeler...\\11%s!"', body)
+            self.assertIn('["%s is\\nabout to use\\011%s!"] = "%s\\nva appeler...\\011%s!"', body)
             self.assertIn('["Will %s\\nchange POKéMON?"] = "%s va-t-il\\nchanger de POKéMON?"', body)
             self.assertNotIn('["%s is\\nabout to use"] = ', body)
 

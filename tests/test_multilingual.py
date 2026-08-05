@@ -98,8 +98,8 @@ class MultilingualTests(unittest.TestCase):
                 self.assertNotIn('mod.content.type_chart:patch', main, language)
                 # engine send-out templates translated from the corpus row
                 strings = (mod / "lang/strings.lua").read_text(encoding="utf-8")
-                self.assertIn('["%s is\\nabout to use\\11%s!"] = "', strings, language)
-                self.assertNotIn('["%s is\\nabout to use\\11%s!"] = "",', strings, language)
+                self.assertIn('["%s is\\nabout to use\\011%s!"] = "', strings, language)
+                self.assertNotIn('["%s is\\nabout to use\\011%s!"] = "",', strings, language)
                 self.assertIn('["Will %s\\nchange POKéMON?"] = "', strings, language)
                 self.assertNotIn('["%s is\\nabout to use"] = "', strings, language)
                 # romText fallback keys the engine renders via Strings
