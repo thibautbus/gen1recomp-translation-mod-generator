@@ -247,13 +247,15 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
     # The trainer send-out templates (strings.lua) are qid-driven from one
     # corpus row (see pipeline/join.py) and merged into the engine strings,
     # so they ship even without a worksheet.
-    from .join import sendout_strings_catalog, pokedex_footer_catalog
+    from .join import sendout_strings_catalog, pokedex_footer_catalog, romtext_fallback_catalog
     sendout_values, sendout_report = sendout_strings_catalog(rows, language)
     pokedex_values, pokedex_report = pokedex_footer_catalog(rows, language)
     if engine_values is None:
         engine_values = {}
     engine_values.update(sendout_values)
     engine_values.update(pokedex_values)
+    romtext_values, romtext_report = romtext_fallback_catalog(engine_values, rows, language)
+    engine_values.update(romtext_values)
     (destination / "lang").mkdir(exist_ok=True)
     for name in CATALOGS:
         if name == "strings" and engine_values:
@@ -385,6 +387,13 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         rom_translated += strings_pokedex_translated
         rom_details["strings_pokedex"] = {
             "translated": strings_pokedex_translated, "total": strings_pokedex_total,
+        }
+        strings_romtext_total = len(romtext_values)
+        strings_romtext_translated = romtext_report["translated"]
+        rom_total += strings_romtext_total
+        rom_translated += strings_romtext_translated
+        rom_details["strings_romtext"] = {
+            "translated": strings_romtext_translated, "total": strings_romtext_total,
         }
         report["rom"] = {"translated": rom_translated, "total": rom_total, "percent": round(rom_translated * 100 / rom_total, 2) if rom_total else 100.0, "details": rom_details}
         if engine_report is not None:

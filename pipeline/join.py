@@ -440,6 +440,49 @@ def pokedex_footer_catalog(items: list[Alignment], target_lang: str = "fr") -> t
     return output, report
 
 
+# romText fallback keys that v0.1.69 renders via Strings because the pokered
+# label cannot carry the call's arguments (slot mismatch in RomText).
+#
+# 1. "%s\nused %s!" (battle move-use, BattleState.lua:3433): _ItemUseText001
+#    extracts as "{PLAYER} used" / "{PLAYER} utilise:" — a single slot, while
+#    the call passes user + move.  The item-use variant of the same message
+#    ("%s used\n%s!", BattleState.lua:4491) is already translated from
+#    rb.text_7.ItemUseText001, so the battle key aliases it.
+# 2. "The enemy's weak!\nGet'm! %s!" (BattleState.lua:1362): _EnemysWeakText
+#    extracts without a name slot; the corpus row rb.text_2.EnemysWeakText
+#    carries the localized phrase with the trailing name slot.
+ROMTEXT_USED_KEY = "%s\nused %s!"
+ROMTEXT_USED_ALIAS = "%s used\n%s!"
+ENEMY_WEAK_QID = "rb.text_2.EnemysWeakText"
+ENEMY_WEAK_KEY = "The enemy's weak!\nGet'm! %s!"
+
+
+def romtext_fallback_catalog(values: dict[str, str], items: list[Alignment], target_lang: str = "fr") -> tuple[dict[str, str], dict]:
+    """Localize the romText fallback keys the engine renders via Strings."""
+    output: dict[str, str] = {}
+    report = {"translated": 0, "unmatched": [], "strategies": {}, "reasons": {}}
+    alias = values.get(ROMTEXT_USED_ALIAS)
+    if alias:
+        output[ROMTEXT_USED_KEY] = alias
+        report["strategies"][ROMTEXT_USED_KEY] = "alias_item_use"
+    else:
+        report["unmatched"].append(ROMTEXT_USED_KEY)
+        report["strategies"][ROMTEXT_USED_KEY] = "manual_review"
+        report["reasons"][ROMTEXT_USED_KEY] = f"{ROMTEXT_USED_ALIAS!r} untranslated; manual review required"
+    row = next((item for item in items if _base_qid(item.qid) == ENEMY_WEAK_QID), None)
+    if row is not None and row.translation:
+        value = row.translation.replace("{text_start}", "").replace("<LINE>", "\n")
+        value = value.rstrip("@")
+        output[ENEMY_WEAK_KEY] = value + "%s!"
+        report["strategies"][ENEMY_WEAK_KEY] = "corpus_enemy_weak"
+    else:
+        report["unmatched"].append(ENEMY_WEAK_KEY)
+        report["strategies"][ENEMY_WEAK_KEY] = "manual_review"
+        report["reasons"][ENEMY_WEAK_KEY] = f"missing or empty corpus row {ENEMY_WEAK_QID}; manual review required"
+    report["translated"] = len(output)
+    return output, report
+
+
 def demo_names_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple[dict[str, str], dict]:
     """Join the corpus rows for engine hard-coded demo-battle names.
 

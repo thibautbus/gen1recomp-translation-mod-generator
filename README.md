@@ -188,14 +188,16 @@ registration files.
 
 `ROM aggregate` is the release gate: six ROM-derived catalogs plus the
 corpus-backed extras in the next column (type names, literal handlers,
-demo names `OLD MAN`/`PROF.OAK`, the two trainer send-out keys and the
-Pokédex footer `SEEN %3d  OWN %3d`). Engine
+demo names `OLD MAN`/`PROF.OAK`, the two trainer send-out keys, the
+Pokédex footer `SEEN %3d  OWN %3d` and the two romText fallback keys
+(`%s\nused %s!`, `The enemy's weak!\nGet'm! %s!`)). Engine
 columns are informational; English fallback keeps untranslated entries
 playable. Reports are generated from cached ROM imports and corpus
 snapshots, so revisions can change these values.
 
-> The `Corpus-backed extras` column is the sum `15 + 5 + 2 + 2 + 1 = 25`, so
-> `3127 = 3102 + 25` reads directly off the table. Engine-string counts also
+> The `Corpus-backed extras` column is the sum `15 + 5 + 2 + 2 + 1 + 2 = 27`
+> (the last two are the romText fallback keys), so `3129 = 3102 + 27` reads
+> directly off the table. Engine-string counts also
 > move between revisions because the engine re-channels texts: v0.1.69
 > renders the battle effect messages via `data.text` instead of `Strings`,
 > so the `All engine strings` denominator shrank even as the dialogue
@@ -203,15 +205,18 @@ snapshots, so revisions can change these values.
 
 | Target | ROM catalogs | Corpus-backed extras | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 25/25 (100%) | 3127/3127 (100%) | 244/246 (99.19%) | 258/604 (42.72%) |
-| `de` | 3102/3102 (100%) | 25/25 (100%) | 3127/3127 (100%) | 244/246 (99.19%) | 259/604 (42.88%) |
-| `es` | 3102/3102 (100%) | 25/25 (100%) | 3127/3127 (100%) | 244/246 (99.19%) | 258/604 (42.72%) |
-| `it` | 3102/3102 (100%) | 25/25 (100%) | 3127/3127 (100%) | 244/246 (99.19%) | 260/604 (43.05%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 25/25 (100%) | 3127/3127 (100%) | 244/246 (99.19%) | 259/604 (42.88%) |
+| `fr` | 3102/3102 (100%) | 27/27 (100%) | 3129/3129 (100%) | 244/246 (99.19%) | 258/604 (42.72%) |
+| `de` | 3102/3102 (100%) | 27/27 (100%) | 3129/3129 (100%) | 244/246 (99.19%) | 259/604 (42.88%) |
+| `es` | 3102/3102 (100%) | 27/27 (100%) | 3129/3129 (100%) | 244/246 (99.19%) | 258/604 (42.72%) |
+| `it` | 3102/3102 (100%) | 27/27 (100%) | 3129/3129 (100%) | 244/246 (99.19%) | 260/604 (43.05%) |
+| `ja-Hrkt` | 3102/3102 (100%) | 27/27 (100%) | 3129/3129 (100%) | 244/246 (99.19%) | 259/604 (42.88%) |
 
-The corpus-backed extras are fully translated (25/25): fifteen type names,
-five literal handlers (15/15 unique corpus qids), two demo names and the
-three engine templates (send-out + Pokédex footer). `RBY-related engine
+The corpus-backed extras are fully translated (27/27): fifteen type names,
+five literal handlers (15/15 unique corpus qids), two demo names, the
+three engine templates (send-out + Pokédex footer) and the two romText
+fallback keys (the battle move-use `X used Y!` and the rival `The enemy's
+weak!` messages, rendered via Strings because their pokered labels carry
+fewer slots than the calls pass). `RBY-related engine
 strings` counts 246 keys from Gen1Recomp v0.1.69's 604-key catalog whose
 production callsites reproduce original Red/Blue gameplay or interfaces; `All
 engine strings` covers the complete catalog, including modern surfaces. The

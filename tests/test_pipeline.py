@@ -20,6 +20,7 @@ from pipeline.join import (
     join_catalogs,
     pokedex_footer_catalog,
     read_worksheets,
+    romtext_fallback_catalog,
     sendout_strings_catalog,
     type_names_catalog,
 )
@@ -459,6 +460,29 @@ class PipelineTests(unittest.TestCase):
         values, report = pokedex_footer_catalog(rows, "fr")
         self.assertEqual(values, {})
         self.assertIn("OWN", report["unmatched"])
+
+    def test_romtext_fallback_catalog_aliases_used_and_derives_enemy_weak(self):
+        rows = align([
+            CorpusRecord("rb.text_7.ItemUseText001", "en", "{text_start}<PLAYER> used@@"),
+            CorpusRecord("rb.text_7.ItemUseText001", "fr", "{text_start}<PLAYER> utilise:@@"),
+            CorpusRecord("rb.text_2.EnemysWeakText", "en", "{text_start}The enemy's weak!<LINE>Get'm! @@"),
+            CorpusRecord("rb.text_2.EnemysWeakText", "fr", "{text_start}Il est à toi,<LINE>@@"),
+        ])
+        values = {"%s used\n%s!": "%s utilise:\n%s!"}
+        output, report = romtext_fallback_catalog(values, rows, "fr")
+        self.assertEqual(output["%s\nused %s!"], "%s utilise:\n%s!")
+        self.assertEqual(output["The enemy's weak!\nGet'm! %s!"], "Il est à toi,\n%s!")
+        self.assertEqual(report["translated"], 2)
+        self.assertEqual(report["unmatched"], [])
+
+    def test_romtext_fallback_catalog_unmatched_without_source(self):
+        rows = align([
+            CorpusRecord("rb.text_7.ItemUseText001", "en", "{text_start}<PLAYER> used@@"),
+            CorpusRecord("rb.text_7.ItemUseText001", "fr", "{text_start}<PLAYER> utilise:@@"),
+        ])
+        output, report = romtext_fallback_catalog({}, rows, "fr")
+        self.assertEqual(output, {})
+        self.assertEqual(len(report["unmatched"]), 2)
 
     def test_generate_mod_writes_sendout_strings(self):
         rows = align([

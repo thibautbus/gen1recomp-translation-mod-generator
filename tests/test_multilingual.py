@@ -102,6 +102,11 @@ class MultilingualTests(unittest.TestCase):
                 self.assertNotIn('["%s is\\nabout to use\\11%s!"] = "",', strings, language)
                 self.assertIn('["Will %s\\nchange POKéMON?"] = "', strings, language)
                 self.assertNotIn('["%s is\\nabout to use"] = "', strings, language)
+                # romText fallback keys the engine renders via Strings
+                self.assertIn('["%s\\nused %s!"] = "', strings, language)
+                self.assertNotIn('["%s\\nused %s!"] = "",', strings, language)
+                self.assertIn('["The enemy\'s weak!\\nGet\'m! %s!"] = "', strings, language)
+                self.assertNotIn('["The enemy\'s weak!\\nGet\'m! %s!"] = "",', strings, language)
                 self.assertIn('["SEEN %3d  OWN %3d"] = "', strings, language)
                 self.assertNotIn('["SEEN %3d  OWN %3d"] = "",', strings, language)
                 # corpus-backed demo name (old-man tutorial literal) translated
