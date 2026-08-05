@@ -94,7 +94,7 @@
       "eligibility": "eligible",
       "reason": "engine-contract-gap",
       "provenance": "forced_dynamic",
-      "callsite": "src/ui/SummaryMenu.lua:156 (runtime table; compatibility/engine-contract workaround; no literal callsite at 898bf)",
+      "callsite": "src/ui/SummaryMenu.lua:156 (runtime table; compatibility/engine-contract workaround; no literal callsite)",
       "qid": "rb.start_sub_menus.TrainerInfo_NameMoneyTimeText"
     },
     "ATTACK": {
@@ -232,12 +232,6 @@
       "reason": "fallback-only"
     },
     "Crammed full of\nPOKéMON books!": {
-      "category": "rby",
-      "eligibility": "ineligible",
-      "reason": "covered-by-rom",
-      "engine_empty": true
-    },
-    "INDIGO PLATEAU": {
       "category": "rby",
       "eligibility": "ineligible",
       "reason": "covered-by-rom",

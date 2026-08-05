@@ -174,7 +174,7 @@ class MultilingualTests(unittest.TestCase):
             self.assertTrue(path.is_file())
             overrides = load_engine_overrides(path)
             self.assertEqual(sum(entry.get("reason") == "editorial-correction" for entry in overrides.values()), 4)
-            self.assertEqual(sum(entry.get("reason") == "AI-generated manual corpus-gap translation." for entry in overrides.values()), 12)
+            self.assertTrue(all(entry.get("provenance") for entry in overrides.values()))
 
     def test_engine_original_editorial_overrides_are_scoped_and_printf_safe(self):
         key = "%s's\nhits will never\nmiss!"

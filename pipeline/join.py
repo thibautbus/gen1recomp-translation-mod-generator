@@ -168,7 +168,10 @@ def _derive_sendout_templates(value: str, lang: str) -> dict[str, str]:
     # "#MON" symbol renders as POKéMON in the engine template.  de's prompt
     # addresses the player without a name, so the name is injected (the
     # engine template requires its %s).
-    prompt = clean(tail).replace("#MON", "POKéMON")
+    # PokeCorpus uses both ``#MON`` and the bare Japanese ``#`` macro for the
+    # Pokémon wordmark.  Engine strings do not expand corpus macros, so never
+    # let either form reach Font as a literal/unknown glyph.
+    prompt = clean(tail).replace("#MON", "POKéMON").replace("#", "POKéMON")
     if "<PLAYER>" in tail:
         prompt = prompt.replace("<PLAYER>", "%s")
     elif lang == "de":
@@ -504,6 +507,24 @@ ENEMY_QUALIFIER_VALUES = {
     "it": "%s nemico",
     "ja-Hrkt": "てきの　%s",
 }
+
+# Keys supplied by dedicated qid joins instead of the generic matcher.  Keep
+# them in the engine coverage universe even when Modkit's scaffold omits a
+# rendered fallback (currently the two romText keys below).
+QID_DRIVEN_ENGINE_KEYS = frozenset({
+    *SENDOUT_ENGINE_KEYS,
+    *POKEDEX_FOOTER_ENGINE_KEYS,
+    ROMTEXT_USED_KEY,
+    ENEMY_WEAK_KEY,
+    ENEMY_QUALIFIER_KEY,
+})
+
+# Rendered romText fallbacks omitted by Modkit's strings.lua harvester still
+# belong to the engine universe.  The two translated fallbacks are already in
+# QID_DRIVEN_ENGINE_KEYS; Yellow's starter-Pikachu refusal deliberately stays
+# English until Yellow corpus support exists.
+YELLOW_REFUSING_KEY = "%s\nis refusing!"
+ENGINE_CATALOG_EXTRA_KEYS = QID_DRIVEN_ENGINE_KEYS | {YELLOW_REFUSING_KEY}
 
 
 def enemy_qualifier_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple[dict[str, str], dict]:

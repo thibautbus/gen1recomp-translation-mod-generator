@@ -215,12 +215,19 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
     if engine_catalog:
         from .engine_scope import engine_dynamic_values, forced_dynamic_keys, load_scope
         scope = load_scope(engine_scope) if engine_scope else load_scope()
+        from .join import ENGINE_CATALOG_EXTRA_KEYS
         catalog = read_engine_catalog(engine_catalog)
         for key in forced_dynamic_keys(scope):
             catalog.setdefault(key, "")
         for key in engine_dynamic_values(scope):
             catalog.setdefault(key, "")
-        engine_values, engine_report = match_engine_catalog(catalog, rows, load_engine_overrides(engine_overrides), semantic_anchors=semantic_anchors, semantic_anchor_decisions=semantic_anchor_decisions, target_lang=language)
+        for key in ENGINE_CATALOG_EXTRA_KEYS:
+            catalog.setdefault(key, "")
+        overrides = load_engine_overrides(engine_overrides)
+        stale_overrides = sorted(set(overrides) - set(catalog))
+        if stale_overrides:
+            raise ValueError(f"engine overrides contain {len(stale_overrides)} unknown key(s): {stale_overrides!r}")
+        engine_values, engine_report = match_engine_catalog(catalog, rows, overrides, semantic_anchors=semantic_anchors, semantic_anchor_decisions=semantic_anchor_decisions, target_lang=language)
         for key, dynamic in scope.get("forced_dynamic_keys", {}).items():
             if key in engine_values:
                 engine_report["details"][key] = "forced_dynamic"
@@ -258,28 +265,30 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
     pokedex_values, pokedex_report = pokedex_footer_catalog(rows, language)
     if engine_values is None:
         engine_values = {}
-    engine_values.update(sendout_values)
-    engine_values.update(pokedex_values)
+    qid_values = {**sendout_values, **pokedex_values}
+    engine_values.update(qid_values)
     romtext_values, romtext_report = romtext_fallback_catalog(engine_values, rows, language)
+    qid_values.update(romtext_values)
     engine_values.update(romtext_values)
     enemy_values, enemy_report = enemy_qualifier_catalog(rows, language)
+    qid_values.update(enemy_values)
     engine_values.update(enemy_values)
     # The qid-driven catalogs above inject translated values AFTER the matcher
     # ran, so the engine report still lists those keys as unmatched (or omits
     # them).  Sync the report so "All engine strings" reflects what ships.
     if engine_report is not None:
-        for key, value in engine_values.items():
+        unresolved_methods = {None, "english_fallback", "semantic_ambiguous", "semantic_unresolved", "ambiguous", "structural_incompatible"}
+        for key, value in qid_values.items():
             if not (isinstance(value, str) and value):
                 continue
-            if engine_report["details"].get(key) not in (None, "english_fallback"):
-                continue
-            if key in engine_report.get("unmatched", []):
-                engine_report["unmatched"] = [item for item in engine_report["unmatched"] if item != key]
-                engine_report["fallback_english"] = max(0, engine_report.get("fallback_english", 0) - 1)
-            engine_report.get("ambiguous", {}).pop(key, None)
+            if engine_report["details"].get(key) in unresolved_methods:
+                if key in engine_report.get("unmatched", []):
+                    engine_report["unmatched"] = [item for item in engine_report["unmatched"] if item != key]
+                    engine_report["fallback_english"] = max(0, engine_report.get("fallback_english", 0) - 1)
+                engine_report.get("ambiguous", {}).pop(key, None)
+                engine_report["translated"] += 1
             engine_report["details"][key] = "qid-driven"
             engine_report["provenance"][key] = {"method": "qid-driven", "reason": "corpus qid merged after matching (sendout/pokedex/romtext/enemy)"}
-            engine_report["translated"] += 1
         engine_report["percent"] = round(engine_report["translated"] * 100 / engine_report["total"], 2) if engine_report["total"] else 100.0
     (destination / "lang").mkdir(exist_ok=True)
     for name in CATALOGS:

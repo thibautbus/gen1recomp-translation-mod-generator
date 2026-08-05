@@ -29,9 +29,6 @@ def load_scope(path: str | Path = CONFIG_PATH) -> dict[str, Any]:
         raise ValueError("engine scope config has unknown or missing fields")
     if data["schema"] != "gen1recomp-translation-mods/engine-scope" or data["classifier_version"] != 4:
         raise ValueError("unsupported engine scope schema/version")
-    missing = [key for key in required if key not in data]
-    if missing:
-        raise ValueError(f"engine scope config missing fields: {', '.join(missing)}")
     if not isinstance(data["classifier_version"], int) or isinstance(data["classifier_version"], bool):
         raise ValueError("engine scope classifier_version must be an integer")
     if not isinstance(data["gen1recomp_revision"], str) or not re.fullmatch(r"[0-9a-f]{40}", data["gen1recomp_revision"]):

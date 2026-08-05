@@ -19,70 +19,58 @@
     },
     "%s :L%d": {
       "override": "%s :L%d",
-      "reason": "AI-generated manual corpus-gap translation."
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     ":L%d No.%03d": {
       "override": ":L%d Nr.%03d",
-      "reason": "AI-generated manual corpus-gap translation."
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "Empty.": {
       "override": "Leer.",
-      "reason": "AI-generated manual corpus-gap translation."
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "No good! It's not\neven near water.": {
       "override": "Schade! Nicht mal\nin Wassernähe.",
-      "reason": "AI-generated manual corpus-gap translation; requires in-game visual validation."
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "PP": {
       "override": "PP",
-      "reason": "AI-generated manual corpus-gap translation."
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "PRINT BOX": {
       "override": "BOX DRUCKEN",
-      "reason": "AI-generated manual corpus-gap translation."
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "PRNT": {
       "override": "PRNT",
-      "reason": "AI-generated manual corpus-gap translation."
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "BOX %d (WITHDRAW)": {
       "override": "BOX %d (MITNEHMEN)",
-      "reason": "AI-generated manual corpus-gap translation; requires in-game visual validation."
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "BOX %d (RELEASE)": {
       "override": "BOX %d (FREILASSEN)",
-      "reason": "AI-generated manual corpus-gap translation; requires in-game visual validation."
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "Data unknown.": {
       "override": "Daten unbekannt.",
-      "reason": "AI-generated manual corpus-gap translation."
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "The boulder fell\nthrough the hole!": {
       "override": "Der Felsen fiel\ndurch das Loch!",
-      "reason": "AI-generated manual corpus-gap translation."
-    },
-    "%s's\nstatus returned\nto normal!": {
-      "override": "Der Status von %s\nist wieder\nnormal!",
-      "reason": "AI-generated manual corpus-gap translation."
-    },
-    "Coin count:\n%d": {
-      "override": "Münzen:\n%d",
-      "reason": "AI-generated manual corpus-gap translation."
-    },
-    "%s can't\nlearn that move!": {
-      "override": "%s kann diese\nAttacke nicht lernen!",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary source with context-specific arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
-    },
-    "%s defeated\n%s!": {
-      "override": "%s besiegte\n%s!",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation; concrete engine contract limitation is reordered battle arguments across callsites; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
-    },
-    "%s is\nabout to use": {
-      "override": "%s wird\nbenutzen",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary source split from the following move argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "%s lined up!\nScored %d coins!": {
       "override": "%s passt!\n%d Münzen gewonnen!",
@@ -93,11 +81,6 @@
       "override": "%s wurde\nzu %s\nübertragen!",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation; concrete engine contract limitation is context-specific transfer arguments with a fragmentary source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
-    },
-    "%s's\nSUBSTITUTE broke!": {
-      "override": "%s\nDELEGATOR wurde zerstört!",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation; concrete engine contract limitation is a missing battle-substitute context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
     "%s's\nhurt by poison!": {
       "override": "%s\nwurde durch Gift verletzt!",
@@ -113,26 +96,6 @@
       "override": "%s lässt %s\nsteigen!",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation; concrete engine contract limitation is reordered stat arguments at shared callsites; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
-    },
-    "%s's PP\nwas restored!": {
-      "override": "%s: PP\nwiederhergestellt!",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation retaining the technical PP token; concrete engine contract limitation is a fragmentary PP source without the original context; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
-    },
-    "Converted type to\n%s's!": {
-      "override": "Typ geändert zu\ndem von %s!",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation; concrete engine contract limitation is a missing type-context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
-    },
-    "It didn't affect\n%s!": {
-      "override": "Es hatte keine Wirkung\nauf %s!",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation; concrete engine contract limitation is a missing target-context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
-    },
-    "It knows that\nmove already!": {
-      "override": "Es kennt diese\nAttacke bereits!",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary move-learning source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
     "Once released,\n%s is\ngone forever. OK?": {
       "override": "Einmal freigelassen,\nist %s\nfür immer weg. OK?",
@@ -154,11 +117,6 @@
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation retained as a technical height format; concrete engine contract limitation is missing unit context around numeric arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
-    "The wild POKéMON\nran away!": {
-      "override": "Das wilde POKéMON\nist geflohen!",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary battle-result source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
-    },
     "This POKéMON\ncan't be caught!": {
       "override": "Dieses POKéMON\nkann nicht gefangen werden!",
       "reason": "engine-contract-gap",
@@ -174,11 +132,6 @@
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation retained as a technical weight format; concrete engine contract limitation is a missing unit-context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
-    "Will %s\nchange POKéMON?": {
-      "override": "Wird %s\ndas POKéMON wechseln?",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation; concrete engine contract limitation is a missing choice-context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
-    },
     "evolving!": {
       "override": "entwickelt sich!",
       "reason": "engine-contract-gap",
@@ -193,11 +146,6 @@
       "override": "%s\nwurde besiegt!",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated neutral translation (de); shared incompatible contexts are rb.text_2.EnemyMonFaintedText, rb.text_2.PlayerMonFaintedText, and rb.text_4.PokemonFaintedText; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
-    },
-    "%s\nused %s!": {
-      "override": "%s\nsetzt %s ein!",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated neutral translation (de); shared incompatible contexts are battle move use and TrainerAI item use (rb.text_2.Used1Text/rb.text_2.Used2Text); could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
     },
     "%s found\n%s!": {
       "override": "%s findet\n%s!",

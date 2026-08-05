@@ -30,7 +30,8 @@ from .engine import (
 )
 from .project import ROOT, project_config
 from .tokens import corpus_to_engine
-from .engine_scope import classify_callsites, forced_dynamic_keys, load_scope, coverage_metadata
+from .engine_scope import classify_catalog, engine_dynamic_values, forced_dynamic_keys, load_scope, coverage_metadata
+from .join import ENGINE_CATALOG_EXTRA_KEYS
 
 
 SCHEMA = "gen1recomp-translation-mods/engine-backlog"
@@ -470,7 +471,7 @@ def analyze_engine_backlog(
         raise FileNotFoundError(f"engine strings catalogue not found for {language}; run the build first")
     scope = load_scope()
     catalog = read_engine_catalog(engine_catalog)
-    dynamic = forced_dynamic_keys(scope)
+    optional_keys = forced_dynamic_keys(scope) | engine_dynamic_values(scope) | ENGINE_CATALOG_EXTRA_KEYS
     coverage = _load_json(Path(coverage_path))
     if not coverage or not isinstance(coverage, dict) or not (
         isinstance(coverage.get("engine"), dict) or "unmatched" in coverage or "ambiguous" in coverage
@@ -490,8 +491,8 @@ def analyze_engine_backlog(
     snapshot_total = engine_report.get("total") if isinstance(engine_report, dict) else None
     if isinstance(snapshot_total, bool) or not isinstance(snapshot_total, int):
         raise ValueError("engine coverage snapshot total must be an integer")
-    if snapshot_total == len(catalog) + len(dynamic):
-        for key in dynamic:
+    if snapshot_total == len(set(catalog) | optional_keys):
+        for key in optional_keys:
             catalog.setdefault(key, "")
     elif snapshot_total != len(catalog):
         raise ValueError(f"engine coverage snapshot total {snapshot_total} does not match catalog total {len(catalog)}")
@@ -508,7 +509,8 @@ def analyze_engine_backlog(
     unmatched_set = {str(key) for key in (unmatched if isinstance(unmatched, list) else unmatched.keys() if isinstance(unmatched, dict) else [])}
     ambiguous_map = {str(key): value for key, value in ambiguous.items()} if isinstance(ambiguous, dict) else {}
     keys = sorted(set(catalog) & (unmatched_set | set(ambiguous_map)) or (unmatched_set | set(ambiguous_map)))
-    classified = classify_callsites(iter_literal_strings_callsites(checkout), scope)
+    callsite_rows = iter_literal_strings_callsites(checkout) + iter_romtext_fallback_callsites(checkout)
+    classified = classify_catalog(catalog, callsite_rows, scope)
     callsites = defaultdict(list)
     for key, info in classified.items():
         callsites[key].extend({k: v for k, v in row.items() if k not in {"source", "category"}} for row in info["callsites"])
@@ -523,16 +525,16 @@ def analyze_engine_backlog(
         sites = sorted(callsites.get(key, []), key=lambda item: (item["path"], item["line"], item["kind"], item["context"]))
         scope_info = classified.get(key, {"category": "unknown", "eligibility": "review"})
         categories = scope_info.get("categories", [])
-        dynamic = scope_info.get("provenance") == "forced_dynamic"
-        category = scope_info.get("category", "unknown") if (sites or dynamic) else "unknown"
-        eligibility = scope_info.get("eligibility", "review") if (sites or dynamic) else "review"
+        dynamic_kind = scope_info.get("provenance") if scope_info.get("provenance") in {"forced_dynamic", "engine_dynamic"} else None
+        category = scope_info.get("category", "unknown") if (sites or dynamic_kind) else "unknown"
+        eligibility = scope_info.get("eligibility", "review") if (sites or dynamic_kind) else "review"
         for candidate in candidates.get(key, []):
             candidate["eligible"] = bool(eligibility == "eligible" and candidate["method"] != "fuzzy" and candidate["placeholder_compatible"] is not False and candidate.get("translation"))
         provenance = (engine_report.get("provenance", {}) or {}).get(key, {}) if isinstance(engine_report, dict) else {}
-        if dynamic:
+        if dynamic_kind:
             provenance = {
                 **provenance,
-                "provenance": "forced_dynamic",
+                "provenance": dynamic_kind,
                 "reason": scope_info.get("reason"),
                 "callsite": scope_info.get("callsite"),
                 "qid": scope_info.get("qid"),
@@ -546,8 +548,8 @@ def analyze_engine_backlog(
             "status": status,
             "category": category,
             "classifier_version": coverage_metadata(load_scope())["classifier_version"],
-            "provenance": "forced_dynamic" if dynamic else "gen1recomp_literal" if sites else "engine_catalog",
-            "provenance_kind": "forced_dynamic" if dynamic else "gen1recomp_literal" if sites else "engine_catalog",
+            "provenance": dynamic_kind or ("gen1recomp_literal" if sites else "engine_catalog"),
+            "provenance_kind": dynamic_kind or ("gen1recomp_literal" if sites else "engine_catalog"),
             "coverage_provenance": provenance,
             "rby_eligibility": eligibility,
             "rby_eligible": {"eligible": True, "ineligible": False}.get(eligibility),

@@ -13,6 +13,7 @@ from pipeline.generate import generate_lua, lua_string
 from pipeline.model import CorpusRecord
 from pipeline.mod import generate_mod
 from pipeline.join import (
+    ENGINE_CATALOG_EXTRA_KEYS,
     SENDOUT_ENGINE_KEYS,
     WorksheetEntry,
     _derive_sendout_templates,
@@ -481,6 +482,31 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(report["rom"]["details"]["strings_pokedex"]["translated"], 0)
             self.assertGreaterEqual(report["rom"]["translated"], 0)
 
+    def test_engine_report_uses_the_same_key_universe_as_generated_strings(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            worksheets = root / "worksheets"
+            worksheets.mkdir()
+            for name in ("dialogue", "species_names", "move_names", "item_names", "trainer_names", "status_labels"):
+                (worksheets / f"{name}.txt").write_text("# header\n", encoding="utf-8")
+            catalog = worksheets / "strings.lua"
+            catalog.write_text('return { ["Unmatched"] = "" }\n', encoding="utf-8")
+            report_path = root / "coverage.json"
+            generate_mod([], root / "mod", language="fr", modkit_worksheet=worksheets, engine_catalog=catalog, report_path=report_path)
+            engine = json.loads(report_path.read_text(encoding="utf-8"))["engine"]
+            self.assertEqual(engine["total"], len(engine["details"]))
+            self.assertTrue(ENGINE_CATALOG_EXTRA_KEYS <= set(engine["details"]))
+
+    def test_generate_mod_rejects_unknown_engine_override_keys(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            catalog = root / "strings.lua"
+            catalog.write_text('return { ["Known"] = "" }\n', encoding="utf-8")
+            overrides = root / "overrides.json"
+            overrides.write_text(json.dumps({"entries": {"Stale": {"override": "Périmé"}}}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "unknown key.*Stale"):
+                generate_mod([], root / "mod", engine_catalog=catalog, engine_overrides=overrides)
+
     def test_sendout_derive_partition_guard_returns_empty(self):
         # A corpus value missing the RAM tokens would embed raw nick/trainer
         # text; the derivation must yield nothing so the keys stay unmatched.
@@ -562,7 +588,7 @@ EXPECTED = {
     "de": {"%s is\nabout to use": "%s wird", "%s!": "%s in den\nKampf schicken!", "Will %s\nchange POKéMON?": "%s, Möchtest Du das\nPOKéMON wechseln?", "%s is\nabout to use\v%s!": "%s wird\v%s in den\nKampf schicken!"},
     "es": {"%s is\nabout to use": "¡%s\nva a utilizar a", "%s!": "%s!", "Will %s\nchange POKéMON?": "¿%s quiere\ncambiar de POKéMON?", "%s is\nabout to use\v%s!": "¡%s\nva a utilizar a\v%s!"},
     "it": {"%s is\nabout to use": "%s\nsta per usare", "%s!": "%s!", "Will %s\nchange POKéMON?": "%s, vuoi\ncambiare POKéMON?", "%s is\nabout to use\v%s!": "%s\nsta per usare\v%s!"},
-    "ja-Hrkt": {"%s is\nabout to use": "%sは　", "%s!": "%sを\nくりだそうと　しているようだ", "Will %s\nchange POKéMON?": "%sも　#を\nとりかえますか？", "%s is\nabout to use\v%s!": "%sは　\v%sを\nくりだそうと　しているようだ"},
+    "ja-Hrkt": {"%s is\nabout to use": "%sは　", "%s!": "%sを\nくりだそうと　しているようだ", "Will %s\nchange POKéMON?": "%sも　POKéMONを\nとりかえますか？", "%s is\nabout to use\v%s!": "%sは　\v%sを\nくりだそうと　しているようだ"},
 }
 
 
