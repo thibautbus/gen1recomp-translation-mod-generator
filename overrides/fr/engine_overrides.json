@@ -213,6 +213,26 @@
       "override": "ADVERSAIRE",
       "reason": "engine-original",
       "provenance": "Link-battle (Colosseum) opponent-name fallback, engine-authored; user-approved per-language value."
+    },
+    "BOX %d is full!": {
+      "override": "BOÎTE %d pleine!",
+      "reason": "engine-original",
+      "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
+    },
+    "No POKéMON!": {
+      "override": "AUCUN POKéMON!",
+      "reason": "engine-original",
+      "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
+    },
+    "%s received\n%s!": {
+      "override": "%s obtient\n%s!",
+      "reason": "engine-original",
+      "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
+    },
+    "%s received\nthe %s!": {
+      "override": "%s reçoit\nle %s!",
+      "reason": "engine-original",
+      "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
     }
   }
 }

@@ -206,11 +206,11 @@ snapshots, so revisions can change these values.
 
 | Target | ROM catalogs | Corpus-backed extras | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 259/604 (42.88%) |
-| `de` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 260/604 (43.05%) |
-| `es` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 259/604 (42.88%) |
-| `it` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 261/604 (43.21%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 260/604 (43.05%) |
+| `fr` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 263/604 (43.54%) |
+| `de` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 263/604 (43.54%) |
+| `es` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 263/604 (43.54%) |
+| `it` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 264/604 (43.71%) |
+| `ja-Hrkt` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 264/604 (43.71%) |
 
 The corpus-backed extras are fully translated (28/28): fifteen type names,
 five literal handlers (15/15 unique corpus qids), two demo names, the
@@ -219,7 +219,11 @@ fallback keys (the battle move-use `X used Y!` and the rival `The enemy's
 weak!` messages, rendered via Strings because their pokered labels carry
 fewer slots than the calls pass), the enemy qualifier `Enemy %s` (words
 from `rb.text.EnemyText`), and the link-battle `FOE` label (engine-original
-override, user-approved). `RBY-related engine
+override, user-approved), and the four gameplay messages without any poke-corpus
+source (`BOX %d is full!`, `No POKéMON!`, `%s received\n%s!`, `%s received\nthe %s!` —
+engine-authored templates with no pokered/ROM equivalent; manual per-language
+values aligned with corpus conventions, e.g. fr `obtient`/`reçoit`, de `erhält`,
+es `obtuvo`/`recibió`, it `riceve`). `RBY-related engine
 strings` counts 246 keys from Gen1Recomp v0.1.69's 604-key catalog whose
 production callsites reproduce original Red/Blue gameplay or interfaces; `All
 engine strings` covers the complete catalog, including modern surfaces. The

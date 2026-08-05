@@ -43,7 +43,7 @@ class MultilingualTests(unittest.TestCase):
         worksheets = Path(".cache/interactive/fr/complete-modkit-worksheet")
         if not (worksheets / "strings.lua").is_file():
             self.skipTest("cached modkit worksheet unavailable")
-        rom_keys = ("Crammed full of\nPOKéMON books!", "Keep it up!", "No POKéMON!", "No SURFing here!", "Nothing to CUT!", "POKéDEX Rating{COLON}", "{RIVAL}: Yeah! Am\nI great or what?", "Welcome to our\nPOKéMON CENTER!", "Your POKéMON are\nfighting fit!")
+        rom_keys = ("Crammed full of\nPOKéMON books!", "Keep it up!", "No SURFing here!", "Nothing to CUT!", "POKéDEX Rating{COLON}", "{RIVAL}: Yeah! Am\nI great or what?", "Welcome to our\nPOKéMON CENTER!", "Your POKéMON are\nfighting fit!")
         from tempfile import TemporaryDirectory
         for language in ("fr", "de", "es", "it", "ja-Hrkt"):
             worksheet = Path(".cache/interactive") / language / "complete-modkit-worksheet"
