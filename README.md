@@ -12,6 +12,27 @@ and engine string overrides without storing a ROM or ROM extract here.
 
 ## Quick start: build a ready-to-import ZIP
 
+### Recommended: use the graphical application
+
+Download the GUI executable for your platform from the
+[latest release](https://github.com/thibautbus/gen1recomp-translation-mod-generator/releases/latest),
+then select:
+
+1. your own canonical US Pokémon Red and Blue ROM dumps;
+2. the target language;
+3. one localized Red or Blue ROM as the font source for Western languages;
+4. the output directory.
+
+![Gen1Recomp translation mod generator GUI](docs/gui.png)
+
+The GUI runs the same verified matching and packaging pipeline as the CLI and
+writes the ready-to-import ZIP into the selected directory. The standalone
+application bundles its Python runtime, Pillow, and LuaJIT, so those
+prerequisites do not need to be installed separately. Network access is still
+required to download the pinned Gen1Recomp and PokeCorpus inputs.
+
+### Build from source with the CLI
+
 Install Python 3.11+, Git, LuaJIT (`sudo apt install luajit` on
 Ubuntu/Debian or `brew install luajit` on macOS), and Pillow
 (`python -m pip install Pillow`). The builder checks prerequisites and prints
