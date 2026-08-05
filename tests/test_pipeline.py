@@ -12,7 +12,20 @@ from pipeline.corpus import load_corpus
 from pipeline.generate import generate_lua, lua_string
 from pipeline.model import CorpusRecord
 from pipeline.mod import generate_mod
-from pipeline.join import join_catalogs, read_worksheets, WorksheetEntry
+from pipeline.join import (
+    ENGINE_CATALOG_EXTRA_KEYS,
+    SENDOUT_ENGINE_KEYS,
+    WorksheetEntry,
+    _derive_sendout_templates,
+    demo_names_catalog,
+    enemy_qualifier_catalog,
+    join_catalogs,
+    pokedex_footer_catalog,
+    read_worksheets,
+    romtext_fallback_catalog,
+    sendout_strings_catalog,
+    type_names_catalog,
+)
 from pipeline.tokens import check_placeholders, encode
 from pipeline.validate import release_gate, validate
 from pipeline.worksheet import dump, load
@@ -263,6 +276,320 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(output["dialogue"]["_MissingText"], "")
         self.assertEqual(report["unmatched"]["dialogue"], ["_MissingText"])
         self.assertNotIn("dialogue", report["matched"])
+
+    def test_type_names_join_uses_runtime_ids_and_excludes_bird(self):
+        rows = align([
+            CorpusRecord("rb.names.TypeNames.Fire", "en", "FIRE@"),
+            CorpusRecord("rb.names.TypeNames.Fire", "fr", "FEU@"),
+            CorpusRecord("rb.names.TypeNames.Psychic", "en", "PSYCHIC@"),
+            CorpusRecord("rb.names.TypeNames.Psychic", "fr", "PSY@"),
+            CorpusRecord("rb.names.TypeNames.Bird", "en", "BIRD@"),
+            CorpusRecord("rb.names.TypeNames.Bird", "fr", "OISEAU@"),
+            CorpusRecord("rb.names.TypeNames.Water", "en", "WATER@"),
+        ])
+        worksheets = {name: [] for name in ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels")}
+        output, report = join_catalogs(rows, worksheets)
+        self.assertEqual(output["type_names"]["FIRE"], "FEU")
+        self.assertEqual(output["type_names"]["PSYCHIC_TYPE"], "PSY")
+        # The engine registers no Bird record, so the corpus row is recorded
+        # as excluded instead of emitted.
+        self.assertNotIn("BIRD", output["type_names"])
+        self.assertEqual(report["type_names"]["excluded"]["Bird"]["qid"], "rb.names.TypeNames.Bird")
+        # An English-only row stays empty (runtime English fallback); the
+        # other runtime ids without corpus rows are unmatched too.
+        self.assertEqual(output["type_names"]["WATER"], "")
+        self.assertEqual(report["matched"]["type_names"], 2)
+        self.assertIn("WATER", report["unmatched"]["type_names"])
+        self.assertNotIn("FIRE", report["unmatched"]["type_names"])
+        self.assertEqual(report["strategies"]["type_names"]["FIRE"], "type_name_qid")
+
+    def test_type_names_catalog_is_empty_without_corpus_rows(self):
+        rows = align([
+            CorpusRecord("rb.names.SpeciesNames", "en", "ABRA"),
+            CorpusRecord("rb.names.SpeciesNames", "fr", "ABRA"),
+        ])
+        values, report = type_names_catalog(rows, "fr")
+        self.assertEqual(values, {})
+        self.assertEqual(report["translated"], 0)
+        self.assertIn("Bird", report["excluded"])
+
+    def test_generate_mod_writes_type_names_catalog_and_main_patch(self):
+        rows = align([
+            CorpusRecord("rb.names.TypeNames.Fire", "en", "FIRE@"),
+            CorpusRecord("rb.names.TypeNames.Fire", "fr", "FEU@"),
+            CorpusRecord("rb.names.TypeNames.Psychic", "en", "PSYCHIC@"),
+            CorpusRecord("rb.names.TypeNames.Psychic", "fr", "PSY@"),
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ws = root / "ws"; ws.mkdir()
+            for name in ("dialogue", "species_names", "move_names", "item_names", "trainer_names", "status_labels"):
+                (ws / f"{name}.txt").write_text("# header\n", encoding="utf-8")
+            (ws / "strings.lua").write_text('return { ["X"] = "" }\n', encoding="utf-8")
+            mod = generate_mod(rows, root / "mod", language="fr", modkit_worksheet=ws, strict_engine=True)
+            body = (mod / "lang/type_names.lua").read_text(encoding="utf-8")
+            self.assertIn('["FIRE"] = "FEU"', body)
+            self.assertIn('["PSYCHIC_TYPE"] = "PSY"', body)
+            self.assertNotIn("BIRD", body)
+            main = (mod / "main.lua").read_text(encoding="utf-8")
+            self.assertIn('by_english[canonical] = localized', main)
+            self.assertIn('Font.draw = function(text, x, y, ...)', main)
+            self.assertIn('local demo_names = catalog("demo_names")', main)
+            self.assertIn('BS.oldManThrow = function(self, ...)', main)
+            self.assertIn('localizedDemoName(self, canonical)', main)
+            self.assertIn('self.demoName = localized', main)
+            self.assertNotIn('Runtime.hooks:wrap("player.sprite"', main)
+            self.assertNotIn('BS.makeOldManDemo = function', main)
+            self.assertNotIn('mod.content.type_chart:patch', main)
+
+    def test_generate_mod_without_worksheet_uses_runtime_type_ids(self):
+        rows = align([
+            CorpusRecord("rb.names.TypeNames.Fire", "en", "FIRE@"),
+            CorpusRecord("rb.names.TypeNames.Fire", "fr", "FEU@"),
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            mod = generate_mod(rows, Path(tmp) / "mod", language="fr")
+            body = (mod / "lang/type_names.lua").read_text(encoding="utf-8")
+            self.assertIn('["FIRE"] = "FEU"', body)
+            self.assertNotIn("rb.names.TypeNames", body)
+
+
+    def test_demo_names_join_uses_corpus_literal(self):
+        rows = align([
+            CorpusRecord("rb.core.DisplayBattleMenu.oldManName", "en", "OLD MAN@"),
+            CorpusRecord("rb.core.DisplayBattleMenu.oldManName", "fr", "VIEILLARD@"),
+        ])
+        values, report = demo_names_catalog(rows, "fr")
+        self.assertEqual(values, {"OLD MAN": "VIEILLARD"})
+        self.assertEqual(report["translated"], 1)
+        self.assertEqual(report["unmatched"], ["PROF.OAK"])
+        self.assertEqual(report["strategies"]["OLD MAN"], "demo_name_qid")
+
+    def test_demo_names_catalog_empty_without_corpus_rows(self):
+        values, report = demo_names_catalog([], "fr")
+        self.assertEqual(values, {})
+        self.assertEqual(report["translated"], 0)
+        self.assertEqual(report["unmatched"], ["OLD MAN", "PROF.OAK"])
+
+    def test_demo_names_join_covers_both_engine_literals(self):
+        rows = align([
+            CorpusRecord("rb.core.DisplayBattleMenu.oldManName", "en", "OLD MAN@"),
+            CorpusRecord("rb.core.DisplayBattleMenu.oldManName", "fr", "VIEILLARD@"),
+            CorpusRecord("rb.name_pointers.TrainerNamePointers.ProfOakName", "en", "PROF.OAK@"),
+            CorpusRecord("rb.name_pointers.TrainerNamePointers.ProfOakName", "fr", "PROF.CHEN@"),
+        ])
+        values, report = demo_names_catalog(rows, "fr")
+        self.assertEqual(values, {"OLD MAN": "VIEILLARD", "PROF.OAK": "PROF.CHEN"})
+        self.assertEqual(report["translated"], 2)
+        self.assertEqual(report["unmatched"], [])
+
+    def test_demo_names_join_counts_empty_translation(self):
+        # A corpus row with an empty translation must still be counted by the
+        # gate: the literal is emitted empty (English fallback at runtime) and
+        # the catalog reports it unmatched so rom coverage fails the 100% gate.
+        rows = align([
+            CorpusRecord("rb.core.DisplayBattleMenu.oldManName", "en", "OLD MAN@"),
+            CorpusRecord("rb.core.DisplayBattleMenu.oldManName", "fr", ""),
+        ])
+        values, report = demo_names_catalog(rows, "fr")
+        self.assertEqual(values, {"OLD MAN": ""})
+        self.assertEqual(report["translated"], 0)
+        self.assertEqual(report["unmatched"], ["OLD MAN", "PROF.OAK"])
+
+    def test_generate_mod_writes_demo_names_catalog(self):
+        rows = align([
+            CorpusRecord("rb.core.DisplayBattleMenu.oldManName", "en", "OLD MAN@"),
+            CorpusRecord("rb.core.DisplayBattleMenu.oldManName", "fr", "VIEILLARD@"),
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            mod = generate_mod(rows, Path(tmp) / "mod", language="fr")
+            body = (mod / "lang/demo_names.lua").read_text(encoding="utf-8")
+            self.assertIn('["OLD MAN"] = "VIEILLARD"', body)
+
+
+    def test_sendout_templates_derive_all_languages(self):
+        rows = {
+            lang: (SENDOUT_ROW[lang], EXPECTED[lang])
+            for lang in SENDOUT_ROW
+        }
+        for lang, (value, expected) in rows.items():
+            derived = _derive_sendout_templates(value, lang)
+            self.assertEqual(derived, expected, lang)
+            for key, template in derived.items():
+                self.assertEqual(template.count("%s"), key.count("%s"), (lang, key, template))
+
+    def test_sendout_strings_catalog_uses_corpus_row(self):
+        rows = align([
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "en", SENDOUT_ROW["en"]),
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "fr", SENDOUT_ROW["fr"]),
+        ])
+        values, report = sendout_strings_catalog(rows, "fr")
+        self.assertEqual(values, {key: EXPECTED["fr"][key] for key in SENDOUT_ENGINE_KEYS})
+        self.assertEqual(report["translated"], 2)
+        self.assertEqual(report["unmatched"], [])
+
+    def test_sendout_strings_catalog_gates_empty_translation(self):
+        rows = align([
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "en", SENDOUT_ROW["en"]),
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "fr", ""),
+        ])
+        values, report = sendout_strings_catalog(rows, "fr")
+        self.assertEqual(values, {key: "" for key in SENDOUT_ENGINE_KEYS})
+        self.assertEqual(report["translated"], 0)
+        self.assertEqual(sorted(report["unmatched"]), sorted(SENDOUT_ENGINE_KEYS))
+
+    def test_sendout_strings_catalog_empty_without_corpus_rows(self):
+        values, report = sendout_strings_catalog([], "fr")
+        self.assertEqual(values, {})
+        self.assertEqual(report["translated"], 0)
+
+    def test_pokedex_footer_catalog_joins_labels(self):
+        rows = align([
+            CorpusRecord("rb.pokedex.PokedexSeenText", "en", "SEEN@"),
+            CorpusRecord("rb.pokedex.PokedexSeenText", "fr", "VUS@"),
+            CorpusRecord("rb.pokedex.PokedexOwnText", "en", "OWN@"),
+            CorpusRecord("rb.pokedex.PokedexOwnText", "fr", "PRIS@"),
+        ])
+        values, report = pokedex_footer_catalog(rows, "fr")
+        self.assertEqual(values, {"SEEN %3d  OWN %3d": "VUS %3d  PRIS %3d"})
+        self.assertEqual(report["unmatched"], [])
+
+    def test_pokedex_footer_catalog_empty_without_labels(self):
+        rows = align([
+            CorpusRecord("rb.pokedex.PokedexSeenText", "en", "SEEN@"),
+            CorpusRecord("rb.pokedex.PokedexSeenText", "fr", "VUS@"),
+        ])
+        values, report = pokedex_footer_catalog(rows, "fr")
+        self.assertEqual(values, {})
+        self.assertIn("OWN", report["unmatched"])
+
+    def test_generate_mod_pokedex_gate_guard_never_negative(self):
+        # No pokedex labels in the corpus: the footer catalog is empty and the
+        # ROM gate must not subtract the unmatched roles from rom_translated.
+        rows = align([
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "en", "X"),
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "fr", "Y"),
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ws = root / "ws"; ws.mkdir()
+            for name in ("dialogue", "species_names", "move_names", "item_names", "trainer_names", "status_labels"):
+                (ws / f"{name}.txt").write_text("# header\n", encoding="utf-8")
+            (ws / "strings.lua").write_text('return { ["X"] = "" }\n', encoding="utf-8")
+            report_path = root / "report.json"
+            generate_mod(rows, root / "mod", language="fr", modkit_worksheet=ws, report_path=report_path)
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(report["rom"]["details"]["strings_pokedex"]["translated"], 0)
+            self.assertGreaterEqual(report["rom"]["translated"], 0)
+
+    def test_engine_report_uses_the_same_key_universe_as_generated_strings(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            worksheets = root / "worksheets"
+            worksheets.mkdir()
+            for name in ("dialogue", "species_names", "move_names", "item_names", "trainer_names", "status_labels"):
+                (worksheets / f"{name}.txt").write_text("# header\n", encoding="utf-8")
+            catalog = worksheets / "strings.lua"
+            catalog.write_text('return { ["Unmatched"] = "" }\n', encoding="utf-8")
+            report_path = root / "coverage.json"
+            generate_mod([], root / "mod", language="fr", modkit_worksheet=worksheets, engine_catalog=catalog, report_path=report_path)
+            engine = json.loads(report_path.read_text(encoding="utf-8"))["engine"]
+            self.assertEqual(engine["total"], len(engine["details"]))
+            self.assertTrue(ENGINE_CATALOG_EXTRA_KEYS <= set(engine["details"]))
+
+    def test_generate_mod_rejects_unknown_engine_override_keys(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            catalog = root / "strings.lua"
+            catalog.write_text('return { ["Known"] = "" }\n', encoding="utf-8")
+            overrides = root / "overrides.json"
+            overrides.write_text(json.dumps({"entries": {"Stale": {"override": "Périmé"}}}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "unknown key.*Stale"):
+                generate_mod([], root / "mod", engine_catalog=catalog, engine_overrides=overrides)
+
+    def test_sendout_derive_partition_guard_returns_empty(self):
+        # A corpus value missing the RAM tokens would embed raw nick/trainer
+        # text; the derivation must yield nothing so the keys stay unmatched.
+        self.assertEqual(_derive_sendout_templates("garbage without tokens", "fr"), {})
+
+    def test_sendout_catalog_unmatched_on_corpus_drift(self):
+        rows = align([
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "en", "SENT OUT <PARA> Will %s change POKéMON?"),
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "fr", "ENVOYE <PARA> Changer de POKéMON?"),
+        ])
+        values, report = sendout_strings_catalog(rows, "fr")
+        self.assertEqual(values, {key: "" for key in SENDOUT_ENGINE_KEYS})
+        self.assertEqual(report["translated"], 0)
+        self.assertEqual(len(report["unmatched"]), len(SENDOUT_ENGINE_KEYS))
+
+    def test_romtext_fallback_catalog_aliases_used_and_derives_enemy_weak(self):
+        rows = align([
+            CorpusRecord("rb.text_7.ItemUseText001", "en", "{text_start}<PLAYER> used@@"),
+            CorpusRecord("rb.text_7.ItemUseText001", "fr", "{text_start}<PLAYER> utilise:@@"),
+            CorpusRecord("rb.text_2.EnemysWeakText", "en", "{text_start}The enemy's weak!<LINE>Get'm! @@"),
+            CorpusRecord("rb.text_2.EnemysWeakText", "fr", "{text_start}Il est à toi,<LINE>@@"),
+        ])
+        values = {"%s used\n%s!": "%s utilise:\n%s!"}
+        output, report = romtext_fallback_catalog(values, rows, "fr")
+        self.assertEqual(output["%s\nused %s!"], "%s utilise:\n%s!")
+        self.assertEqual(output["The enemy's weak!\nGet'm! %s!"], "Il est à toi,\n%s!")
+        self.assertEqual(report["translated"], 2)
+        self.assertEqual(report["unmatched"], [])
+
+    def test_romtext_fallback_catalog_unmatched_without_source(self):
+        rows = align([
+            CorpusRecord("rb.text_7.ItemUseText001", "en", "{text_start}<PLAYER> used@@"),
+            CorpusRecord("rb.text_7.ItemUseText001", "fr", "{text_start}<PLAYER> utilise:@@"),
+        ])
+        output, report = romtext_fallback_catalog({}, rows, "fr")
+        self.assertEqual(output, {})
+        self.assertEqual(len(report["unmatched"]), 2)
+
+    def test_enemy_qualifier_catalog_uses_corpus_label(self):
+        rows = align([
+            CorpusRecord("rb.text.EnemyText", "en", "Enemy @"),
+            CorpusRecord("rb.text.EnemyText", "fr", " ennemi@"),
+        ])
+        output, report = enemy_qualifier_catalog(rows, "fr")
+        self.assertEqual(output, {"Enemy %s": "%s ennemi"})
+        self.assertEqual(report["translated"], 1)
+        self.assertEqual(report["unmatched"], [])
+        output_de, _ = enemy_qualifier_catalog(rows, "de")
+        self.assertEqual(output_de, {"Enemy %s": "Gegn. %s"})
+        # sans la ligne corpus -> vide
+        out_empty, rep = enemy_qualifier_catalog([], "fr")
+        self.assertEqual(out_empty, {})
+        self.assertIn("Enemy %s", rep["unmatched"])
+
+    def test_generate_mod_writes_sendout_strings(self):
+        rows = align([
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "en", SENDOUT_ROW["en"]),
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "fr", SENDOUT_ROW["fr"]),
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            mod = generate_mod(rows, Path(tmp) / "mod", language="fr")
+            body = (mod / "lang/strings.lua").read_text(encoding="utf-8")
+            self.assertIn('["%s is\\nabout to use\\011%s!"] = "%s\\nva appeler...\\011%s!"', body)
+            self.assertIn('["Will %s\\nchange POKéMON?"] = "%s va-t-il\\nchanger de POKéMON?"', body)
+            self.assertNotIn('["%s is\\nabout to use"] = ', body)
+
+
+SENDOUT_ROW = {
+    "en": "{text_ram wTrainerName}{text_start} is<LINE>about to use<CONT>@{text_ram wEnemyMonNick}{text_start}!<PARA>Will <PLAYER><LINE>change #MON?<DONE>",
+    "fr": "{text_ram wTrainerName}{text_start}<LINE>va appeler...<CONT>@{text_ram wEnemyMonNick}{text_start}!<PARA><PLAYER> va-t-il<LINE>changer de<CONT>#MON?<DONE>",
+    "de": "{text_ram wTrainerName}{text_start} wird<LINE>@{text_ram wEnemyMonNick}{text_start} in den<CONT>Kampf schicken!<PARA>Möchtest Du das<LINE>#MON wechseln?<DONE>",
+    "es": "{text_start}¡@{text_ram wTrainerName}{text_start}<LINE>va a utilizar a<CONT>@{text_ram wEnemyMonNick}{text_start}!<PARA>¿<PLAYER> quiere<LINE>cambiar de<CONT>#MON?<DONE>",
+    "it": "{text_ram wTrainerName}{text_start}<LINE>sta per usare<CONT>@{text_ram wEnemyMonNick}{text_start}!<PARA><PLAYER>, vuoi<LINE>cambiare #MON?<DONE>",
+    "ja-Hrkt": "{text_ram wTrainerName}{text_start}は　@{text_ram wEnemyMonNick}{text_start}を<LINE>くりだそうと　しているようだ<PARA><PLAYER>も　#を<LINE>とりかえますか？<DONE>",
+}
+EXPECTED = {
+    "en": {"%s is\nabout to use": "%s is\nabout to use", "%s!": "%s!", "Will %s\nchange POKéMON?": "Will %s\nchange POKéMON?", "%s is\nabout to use\v%s!": "%s is\nabout to use\v%s!"},
+    "fr": {"%s is\nabout to use": "%s\nva appeler...", "%s!": "%s!", "Will %s\nchange POKéMON?": "%s va-t-il\nchanger de POKéMON?", "%s is\nabout to use\v%s!": "%s\nva appeler...\v%s!"},
+    "de": {"%s is\nabout to use": "%s wird", "%s!": "%s in den\nKampf schicken!", "Will %s\nchange POKéMON?": "%s, Möchtest Du das\nPOKéMON wechseln?", "%s is\nabout to use\v%s!": "%s wird\v%s in den\nKampf schicken!"},
+    "es": {"%s is\nabout to use": "¡%s\nva a utilizar a", "%s!": "%s!", "Will %s\nchange POKéMON?": "¿%s quiere\ncambiar de POKéMON?", "%s is\nabout to use\v%s!": "¡%s\nva a utilizar a\v%s!"},
+    "it": {"%s is\nabout to use": "%s\nsta per usare", "%s!": "%s!", "Will %s\nchange POKéMON?": "%s, vuoi\ncambiare POKéMON?", "%s is\nabout to use\v%s!": "%s\nsta per usare\v%s!"},
+    "ja-Hrkt": {"%s is\nabout to use": "%sは　", "%s!": "%sを\nくりだそうと　しているようだ", "Will %s\nchange POKéMON?": "%sも　POKéMONを\nとりかえますか？", "%s is\nabout to use\v%s!": "%sは　\v%sを\nくりだそうと　しているようだ"},
+}
 
 
 if __name__ == "__main__":

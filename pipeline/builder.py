@@ -344,6 +344,128 @@ def preserve_scaffold_support(scaffold: Path, mod: Path) -> None:
             font_path_fix + font_registration,
             1,
         )
+    # Type names are translated at draw time (Font.draw/Font.split) while the
+    # type_chart registry keeps the English names, so third-party mods that
+    # key colors/UI off TypeChart.displayName keep resolving them.  An empty
+    # generated catalog (no corpus TypeNames rows) has nothing to apply and
+    # leaves the scaffold untouched; when values exist but the scaffold
+    # drifts, the failure is loud so a generated type_names.lua can never be
+    # packed without its runtime hook.
+    type_catalog = mod / "lang" / "type_names.lua"
+    if type_catalog.is_file():
+        type_body = type_catalog.read_text(encoding="utf-8")
+        has_type_values = any(
+            line.lstrip().startswith("[") and '= "' in line
+            and not line.rstrip().endswith('"",')
+            for line in type_body.splitlines()
+        )
+        if has_type_values:
+            type_injection = (
+                "\n  -- Injected: localized type display names from generated lang/type_names.lua\n"
+                "  -- Type names stay English in the type_chart registry so third-party\n"
+                "  -- mods that key colors/UI off TypeChart.displayName keep resolving,\n"
+                "  -- and are localized at draw time instead: every engine site renders\n"
+                "  -- the type name as a standalone Font.draw string, which is substituted\n"
+                "  -- below.\n"
+                '  local okType, TypeChart = pcall(require, "src.battle.TypeChart")\n'
+                "  local by_english = {}\n"
+                '  counts.type_names = each("type_names", function(typeId, localized)\n'
+                "    if okType and TypeChart and type(TypeChart.displayName) == \"function\" then\n"
+                "      local canonical = TypeChart.displayName(typeId)\n"
+                "      if type(canonical) == \"string\" and canonical ~= \"\" and canonical ~= localized then\n"
+                "        by_english[canonical] = localized\n"
+                "      end\n"
+                "    end\n"
+                "  end)\n"
+                "  if next(by_english) then\n"
+                '    local okFont, Font = pcall(require, "src.render.Font")\n'
+                "    if okFont and type(Font) == \"table\" then\n"
+                "      local function localize(text)\n"
+                "        if type(text) ~= \"string\" then return text end\n"
+                "        local localized = by_english[text]\n"
+                "        return type(localized) == \"string\" and localized or text\n"
+                "      end\n"
+                "      if type(Font.split) == \"function\" then\n"
+                "        local original_split = Font.split\n"
+                "        Font.split = function(text)\n"
+                "          return original_split(localize(text))\n"
+                "        end\n"
+                "      end\n"
+                "      if type(Font.draw) == \"function\" then\n"
+                "        local original_draw = Font.draw\n"
+                "        Font.draw = function(text, x, y, ...)\n"
+                "          return original_draw(localize(text), x, y, ...)\n"
+                "        end\n"
+                "      end\n"
+                "    end\n"
+                "  end\n"
+            )
+            if "counts.type_names" not in scaffold_main:
+                type_marker = '  counts.statuses = each("status_labels", function(id, value)\n    mod.content.statuses:patch(id, { label = value })\n  end)'
+                if type_marker in scaffold_main:
+                    scaffold_main = scaffold_main.replace(type_marker, type_marker + type_injection, 1)
+                elif 'each("status_labels"' in scaffold_main:
+                    # The statuses block drifted from the exact scaffold shape;
+                    # fall back to the closing function boundary like the
+                    # literal-handler injection below (counts and each are in
+                    # scope for the whole function body).
+                    end = scaffold_main.rfind("\nend")
+                    if end < 0:
+                        raise BuildError(f"Modkit scaffold main has no closing function: {main}")
+                    scaffold_main = scaffold_main[:end] + type_injection + scaffold_main[end:]
+                else:
+                    raise BuildError(f"Modkit scaffold main has no statuses block to extend: {main}")
+    # Yellow's Pallet-intro catch demo and the old-man tutorial show the
+    # thrower name in the translated "%s used POKé BALL!" template
+    # (BattleState.oldManThrow).  demoName must stay the canonical English
+    # literal -- the engine keys Yellow's Pallet-intro sprite selection off
+    # demoName == "PROF.OAK" -- so the translation happens only at the
+    # render site and is reverted right after.
+    if "oldManThrow" not in scaffold_main:
+        demo_injection = (
+            "\n  -- Injected: localize hard-coded demo-battle thrower names\n"
+            '  local demo_names = catalog("demo_names")\n'
+            "  local function localizedDemoName(self, name)\n"
+            "    if type(name) == \"string\" then\n"
+            "      local localized = demo_names and demo_names[name]\n"
+            "      if type(localized) == \"string\" and localized ~= \"\" then\n"
+            "        return localized\n"
+            "      end\n"
+            "      if name == \"PROF.OAK\" then\n"
+            "        local trainers = self and self.game and self.game.data and self.game.data.trainers\n"
+            "        local oak = trainers and trainers.OPP_PROF_OAK\n"
+            "        if oak and type(oak.name) == \"string\" and oak.name ~= \"\" then\n"
+            "          return oak.name\n"
+            "        end\n"
+            "      end\n"
+            "    end\n"
+            "    return nil\n"
+            "  end\n"
+            '  local okDemo, BS = pcall(require, "src.battle.BattleState")\n'
+            "  if okDemo and type(BS) == \"table\" and type(BS.oldManThrow) == \"function\" then\n"
+            "    local original_oldManThrow = BS.oldManThrow\n"
+            "    BS.oldManThrow = function(self, ...)\n"
+            "      if type(self) == \"table\" then\n"
+            "        local canonical = self.demoName\n"
+            "        local localized = localizedDemoName(self, canonical)\n"
+            "        if type(localized) == \"string\" and localized ~= \"\" then\n"
+            "          self.demoName = localized\n"
+            "          local ok, result = pcall(original_oldManThrow, self, ...)\n"
+            "          self.demoName = canonical\n"
+            "          if ok then return result end\n"
+            "          error(result, 0)\n"
+            "        end\n"
+            "      end\n"
+            "      return original_oldManThrow(self, ...)\n"
+            "    end\n"
+            "  end\n"
+            "  -- Injected: the Pallet-intro thrower sprite is NOT overridden; with\n"
+            "  -- demoName kept canonical, the engine itself selects Prof. Oak's back\n"
+            "  -- pic for that demo (vanilla behavior).\n"
+        )
+        end = scaffold_main.rfind("\nend")
+        if end >= 0:
+            scaffold_main = scaffold_main[:end] + demo_injection + scaffold_main[end:]
     if runtime.is_file():
         marker = '  local literal_body = mod:read("lang/literal_handlers.lua")'
         if marker not in scaffold_main:
@@ -519,6 +641,11 @@ def build(
     env = dict(os.environ)
     env["MODKIT_LUAJIT"] = luajit
     env["LUA"] = luajit
+    # v0.1.69+'s modkit pack/validate drives the real loader headlessly.
+    # Data.loadModule supports POKEPORT_DATA_DIR, which loadfiles the
+    # imported dataset directly and skips the love.filesystem-dependent
+    # CacheFs path (a bare loader run would crash on CacheFs.read).
+    env["POKEPORT_DATA_DIR"] = str(gen1recomp / "data" / "generated")
     if is_frozen():
         lua_dir = str(Path(luajit).resolve().parent)
         env["PATH"] = lua_dir + os.pathsep + env.get("PATH", "")

@@ -16,8 +16,6 @@ KEYS = (
     "BOX %d (RELEASE)",
     "Data unknown.",
     "The boulder fell\nthrough the hole!",
-    "%s's\nstatus returned\nto normal!",
-    "Coin count:\n%d",
 )
 
 EXPECTED = {
@@ -25,64 +23,47 @@ EXPECTED = {
         "%s :N%d", ":N%d No.%03d", "Vide.",
         "Pas bon! Même pas\nprès de l'eau.", "PP", "IMPRIMER BOITE", "PRNT",
         "BOITE %d (RETIRER)", "BOITE %d (RELACHER)", "Données inconnues.",
-        "Le rocher est tombé\ndans le trou!", "L'état de %s\nest redevenu\nnormal!",
-        "Jetons :\n%d",
+        "Le rocher est tombé\ndans le trou!",
     ],
     "de": [
         "%s :L%d", ":L%d Nr.%03d", "Leer.",
         "Schade! Nicht mal\nin Wassernähe.", "PP", "BOX DRUCKEN", "PRNT",
         "BOX %d (MITNEHMEN)", "BOX %d (FREILASSEN)", "Daten unbekannt.",
-        "Der Felsen fiel\ndurch das Loch!", "Der Status von %s\nist wieder\nnormal!",
-        "Münzen:\n%d",
+        "Der Felsen fiel\ndurch das Loch!",
     ],
     "es": [
         "%s :N%d", ":N%d Nº%03d", "Vacía.",
         "¡Qué mal! No estás\nni cerca del agua.", "PP", "IMPRIMIR CAJA", "PRNT",
         "CAJA %d (SACAR)", "CAJA %d (SOLTAR)", "Datos desconocidos.",
-        "¡La roca cayó\npor el agujero!", "El estado de %s\nvolvió a la\nnormalidad!",
-        "Fichas:\n%d",
+        "¡La roca cayó\npor el agujero!",
     ],
     "it": [
         "%s :L%d", ":L%d Nº%03d", "Vuoto.",
         "Niente da fare!\nLontano dall'acqua.", "PP", "STAMPA BOX", "PRNT",
         "BOX %d (RITIRA)", "BOX %d (LIBERA)", "Dati sconosciuti.",
-        "Il masso è caduto\nnel buco!", "Lo stato di %s\nè tornato\nnormale!",
-        "Gettoni:\n%d",
+        "Il masso è caduto\nnel buco!",
     ],
     "ja-Hrkt": [
         "%s :L%d", ":L%d No.%03d", "からっぽ。",
         "だめだ！\nみずの　そばじゃ　ない！", "PP", "ボックスを　プリント", "PRNT",
         "ボックス%d（つれていく）", "ボックス%d（にがす）", "データ　ふめい。",
-        "いわが　あなに\nおちた！", "%sの\nじょうたいが\nもとに　もどった！",
-        "コイン\n%dまい",
+        "いわが　あなに\nおちた！",
     ],
 }
 
-REASON_AI = "AI-generated manual corpus-gap translation."
-REASON_VISUAL = "AI-generated manual corpus-gap translation; requires in-game visual validation."
-VISUAL_KEYS = {
-    language: {"No good! It's not\neven near water."}
-    for language in EXPECTED
-}
-VISUAL_KEYS["de"].update(("BOX %d (WITHDRAW)", "BOX %d (RELEASE)"))
-
 CONTRACT_GAP_KEYS = (
-    "%s can't\nlearn that move!", "%s defeated\n%s!", "%s is\nabout to use",
     "%s lined up!\nScored %d coins!", "%s was\ntransferred to\n%s!",
-    "%s's\nSUBSTITUTE broke!", "%s's\nhurt by poison!", "%s's\nhurt by the burn!",
-    "%s's %s\nrose!", "%s's PP\nwas restored!", "Converted type to\n%s's!",
-    "It didn't affect\n%s!", "It knows that\nmove already!",
+    "%s's\nhurt by poison!", "%s's\nhurt by the burn!", "%s's %s\nrose!",
     "Once released,\n%s is\ngone forever. OK?",
     "PLAYER %s\nBADGES    %d\nPOKéDEX %3d\nTIME %6d:%02d", "BADGES",
-    "HT %d′%02d″", "The wild POKéMON\nran away!",
-    "This POKéMON\ncan't be caught!", "Use on which one?", "WT %.1flb",
-    "Will %s\nchange POKéMON?", "evolving!", "%sBOX %2d",
-    "%s\nfainted!", "%s\nused %s!", "%s found\n%s!",
+    "HT %d′%02d″", "This POKéMON\ncan't be caught!", "Use on which one?", "WT %.1flb",
+    "evolving!", "%sBOX %2d",
+    "%s\nfainted!", "%s found\n%s!",
     "%s's HP\nwas restored!", "It won't have\nany effect.", "POKéDEX",
 )
 
 COLLISION_KEYS = (
-    "%s\nfainted!", "%s\nused %s!", "%s found\n%s!",
+    "%s\nfainted!", "%s found\n%s!",
     "%s's HP\nwas restored!", "It won't have\nany effect.", "POKéDEX",
 )
 
@@ -97,8 +78,10 @@ class ManualCorpusGapOverrideTests(unittest.TestCase):
                 row = overrides[source]
                 self.assertEqual(row["override"], expected, (language, source))
                 self.assertTrue(row["override"].strip(), (language, source))
-                reason = REASON_VISUAL if source in VISUAL_KEYS[language] else REASON_AI
-                self.assertEqual(row["reason"], reason, (language, source))
+                self.assertEqual(row["reason"], "engine-original", (language, source))
+                self.assertIn("AI-generated engine-original translation", row["provenance"], (language, source))
+                self.assertIn("no compatible PokeCorpus qid", row["provenance"], (language, source))
+                self.assertIn("requires in-game visual validation", row["provenance"], (language, source))
                 self.assertEqual(printf_directives(source), printf_directives(expected), (language, source))
 
     def test_engine_contract_gap_candidates_are_traceable_and_printf_safe(self):

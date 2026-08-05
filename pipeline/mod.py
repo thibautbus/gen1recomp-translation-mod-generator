@@ -12,7 +12,8 @@ from .corpus import canonical_language
 from .project import project_version
 from .literals import load_recipes, generate_handlers
 
-CATALOGS = ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels")
+CATALOGS = ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels", "type_names", "demo_names")
+
 # Keep every language at the same priority; language choice must not affect load order.
 TRANSLATION_MOD_PRIORITY = 100
 COMMANDS_SHOW_TEXT_KEYS = {
@@ -37,6 +38,15 @@ def validate_commands_show_text_collisions(engine_values: dict[str, str], dialog
 
 def catalog_for(qid: str) -> str:
     value = qid.lower()
+    from .join import _type_name_tail, _base_qid, DEMO_NAMES_QIDS, SENDOUT_QID, POKEDEX_FOOTER_LABEL_QIDS
+    if _base_qid(qid) == SENDOUT_QID:
+        return "strings"
+    if _base_qid(qid) in POKEDEX_FOOTER_LABEL_QIDS.values():
+        return "strings"
+    if _base_qid(qid) in DEMO_NAMES_QIDS.values():
+        return "demo_names"
+    if _type_name_tail(qid):
+        return "type_names"
     if "status" in value or "condition" in value:
         return "status_labels"
     if "item" in value:
@@ -83,6 +93,92 @@ return function(mod)
   each("item_names", function(id, value) mod.content.items:patch(id, {name = value}) end)
   each("trainer_names", function(id, value) mod.content.trainers:patch(id, {name = value}) end)
   each("status_labels", function(id, value) mod.content.statuses:patch(id, {label = value}) end)
+  -- Type names stay English in the type_chart registry so third-party mods
+  -- that key colors/UI off TypeChart.displayName keep resolving, and are
+  -- localized at draw time instead: every engine site renders the type name
+  -- as a standalone Font.draw string, which is substituted below.
+  local okType, TypeChart = pcall(require, "src.battle.TypeChart")
+  local by_english = {}
+  each("type_names", function(typeId, localized)
+    if okType and TypeChart and type(TypeChart.displayName) == "function" then
+      local canonical = TypeChart.displayName(typeId)
+      if type(canonical) == "string" and canonical ~= "" and canonical ~= localized then
+        by_english[canonical] = localized
+      end
+    end
+  end)
+  if next(by_english) then
+    local okFont, Font = pcall(require, "src.render.Font")
+    if okFont and type(Font) == "table" then
+      local function localize(text)
+        if type(text) ~= "string" then return text end
+        local localized = by_english[text]
+        return type(localized) == "string" and localized or text
+      end
+      if type(Font.split) == "function" then
+        local original_split = Font.split
+        Font.split = function(text)
+          return original_split(localize(text))
+        end
+      end
+      if type(Font.draw) == "function" then
+        local original_draw = Font.draw
+        Font.draw = function(text, x, y, ...)
+          return original_draw(localize(text), x, y, ...)
+        end
+      end
+    end
+  end
+  -- Engine hard-coded demo-battle thrower names: the old-man tutorial's
+  -- "OLD MAN" (BattleState.makeOldManDemo default) and Yellow's Pallet-intro
+  -- catch demo "PROF.OAK" (data/scripts/story2.lua), shown in the translated
+  -- "%s used POKé BALL!" template (BattleState.oldManThrow).  The corpus-
+  -- backed demo_names catalog maps the literals per language.
+  --
+  -- demoName itself must stay the canonical English literal: the engine may
+  -- key sprite selection off it (Yellow's Pallet intro picks Prof. Oak's
+  -- sprite when demoName == "PROF.OAK"), so the translation happens only at
+  -- the render site below and is reverted right after.
+  local demo_names = catalog("demo_names")
+  local function localizedDemoName(self, name)
+    if type(name) == "string" then
+      local localized = demo_names and demo_names[name]
+      if type(localized) == "string" and localized ~= "" then
+        return localized
+      end
+      if name == "PROF.OAK" then
+        -- last-resort fallback: the translated trainer record
+        local trainers = self and self.game and self.game.data and self.game.data.trainers
+        local oak = trainers and trainers.OPP_PROF_OAK
+        if oak and type(oak.name) == "string" and oak.name ~= "" then
+          return oak.name
+        end
+      end
+    end
+    return nil
+  end
+  local okDemo, BS = pcall(require, "src.battle.BattleState")
+  if okDemo and type(BS) == "table" and type(BS.oldManThrow) == "function" then
+    local original_oldManThrow = BS.oldManThrow
+    BS.oldManThrow = function(self, ...)
+      if type(self) == "table" then
+        local canonical = self.demoName
+        local localized = localizedDemoName(self, canonical)
+        if type(localized) == "string" and localized ~= "" then
+          self.demoName = localized
+          local ok, result = pcall(original_oldManThrow, self, ...)
+          self.demoName = canonical
+          if ok then return result end
+          error(result, 0)
+        end
+      end
+      return original_oldManThrow(self, ...)
+    end
+  end
+  -- Note: the Pallet-intro thrower sprite is NOT overridden here — with
+  -- demoName kept canonical above, the engine itself selects Prof. Oak's
+  -- back pic for that demo (vanilla behavior); a player.sprite override
+  -- would clobber it with the front trainer pic.
   local literal_body = mod:read("lang/literal_handlers.lua")
   if literal_body then
     local chunk, err = loadstring(literal_body, "lang/literal_handlers.lua")
@@ -107,6 +203,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
     joined = None
     join_report = None
     engine_report = None
+    engine_values = None
     worksheets = None
     if modkit_worksheet and strict_engine:
         require_worksheets(modkit_worksheet)
@@ -116,12 +213,21 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         if engine_catalog is None and strict_engine:
             engine_catalog = Path(modkit_worksheet) / "strings.lua"
     if engine_catalog:
-        from .engine_scope import forced_dynamic_keys, load_scope
+        from .engine_scope import engine_dynamic_values, forced_dynamic_keys, load_scope
         scope = load_scope(engine_scope) if engine_scope else load_scope()
+        from .join import ENGINE_CATALOG_EXTRA_KEYS
         catalog = read_engine_catalog(engine_catalog)
         for key in forced_dynamic_keys(scope):
             catalog.setdefault(key, "")
-        engine_values, engine_report = match_engine_catalog(catalog, rows, load_engine_overrides(engine_overrides), semantic_anchors=semantic_anchors, semantic_anchor_decisions=semantic_anchor_decisions, target_lang=language)
+        for key in engine_dynamic_values(scope):
+            catalog.setdefault(key, "")
+        for key in ENGINE_CATALOG_EXTRA_KEYS:
+            catalog.setdefault(key, "")
+        overrides = load_engine_overrides(engine_overrides)
+        stale_overrides = sorted(set(overrides) - set(catalog))
+        if stale_overrides:
+            raise ValueError(f"engine overrides contain {len(stale_overrides)} unknown key(s): {stale_overrides!r}")
+        engine_values, engine_report = match_engine_catalog(catalog, rows, overrides, semantic_anchors=semantic_anchors, semantic_anchor_decisions=semantic_anchor_decisions, target_lang=language)
         for key, dynamic in scope.get("forced_dynamic_keys", {}).items():
             if key in engine_values:
                 engine_report["details"][key] = "forced_dynamic"
@@ -133,9 +239,9 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
                     "qid": dynamic["qid"],
                 }
         empty_keys = {key for key, info in scope.get("key_scope_overrides", {}).items() if info.get("engine_empty")}
-        for key in empty_keys & set(engine_values):
+        for key in empty_keys & set(catalog):
             was_unmatched = key in engine_report.get("unmatched", [])
-            if engine_values[key]:
+            if engine_values.get(key):
                 engine_report["translated"] -= 1
             engine_report["details"][key] = "covered_by_rom"
             engine_report["provenance"][key] = {"method": "covered-by-rom", "reason": "ROM/Data.text dialogue owns localized text"}
@@ -144,14 +250,68 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
             if was_unmatched:
                 engine_report["fallback_english"] = max(0, engine_report.get("fallback_english", 0) - 1)
             engine_values[key] = ""
+            # The key renders localized via the dialogue (data.text), so even
+            # though strings.lua stays empty it counts as translated.
+            engine_report["translated"] += 1
+            engine_report["covered_by_rom"] = engine_report.get("covered_by_rom", 0) + 1
         engine_report["percent"] = round(engine_report["translated"] * 100 / engine_report["total"], 2) if engine_report["total"] else 100.0
         if worksheets is not None:
             validate_commands_show_text_collisions(engine_values, (entry.key for entry in worksheets.get("dialogue", ())))
+    # The trainer send-out templates (strings.lua) are qid-driven from one
+    # corpus row (see pipeline/join.py) and merged into the engine strings,
+    # so they ship even without a worksheet.
+    from .join import sendout_strings_catalog, pokedex_footer_catalog, romtext_fallback_catalog, enemy_qualifier_catalog
+    sendout_values, sendout_report = sendout_strings_catalog(rows, language)
+    pokedex_values, pokedex_report = pokedex_footer_catalog(rows, language)
+    if engine_values is None:
+        engine_values = {}
+    qid_values = {**sendout_values, **pokedex_values}
+    engine_values.update(qid_values)
+    romtext_values, romtext_report = romtext_fallback_catalog(engine_values, rows, language)
+    qid_values.update(romtext_values)
+    engine_values.update(romtext_values)
+    enemy_values, enemy_report = enemy_qualifier_catalog(rows, language)
+    qid_values.update(enemy_values)
+    engine_values.update(enemy_values)
+    # The qid-driven catalogs above inject translated values AFTER the matcher
+    # ran, so the engine report still lists those keys as unmatched (or omits
+    # them).  Sync the report so "All engine strings" reflects what ships.
+    if engine_report is not None:
+        unresolved_methods = {None, "english_fallback", "semantic_ambiguous", "semantic_unresolved", "ambiguous", "structural_incompatible"}
+        for key, value in qid_values.items():
+            if not (isinstance(value, str) and value):
+                continue
+            if engine_report["details"].get(key) in unresolved_methods:
+                if key in engine_report.get("unmatched", []):
+                    engine_report["unmatched"] = [item for item in engine_report["unmatched"] if item != key]
+                    engine_report["fallback_english"] = max(0, engine_report.get("fallback_english", 0) - 1)
+                engine_report.get("ambiguous", {}).pop(key, None)
+                engine_report["translated"] += 1
+            engine_report["details"][key] = "qid-driven"
+            engine_report["provenance"][key] = {"method": "qid-driven", "reason": "corpus qid merged after matching (sendout/pokedex/romtext/enemy)"}
+        engine_report["percent"] = round(engine_report["translated"] * 100 / engine_report["total"], 2) if engine_report["total"] else 100.0
     (destination / "lang").mkdir(exist_ok=True)
     for name in CATALOGS:
-        if name == "strings" and engine_report is not None:
+        if name == "strings" and engine_values:
             lines = [f"-- Generated by multilingual pipeline ({language}): strings", "return {"]
             lines.extend(f"  [{lua_string(key)}] = {lua_string(value)}," for key, value in engine_values.items())
+            lines.append("}")
+            body = "\n".join(lines) + "\n"
+        elif name == "demo_names" and joined is None:
+            # Engine hard-coded demo names are qid-driven (see pipeline/join.py).
+            from .join import demo_names_catalog
+            values, _ = demo_names_catalog(rows, language)
+            lines = [f"-- Generated by multilingual pipeline ({language}): demo_names", "return {"]
+            lines.extend(f"  [{lua_string(key)}] = {lua_string(value)}," for key, value in sorted(values.items()))
+            lines.append("}")
+            body = "\n".join(lines) + "\n"
+        elif name == "type_names" and joined is None:
+            # Without a worksheet the join is purely qid-driven (see
+            # pipeline/join.py); keys are the engine's type_chart ids.
+            from .join import type_names_catalog
+            values, _ = type_names_catalog(rows, language)
+            lines = [f"-- Generated by multilingual pipeline ({language}): type_names", "return {"]
+            lines.extend(f"  [{lua_string(key)}] = {lua_string(value)}," for key, value in sorted(values.items()))
             lines.append("}")
             body = "\n".join(lines) + "\n"
         elif joined is not None:
@@ -222,14 +382,59 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
                     if isinstance(value, dict) and isinstance(value.get("qid"), str):
                         literal_qids_total.add(value["qid"])
         literal_qids_translated = set().union(*(recipe_qids(handler) for handler in generated_handlers)) if generated_handlers else set()
-        rom_total = (sum(len(read_worksheets(modkit_worksheet)[name]) for name in ROM_CATALOGS) if modkit_worksheet else 0) + literal_total
-        rom_translated = sum(join_report.get("matched", {}).get(name, 0) for name in ROM_CATALOGS) + literal_translated
+        type_names = joined.get("type_names", {}) if joined is not None else {}
+        type_names_total = len(type_names)
+        type_names_translated = join_report.get("matched", {}).get("type_names", 0)
+        rom_total = (sum(len(read_worksheets(modkit_worksheet)[name]) for name in ROM_CATALOGS) if modkit_worksheet else 0) + literal_total + type_names_total
+        rom_translated = sum(join_report.get("matched", {}).get(name, 0) for name in ROM_CATALOGS) + literal_translated + type_names_translated
         report = dict(join_report)
         rom_details = {name: {"translated": join_report.get("matched", {}).get(name, 0), "total": len(read_worksheets(modkit_worksheet)[name])} for name in ROM_CATALOGS} if modkit_worksheet else {}
         rom_details["literal_handlers"] = {
             "translated": literal_translated, "total": literal_total,
             "qids_translated": len(literal_qids_translated),
             "qids_total": len(literal_qids_total),
+        }
+        rom_details["type_names"] = {
+            "translated": type_names_translated, "total": type_names_total,
+            "excluded": (join_report.get("type_names") or {}).get("excluded"),
+        }
+        demo_names = joined.get("demo_names", {}) if joined is not None else {}
+        demo_names_total = len(demo_names)
+        demo_names_translated = join_report.get("matched", {}).get("demo_names", 0)
+        rom_total += demo_names_total
+        rom_translated += demo_names_translated
+        rom_details["demo_names"] = {
+            "translated": demo_names_translated, "total": demo_names_total,
+            "qids": (join_report.get("demo_names") or {}).get("qids"),
+        }
+        strings_sendout_total = len(sendout_values)
+        strings_sendout_translated = sendout_report["translated"]
+        rom_total += strings_sendout_total
+        rom_translated += strings_sendout_translated
+        rom_details["strings_sendout"] = {
+            "translated": strings_sendout_translated, "total": strings_sendout_total,
+            "qids": sendout_report.get("qids"),
+        }
+        strings_pokedex_total = len(pokedex_values)
+        strings_pokedex_translated = len(pokedex_values)
+        rom_total += strings_pokedex_total
+        rom_translated += strings_pokedex_translated
+        rom_details["strings_pokedex"] = {
+            "translated": strings_pokedex_translated, "total": strings_pokedex_total,
+        }
+        strings_romtext_total = len(romtext_values)
+        strings_romtext_translated = romtext_report["translated"]
+        rom_total += strings_romtext_total
+        rom_translated += strings_romtext_translated
+        rom_details["strings_romtext"] = {
+            "translated": strings_romtext_translated, "total": strings_romtext_total,
+        }
+        strings_enemy_total = len(enemy_values)
+        strings_enemy_translated = enemy_report["translated"]
+        rom_total += strings_enemy_total
+        rom_translated += strings_enemy_translated
+        rom_details["strings_enemy"] = {
+            "translated": strings_enemy_translated, "total": strings_enemy_total,
         }
         report["rom"] = {"translated": rom_translated, "total": rom_total, "percent": round(rom_translated * 100 / rom_total, 2) if rom_total else 100.0, "details": rom_details}
         if engine_report is not None:

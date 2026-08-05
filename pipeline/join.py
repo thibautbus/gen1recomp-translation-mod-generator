@@ -80,6 +80,149 @@ ENGINE_ALIASES = {
 }
 
 
+# Type display names are engine content: they live in the ``type_chart``
+# registry (names are translated at draw time, see pipeline/mod.py) and have
+# no modkit worksheet, so the join is qid-driven instead of key-driven.  The
+# runtime chart carries exactly 15 records (TypeChart.TYPES).  PSYCHIC_TYPE is
+# the pokered constant species types are stored as, displayed back as
+# "PSYCHIC"; Bird is the pokered type the engine never registers and nothing
+# displays, so its corpus row is recorded as excluded but never emitted.
+TYPE_NAMES_QID_PREFIX = "rb.names.TypeNames."
+TYPE_NAMES_RUNTIME_IDS = {
+    "Normal": "NORMAL", "Fighting": "FIGHTING", "Flying": "FLYING",
+    "Poison": "POISON", "Ground": "GROUND", "Rock": "ROCK", "Bug": "BUG",
+    "Ghost": "GHOST", "Fire": "FIRE", "Water": "WATER", "Grass": "GRASS",
+    "Electric": "ELECTRIC", "Psychic": "PSYCHIC_TYPE", "Ice": "ICE",
+    "Dragon": "DRAGON",
+}
+
+# Engine demo-battle thrower names that are hard-coded in Lua/scripts
+# (BattleState.makeOldManDemo's "OLD MAN" default, and Yellow's Pallet
+# intro which passes "PROF.OAK").  Corpus qid -> canonical English literal.
+DEMO_NAMES_QIDS = {
+    "OLD MAN": "rb.core.DisplayBattleMenu.oldManName",
+    "PROF.OAK": "rb.name_pointers.TrainerNamePointers.ProfOakName",
+}
+
+# The trainer send-out message: the engine renders it as fixed templates
+# (BattleState.lua TrainerSentOutText) fed from one corpus row:#   older engines split it as "%s is\nabout to use" -> "%s!" -> "Will
+#   %s\nchange POKéMON?"; the current engine (commit #565) merged the
+#   first two into "%s is\nabout to use\v%s!" (2 placeholders, \v = wait
+#   for a button press).  The templates are English-structured; fr/es/it
+#   mirror them, de and ja need structural adaptation (see
+#   _derive_sendout_templates).  Since the v0.1.69 pin, only the merged
+#   key and the change prompt are looked up; the pre-#565 split forms were
+#   dropped with the pin.
+SENDOUT_QID = "rb.text_2.TrainerAboutToUseText"
+SENDOUT_ENGINE_KEYS = ("%s is\nabout to use\v%s!", "Will %s\nchange POKéMON?")
+
+
+def _derive_sendout_templates(value: str, lang: str) -> dict[str, str]:
+    """Derive the engine's three send-out templates from the corpus message.
+
+    The corpus value carries the whole localized message with text control
+    codes; the trainer name, the incoming nick and the player name are RAM
+    placeholders the engine parameterizes.  Structure per language:
+    en/fr/it  "X is about to use<CONT>@NICK!<PARA>Will <PLAYER> change #MON?"
+    es         ¡@X ... (the ¡ precedes the name)
+    de         X wird<LINE>@NICK in den<CONT>Kampf schicken!<PARA>... (nick
+               inline; the change prompt has no <PLAYER>)
+    ja         Xは　@NICKを<LINE>くりだそうとしているようだ<PARA>...
+               (the sentence continues after the nick's を particle)
+    """
+    value = value.replace("<DONE>", "")
+    head, _, tail = value.partition("<PARA>")
+    before_nick, nick_sep, nick_suffix = head.partition("{text_ram wEnemyMonNick}")
+    prefix, trainer_sep, body = before_nick.partition("{text_ram wTrainerName}")
+    if not nick_sep or not trainer_sep:
+        # Corpus format drift: a missing RAM token would embed the raw nick
+        # or trainer text into the derived template.  Emit nothing and let
+        # the coverage gate report the send-out keys as unmatched instead of
+        # shipping garbage.
+        return {}
+
+    def clean(text: str, cont: str = " ") -> str:
+        return (text.replace("{text_start}", "").replace("@", "")
+                    .replace("<LINE>", "\n").replace("<CONT>", cont))
+
+    # msg1: the static text glued to the trainer name, cut where the nick
+    # begins (<CONT> in en/fr/es/it, a trailing <LINE> in de, nothing in ja).
+    if "<CONT>" in body:
+        body = body.split("<CONT>", 1)[0]
+    elif "<LINE>" in body:
+        body = body.split("<LINE>", 1)[0]
+    msg1 = clean(prefix) + "%s" + clean(body)
+
+    # msg2: the nick plus its suffix ("!", ja's を particle, de's verb phrase
+    # which must wrap onto a second line to fit the message box).
+    if lang == "de":
+        msg2 = "%s" + clean(nick_suffix, cont="\n")
+    else:
+        msg2 = "%s" + clean(nick_suffix)
+
+    # The current engine (#565) merged msg1+msg2 into one template with a
+    # \v wait marker between the parts; older engines kept them separate.
+    merged12 = msg1 + "\v" + msg2
+
+    # msg3: the change prompt.  <PLAYER> becomes the placeholder; the ROM's
+    # "#MON" symbol renders as POKéMON in the engine template.  de's prompt
+    # addresses the player without a name, so the name is injected (the
+    # engine template requires its %s).
+    # PokeCorpus uses both ``#MON`` and the bare Japanese ``#`` macro for the
+    # Pokémon wordmark.  Engine strings do not expand corpus macros, so never
+    # let either form reach Font as a literal/unknown glyph.
+    prompt = clean(tail).replace("#MON", "POKéMON").replace("#", "POKéMON")
+    if "<PLAYER>" in tail:
+        prompt = prompt.replace("<PLAYER>", "%s")
+    elif lang == "de":
+        prompt = "%s, " + prompt
+
+    return {
+        "%s is\nabout to use": msg1,
+        "%s!": msg2,
+        "Will %s\nchange POKéMON?": prompt,
+        "%s is\nabout to use\v%s!": merged12,
+    }
+
+
+def sendout_strings_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple[dict[str, str], dict]:
+    """Join the engine's trainer send-out templates from the corpus.
+
+    All three engine keys are emitted (left empty when untranslated, like
+    type_names/demo_names) so the coverage gate counts them; an empty
+    catalog is returned when the corpus carries no such row at all.
+    """
+    by_qid = {_base_qid(item.qid): item for item in items}
+    row = by_qid.get(SENDOUT_QID)
+    output: dict[str, str] = {}
+    report = {"translated": 0, "unmatched": [], "strategies": {}, "reasons": {}, "qids": {key: SENDOUT_QID for key in SENDOUT_ENGINE_KEYS}}
+    if row is None:
+        for key in SENDOUT_ENGINE_KEYS:
+            report["unmatched"].append(key)
+            report["strategies"][key] = "manual_review"
+            report["reasons"][key] = f"{SENDOUT_QID}: no {target_lang} translation; manual review required"
+        return output, report
+    if not row.translation:
+        for key in SENDOUT_ENGINE_KEYS:
+            output[key] = ""
+            report["unmatched"].append(key)
+            report["strategies"][key] = "manual_review"
+            report["reasons"][key] = f"{SENDOUT_QID}: empty {target_lang} translation; manual review required"
+        return output, report
+    templates = _derive_sendout_templates(str(row.translation), target_lang)
+    for key in SENDOUT_ENGINE_KEYS:
+        value = templates.get(key) or ""
+        output[key] = value
+        if value:
+            report["translated"] += 1
+            report["strategies"][key] = "sendout_qid"
+        else:
+            report["unmatched"].append(key)
+            report["strategies"][key] = "manual_review"
+            report["reasons"][key] = f"{SENDOUT_QID}: no derivable {target_lang} template; manual review required"
+    return output, report
+
+
 @dataclass
 class WorksheetEntry:
     key: str
@@ -194,6 +337,250 @@ def _canonical_candidates(catalog: str, key: str, candidates: list[Alignment]) -
         return _same_value(selected), f"canonical_{catalog}", f"selected {canonical_prefix} catalogue"
 
     return candidates, None, None
+
+
+def _base_qid(qid: str) -> str:
+    # Scope markers are internal (e.g. ^RG.rb.names.TypeNames.Fire or a
+    # trailing rb.names.TypeNames.Fire^RG), not part of the symbol.
+    return re.sub(r"\^(?:RG|R|G|B)(?=\.|$)", "", qid).lstrip(".")
+
+
+def _type_name_tail(qid: str) -> str | None:
+    # Scope markers are internal (e.g. ^RG.rb.names.TypeNames.Fire or a
+    # trailing rb.names.TypeNames.Fire^RG), not part of the symbol.
+    cleaned = _base_qid(qid)
+    if not cleaned.startswith(TYPE_NAMES_QID_PREFIX):
+        return None
+    return cleaned[len(TYPE_NAMES_QID_PREFIX):]
+
+
+def type_names_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple[dict[str, str], dict]:
+    """Join the corpus TypeNames rows onto the engine's type_chart ids.
+
+    Every runtime id is emitted, left empty when untranslated (the game then
+    keeps the English name).  When the corpus carries no TypeNames rows at
+    all, an empty catalog is returned so callers without type data keep their
+    prior behavior; ``report["excluded"]`` always records the Bird row and
+    why it is not emitted.
+    """
+    by_tail: dict[str, list[Alignment]] = defaultdict(list)
+    for item in items:
+        tail = _type_name_tail(item.qid)
+        if tail:
+            by_tail[tail].append(item)
+    output: dict[str, str] = {}
+    report = {
+        "translated": 0,
+        "unmatched": [],
+        "strategies": {},
+        "reasons": {},
+        "excluded": {
+            "Bird": {
+                "qid": TYPE_NAMES_QID_PREFIX + "Bird",
+                "reason": "the engine registers no Bird type (type_chart has 15 records) and nothing displays it, so the corpus row is recorded as excluded",
+            },
+        },
+    }
+    if not by_tail:
+        return output, report
+    for tail, runtime_id in TYPE_NAMES_RUNTIME_IDS.items():
+        qid = TYPE_NAMES_QID_PREFIX + tail
+        candidates = _same_value(by_tail.get(tail, []))
+        if len(candidates) == 1 and candidates[0].translation is not None:
+            output[runtime_id] = corpus_to_engine(str(candidates[0].translation))
+            report["translated"] += 1
+            report["strategies"][runtime_id] = "type_name_qid"
+        elif len(candidates) == 1:
+            output[runtime_id] = ""
+            report["unmatched"].append(runtime_id)
+            report["strategies"][runtime_id] = "manual_review"
+            report["reasons"][runtime_id] = f"{qid}: no {target_lang} translation; manual review required"
+        else:
+            output[runtime_id] = ""
+            report["unmatched"].append(runtime_id)
+            report["strategies"][runtime_id] = "manual_review"
+            reason = "no canonical candidate" if not candidates else f"ambiguous {qid}: {[x.qid for x in candidates]}"
+            report["reasons"][runtime_id] = f"{reason}; manual review required"
+    return output, report
+
+
+# The Pokédex footer (ui/PokedexMenu.lua) is one engine template assembled
+# from two corpus labels ("SEEN" and "OWN" fragments of the ROM's footer).
+POKEDEX_FOOTER_ENGINE_KEYS = {
+    "SEEN %3d  OWN %3d",
+}
+POKEDEX_FOOTER_LABEL_QIDS = {
+    "SEEN": "rb.pokedex.PokedexSeenText",
+    "OWN": "rb.pokedex.PokedexOwnText",
+}
+
+
+def pokedex_footer_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple[dict[str, str], dict]:
+    """Localize the Pokédex footer template from the two corpus label rows.
+
+    The current engine (#639) formats the footer as one fixed template with
+    two 3-digit fields ("SEEN %3d  OWN %3d"); the corpus labels keep their
+    ROM casing while the format directive widths come from the template.
+    """
+    output: dict[str, str] = {}
+    report: dict = {"strategies": {}, "reasons": {}, "unmatched": []}
+    by_qid: dict[str, Alignment] = {}
+    for item in items:
+        qid = _base_qid(item.qid)
+        by_qid.setdefault(qid, item)
+    parts: dict[str, str] = {}
+    for role, qid in POKEDEX_FOOTER_LABEL_QIDS.items():
+        row = by_qid.get(qid)
+        if row is None:
+            report["strategies"][role] = "unmatched"
+            report["reasons"][role] = f"missing corpus row {qid}"
+            report["unmatched"].append(role)
+            return output, report
+        translation = row.translation
+        if not translation:
+            report["strategies"][role] = "empty_corpus"
+            report["reasons"][role] = f"empty {qid} translation"
+            report["unmatched"].append(role)
+            return output, report
+        parts[role] = translation.replace("{text_start}", "").replace("@", "").strip()
+    template = next(iter(POKEDEX_FOOTER_ENGINE_KEYS))
+    output[template] = f"{parts['SEEN']} %3d  {parts['OWN']} %3d"
+    report["strategies"][template] = "corpus_footer_labels"
+    return output, report
+
+
+# romText fallback keys that v0.1.69 renders via Strings because the pokered
+# label cannot carry the call's arguments (slot mismatch in RomText).
+#
+# 1. "%s\nused %s!" (battle move-use, BattleState.lua:3433): _ItemUseText001
+#    extracts as "{PLAYER} used" / "{PLAYER} utilise:" — a single slot, while
+#    the call passes user + move.  The item-use variant of the same message
+#    ("%s used\n%s!", BattleState.lua:4491) is already translated from
+#    rb.text_7.ItemUseText001, so the battle key aliases it.
+# 2. "The enemy's weak!\nGet'm! %s!" (BattleState.lua:1362): _EnemysWeakText
+#    extracts without a name slot; the corpus row rb.text_2.EnemysWeakText
+#    carries the localized phrase with the trailing name slot.
+ROMTEXT_USED_KEY = "%s\nused %s!"
+ROMTEXT_USED_ALIAS = "%s used\n%s!"
+ENEMY_WEAK_QID = "rb.text_2.EnemysWeakText"
+ENEMY_WEAK_KEY = "The enemy's weak!\nGet'm! %s!"
+
+
+def romtext_fallback_catalog(values: dict[str, str], items: list[Alignment], target_lang: str = "fr") -> tuple[dict[str, str], dict]:
+    """Localize the romText fallback keys the engine renders via Strings."""
+    output: dict[str, str] = {}
+    report = {"translated": 0, "unmatched": [], "strategies": {}, "reasons": {}}
+    alias = values.get(ROMTEXT_USED_ALIAS)
+    if alias:
+        output[ROMTEXT_USED_KEY] = alias
+        report["strategies"][ROMTEXT_USED_KEY] = "alias_item_use"
+    else:
+        report["unmatched"].append(ROMTEXT_USED_KEY)
+        report["strategies"][ROMTEXT_USED_KEY] = "manual_review"
+        report["reasons"][ROMTEXT_USED_KEY] = f"{ROMTEXT_USED_ALIAS!r} untranslated; manual review required"
+    row = next((item for item in items if _base_qid(item.qid) == ENEMY_WEAK_QID), None)
+    if row is not None and row.translation:
+        value = row.translation.replace("{text_start}", "").replace("<LINE>", "\n")
+        value = value.rstrip("@")
+        output[ENEMY_WEAK_KEY] = value + "%s!"
+        report["strategies"][ENEMY_WEAK_KEY] = "corpus_enemy_weak"
+    else:
+        report["unmatched"].append(ENEMY_WEAK_KEY)
+        report["strategies"][ENEMY_WEAK_KEY] = "manual_review"
+        report["reasons"][ENEMY_WEAK_KEY] = f"missing or empty corpus row {ENEMY_WEAK_QID}; manual review required"
+    report["translated"] = len(output)
+    return output, report
+
+
+# The enemy-mon qualifier (BattleState.lua displayName, #779): battle texts
+# naming the enemy mon print "Enemy " before the nickname.  The words come
+# from the ROM's own enemy label (rb.text.EnemyText: " ennemi@", "Gegn. @",
+# "Enem.@", " nemico@", "てきの　@"); the %s position is curated per language
+# because fr/it qualify after the name (the engine note suggests "%s ennemi")
+# while de/es/ja prefix it, and the ja label carries a full-width space.
+ENEMY_QUALIFIER_QID = "rb.text.EnemyText"
+ENEMY_QUALIFIER_KEY = "Enemy %s"
+ENEMY_QUALIFIER_VALUES = {
+    "fr": "%s ennemi",
+    "de": "Gegn. %s",
+    "es": "Enem. %s",
+    "it": "%s nemico",
+    "ja-Hrkt": "てきの　%s",
+}
+
+# Keys supplied by dedicated qid joins instead of the generic matcher.  Keep
+# them in the engine coverage universe even when Modkit's scaffold omits a
+# rendered fallback (currently the two romText keys below).
+QID_DRIVEN_ENGINE_KEYS = frozenset({
+    *SENDOUT_ENGINE_KEYS,
+    *POKEDEX_FOOTER_ENGINE_KEYS,
+    ROMTEXT_USED_KEY,
+    ENEMY_WEAK_KEY,
+    ENEMY_QUALIFIER_KEY,
+})
+
+# Rendered romText fallbacks omitted by Modkit's strings.lua harvester still
+# belong to the engine universe.  The two translated fallbacks are already in
+# QID_DRIVEN_ENGINE_KEYS; Yellow's starter-Pikachu refusal deliberately stays
+# English until Yellow corpus support exists.
+YELLOW_REFUSING_KEY = "%s\nis refusing!"
+ENGINE_CATALOG_EXTRA_KEYS = QID_DRIVEN_ENGINE_KEYS | {YELLOW_REFUSING_KEY}
+
+
+def enemy_qualifier_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple[dict[str, str], dict]:
+    """Localize the 'Enemy %s' qualifier from the corpus enemy label."""
+    output: dict[str, str] = {}
+    report = {"translated": 0, "unmatched": [], "strategies": {}, "reasons": {}, "qids": {ENEMY_QUALIFIER_KEY: ENEMY_QUALIFIER_QID}}
+    row = next((item for item in items if _base_qid(item.qid) == ENEMY_QUALIFIER_QID), None)
+    value = ENEMY_QUALIFIER_VALUES.get(target_lang)
+    if row is None or not row.translation:
+        report["unmatched"].append(ENEMY_QUALIFIER_KEY)
+        report["strategies"][ENEMY_QUALIFIER_KEY] = "manual_review"
+        report["reasons"][ENEMY_QUALIFIER_KEY] = f"missing or empty corpus row {ENEMY_QUALIFIER_QID}; manual review required"
+    elif value is None:
+        report["unmatched"].append(ENEMY_QUALIFIER_KEY)
+        report["strategies"][ENEMY_QUALIFIER_KEY] = "manual_review"
+        report["reasons"][ENEMY_QUALIFIER_KEY] = f"no curated value for {target_lang}; manual review required"
+    else:
+        output[ENEMY_QUALIFIER_KEY] = value
+        report["strategies"][ENEMY_QUALIFIER_KEY] = "corpus_enemy_qualifier"
+    report["translated"] = len(output)
+    return output, report
+
+
+def demo_names_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple[dict[str, str], dict]:
+    """Join the corpus rows for engine hard-coded demo-battle names.
+
+    These literals (e.g. the old-man tutorial's "OLD MAN") are baked into
+    engine Lua/scripts rather than trainer records, so the mod ships them as
+    a small name map read by the makeOldManDemo hook.  An empty catalog is
+    returned when the corpus has no matching rows.
+    """
+    by_qid = {_base_qid(item.qid): item for item in items}
+    output: dict[str, str] = {}
+    report = {"translated": 0, "unmatched": [], "strategies": {}, "reasons": {}, "qids": {}}
+    for literal, qid in DEMO_NAMES_QIDS.items():
+        row = by_qid.get(qid)
+        report["qids"][literal] = qid
+        if row is None:
+            # No corpus rows at all: return an empty catalog (callers without
+            # corpus data keep their prior behavior, like type_names).
+            report["unmatched"].append(literal)
+            report["strategies"][literal] = "manual_review"
+            report["reasons"][literal] = f"{qid}: no {target_lang} translation; manual review required"
+            continue
+        # Emit the literal even when untranslated (empty value) so the
+        # coverage gate counts it: a language missing the translation then
+        # fails the 100% gate instead of silently falling back to English.
+        output[literal] = corpus_to_engine(str(row.translation)) if row.translation else ""
+        if row.translation:
+            report["translated"] += 1
+            report["strategies"][literal] = "demo_name_qid"
+        else:
+            report["unmatched"].append(literal)
+            report["strategies"][literal] = "manual_review"
+            report["reasons"][literal] = f"{qid}: empty {target_lang} translation; manual review required"
+    return output, report
 
 
 def _anchor_row(items: list[Alignment], qid: str | None, role: str = "prefix") -> tuple[Alignment | None, str]:
@@ -407,4 +794,44 @@ def join_catalogs(items: list[Alignment], worksheets: dict[str, list[WorksheetEn
                 report["ambiguous"].setdefault(catalog, {})[entry.key] = [x.qid for x in candidates]
                 report["strategies"][catalog][entry.key] = "manual_review"
                 report["reasons"][catalog].setdefault(entry.key, "multiple canonical candidates with different translated values")
+    # Type display names are engine ``type_chart`` content with no modkit
+    # worksheet.  They are joined qid-driven and gated like a catalog when
+    # the corpus provides TypeNames rows; otherwise the catalog stays empty
+    # and English names remain active at runtime.
+    type_values, type_report = type_names_catalog(items, target_lang)
+    output["type_names"] = type_values
+    report["type_names"] = type_report
+    if type_values:
+        report["matched"]["type_names"] = type_report["translated"]
+        report["unmatched"]["type_names"] = type_report["unmatched"]
+        report["strategies"]["type_names"] = type_report["strategies"]
+        report["reasons"]["type_names"] = type_report["reasons"]
+    # Engine hard-coded demo-battle names (makeOldManDemo's "OLD MAN") are
+    # joined the same qid-driven way and gated when the corpus provides rows.
+    demo_values, demo_report = demo_names_catalog(items, target_lang)
+    output["demo_names"] = demo_values
+    report["demo_names"] = demo_report
+    if demo_values:
+        report["matched"]["demo_names"] = demo_report["translated"]
+        report["unmatched"]["demo_names"] = demo_report["unmatched"]
+        report["strategies"]["demo_names"] = demo_report["strategies"]
+        report["reasons"]["demo_names"] = demo_report["reasons"]
+    # The trainer send-out templates (strings catalog) are qid-driven too:
+    # one corpus row feeds the engine's three fixed templates.
+    sendout_values, sendout_report = sendout_strings_catalog(items, target_lang)
+    output["strings"].update(sendout_values)
+    report["strings_sendout"] = sendout_report
+    if sendout_values:
+        report["matched"]["strings_sendout"] = sendout_report["translated"]
+        report["unmatched"]["strings_sendout"] = sendout_report["unmatched"]
+        report["strategies"]["strings_sendout"] = sendout_report["strategies"]
+        report["reasons"]["strings_sendout"] = sendout_report["reasons"]
+    # The Pokédex footer template is assembled from two corpus labels.
+    pokedex_values, pokedex_report = pokedex_footer_catalog(items, target_lang)
+    output["strings"].update(pokedex_values)
+    report["strings_pokedex"] = pokedex_report
+    if pokedex_values:
+        report["matched"]["strings_pokedex"] = pokedex_report.get("translated", len(pokedex_values))
+        report["strategies"]["strings_pokedex"] = pokedex_report["strategies"]
+        report["reasons"]["strings_pokedex"] = pokedex_report["reasons"]
     return output, report

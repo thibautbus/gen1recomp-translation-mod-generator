@@ -528,27 +528,6 @@
       "placeholders": {
         "{RAM:wBattleMonNick}": "%s"
       }
-    },
-    "The enemy's weak!\nGet'm! %s!": {
-      "parts": [
-        {
-          "qid": "rb.text_2.EnemysWeakText",
-          "extraction": {
-            "kind": "full",
-            "preserve_edges": true
-          }
-        },
-        {
-          "qid": "rb.text_2.PlayerMon1Text",
-          "extraction": {
-            "kind": "full"
-          }
-        }
-      ],
-      "join": "",
-      "placeholders": {
-        "{RAM:wBattleMonNick}": "%s"
-      }
     }
   }
 }

@@ -43,7 +43,7 @@ class MultilingualTests(unittest.TestCase):
         worksheets = Path(".cache/interactive/fr/complete-modkit-worksheet")
         if not (worksheets / "strings.lua").is_file():
             self.skipTest("cached modkit worksheet unavailable")
-        rom_keys = ("Crammed full of\nPOKéMON books!", "INDIGO PLATEAU", "POKéDEX comp-\nletion is:\f{NUM:hDexRatingNumMonsSeen} POKéMON seen\n{NUM:hDexRatingNumMonsOwned} POKéMON owned\fPROF.OAK's\nRating:", "{RIVAL}: Yeah! Am\nI great or what?", "Welcome to our\nPOKéMON CENTER!", "Your POKéMON are\nfighting fit!")
+        rom_keys = ("Crammed full of\nPOKéMON books!", "Keep it up!", "No SURFing here!", "Nothing to CUT!", "POKéDEX Rating{COLON}", "{RIVAL}: Yeah! Am\nI great or what?", "Welcome to our\nPOKéMON CENTER!", "Your POKéMON are\nfighting fit!")
         from tempfile import TemporaryDirectory
         for language in ("fr", "de", "es", "it", "ja-Hrkt"):
             worksheet = Path(".cache/interactive") / language / "complete-modkit-worksheet"
@@ -58,6 +58,68 @@ class MultilingualTests(unittest.TestCase):
                 for key in rom_keys:
                     self.assertIn(f'  [{lua_string(key)}] = "",', strings, language)
                 self.assertIn('  ["_PokemonBooksText"] = ', (mod / "lang/dialogue.lua").read_text(encoding="utf-8"), language)
+
+    def test_real_corpus_type_names_cover_all_runtime_types(self):
+        corpus_root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
+        if not (corpus_root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout unavailable")
+        runtime_ids = ("NORMAL", "FIGHTING", "FLYING", "POISON", "GROUND", "ROCK", "BUG", "GHOST", "FIRE", "WATER", "GRASS", "ELECTRIC", "PSYCHIC_TYPE", "ICE", "DRAGON")
+        for language in ("fr", "de", "es", "it", "ja-Hrkt"):
+            worksheet = Path(".cache/interactive") / language / "complete-modkit-worksheet"
+            if not (worksheet / "strings.lua").is_file():
+                self.skipTest(f"cached {language} worksheet unavailable")
+            rows = align(parse_redblue(corpus_root, language), target_lang=language)
+            from tempfile import TemporaryDirectory
+            with TemporaryDirectory() as tmp:
+                mod = generate_mod(rows, Path(tmp) / "mod", language=language, modkit_worksheet=worksheet, engine_catalog=worksheet / "strings.lua", engine_overrides=Path("overrides") / language / "engine_overrides.json", strict_engine=True)
+                body = (mod / "lang/type_names.lua").read_text(encoding="utf-8")
+                for type_id in runtime_ids:
+                    self.assertIn(f'  ["{type_id}"] = ', body, (language, type_id))
+                    self.assertNotIn(f'  ["{type_id}"] = "",', body, (language, type_id))
+                # The corpus Bird row must never reach the catalog: the engine
+                # registers no Bird type, so the patch would fail validation.
+                self.assertNotIn('"BIRD"', body, language)
+                # Drive the real builder path against the modkit scaffold so
+                # the runtime hook lands exactly as an interactive build would.
+                scaffold = Path(".cache/interactive") / language / "translation_source"
+                if not (scaffold / "main.lua").is_file():
+                    self.skipTest(f"cached {language} scaffold unavailable")
+                from pipeline import builder
+                builder.preserve_scaffold_support(scaffold, mod)
+                main = (mod / "main.lua").read_text(encoding="utf-8")
+                self.assertIn('counts.type_names = each("type_names"', main, language)
+                self.assertIn('by_english[canonical] = localized', main, language)
+                self.assertIn('Font.draw = function(text, x, y, ...)', main, language)
+                self.assertIn('local demo_names = catalog("demo_names")', main, language)
+                self.assertIn('BS.oldManThrow = function(self, ...)', main, language)
+                self.assertIn('localizedDemoName(self, canonical)', main, language)
+                self.assertNotIn('Runtime.hooks:wrap("player.sprite"', main, language)
+                self.assertNotIn('BS.makeOldManDemo = function', main, language)
+                self.assertNotIn('mod.content.type_chart:patch', main, language)
+                # engine send-out templates translated from the corpus row
+                strings = (mod / "lang/strings.lua").read_text(encoding="utf-8")
+                self.assertIn('["%s is\\nabout to use\\011%s!"] = "', strings, language)
+                self.assertNotIn('["%s is\\nabout to use\\011%s!"] = "",', strings, language)
+                self.assertIn('["Will %s\\nchange POKéMON?"] = "', strings, language)
+                self.assertNotIn('["%s is\\nabout to use"] = "', strings, language)
+                # romText fallback keys the engine renders via Strings
+                self.assertIn('["%s\\nused %s!"] = "', strings, language)
+                self.assertNotIn('["%s\\nused %s!"] = "",', strings, language)
+                self.assertIn('["The enemy\'s weak!\\nGet\'m! %s!"] = "', strings, language)
+                self.assertNotIn('["The enemy\'s weak!\\nGet\'m! %s!"] = "",', strings, language)
+                self.assertIn('["Enemy %s"] = "', strings, language)
+                self.assertNotIn('["Enemy %s"] = "",', strings, language)
+                self.assertIn('["FOE"] = "', strings, language)
+                self.assertNotIn('["FOE"] = "",', strings, language)
+                self.assertIn('["SEEN %3d  OWN %3d"] = "', strings, language)
+                self.assertNotIn('["SEEN %3d  OWN %3d"] = "",', strings, language)
+                # corpus-backed demo name (old-man tutorial literal) translated
+                demo = (mod / "lang/demo_names.lua").read_text(encoding="utf-8")
+                self.assertIn('  ["OLD MAN"] = ', demo, language)
+                self.assertIn('  ["PROF.OAK"] = ', demo, language)
+                self.assertNotIn('  ["OLD MAN"] = "",', demo, language)
+                self.assertNotIn('  ["PROF.OAK"] = "",', demo, language)
+
     def test_oak_speech_rom_symbol_stays_empty_engine_and_dialogue_localized(self):
         source = "{text_start}This world is<LINE>inhabited by<CONT>creatures called<CONT>#MON!@@"
         qid = "rb.text_2.OakSpeechText2A"
@@ -112,7 +174,7 @@ class MultilingualTests(unittest.TestCase):
             self.assertTrue(path.is_file())
             overrides = load_engine_overrides(path)
             self.assertEqual(sum(entry.get("reason") == "editorial-correction" for entry in overrides.values()), 4)
-            self.assertEqual(sum(entry.get("reason") == "AI-generated manual corpus-gap translation." for entry in overrides.values()), 12)
+            self.assertTrue(all(entry.get("provenance") for entry in overrides.values()))
 
     def test_engine_original_editorial_overrides_are_scoped_and_printf_safe(self):
         key = "%s's\nhits will never\nmiss!"
@@ -907,12 +969,12 @@ class MultilingualTests(unittest.TestCase):
         keys = {
             "USE": {"ui/BagMenu.lua"},
             "You can't carry\nany more items.": {"ui/PlayerPC.lua", "ui/ShopMenu.lua"},
-            "SEEN %d  OWNED %d": {"ui/PokedexMenu.lua"},
+            "SEEN %3d  OWN %3d": {"ui/PokedexMenu.lua"},
             "%s is out of\nuseable POKéMON!": {"battle/BattleState.lua"},
             "%s blacked\nout!": {"battle/BattleState.lua", "world/OverworldController.lua"},
             "It dodged the\nthrown BALL!": {"battle/BattleState.lua"},
             "It contained\n%s!": {"ui/BagMenu.lua"},
-            "BATTLE ANIMATION": {"ui/OptionsMenu.lua"},
+            "BATTLE ANIMATION": {"ui/OptionsMenu.lua", "import/LauncherSettings.lua"},
             "When you change a\nPOKéMON BOX, data\nwill be saved. OK?": {"ui/BoxMenu.lua"},
         }
         catalog = classify_callsites(iter_callsites(checkout))
@@ -920,7 +982,7 @@ class MultilingualTests(unittest.TestCase):
             self.assertIn(key, catalog)
             row = catalog[key]
             self.assertEqual(row["eligibility"], "eligible", key)
-            self.assertEqual(row["category"], "rby", key)
+            self.assertEqual(row["category"], "rby" if key != "BATTLE ANIMATION" else "mixed", key)
             self.assertEqual({call["path"] for call in row["callsites"]}, paths, key)
             self.assertTrue(all("Strings(" in call["context"] for call in row["callsites"]), key)
 

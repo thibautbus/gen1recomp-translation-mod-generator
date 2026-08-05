@@ -18,7 +18,7 @@ class EngineScopeTests(unittest.TestCase):
             with self.assertRaises(ValueError): load_scope(path)
 
     def test_manifest_rejects_schema_revision_path_and_fields(self):
-        for mutate in [lambda d: d.pop("schema"), lambda d: d.update(schema="wrong"), lambda d: d.update(classifier_version=4), lambda d: d.update(gen1recomp_revision="abc"), lambda d: d.update(gen1recomp_revision="A" * 40), lambda d: d.update(gen1recomp_revision="g" * 40), lambda d: d.update(source_subdir="/tmp"), lambda d: d.update(source_subdir="../src"), lambda d: d.update(source_subdir="other"), lambda d: d.update(extra=1)]:
+        for mutate in [lambda d: d.pop("schema"), lambda d: d.update(schema="wrong"), lambda d: d.update(classifier_version=5), lambda d: d.update(gen1recomp_revision="abc"), lambda d: d.update(gen1recomp_revision="A" * 40), lambda d: d.update(gen1recomp_revision="g" * 40), lambda d: d.update(source_subdir="/tmp"), lambda d: d.update(source_subdir="../src"), lambda d: d.update(source_subdir="other"), lambda d: d.update(extra=1)]:
             self._load_mutated(mutate)
 
     def test_manifest_rejects_list_types_duplicates_and_overlaps(self):
@@ -31,19 +31,19 @@ class EngineScopeTests(unittest.TestCase):
 
     def test_scope_overrides_are_versioned_and_strict(self):
         scope = load_scope()
-        self.assertEqual(scope["classifier_version"], 3)
+        self.assertEqual(scope["classifier_version"], 4)
         self.assertEqual(forced_dynamic_keys(scope), {"NAME", "ATTACK", "DEFENSE", "SPEED", "SPECIAL"})
         self.assertEqual(scope["forced_dynamic_keys"]["DEFENSE"]["qid"], "rb.stat_names.VitaminStats.3")
         self.assertEqual(scope["forced_dynamic_keys"]["SPECIAL"]["qid"], "rb.stat_names.VitaminStats.5")
         self.assertIn("_OakSpeechText2A", scope["key_scope_overrides"])
         self.assertEqual(
             scope["key_scope_overrides"]["_OakSpeechText2A"],
-            {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom"},
+            {"category": "rby", "eligibility": "ineligible", "reason": "covered-by-rom", "engine_empty": True},
         )
         for key_set in ("rby_ui_keys", "link_ui_keys", "modern_ui_keys"):
             self.assertNotIn("_OakSpeechText2A", scope[key_set])
         self.assertNotIn("But every BOX\nis full!", scope["key_scope_overrides"])
-        for key in ("Crammed full of\nPOKéMON books!", "INDIGO PLATEAU", "POKéDEX comp-\nletion is:\f{NUM:hDexRatingNumMonsSeen} POKéMON seen\n{NUM:hDexRatingNumMonsOwned} POKéMON owned\fPROF.OAK's\nRating:", "{RIVAL}: Yeah! Am\nI great or what?", "Welcome to our\nPOKéMON CENTER!", "Your POKéMON are\nfighting fit!"):
+        for key in ("Crammed full of\nPOKéMON books!", "POKéDEX comp-\nletion is:\f{NUM:hDexRatingNumMonsSeen} POKéMON seen\n{NUM:hDexRatingNumMonsOwned} POKéMON owned\fPROF.OAK's\nRating:", "{RIVAL}: Yeah! Am\nI great or what?", "Welcome to our\nPOKéMON CENTER!", "Your POKéMON are\nfighting fit!", "No SURFing here!", "Nothing to CUT!", "Keep it up!", "POKéDEX Rating{COLON}", "_OakSpeechText2A", "{RAM}\nPOKéMON GYM\nLEADER: {RAM}", "I like shorts!\nThey're comfy and\neasy to wear!", "%s is\ntaken out.\x0bGot %s."):
             self.assertEqual(scope["key_scope_overrides"][key]["reason"], "covered-by-rom")
             self.assertTrue(scope["key_scope_overrides"][key]["engine_empty"])
         self.assertIn("Printed %s's\ndata!\fSaved as\n%s\vin the save\nfolder.", scope["key_scope_overrides"])
@@ -63,6 +63,12 @@ class EngineScopeTests(unittest.TestCase):
         self.assertEqual(result["NAME"]["eligibility"], "eligible")
         self.assertIn("compatibility/engine-contract workaround", result["NAME"]["callsite"])
 
+    def test_engine_dynamic_values_keep_their_scope(self):
+        result = classify_catalog(["FAST", "balanced"], [], load_scope())
+        self.assertEqual(result["FAST"]["provenance"], "engine_dynamic")
+        self.assertEqual(result["FAST"]["eligibility"], "ineligible")
+        self.assertEqual(result["balanced"]["category"], "mixed")
+
     def test_scope_override_wins_after_raw_callsite_classification(self):
         scope = load_scope()
         scope["key_scope_overrides"] = {
@@ -80,10 +86,11 @@ class EngineScopeTests(unittest.TestCase):
         scope = load_scope()
         result = classify_catalog(["Creatures inc.", "_OakSpeechText2A", "But every BOX\nis full!"], [], scope)
         self.assertEqual(result["Creatures inc."]["eligibility"], "ineligible")
-        self.assertEqual(result["Creatures inc."]["reason"], "covered-by-rom")
+        self.assertEqual(result["Creatures inc."]["reason"], "defensive")
         self.assertEqual(result["Creatures inc."]["raw_eligibility"], "review")
         self.assertEqual(result["_OakSpeechText2A"]["eligibility"], "ineligible")
         self.assertEqual(result["_OakSpeechText2A"]["reason"], "covered-by-rom")
+        self.assertEqual(result["_OakSpeechText2A"]["engine_empty"], True)
         self.assertEqual(result["But every BOX\nis full!"]["eligibility"], "review")
 
     def _git_fixture(self):
@@ -147,7 +154,7 @@ class EngineScopeTests(unittest.TestCase):
 
     def test_manifest_and_lua_suffix_rules(self):
         scope = load_scope()
-        self.assertEqual(scope["gen1recomp_revision"], "898bf0c71ed0a9fa9af596aeea80825f79c7eff3")
+        self.assertEqual(scope["gen1recomp_revision"], "12a04f418838e09ade97ad3fb36933c9fffb31ec")
         self.assertEqual(
             classify_callsites([{"source": "x", "path": "ui/BagMenu.lua", "line": 1}])["x"]["eligibility"],
             "eligible",
@@ -190,7 +197,10 @@ class EngineScopeTests(unittest.TestCase):
         tmp, root, scope = self._git_fixture()
         try:
             with self.assertRaises(ValueError): validate_catalog_universe({"one", "extra"}, root)
-            with self.assertRaises(ValueError): validate_catalog_universe(set(), root)
+            # Subset semantics: a catalog key absent from the source fails the
+            # check, but source keys without a catalog entry are tolerated
+            # (untranslated engine strings / concatenated fragments).
+            self.assertEqual(validate_catalog_universe(set(), root)["catalog_total"], 0)
             (root / "outside.txt").write_text("ok")
             self.assertEqual(verified_source(root, scope)[0], root / "src")
         finally: tmp.cleanup()
