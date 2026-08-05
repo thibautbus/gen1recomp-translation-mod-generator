@@ -233,6 +233,116 @@
       "override": "%s は\n%s を\nもらった！",
       "reason": "engine-original",
       "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
+    },
+    "BATTLE BG": {
+      "override": "バトル背景",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "BATTLE LAYOUT": {
+      "override": "バトルレイアウト",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "BATTLE SIZE": {
+      "override": "バトルサイズ",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "COLORS": {
+      "override": "カラー",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "FAITHFUL RATIO": {
+      "override": "忠実比",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "GAME SPEED": {
+      "override": "ゲームスピード",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "GBC FX": {
+      "override": "GBCエフェクト",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "MAX FPS": {
+      "override": "最大FPS",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "MODS": {
+      "override": "MODS",
+      "reason": "engine-original",
+      "provenance": "User-validated 2026-08-05: kept as-is (proper noun, no translation)."
+    },
+    "MUSIC FILTER": {
+      "override": "音楽フィルター",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "MUSIC VOL": {
+      "override": "音楽ボリューム",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "ON": {
+      "override": "オン",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "OFF": {
+      "override": "オフ",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "ORIENTATION": {
+      "override": "向き",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "PERFORMANCE": {
+      "override": "パフォーマンス",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "RESET DEFAULTS": {
+      "override": "初期設定に戻す",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "SFX VOL": {
+      "override": "効果音ボリューム",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "TILT": {
+      "override": "傾き",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "TOUCH PAD": {
+      "override": "タッチパッド",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "UI LAYOUT": {
+      "override": "UIレイアウト",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "VIDEO MODE": {
+      "override": "画面モード",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "VOID FILL": {
+      "override": "余白",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     }
   }
 }

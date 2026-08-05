@@ -253,6 +253,116 @@
       "override": "¡%s recibió\nla %s!",
       "reason": "engine-original",
       "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
+    },
+    "BATTLE BG": {
+      "override": "FONDO COMBATE",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "BATTLE LAYOUT": {
+      "override": "DISEÑO COMBATE",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "BATTLE SIZE": {
+      "override": "TAMAÑO COMBATE",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "COLORS": {
+      "override": "COLORES",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "FAITHFUL RATIO": {
+      "override": "RATIO FIEL",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "GAME SPEED": {
+      "override": "VELOCIDAD",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "GBC FX": {
+      "override": "FX GBC",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "MAX FPS": {
+      "override": "FPS MÁX",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "MODS": {
+      "override": "MODS",
+      "reason": "engine-original",
+      "provenance": "User-validated 2026-08-05: kept as-is (proper noun, no translation)."
+    },
+    "MUSIC FILTER": {
+      "override": "FILTRO MÚSICA",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "MUSIC VOL": {
+      "override": "VOL. MÚSICA",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "ON": {
+      "override": "SÍ",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "OFF": {
+      "override": "NO",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "ORIENTATION": {
+      "override": "ORIENTACIÓN",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "PERFORMANCE": {
+      "override": "RENDIMIENTO",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "RESET DEFAULTS": {
+      "override": "RESTABLECER",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "SFX VOL": {
+      "override": "VOL. EFECTOS",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "TILT": {
+      "override": "INCLINACIÓN",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "TOUCH PAD": {
+      "override": "PAD TÁCTIL",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "UI LAYOUT": {
+      "override": "DISEÑO INTERFAZ",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "VIDEO MODE": {
+      "override": "MODO VÍDEO",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "VOID FILL": {
+      "override": "RELLENO",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     }
   }
 }
