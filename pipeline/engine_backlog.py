@@ -39,6 +39,7 @@ MATRIX_SCHEMA = "gen1recomp-translation-mods/engine-backlog-matrix"
 MATRIX_VERSION = 1
 MATRIX_LANGUAGES = ("fr", "de", "es", "it", "ja-Hrkt")
 _CALL_RE = re.compile(r"\bStrings(?:\.source)?\s*\(")
+_ROMTEXT_CALL_RE = re.compile(r"\bromText\s*\(")
 _LANGUAGE_CODES = {"fr", "de", "es", "it", "ja-Hrkt"}
 
 
@@ -227,6 +228,65 @@ def iter_literal_strings_callsites(checkout: str | Path) -> list[dict[str, Any]]
                 "kind": "source" if ".source" in match.group(0) else "call",
             })
     return sorted(result, key=lambda item: (item["source"], item["path"], item["line"], item["kind"], item["context"]))
+
+
+def iter_romtext_fallback_callsites(checkout: str | Path) -> list[dict[str, Any]]:
+    """Collect ``romText(label, fallback, ...)`` fallbacks actually rendered.
+
+    RomText falls back to ``Strings(fallback, ...)`` when the pokered label
+    carries fewer slots than the call's format directives (or the label is
+    absent from the import).  Statically identified per key — the other 37
+    romText fallbacks resolve to their dialogue labels and are covered by
+    the dialogue catalog, so they are not engine callsites:
+    """
+    RENDERED_ROMTEXT_FALLBACKS = {
+        "%s\nused %s!",                  # _ItemUseText001: 1 slot, 2 args
+        "The enemy's weak!\nGet'm! %s!", # _EnemysWeakText: 0 slots, 1 arg
+        "%s\nis refusing!",              # _RefusingText: Yellow-only, absent from RB import
+    }
+    root = Path(checkout)
+    if not root.is_dir():
+        raise FileNotFoundError(f"Gen1Recomp checkout missing: {root}")
+    scan_root = root / "src" if (root / "src").is_dir() else root
+    result: list[dict[str, Any]] = []
+    for path in sorted(p for p in scan_root.rglob("*.lua") if ".git" not in p.parts):
+        raw = path.read_text(encoding="utf-8", errors="replace")
+        cleaned = _strip_lua_comments(raw)
+        lines = raw.splitlines()
+        for match in _ROMTEXT_CALL_RE.finditer(cleaned):
+            # Read the label and fallback literals from the raw text at the
+            # cleaned positions (the comment stripper masks literal content).
+            # The first argument is a variable in some calls
+            # (romText(data, "_RefusingText", ...)), so skip to the first
+            # string literal — the engine's romText label is always literal.
+            index = match.end()
+            while index < len(cleaned) and cleaned[index] != '"':
+                index += 1
+            label = _read_lua_literal(raw, index)
+            if label is None:
+                continue
+            _, end_label = label
+            index = end_label
+            while index < len(cleaned) and cleaned[index] in " \t\r\n,":
+                index += 1
+            fallback = _read_lua_literal(raw, index)
+            if fallback is None:
+                continue
+            quoted_fallback, _ = fallback
+            source = _decode_lua_string(quoted_fallback)
+            if source not in RENDERED_ROMTEXT_FALLBACKS:
+                continue
+            line = cleaned.count("\n", 0, match.start()) + 1
+            context = " ".join(item.strip() for item in lines[line - 1:line + 1] if item.strip())
+            rel = path.relative_to(root).as_posix()
+            result.append({
+                "path": rel,
+                "line": line,
+                "context": context[:300],
+                "source": source,
+                "kind": "romtext-fallback",
+            })
+    return sorted(result, key=lambda item: (item["source"], item["path"], item["line"]))
 
 
 def _classify_path(path: str) -> tuple[str, str]:

@@ -206,11 +206,11 @@ snapshots, so revisions can change these values.
 
 | Target | ROM catalogs | Corpus-backed extras | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 246/246 (100%) | 259/604 (42.88%) |
-| `de` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 246/246 (100%) | 260/604 (43.05%) |
-| `es` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 246/246 (100%) | 259/604 (42.88%) |
-| `it` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 246/246 (100%) | 261/604 (43.21%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 246/246 (100%) | 260/604 (43.05%) |
+| `fr` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 259/604 (42.88%) |
+| `de` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 260/604 (43.05%) |
+| `es` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 259/604 (42.88%) |
+| `it` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 261/604 (43.21%) |
+| `ja-Hrkt` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 260/604 (43.05%) |
 
 The corpus-backed extras are fully translated (28/28): fifteen type names,
 five literal handlers (15/15 unique corpus qids), two demo names, the
@@ -240,9 +240,12 @@ modern mod-manager/desktop surfaces, network/tournament flows, imports, and
 shared link+RBY keys are therefore not silently counted as RBY coverage.
 `_OakSpeechText2A` is intentionally excluded from the engine denominator: its
 localized text is supplied by the ROM/Data.text dialogue catalog, while the
-engine symbol remains empty to avoid OakSpeech's double lookup. All 246
-eligible RBY keys are translated (100%): the former `Enemy %s` and `FOE`
-link-battle opponent labels are now covered too.
+engine symbol remains empty to avoid OakSpeech's double lookup. The 249
+eligible RBY keys (the `Strings(...)` callsites plus the rendered romText
+fallbacks `%s\nused %s!`, `The enemy's weak!\nGet'm! %s!` and the
+Yellow-only `%s\nis refusing!`) are translated 248/249 (99.60%) — the sole
+gap is the deliberately English Yellow Pikachu-stone line, deferred to
+Yellow support.
 
 `forced_dynamic_keys` in `engine_scope.json` records the five SummaryMenu
 labels (`NAME`, `ATTACK`, `DEFENSE`, `SPEED`, `SPECIAL`) selected from a runtime

@@ -166,11 +166,11 @@ def verified_source(checkout: str | Path, scope: Mapping[str, Any] | None = None
 
 
 def iter_callsites(checkout: str | Path) -> list[dict[str, Any]]:
-    """Collect production ``Strings`` callsites, excluding tests and tooling."""
+    """Collect production ``Strings`` callsites and rendered romText fallbacks."""
     # Imported lazily to keep this module independent of backlog analysis.
-    from .engine_backlog import iter_literal_strings_callsites
+    from .engine_backlog import iter_literal_strings_callsites, iter_romtext_fallback_callsites
     src = source_root(checkout)
-    return iter_literal_strings_callsites(src)
+    return iter_literal_strings_callsites(src) + iter_romtext_fallback_callsites(src)
 
 
 def _module(path: str) -> str:

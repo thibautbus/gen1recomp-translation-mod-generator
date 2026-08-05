@@ -10,6 +10,7 @@ from pipeline.engine_backlog import (
     analyze_engine_backlog,
     analyze_engine_backlog_matrix,
     iter_literal_strings_callsites,
+    iter_romtext_fallback_callsites,
     run_backlog,
     run_backlog_matrix,
 )
@@ -67,6 +68,34 @@ class EngineBacklogTests(unittest.TestCase):
             self.assertEqual([item["kind"] for item in calls[:2]], ["call", "source"])
             self.assertEqual(calls[0]["path"], "src/battle/Battle.lua")
             self.assertEqual(calls[0]["line"], 7)
+        finally:
+            tmp.cleanup()
+
+
+    def test_romtext_fallback_callsites_only_collect_rendered(self):
+        tmp = tempfile.TemporaryDirectory()
+        root = Path(tmp.name)
+        checkout = root / "src"
+        for directory in (checkout / "battle", checkout / "inventory"):
+            directory.mkdir(parents=True)
+        (checkout / "battle" / "BattleState.lua").write_text(
+            'local used = romText("_ItemUseText001", "%s\\nused %s!", a, b)\n'
+            'local weak = romText("_EnemysWeakText", "The enemy\'s weak!\\nGet\'m! %s!", name)\n'
+            'local confused = romText("_IsConfusedText", "%s\\nis confused!", name)\n',
+            encoding="utf-8")
+        (checkout / "inventory" / "ItemEffects.lua").write_text(
+            'return "failed", { romText(data, "_RefusingText",\n'
+            '        "%s\\nis refusing!", monName(data, target)) }\n',
+            encoding="utf-8")
+        try:
+            calls = iter_romtext_fallback_callsites(root)
+            sources = [item["source"] for item in calls]
+            self.assertEqual(sources, ["%s\nis refusing!", "%s\nused %s!", "The enemy's weak!\nGet'm! %s!"])
+            # fallback non rendu (label 1 slot / 1 arg -> dialogue) non collecté
+            self.assertNotIn("%s\nis confused!", sources)
+            # premier argument variable (data) : label lu au 2e argument
+            item = next(item for item in calls if item["source"] == "%s\nis refusing!")
+            self.assertEqual(item["path"], "src/inventory/ItemEffects.lua")
         finally:
             tmp.cleanup()
 
