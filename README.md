@@ -189,14 +189,15 @@ registration files.
 `ROM aggregate` is the release gate: six ROM-derived catalogs plus the
 corpus-backed extras in the next column (type names, literal handlers,
 demo names `OLD MAN`/`PROF.OAK`, the two trainer send-out keys, the
-Pokédex footer `SEEN %3d  OWN %3d` and the two romText fallback keys
-(`%s\nused %s!`, `The enemy's weak!\nGet'm! %s!`)). Engine
+Pokédex footer `SEEN %3d  OWN %3d`, the two romText fallback keys
+(`%s\nused %s!`, `The enemy's weak!\nGet'm! %s!`), the enemy qualifier
+`Enemy %s` and the link-battle `FOE` label). Engine
 columns are informational; English fallback keeps untranslated entries
 playable. Reports are generated from cached ROM imports and corpus
 snapshots, so revisions can change these values.
 
-> The `Corpus-backed extras` column is the sum `15 + 5 + 2 + 2 + 1 + 2 = 27`
-> (the last two are the romText fallback keys), so `3129 = 3102 + 27` reads
+> The `Corpus-backed extras` column is the sum `15 + 5 + 2 + 2 + 1 + 2 + 1 = 28`
+> (romText fallbacks + the enemy qualifier), so `3130 = 3102 + 28` reads
 > directly off the table. Engine-string counts also
 > move between revisions because the engine re-channels texts: v0.1.69
 > renders the battle effect messages via `data.text` instead of `Strings`,
@@ -205,18 +206,20 @@ snapshots, so revisions can change these values.
 
 | Target | ROM catalogs | Corpus-backed extras | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 27/27 (100%) | 3129/3129 (100%) | 244/246 (99.19%) | 258/604 (42.72%) |
-| `de` | 3102/3102 (100%) | 27/27 (100%) | 3129/3129 (100%) | 244/246 (99.19%) | 259/604 (42.88%) |
-| `es` | 3102/3102 (100%) | 27/27 (100%) | 3129/3129 (100%) | 244/246 (99.19%) | 258/604 (42.72%) |
-| `it` | 3102/3102 (100%) | 27/27 (100%) | 3129/3129 (100%) | 244/246 (99.19%) | 260/604 (43.05%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 27/27 (100%) | 3129/3129 (100%) | 244/246 (99.19%) | 259/604 (42.88%) |
+| `fr` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 246/246 (100%) | 259/604 (42.88%) |
+| `de` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 246/246 (100%) | 260/604 (43.05%) |
+| `es` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 246/246 (100%) | 259/604 (42.88%) |
+| `it` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 246/246 (100%) | 261/604 (43.21%) |
+| `ja-Hrkt` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 246/246 (100%) | 260/604 (43.05%) |
 
-The corpus-backed extras are fully translated (27/27): fifteen type names,
+The corpus-backed extras are fully translated (28/28): fifteen type names,
 five literal handlers (15/15 unique corpus qids), two demo names, the
-three engine templates (send-out + Pokédex footer) and the two romText
+three engine templates (send-out + Pokédex footer), the two romText
 fallback keys (the battle move-use `X used Y!` and the rival `The enemy's
 weak!` messages, rendered via Strings because their pokered labels carry
-fewer slots than the calls pass). `RBY-related engine
+fewer slots than the calls pass), the enemy qualifier `Enemy %s` (words
+from `rb.text.EnemyText`), and the link-battle `FOE` label (engine-original
+override, user-approved). `RBY-related engine
 strings` counts 246 keys from Gen1Recomp v0.1.69's 604-key catalog whose
 production callsites reproduce original Red/Blue gameplay or interfaces; `All
 engine strings` covers the complete catalog, including modern surfaces. The
@@ -237,10 +240,9 @@ modern mod-manager/desktop surfaces, network/tournament flows, imports, and
 shared link+RBY keys are therefore not silently counted as RBY coverage.
 `_OakSpeechText2A` is intentionally excluded from the engine denominator: its
 localized text is supplied by the ROM/Data.text dialogue catalog, while the
-engine symbol remains empty to avoid OakSpeech's double lookup. The two
-remaining eligible RBY fallbacks are `Enemy %s` and `FOE` at
-`battle/BattleState.lua:386/1572` — the opponent-name labels that only appear
-in link battles — which account for the expected 244/246 RBY-related result.
+engine symbol remains empty to avoid OakSpeech's double lookup. All 246
+eligible RBY keys are translated (100%): the former `Enemy %s` and `FOE`
+link-battle opponent labels are now covered too.
 
 `forced_dynamic_keys` in `engine_scope.json` records the five SummaryMenu
 labels (`NAME`, `ATTACK`, `DEFENSE`, `SPEED`, `SPECIAL`) selected from a runtime

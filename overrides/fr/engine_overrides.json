@@ -208,6 +208,11 @@
       "override": "POKéDEX",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated neutral translation (fr); shared incompatible contexts are src/ui/StartMenu.lua, src/ui/PokedexMenu.lua, src/ui/TitleState.lua, and src/ui/HallOfFame.lua labels, with no single upstream qid; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+    },
+    "FOE": {
+      "override": "ADVERSAIRE",
+      "reason": "engine-original",
+      "provenance": "Link-battle (Colosseum) opponent-name fallback, engine-authored; user-approved per-language value."
     }
   }
 }

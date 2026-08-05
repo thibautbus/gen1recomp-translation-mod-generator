@@ -107,6 +107,10 @@ class MultilingualTests(unittest.TestCase):
                 self.assertNotIn('["%s\\nused %s!"] = "",', strings, language)
                 self.assertIn('["The enemy\'s weak!\\nGet\'m! %s!"] = "', strings, language)
                 self.assertNotIn('["The enemy\'s weak!\\nGet\'m! %s!"] = "",', strings, language)
+                self.assertIn('["Enemy %s"] = "', strings, language)
+                self.assertNotIn('["Enemy %s"] = "",', strings, language)
+                self.assertIn('["FOE"] = "', strings, language)
+                self.assertNotIn('["FOE"] = "",', strings, language)
                 self.assertIn('["SEEN %3d  OWN %3d"] = "', strings, language)
                 self.assertNotIn('["SEEN %3d  OWN %3d"] = "",', strings, language)
                 # corpus-backed demo name (old-man tutorial literal) translated

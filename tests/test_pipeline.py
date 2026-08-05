@@ -17,6 +17,7 @@ from pipeline.join import (
     WorksheetEntry,
     _derive_sendout_templates,
     demo_names_catalog,
+    enemy_qualifier_catalog,
     join_catalogs,
     pokedex_footer_catalog,
     read_worksheets,
@@ -483,6 +484,22 @@ class PipelineTests(unittest.TestCase):
         output, report = romtext_fallback_catalog({}, rows, "fr")
         self.assertEqual(output, {})
         self.assertEqual(len(report["unmatched"]), 2)
+
+    def test_enemy_qualifier_catalog_uses_corpus_label(self):
+        rows = align([
+            CorpusRecord("rb.text.EnemyText", "en", "Enemy @"),
+            CorpusRecord("rb.text.EnemyText", "fr", " ennemi@"),
+        ])
+        output, report = enemy_qualifier_catalog(rows, "fr")
+        self.assertEqual(output, {"Enemy %s": "%s ennemi"})
+        self.assertEqual(report["translated"], 1)
+        self.assertEqual(report["unmatched"], [])
+        output_de, _ = enemy_qualifier_catalog(rows, "de")
+        self.assertEqual(output_de, {"Enemy %s": "Gegn. %s"})
+        # sans la ligne corpus -> vide
+        out_empty, rep = enemy_qualifier_catalog([], "fr")
+        self.assertEqual(out_empty, {})
+        self.assertIn("Enemy %s", rep["unmatched"])
 
     def test_generate_mod_writes_sendout_strings(self):
         rows = align([

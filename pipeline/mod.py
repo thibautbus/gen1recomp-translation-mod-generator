@@ -247,7 +247,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
     # The trainer send-out templates (strings.lua) are qid-driven from one
     # corpus row (see pipeline/join.py) and merged into the engine strings,
     # so they ship even without a worksheet.
-    from .join import sendout_strings_catalog, pokedex_footer_catalog, romtext_fallback_catalog
+    from .join import sendout_strings_catalog, pokedex_footer_catalog, romtext_fallback_catalog, enemy_qualifier_catalog
     sendout_values, sendout_report = sendout_strings_catalog(rows, language)
     pokedex_values, pokedex_report = pokedex_footer_catalog(rows, language)
     if engine_values is None:
@@ -256,6 +256,8 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
     engine_values.update(pokedex_values)
     romtext_values, romtext_report = romtext_fallback_catalog(engine_values, rows, language)
     engine_values.update(romtext_values)
+    enemy_values, enemy_report = enemy_qualifier_catalog(rows, language)
+    engine_values.update(enemy_values)
     (destination / "lang").mkdir(exist_ok=True)
     for name in CATALOGS:
         if name == "strings" and engine_values:
@@ -394,6 +396,13 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         rom_translated += strings_romtext_translated
         rom_details["strings_romtext"] = {
             "translated": strings_romtext_translated, "total": strings_romtext_total,
+        }
+        strings_enemy_total = len(enemy_values)
+        strings_enemy_translated = enemy_report["translated"]
+        rom_total += strings_enemy_total
+        rom_translated += strings_enemy_translated
+        rom_details["strings_enemy"] = {
+            "translated": strings_enemy_translated, "total": strings_enemy_total,
         }
         report["rom"] = {"translated": rom_translated, "total": rom_total, "percent": round(rom_translated * 100 / rom_total, 2) if rom_total else 100.0, "details": rom_details}
         if engine_report is not None:

@@ -483,6 +483,44 @@ def romtext_fallback_catalog(values: dict[str, str], items: list[Alignment], tar
     return output, report
 
 
+# The enemy-mon qualifier (BattleState.lua displayName, #779): battle texts
+# naming the enemy mon print "Enemy " before the nickname.  The words come
+# from the ROM's own enemy label (rb.text.EnemyText: " ennemi@", "Gegn. @",
+# "Enem.@", " nemico@", "てきの　@"); the %s position is curated per language
+# because fr/it qualify after the name (the engine note suggests "%s ennemi")
+# while de/es/ja prefix it, and the ja label carries a full-width space.
+ENEMY_QUALIFIER_QID = "rb.text.EnemyText"
+ENEMY_QUALIFIER_KEY = "Enemy %s"
+ENEMY_QUALIFIER_VALUES = {
+    "fr": "%s ennemi",
+    "de": "Gegn. %s",
+    "es": "Enem. %s",
+    "it": "%s nemico",
+    "ja-Hrkt": "てきの　%s",
+}
+
+
+def enemy_qualifier_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple[dict[str, str], dict]:
+    """Localize the 'Enemy %s' qualifier from the corpus enemy label."""
+    output: dict[str, str] = {}
+    report = {"translated": 0, "unmatched": [], "strategies": {}, "reasons": {}, "qids": {ENEMY_QUALIFIER_KEY: ENEMY_QUALIFIER_QID}}
+    row = next((item for item in items if _base_qid(item.qid) == ENEMY_QUALIFIER_QID), None)
+    value = ENEMY_QUALIFIER_VALUES.get(target_lang)
+    if row is None or not row.translation:
+        report["unmatched"].append(ENEMY_QUALIFIER_KEY)
+        report["strategies"][ENEMY_QUALIFIER_KEY] = "manual_review"
+        report["reasons"][ENEMY_QUALIFIER_KEY] = f"missing or empty corpus row {ENEMY_QUALIFIER_QID}; manual review required"
+    elif value is None:
+        report["unmatched"].append(ENEMY_QUALIFIER_KEY)
+        report["strategies"][ENEMY_QUALIFIER_KEY] = "manual_review"
+        report["reasons"][ENEMY_QUALIFIER_KEY] = f"no curated value for {target_lang}; manual review required"
+    else:
+        output[ENEMY_QUALIFIER_KEY] = value
+        report["strategies"][ENEMY_QUALIFIER_KEY] = "corpus_enemy_qualifier"
+    report["translated"] = len(output)
+    return output, report
+
+
 def demo_names_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple[dict[str, str], dict]:
     """Join the corpus rows for engine hard-coded demo-battle names.
 
