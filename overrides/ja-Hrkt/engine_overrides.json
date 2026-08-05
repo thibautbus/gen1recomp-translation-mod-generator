@@ -2,6 +2,19 @@
   "schema": "gen1recomp-translation-mods/engine-overrides",
   "version": 1,
   "entries": {
+    "OG RED": {"override": "OG あか", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "OG BLUE": {"override": "OG あお", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "OG YELLOW": {"override": "OG きいろ", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "SGB": {"override": "SGB", "reason": "engine-contract-gap", "provenance": "Acronym retained; raw PaletteFX.modeLabel value, no compatible PokeCorpus qid."},
+    "ADVANCED": {"override": "こうせい", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "OG INV": {"override": "オリジナル ぎゃく", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "SGB INV": {"override": "SGB ぎゃく", "reason": "engine-contract-gap", "provenance": "Acronym retained; kana-only raw PaletteFX.modeLabel value, no compatible PokeCorpus qid."},
+    "CLASSIC": {"override": "クラシック", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "GBC": {"override": "GBC", "reason": "engine-contract-gap", "provenance": "Acronym retained; raw PaletteFX.modeLabel fallback value, no compatible PokeCorpus qid."},
+    "WINDOWED": {"override": "ウィンドウ", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "BORDERLESS": {"override": "ボーダーレス", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "TREES": {"override": "き", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "WATER": {"override": "みず", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "%s's\nhits will never\nmiss!": {
       "override": "%sは\nぜったいに\nはずれない！",
       "reason": "engine-original",
@@ -169,16 +182,6 @@
     },
     "No POKéMON!": {
       "override": "ポケモンが\nいない！",
-      "reason": "engine-original",
-      "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
-    },
-    "%s received\n%s!": {
-      "override": "%s は\n%s を\nもらった！",
-      "reason": "engine-original",
-      "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
-    },
-    "%s received\nthe %s!": {
-      "override": "%s は\n%s を\nもらった！",
       "reason": "engine-original",
       "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
     },

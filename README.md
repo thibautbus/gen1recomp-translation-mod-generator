@@ -205,6 +205,13 @@ recorded as excluded: Gen 1's unused type id 6 is never registered by the
 engine. Western ZIPs include only the compact glyph sheet and its Lua
 registration files.
 
+The same generated hook translates an explicit allowlist of raw values in the
+in-game Options menu (`COLORS`, video mode, void fill, music filter and game
+speed). Gen1Recomp's label helpers return these values without calling
+`Strings()`, so they use documented manual overrides. Numeric values and
+acronyms remain unchanged. The desktop launcher uses a separate Kit renderer
+and is intentionally outside this hook.
+
 ## Translation coverage
 
 `ROM aggregate` is the release gate: six ROM-derived catalogs plus the
@@ -224,13 +231,14 @@ snapshots, so revisions can change these values.
 > renders the battle effect messages via `data.text` instead of `Strings`,
 > so the `All engine strings` denominator shrank even as the dialogue
 > catalog grew (2548 → 2582 entries) and kept them translated.  The
-> denominator (618, scope classifier v4) contains the 603-key Modkit scaffold,
-> eleven option-value keys
+> denominator (635, scope classifier v4) contains the union of the 603-key
+> Modkit scaffold and 29 option-value keys
 > (`FAST`/`MEDIUM`/`SLOW`, `low`/`balanced`/`high`/`auto`, `AUTO`/
 > `PORTRAIT`/`LANDSCAPE`/`REVERSE LANDSCAPE`) that the literal callsite
 > scanner cannot see (dynamic `Strings` lookups through label functions) —
 > declared in `engine_scope.json` `engine_dynamic_values` so their manual
-> overrides ship, one additional forced dynamic key (`NAME`), and the three
+> overrides ship. `OFF` already exists in the scaffold; one additional forced
+> dynamic key (`NAME`) and the three
 > rendered romText fallbacks omitted by the scaffold. The `All engine strings`
 > numerator counts translations
 > that reach the screen: the strings catalog PLUS the 13 keys marked
@@ -246,11 +254,11 @@ snapshots, so revisions can change these values.
 
 | Target | ROM catalogs | Corpus-derived runtime extras | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 326/618 (52.75%) |
-| `de` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 325/618 (52.59%) |
-| `es` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 325/618 (52.59%) |
-| `it` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 326/618 (52.75%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 326/618 (52.75%) |
+| `fr` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 338/635 (53.23%) |
+| `de` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 338/635 (53.23%) |
+| `es` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 337/635 (53.07%) |
+| `it` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 339/635 (53.39%) |
+| `ja-Hrkt` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 338/635 (53.23%) |
 
 The corpus-derived runtime extras are fully translated (28/28): fifteen type names,
 five literal handlers (15/15 unique corpus qids), two demo names, the
@@ -262,12 +270,12 @@ from `rb.text.EnemyText`). Engine coverage separately includes manual
 engine-original translations such as `FOE`, the four gameplay templates with
 no compatible PokeCorpus source, and the Options/launcher labels.
 `RBY-related engine strings` counts 249 keys from Gen1Recomp v0.1.69's
-618-key engine universe whose
+635-key engine universe whose
 production callsites reproduce original Red/Blue gameplay or interfaces; `All
 engine strings` covers the complete catalog, including modern surfaces. The
 versioned [`engine_scope.json`](config/engine_scope.json) classifier (revision
 `12a04f418838e09ade97ad3fb36933c9fffb31ec`) scans production `src` callsites:
-249 keys form the eligible denominator, seven require review, and 368 modern,
+249 keys form the eligible denominator, seven require review, and 385 modern,
 network/link, import, core, diagnostic, defensive, fallback-only, or
 ROM/generated-path keys are ineligible. Coverage comes from
 isolated clean rebuilds using pinned snapshots; if the engine source is
@@ -288,6 +296,12 @@ fallbacks `%s\nused %s!`, `The enemy's weak!\nGet'm! %s!` and the
 Yellow-only `%s\nis refusing!`) are translated 248/249 (99.60%) — the sole
 gap is the deliberately English Yellow Pikachu-stone line, deferred to
 Yellow support.
+
+Fallback-only labels shown exclusively when generated assets or vanilla
+reward metadata are missing remain in English and outside RBY coverage. This
+includes the text substitutes for the intro sprites, title logo and slot
+machine frame, plus the generic gym-reward templates. Translating them would
+inflate coverage without changing a normal build.
 
 `forced_dynamic_keys` in `engine_scope.json` records the five SummaryMenu
 labels (`NAME`, `ATTACK`, `DEFENSE`, `SPEED`, `SPECIAL`) selected from a runtime
@@ -320,8 +334,9 @@ This taxonomy is exhaustive, but the affected strings evolve with engine and
 corpus revisions. Generated coverage reports are the authoritative inventory
 of unmatched and ambiguous strings for a given build.
 
-Each language currently contains 19 AI-generated `engine-contract-gap`
-overrides. The larger `engine-original` group includes eleven legacy manual
+Each language currently contains 32 AI-generated `engine-contract-gap`
+overrides, including 13 raw in-game option values that Gen1Recomp does not
+route through `Strings()`. The larger `engine-original` group includes eleven legacy manual
 entries that were normalized during the provenance migration. Their per-entry provenance records the limitation,
 the upstream improvement path where applicable, and the need for in-game
 visual validation. Technical labels and formats are retained where changing

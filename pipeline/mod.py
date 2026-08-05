@@ -107,6 +107,26 @@ return function(mod)
       end
     end
   end)
+  -- A few in-game Options values are returned directly by label helpers
+  -- rather than through Strings (v0.1.69: COLORS, VIDEO MODE, VOID FILL,
+  -- music filter, faithful resolution and game speed).  Keep this allowlist
+  -- narrow so this does not become a general renderer rewrite. The desktop
+  -- launcher uses its own Kit renderer and is intentionally unaffected.
+  local raw_option_keys = {
+    ["OG RED"] = true, ["OG BLUE"] = true, ["OG YELLOW"] = true,
+    ["SGB"] = true, ["ADVANCED"] = true, ["OG INV"] = true,
+    ["SGB INV"] = true, ["CLASSIC"] = true, ["GBC"] = true,
+    ["WINDOWED"] = true, ["BORDERLESS"] = true,
+    ["TREES"] = true, ["WATER"] = true, ["BLACK"] = true,
+    ["OFF"] = true, ["1X"] = true, ["2X"] = true, ["3X"] = true,
+    ["NORMAL"] = true,
+  }
+  local by_raw_option = {}
+  each("strings", function(id, localized)
+    if raw_option_keys[id] and localized ~= id then
+      by_raw_option[id] = localized
+    end
+  end)
   if next(by_english) then
     local okFont, Font = pcall(require, "src.render.Font")
     if okFont and type(Font) == "table" then
@@ -126,6 +146,35 @@ return function(mod)
         Font.draw = function(text, x, y, ...)
           return original_draw(localize(text), x, y, ...)
         end
+      end
+    end
+  end
+  -- Scope raw substitutions to OptionsMenu.draw. Font is shared by gameplay
+  -- and third-party mods, so a global OFF/WATER/NORMAL replacement is unsafe.
+  if next(by_raw_option) then
+    local okOptions, OptionsMenu = pcall(require, "src.ui.OptionsMenu")
+    local okFont, Font = pcall(require, "src.render.Font")
+    if okOptions and type(OptionsMenu) == "table" and type(OptionsMenu.draw) == "function"
+        and okFont and type(Font) == "table" then
+      local original_options_draw = OptionsMenu.draw
+      local function localizeRawOption(text)
+        if type(text) ~= "string" then return text end
+        return by_raw_option[text] or text
+      end
+      OptionsMenu.draw = function(self, ...)
+        local original_split, original_draw = Font.split, Font.draw
+        if type(original_split) == "function" then
+          Font.split = function(text) return original_split(localizeRawOption(text)) end
+        end
+        if type(original_draw) == "function" then
+          Font.draw = function(text, x, y, ...)
+            return original_draw(localizeRawOption(text), x, y, ...)
+          end
+        end
+        local ok, result = pcall(original_options_draw, self, ...)
+        Font.split, Font.draw = original_split, original_draw
+        if ok then return result end
+        error(result, 0)
       end
     end
   end
