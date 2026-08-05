@@ -12,7 +12,7 @@ from pipeline.corpus import load_corpus
 from pipeline.generate import generate_lua, lua_string
 from pipeline.model import CorpusRecord
 from pipeline.mod import generate_mod
-from pipeline.join import join_catalogs, WorksheetEntry
+from pipeline.join import join_catalogs, read_worksheets, WorksheetEntry
 from pipeline.tokens import check_placeholders, encode
 from pipeline.validate import release_gate, validate
 from pipeline.worksheet import dump, load
@@ -162,6 +162,31 @@ class PipelineTests(unittest.TestCase):
     def test_lua_string_pads_control_escapes_before_digits(self):
         self.assertEqual(lua_string("Rapport:\f1er"), '"Rapport:\\0121er"')
         self.assertEqual(lua_string("Note:\v2e"), '"Note:\\0112e"')
+
+    def test_read_worksheets_repairs_cp1252_mojibake(self):
+        def mojibake(value):
+            return value.encode("utf-8").decode("cp1252")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "item_names.txt").write_text(
+                f'"{mojibake("POKéDEX")}"\t"{mojibake("POKé BALL")}"\n'
+                f'"{mojibake("NIDORAN♀")}"\t"{mojibake("NIDORAN♂")}"\n'
+                '"POKéMON"\t"NIDORAN♀"\n'
+                '"日本語"\t"日本語"\n',
+                encoding="utf-8",
+            )
+            entries = read_worksheets(root)["item_names"]
+
+        self.assertEqual(
+            [(entry.key, entry.english) for entry in entries],
+            [
+                ("POKéDEX", "POKé BALL"),
+                ("NIDORAN♀", "NIDORAN♂"),
+                ("POKéMON", "NIDORAN♀"),
+                ("日本語", "日本語"),
+            ],
+        )
 
     def test_modkit_worksheet_join_preserves_unmatched_keys(self):
         items = align([

@@ -96,6 +96,14 @@ def _unquote(value: str) -> str:
     return re.sub(r"\\([0-7]{1,3})", lambda m: chr(int(m.group(1), 8)), value)
 
 
+def _repair_cp1252_mojibake(value: str) -> str:
+    """Repair UTF-8 output decoded once as CP1252 by Modkit on Windows."""
+    try:
+        return value.encode("cp1252").decode("utf-8")
+    except UnicodeError:
+        return value
+
+
 def read_worksheets(root: str | Path) -> dict[str, list[WorksheetEntry]]:
     root = Path(root); result = {}
     for catalog in CATALOGS:
@@ -106,7 +114,11 @@ def read_worksheets(root: str | Path) -> dict[str, list[WorksheetEntry]]:
                 if not line or line.startswith("#") or "\t" not in line:
                     continue
                 key, english = line.split("\t", 1)
-                entries.append(WorksheetEntry(_unquote(key), _unquote(english), catalog))
+                entries.append(WorksheetEntry(
+                    _repair_cp1252_mojibake(_unquote(key)),
+                    _repair_cp1252_mojibake(_unquote(english)),
+                    catalog,
+                ))
         result[catalog] = entries
     return result
 
