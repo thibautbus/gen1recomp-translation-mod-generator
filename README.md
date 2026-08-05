@@ -208,15 +208,21 @@ snapshots, so revisions can change these values.
 > `PORTRAIT`/`LANDSCAPE`/`REVERSE LANDSCAPE`) that the literal callsite
 > scanner cannot see (dynamic `Strings` lookups through label functions) —
 > declared in `engine_scope.json` `engine_dynamic_values` so their manual
-> overrides ship.
+> overrides ship.  The `All engine strings` numerator counts translations
+> that reach the screen: the strings catalog PLUS the 13 keys marked
+> `engine_empty` in `key_scope_overrides` whose text the dialogue owns
+> (`data.text` renders localized — e.g. `Welcome to our POKéMON CENTER!`,
+> `Keep it up!`, `No SURFing here!`), reported as `covered_by_rom` in the
+> per-key breakdown.  English-fallback counts only keys that actually
+> display English.
 
 | Target | ROM catalogs | Corpus-backed extras | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 307/615 (49.92%) |
-| `de` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 307/615 (49.92%) |
-| `es` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 307/615 (49.92%) |
-| `it` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 308/615 (50.08%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 308/615 (50.08%) |
+| `fr` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 321/615 (52.20%) |
+| `de` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 320/615 (52.03%) |
+| `es` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 320/615 (52.03%) |
+| `it` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 321/615 (52.20%) |
+| `ja-Hrkt` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 321/615 (52.20%) |
 
 The corpus-backed extras are fully translated (28/28): fifteen type names,
 five literal handlers (15/15 unique corpus qids), two demo names, the

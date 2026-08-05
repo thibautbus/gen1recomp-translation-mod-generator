@@ -232,9 +232,9 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
                     "qid": dynamic["qid"],
                 }
         empty_keys = {key for key, info in scope.get("key_scope_overrides", {}).items() if info.get("engine_empty")}
-        for key in empty_keys & set(engine_values):
+        for key in empty_keys & set(catalog):
             was_unmatched = key in engine_report.get("unmatched", [])
-            if engine_values[key]:
+            if engine_values.get(key):
                 engine_report["translated"] -= 1
             engine_report["details"][key] = "covered_by_rom"
             engine_report["provenance"][key] = {"method": "covered-by-rom", "reason": "ROM/Data.text dialogue owns localized text"}
@@ -243,6 +243,10 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
             if was_unmatched:
                 engine_report["fallback_english"] = max(0, engine_report.get("fallback_english", 0) - 1)
             engine_values[key] = ""
+            # The key renders localized via the dialogue (data.text), so even
+            # though strings.lua stays empty it counts as translated.
+            engine_report["translated"] += 1
+            engine_report["covered_by_rom"] = engine_report.get("covered_by_rom", 0) + 1
         engine_report["percent"] = round(engine_report["translated"] * 100 / engine_report["total"], 2) if engine_report["total"] else 100.0
         if worksheets is not None:
             validate_commands_show_text_collisions(engine_values, (entry.key for entry in worksheets.get("dialogue", ())))

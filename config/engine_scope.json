@@ -270,22 +270,23 @@
     "%s is\ntaken out.\u000bGot %s.": {
       "category": "rby",
       "eligibility": "ineligible",
-      "reason": "covered-by-rom"
+      "reason": "covered-by-rom",
+      "engine_empty": true
     },
     "Creatures inc.": {
       "category": "rby",
       "eligibility": "ineligible",
-      "reason": "covered-by-rom"
+      "reason": "defensive"
     },
     "GAME FREAK inc.": {
       "category": "rby",
       "eligibility": "ineligible",
-      "reason": "covered-by-rom"
+      "reason": "defensive"
     },
     "GENGAR VS NIDORINO": {
       "category": "rby",
       "eligibility": "ineligible",
-      "reason": "covered-by-rom"
+      "reason": "defensive"
     },
     "Gyaoo!": {
       "category": "rby",
@@ -295,42 +296,47 @@
     "I like shorts!\nThey're comfy and\neasy to wear!": {
       "category": "rby",
       "eligibility": "ineligible",
-      "reason": "covered-by-rom"
+      "reason": "covered-by-rom",
+      "engine_empty": true
     },
     "Keep it up!": {
       "category": "rby",
       "eligibility": "ineligible",
-      "reason": "covered-by-rom"
+      "reason": "covered-by-rom",
+      "engine_empty": true
     },
     "Nintendo": {
       "category": "rby",
       "eligibility": "ineligible",
-      "reason": "covered-by-rom"
+      "reason": "defensive"
     },
     "No SURFing here!": {
       "category": "rby",
       "eligibility": "ineligible",
-      "reason": "covered-by-rom"
+      "reason": "covered-by-rom",
+      "engine_empty": true
     },
     "Nothing to CUT!": {
       "category": "rby",
       "eligibility": "ineligible",
-      "reason": "covered-by-rom"
+      "reason": "covered-by-rom",
+      "engine_empty": true
     },
     "POKéDEX Rating{COLON}": {
       "category": "rby",
       "eligibility": "ineligible",
-      "reason": "covered-by-rom"
+      "reason": "covered-by-rom",
+      "engine_empty": true
     },
     "POKéMON RED": {
       "category": "rby",
       "eligibility": "ineligible",
-      "reason": "covered-by-rom"
+      "reason": "defensive"
     },
     "SLOT MACHINE": {
       "category": "rby",
       "eligibility": "ineligible",
-      "reason": "covered-by-rom"
+      "reason": "defensive"
     },
     "T H E  E N D": {
       "category": "rby",
@@ -340,12 +346,14 @@
     "{RAM}\nPOKéMON GYM\nLEADER: {RAM}": {
       "category": "rby",
       "eligibility": "ineligible",
-      "reason": "covered-by-rom"
+      "reason": "covered-by-rom",
+      "engine_empty": true
     },
     "_OakSpeechText2A": {
       "category": "rby",
       "eligibility": "ineligible",
-      "reason": "covered-by-rom"
+      "reason": "covered-by-rom",
+      "engine_empty": true
     }
   },
   "engine_dynamic_values": {
