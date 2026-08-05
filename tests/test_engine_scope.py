@@ -69,6 +69,25 @@ class EngineScopeTests(unittest.TestCase):
         self.assertEqual(result["FAST"]["eligibility"], "ineligible")
         self.assertEqual(result["balanced"]["category"], "mixed")
 
+    def test_haptic_option_values_are_engine_dynamic(self):
+        scope = load_scope()
+        self.assertEqual({"LIGHT", "HEAVY"} <= set(scope["engine_dynamic_values"]), True)
+        result = classify_catalog(["LIGHT", "HEAVY"], [], scope)
+        for key in ("LIGHT", "HEAVY"):
+            self.assertEqual(result[key]["provenance"], "engine_dynamic")
+            self.assertEqual(result[key]["eligibility"], "ineligible")
+
+    def test_reporting_scope_excludes_source_only_keys(self):
+        from pipeline.mod import _catalog_scope
+        classified = {
+            "catalog": {"category": "rby", "eligibility": "eligible"},
+            "source-only": {"category": "modern", "eligibility": "ineligible"},
+        }
+        scoped = _catalog_scope(classified, {"catalog"})
+        self.assertEqual(set(scoped), {"catalog"})
+        self.assertEqual(sum(info["eligibility"] == "eligible" for info in scoped.values()), 1)
+        self.assertEqual(sum(info["eligibility"] == "ineligible" for info in scoped.values()), 0)
+
     def test_scope_override_wins_after_raw_callsite_classification(self):
         scope = load_scope()
         scope["key_scope_overrides"] = {
@@ -154,7 +173,7 @@ class EngineScopeTests(unittest.TestCase):
 
     def test_manifest_and_lua_suffix_rules(self):
         scope = load_scope()
-        self.assertEqual(scope["gen1recomp_revision"], "12a04f418838e09ade97ad3fb36933c9fffb31ec")
+        self.assertEqual(scope["gen1recomp_revision"], "a83d18fc5139b99305e010ab077028a91a65074a")
         self.assertEqual(
             classify_callsites([{"source": "x", "path": "ui/BagMenu.lua", "line": 1}])["x"]["eligibility"],
             "eligible",

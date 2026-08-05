@@ -1,7 +1,7 @@
 {
   "schema": "gen1recomp-translation-mods/engine-scope",
   "classifier_version": 4,
-  "gen1recomp_revision": "12a04f418838e09ade97ad3fb36933c9fffb31ec",
+  "gen1recomp_revision": "a83d18fc5139b99305e010ab077028a91a65074a",
   "source_subdir": "src",
   "rby_paths": [
     "battle",
@@ -53,20 +53,29 @@
   ],
   "modern_ui_keys": [
     "%d INSTALLED",
+    "BATTLE BG",
     "BATTLE LAYOUT",
+    "BATTLE SIZE",
     "COLORS",
     "CONTROLS",
+    "FAITHFUL RATIO",
     "GAME SPEED",
     "GBC FX",
     "MAX FPS",
     "MUSIC FILTER",
     "MUSIC VOL",
     "MODS",
+    "ORIENTATION",
+    "PERFORMANCE",
+    "PIKACHU VOL",
     "RETURN TO MAIN\nMENU?",
     "RULESET",
     "SFX VOL",
     "TILT",
+    "TOUCH PAD",
+    "UI LAYOUT",
     "VIDEO MODE",
+    "VIBRATION",
     "VOID FILL",
     "ZOOM"
   ],
@@ -581,6 +590,22 @@
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
       "callsite": "src/ui/OptionsMenu.lua:357 (Orientation.modeLabel; dynamic Strings lookup)",
+      "qid": ""
+    },
+    "LIGHT": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:447 and src/import/LauncherSettings.lua:250 (TouchControls.hapticLabel; dynamic Strings lookup)",
+      "qid": ""
+    },
+    "HEAVY": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:447 and src/import/LauncherSettings.lua:250 (TouchControls.hapticLabel; dynamic Strings lookup)",
       "qid": ""
     }
   }

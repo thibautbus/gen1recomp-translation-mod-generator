@@ -14,6 +14,12 @@ from .literals import load_recipes, generate_handlers
 
 CATALOGS = ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels", "type_names", "demo_names")
 
+
+def _catalog_scope(classified: dict[str, dict], catalog: Iterable[str]) -> dict[str, dict]:
+    """Limit reporting statistics to keys present in the generated catalog."""
+    keys = set(catalog)
+    return {key: info for key, info in classified.items() if key in keys}
+
 # Keep every language at the same priority; language choice must not affect load order.
 TRANSLATION_MOD_PRIORITY = 100
 COMMANDS_SHOW_TEXT_KEYS = {
@@ -493,18 +499,19 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
                 source_path, _, _ = verified_source(engine_source, scope)
                 validate_catalog_universe(catalog.keys(), source_path, scope)
                 classified = classify_catalog(catalog.keys(), iter_callsites(source_path), scope)
-                eligible = {key for key, info in classified.items() if info["eligibility"] == "eligible"}
+                report_scope = _catalog_scope(classified, catalog)
+                eligible = {key for key, info in report_scope.items() if info["eligibility"] == "eligible"}
                 translated_keys = {key for key, value in engine_values.items() if isinstance(value, str) and value}
                 translated = len(eligible & translated_keys)
                 categories = {}
-                for info in classified.values():
+                for info in report_scope.values():
                     categories[info["category"]] = categories.get(info["category"], 0) + 1
                 report["engine_rby"] = {
                     **coverage_metadata(scope),
                     "translated": translated,
                     "total": len(eligible),
                     "percent": round(translated * 100 / len(eligible), 2) if eligible else 100.0,
-                    "eligibility": {"eligible": len(eligible), "review": sum(i["eligibility"] == "review" for i in classified.values()), "ineligible": sum(i["eligibility"] == "ineligible" for i in classified.values())},
+                    "eligibility": {"eligible": len(eligible), "review": sum(i["eligibility"] == "review" for i in report_scope.values()), "ineligible": sum(i["eligibility"] == "ineligible" for i in report_scope.values())},
                     "categories": categories,
                     "catalog_total": len(catalog),
                 }
