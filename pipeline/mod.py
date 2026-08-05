@@ -264,6 +264,23 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
     engine_values.update(romtext_values)
     enemy_values, enemy_report = enemy_qualifier_catalog(rows, language)
     engine_values.update(enemy_values)
+    # The qid-driven catalogs above inject translated values AFTER the matcher
+    # ran, so the engine report still lists those keys as unmatched (or omits
+    # them).  Sync the report so "All engine strings" reflects what ships.
+    if engine_report is not None:
+        for key, value in engine_values.items():
+            if not (isinstance(value, str) and value):
+                continue
+            if engine_report["details"].get(key) not in (None, "english_fallback"):
+                continue
+            if key in engine_report.get("unmatched", []):
+                engine_report["unmatched"] = [item for item in engine_report["unmatched"] if item != key]
+                engine_report["fallback_english"] = max(0, engine_report.get("fallback_english", 0) - 1)
+            engine_report.get("ambiguous", {}).pop(key, None)
+            engine_report["details"][key] = "qid-driven"
+            engine_report["provenance"][key] = {"method": "qid-driven", "reason": "corpus qid merged after matching (sendout/pokedex/romtext/enemy)"}
+            engine_report["translated"] += 1
+        engine_report["percent"] = round(engine_report["translated"] * 100 / engine_report["total"], 2) if engine_report["total"] else 100.0
     (destination / "lang").mkdir(exist_ok=True)
     for name in CATALOGS:
         if name == "strings" and engine_values:

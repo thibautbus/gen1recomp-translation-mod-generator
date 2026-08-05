@@ -214,15 +214,18 @@ snapshots, so revisions can change these values.
 > (`data.text` renders localized — e.g. `Welcome to our POKéMON CENTER!`,
 > `Keep it up!`, `No SURFing here!`), reported as `covered_by_rom` in the
 > per-key breakdown.  English-fallback counts only keys that actually
-> display English.
+> display English.  Five corpus-qid keys merged after matching (trainer
+> send-out, Pokédex footer `SEEN %3d  OWN %3d`, the two romText fallbacks and
+> `Enemy %s`) are synced back into the report as `qid-driven`, so the count
+> matches what ships.
 
 | Target | ROM catalogs | Corpus-backed extras | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 321/615 (52.20%) |
-| `de` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 320/615 (52.03%) |
-| `es` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 320/615 (52.03%) |
-| `it` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 321/615 (52.20%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 321/615 (52.20%) |
+| `fr` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 326/615 (53.01%) |
+| `de` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 325/615 (52.85%) |
+| `es` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 325/615 (52.85%) |
+| `it` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 326/615 (53.01%) |
+| `ja-Hrkt` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 326/615 (53.01%) |
 
 The corpus-backed extras are fully translated (28/28): fifteen type names,
 five literal handlers (15/15 unique corpus qids), two demo names, the
