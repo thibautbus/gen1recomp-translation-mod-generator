@@ -147,7 +147,7 @@ class EngineScopeTests(unittest.TestCase):
 
     def test_manifest_and_lua_suffix_rules(self):
         scope = load_scope()
-        self.assertEqual(scope["gen1recomp_revision"], "898bf0c71ed0a9fa9af596aeea80825f79c7eff3")
+        self.assertEqual(scope["gen1recomp_revision"], "12a04f418838e09ade97ad3fb36933c9fffb31ec")
         self.assertEqual(
             classify_callsites([{"source": "x", "path": "ui/BagMenu.lua", "line": 1}])["x"]["eligibility"],
             "eligible",
@@ -190,7 +190,10 @@ class EngineScopeTests(unittest.TestCase):
         tmp, root, scope = self._git_fixture()
         try:
             with self.assertRaises(ValueError): validate_catalog_universe({"one", "extra"}, root)
-            with self.assertRaises(ValueError): validate_catalog_universe(set(), root)
+            # Subset semantics: a catalog key absent from the source fails the
+            # check, but source keys without a catalog entry are tolerated
+            # (untranslated engine strings / concatenated fragments).
+            self.assertEqual(validate_catalog_universe(set(), root)["catalog_total"], 0)
             (root / "outside.txt").write_text("ok")
             self.assertEqual(verified_source(root, scope)[0], root / "src")
         finally: tmp.cleanup()

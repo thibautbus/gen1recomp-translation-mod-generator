@@ -162,12 +162,12 @@ utilizar a`), adapted for de (the nick's verb phrase moves into the
 `%s!` message and the player name is injected into the change prompt,
 whose ROM form has no placeholder) and ja (`%sは\u3000` / `%sを...` / `%sも
 \u3000#を...`). Engines since commit #565 merged the first two parts into
-one template (`%s is\nabout to use\v%s!`, two placeholders), so that
-merged key is emitted alongside the split ones — both engine generations
-resolve. Other key changes after the pin are handled by an engine-key
-migration table (`ENGINE_KEY_MIGRATIONS`): #639 reworked the Pokédex
-footer (`SEEN %d  OWNED %d` → `SEEN %3d  OWN %3d`), whose translation is
-derived from the old key's value with the directive widths preserved.
+one template (`%s is\nabout to use\v%s!`, two placeholders); with the engine
+pinned to v0.1.69 (commit `12a04f41`) that merged key is the worksheet's
+own entry; the pre-#565 split forms were dropped with the pin.
+The Pokédex footer (`SEEN %3d  OWN %3d`) is similarly joined qid-driven from
+the two corpus label rows `rb.pokedex.PokedexSeenText` and
+`rb.pokedex.PokedexOwnText` (`VUS %3d  PRIS %3d`).
 Type display names are engine content — the runtime
 `type_chart` registry, not a modkit worksheet — so a seventh `type_names.lua`
 catalog is joined qid-driven from `rb.names.TypeNames.*`: exactly the 15
@@ -186,31 +186,39 @@ registration files.
 
 ## Translation coverage
 
-`ROM aggregate` is the release gate: six ROM-derived catalogs, fifteen
-corpus-backed type names, five corpus-backed literal handlers, the two
-corpus-backed demo names (`OLD MAN`, `PROF.OAK`) and the four trainer
-send-out templates (`%s is\nabout to use`, `%s!`, `%s is\nabout to
-use\v%s!`, `Will %s\nchange POKéMON?`). Engine
+`ROM aggregate` is the release gate: six ROM-derived catalogs plus the
+corpus-backed extras in the next column (type names, literal handlers,
+demo names `OLD MAN`/`PROF.OAK`, the two trainer send-out keys and the
+Pokédex footer `SEEN %3d  OWN %3d`). Engine
 columns are informational; English fallback keeps untranslated entries
 playable. Reports are generated from cached ROM imports and corpus
 snapshots, so revisions can change these values.
 
-| Target | ROM catalogs | Type names | Literal handlers | ROM aggregate | RBY-related engine strings | All engine strings |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3128/3128 (100%) | 357/358 (99.72%) | 369/581 (63.51%) |
-| `de` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3128/3128 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
-| `es` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3128/3128 (100%) | 357/358 (99.72%) | 369/581 (63.51%) |
-| `it` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3128/3128 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 15/15 (100%) | 5/5 (100%) | 3128/3128 (100%) | 357/358 (99.72%) | 370/581 (63.68%) |
+> The `Corpus-backed extras` column is the sum `15 + 5 + 2 + 2 + 1 = 25`, so
+> `3127 = 3102 + 25` reads directly off the table. Engine-string counts also
+> move between revisions because the engine re-channels texts: v0.1.69
+> renders the battle effect messages via `data.text` instead of `Strings`,
+> so the `All engine strings` denominator shrank even as the dialogue
+> catalog grew (2548 → 2582 entries) and kept them translated.
 
-The five handlers are backed by 15/15 unique corpus qids. `RBY-related engine
-strings` counts 358 keys from Gen1Recomp's 581-key catalog whose production
-callsites reproduce original Red/Blue gameplay or interfaces; `All engine
-strings` covers the complete catalog, including modern surfaces. The
+| Target | ROM catalogs | Corpus-backed extras | ROM aggregate | RBY-related engine strings | All engine strings |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `fr` | 3102/3102 (100%) | 25/25 (100%) | 3127/3127 (100%) | 244/246 (99.19%) | 258/604 (42.72%) |
+| `de` | 3102/3102 (100%) | 25/25 (100%) | 3127/3127 (100%) | 244/246 (99.19%) | 259/604 (42.88%) |
+| `es` | 3102/3102 (100%) | 25/25 (100%) | 3127/3127 (100%) | 244/246 (99.19%) | 258/604 (42.72%) |
+| `it` | 3102/3102 (100%) | 25/25 (100%) | 3127/3127 (100%) | 244/246 (99.19%) | 260/604 (43.05%) |
+| `ja-Hrkt` | 3102/3102 (100%) | 25/25 (100%) | 3127/3127 (100%) | 244/246 (99.19%) | 259/604 (42.88%) |
+
+The corpus-backed extras are fully translated (25/25): fifteen type names,
+five literal handlers (15/15 unique corpus qids), two demo names and the
+three engine templates (send-out + Pokédex footer). `RBY-related engine
+strings` counts 246 keys from Gen1Recomp v0.1.69's 604-key catalog whose
+production callsites reproduce original Red/Blue gameplay or interfaces; `All
+engine strings` covers the complete catalog, including modern surfaces. The
 versioned [`engine_scope.json`](config/engine_scope.json) classifier (revision
-`898bf0c71ed0a9fa9af596aeea80825f79c7eff3`) scans production `src` callsites:
-358 keys form the eligible denominator, eight require review, and 215 modern,
-network/link, import, core, diagnostic, defensive, fallback-only, or
+`12a04f418838e09ade97ad3fb36933c9fffb31ec`) scans production `src` callsites:
+246 keys form the eligible denominator, seven require review, and 357 are
+modern, network/link, import, core, diagnostic, defensive, fallback-only, or
 ROM/generated-path keys are ineligible. Coverage comes from
 isolated clean rebuilds using pinned snapshots; if the engine source is
 unavailable, the report omits RBY coverage and warns instead of guessing. Each
@@ -224,11 +232,10 @@ modern mod-manager/desktop surfaces, network/tournament flows, imports, and
 shared link+RBY keys are therefore not silently counted as RBY coverage.
 `_OakSpeechText2A` is intentionally excluded from the engine denominator: its
 localized text is supplied by the ROM/Data.text dialogue catalog, while the
-engine symbol remains empty to avoid OakSpeech's double lookup. The one
-remaining eligible RBY fallback is `%s\nis refusing!` at
-`inventory/ItemEffects.lua:363`, guarded to Yellow's starter Pikachu stone
-refusal; it is intentionally outside Red/Blue and accounts for the expected
-357/358 RBY-related result.
+engine symbol remains empty to avoid OakSpeech's double lookup. The two
+remaining eligible RBY fallbacks are `Enemy %s` and `FOE` at
+`battle/BattleState.lua:386/1572` — the opponent-name labels that only appear
+in link battles — which account for the expected 244/246 RBY-related result.
 
 `forced_dynamic_keys` in `engine_scope.json` records the five SummaryMenu
 labels (`NAME`, `ATTACK`, `DEFENSE`, `SPEED`, `SPECIAL`) selected from a runtime

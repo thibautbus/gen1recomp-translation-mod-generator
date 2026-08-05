@@ -11,13 +11,14 @@ from pipeline.cli import main as cli_main
 from pipeline.corpus import load_corpus
 from pipeline.generate import generate_lua, lua_string
 from pipeline.model import CorpusRecord
-from pipeline.mod import ENGINE_KEY_MIGRATIONS, generate_mod, migrate_engine_keys
+from pipeline.mod import generate_mod
 from pipeline.join import (
     SENDOUT_ENGINE_KEYS,
     WorksheetEntry,
     _derive_sendout_templates,
     demo_names_catalog,
     join_catalogs,
+    pokedex_footer_catalog,
     read_worksheets,
     sendout_strings_catalog,
     type_names_catalog,
@@ -420,8 +421,8 @@ class PipelineTests(unittest.TestCase):
             CorpusRecord("rb.text_2.TrainerAboutToUseText", "fr", SENDOUT_ROW["fr"]),
         ])
         values, report = sendout_strings_catalog(rows, "fr")
-        self.assertEqual(values, EXPECTED["fr"])
-        self.assertEqual(report["translated"], 4)
+        self.assertEqual(values, {key: EXPECTED["fr"][key] for key in SENDOUT_ENGINE_KEYS})
+        self.assertEqual(report["translated"], 2)
         self.assertEqual(report["unmatched"], [])
 
     def test_sendout_strings_catalog_gates_empty_translation(self):
@@ -439,6 +440,26 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(values, {})
         self.assertEqual(report["translated"], 0)
 
+    def test_pokedex_footer_catalog_joins_labels(self):
+        rows = align([
+            CorpusRecord("rb.pokedex.PokedexSeenText", "en", "SEEN@"),
+            CorpusRecord("rb.pokedex.PokedexSeenText", "fr", "VUS@"),
+            CorpusRecord("rb.pokedex.PokedexOwnText", "en", "OWN@"),
+            CorpusRecord("rb.pokedex.PokedexOwnText", "fr", "PRIS@"),
+        ])
+        values, report = pokedex_footer_catalog(rows, "fr")
+        self.assertEqual(values, {"SEEN %3d  OWN %3d": "VUS %3d  PRIS %3d"})
+        self.assertEqual(report["unmatched"], [])
+
+    def test_pokedex_footer_catalog_empty_without_labels(self):
+        rows = align([
+            CorpusRecord("rb.pokedex.PokedexSeenText", "en", "SEEN@"),
+            CorpusRecord("rb.pokedex.PokedexSeenText", "fr", "VUS@"),
+        ])
+        values, report = pokedex_footer_catalog(rows, "fr")
+        self.assertEqual(values, {})
+        self.assertIn("OWN", report["unmatched"])
+
     def test_generate_mod_writes_sendout_strings(self):
         rows = align([
             CorpusRecord("rb.text_2.TrainerAboutToUseText", "en", SENDOUT_ROW["en"]),
@@ -447,9 +468,9 @@ class PipelineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             mod = generate_mod(rows, Path(tmp) / "mod", language="fr")
             body = (mod / "lang/strings.lua").read_text(encoding="utf-8")
-            self.assertIn('["%s is\\nabout to use"] = "%s\\nva appeler..."', body)
-            self.assertIn('["Will %s\\nchange POKéMON?"] = "%s va-t-il\\nchanger de POKéMON?"', body)
             self.assertIn('["%s is\\nabout to use\\11%s!"] = "%s\\nva appeler...\\11%s!"', body)
+            self.assertIn('["Will %s\\nchange POKéMON?"] = "%s va-t-il\\nchanger de POKéMON?"', body)
+            self.assertNotIn('["%s is\\nabout to use"] = ', body)
 
 
 SENDOUT_ROW = {
@@ -469,17 +490,6 @@ EXPECTED = {
     "ja-Hrkt": {"%s is\nabout to use": "%sは　", "%s!": "%sを\nくりだそうと　しているようだ", "Will %s\nchange POKéMON?": "%sも　#を\nとりかえますか？", "%s is\nabout to use\v%s!": "%sは　\v%sを\nくりだそうと　しているようだ"},
 }
 
-
-def test_migrate_engine_keys_derives_changed_key(self):
-        values = migrate_engine_keys({"SEEN %d  OWNED %d": "Vus:%d  Pris:%d"})
-        self.assertEqual(values["SEEN %3d  OWN %3d"], "Vus:%3d  Pris:%3d")
-        self.assertIn("SEEN %d  OWNED %d", values)
-        values2 = migrate_engine_keys({
-            "SEEN %3d  OWN %3d": "Déjà fait",
-            "SEEN %d  OWNED %d": "Vus:%d  Pris:%d",
-        })
-        self.assertEqual(values2["SEEN %3d  OWN %3d"], "Déjà fait")
-        self.assertEqual(migrate_engine_keys({}), {})
 
 if __name__ == "__main__":
     unittest.main()

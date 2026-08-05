@@ -20,10 +20,10 @@ target_lang = "fr"
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "898bf0c71ed0a9fa9af596aeea80825f79c7eff3"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/898bf0c71ed0a9fa9af596aeea80825f79c7eff3"
-archive_sha256 = "cdfc5b3285b609377471fc6433072b945ae68ea44c65fb50e4db9110d70247b6"
-archive_tree_sha256 = "536b6093e492a1c4fcb2927dd6b7e3331052a4a6e9482cd359eddf26034af4a1"
+revision = "12a04f418838e09ade97ad3fb36933c9fffb31ec"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/12a04f418838e09ade97ad3fb36933c9fffb31ec"
+archive_sha256 = "b9c26d261e64c9f542de5065801b34bb48dc1500e2b5d7b495196496342febbb"
+archive_tree_sha256 = "edeb43d96c6ce0677ad0ce25beeaa7c35530ef20b3cf6836c560256e2b98c11c"
 
 [luajit]
 source = "https://luajit.org/git/luajit.git"

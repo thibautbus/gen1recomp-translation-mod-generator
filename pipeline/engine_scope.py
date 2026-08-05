@@ -317,17 +317,23 @@ def classify_catalog(keys: Iterable[str], callsites: Iterable[Mapping[str, Any]]
 
 
 def validate_catalog_universe(catalog_keys: Iterable[str], checkout: str | Path, scope: Mapping[str, Any] | None = None) -> dict[str, int]:
-    """Assert that a production checkout and catalog describe the same keys."""
+    """Assert that a production checkout and catalog describe the same keys.
+
+    A catalog key missing from the source is a stale override (the engine no
+    longer looks it up) and fails the check.  Source keys without a catalog
+    entry are tolerated: they are either engine strings the mod leaves in
+    English (fallback) or fragments of concatenated literals that Modkit's
+    scaffold harvester joins into the full form.
+    """
     catalog = {str(key) for key in catalog_keys}
     calls = iter_callsites(checkout)
     source = {str(row.get("source", "")) for row in calls if row.get("source")}
     scope = scope or load_scope()
     dynamic = forced_dynamic_keys(scope)
     source_with_dynamic = source | dynamic
-    if source_with_dynamic != catalog:
-        missing = sorted(catalog - source_with_dynamic)
-        extra = sorted(source_with_dynamic - catalog)
-        raise ValueError(f"engine catalog/source key universe mismatch (missing={len(missing)}, extra={len(extra)})")
+    missing = sorted(catalog - source_with_dynamic)
+    if missing:
+        raise ValueError(f"engine catalog/source key universe mismatch (missing={len(missing)})")
     return {"catalog_total": len(catalog), "source_keys": len(source_with_dynamic), "callsites": len(calls), "forced_dynamic": len(dynamic)}
 
 

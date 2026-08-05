@@ -641,6 +641,11 @@ def build(
     env = dict(os.environ)
     env["MODKIT_LUAJIT"] = luajit
     env["LUA"] = luajit
+    # v0.1.69+'s modkit pack/validate drives the real loader headlessly.
+    # Data.loadModule supports POKEPORT_DATA_DIR, which loadfiles the
+    # imported dataset directly and skips the love.filesystem-dependent
+    # CacheFs path (a bare loader run would crash on CacheFs.read).
+    env["POKEPORT_DATA_DIR"] = str(gen1recomp / "data" / "generated")
     if is_frozen():
         lua_dir = str(Path(luajit).resolve().parent)
         env["PATH"] = lua_dir + os.pathsep + env.get("PATH", "")

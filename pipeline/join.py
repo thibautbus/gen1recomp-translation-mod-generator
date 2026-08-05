@@ -105,15 +105,16 @@ DEMO_NAMES_QIDS = {
 }
 
 # The trainer send-out message: the engine renders it as fixed templates
-# (BattleState.lua TrainerSentOutText) fed from one corpus row:
-#   older engines split it as "%s is\nabout to use" -> "%s!" -> "Will
+# (BattleState.lua TrainerSentOutText) fed from one corpus row:#   older engines split it as "%s is\nabout to use" -> "%s!" -> "Will
 #   %s\nchange POKéMON?"; the current engine (commit #565) merged the
 #   first two into "%s is\nabout to use\v%s!" (2 placeholders, \v = wait
 #   for a button press).  The templates are English-structured; fr/es/it
 #   mirror them, de and ja need structural adaptation (see
-#   _derive_sendout_templates).
+#   _derive_sendout_templates).  Since the v0.1.69 pin, only the merged
+#   key and the change prompt are looked up; the pre-#565 split forms were
+#   dropped with the pin.
 SENDOUT_QID = "rb.text_2.TrainerAboutToUseText"
-SENDOUT_ENGINE_KEYS = ("%s is\nabout to use", "%s!", "Will %s\nchange POKéMON?", "%s is\nabout to use\v%s!")
+SENDOUT_ENGINE_KEYS = ("%s is\nabout to use\v%s!", "Will %s\nchange POKéMON?")
 
 
 def _derive_sendout_templates(value: str, lang: str) -> dict[str, str]:
@@ -391,6 +392,51 @@ def type_names_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple
             report["strategies"][runtime_id] = "manual_review"
             reason = "no canonical candidate" if not candidates else f"ambiguous {qid}: {[x.qid for x in candidates]}"
             report["reasons"][runtime_id] = f"{reason}; manual review required"
+    return output, report
+
+
+# The Pokédex footer (ui/PokedexMenu.lua) is one engine template assembled
+# from two corpus labels ("SEEN" and "OWN" fragments of the ROM's footer).
+POKEDEX_FOOTER_ENGINE_KEYS = {
+    "SEEN %3d  OWN %3d",
+}
+POKEDEX_FOOTER_LABEL_QIDS = {
+    "SEEN": "rb.pokedex.PokedexSeenText",
+    "OWN": "rb.pokedex.PokedexOwnText",
+}
+
+
+def pokedex_footer_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple[dict[str, str], dict]:
+    """Localize the Pokédex footer template from the two corpus label rows.
+
+    The current engine (#639) formats the footer as one fixed template with
+    two 3-digit fields ("SEEN %3d  OWN %3d"); the corpus labels keep their
+    ROM casing while the format directive widths come from the template.
+    """
+    output: dict[str, str] = {}
+    report: dict = {"strategies": {}, "reasons": {}, "unmatched": []}
+    by_qid: dict[str, Alignment] = {}
+    for item in items:
+        qid = _base_qid(item.qid)
+        by_qid.setdefault(qid, item)
+    parts: dict[str, str] = {}
+    for role, qid in POKEDEX_FOOTER_LABEL_QIDS.items():
+        row = by_qid.get(qid)
+        if row is None:
+            report["strategies"][role] = "unmatched"
+            report["reasons"][role] = f"missing corpus row {qid}"
+            report["unmatched"].append(role)
+            return output, report
+        translation = row.translation
+        if not translation:
+            report["strategies"][role] = "empty_corpus"
+            report["reasons"][role] = f"empty {qid} translation"
+            report["unmatched"].append(role)
+            return output, report
+        parts[role] = translation.replace("{text_start}", "").replace("@", "").strip()
+    template = next(iter(POKEDEX_FOOTER_ENGINE_KEYS))
+    output[template] = f"{parts['SEEN']} %3d  {parts['OWN']} %3d"
+    report["strategies"][template] = "corpus_footer_labels"
     return output, report
 
 
@@ -672,4 +718,12 @@ def join_catalogs(items: list[Alignment], worksheets: dict[str, list[WorksheetEn
         report["unmatched"]["strings_sendout"] = sendout_report["unmatched"]
         report["strategies"]["strings_sendout"] = sendout_report["strategies"]
         report["reasons"]["strings_sendout"] = sendout_report["reasons"]
+    # The Pokédex footer template is assembled from two corpus labels.
+    pokedex_values, pokedex_report = pokedex_footer_catalog(items, target_lang)
+    output["strings"].update(pokedex_values)
+    report["strings_pokedex"] = pokedex_report
+    if pokedex_values:
+        report["matched"]["strings_pokedex"] = pokedex_report.get("translated", len(pokedex_values))
+        report["strategies"]["strings_pokedex"] = pokedex_report["strategies"]
+        report["reasons"]["strings_pokedex"] = pokedex_report["reasons"]
     return output, report

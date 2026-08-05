@@ -43,7 +43,7 @@ class MultilingualTests(unittest.TestCase):
         worksheets = Path(".cache/interactive/fr/complete-modkit-worksheet")
         if not (worksheets / "strings.lua").is_file():
             self.skipTest("cached modkit worksheet unavailable")
-        rom_keys = ("Crammed full of\nPOKéMON books!", "INDIGO PLATEAU", "POKéDEX comp-\nletion is:\f{NUM:hDexRatingNumMonsSeen} POKéMON seen\n{NUM:hDexRatingNumMonsOwned} POKéMON owned\fPROF.OAK's\nRating:", "{RIVAL}: Yeah! Am\nI great or what?", "Welcome to our\nPOKéMON CENTER!", "Your POKéMON are\nfighting fit!")
+        rom_keys = ("Crammed full of\nPOKéMON books!", "Keep it up!", "No POKéMON!", "No SURFing here!", "Nothing to CUT!", "POKéDEX Rating{COLON}", "{RIVAL}: Yeah! Am\nI great or what?", "Welcome to our\nPOKéMON CENTER!", "Your POKéMON are\nfighting fit!")
         from tempfile import TemporaryDirectory
         for language in ("fr", "de", "es", "it", "ja-Hrkt"):
             worksheet = Path(".cache/interactive") / language / "complete-modkit-worksheet"
@@ -98,10 +98,10 @@ class MultilingualTests(unittest.TestCase):
                 self.assertNotIn('mod.content.type_chart:patch', main, language)
                 # engine send-out templates translated from the corpus row
                 strings = (mod / "lang/strings.lua").read_text(encoding="utf-8")
-                self.assertIn('["%s is\\nabout to use"] = "', strings, language)
-                self.assertNotIn('["%s is\\nabout to use"] = "",', strings, language)
                 self.assertIn('["%s is\\nabout to use\\11%s!"] = "', strings, language)
                 self.assertNotIn('["%s is\\nabout to use\\11%s!"] = "",', strings, language)
+                self.assertIn('["Will %s\\nchange POKéMON?"] = "', strings, language)
+                self.assertNotIn('["%s is\\nabout to use"] = "', strings, language)
                 self.assertIn('["SEEN %3d  OWN %3d"] = "', strings, language)
                 self.assertNotIn('["SEEN %3d  OWN %3d"] = "",', strings, language)
                 # corpus-backed demo name (old-man tutorial literal) translated
@@ -960,12 +960,12 @@ class MultilingualTests(unittest.TestCase):
         keys = {
             "USE": {"ui/BagMenu.lua"},
             "You can't carry\nany more items.": {"ui/PlayerPC.lua", "ui/ShopMenu.lua"},
-            "SEEN %d  OWNED %d": {"ui/PokedexMenu.lua"},
+            "SEEN %3d  OWN %3d": {"ui/PokedexMenu.lua"},
             "%s is out of\nuseable POKéMON!": {"battle/BattleState.lua"},
             "%s blacked\nout!": {"battle/BattleState.lua", "world/OverworldController.lua"},
             "It dodged the\nthrown BALL!": {"battle/BattleState.lua"},
             "It contained\n%s!": {"ui/BagMenu.lua"},
-            "BATTLE ANIMATION": {"ui/OptionsMenu.lua"},
+            "BATTLE ANIMATION": {"ui/OptionsMenu.lua", "import/LauncherSettings.lua"},
             "When you change a\nPOKéMON BOX, data\nwill be saved. OK?": {"ui/BoxMenu.lua"},
         }
         catalog = classify_callsites(iter_callsites(checkout))
@@ -973,7 +973,7 @@ class MultilingualTests(unittest.TestCase):
             self.assertIn(key, catalog)
             row = catalog[key]
             self.assertEqual(row["eligibility"], "eligible", key)
-            self.assertEqual(row["category"], "rby", key)
+            self.assertEqual(row["category"], "rby" if key != "BATTLE ANIMATION" else "mixed", key)
             self.assertEqual({call["path"] for call in row["callsites"]}, paths, key)
             self.assertTrue(all("Strings(" in call["context"] for call in row["callsites"]), key)
 

@@ -14,28 +14,6 @@ from .literals import load_recipes, generate_handlers
 
 CATALOGS = ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels", "type_names", "demo_names")
 
-# Engine keys that changed after the pinned revision (898bf0c7): the current
-# engine looks up the NEW key, which the pinned worksheet does not carry, so
-# the translation is derived from the OLD key's value.  #639 reworked the
-# Pokédex footer ("SEEN %d  OWNED %d" -> "SEEN %3d  OWN %3d", fixed 3-digit
-# fields and "OWN" instead of "OWNED").
-ENGINE_KEY_MIGRATIONS = {
-    "SEEN %3d  OWN %3d": ("SEEN %d  OWNED %d", lambda value: value.replace("%d", "%3d")),
-}
-
-
-def migrate_engine_keys(values: dict[str, str]) -> dict[str, str]:
-    """Derive translations for engine keys that changed after the pin.
-
-    Each migration maps a HEAD-only key to the pinned key it replaced and a
-    transform of the pinned key's translated value.  The engine's format-
-    directive arity is preserved by the transform.
-    """
-    for new_key, (old_key, transform) in ENGINE_KEY_MIGRATIONS.items():
-        old_value = values.get(old_key)
-        if new_key not in values and isinstance(old_value, str) and old_value:
-            values[new_key] = transform(old_value)
-    return values
 # Keep every language at the same priority; language choice must not affect load order.
 TRANSLATION_MOD_PRIORITY = 100
 COMMANDS_SHOW_TEXT_KEYS = {
@@ -60,8 +38,10 @@ def validate_commands_show_text_collisions(engine_values: dict[str, str], dialog
 
 def catalog_for(qid: str) -> str:
     value = qid.lower()
-    from .join import _type_name_tail, _base_qid, DEMO_NAMES_QIDS, SENDOUT_QID
+    from .join import _type_name_tail, _base_qid, DEMO_NAMES_QIDS, SENDOUT_QID, POKEDEX_FOOTER_LABEL_QIDS
     if _base_qid(qid) == SENDOUT_QID:
+        return "strings"
+    if _base_qid(qid) in POKEDEX_FOOTER_LABEL_QIDS.values():
         return "strings"
     if _base_qid(qid) in DEMO_NAMES_QIDS.values():
         return "demo_names"
@@ -267,12 +247,13 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
     # The trainer send-out templates (strings.lua) are qid-driven from one
     # corpus row (see pipeline/join.py) and merged into the engine strings,
     # so they ship even without a worksheet.
-    from .join import sendout_strings_catalog
+    from .join import sendout_strings_catalog, pokedex_footer_catalog
     sendout_values, sendout_report = sendout_strings_catalog(rows, language)
+    pokedex_values, pokedex_report = pokedex_footer_catalog(rows, language)
     if engine_values is None:
         engine_values = {}
     engine_values.update(sendout_values)
-    migrate_engine_keys(engine_values)
+    engine_values.update(pokedex_values)
     (destination / "lang").mkdir(exist_ok=True)
     for name in CATALOGS:
         if name == "strings" and engine_values:
@@ -397,6 +378,13 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         rom_details["strings_sendout"] = {
             "translated": strings_sendout_translated, "total": strings_sendout_total,
             "qids": sendout_report.get("qids"),
+        }
+        strings_pokedex_total = len(pokedex_values)
+        strings_pokedex_translated = len(pokedex_values) - len(pokedex_report.get("unmatched", []))
+        rom_total += strings_pokedex_total
+        rom_translated += strings_pokedex_translated
+        rom_details["strings_pokedex"] = {
+            "translated": strings_pokedex_translated, "total": strings_pokedex_total,
         }
         report["rom"] = {"translated": rom_translated, "total": rom_total, "percent": round(rom_translated * 100 / rom_total, 2) if rom_total else 100.0, "details": rom_details}
         if engine_report is not None:
