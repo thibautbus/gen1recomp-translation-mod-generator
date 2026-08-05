@@ -132,8 +132,14 @@ def _derive_sendout_templates(value: str, lang: str) -> dict[str, str]:
     """
     value = value.replace("<DONE>", "")
     head, _, tail = value.partition("<PARA>")
-    before_nick, _, nick_suffix = head.partition("{text_ram wEnemyMonNick}")
-    prefix, _, body = before_nick.partition("{text_ram wTrainerName}")
+    before_nick, nick_sep, nick_suffix = head.partition("{text_ram wEnemyMonNick}")
+    prefix, trainer_sep, body = before_nick.partition("{text_ram wTrainerName}")
+    if not nick_sep or not trainer_sep:
+        # Corpus format drift: a missing RAM token would embed the raw nick
+        # or trainer text into the derived template.  Emit nothing and let
+        # the coverage gate report the send-out keys as unmatched instead of
+        # shipping garbage.
+        return {}
 
     def clean(text: str, cont: str = " ") -> str:
         return (text.replace("{text_start}", "").replace("@", "")

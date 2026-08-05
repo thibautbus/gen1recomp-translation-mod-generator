@@ -462,6 +462,40 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(values, {})
         self.assertIn("OWN", report["unmatched"])
 
+    def test_generate_mod_pokedex_gate_guard_never_negative(self):
+        # No pokedex labels in the corpus: the footer catalog is empty and the
+        # ROM gate must not subtract the unmatched roles from rom_translated.
+        rows = align([
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "en", "X"),
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "fr", "Y"),
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ws = root / "ws"; ws.mkdir()
+            for name in ("dialogue", "species_names", "move_names", "item_names", "trainer_names", "status_labels"):
+                (ws / f"{name}.txt").write_text("# header\n", encoding="utf-8")
+            (ws / "strings.lua").write_text('return { ["X"] = "" }\n', encoding="utf-8")
+            report_path = root / "report.json"
+            generate_mod(rows, root / "mod", language="fr", modkit_worksheet=ws, report_path=report_path)
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(report["rom"]["details"]["strings_pokedex"]["translated"], 0)
+            self.assertGreaterEqual(report["rom"]["translated"], 0)
+
+    def test_sendout_derive_partition_guard_returns_empty(self):
+        # A corpus value missing the RAM tokens would embed raw nick/trainer
+        # text; the derivation must yield nothing so the keys stay unmatched.
+        self.assertEqual(_derive_sendout_templates("garbage without tokens", "fr"), {})
+
+    def test_sendout_catalog_unmatched_on_corpus_drift(self):
+        rows = align([
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "en", "SENT OUT <PARA> Will %s change POKéMON?"),
+            CorpusRecord("rb.text_2.TrainerAboutToUseText", "fr", "ENVOYE <PARA> Changer de POKéMON?"),
+        ])
+        values, report = sendout_strings_catalog(rows, "fr")
+        self.assertEqual(values, {key: "" for key in SENDOUT_ENGINE_KEYS})
+        self.assertEqual(report["translated"], 0)
+        self.assertEqual(len(report["unmatched"]), len(SENDOUT_ENGINE_KEYS))
+
     def test_romtext_fallback_catalog_aliases_used_and_derives_enemy_weak(self):
         rows = align([
             CorpusRecord("rb.text_7.ItemUseText001", "en", "{text_start}<PLAYER> used@@"),

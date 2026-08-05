@@ -407,7 +407,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
             "qids": sendout_report.get("qids"),
         }
         strings_pokedex_total = len(pokedex_values)
-        strings_pokedex_translated = len(pokedex_values) - len(pokedex_report.get("unmatched", []))
+        strings_pokedex_translated = len(pokedex_values)
         rom_total += strings_pokedex_total
         rom_translated += strings_pokedex_translated
         rom_details["strings_pokedex"] = {
