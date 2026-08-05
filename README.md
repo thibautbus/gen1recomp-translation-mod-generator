@@ -187,7 +187,7 @@ registration files.
 ## Translation coverage
 
 `ROM aggregate` is the release gate: six ROM-derived catalogs plus the
-corpus-backed extras in the next column (type names, literal handlers,
+corpus-derived runtime extras in the next column (type names, literal handlers,
 demo names `OLD MAN`/`PROF.OAK`, the two trainer send-out keys, the
 Pokédex footer `SEEN %3d  OWN %3d`, the two romText fallback keys
 (`%s\nused %s!`, `The enemy's weak!\nGet'm! %s!`) and the enemy qualifier
@@ -196,7 +196,7 @@ columns are informational; English fallback keeps untranslated entries
 playable. Reports are generated from cached ROM imports and corpus
 snapshots, so revisions can change these values.
 
-> The `Corpus-backed extras` column is the sum `15 + 5 + 2 + 2 + 1 + 2 + 1 = 28`
+> The `Corpus-derived runtime extras` column is the sum `15 + 5 + 2 + 2 + 1 + 2 + 1 = 28`
 > (romText fallbacks + the enemy qualifier), so `3130 = 3102 + 28` reads
 > directly off the table. Engine-string counts also
 > move between revisions because the engine re-channels texts: v0.1.69
@@ -223,7 +223,7 @@ snapshots, so revisions can change these values.
 > `Enemy %s`) are synced back into the report as `qid-driven`, so the count
 > matches what ships.
 
-| Target | ROM catalogs | Corpus-backed extras | ROM aggregate | RBY-related engine strings | All engine strings |
+| Target | ROM catalogs | Corpus-derived runtime extras | ROM aggregate | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | `fr` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 326/618 (52.75%) |
 | `de` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 325/618 (52.59%) |
@@ -231,7 +231,7 @@ snapshots, so revisions can change these values.
 | `it` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 326/618 (52.75%) |
 | `ja-Hrkt` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 326/618 (52.75%) |
 
-The corpus-backed extras are fully translated (28/28): fifteen type names,
+The corpus-derived runtime extras are fully translated (28/28): fifteen type names,
 five literal handlers (15/15 unique corpus qids), two demo names, the
 three engine templates (send-out + Pokédex footer), the two romText
 fallback keys (the battle move-use `X used Y!` and the rival `The enemy's
