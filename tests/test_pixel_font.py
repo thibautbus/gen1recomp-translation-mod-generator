@@ -13,15 +13,14 @@ class PixelFontTests(unittest.TestCase):
     def _font_source(root: Path) -> Path:
         source = root / "font-source"
         for relative in (
-            "fusion-pixel-8px-proportional-latin.ttf",
+            "fusion-pixel-10px-proportional-latin.ttf",
             "fonts/pokemon-font.ttf",
             "LICENSE.md",
             "fusion-pixel-8px-proportional-ja.ttf",
             "OFL.txt",
-            "LICENSES/boutique-bitmap-7x7/OFL.txt",
+            "LICENSES/boutique-bitmap-9x9/OFL.txt",
+            "LICENSES/ark-pixel/OFL.txt",
             "LICENSES/galmuri/LICENSE.txt",
-            "LICENSES/misaki/misaki.txt",
-            "LICENSES/miseki-bitmap/LICENSE.txt",
         ):
             path = source / relative
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -34,10 +33,10 @@ class PixelFontTests(unittest.TestCase):
             main = (mod / "main.lua").read_text(encoding="utf-8")
             self.assertIn(
                 'mod.content.font:register("ttf", '
-                '{ file = mod.assets:path("fonts/fusion-pixel-8px-proportional-latin.ttf"), size = 8 })',
+                '{ file = mod.assets:path("fonts/fusion-pixel-10px-proportional-latin.ttf"), size = 10 })',
                 main,
             )
-            self.assertTrue((mod / "fonts/fusion-pixel-8px-proportional-latin.ttf").is_file())
+            self.assertTrue((mod / "fonts/fusion-pixel-10px-proportional-latin.ttf").is_file())
             self.assertFalse((mod / "fonts/pokemon-font.ttf").exists())
             self.assertFalse((mod / "fonts/fusion-pixel-8px-proportional-ja.ttf").exists())
             self.assertFalse((mod / "fonts/LICENSES/pokemon-font").exists())
@@ -51,7 +50,7 @@ class PixelFontTests(unittest.TestCase):
             main = (mod / "main.lua").read_text(encoding="utf-8")
             self.assertIn('fonts/pokemon-font.ttf"), size = 8', main)
             self.assertTrue((mod / "fonts/LICENSES/pokemon-font/LICENSE.md").is_file())
-            self.assertFalse((mod / "fonts/fusion-pixel-8px-proportional-latin.ttf").exists())
+            self.assertFalse((mod / "fonts/fusion-pixel-10px-proportional-latin.ttf").exists())
 
     def test_japanese_uses_bundled_fusion_pixel_font(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -63,7 +62,7 @@ class PixelFontTests(unittest.TestCase):
                 main,
             )
             self.assertTrue((mod / "fonts/fusion-pixel-8px-proportional-ja.ttf").is_file())
-            self.assertFalse((mod / "fonts/fusion-pixel-8px-proportional-latin.ttf").exists())
+            self.assertFalse((mod / "fonts/fusion-pixel-10px-proportional-latin.ttf").exists())
             self.assertFalse((mod / "fonts/pokemon-font.ttf").exists())
             self.assertFalse((mod / "fonts/LICENSES/pokemon-font").exists())
             self.assertTrue((mod / "fonts/OFL.txt").is_file())
@@ -81,9 +80,9 @@ class PixelFontTests(unittest.TestCase):
             mod = Path(directory) / "mod"
             source = self._font_source(Path(directory))
             generate_mod([], mod, language="fr", font_source=source)
-            self.assertTrue((mod / "fonts/fusion-pixel-8px-proportional-latin.ttf").exists())
+            self.assertTrue((mod / "fonts/fusion-pixel-10px-proportional-latin.ttf").exists())
             generate_mod([], mod, language="ja-Hrkt", font_source=source)
-            self.assertFalse((mod / "fonts/fusion-pixel-8px-proportional-latin.ttf").exists())
+            self.assertFalse((mod / "fonts/fusion-pixel-10px-proportional-latin.ttf").exists())
             self.assertFalse((mod / "fonts/LICENSES/pokemon-font").exists())
             self.assertTrue((mod / "fonts/fusion-pixel-8px-proportional-ja.ttf").exists())
             self.assertFalse((mod / "assets/fonts").exists())
@@ -98,11 +97,11 @@ class PixelFontTests(unittest.TestCase):
                         output.write(path, path.relative_to(mod).as_posix())
             builder.inspect_archive(archive)
             main = (mod / "main.lua").read_text(encoding="utf-8")
-            self.assertIn('mod.assets:path("fonts/fusion-pixel-8px-proportional-latin.ttf")', main)
+            self.assertIn('mod.assets:path("fonts/fusion-pixel-10px-proportional-latin.ttf")', main)
             with zipfile.ZipFile(archive) as source:
                 names = set(source.namelist())
-            self.assertIn("fonts/fusion-pixel-8px-proportional-latin.ttf", names)
-            self.assertNotIn("assets/fonts/fusion-pixel-8px-proportional-latin.ttf", names)
+            self.assertIn("fonts/fusion-pixel-10px-proportional-latin.ttf", names)
+            self.assertNotIn("assets/fonts/fusion-pixel-10px-proportional-latin.ttf", names)
 
     def test_generation_without_source_uses_plain_pixel_and_refresh_preserves_font(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -112,11 +111,11 @@ class PixelFontTests(unittest.TestCase):
             self.assertFalse((fresh / "fonts").exists())
             source = self._font_source(root)
             mod = generate_mod([], root / "mod", language="fr", font_source=source)
-            font = mod / "fonts/fusion-pixel-8px-proportional-latin.ttf"
+            font = mod / "fonts/fusion-pixel-10px-proportional-latin.ttf"
             original = font.read_bytes()
             generate_mod([], mod, language="fr")
             main = (mod / "main.lua").read_text(encoding="utf-8")
-            self.assertIn('mod.content.font:register("ttf", { file = mod.assets:path("fonts/fusion-pixel-8px-proportional-latin.ttf"), size = 8 })', main)
+            self.assertIn('mod.content.font:register("ttf", { file = mod.assets:path("fonts/fusion-pixel-10px-proportional-latin.ttf"), size = 10 })', main)
             self.assertEqual(font.read_bytes(), original)
 
     def test_invalid_font_source_keeps_existing_assets(self):
@@ -124,9 +123,9 @@ class PixelFontTests(unittest.TestCase):
             root = Path(directory)
             source = self._font_source(root)
             mod = generate_mod([], root / "mod", language="fr", font_source=source)
-            font = mod / "fonts/fusion-pixel-8px-proportional-latin.ttf"
+            font = mod / "fonts/fusion-pixel-10px-proportional-latin.ttf"
             original = font.read_bytes()
-            (source / "fusion-pixel-8px-proportional-latin.ttf").unlink()
+            (source / "fusion-pixel-10px-proportional-latin.ttf").unlink()
             with self.assertRaises(FileNotFoundError):
                 generate_mod([], mod, language="fr", font_source=source)
             self.assertEqual(font.read_bytes(), original)
@@ -137,11 +136,11 @@ class PixelFontTests(unittest.TestCase):
             source = self._font_source(root)
             mod = generate_mod([], root / "mod", language="fr", font_source=source)
             old_main = (mod / "main.lua").read_bytes()
-            old_font = (mod / "fonts/fusion-pixel-8px-proportional-latin.ttf").read_bytes()
+            old_font = (mod / "fonts/fusion-pixel-10px-proportional-latin.ttf").read_bytes()
             with patch("pipeline.mod.load_recipes", side_effect=ValueError("invalid override")), self.assertRaisesRegex(ValueError, "invalid override"):
                 generate_mod([], mod, language="fr", font_source=source, font_profile="pokemon")
             self.assertEqual((mod / "main.lua").read_bytes(), old_main)
-            self.assertEqual((mod / "fonts/fusion-pixel-8px-proportional-latin.ttf").read_bytes(), old_font)
+            self.assertEqual((mod / "fonts/fusion-pixel-10px-proportional-latin.ttf").read_bytes(), old_font)
             self.assertFalse((mod / "fonts/pokemon-font.ttf").exists())
 
     def test_scaffold_support_selects_japanese_profile_without_copying_pages(self):

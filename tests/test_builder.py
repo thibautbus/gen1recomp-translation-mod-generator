@@ -43,7 +43,7 @@ class BuilderTests(unittest.TestCase):
             fetch_archive.assert_called_once()
             self.assertEqual(
                 fetch_archive.call_args.args[1],
-                "9633ab8204078210d457a03cd038dab49a728279432b5007e864fa9c5aeb8e26",
+                "9dba2b4bef9db81c1a1262eed6fa0aca2f6768cad9c6bf54b55d332f86e02f1e",
             )
 
     def test_pokemon_font_profile_fetches_only_font_files(self):
@@ -56,6 +56,21 @@ class BuilderTests(unittest.TestCase):
             fetch_files.assert_called_once()
             fetch_archive.assert_not_called()
             self.assertIn("fonts/pokemon-font.ttf", fetch_files.call_args.args[1])
+
+    def test_japanese_fusion_profile_fetches_the_8px_japanese_font(self):
+        config = builder.project_config()
+        def fake_fetch(*args, **kwargs):
+            destination = args[2]
+            destination.mkdir(parents=True, exist_ok=True)
+            if destination.name.endswith("japanese"):
+                (destination / "fusion-pixel-8px-proportional-ja.ttf").write_bytes(b"font")
+            return destination
+        with tempfile.TemporaryDirectory() as directory, patch(
+            "pipeline.builder.fetch_archive", side_effect=fake_fetch
+        ) as fetch_archive:
+            source = builder._font_source(Path(directory), config, "fusion", "ja-Hrkt")
+            self.assertEqual(source, Path(directory) / "dependencies" / "fusion-pixel-font")
+            self.assertEqual(fetch_archive.call_count, 2)
 
     def test_gui_language_and_coverage_helpers(self):
         self.assertEqual(language_code("French (fr)"), "fr")

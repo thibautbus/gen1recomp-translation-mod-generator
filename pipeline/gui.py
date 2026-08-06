@@ -41,7 +41,7 @@ def language_label(code: str) -> str:
 def font_profile_label(profile: str) -> str:
     profile = str(profile).strip().lower()
     if profile == "fusion":
-        return "Fusion Pixel proportional 8px (recommended)"
+        return "Fusion Pixel proportional 10px (recommended)"
     if profile == "pokemon":
         return "Pokemon Font 8px (may overflow some text)"
     raise builder.BuildError(f"Invalid font profile selection: {profile!r}")

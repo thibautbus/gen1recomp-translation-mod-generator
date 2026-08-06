@@ -22,15 +22,14 @@ FONT_PROFILES = {
     "fusion": {
         "warning": None,
         "files": {
-            "latin": ("fusion-pixel-8px-proportional-latin.ttf", 8),
+            "latin": ("fusion-pixel-10px-proportional-latin.ttf", 10),
             "ja": ("fusion-pixel-8px-proportional-ja.ttf", 8),
         },
         "licenses": (
             Path("OFL.txt"),
-            Path("LICENSES/boutique-bitmap-7x7/OFL.txt"),
+            Path("LICENSES/boutique-bitmap-9x9/OFL.txt"),
+            Path("LICENSES/ark-pixel/OFL.txt"),
             Path("LICENSES/galmuri/LICENSE.txt"),
-            Path("LICENSES/misaki/misaki.txt"),
-            Path("LICENSES/miseki-bitmap/LICENSE.txt"),
         ),
     },
     "pokemon": {

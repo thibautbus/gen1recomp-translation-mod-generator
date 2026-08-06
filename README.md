@@ -46,7 +46,7 @@ From the repository root:
 python build_translation.py
 ```
 
-Latin builds default to Fusion Pixel; advanced users can select the optional
+Latin builds default to Fusion Pixel 10px; advanced users can select the optional
 8px Pokemon Font profile with `python build_translation.py --font-profile pokemon`.
 
 Use `python3 build_translation.py` or `py -3 build_translation.py` when needed.
@@ -119,7 +119,7 @@ leaves the original English string visible. The builder always requires an
 explicit target-language selection.
 
 Latin languages (`fr`, `de`, `es`, `it`) default to the pinned Fusion Pixel
-proportional Latin TTF at `size = 8`; the optional Pokemon Font profile also
+proportional Latin TTF at `size = 10`; the optional Pokemon Font profile also
 uses `size = 8` for a compact, game-like layout, but may overflow some
 translated text. Japanese (`ja-Hrkt`) is
 fixed to the pinned Fusion Pixel 8px proportional Japanese TTF. Macros and border/chrome glyphs remain

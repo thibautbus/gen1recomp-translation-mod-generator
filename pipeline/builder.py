@@ -193,7 +193,7 @@ def _ensure_dependency(config: dict, destination: Path, *, selective_prefix: str
     return destination
 
 
-def _font_source(workspace: Path, config: dict, font_profile: str = "fusion") -> Path:
+def _font_source(workspace: Path, config: dict, font_profile: str = "fusion", language: str = "fr") -> Path:
     """Download only the selected pinned font dependency."""
     profile = validate_font_profile("fr", font_profile)
     fonts = config.get("fonts", {})
@@ -209,12 +209,25 @@ def _font_source(workspace: Path, config: dict, font_profile: str = "fusion") ->
                 root / "pokemon-font",
                 revision=str(selected.get("revision", "")),
             )
-        return fetch_archive(
+        source = fetch_archive(
             str(selected["archive_url"]),
             str(selected["archive_sha256"]),
             root / "fusion-pixel-font",
             revision=str(selected.get("revision", "")),
         )
+        if canonical_language(language) == "ja-Hrkt":
+            japanese = config.get("fonts", {}).get("fusion_japanese", {})
+            japanese_source = fetch_archive(
+                str(japanese["archive_url"]),
+                str(japanese["archive_sha256"]),
+                root / "fusion-pixel-font-japanese",
+                revision=str(japanese.get("revision", "")),
+            )
+            shutil.copy2(
+                japanese_source / "fusion-pixel-8px-proportional-ja.ttf",
+                source / "fusion-pixel-8px-proportional-ja.ttf",
+            )
+        return source
     except (DependencyError, KeyError, TypeError, ValueError, OSError) as error:
         raise BuildError(f"Unable to download pinned font dependency: {error}") from error
 
@@ -304,7 +317,7 @@ def _prompt_font_profile(language: str, input_fn: Callable[[str], str]) -> str:
         print("\nJapanese uses Fusion Pixel proportional 8px.")
         return "fusion"
     print("\nPlease select a font profile:")
-    print("  1 - Fusion Pixel proportional 8px (recommended)")
+    print("  1 - Fusion Pixel proportional 10px (recommended)")
     print("  2 - Pokemon Font 8px (may overflow some text)")
     raw = input_fn("Font profile number [1]: ").strip()
     if raw in {"", "1", "fusion"}:
@@ -726,7 +739,7 @@ def build(
     status("Preparing dependencies")
     _ensure_dependency(engine_source, gen1recomp)
     _ensure_dependency(corpus_source, corpus, selective_prefix="corpus/RedBlue")
-    font_source = _font_source(workspace, config, font_profile)
+    font_source = _font_source(workspace, config, font_profile, language)
 
     log("\nExtracting private ROM data...")
     status("Extracting private ROM data")
