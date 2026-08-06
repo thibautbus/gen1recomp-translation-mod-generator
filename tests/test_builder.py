@@ -95,7 +95,9 @@ class BuilderTests(unittest.TestCase):
 
     def test_gui_font_profile_is_fixed_for_japanese(self):
         self.assertIn("recommended", font_profile_label("fusion"))
-        self.assertIn("may overflow", font_profile_label("pokemon"))
+        self.assertIn("8px", font_profile_label("fusion", "ja-Hrkt"))
+        self.assertIn("10px", font_profile_label("fusion", "fr"))
+        self.assertIn("some text may overflow", font_profile_label("pokemon"))
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             red, blue = root / "red.gb", root / "blue.gb"
@@ -285,7 +287,7 @@ class BuilderTests(unittest.TestCase):
                     patch.object(builder, "_confirm", return_value=True), \
                     patch.object(builder, "build", return_value=root / "out.zip") as build:
                     self.assertEqual(builder.main(lambda _: next(answers), font_profile="pokemon"), 0)
-            self.assertIn("may overflow", output.getvalue())
+            self.assertIn("some translated text may overflow", output.getvalue())
             self.assertEqual(build.call_args.kwargs["font_profile"], "pokemon")
 
     def test_project_version_comes_from_pyproject(self):

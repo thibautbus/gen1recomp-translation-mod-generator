@@ -46,8 +46,8 @@ From the repository root:
 python build_translation.py
 ```
 
-Latin builds default to Fusion Pixel 10px; advanced users can select the optional
-8px Pokemon Font profile with `python build_translation.py --font-profile pokemon`.
+Latin builds default to Fusion Pixel by TakWolf at 10px; advanced users can select the optional
+8px Pokemon Font clone by Superpencil profile with `python build_translation.py --font-profile pokemon`.
 
 Use `python3 build_translation.py` or `py -3 build_translation.py` when needed.
 With a virtual environment, use its interpreter explicitly, for example
@@ -118,11 +118,11 @@ English is the source language and runtime fallback: an empty generated value
 leaves the original English string visible. The builder always requires an
 explicit target-language selection.
 
-Latin languages (`fr`, `de`, `es`, `it`) default to the pinned Fusion Pixel
-proportional Latin TTF at `size = 10`; the optional Pokemon Font profile also
-uses `size = 8` for a compact, game-like layout, but may overflow some
-translated text. Japanese (`ja-Hrkt`) is
-fixed to the pinned Fusion Pixel 8px proportional Japanese TTF. Macros and border/chrome glyphs remain
+Latin languages (`fr`, `de`, `es`, `it`) default to the pinned Fusion Pixel by TakWolf
+proportional Latin TTF at `size = 10`; the optional Pokemon Font clone by Superpencil profile also
+uses `size = 8` for a compact, game-like layout, but some translated text may
+overflow. Japanese (`ja-Hrkt`) is
+fixed to the pinned Fusion Pixel by TakWolf 8px proportional Japanese TTF. Macros and border/chrome glyphs remain
 tile-rendered by the engine. Each mod includes only its selected TTF and
 applicable license notices under `fonts/`; source files remain in the private
 workspace cache. ROM-derived worksheets contain six catalogs
@@ -497,7 +497,7 @@ relevant; Latin and Japanese builds use the dedicated font profiles above.
 
 - [Gen1Recomp](https://github.com/bryanthaboi/gen1recomp) by [bryanthaboi](https://github.com/bryanthaboi), the target game recompilation.
 - [PokéCorpus](https://github.com/abcboy101/poke-corpus) by [abcboy101](https://github.com/abcboy101), the multilingual translation corpus.
-- [pokemon-font](https://github.com/cooljeanius/pokemon-font) v1.8.2 by Superpencil, sourced from the fork maintained by [cooljeanius](https://github.com/cooljeanius), available as the optional Latin Pokemon Font profile.
+- [pokemon-font](https://github.com/cooljeanius/pokemon-font) v1.8.2, the Pokemon Font clone by Superpencil, sourced from the fork maintained by [cooljeanius](https://github.com/cooljeanius), available as the optional Latin profile.
 - [Fusion Pixel Font](https://github.com/TakWolf/fusion-pixel-font) by [TakWolf](https://github.com/TakWolf), used by the recommended Latin profile and the Japanese profile.
 
 ## Contributors ✨

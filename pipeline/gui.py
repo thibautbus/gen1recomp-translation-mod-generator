@@ -38,12 +38,13 @@ def language_label(code: str) -> str:
     raise builder.BuildError(f"Invalid language selection: {code!r}")
 
 
-def font_profile_label(profile: str) -> str:
+def font_profile_label(profile: str, language: str = "fr") -> str:
     profile = str(profile).strip().lower()
     if profile == "fusion":
-        return "Fusion Pixel proportional 10px (recommended)"
+        size = 8 if builder.canonical_language(language) == "ja-Hrkt" else 10
+        return f"Fusion Pixel by TakWolf, proportional {size}px (recommended)"
     if profile == "pokemon":
-        return "Pokemon Font 8px (may overflow some text)"
+        return "Pokemon Font clone by Superpencil, 8px (some text may overflow)"
     raise builder.BuildError(f"Invalid font profile selection: {profile!r}")
 
 
@@ -185,7 +186,7 @@ class TranslationBuilderApp:
         ttk.Label(frame, text="Font profile").grid(row=7, column=0, sticky="w", pady=(0, 6))
         self.font_profile_box = ttk.Combobox(
             frame, textvariable=self.font_profile_var,
-            values=[font_profile_label(profile) for profile in ("fusion", "pokemon")],
+            values=[font_profile_label(profile, self.language_var.get()) for profile in ("fusion", "pokemon")],
             state="readonly",
         )
         self.font_profile_box.grid(row=7, column=1, columnspan=2, sticky="ew", padx=8)
@@ -219,7 +220,12 @@ class TranslationBuilderApp:
     def _sync_font_profile(self):
         japanese = language_code(self.language_var.get()) == "ja-Hrkt"
         if japanese:
-            self.font_profile_var.set(font_profile_label("fusion"))
+            self.font_profile_var.set(font_profile_label("fusion", "ja-Hrkt"))
+        elif font_profile_code(self.font_profile_var.get()) == "fusion":
+            self.font_profile_var.set(font_profile_label("fusion", self.language_var.get()))
+        self.font_profile_box.configure(
+            values=[font_profile_label(profile, self.language_var.get()) for profile in ("fusion", "pokemon")],
+        )
         self.font_profile_box.configure(state="disabled" if japanese else "readonly")
 
     def _post(self, callback: Callable[[], None]):

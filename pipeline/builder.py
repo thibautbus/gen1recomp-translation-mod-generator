@@ -314,11 +314,11 @@ def _prompt_font_profile(language: str, input_fn: Callable[[str], str]) -> str:
     """Choose a font profile after language selection; Japanese is Fusion-only."""
     language = canonical_language(language)
     if language == "ja-Hrkt":
-        print("\nJapanese uses Fusion Pixel proportional 8px.")
+        print("\nJapanese uses Fusion Pixel by TakWolf, proportional 8px.")
         return "fusion"
     print("\nPlease select a font profile:")
-    print("  1 - Fusion Pixel proportional 10px (recommended)")
-    print("  2 - Pokemon Font 8px (may overflow some text)")
+    print("  1 - Fusion Pixel by TakWolf, proportional 10px (recommended)")
+    print("  2 - Pokemon Font clone by Superpencil, 8px (some text may overflow)")
     raw = input_fn("Font profile number [1]: ").strip()
     if raw in {"", "1", "fusion"}:
         return "fusion"
