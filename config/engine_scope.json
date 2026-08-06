@@ -1,7 +1,7 @@
 {
   "schema": "gen1recomp-translation-mods/engine-scope",
   "classifier_version": 4,
-  "gen1recomp_revision": "12a04f418838e09ade97ad3fb36933c9fffb31ec",
+  "gen1recomp_revision": "a83d18fc5139b99305e010ab077028a91a65074a",
   "source_subdir": "src",
   "rby_paths": [
     "battle",
@@ -53,20 +53,29 @@
   ],
   "modern_ui_keys": [
     "%d INSTALLED",
+    "BATTLE BG",
     "BATTLE LAYOUT",
+    "BATTLE SIZE",
     "COLORS",
     "CONTROLS",
+    "FAITHFUL RATIO",
     "GAME SPEED",
     "GBC FX",
     "MAX FPS",
     "MUSIC FILTER",
     "MUSIC VOL",
     "MODS",
+    "ORIENTATION",
+    "PERFORMANCE",
+    "PIKACHU VOL",
     "RETURN TO MAIN\nMENU?",
     "RULESET",
     "SFX VOL",
     "TILT",
+    "TOUCH PAD",
+    "UI LAYOUT",
     "VIDEO MODE",
+    "VIBRATION",
     "VOID FILL",
     "ZOOM"
   ],
@@ -351,6 +360,150 @@
     }
   },
   "engine_dynamic_values": {
+    "OG RED": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "qid": ""
+    },
+    "OG BLUE": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "qid": ""
+    },
+    "OG YELLOW": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "qid": ""
+    },
+    "SGB": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "qid": ""
+    },
+    "ADVANCED": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "qid": ""
+    },
+    "OG INV": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "qid": ""
+    },
+    "SGB INV": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "qid": ""
+    },
+    "CLASSIC": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "qid": ""
+    },
+    "GBC": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "qid": ""
+    },
+    "WINDOWED": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:346 and src/import/LauncherSettings.lua:169 (VideoMode.modeLabel raw value)",
+      "qid": ""
+    },
+    "BORDERLESS": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:346 and src/import/LauncherSettings.lua:169 (VideoMode.modeLabel raw value)",
+      "qid": ""
+    },
+    "TREES": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:330 and src/import/LauncherSettings.lua:154 (TileRenderer.voidFillLabel raw value)",
+      "qid": ""
+    },
+    "WATER": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:330 and src/import/LauncherSettings.lua:154 (TileRenderer.voidFillLabel raw value)",
+      "qid": ""
+    },
+    "OFF": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:251 and src/import/LauncherSettings.lua:99 (raw FILTERS/FaithfulRes value)",
+      "qid": ""
+    },
+    "1X": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:251 and src/import/LauncherSettings.lua:60 (FILTERS/FaithfulRes raw value)",
+      "qid": ""
+    },
+    "2X": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:251 and src/import/LauncherSettings.lua:60 (FILTERS/FaithfulRes raw value)",
+      "qid": ""
+    },
+    "3X": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:251 and src/import/LauncherSettings.lua:60 (FILTERS/FaithfulRes raw value)",
+      "qid": ""
+    },
+    "NORMAL": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:398 and src/import/LauncherSettings.lua:218 (GameSpeed.levelLabel raw value)",
+      "qid": ""
+    },
     "FAST": {
       "category": "modern",
       "eligibility": "ineligible",
@@ -437,6 +590,22 @@
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
       "callsite": "src/ui/OptionsMenu.lua:357 (Orientation.modeLabel; dynamic Strings lookup)",
+      "qid": ""
+    },
+    "LIGHT": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:447 and src/import/LauncherSettings.lua:250 (TouchControls.hapticLabel; dynamic Strings lookup)",
+      "qid": ""
+    },
+    "HEAVY": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:447 and src/import/LauncherSettings.lua:250 (TouchControls.hapticLabel; dynamic Strings lookup)",
       "qid": ""
     }
   }

@@ -415,6 +415,59 @@ def preserve_scaffold_support(scaffold: Path, mod: Path) -> None:
                     scaffold_main = scaffold_main[:end] + type_injection + scaffold_main[end:]
                 else:
                     raise BuildError(f"Modkit scaffold main has no statuses block to extend: {main}")
+    # A few in-game Options values are raw Font strings in v0.1.69 instead
+    # of Strings lookups. Keep this allowlist explicit and reuse the generated
+    # strings catalog; do not patch the renderer/Kit itself.
+    if "local raw_option_keys" not in scaffold_main and 'each("strings"' in scaffold_main:
+        raw_options_injection = (
+            "\n  -- Injected: localize raw values only while OptionsMenu draws\n"
+            "  local raw_option_keys = {\n"
+            '    ["OG RED"] = true, ["OG BLUE"] = true, ["OG YELLOW"] = true,\n'
+            '    ["SGB"] = true, ["ADVANCED"] = true, ["OG INV"] = true,\n'
+            '    ["SGB INV"] = true, ["CLASSIC"] = true, ["GBC"] = true,\n'
+            '    ["WINDOWED"] = true, ["BORDERLESS"] = true,\n'
+            '    ["TREES"] = true, ["WATER"] = true, ["BLACK"] = true,\n'
+            '    ["OFF"] = true, ["1X"] = true, ["2X"] = true, ["3X"] = true,\n'
+            '    ["NORMAL"] = true,\n'
+            "  }\n"
+            "  local by_raw_option = {}\n"
+            '  each("strings", function(id, localized)\n'
+            "    if raw_option_keys[id] and localized ~= id then\n"
+            "      by_raw_option[id] = localized\n"
+            "    end\n"
+            "  end)\n"
+            "  if next(by_raw_option) then\n"
+            '    local okOptions, OptionsMenu = pcall(require, "src.ui.OptionsMenu")\n'
+            '    local okFont, Font = pcall(require, "src.render.Font")\n'
+            "    if okOptions and type(OptionsMenu) == \"table\" and type(OptionsMenu.draw) == \"function\"\n"
+            "        and okFont and type(Font) == \"table\" then\n"
+            "      local original_options_draw = OptionsMenu.draw\n"
+            "      local function localizeRawOption(text)\n"
+            "        if type(text) ~= \"string\" then return text end\n"
+            "        return by_raw_option[text] or text\n"
+            "      end\n"
+            "      OptionsMenu.draw = function(self, ...)\n"
+            "        local original_split, original_draw = Font.split, Font.draw\n"
+            "        if type(original_split) == \"function\" then\n"
+            "          Font.split = function(text) return original_split(localizeRawOption(text)) end\n"
+            "        end\n"
+            "        if type(original_draw) == \"function\" then\n"
+            "          Font.draw = function(text, x, y, ...)\n"
+            "            return original_draw(localizeRawOption(text), x, y, ...)\n"
+            "          end\n"
+            "        end\n"
+            "        local ok, result = pcall(original_options_draw, self, ...)\n"
+            "        Font.split, Font.draw = original_split, original_draw\n"
+            "        if ok then return result end\n"
+            "        error(result, 0)\n"
+            "      end\n"
+            "    end\n"
+            "  end\n"
+        )
+        end = scaffold_main.rfind("\nend")
+        if end < 0:
+            raise BuildError(f"Modkit scaffold main has no closing function: {main}")
+        scaffold_main = scaffold_main[:end] + raw_options_injection + scaffold_main[end:]
     # Yellow's Pallet-intro catch demo and the old-man tutorial show the
     # thrower name in the translated "%s used POKé BALL!" template
     # (BattleState.oldManThrow).  demoName must stay the canonical English

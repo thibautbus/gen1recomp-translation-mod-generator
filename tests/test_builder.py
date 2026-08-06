@@ -449,6 +449,35 @@ class BuilderTests(unittest.TestCase):
                 main.index("mod.content.font:register(id, page)"),
             )
 
+    def test_scaffold_raw_option_hook_is_allowlisted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            scaffold = root / "scaffold"
+            mod = root / "mod"
+            (scaffold / "lang").mkdir(parents=True)
+            (scaffold / "assets" / "font").mkdir(parents=True)
+            (mod / "lang").mkdir(parents=True)
+            (scaffold / "main.lua").write_text(
+                "return function(mod)\n"
+                '  each("strings", function(id, value) end)\n'
+                "end\n",
+                encoding="utf-8",
+            )
+            for name in ("font.lua", "charmap.lua", "naming.lua"):
+                (scaffold / "lang" / name).write_text("return {}", encoding="utf-8")
+
+            builder.preserve_scaffold_support(scaffold, mod)
+
+            main = (mod / "main.lua").read_text(encoding="utf-8")
+            self.assertIn('local raw_option_keys = {', main)
+            self.assertIn('["WINDOWED"] = true', main)
+            self.assertIn('["1X"] = true', main)
+            self.assertIn('by_raw_option[id] = localized', main)
+            self.assertIn('localizeRawOption(text)', main)
+            self.assertIn('OptionsMenu.draw = function(self, ...)', main)
+            self.assertIn('pcall(original_options_draw, self, ...)', main)
+            self.assertIn('Font.split, Font.draw = original_split, original_draw', main)
+
     def test_scaffold_type_names_injection_applies_generated_catalog(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

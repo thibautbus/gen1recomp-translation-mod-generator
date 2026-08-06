@@ -14,6 +14,12 @@ from .literals import load_recipes, generate_handlers
 
 CATALOGS = ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels", "type_names", "demo_names")
 
+
+def _catalog_scope(classified: dict[str, dict], catalog: Iterable[str]) -> dict[str, dict]:
+    """Limit reporting statistics to keys present in the generated catalog."""
+    keys = set(catalog)
+    return {key: info for key, info in classified.items() if key in keys}
+
 # Keep every language at the same priority; language choice must not affect load order.
 TRANSLATION_MOD_PRIORITY = 100
 COMMANDS_SHOW_TEXT_KEYS = {
@@ -107,6 +113,26 @@ return function(mod)
       end
     end
   end)
+  -- A few in-game Options values are returned directly by label helpers
+  -- rather than through Strings (v0.1.69: COLORS, VIDEO MODE, VOID FILL,
+  -- music filter, faithful resolution and game speed).  Keep this allowlist
+  -- narrow so this does not become a general renderer rewrite. The desktop
+  -- launcher uses its own Kit renderer and is intentionally unaffected.
+  local raw_option_keys = {
+    ["OG RED"] = true, ["OG BLUE"] = true, ["OG YELLOW"] = true,
+    ["SGB"] = true, ["ADVANCED"] = true, ["OG INV"] = true,
+    ["SGB INV"] = true, ["CLASSIC"] = true, ["GBC"] = true,
+    ["WINDOWED"] = true, ["BORDERLESS"] = true,
+    ["TREES"] = true, ["WATER"] = true, ["BLACK"] = true,
+    ["OFF"] = true, ["1X"] = true, ["2X"] = true, ["3X"] = true,
+    ["NORMAL"] = true,
+  }
+  local by_raw_option = {}
+  each("strings", function(id, localized)
+    if raw_option_keys[id] and localized ~= id then
+      by_raw_option[id] = localized
+    end
+  end)
   if next(by_english) then
     local okFont, Font = pcall(require, "src.render.Font")
     if okFont and type(Font) == "table" then
@@ -126,6 +152,35 @@ return function(mod)
         Font.draw = function(text, x, y, ...)
           return original_draw(localize(text), x, y, ...)
         end
+      end
+    end
+  end
+  -- Scope raw substitutions to OptionsMenu.draw. Font is shared by gameplay
+  -- and third-party mods, so a global OFF/WATER/NORMAL replacement is unsafe.
+  if next(by_raw_option) then
+    local okOptions, OptionsMenu = pcall(require, "src.ui.OptionsMenu")
+    local okFont, Font = pcall(require, "src.render.Font")
+    if okOptions and type(OptionsMenu) == "table" and type(OptionsMenu.draw) == "function"
+        and okFont and type(Font) == "table" then
+      local original_options_draw = OptionsMenu.draw
+      local function localizeRawOption(text)
+        if type(text) ~= "string" then return text end
+        return by_raw_option[text] or text
+      end
+      OptionsMenu.draw = function(self, ...)
+        local original_split, original_draw = Font.split, Font.draw
+        if type(original_split) == "function" then
+          Font.split = function(text) return original_split(localizeRawOption(text)) end
+        end
+        if type(original_draw) == "function" then
+          Font.draw = function(text, x, y, ...)
+            return original_draw(localizeRawOption(text), x, y, ...)
+          end
+        end
+        local ok, result = pcall(original_options_draw, self, ...)
+        Font.split, Font.draw = original_split, original_draw
+        if ok then return result end
+        error(result, 0)
       end
     end
   end
@@ -444,18 +499,19 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
                 source_path, _, _ = verified_source(engine_source, scope)
                 validate_catalog_universe(catalog.keys(), source_path, scope)
                 classified = classify_catalog(catalog.keys(), iter_callsites(source_path), scope)
-                eligible = {key for key, info in classified.items() if info["eligibility"] == "eligible"}
+                report_scope = _catalog_scope(classified, catalog)
+                eligible = {key for key, info in report_scope.items() if info["eligibility"] == "eligible"}
                 translated_keys = {key for key, value in engine_values.items() if isinstance(value, str) and value}
                 translated = len(eligible & translated_keys)
                 categories = {}
-                for info in classified.values():
+                for info in report_scope.values():
                     categories[info["category"]] = categories.get(info["category"], 0) + 1
                 report["engine_rby"] = {
                     **coverage_metadata(scope),
                     "translated": translated,
                     "total": len(eligible),
                     "percent": round(translated * 100 / len(eligible), 2) if eligible else 100.0,
-                    "eligibility": {"eligible": len(eligible), "review": sum(i["eligibility"] == "review" for i in classified.values()), "ineligible": sum(i["eligibility"] == "ineligible" for i in classified.values())},
+                    "eligibility": {"eligible": len(eligible), "review": sum(i["eligibility"] == "review" for i in report_scope.values()), "ineligible": sum(i["eligibility"] == "ineligible" for i in report_scope.values())},
                     "categories": categories,
                     "catalog_total": len(catalog),
                 }
