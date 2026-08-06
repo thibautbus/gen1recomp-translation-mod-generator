@@ -442,7 +442,7 @@ class SemanticAnchorDecisionTests(unittest.TestCase):
                     self.assertEqual(build_translation._self_check(), 1)
                 self.assertIn("wrapped schema", error.getvalue())
                 shutil.copy(ROOT / "config" / "semantic_anchor_decisions.json", decisions)
-                with redirect_stdout(StringIO()):
+                with patch("build_translation.importlib.util.find_spec", return_value=object()), redirect_stdout(StringIO()):
                     self.assertEqual(build_translation._self_check(), 0)
 
 

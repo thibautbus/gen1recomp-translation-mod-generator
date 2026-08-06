@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
+import shutil
+import tempfile
 from typing import Iterable
 
 from .model import Alignment
@@ -13,6 +16,105 @@ from .project import project_version
 from .literals import load_recipes, generate_handlers
 
 CATALOGS = ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels", "type_names", "demo_names")
+
+
+FONT_FILES = {
+    "latin": ("pokemon-font.ttf", 8),
+    "ja": ("fusion-pixel-8px-proportional-ja.ttf", 8),
+}
+FONT_LICENSES = {
+    "latin": (Path("LICENSES/pokemon-font/LICENSE.md"),),
+    "ja": (
+        Path("OFL.txt"),
+        Path("LICENSES/boutique-bitmap-7x7/OFL.txt"),
+        Path("LICENSES/galmuri/LICENSE.txt"),
+        Path("LICENSES/misaki/misaki.txt"),
+        Path("LICENSES/miseki-bitmap/LICENSE.txt"),
+    ),
+}
+
+
+def _font_variant(language: str) -> str:
+    return "ja" if canonical_language(language) == "ja-Hrkt" else "latin"
+
+
+def plain_pixel_registration() -> str:
+    return '  mod.content.font:register("ttf", {})'
+
+
+def ttf_registration(language: str, font_source: str | Path | None = None) -> str:
+    """Return the selected font registration, or Plain Pixel without a source."""
+    if font_source is None:
+        return plain_pixel_registration()
+    filename, size = FONT_FILES[_font_variant(language)]
+    return (
+        '  mod.content.font:register("ttf", '
+        f'{{ file = mod.assets:path("fonts/{filename}"), size = {size} }})'
+    )
+
+
+def _font_source_file(source_root: Path, relative: Path) -> Path:
+    """Resolve a selected file from either a checkout or extracted archive."""
+    direct = source_root / relative
+    if direct.is_file():
+        return direct
+    candidates = [path for path in source_root.rglob(relative.name) if path.is_file()]
+    if relative.name == "OFL.txt":
+        candidates = [
+            path for path in candidates
+            if "Fusion Pixel Font" in path.read_text(encoding="utf-8", errors="replace")
+        ] or candidates
+    suffix = relative.as_posix()
+    candidates = [path for path in candidates if path.as_posix().endswith(suffix)] or candidates
+    if len(candidates) != 1:
+        raise FileNotFoundError(f"font dependency file not found: {relative}")
+    return candidates[0]
+
+
+def install_font_assets(
+    destination: Path,
+    language: str,
+    font_source: str | Path | None = None,
+) -> None:
+    """Copy only the selected font and its applicable release notices."""
+    if font_source is None:
+        return
+    source_root = Path(font_source)
+    if not source_root.is_dir():
+        raise FileNotFoundError(f"font dependency directory not found: {source_root}")
+    variant = _font_variant(language)
+    selected_files = [
+        (relative, _font_source_file(source_root, relative))
+        for relative in FONT_LICENSES[variant]
+    ]
+    selected, _ = FONT_FILES[variant]
+    selected_files.append((Path(selected), _font_source_file(source_root, Path(selected))))
+    destination.mkdir(parents=True, exist_ok=True)
+    target_root = destination / "fonts"
+    temporary = Path(tempfile.mkdtemp(prefix=".fonts-", dir=destination))
+    try:
+        for relative, source in selected_files:
+            target = temporary / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target)
+        backup = destination.parent / f".{destination.name}.fonts-old"
+        if backup.exists():
+            shutil.rmtree(backup, ignore_errors=True)
+        had_target = target_root.exists()
+        if had_target:
+            os.replace(target_root, backup)
+        try:
+            os.replace(temporary, target_root)
+        except Exception:
+            if had_target and backup.exists() and not target_root.exists():
+                os.replace(backup, target_root)
+            raise
+        if backup.exists():
+            shutil.rmtree(backup, ignore_errors=True)
+        shutil.rmtree(destination / "assets" / "fonts", ignore_errors=True)
+    except Exception:
+        shutil.rmtree(temporary, ignore_errors=True)
+        raise
 
 
 def _catalog_scope(classified: dict[str, dict], catalog: Iterable[str]) -> dict[str, dict]:
@@ -79,6 +181,7 @@ def _catalog(rows: list[Alignment], title: str, language: str = "fr") -> str:
 
 MAIN = '''-- Generated translation mod; catalogs are safe to refresh.
 return function(mod)
+__TTF_REGISTRATION__
   local function catalog(name)
     local body = mod:read("lang/" .. name .. ".lua")
     if not body then return {} end
@@ -246,7 +349,7 @@ end
 '''
 
 
-def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: str = "translation-fr", language: str = "fr", modkit_worksheet: str | Path | None = None, report_path: str | Path | None = None, engine_catalog: str | Path | None = None, engine_overrides: str | Path | None = None, strict_engine: bool = False, semantic_anchors: str | Path | None = None, semantic_anchor_decisions: str | Path | None = None, target_name: str | None = None, literal_handlers: str | Path | None = None, target_description: str | None = None, engine_source: str | Path | None = None, engine_scope: str | Path | None = None) -> Path:
+def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: str = "translation-fr", language: str = "fr", modkit_worksheet: str | Path | None = None, report_path: str | Path | None = None, engine_catalog: str | Path | None = None, engine_overrides: str | Path | None = None, strict_engine: bool = False, semantic_anchors: str | Path | None = None, semantic_anchor_decisions: str | Path | None = None, target_name: str | None = None, literal_handlers: str | Path | None = None, target_description: str | None = None, engine_source: str | Path | None = None, engine_scope: str | Path | None = None, font_source: str | Path | None = None) -> Path:
     """Generate a mod; ``strict_engine`` requires scaffold/catalog presence only.
 
     It does not require complete engine translations: unresolved entries remain
@@ -254,6 +357,14 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
     """
     language = canonical_language(language)
     destination = Path(destination); destination.mkdir(parents=True, exist_ok=True)
+    install_font_assets(destination, language, font_source)
+    existing_registration = None
+    existing_main = destination / "main.lua"
+    if font_source is None and existing_main.is_file():
+        for line in existing_main.read_text(encoding="utf-8").splitlines():
+            if line.strip().startswith('mod.content.font:register("ttf"'):
+                existing_registration = line
+                break
     rows = list(items)
     joined = None
     join_report = None
@@ -390,7 +501,13 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         _, generated_handlers = generate_handlers(rows, recipes, runtime)
     elif runtime.exists():
         runtime.unlink()
-    (destination / "main.lua").write_text(MAIN, encoding="utf-8")
+    (destination / "main.lua").write_text(
+        MAIN.replace(
+            "__TTF_REGISTRATION__",
+            existing_registration or ttf_registration(language, font_source),
+        ),
+        encoding="utf-8",
+    )
     worksheet_root = Path(str(destination) + "-worksheet")
     worksheet_root.mkdir(parents=True, exist_ok=True)
     for name in CATALOGS:

@@ -30,6 +30,27 @@ class BuilderTests(unittest.TestCase):
             builder._run(["tool"], log_fn=messages.append)
         self.assertEqual(messages, ["\n> tool", "first", "second"])
 
+    def test_font_dependencies_use_private_cache_and_checked_in_pins(self):
+        config = builder.project_config()
+        with tempfile.TemporaryDirectory() as directory, patch(
+            "pipeline.builder.fetch_files", side_effect=lambda *args, **kwargs: args[2]
+        ) as fetch_files, patch(
+            "pipeline.builder.fetch_archive", side_effect=lambda *args, **kwargs: args[2]
+        ) as fetch_archive:
+            sources = builder._font_sources(Path(directory), config)
+        self.assertEqual(sources["latin"], Path(directory) / "dependencies" / "pokemon-font")
+        self.assertEqual(sources["ja"], Path(directory) / "dependencies" / "fusion-pixel-font")
+        fetch_files.assert_called_once()
+        fetch_archive.assert_called_once()
+        self.assertEqual(
+            fetch_files.call_args.args[1]["fonts/pokemon-font.ttf"],
+            "1a903311f21a249ac2be6dd3ce84ce0593c94097ea4af90817e552bbe509c9a9",
+        )
+        self.assertEqual(
+            fetch_archive.call_args.args[1],
+            "9633ab8204078210d457a03cd038dab49a728279432b5007e864fa9c5aeb8e26",
+        )
+
     def test_gui_language_and_coverage_helpers(self):
         self.assertEqual(language_code("French (fr)"), "fr")
         self.assertEqual(language_code("ja-Hrkt"), "ja-Hrkt")
@@ -38,20 +59,21 @@ class BuilderTests(unittest.TestCase):
             report.write_text(json.dumps({"rom": {"translated": 2, "total": 4, "percent": 50}, "engine": {"translated": 1, "total": 2, "percent": 50}, "engine_rby": {"translated": 3, "total": 4, "percent": 75}}), encoding="utf-8")
             self.assertEqual(coverage_lines(report), ["ROM catalog: 2/4 (50.00%)", "All engine strings: 1/2 (50.00%)", "RBY-related engine strings: 3/4 (75.00%)"])
 
-    def test_gui_validation_requires_output_and_localized_western_rom(self):
+    def test_gui_validation_requires_output_only(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             red, blue = root / "red.gb", root / "blue.gb"
             red.write_bytes(b"red")
             blue.write_bytes(b"blue")
             with patch.object(builder, "verify_rom"), self.assertRaisesRegex(builder.BuildError, "output directory"):
-                validate_inputs(red, blue, "fr", None, "")
-            with patch.object(builder, "verify_rom"), self.assertRaisesRegex(builder.BuildError, "font source"):
-                validate_inputs(red, blue, "fr", None, root / "out")
+                validate_inputs(red, blue, "fr", "")
+            with patch.object(builder, "verify_rom"):
+                inputs = validate_inputs(red, blue, "fr", root / "out")
+            self.assertEqual(inputs.language, "fr")
     def test_absent_rom_path_config_is_empty(self):
         with tempfile.TemporaryDirectory() as directory:
             paths = load_rom_paths(Path(directory) / "rom_paths.toml")
-        self.assertEqual(paths, {"rom": {}, "localized": {}})
+        self.assertEqual(paths, {"rom": {}})
 
     def test_partial_config_resolves_relative_quoted_and_tilde_paths(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -59,27 +81,22 @@ class BuilderTests(unittest.TestCase):
             config = root / "config" / "rom_paths.toml"
             config.parent.mkdir()
             config.write_text(
-                "[rom]\nred = '../roms/Red.gb'\n"
-                "[localized]\nfr = '~/French.gb'\n",
+                "[rom]\nred = '../roms/Red.gb'\n",
                 encoding="utf-8",
             )
             paths = load_rom_paths(config)
         self.assertEqual(paths["rom"]["red"], (root / "roms" / "Red.gb").resolve())
-        self.assertEqual(paths["localized"]["fr"], (Path.home() / "French.gb").resolve())
         self.assertNotIn("blue", paths["rom"])
 
     def test_full_config_accepts_supported_localized_languages(self):
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory) / "rom_paths.toml"
             config.write_text(
-                "[rom]\nred = \"red.gb\"\nblue = \"blue.gb\"\n"
-                "[localized]\nfr = \"fr.gb\"\nde = \"de.gb\"\n"
-                "es = \"es.gb\"\nit = \"it.gb\"\n",
+                "[rom]\nred = \"red.gb\"\nblue = \"blue.gb\"\n",
                 encoding="utf-8",
             )
             paths = load_rom_paths(config)
         self.assertEqual(set(paths["rom"]), {"red", "blue"})
-        self.assertEqual(set(paths["localized"]), {"fr", "de", "es", "it"})
 
     def test_windows_literal_path_is_parsed_without_posix_absolute_assumption(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -98,7 +115,7 @@ class BuilderTests(unittest.TestCase):
         cases = {
             "malformed": ("[rom\nred = 'x'", "Unable to load ROM path configuration"),
             "unknown key": ("[rom]\ngreen = 'x'", "Unsupported keys in [rom]: green"),
-            "unknown localized": ("[localized]\nja-Hrkt = 'x'", "Unsupported keys in [localized]: ja-Hrkt"),
+            "unknown section": ("[localized]\nfr = 'x'", "Unsupported ROM path configuration keys"),
             "wrong type": ("[rom]\nred = 1", "[rom].red must be a string path."),
             "wrong table": ("rom = 'red.gb'", "[rom] must be a TOML table."),
         }
@@ -167,22 +184,13 @@ class BuilderTests(unittest.TestCase):
                 )
             self.assertEqual(result, replacement.resolve())
 
-    def test_japanese_does_not_consult_localized_config(self):
+    def test_main_autoloads_red_blue_without_localized_prompt(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            localized = root / "japanese.gb"
-            localized.write_bytes(b"rom")
-            paths = {"rom": {}, "localized": {"fr": localized}}
-            from pipeline.rom_paths import configured_path
-            self.assertIsNone(configured_path(paths, "localized", "ja-Hrkt"))
-
-    def test_main_autoloads_red_blue_and_selected_localized_key(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            red, blue, fr, de = (root / name for name in ("red.gb", "blue.gb", "fr.gb", "de.gb"))
-            for rom in (red, blue, fr, de):
+            red, blue = (root / name for name in ("red.gb", "blue.gb"))
+            for rom in (red, blue):
                 rom.write_bytes(b"rom")
-            configured = {"rom": {"red": red, "blue": blue}, "localized": {"fr": fr, "de": de}}
+            configured = {"rom": {"red": red, "blue": blue}}
             prompts = []
             answers = iter(("", "", "2", ""))
             events = []
@@ -194,47 +202,39 @@ class BuilderTests(unittest.TestCase):
             def verify(path, version):
                 events.append(("verify", version, path))
 
-            def validate(path):
-                events.append(("localized", path))
-
             with (
                 patch.object(builder, "check_prerequisites", return_value="luajit"),
                 patch.object(builder, "load_rom_paths", return_value=configured) as load,
                 patch.object(builder, "configured_path", wraps=builder.configured_path) as configured_lookup,
                 patch.object(builder, "verify_rom", side_effect=verify),
-                patch.object(builder, "validate_localized_rom", side_effect=validate),
                 patch.object(builder, "_confirm", return_value=True),
                 patch.object(builder, "build", return_value=root / "out.zip"),
             ):
                 self.assertEqual(builder.main(input_fn), 0)
             load.assert_called_once_with(builder.ROOT / "config" / "rom_paths.toml")
             self.assertEqual([call.args for call in configured_lookup.call_args_list],
-                             [(configured, "rom", "red"), (configured, "rom", "blue"), (configured, "localized", "de")])
-            self.assertEqual([event[0] for event in events], ["verify", "verify", "localized"])
+                             [(configured, "rom", "red"), (configured, "rom", "blue")])
+            self.assertEqual([event[0] for event in events], ["verify", "verify"])
             self.assertEqual([event[1] for event in events[:2]], ["red", "blue"])
-            self.assertTrue(os.path.samefile(events[2][1], de))
-            self.assertTrue(any(str(de) in prompt for prompt in prompts))
-            self.assertFalse(any(str(fr) in prompt for prompt in prompts))
+            self.assertFalse(any("localized" in prompt.lower() for prompt in prompts))
 
-    def test_main_japanese_does_not_consult_localized_config(self):
+    def test_main_japanese_uses_same_red_blue_prompts(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            red, blue, fr = (root / name for name in ("red.gb", "blue.gb", "fr.gb"))
-            for rom in (red, blue, fr):
+            red, blue = (root / name for name in ("red.gb", "blue.gb"))
+            for rom in (red, blue):
                 rom.write_bytes(b"rom")
-            configured = {"rom": {"red": red, "blue": blue}, "localized": {"fr": fr}}
+            configured = {"rom": {"red": red, "blue": blue}}
             answers = iter(("", "", "5"))
             with (
                 patch.object(builder, "check_prerequisites", return_value="luajit"),
                 patch.object(builder, "load_rom_paths", return_value=configured),
-                patch.object(builder, "configured_path", wraps=builder.configured_path) as configured_lookup,
                 patch.object(builder, "verify_rom"),
                 patch.object(builder, "_confirm", return_value=True),
                 patch.object(builder, "build", return_value=root / "out.zip"),
             ):
                 self.assertEqual(builder.main(lambda prompt: next(answers)), 0)
-            self.assertEqual([call.args for call in configured_lookup.call_args_list],
-                             [(configured, "rom", "red"), (configured, "rom", "blue")])
+            self.assertEqual(configured["rom"].keys(), {"red", "blue"})
 
     def test_project_version_comes_from_pyproject(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -252,53 +252,9 @@ class BuilderTests(unittest.TestCase):
         with patch("builtins.print"), self.assertRaises(builder.BuildError):
             builder._prompt_language(lambda _: "99")
 
-    def test_french_build_requires_localized_font_rom(self):
-        with (
-            patch.object(builder, "verify_rom"),
-            self.assertRaisesRegex(builder.BuildError, "French Pokémon Red or Blue"),
-        ):
-            builder.build(
-                Path("red.gb"), Path("blue.gb"), "fr", "French", "luajit"
-            )
-
-    def test_western_languages_require_localized_font_rom(self):
-        with (
-            patch.object(builder, "verify_rom"),
-            self.assertRaisesRegex(builder.BuildError, "German Pokémon Red or Blue"),
-        ):
-            builder.build(
-                Path("red.gb"),
-                Path("blue.gb"),
-                "de",
-                "German",
-                "luajit",
-            )
-
-    def test_japanese_rejects_localized_font_rom(self):
-        with (
-            patch.object(builder, "verify_rom"),
-            self.assertRaisesRegex(builder.BuildError, "not yet supported for Japanese"),
-        ):
-            builder.build(
-                Path("red.gb"), Path("blue.gb"), "ja-Hrkt", "Japanese", "luajit",
-                localized_rom=Path("japanese.gb"),
-            )
-
-    def test_japanese_language_warning(self):
-        output = io.StringIO()
-        with redirect_stdout(output):
-            builder._print_language_warning("ja")
-        self.assertIn(
-            "Japanese localized-font extraction is not supported",
-            output.getvalue(),
-        )
-        self.assertIn("No Japanese ROM will be requested", output.getvalue())
-
-    def test_other_languages_have_no_display_warning(self):
-        output = io.StringIO()
-        with redirect_stdout(output):
-            builder._print_language_warning("fr")
-        self.assertEqual(output.getvalue(), "")
+    def test_build_no_longer_accepts_localized_rom(self):
+        import inspect
+        self.assertNotIn("localized_rom", inspect.signature(builder.build).parameters)
 
     def test_corpus_and_engine_override_defaults_use_language_subdirectories(self):
         self.assertEqual(
@@ -379,6 +335,7 @@ class BuilderTests(unittest.TestCase):
             with zipfile.ZipFile(archive, "w") as output:
                 output.writestr("manifest.json", json.dumps({"id": "translation-fr"}))
                 output.writestr("lang/dialogue.lua", "return {}")
+                output.writestr("fonts/pokemon-font.ttf", b"ttf")
             builder.inspect_archive(archive)
 
     def test_archive_scan_rejects_private_data(self):
@@ -407,20 +364,23 @@ class BuilderTests(unittest.TestCase):
             (scaffold / "lang").mkdir(parents=True)
             (scaffold / "assets" / "font").mkdir(parents=True)
             (mod / "lang").mkdir(parents=True)
-            (scaffold / "main.lua").write_text("scaffold main", encoding="utf-8")
-            for name in ("font.lua", "charmap.lua", "naming.lua"):
-                (scaffold / "lang" / name).write_text(name, encoding="utf-8")
+            (scaffold / "main.lua").write_text(
+                'return function(mod)\n  -- mod.content.font:register("ttf", {})\nend\n', encoding="utf-8"
+            )
+            (scaffold / "lang" / "naming.lua").write_text("return {}", encoding="utf-8")
             (scaffold / "assets" / "font" / "target.png").write_bytes(b"png")
             (scaffold / "assets" / "font" / "README.md").write_text("docs", encoding="utf-8")
 
             builder.preserve_scaffold_support(scaffold, mod)
 
-            self.assertEqual((mod / "main.lua").read_text(encoding="utf-8"), "scaffold main")
-            self.assertTrue((mod / "lang" / "charmap.lua").is_file())
-            self.assertTrue((mod / "assets" / "font" / "target.png").is_file())
-            self.assertFalse((mod / "assets" / "font" / "README.md").exists())
+            self.assertIn(
+                'mod.content.font:register("ttf", {})',
+                (mod / "main.lua").read_text(encoding="utf-8"),
+            )
+            self.assertFalse((mod / "lang" / "charmap.lua").exists())
+            self.assertFalse((mod / "assets" / "font").exists())
 
-    def test_scaffold_font_image_is_resolved_inside_mod_archive(self):
+    def test_scaffold_font_pages_are_not_copied(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             scaffold = root / "scaffold"
@@ -436,18 +396,16 @@ class BuilderTests(unittest.TestCase):
                 "end\n",
                 encoding="utf-8",
             )
-            for name in ("font.lua", "charmap.lua", "naming.lua"):
-                (scaffold / "lang" / name).write_text("return {}", encoding="utf-8")
+            (scaffold / "lang" / "naming.lua").write_text("return {}", encoding="utf-8")
 
             builder.preserve_scaffold_support(scaffold, mod)
 
             main = (mod / "main.lua").read_text(encoding="utf-8")
-            self.assertIn("mod:read(page.image)", main)
-            self.assertIn("page.image = mod.assets:path(page.image)", main)
-            self.assertLess(
-                main.index("mod.assets:path(page.image)"),
-                main.index("mod.content.font:register(id, page)"),
+            self.assertIn(
+                'mod.content.font:register("ttf", {})',
+                main,
             )
+            self.assertFalse((mod / "lang" / "font.lua").exists())
 
     def test_scaffold_raw_option_hook_is_allowlisted(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -733,7 +691,6 @@ class BuilderTests(unittest.TestCase):
         expected = environment / "bin" / "python"
         self.assertIn(f"active virtual environment is {environment}", hint)
         self.assertIn(f'"{expected}" build_translation.py', hint)
-
 
 if __name__ == "__main__":
     unittest.main()

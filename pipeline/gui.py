@@ -17,7 +17,6 @@ class GuiInputs:
     red_rom: Path
     blue_rom: Path
     language: str
-    localized_rom: Path | None
     output_dir: Path
 
 
@@ -42,7 +41,6 @@ def validate_inputs(
     red_rom: str | Path,
     blue_rom: str | Path,
     language: str,
-    localized_rom: str | Path | None,
     output_dir: str | Path,
 ) -> GuiInputs:
     """Validate GUI values using the same ROM checks as the CLI."""
@@ -58,17 +56,7 @@ def validate_inputs(
         raise builder.BuildError(f"File not found: {blue}")
     builder.verify_rom(red, "red")
     builder.verify_rom(blue, "blue")
-    localized = Path(localized_rom).expanduser() if localized_rom else None
-    if code in builder.WESTERN_FONT_LANGUAGES:
-        if localized is None:
-            name = dict(builder.LANGUAGES)[code]
-            raise builder.BuildError(f"A {name} Pokémon Red or Blue ROM is required as the font source.")
-        if not localized.is_file():
-            raise builder.BuildError(f"File not found: {localized}")
-        builder.validate_localized_rom(localized)
-    elif localized is not None:
-        raise builder.BuildError("Localized font extraction is not yet supported for Japanese.")
-    return GuiInputs(red.resolve(), blue.resolve(), code, localized.resolve() if localized else None, output.resolve())
+    return GuiInputs(red.resolve(), blue.resolve(), code, output.resolve())
 
 
 def coverage_lines(path: str | Path) -> list[str]:
@@ -142,7 +130,6 @@ class TranslationBuilderApp:
         tk, ttk = self.tk, self.ttk
         self.red_var = tk.StringVar()
         self.blue_var = tk.StringVar()
-        self.localized_var = tk.StringVar()
         self.language_var = tk.StringVar(value=language_label("fr"))
         self.output_var = tk.StringVar()
         self.status_var = tk.StringVar(value="Ready")
@@ -151,7 +138,7 @@ class TranslationBuilderApp:
         fields = (
             (0, "Required to extract shared and Pokémon Red-specific game text and data.", "Pokemon Red ROM (US)", self.red_var, self._browse_file),
             (2, "Required to extract Pokémon Blue-specific game text and data.", "Pokemon Blue ROM (US)", self.blue_var, self._browse_file),
-            (8, "The generated translation mod ZIP and temporary .cache workspace will be placed here.", "Output directory", self.output_var, self._browse_directory),
+            (6, "The generated translation mod ZIP and temporary .cache workspace will be placed here.", "Output directory", self.output_var, self._browse_directory),
         )
         for row, description, label, variable, command in fields:
             ttk.Label(frame, text=description, style="Hint.TLabel").grid(row=row, column=0, columnspan=3, sticky="w", pady=(8, 2))
@@ -169,23 +156,8 @@ class TranslationBuilderApp:
         )
         self.language_box.grid(row=5, column=1, columnspan=2, sticky="ew", padx=8)
         self._controls.append((self.language_box, "readonly"))
-        self.language_box.bind("<<ComboboxSelected>>", lambda _event: self._update_localized())
-        localized_hint = ttk.Label(
-            frame,
-            text="Red or Blue. Provides localized font glyphs for the selected language, e.g. a French ROM.",
-            style="Hint.TLabel",
-        )
-        localized_hint.grid(row=6, column=0, columnspan=3, sticky="w", pady=(8, 2))
-        localized_label = ttk.Label(frame, text="Localized Pokémon ROM")
-        localized_label.grid(row=7, column=0, sticky="w", pady=(0, 6))
-        localized_entry = ttk.Entry(frame, textvariable=self.localized_var)
-        localized_entry.grid(row=7, column=1, sticky="ew", padx=8)
-        localized_browse = ttk.Button(frame, text="Browse…", command=lambda: self._browse_file(self.localized_var))
-        localized_browse.grid(row=7, column=2)
-        self.localized_widgets = (localized_hint, localized_label, localized_entry, localized_browse)
-        self._controls.extend(((localized_entry, "normal"), (localized_browse, "normal")))
         self.log_toggle = ttk.Button(frame, text="Show log", command=self.toggle_log)
-        self.log_toggle.grid(row=10, column=0, sticky="w", pady=(16, 4))
+        self.log_toggle.grid(row=8, column=0, sticky="w", pady=(16, 4))
         self.log_text = tk.Text(frame, height=8, bg="#111315", fg="#d8dee9", insertbackground="#f1f3f4", state="disabled")
         self.progress = ttk.Progressbar(frame, mode="indeterminate")
         self.progress.grid(row=11, column=0, columnspan=3, sticky="ew", pady=8)
@@ -195,7 +167,6 @@ class TranslationBuilderApp:
         self.start_button.grid(row=12, column=2, sticky="e")
         self._controls.append((self.start_button, "normal"))
         frame.columnconfigure(1, weight=1)
-        self._update_localized()
         self.toggle_log()
 
     def _browse_file(self, variable):
@@ -209,15 +180,6 @@ class TranslationBuilderApp:
         value = filedialog.askdirectory(title="Select output directory")
         if value:
             variable.set(value)
-
-    def _update_localized(self):
-        if language_code(self.language_var.get()) in builder.WESTERN_FONT_LANGUAGES:
-            for widget in self.localized_widgets:
-                widget.grid()
-        else:
-            self.localized_var.set("")
-            for widget in self.localized_widgets:
-                widget.grid_remove()
 
     def _post(self, callback: Callable[[], None]):
         self._events.put(callback)
@@ -253,7 +215,7 @@ class TranslationBuilderApp:
     def start(self):
         from tkinter import messagebox
         try:
-            inputs = validate_inputs(self.red_var.get(), self.blue_var.get(), self.language_var.get(), self.localized_var.get(), self.output_var.get())
+            inputs = validate_inputs(self.red_var.get(), self.blue_var.get(), self.language_var.get(), self.output_var.get())
         except (builder.BuildError, OSError, ValueError) as error:
             messagebox.showerror("Unable to build", str(error), parent=self.root)
             return
@@ -276,7 +238,6 @@ class TranslationBuilderApp:
             output = builder.build(
                 inputs.red_rom, inputs.blue_rom, inputs.language,
                 dict(builder.LANGUAGES)[inputs.language], luajit,
-                localized_rom=inputs.localized_rom,
                 workspace_root=inputs.output_dir / ".cache",
                 output_dir=inputs.output_dir,
                 log_fn=lambda message: self._append_log(message),

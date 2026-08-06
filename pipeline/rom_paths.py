@@ -7,8 +7,7 @@ from typing import Mapping
 
 
 ROM_PATH_KEYS = frozenset(("red", "blue"))
-LOCALIZED_PATH_KEYS = frozenset(("fr", "de", "es", "it"))
-_SECTIONS = frozenset(("rom", "localized"))
+_SECTIONS = frozenset(("rom",))
 
 
 def load_rom_paths(config_path: str | Path | None = None) -> dict[str, dict[str, Path]]:
@@ -25,7 +24,7 @@ def load_rom_paths(config_path: str | Path | None = None) -> dict[str, dict[str,
         else Path(__file__).resolve().parents[1] / "config" / "rom_paths.toml"
     )
     if not path.is_file():
-        return {"rom": {}, "localized": {}}
+        return {"rom": {}}
     try:
         data = tomllib.loads(path.read_text(encoding="utf-8"))
     except tomllib.TOMLDecodeError as error:
@@ -41,8 +40,8 @@ def load_rom_paths(config_path: str | Path | None = None) -> dict[str, dict[str,
             "Unsupported ROM path configuration keys: " + ", ".join(unknown_sections)
         )
 
-    resolved: dict[str, dict[str, Path]] = {"rom": {}, "localized": {}}
-    for section, allowed in (("rom", ROM_PATH_KEYS), ("localized", LOCALIZED_PATH_KEYS)):
+    resolved: dict[str, dict[str, Path]] = {"rom": {}}
+    for section, allowed in (("rom", ROM_PATH_KEYS),):
         raw_table = data.get(section, {})
         if not isinstance(raw_table, dict):
             raise ValueError(f"[{section}] must be a TOML table.")
