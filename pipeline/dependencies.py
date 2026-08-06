@@ -69,9 +69,11 @@ def _extract_archive(archive: Path, destination: Path, selective_prefix: str | N
             raise DependencyError("dependency archive CRC check failed")
         names = [_safe_name(entry.filename) for entry in entries]
         prefixes = {name.split("/", 1)[0] for name in names if name}
-        if len(prefixes) != 1:
-            raise DependencyError("archive must contain exactly one top-level prefix")
-        expected_prefix = next(iter(prefixes))
+        expected_prefix = None
+        if len(prefixes) == 1:
+            candidate = next(iter(prefixes))
+            if all(name == candidate + "/" or name.startswith(candidate + "/") for name in names if name):
+                expected_prefix = candidate
         for entry, name in zip(entries, names):
             unix_mode = (entry.external_attr >> 16) & 0o170000
             if unix_mode == 0o120000:

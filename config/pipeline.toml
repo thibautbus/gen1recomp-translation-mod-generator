@@ -35,6 +35,11 @@ archive_base_url = "https://raw.githubusercontent.com/cooljeanius/pokemon-font/8
 
 [fonts.fusion]
 revision = "2026.07.20"
+archive_url = "https://github.com/TakWolf/fusion-pixel-font/releases/download/2026.07.20/fusion-pixel-font-10px-proportional-ttf-v2026.07.20.zip"
+archive_sha256 = "9dba2b4bef9db81c1a1262eed6fa0aca2f6768cad9c6bf54b55d332f86e02f1e"
+
+[fonts.fusion_japanese]
+revision = "2026.07.20"
 archive_url = "https://github.com/TakWolf/fusion-pixel-font/releases/download/2026.07.20/fusion-pixel-font-8px-proportional-ttf-v2026.07.20.zip"
 archive_sha256 = "9633ab8204078210d457a03cd038dab49a728279432b5007e864fa9c5aeb8e26"
 
