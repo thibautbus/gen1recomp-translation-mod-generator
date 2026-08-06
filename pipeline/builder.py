@@ -305,7 +305,7 @@ def _prompt_font_profile(language: str, input_fn: Callable[[str], str]) -> str:
         return "fusion"
     print("\nPlease select a font profile:")
     print("  1 - Fusion Pixel proportional 8px (recommended)")
-    print("  2 - Pokemon Font 10px (may overflow some text)")
+    print("  2 - Pokemon Font 8px (may overflow some text)")
     raw = input_fn("Font profile number [1]: ").strip()
     if raw in {"", "1", "fusion"}:
         return "fusion"

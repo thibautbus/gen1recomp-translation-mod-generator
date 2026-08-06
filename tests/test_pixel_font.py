@@ -45,11 +45,11 @@ class PixelFontTests(unittest.TestCase):
             self.assertTrue((mod / "fonts/LICENSES/galmuri/LICENSE.txt").is_file())
             self.assertFalse((mod / "assets/fonts").exists())
 
-    def test_latin_pokemon_profile_uses_10px_font(self):
+    def test_latin_pokemon_profile_uses_8px_font(self):
         with tempfile.TemporaryDirectory() as directory:
             mod = generate_mod([], Path(directory) / "mod", language="fr", font_source=self._font_source(Path(directory)), font_profile="pokemon")
             main = (mod / "main.lua").read_text(encoding="utf-8")
-            self.assertIn('fonts/pokemon-font.ttf"), size = 10', main)
+            self.assertIn('fonts/pokemon-font.ttf"), size = 8', main)
             self.assertTrue((mod / "fonts/LICENSES/pokemon-font/LICENSE.md").is_file())
             self.assertFalse((mod / "fonts/fusion-pixel-8px-proportional-latin.ttf").exists())
 

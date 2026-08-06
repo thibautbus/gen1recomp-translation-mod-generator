@@ -34,8 +34,8 @@ FONT_PROFILES = {
         ),
     },
     "pokemon": {
-        "warning": "Pokemon Font is 10px and may overflow some translated text.",
-        "files": {"latin": ("pokemon-font.ttf", 10), "ja": None},
+        "warning": "Pokemon Font is 8px and may overflow some translated text.",
+        "files": {"latin": ("pokemon-font.ttf", 8), "ja": None},
         "licenses": (Path("LICENSES/pokemon-font/LICENSE.md"),),
     },
 }
