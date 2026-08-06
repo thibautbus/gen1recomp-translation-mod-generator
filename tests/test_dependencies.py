@@ -305,6 +305,21 @@ class DependencyTests(unittest.TestCase):
             self.assertEqual((destination / "src/main.lua").read_bytes(), b"ok")
             self.assertEqual(list(root.glob("dependency-*.zip")), [])
 
+    def test_flat_archive_extracts_font_files_at_root_and_reuses_marker(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); archive = root / "fonts.zip"
+            with zipfile.ZipFile(archive, "w") as z:
+                z.writestr("font.ttf", b"ttf")
+                z.writestr("OFL.txt", b"license")
+            digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+            calls = []
+            opener = lambda url: (calls.append(url) or _Response(archive.read_bytes()))
+            destination = fetch_archive("https://example/fonts.zip", digest, root / "fonts", opener=opener)
+            self.assertEqual((destination / "font.ttf").read_bytes(), b"ttf")
+            self.assertEqual((destination / "OFL.txt").read_bytes(), b"license")
+            fetch_archive("https://example/fonts.zip", digest, destination, opener=opener)
+            self.assertEqual(calls, ["https://example/fonts.zip"])
+
     def test_archive_rejects_traversal_and_hash(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); archive = root / "bad.zip"
