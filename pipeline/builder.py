@@ -14,7 +14,13 @@ import zipfile
 
 from .align import align, apply_corpus_overrides
 from .corpus import canonical_language, parse_redblue
-from .mod import generate_mod, ttf_registration
+from .mod import (
+    FONT_PROFILES,
+    font_profile_warning,
+    generate_mod,
+    ttf_registration,
+    validate_font_profile,
+)
 from .project import ROOT, is_frozen, project_config, project_version, resource_root, work_root
 from .dependencies import DependencyError, fetch_archive, fetch_files
 from .roms import import_rom, verify_rom
@@ -187,30 +193,30 @@ def _ensure_dependency(config: dict, destination: Path, *, selective_prefix: str
     return destination
 
 
-def _font_sources(workspace: Path, config: dict) -> dict[str, Path]:
-    """Download pinned font inputs into the private workspace cache."""
+def _font_source(workspace: Path, config: dict, font_profile: str = "fusion") -> Path:
+    """Download only the selected pinned font dependency."""
+    profile = validate_font_profile("fr", font_profile)
     fonts = config.get("fonts", {})
-    pokemon = fonts.get("pokemon", {})
-    fusion = fonts.get("fusion", {})
-    if not pokemon or not fusion:
-        raise BuildError("Pinned font dependencies are missing from config/pipeline.toml.")
+    selected = fonts.get(profile, {})
+    if not selected:
+        raise BuildError(f"Pinned {profile} font dependency is missing from config/pipeline.toml.")
     root = workspace / "dependencies"
     try:
-        latin = fetch_files(
-            str(pokemon["archive_base_url"]),
-            dict(pokemon["archive_files"]),
-            root / "pokemon-font",
-            revision=str(pokemon.get("revision", "")),
-        )
-        japanese = fetch_archive(
-            str(fusion["archive_url"]),
-            str(fusion["archive_sha256"]),
+        if profile == "pokemon":
+            return fetch_files(
+                str(selected["archive_base_url"]),
+                dict(selected["archive_files"]),
+                root / "pokemon-font",
+                revision=str(selected.get("revision", "")),
+            )
+        return fetch_archive(
+            str(selected["archive_url"]),
+            str(selected["archive_sha256"]),
             root / "fusion-pixel-font",
-            revision=str(fusion.get("revision", "")),
+            revision=str(selected.get("revision", "")),
         )
     except (DependencyError, KeyError, TypeError, ValueError, OSError) as error:
         raise BuildError(f"Unable to download pinned font dependency: {error}") from error
-    return {"latin": latin, "ja": japanese}
 
 
 def ensure_checkout(
@@ -291,6 +297,26 @@ def _prompt_language(input_fn: Callable[[str], str]) -> tuple[str, str]:
         raise BuildError(f"Invalid language selection: {raw!r}") from None
 
 
+def _prompt_font_profile(language: str, input_fn: Callable[[str], str]) -> str:
+    """Choose a font profile after language selection; Japanese is Fusion-only."""
+    language = canonical_language(language)
+    if language == "ja-Hrkt":
+        print("\nJapanese uses Fusion Pixel proportional 8px.")
+        return "fusion"
+    print("\nPlease select a font profile:")
+    print("  1 - Fusion Pixel proportional 8px (recommended)")
+    print("  2 - Pokemon Font 10px (may overflow some text)")
+    raw = input_fn("Font profile number [1]: ").strip()
+    if raw in {"", "1", "fusion"}:
+        return "fusion"
+    if raw in {"2", "pokemon"}:
+        warning = font_profile_warning("pokemon")
+        if warning:
+            print(f"Warning: {warning}")
+        return "pokemon"
+    raise BuildError(f"Invalid font profile selection: {raw!r}")
+
+
 def _confirm(input_fn: Callable[[str], str]) -> bool:
     action = "downloaded" if is_frozen() else "cloned"
     answer = input_fn(
@@ -337,6 +363,7 @@ def preserve_scaffold_support(
     mod: Path,
     language: str = "fr",
     font_source: str | Path | None = None,
+    font_profile: str = "fusion",
 ) -> None:
     """Keep Modkit's runtime hooks while selecting the bundled TTF profile."""
     main = scaffold / "main.lua"
@@ -349,7 +376,7 @@ def preserve_scaffold_support(
     scaffold_main = main.read_text(encoding="utf-8")
     # Keep an existing scaffold registration during refreshes without a font
     # dependency; only a real source may select the custom TTF profile.
-    ttf_line = ttf_registration(language, font_source)
+    ttf_line = ttf_registration(language, font_source, font_profile)
     registration_lines = [
         line for line in scaffold_main.splitlines()
         if line.strip().startswith('mod.content.font:register("ttf"')
@@ -666,6 +693,7 @@ def build(
     output_dir: Path | None = None,
     log_fn: Callable[[str], None] | None = None,
     status_fn: Callable[[str], None] | None = None,
+    font_profile: str = "fusion",
 ) -> Path:
     """Execute the complete private extraction, translation, and pack flow."""
     def status(message: str) -> None:
@@ -678,6 +706,7 @@ def build(
             log_fn(message)
 
     language = canonical_language(language)
+    font_profile = validate_font_profile(language, font_profile)
     workspace = Path(workspace_root) if workspace_root is not None else work_root() / ".cache"
     destination = Path(output_dir) if output_dir is not None else (
         work_root() if is_frozen() else work_root() / "dist"
@@ -697,7 +726,7 @@ def build(
     status("Preparing dependencies")
     _ensure_dependency(engine_source, gen1recomp)
     _ensure_dependency(corpus_source, corpus, selective_prefix="corpus/RedBlue")
-    font_sources = _font_sources(workspace, config)
+    font_source = _font_source(workspace, config, font_profile)
 
     log("\nExtracting private ROM data...")
     status("Extracting private ROM data")
@@ -761,9 +790,10 @@ def build(
         strict_engine=True,
         engine_source=gen1recomp / "src",
         engine_scope=resource_root() / "config" / "engine_scope.json",
-        font_source=font_sources["ja" if language == "ja-Hrkt" else "latin"],
+        font_source=font_source,
+        font_profile=font_profile,
     )
-    preserve_scaffold_support(scaffold, mod, language, font_sources["ja" if language == "ja-Hrkt" else "latin"])
+    preserve_scaffold_support(scaffold, mod, language, font_source, font_profile)
 
     version = project_version()
     destination.mkdir(parents=True, exist_ok=True)
@@ -783,7 +813,7 @@ def build(
     return published
 
 
-def main(input_fn: Callable[[str], str] = input) -> int:
+def main(input_fn: Callable[[str], str] = input, font_profile: str | None = None) -> int:
     print("Gen1Recomp translation mod builder\n")
     try:
         luajit = check_prerequisites()
@@ -803,6 +833,12 @@ def main(input_fn: Callable[[str], str] = input) -> int:
             blue_prompt, configured_path(rom_paths, "rom", "blue"), input_fn
         )
         language, language_name = _prompt_language(input_fn)
+        selected_profile = font_profile or _prompt_font_profile(language, input_fn)
+        selected_profile = validate_font_profile(language, selected_profile)
+        if font_profile:
+            warning = font_profile_warning(selected_profile)
+            if warning:
+                print(f"Warning: {warning}")
         verify_rom(red, "red")
         verify_rom(blue, "blue")
         if not _confirm(input_fn):
@@ -817,6 +853,7 @@ def main(input_fn: Callable[[str], str] = input) -> int:
             language,
             language_name,
             luajit,
+            font_profile=selected_profile,
         )
     except (BuildError, ValueError, OSError) as error:
         print(f"\nError: {error}", file=sys.stderr)

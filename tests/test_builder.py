@@ -13,7 +13,7 @@ import zipfile
 from pipeline import builder
 from pipeline.project import project_version
 from pipeline.rom_paths import load_rom_paths
-from pipeline.gui import coverage_lines, language_code, validate_inputs
+from pipeline.gui import coverage_lines, font_profile_label, language_code, validate_inputs
 
 
 class BuilderTests(unittest.TestCase):
@@ -37,19 +37,25 @@ class BuilderTests(unittest.TestCase):
         ) as fetch_files, patch(
             "pipeline.builder.fetch_archive", side_effect=lambda *args, **kwargs: args[2]
         ) as fetch_archive:
-            sources = builder._font_sources(Path(directory), config)
-        self.assertEqual(sources["latin"], Path(directory) / "dependencies" / "pokemon-font")
-        self.assertEqual(sources["ja"], Path(directory) / "dependencies" / "fusion-pixel-font")
-        fetch_files.assert_called_once()
-        fetch_archive.assert_called_once()
-        self.assertEqual(
-            fetch_files.call_args.args[1]["fonts/pokemon-font.ttf"],
-            "1a903311f21a249ac2be6dd3ce84ce0593c94097ea4af90817e552bbe509c9a9",
-        )
-        self.assertEqual(
-            fetch_archive.call_args.args[1],
-            "9633ab8204078210d457a03cd038dab49a728279432b5007e864fa9c5aeb8e26",
-        )
+            source = builder._font_source(Path(directory), config)
+            self.assertEqual(source, Path(directory) / "dependencies" / "fusion-pixel-font")
+            fetch_files.assert_not_called()
+            fetch_archive.assert_called_once()
+            self.assertEqual(
+                fetch_archive.call_args.args[1],
+                "9633ab8204078210d457a03cd038dab49a728279432b5007e864fa9c5aeb8e26",
+            )
+
+    def test_pokemon_font_profile_fetches_only_font_files(self):
+        config = builder.project_config()
+        with tempfile.TemporaryDirectory() as directory, patch(
+            "pipeline.builder.fetch_files", side_effect=lambda *args, **kwargs: args[2]
+        ) as fetch_files, patch("pipeline.builder.fetch_archive") as fetch_archive:
+            source = builder._font_source(Path(directory), config, "pokemon")
+            self.assertEqual(source, Path(directory) / "dependencies" / "pokemon-font")
+            fetch_files.assert_called_once()
+            fetch_archive.assert_not_called()
+            self.assertIn("fonts/pokemon-font.ttf", fetch_files.call_args.args[1])
 
     def test_gui_language_and_coverage_helpers(self):
         self.assertEqual(language_code("French (fr)"), "fr")
@@ -70,6 +76,18 @@ class BuilderTests(unittest.TestCase):
             with patch.object(builder, "verify_rom"):
                 inputs = validate_inputs(red, blue, "fr", root / "out")
             self.assertEqual(inputs.language, "fr")
+            self.assertEqual(inputs.font_profile, "fusion")
+
+    def test_gui_font_profile_is_fixed_for_japanese(self):
+        self.assertIn("recommended", font_profile_label("fusion"))
+        self.assertIn("may overflow", font_profile_label("pokemon"))
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            red, blue = root / "red.gb", root / "blue.gb"
+            red.write_bytes(b"red")
+            blue.write_bytes(b"blue")
+            with patch.object(builder, "verify_rom"), self.assertRaisesRegex(ValueError, "only available"):
+                validate_inputs(red, blue, "ja-Hrkt", root / "out", "pokemon")
     def test_absent_rom_path_config_is_empty(self):
         with tempfile.TemporaryDirectory() as directory:
             paths = load_rom_paths(Path(directory) / "rom_paths.toml")
@@ -235,6 +253,25 @@ class BuilderTests(unittest.TestCase):
             ):
                 self.assertEqual(builder.main(lambda prompt: next(answers)), 0)
             self.assertEqual(configured["rom"].keys(), {"red", "blue"})
+
+    def test_main_explicit_pokemon_profile_warns(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            red, blue = (root / name for name in ("red.gb", "blue.gb"))
+            red.write_bytes(b"rom")
+            blue.write_bytes(b"rom")
+            configured = {"rom": {"red": red, "blue": blue}}
+            output = io.StringIO()
+            answers = iter(("", "", "1"))
+            with redirect_stdout(output):
+                with patch.object(builder, "check_prerequisites", return_value="luajit"), \
+                    patch.object(builder, "load_rom_paths", return_value=configured), \
+                    patch.object(builder, "verify_rom"), \
+                    patch.object(builder, "_confirm", return_value=True), \
+                    patch.object(builder, "build", return_value=root / "out.zip") as build:
+                    self.assertEqual(builder.main(lambda _: next(answers), font_profile="pokemon"), 0)
+            self.assertIn("may overflow", output.getvalue())
+            self.assertEqual(build.call_args.kwargs["font_profile"], "pokemon")
 
     def test_project_version_comes_from_pyproject(self):
         with tempfile.TemporaryDirectory() as directory:

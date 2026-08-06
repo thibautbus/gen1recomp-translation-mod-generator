@@ -18,19 +18,26 @@ from .literals import load_recipes, generate_handlers
 CATALOGS = ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels", "type_names", "demo_names")
 
 
-FONT_FILES = {
-    "latin": ("pokemon-font.ttf", 8),
-    "ja": ("fusion-pixel-8px-proportional-ja.ttf", 8),
-}
-FONT_LICENSES = {
-    "latin": (Path("LICENSES/pokemon-font/LICENSE.md"),),
-    "ja": (
-        Path("OFL.txt"),
-        Path("LICENSES/boutique-bitmap-7x7/OFL.txt"),
-        Path("LICENSES/galmuri/LICENSE.txt"),
-        Path("LICENSES/misaki/misaki.txt"),
-        Path("LICENSES/miseki-bitmap/LICENSE.txt"),
-    ),
+FONT_PROFILES = {
+    "fusion": {
+        "warning": None,
+        "files": {
+            "latin": ("fusion-pixel-8px-proportional-latin.ttf", 8),
+            "ja": ("fusion-pixel-8px-proportional-ja.ttf", 8),
+        },
+        "licenses": (
+            Path("OFL.txt"),
+            Path("LICENSES/boutique-bitmap-7x7/OFL.txt"),
+            Path("LICENSES/galmuri/LICENSE.txt"),
+            Path("LICENSES/misaki/misaki.txt"),
+            Path("LICENSES/miseki-bitmap/LICENSE.txt"),
+        ),
+    },
+    "pokemon": {
+        "warning": "Pokemon Font is 10px and may overflow some translated text.",
+        "files": {"latin": ("pokemon-font.ttf", 10), "ja": None},
+        "licenses": (Path("LICENSES/pokemon-font/LICENSE.md"),),
+    },
 }
 
 
@@ -38,15 +45,36 @@ def _font_variant(language: str) -> str:
     return "ja" if canonical_language(language) == "ja-Hrkt" else "latin"
 
 
+def validate_font_profile(language: str, font_profile: str = "fusion") -> str:
+    profile = str(font_profile or "fusion").strip().lower()
+    if profile not in FONT_PROFILES:
+        raise ValueError(f"Unsupported font profile: {font_profile!r}")
+    if _font_variant(language) == "ja" and FONT_PROFILES[profile]["files"]["ja"] is None:
+        raise ValueError("Pokemon Font is only available for French, German, Spanish, and Italian.")
+    return profile
+
+
+def font_profile_warning(font_profile: str) -> str | None:
+    profile = str(font_profile or "fusion").strip().lower()
+    if profile not in FONT_PROFILES:
+        raise ValueError(f"Unsupported font profile: {font_profile!r}")
+    return FONT_PROFILES[profile]["warning"]
+
+
 def plain_pixel_registration() -> str:
     return '  mod.content.font:register("ttf", {})'
 
 
-def ttf_registration(language: str, font_source: str | Path | None = None) -> str:
+def ttf_registration(
+    language: str,
+    font_source: str | Path | None = None,
+    font_profile: str = "fusion",
+) -> str:
     """Return the selected font registration, or Plain Pixel without a source."""
     if font_source is None:
         return plain_pixel_registration()
-    filename, size = FONT_FILES[_font_variant(language)]
+    profile = validate_font_profile(language, font_profile)
+    filename, size = FONT_PROFILES[profile]["files"][_font_variant(language)]
     return (
         '  mod.content.font:register("ttf", '
         f'{{ file = mod.assets:path("fonts/{filename}"), size = {size} }})'
@@ -75,6 +103,7 @@ def install_font_assets(
     destination: Path,
     language: str,
     font_source: str | Path | None = None,
+    font_profile: str = "fusion",
 ) -> None:
     """Copy only the selected font and its applicable release notices."""
     if font_source is None:
@@ -82,12 +111,13 @@ def install_font_assets(
     source_root = Path(font_source)
     if not source_root.is_dir():
         raise FileNotFoundError(f"font dependency directory not found: {source_root}")
+    profile = validate_font_profile(language, font_profile)
     variant = _font_variant(language)
     selected_files = [
         (relative, _font_source_file(source_root, relative))
-        for relative in FONT_LICENSES[variant]
+        for relative in FONT_PROFILES[profile]["licenses"]
     ]
-    selected, _ = FONT_FILES[variant]
+    selected, _ = FONT_PROFILES[profile]["files"][variant]
     selected_files.append((Path(selected), _font_source_file(source_root, Path(selected))))
     destination.mkdir(parents=True, exist_ok=True)
     target_root = destination / "fonts"
@@ -349,15 +379,15 @@ end
 '''
 
 
-def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: str = "translation-fr", language: str = "fr", modkit_worksheet: str | Path | None = None, report_path: str | Path | None = None, engine_catalog: str | Path | None = None, engine_overrides: str | Path | None = None, strict_engine: bool = False, semantic_anchors: str | Path | None = None, semantic_anchor_decisions: str | Path | None = None, target_name: str | None = None, literal_handlers: str | Path | None = None, target_description: str | None = None, engine_source: str | Path | None = None, engine_scope: str | Path | None = None, font_source: str | Path | None = None) -> Path:
+def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: str = "translation-fr", language: str = "fr", modkit_worksheet: str | Path | None = None, report_path: str | Path | None = None, engine_catalog: str | Path | None = None, engine_overrides: str | Path | None = None, strict_engine: bool = False, semantic_anchors: str | Path | None = None, semantic_anchor_decisions: str | Path | None = None, target_name: str | None = None, literal_handlers: str | Path | None = None, target_description: str | None = None, engine_source: str | Path | None = None, engine_scope: str | Path | None = None, font_source: str | Path | None = None, font_profile: str = "fusion") -> Path:
     """Generate a mod; ``strict_engine`` requires scaffold/catalog presence only.
 
     It does not require complete engine translations: unresolved entries remain
     empty and the game uses its English fallback.
     """
     language = canonical_language(language)
+    font_profile = validate_font_profile(language, font_profile)
     destination = Path(destination); destination.mkdir(parents=True, exist_ok=True)
-    install_font_assets(destination, language, font_source)
     existing_registration = None
     existing_main = destination / "main.lua"
     if font_source is None and existing_main.is_file():
@@ -501,13 +531,15 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         _, generated_handlers = generate_handlers(rows, recipes, runtime)
     elif runtime.exists():
         runtime.unlink()
-    (destination / "main.lua").write_text(
-        MAIN.replace(
-            "__TTF_REGISTRATION__",
-            existing_registration or ttf_registration(language, font_source),
-        ),
-        encoding="utf-8",
+    main_body = MAIN.replace(
+        "__TTF_REGISTRATION__",
+        existing_registration or ttf_registration(language, font_source, font_profile),
     )
+    # Install the selected assets only after all catalog, override, and
+    # handler validation above has succeeded.  The installer swaps fonts
+    # atomically, so a missing source leaves an existing refresh untouched.
+    install_font_assets(destination, language, font_source, font_profile)
+    (destination / "main.lua").write_text(main_body, encoding="utf-8")
     worksheet_root = Path(str(destination) + "-worksheet")
     worksheet_root.mkdir(parents=True, exist_ok=True)
     for name in CATALOGS:

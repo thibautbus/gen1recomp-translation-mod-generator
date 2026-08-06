@@ -56,4 +56,8 @@ if __name__ == "__main__":
         raise SystemExit(_internal_worker())
     if len(sys.argv) > 1 and sys.argv[1] == "--self-check":
         raise SystemExit(_self_check())
-    raise SystemExit(main())
+    import argparse
+    parser = argparse.ArgumentParser(description="Build a Gen1Recomp translation mod")
+    parser.add_argument("--font-profile", choices=("fusion", "pokemon"), default=None)
+    args = parser.parse_args()
+    raise SystemExit(main(font_profile=args.font_profile))

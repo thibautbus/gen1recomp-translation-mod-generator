@@ -96,6 +96,29 @@ class PipelineTests(unittest.TestCase):
                     generate.call_args.kwargs["engine_overrides"], expected,
                 )
 
+    def test_cli_generate_passes_font_profile(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            aligned = Path(tmp) / "aligned.json"
+            aligned.write_text(json.dumps([]), encoding="utf-8")
+            with patch("pipeline.cli.generate_mod") as generate:
+                self.assertEqual(cli_main([
+                    "generate", str(aligned), "-o", str(Path(tmp) / "mod"),
+                    "--target-lang", "fr", "--font-profile", "pokemon",
+                ]), 0)
+            self.assertEqual(generate.call_args.kwargs["font_profile"], "pokemon")
+
+    def test_cli_generate_warns_for_pokemon_profile(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            aligned = Path(tmp) / "aligned.json"
+            aligned.write_text(json.dumps([]), encoding="utf-8")
+            output = io.StringIO()
+            with patch("pipeline.cli.generate_mod"), patch("sys.stderr", output):
+                self.assertEqual(cli_main([
+                    "generate", str(aligned), "-o", str(Path(tmp) / "mod"),
+                    "--target-lang", "fr", "--font-profile", "pokemon",
+                ]), 0)
+            self.assertIn("may overflow", output.getvalue())
+
     def test_corpus_json_and_qid_alignment(self):
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "redblue.jsonl"

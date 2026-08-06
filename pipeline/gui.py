@@ -17,6 +17,7 @@ class GuiInputs:
     red_rom: Path
     blue_rom: Path
     language: str
+    font_profile: str
     output_dir: Path
 
 
@@ -37,14 +38,36 @@ def language_label(code: str) -> str:
     raise builder.BuildError(f"Invalid language selection: {code!r}")
 
 
+def font_profile_label(profile: str) -> str:
+    profile = str(profile).strip().lower()
+    if profile == "fusion":
+        return "Fusion Pixel proportional 8px (recommended)"
+    if profile == "pokemon":
+        return "Pokemon Font 10px (may overflow some text)"
+    raise builder.BuildError(f"Invalid font profile selection: {profile!r}")
+
+
+def font_profile_code(value: str) -> str:
+    raw = value.strip().lower()
+    if raw.startswith("fusion pixel"):
+        return "fusion"
+    if raw.startswith("pokemon font"):
+        return "pokemon"
+    if raw in builder.FONT_PROFILES:
+        return raw
+    raise builder.BuildError(f"Invalid font profile selection: {value!r}")
+
+
 def validate_inputs(
     red_rom: str | Path,
     blue_rom: str | Path,
     language: str,
     output_dir: str | Path,
+    font_profile: str = "fusion",
 ) -> GuiInputs:
     """Validate GUI values using the same ROM checks as the CLI."""
     code = language_code(language)
+    profile = builder.validate_font_profile(code, font_profile_code(font_profile))
     red = Path(red_rom).expanduser()
     blue = Path(blue_rom).expanduser()
     if not str(output_dir).strip():
@@ -56,7 +79,7 @@ def validate_inputs(
         raise builder.BuildError(f"File not found: {blue}")
     builder.verify_rom(red, "red")
     builder.verify_rom(blue, "blue")
-    return GuiInputs(red.resolve(), blue.resolve(), code, output.resolve())
+    return GuiInputs(red.resolve(), blue.resolve(), code, profile, output.resolve())
 
 
 def coverage_lines(path: str | Path) -> list[str]:
@@ -131,6 +154,7 @@ class TranslationBuilderApp:
         self.red_var = tk.StringVar()
         self.blue_var = tk.StringVar()
         self.language_var = tk.StringVar(value=language_label("fr"))
+        self.font_profile_var = tk.StringVar(value=font_profile_label("fusion"))
         self.output_var = tk.StringVar()
         self.status_var = tk.StringVar(value="Ready")
         frame = ttk.Frame(self.root, padding=18)
@@ -138,7 +162,7 @@ class TranslationBuilderApp:
         fields = (
             (0, "Required to extract shared and Pokémon Red-specific game text and data.", "Pokemon Red ROM (US)", self.red_var, self._browse_file),
             (2, "Required to extract Pokémon Blue-specific game text and data.", "Pokemon Blue ROM (US)", self.blue_var, self._browse_file),
-            (6, "The generated translation mod ZIP and temporary .cache workspace will be placed here.", "Output directory", self.output_var, self._browse_directory),
+            (8, "The generated translation mod ZIP and temporary .cache workspace will be placed here.", "Output directory", self.output_var, self._browse_directory),
         )
         for row, description, label, variable, command in fields:
             ttk.Label(frame, text=description, style="Hint.TLabel").grid(row=row, column=0, columnspan=3, sticky="w", pady=(8, 2))
@@ -155,9 +179,20 @@ class TranslationBuilderApp:
             values=[language_label(code) for code, _ in builder.LANGUAGES], state="readonly",
         )
         self.language_box.grid(row=5, column=1, columnspan=2, sticky="ew", padx=8)
+        self.language_box.bind("<<ComboboxSelected>>", lambda _event: self._sync_font_profile())
         self._controls.append((self.language_box, "readonly"))
+        ttk.Label(frame, text="Select the font used for translated text.", style="Hint.TLabel").grid(row=6, column=0, columnspan=3, sticky="w", pady=(8, 2))
+        ttk.Label(frame, text="Font profile").grid(row=7, column=0, sticky="w", pady=(0, 6))
+        self.font_profile_box = ttk.Combobox(
+            frame, textvariable=self.font_profile_var,
+            values=[font_profile_label(profile) for profile in ("fusion", "pokemon")],
+            state="readonly",
+        )
+        self.font_profile_box.grid(row=7, column=1, columnspan=2, sticky="ew", padx=8)
+        self._controls.append((self.font_profile_box, "readonly"))
+        self._sync_font_profile()
         self.log_toggle = ttk.Button(frame, text="Show log", command=self.toggle_log)
-        self.log_toggle.grid(row=8, column=0, sticky="w", pady=(16, 4))
+        self.log_toggle.grid(row=10, column=0, sticky="w", pady=(16, 4))
         self.log_text = tk.Text(frame, height=8, bg="#111315", fg="#d8dee9", insertbackground="#f1f3f4", state="disabled")
         self.progress = ttk.Progressbar(frame, mode="indeterminate")
         self.progress.grid(row=11, column=0, columnspan=3, sticky="ew", pady=8)
@@ -180,6 +215,12 @@ class TranslationBuilderApp:
         value = filedialog.askdirectory(title="Select output directory")
         if value:
             variable.set(value)
+
+    def _sync_font_profile(self):
+        japanese = language_code(self.language_var.get()) == "ja-Hrkt"
+        if japanese:
+            self.font_profile_var.set(font_profile_label("fusion"))
+        self.font_profile_box.configure(state="disabled" if japanese else "readonly")
 
     def _post(self, callback: Callable[[], None]):
         self._events.put(callback)
@@ -215,7 +256,7 @@ class TranslationBuilderApp:
     def start(self):
         from tkinter import messagebox
         try:
-            inputs = validate_inputs(self.red_var.get(), self.blue_var.get(), self.language_var.get(), self.output_var.get())
+            inputs = validate_inputs(self.red_var.get(), self.blue_var.get(), self.language_var.get(), self.output_var.get(), self.font_profile_var.get())
         except (builder.BuildError, OSError, ValueError) as error:
             messagebox.showerror("Unable to build", str(error), parent=self.root)
             return
@@ -238,6 +279,7 @@ class TranslationBuilderApp:
             output = builder.build(
                 inputs.red_rom, inputs.blue_rom, inputs.language,
                 dict(builder.LANGUAGES)[inputs.language], luajit,
+                font_profile=inputs.font_profile,
                 workspace_root=inputs.output_dir / ".cache",
                 output_dir=inputs.output_dir,
                 log_fn=lambda message: self._append_log(message),
@@ -276,6 +318,8 @@ class TranslationBuilderApp:
     def _set_controls(self, disabled: bool):
         for widget, enabled_state in self._controls:
             widget.configure(state="disabled" if disabled else enabled_state)
+        if not disabled:
+            self._sync_font_profile()
 
     def close(self):
         from tkinter import messagebox
