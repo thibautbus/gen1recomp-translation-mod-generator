@@ -187,6 +187,32 @@ def _ensure_dependency(config: dict, destination: Path, *, selective_prefix: str
     return destination
 
 
+def _font_sources(workspace: Path, config: dict) -> dict[str, Path]:
+    """Download pinned font inputs into the private workspace cache."""
+    fonts = config.get("fonts", {})
+    pokemon = fonts.get("pokemon", {})
+    fusion = fonts.get("fusion", {})
+    if not pokemon or not fusion:
+        raise BuildError("Pinned font dependencies are missing from config/pipeline.toml.")
+    root = workspace / "dependencies"
+    try:
+        latin = fetch_files(
+            str(pokemon["archive_base_url"]),
+            dict(pokemon["archive_files"]),
+            root / "pokemon-font",
+            revision=str(pokemon.get("revision", "")),
+        )
+        japanese = fetch_archive(
+            str(fusion["archive_url"]),
+            str(fusion["archive_sha256"]),
+            root / "fusion-pixel-font",
+            revision=str(fusion.get("revision", "")),
+        )
+    except (DependencyError, KeyError, TypeError, ValueError, OSError) as error:
+        raise BuildError(f"Unable to download pinned font dependency: {error}") from error
+    return {"latin": latin, "ja": japanese}
+
+
 def ensure_checkout(
     url: str,
     revision: str,
@@ -306,7 +332,12 @@ def assemble_worksheet(scaffold: Path, destination: Path) -> Path:
     return destination
 
 
-def preserve_scaffold_support(scaffold: Path, mod: Path, language: str = "fr") -> None:
+def preserve_scaffold_support(
+    scaffold: Path,
+    mod: Path,
+    language: str = "fr",
+    font_source: str | Path | None = None,
+) -> None:
     """Keep Modkit's runtime hooks while selecting the bundled TTF profile."""
     main = scaffold / "main.lua"
     if not main.is_file():
@@ -316,19 +347,35 @@ def preserve_scaffold_support(scaffold: Path, mod: Path, language: str = "fr") -
     # proven; without the runtime file vanilla behavior remains untouched.
     runtime = mod / "lang" / "literal_handlers.lua"
     scaffold_main = main.read_text(encoding="utf-8")
-    # Always use the engine's bundled Plain Pixel font. Japanese keeps the
-    # numeric/chrome glyphs on the vanilla tile page for layout stability.
-    ttf_line = ttf_registration(language)
-    if 'mod.content.font:register("ttf"' in scaffold_main:
+    # Keep an existing scaffold registration during refreshes without a font
+    # dependency; only a real source may select the custom TTF profile.
+    ttf_line = ttf_registration(language, font_source)
+    registration_lines = [
+        line for line in scaffold_main.splitlines()
+        if line.strip().startswith('mod.content.font:register("ttf"')
+    ]
+    if registration_lines and font_source is not None:
         scaffold_main = "\n".join(
-            ttf_line if 'mod.content.font:register("ttf"' in line else line
+            ttf_line if line.strip().startswith('mod.content.font:register("ttf"') else line
             for line in scaffold_main.splitlines()
         ) + ("\n" if scaffold_main.endswith("\n") else "")
-    else:
-        marker = "return function(mod)"
-        if marker not in scaffold_main:
-            raise BuildError(f"Modkit scaffold main has no translation entry point: {main}")
-        scaffold_main = scaffold_main.replace(marker, marker + "\n" + ttf_line, 1)
+    elif not registration_lines:
+        # Refreshes without a dependency source must not point at an absent
+        # asset; a new scaffold uses the engine's Plain Pixel registration.
+        lines = scaffold_main.splitlines()
+        placeholder = next(
+            (index for index, line in enumerate(lines)
+             if line.strip().startswith('-- mod.content.font:register("ttf"')),
+            None,
+        )
+        if placeholder is not None:
+            lines[placeholder] = ttf_line
+            scaffold_main = "\n".join(lines) + ("\n" if scaffold_main.endswith("\n") else "")
+        else:
+            marker = "return function(mod)"
+            if marker not in scaffold_main:
+                raise BuildError(f"Modkit scaffold main has no translation entry point: {main}")
+            scaffold_main = scaffold_main.replace(marker, marker + "\n" + ttf_line, 1)
     # Type names are translated at draw time (Font.draw/Font.split) while the
     # type_chart registry keeps the English names, so third-party mods that
     # key colors/UI off TypeChart.displayName keep resolving them.  An empty
@@ -566,6 +613,7 @@ def inspect_archive(path: Path) -> None:
         allowed = (
             normalized in {"manifest.json", "main.lua"}
             or normalized.startswith("lang/")
+            or normalized.startswith("fonts/")
             or normalized.startswith("assets/font/")
             or normalized == ".modkit/pack.json"
         )
@@ -649,6 +697,7 @@ def build(
     status("Preparing dependencies")
     _ensure_dependency(engine_source, gen1recomp)
     _ensure_dependency(corpus_source, corpus, selective_prefix="corpus/RedBlue")
+    font_sources = _font_sources(workspace, config)
 
     log("\nExtracting private ROM data...")
     status("Extracting private ROM data")
@@ -712,8 +761,9 @@ def build(
         strict_engine=True,
         engine_source=gen1recomp / "src",
         engine_scope=resource_root() / "config" / "engine_scope.json",
+        font_source=font_sources["ja" if language == "ja-Hrkt" else "latin"],
     )
-    preserve_scaffold_support(scaffold, mod, language)
+    preserve_scaffold_support(scaffold, mod, language, font_sources["ja" if language == "ja-Hrkt" else "latin"])
 
     version = project_version()
     destination.mkdir(parents=True, exist_ok=True)

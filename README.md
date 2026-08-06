@@ -60,8 +60,9 @@ before cloning pinned repositories. After validation, it:
 2. extracts both ROMs into private ignored directories and creates the complete
    Modkit worksheet;
 3. matches ROM and engine catalogs against the selected corpus language;
-4. enables Gen1Recomp's bundled Plain Pixel TTF (keeping macro and tile
-   glyphs on the engine's tile pages) and applies the
+4. downloads the pinned pokemon-font and Fusion Pixel dependencies into the
+   private workspace cache, then bundles only the selected TTF and license
+   notices (keeping macro and tile glyphs on the engine's tile pages) and applies the
    selected language's optional corpus overrides;
 5. runs strict validation and ROM-content lint while packing, scans a private
    candidate archive, and atomically publishes it to `dist/`.
@@ -114,10 +115,12 @@ English is the source language and runtime fallback: an empty generated value
 leaves the original English string visible. The builder always requires an
 explicit target-language selection.
 
-All languages use the bundled Plain Pixel TTF. Latin languages register its
-default profile (`{}`). Japanese uses `{ size = 10, tiles = "0123456789/:" }`
-so numeric and punctuation columns retain vanilla tile widths. Macros and
-border/chrome glyphs remain tile-rendered by the engine. ROM-derived worksheets contain six catalogs
+Latin languages (`fr`, `de`, `es`, `it`) use the pinned pokemon-font TTF at
+`size = 8`; Japanese (`ja-Hrkt`) uses the pinned Fusion Pixel 8px proportional
+Japanese TTF at `size = 8`. Macros and border/chrome glyphs remain
+tile-rendered by the engine. Each mod includes only its selected TTF and
+applicable license notices under `fonts/`; source files remain in the private
+workspace cache. ROM-derived worksheets contain six catalogs
 (`dialogue`, `species_names`, `move_names`, `item_names`, `trainer_names`,
 `status_labels`) plus the empty 604-key `strings.lua` scaffold; none are
 committed or packaged. Two engine edges are covered by one dedicated hook:
@@ -483,12 +486,14 @@ callsites, key commonality, and conservative triage. Use `--coverage-dir`,
 ### Remaining limitations
 
 UI-width constraints, in-game testing, and incomplete engine coverage remain
-relevant; Japanese uses the dedicated Plain Pixel size/tiles profile above.
+relevant; Latin and Japanese builds use the dedicated font profiles above.
 
 ## Credits
 
 - [Gen1Recomp](https://github.com/bryanthaboi/gen1recomp) by [bryanthaboi](https://github.com/bryanthaboi), the target game recompilation.
 - [PokéCorpus](https://github.com/abcboy101/poke-corpus) by [abcboy101](https://github.com/abcboy101), the multilingual translation corpus.
+- [pokemon-font](https://github.com/cooljeanius/pokemon-font) v1.8.2 by Superpencil, sourced from the fork maintained by [cooljeanius](https://github.com/cooljeanius), used for Latin builds.
+- [Fusion Pixel Font](https://github.com/TakWolf/fusion-pixel-font) by [TakWolf](https://github.com/TakWolf), used for Japanese builds.
 
 ## Contributors ✨
 

@@ -25,6 +25,19 @@ archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/a83d18fc51
 archive_sha256 = "7f565985f5c20f40d231ea64aa56e1ea067a2cb1cdf135eae7814b6ef6e4fcd8"
 archive_tree_sha256 = "42712839fc04ad0f74a420f4e3ca0e4b69f9596517f027e765b28f3d359a8a3f"
 
+[fonts.pokemon]
+revision = "81b60805150c75ebfdfcec6d8352c67e491f8a6c"
+archive_base_url = "https://raw.githubusercontent.com/cooljeanius/pokemon-font/81b60805150c75ebfdfcec6d8352c67e491f8a6c"
+
+[fonts.pokemon.archive_files]
+"fonts/pokemon-font.ttf" = "1a903311f21a249ac2be6dd3ce84ce0593c94097ea4af90817e552bbe509c9a9"
+"LICENSE.md" = "b1deeff9a2b06d76fb3aad3d39000424b37bdeff3f485e3d0449f5c889fbb91a"
+
+[fonts.fusion]
+revision = "2026.07.20"
+archive_url = "https://github.com/TakWolf/fusion-pixel-font/releases/download/2026.07.20/fusion-pixel-font-8px-proportional-ttf-v2026.07.20.zip"
+archive_sha256 = "9633ab8204078210d457a03cd038dab49a728279432b5007e864fa9c5aeb8e26"
+
 [luajit]
 source = "https://luajit.org/git/luajit.git"
 revision = "faaf663340347a78b22ed94c63c24fe090bd9784"

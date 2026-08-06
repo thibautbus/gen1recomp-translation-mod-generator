@@ -8,27 +8,118 @@ import zipfile
 
 
 class PixelFontTests(unittest.TestCase):
-    def test_latin_uses_bundled_plain_pixel_defaults(self):
-        with tempfile.TemporaryDirectory() as directory:
-            mod = generate_mod([], Path(directory) / "mod", language="fr")
-            main = (mod / "main.lua").read_text(encoding="utf-8")
-            self.assertIn('mod.content.font:register("ttf", {})', main)
+    @staticmethod
+    def _font_source(root: Path) -> Path:
+        source = root / "font-source"
+        for relative in (
+            "fonts/pokemon-font.ttf",
+            "LICENSE.md",
+            "fusion-pixel-8px-proportional-ja.ttf",
+            "OFL.txt",
+            "LICENSES/boutique-bitmap-7x7/OFL.txt",
+            "LICENSES/galmuri/LICENSE.txt",
+            "LICENSES/misaki/misaki.txt",
+            "LICENSES/miseki-bitmap/LICENSE.txt",
+        ):
+            path = source / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"Fusion Pixel Font" if path.name == "OFL.txt" else b"font")
+        return source
 
-    def test_japanese_preserves_vanilla_numeric_tiles(self):
+    def test_latin_uses_bundled_pokemon_font(self):
         with tempfile.TemporaryDirectory() as directory:
-            mod = generate_mod([], Path(directory) / "mod", language="ja-Hrkt")
+            mod = generate_mod([], Path(directory) / "mod", language="fr", font_source=self._font_source(Path(directory)))
             main = (mod / "main.lua").read_text(encoding="utf-8")
             self.assertIn(
-                'mod.content.font:register("ttf", { size = 10, tiles = "0123456789/:" })',
+                'mod.content.font:register("ttf", '
+                '{ file = mod.assets:path("fonts/pokemon-font.ttf"), size = 8 })',
                 main,
             )
+            self.assertTrue((mod / "fonts/pokemon-font.ttf").is_file())
+            self.assertFalse((mod / "fonts/fusion-pixel-8px-proportional-latin.ttf").exists())
+            self.assertFalse((mod / "fonts/fusion-pixel-8px-proportional-ja.ttf").exists())
+            self.assertTrue((mod / "fonts/LICENSES/pokemon-font/LICENSE.md").is_file())
+            self.assertFalse((mod / "fonts/OFL.txt").exists())
+            self.assertFalse((mod / "fonts/LICENSES/galmuri").exists())
+            self.assertFalse((mod / "assets/fonts").exists())
+
+    def test_japanese_uses_bundled_fusion_pixel_font(self):
+        with tempfile.TemporaryDirectory() as directory:
+            mod = generate_mod([], Path(directory) / "mod", language="ja-Hrkt", font_source=self._font_source(Path(directory)))
+            main = (mod / "main.lua").read_text(encoding="utf-8")
+            self.assertIn(
+                'mod.content.font:register("ttf", '
+                '{ file = mod.assets:path("fonts/fusion-pixel-8px-proportional-ja.ttf"), size = 8 })',
+                main,
+            )
+            self.assertTrue((mod / "fonts/fusion-pixel-8px-proportional-ja.ttf").is_file())
+            self.assertFalse((mod / "fonts/fusion-pixel-8px-proportional-latin.ttf").exists())
+            self.assertFalse((mod / "fonts/pokemon-font.ttf").exists())
+            self.assertFalse((mod / "fonts/LICENSES/pokemon-font").exists())
+            self.assertTrue((mod / "fonts/OFL.txt").is_file())
+            self.assertFalse((mod / "assets/fonts").exists())
 
     def test_generation_does_not_create_rom_font_assets(self):
         with tempfile.TemporaryDirectory() as directory:
-            mod = generate_mod([], Path(directory) / "mod", language="de")
+            mod = generate_mod([], Path(directory) / "mod", language="de", font_source=self._font_source(Path(directory)))
             self.assertFalse((mod / "assets" / "font").exists())
             self.assertFalse((mod / "lang" / "font.lua").exists())
             self.assertFalse((mod / "lang" / "charmap.lua").exists())
+
+    def test_incremental_build_removes_stale_font_variant_and_licenses(self):
+        with tempfile.TemporaryDirectory() as directory:
+            mod = Path(directory) / "mod"
+            source = self._font_source(Path(directory))
+            generate_mod([], mod, language="fr", font_source=source)
+            self.assertTrue((mod / "fonts/pokemon-font.ttf").exists())
+            generate_mod([], mod, language="ja-Hrkt", font_source=source)
+            self.assertFalse((mod / "fonts/pokemon-font.ttf").exists())
+            self.assertFalse((mod / "fonts/LICENSES/pokemon-font").exists())
+            self.assertTrue((mod / "fonts/fusion-pixel-8px-proportional-ja.ttf").exists())
+            self.assertFalse((mod / "assets/fonts").exists())
+
+    def test_font_registration_matches_mod_and_archive_paths(self):
+        with tempfile.TemporaryDirectory() as directory:
+            mod = generate_mod([], Path(directory) / "mod", language="fr", font_source=self._font_source(Path(directory)))
+            archive = Path(directory) / "mod.zip"
+            with zipfile.ZipFile(archive, "w") as output:
+                for path in mod.rglob("*"):
+                    if path.is_file():
+                        output.write(path, path.relative_to(mod).as_posix())
+            builder.inspect_archive(archive)
+            main = (mod / "main.lua").read_text(encoding="utf-8")
+            self.assertIn('mod.assets:path("fonts/pokemon-font.ttf")', main)
+            with zipfile.ZipFile(archive) as source:
+                names = set(source.namelist())
+            self.assertIn("fonts/pokemon-font.ttf", names)
+            self.assertNotIn("assets/fonts/pokemon-font.ttf", names)
+
+    def test_generation_without_source_uses_plain_pixel_and_refresh_preserves_font(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            fresh = generate_mod([], root / "fresh", language="fr")
+            self.assertIn('mod.content.font:register("ttf", {})', (fresh / "main.lua").read_text(encoding="utf-8"))
+            self.assertFalse((fresh / "fonts").exists())
+            source = self._font_source(root)
+            mod = generate_mod([], root / "mod", language="fr", font_source=source)
+            font = mod / "fonts/pokemon-font.ttf"
+            original = font.read_bytes()
+            generate_mod([], mod, language="fr")
+            main = (mod / "main.lua").read_text(encoding="utf-8")
+            self.assertIn('mod.content.font:register("ttf", { file = mod.assets:path("fonts/pokemon-font.ttf"), size = 8 })', main)
+            self.assertEqual(font.read_bytes(), original)
+
+    def test_invalid_font_source_keeps_existing_assets(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = self._font_source(root)
+            mod = generate_mod([], root / "mod", language="fr", font_source=source)
+            font = mod / "fonts/pokemon-font.ttf"
+            original = font.read_bytes()
+            (source / "LICENSE.md").unlink()
+            with self.assertRaises(FileNotFoundError):
+                generate_mod([], mod, language="fr", font_source=source)
+            self.assertEqual(font.read_bytes(), original)
 
     def test_scaffold_support_selects_japanese_profile_without_copying_pages(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -44,7 +135,10 @@ class PixelFontTests(unittest.TestCase):
             (scaffold / "lang" / "naming.lua").write_text("return {}\n", encoding="utf-8")
             builder.preserve_scaffold_support(scaffold, mod, "ja-Hrkt")
             main = (mod / "main.lua").read_text(encoding="utf-8")
-            self.assertIn('mod.content.font:register("ttf", { size = 10, tiles = "0123456789/:" })', main)
+            self.assertIn(
+                'mod.content.font:register("ttf", {})',
+                main,
+            )
             self.assertFalse((mod / "lang" / "font.lua").exists())
 
     def test_incremental_build_removes_stale_legacy_font_artifacts(self):

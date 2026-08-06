@@ -30,6 +30,27 @@ class BuilderTests(unittest.TestCase):
             builder._run(["tool"], log_fn=messages.append)
         self.assertEqual(messages, ["\n> tool", "first", "second"])
 
+    def test_font_dependencies_use_private_cache_and_checked_in_pins(self):
+        config = builder.project_config()
+        with tempfile.TemporaryDirectory() as directory, patch(
+            "pipeline.builder.fetch_files", side_effect=lambda *args, **kwargs: args[2]
+        ) as fetch_files, patch(
+            "pipeline.builder.fetch_archive", side_effect=lambda *args, **kwargs: args[2]
+        ) as fetch_archive:
+            sources = builder._font_sources(Path(directory), config)
+        self.assertEqual(sources["latin"], Path(directory) / "dependencies" / "pokemon-font")
+        self.assertEqual(sources["ja"], Path(directory) / "dependencies" / "fusion-pixel-font")
+        fetch_files.assert_called_once()
+        fetch_archive.assert_called_once()
+        self.assertEqual(
+            fetch_files.call_args.args[1]["fonts/pokemon-font.ttf"],
+            "1a903311f21a249ac2be6dd3ce84ce0593c94097ea4af90817e552bbe509c9a9",
+        )
+        self.assertEqual(
+            fetch_archive.call_args.args[1],
+            "9633ab8204078210d457a03cd038dab49a728279432b5007e864fa9c5aeb8e26",
+        )
+
     def test_gui_language_and_coverage_helpers(self):
         self.assertEqual(language_code("French (fr)"), "fr")
         self.assertEqual(language_code("ja-Hrkt"), "ja-Hrkt")
@@ -314,6 +335,7 @@ class BuilderTests(unittest.TestCase):
             with zipfile.ZipFile(archive, "w") as output:
                 output.writestr("manifest.json", json.dumps({"id": "translation-fr"}))
                 output.writestr("lang/dialogue.lua", "return {}")
+                output.writestr("fonts/pokemon-font.ttf", b"ttf")
             builder.inspect_archive(archive)
 
     def test_archive_scan_rejects_private_data(self):
@@ -351,7 +373,10 @@ class BuilderTests(unittest.TestCase):
 
             builder.preserve_scaffold_support(scaffold, mod)
 
-            self.assertIn('mod.content.font:register("ttf", {})', (mod / "main.lua").read_text(encoding="utf-8"))
+            self.assertIn(
+                'mod.content.font:register("ttf", {})',
+                (mod / "main.lua").read_text(encoding="utf-8"),
+            )
             self.assertFalse((mod / "lang" / "charmap.lua").exists())
             self.assertFalse((mod / "assets" / "font").exists())
 
@@ -376,7 +401,10 @@ class BuilderTests(unittest.TestCase):
             builder.preserve_scaffold_support(scaffold, mod)
 
             main = (mod / "main.lua").read_text(encoding="utf-8")
-            self.assertIn('mod.content.font:register("ttf", {})', main)
+            self.assertIn(
+                'mod.content.font:register("ttf", {})',
+                main,
+            )
             self.assertFalse((mod / "lang" / "font.lua").exists())
 
     def test_scaffold_raw_option_hook_is_allowlisted(self):
