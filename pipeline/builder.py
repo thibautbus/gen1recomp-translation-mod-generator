@@ -13,7 +13,7 @@ from typing import Callable
 import zipfile
 
 from .align import align, apply_corpus_overrides
-from .corpus import canonical_language, parse_redblue
+from .corpus import canonical_language, parse_redblue, parse_yellow
 from .mod import (
     FONT_PROFILES,
     font_profile_warning,
@@ -34,6 +34,10 @@ LANGUAGES = (
     ("it", "Italian"),
     ("ja-Hrkt", "Japanese"),
 )
+
+# Italian Yellow stat messages compose the final wording across several ROM
+# fragments; RoseText is intentionally empty in that catalog.
+YELLOW_COMPOSITION_COVERED = {"it": frozenset({"_RoseText"})}
 
 FORBIDDEN_ARCHIVE_SUFFIXES = {
     ".gb", ".gbc", ".rom", ".ips", ".bps", ".ups", ".patch", ".diff",
@@ -169,7 +173,8 @@ def _modkit_command(modkit: Path, *args: str) -> list[str]:
     return [sys.executable, str(modkit), *args]
 
 
-def _ensure_dependency(config: dict, destination: Path, *, selective_prefix: str | None = None) -> Path:
+def _ensure_dependency(config: dict, destination: Path, *, selective_prefix: str | list[str] | None = None) -> Path:
+    prefixes = (selective_prefix,) if isinstance(selective_prefix, str) else tuple(selective_prefix or ())
     if is_frozen():
         if config.get("archive_files"):
             try:
@@ -186,10 +191,16 @@ def _ensure_dependency(config: dict, destination: Path, *, selective_prefix: str
         if not url or not digest:
             raise BuildError("Pinned archive URL and SHA-256 are required in config/pipeline.toml for standalone mode.")
         try:
-            return fetch_archive(url, digest, destination, revision=str(config.get("revision", "")), selective_prefix=selective_prefix, immutable_prefixes=("src",), trusted_tree_sha256=str(config.get("archive_tree_sha256", "")))
+            # fetch_archive extracts a single subtree; a multi-prefix request
+            # only makes sense for the git sparse-checkout path below, so
+            # scope the archive extraction to the first prefix (each pinned
+            # dependency ships one archive).
+            assert len(prefixes) <= 1, "fetch_archive supports a single selective prefix"
+            single = prefixes[0] if prefixes else None
+            return fetch_archive(url, digest, destination, revision=str(config.get("revision", "")), selective_prefix=single, immutable_prefixes=("src",), trusted_tree_sha256=str(config.get("archive_tree_sha256", "")))
         except DependencyError as error:
             raise BuildError(f"Unable to download pinned dependency: {error}") from error
-    ensure_checkout(config["source"], config["revision"], destination, sparse_paths=((selective_prefix,) if selective_prefix else ()))
+    ensure_checkout(config["source"], config["revision"], destination, sparse_paths=prefixes)
     return destination
 
 
@@ -349,7 +360,27 @@ def _corpus_overrides_path(language: str) -> Path | None:
 
 
 def _engine_overrides_path(language: str) -> Path | None:
-    return _language_override_path(language, "engine_overrides.json")
+    return _language_override_path(language, "shared_engine_overrides.json")
+
+
+def _yellow_engine_overrides_path(language: str) -> Path | None:
+    return _language_override_path(language, "yellow_engine_overrides.json")
+
+
+def _merge_engine_overrides(*paths: Path | None, destination_dir: Path | None = None, name: str = "merged_engine_overrides.json") -> Path | None:
+    """Merge shared engine override files into one temporary JSON."""
+    from .engine import ENGINE_SCHEMA, load_engine_overrides
+    merged: dict = {}
+    for path in paths:
+        if path is None:
+            continue
+        merged.update(load_engine_overrides(path))
+    if not merged:
+        return None
+    destination = (destination_dir or resource_root() / ".cache" / "tmp") / name
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(json.dumps({"schema": ENGINE_SCHEMA, "version": 1, "entries": merged}, ensure_ascii=False, indent=2), encoding="utf-8")
+    return destination
 
 
 def assemble_worksheet(scaffold: Path, destination: Path) -> Path:
@@ -487,6 +518,39 @@ def preserve_scaffold_support(
                     scaffold_main = scaffold_main[:end] + type_injection + scaffold_main[end:]
                 else:
                     raise BuildError(f"Modkit scaffold main has no statuses block to extend: {main}")
+    # Yellow layers are applied only after the shared catalogs and only for
+    # the Yellow game.  Keep the hook in the final scaffold-owned main.lua;
+    # generate_mod's standalone main remains useful for unit tests.
+    yellow_names = [
+        name for name in ("dialogue", "strings", "species_names", "move_names",
+                          "item_names", "trainer_names", "status_labels")
+        if (mod / "lang" / f"{name}_yellow.lua").is_file()
+    ]
+    if yellow_names and "local yellow_game_version" not in scaffold_main:
+        apply_calls = {
+            "dialogue": 'each("dialogue_yellow", function(id, value) mod.content.text:override(id, value) end)',
+            "strings": 'each("strings_yellow", function(id, value) mod.content.strings:override(id, value) end)',
+            "species_names": 'each("species_names_yellow", function(id, value) mod.content.pokemon:patch(id, { name = value }) end)',
+            "move_names": 'each("move_names_yellow", function(id, value) mod.content.moves:patch(id, { name = value }) end)',
+            "item_names": 'each("item_names_yellow", function(id, value) mod.content.items:patch(id, { name = value }) end)',
+            "trainer_names": 'each("trainer_names_yellow", function(id, value) mod.content.trainers:patch(id, { name = value }) end)',
+            "status_labels": 'each("status_labels_yellow", function(id, value) mod.content.statuses:patch(id, { label = value }) end)',
+        }
+        yellow_injection = (
+            "\n  -- Injected: versioned catalogs for Pokémon Yellow.\n"
+            '  local okGame, GameVersion = pcall(require, "src.core.GameVersion")\n'
+            "  local yellow_game_version = okGame and type(GameVersion) == \"table\"\n"
+            "      and type(GameVersion.isYellow) == \"function\"\n"
+            "      and GameVersion.isYellow()\n"
+            "  if yellow_game_version then\n"
+            + "\n".join(f"    {apply_calls[name]}" for name in yellow_names)
+            + "\n  end\n"
+        )
+        end = scaffold_main.rfind("\nend")
+        if end < 0:
+            raise BuildError(f"Modkit scaffold main has no closing function: {main}")
+        scaffold_main = scaffold_main[:end] + yellow_injection + scaffold_main[end:]
+
     # A few in-game Options values are raw Font strings in v0.1.69 instead
     # of Strings lookups. Keep this allowlist explicit and reuse the generated
     # strings catalog; do not patch the renderer/Kit itself.
@@ -690,6 +754,9 @@ def print_coverage(
         lines.append(f"  RBY-related engine strings: {int(section.get('translated', 0))}/{int(section.get('total', 0))} ({float(section.get('percent', 0.0)):.2f}%)")
     elif report.get("engine_rby_warning"):
         lines.append(f"  RBY-related engine strings: unavailable ({report['engine_rby_warning']})")
+    yellow = (report.get("yellow") or {}).get("coverage", {}).get("rom") or {}
+    if yellow.get("total"):
+        lines.append(f"  Yellow ROM catalogs: {int(yellow.get('translated', 0))}/{int(yellow.get('total', 0))} ({float(yellow.get('percent', 0.0)):.2f}%)")
     for line in lines:
         print(line)
         if log_fn:
@@ -707,8 +774,14 @@ def build(
     log_fn: Callable[[str], None] | None = None,
     status_fn: Callable[[str], None] | None = None,
     font_profile: str = "fusion",
+    yellow_rom: Path | None = None,
 ) -> Path:
-    """Execute the complete private extraction, translation, and pack flow."""
+    """Execute the complete private extraction, translation, and pack flow.
+
+    With ``yellow_rom`` the result is the universal Red/Blue/Yellow mod: the
+    Yellow import stays in a separate cache directory and versioned catalog
+    layers are applied at runtime when ``GameVersion.isYellow()``.
+    """
     def status(message: str) -> None:
         if status_fn:
             status_fn(message)
@@ -729,6 +802,8 @@ def build(
     status("Validating ROMs")
     verify_rom(red_rom, "red")
     verify_rom(blue_rom, "blue")
+    if yellow_rom is not None:
+        verify_rom(yellow_rom, "yellow")
 
     dependency_root = workspace / "dependencies"
     gen1recomp = dependency_root / "gen1recomp"
@@ -738,7 +813,7 @@ def build(
     corpus_source = config["corpus"]
     status("Preparing dependencies")
     _ensure_dependency(engine_source, gen1recomp)
-    _ensure_dependency(corpus_source, corpus, selective_prefix="corpus/RedBlue")
+    _ensure_dependency(corpus_source, corpus, selective_prefix=["corpus/RedBlue", "corpus/Yellow"])
     font_source = _font_source(workspace, config, font_profile, language)
 
     log("\nExtracting private ROM data...")
@@ -753,6 +828,12 @@ def build(
         gen1recomp / "blue" / "data" / "generated",
         gen1recomp / "blue" / "assets" / "generated",
     )
+    if yellow_rom is not None:
+        import_rom(
+            "yellow", yellow_rom, gen1recomp,
+            gen1recomp / "yellow" / "data" / "generated",
+            gen1recomp / "yellow" / "assets" / "generated",
+        )
 
     build_root = workspace / "interactive" / language
     scaffold = build_root / "translation_source"
@@ -775,9 +856,20 @@ def build(
         env=env,
         log_fn=log_fn,
     )
-    worksheet = assemble_worksheet(
-        scaffold, build_root / "complete-modkit-worksheet"
-    )
+    worksheet = assemble_worksheet(scaffold, build_root / "complete-modkit-worksheet")
+    yellow_worksheet = None
+    if yellow_rom is not None:
+        yellow_root = build_root / "yellow_source"
+        yellow_scaffold = yellow_root / "translation_source_yellow"
+        yellow_env = dict(env)
+        yellow_env["POKEPORT_DATA_DIR"] = str(gen1recomp / "yellow" / "data" / "generated")
+        _run(_modkit_command(modkit, "--repo", str(gen1recomp),
+                "translation", "translation_source_yellow", "--language", language_name,
+                "--base", "imported", "--dest", str(yellow_root), "--pixel-font", "--force"),
+            cwd=gen1recomp, env=yellow_env, log_fn=log_fn)
+        yellow_worksheet = assemble_worksheet(
+            yellow_scaffold, yellow_root / "complete-modkit-worksheet"
+        )
 
     log("\nMatching poke-corpus translations...")
     status("Matching poke-corpus translations")
@@ -789,6 +881,120 @@ def build(
     mod = build_root / "mod"
     coverage = build_root / "coverage.json"
     remove_legacy_font_artifacts(mod)
+    yellow_dialogue = None
+    yellow_stats = None
+    yellow_catalogs: dict[str, dict[str, str]] = {}
+    yellow_engine_values: dict[str, str] = {}
+    if yellow_rom is not None:
+        log("\nBuilding Yellow dialogue layer...")
+        status("Building Yellow dialogue layer")
+        from .yellow import parse_text_catalog, yellow_dialogue_layer
+        from .join import join_catalogs, read_worksheets
+        red_text = parse_text_catalog(gen1recomp / "data" / "generated" / "text.lua")
+        yellow_text = parse_text_catalog(gen1recomp / "yellow" / "data" / "generated" / "text.lua")
+        yellow_rows = align(parse_yellow(corpus, language), target_lang=language)
+        red_worksheets = read_worksheets(worksheet)
+        red_joined, _ = join_catalogs(rows, red_worksheets, language)
+        yellow_worksheets = read_worksheets(yellow_worksheet)
+        yellow_joined, yellow_join_report = join_catalogs(
+            yellow_rows, yellow_worksheets, language
+        )
+        yellow_dialogue, yellow_stats = yellow_dialogue_layer(
+            red_text, yellow_text,
+            yellow_rows,
+            language,
+            red_translation=red_joined.get("dialogue", {}),
+        )
+        for catalog_name, values in yellow_joined.items():
+            if catalog_name == "dialogue":
+                continue
+            common = red_joined.get(catalog_name, {})
+            layer = {
+                key: value for key, value in values.items()
+                if value and value != common.get(key)
+            }
+            if layer:
+                yellow_catalogs[catalog_name] = layer
+        yellow_stats["catalogs"] = {}
+        for name in yellow_worksheets:
+            if name == "dialogue":
+                continue
+            yellow_stats["catalogs"][name] = {
+                "translated": len(yellow_catalogs.get(name, {})),
+                "total": len(yellow_worksheets[name]),
+                "matched": yellow_join_report.get("matched", {}).get(name, 0),
+            }
+        common_dialogue = red_joined.get("dialogue", {})
+        yellow_dialogue_joined = yellow_joined.get("dialogue", {})
+        unmatched_labels = set(yellow_stats.get("unmatched_labels", ()))
+        composition_covered = YELLOW_COMPOSITION_COVERED.get(language, frozenset())
+        yellow_stats["effective_dialogue_translated"] = sum(
+            label not in unmatched_labels
+            and (
+                label in yellow_dialogue_joined
+                or (
+                    label in common_dialogue
+                    and red_text.get(label) == yellow_text.get(label)
+                )
+            )
+            or label in composition_covered
+            for label in yellow_text
+        )
+        yellow_stats["composition_covered_labels"] = sorted(
+            composition_covered & set(yellow_text)
+        )
+        yellow_stats["effective_dialogue_total"] = sum(
+            bool(content) for content in yellow_text.values()
+        )
+        effective_named = 0
+        for name, entries in yellow_worksheets.items():
+            if name == "dialogue":
+                continue
+            common_entries = {entry.key: entry.english for entry in red_worksheets.get(name, ())}
+            common_values = red_joined.get(name, {})
+            yellow_values = yellow_joined.get(name, {})
+            effective_named += sum(
+                key in yellow_values
+                or (key in common_values and common_entries.get(key) == entry.english)
+                for entry in entries
+                for key in (entry.key,)
+            )
+        yellow_stats["effective_named_catalog_translated"] = effective_named
+        override_path = _yellow_engine_overrides_path(language)
+        if override_path:
+            from .engine import check_printf_directives, load_engine_overrides, read_engine_catalog
+            overrides = load_engine_overrides(override_path)
+            engine_catalog_values = read_engine_catalog(worksheet / "strings.lua")
+            for source, row in overrides.items():
+                if source not in engine_catalog_values:
+                    raise BuildError(f"Yellow engine override contains unknown key: {source!r}")
+                value = row["override"]
+                errors = check_printf_directives(source, value)
+                if errors:
+                    raise BuildError(f"Invalid Yellow engine override {source!r}: {errors[0]}")
+                yellow_engine_values[source] = value
+            yellow_catalogs.setdefault("strings", {}).update(yellow_engine_values)
+        log(f"  Yellow layer: {yellow_stats['layer_entries']} entries "
+            f"({yellow_stats['versioned_required']} versioned, "
+            f"{yellow_stats['yellow_only']} Yellow-only, "
+            f"{yellow_stats['shared_safe']} shared-safe skipped, "
+            f"{yellow_stats['unmatched']} unmatched)")
+        # Independent Yellow audit: the versioned dialogue matrix, written
+        # under .cache/audit/yellow/ next to the coverage report.
+        from .yellow_audit import write_yellow_audit
+        audit_path = write_yellow_audit(
+            gen1recomp / "data" / "generated" / "text.lua",
+            gen1recomp / "yellow" / "data" / "generated" / "text.lua",
+            align(parse_yellow(corpus, language), target_lang=language),
+            language,
+            build_root / ".." / ".." / "audit" / "yellow",
+            red_text=red_text,
+            yellow_text=yellow_text,
+            red_translation=red_joined.get("dialogue", {}),
+            layer=yellow_dialogue,
+            stats=yellow_stats,
+        )
+        log(f"  Yellow audit: {audit_path}")
     generate_mod(
         rows,
         mod,
@@ -797,7 +1003,11 @@ def build(
         target_name=f"{language_name} translation",
         modkit_worksheet=worksheet,
         report_path=coverage,
-        engine_overrides=_engine_overrides_path(language),
+        engine_overrides=_merge_engine_overrides(
+            _engine_overrides_path(language),
+            destination_dir=workspace / "tmp",
+            name=f"merged_engine_overrides_{language}.json",
+        ),
         semantic_anchors=resource_root() / "config" / "semantic_anchors.json",
         semantic_anchor_decisions=resource_root() / "config" / "semantic_anchor_decisions.json",
         strict_engine=True,
@@ -805,6 +1015,10 @@ def build(
         engine_scope=resource_root() / "config" / "engine_scope.json",
         font_source=font_source,
         font_profile=font_profile,
+        yellow_dialogue=yellow_dialogue,
+        yellow_stats=yellow_stats,
+        yellow_catalogs=yellow_catalogs,
+        yellow_engine_overrides=yellow_engine_values,
     )
     preserve_scaffold_support(scaffold, mod, language, font_source, font_profile)
 
@@ -845,6 +1059,13 @@ def main(input_fn: Callable[[str], str] = input, font_profile: str | None = None
         blue = _prompt_configured_path(
             blue_prompt, configured_path(rom_paths, "rom", "blue"), input_fn
         )
+        yellow_prompt = (
+            "Please specify the location of your Pokemon Yellow ROM "
+            "(full path, e.g. C:\\Games\\PokemonYellow.gb): "
+        )
+        yellow = _prompt_configured_path(
+            yellow_prompt, configured_path(rom_paths, "rom", "yellow"), input_fn
+        )
         language, language_name = _prompt_language(input_fn)
         selected_profile = font_profile or _prompt_font_profile(language, input_fn)
         selected_profile = validate_font_profile(language, selected_profile)
@@ -854,6 +1075,7 @@ def main(input_fn: Callable[[str], str] = input, font_profile: str | None = None
                 print(f"Warning: {warning}")
         verify_rom(red, "red")
         verify_rom(blue, "blue")
+        verify_rom(yellow, "yellow")
         if not _confirm(input_fn):
             if is_frozen():
                 print("\nBuild cancelled. No dependency downloads were performed.")
@@ -867,6 +1089,7 @@ def main(input_fn: Callable[[str], str] = input, font_profile: str | None = None
             language_name,
             luajit,
             font_profile=selected_profile,
+            yellow_rom=yellow,
         )
     except (BuildError, ValueError, OSError) as error:
         print(f"\nError: {error}", file=sys.stderr)

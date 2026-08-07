@@ -5,7 +5,7 @@ source = "https://github.com/abcboy101/poke-corpus.git"
 revision = "aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
 # Standalone mode downloads only these exact files from the pinned commit.
 archive_base_url = "https://raw.githubusercontent.com/abcboy101/poke-corpus/aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
-format = "corpus/RedBlue/{qid,en,<target_lang>}_msg.txt (UTF-8 parallel lines)"
+format = "corpus/{RedBlue,Yellow}/{qid,en,<target_lang>}_msg.txt (UTF-8 parallel lines)"
 target_lang = "fr"
 
 [corpus.archive_files]
@@ -16,6 +16,13 @@ target_lang = "fr"
 "corpus/RedBlue/es_msg.txt" = "fd75dcaace7aee5beb339be4b70f9fbf0a8622084a419448add7119542d455c2"
 "corpus/RedBlue/it_msg.txt" = "3d441d30243404ce0b545bb79b7480f76ca4f8dedcb6b863d286d611892bfa48"
 "corpus/RedBlue/ja-Hrkt_msg.txt" = "6c60e4cefd326cdfe399c635db67ee8fcddbe20e9b665f373d7550dd2d980db7"
+"corpus/Yellow/qid_msg.txt" = "ab7bdeceadf1dcd3b59e9dc991db9132bc5a4b3be9abc44b69d4a01bbc906985"
+"corpus/Yellow/en_msg.txt" = "2140397c776ec5e05c507c1730f5cf6f81420ced837052e230526fc722ca34f8"
+"corpus/Yellow/fr_msg.txt" = "3e833d9c8bbe7622edcf4912318d8d6cfca2ae95361a0d07fb94163b1162aeb2"
+"corpus/Yellow/de_msg.txt" = "96a9fe20847ffad256cbfb91749eb8394a0c25ac750b2e3aaf9c6eb87806ee79"
+"corpus/Yellow/es_msg.txt" = "e66234e25849a6b8ac8d51c934947d545f8f52a84a7a28c5905a801c19768ac0"
+"corpus/Yellow/it_msg.txt" = "86558cb6c5ab39aba56d9b286a98fdee94389ab302694a9a5b264a6d77fcc643"
+"corpus/Yellow/ja-Hrkt_msg.txt" = "542a88559b8695d5635ca107107f18d4becc03561d9827df3f80503ab6166505"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
@@ -76,6 +83,9 @@ sha1 = "ea9bcae617fdf159b045185467ae58b2e4a48b9a"
 
 [rom.blue]
 sha1 = "d7037c83e1ae5b39bde3c30787637ba1d4c48ce2"
+
+[rom.yellow]
+sha1 = "cc7d03262ebfaf2f06772c1a480c7d9d5f4a38e1"
 
 [output]
 language_dir = "lang"

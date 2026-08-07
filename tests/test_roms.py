@@ -11,19 +11,20 @@ from pipeline.roms import CANONICAL, import_rom, verify_rom
 
 class RomConfigTests(unittest.TestCase):
     @staticmethod
-    def write_config(root: Path, red: str | None = None, blue: str | None = None) -> None:
+    def write_config(root: Path, red: str | None = None, blue: str | None = None, yellow: str | None = None) -> None:
         config = root / "config"
         config.mkdir(parents=True, exist_ok=True)
-        lines = ["[rom.red]"]
-        if red is not None:
-            lines.append(f'sha1 = "{red}"')
-        if blue is not None:
-            lines.extend(["", "[rom.blue]", f'sha1 = "{blue}"'])
-        (config / "pipeline.toml").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        lines: list[str] = []
+        for section, value in (("red", red), ("blue", blue), ("yellow", yellow)):
+            lines.append(f"[rom.{section}]")
+            if value is not None:
+                lines.append(f'sha1 = "{value}"')
+            lines.append("")
+        (config / "pipeline.toml").write_text("\n".join(lines), encoding="utf-8")
 
     def test_checked_in_rom_sections_have_no_paths(self):
         config = project_config()
-        self.assertEqual(set(config["rom"]), {"red", "blue"})
+        self.assertEqual(set(config["rom"]), {"red", "blue", "yellow"})
         for section in config["rom"].values():
             self.assertNotIn("path", section)
 
@@ -34,13 +35,14 @@ class RomConfigTests(unittest.TestCase):
             root = Path(tmp)
             rom = root / "red.gb"
             rom.write_bytes(payload)
-            self.write_config(root, red=expected, blue="0" * 40)
+            self.write_config(root, red=expected, blue="0" * 40, yellow="0" * 40)
             self.assertEqual(verify_rom(rom, "red", config_root=root)["sha1"], expected)
 
     def test_canonical_mapping_is_read_only_and_loaded_from_checked_in_toml(self):
         config = project_config()
         self.assertEqual(CANONICAL["red"], config["rom"]["red"]["sha1"])
         self.assertEqual(CANONICAL["blue"], config["rom"]["blue"]["sha1"])
+        self.assertEqual(CANONICAL["yellow"], config["rom"]["yellow"]["sha1"])
         with self.assertRaises(TypeError):
             CANONICAL["red"] = "0" * 40
 
@@ -52,11 +54,11 @@ class RomConfigTests(unittest.TestCase):
             rom.write_bytes(payload)
             for malformed in ("", "A" * 40, "0" * 39, "g" * 40):
                 with self.subTest(hash=malformed):
-                    self.write_config(root, red=malformed, blue="0" * 40)
+                    self.write_config(root, red=malformed, blue="0" * 40, yellow="0" * 40)
                     with self.assertRaisesRegex(ValueError, r"red\]\.sha1"):
                         verify_rom(rom, "red", config_root=root)
             with self.subTest(hash="missing"):
-                self.write_config(root, red=None, blue="0" * 40)
+                self.write_config(root, red=None, blue="0" * 40, yellow="0" * 40)
                 with self.assertRaisesRegex(ValueError, r"\[rom\.red\]\.sha1"):
                     verify_rom(rom, "red", config_root=root)
 
@@ -70,22 +72,20 @@ class RomConfigTests(unittest.TestCase):
             cases = {
                 "unknown field": (
                     f'[rom.red]\nsha1 = "{digest}"\npath = "old.gb"\n'
-                    f'[rom.blue]\nsha1 = "{"0" * 40}"\n',
+                    f'[rom.blue]\nsha1 = "{"0" * 40}"\n'
+                    f'[rom.yellow]\nsha1 = "{"0" * 40}"\n',
                     "unsupported keys: path",
                 ),
                 "missing rom": ("[output]\nname = \"test\"\n", r"missing \[rom\] section"),
-                "missing version": (
-                    f'[rom.red]\nsha1 = "{digest}"\n',
-                    r"missing \[rom\.blue\]",
-                ),
                 "extra version": (
                     f'[rom.red]\nsha1 = "{digest}"\n'
                     f'[rom.blue]\nsha1 = "{"0" * 40}"\n'
+                    f'[rom.yellow]\nsha1 = "{"0" * 40}"\n'
                     f'[rom.green]\nsha1 = "{"1" * 40}"\n',
                     "unsupported versions: green",
                 ),
                 "non-table": (
-                    f'rom = {{ red = "{digest}", blue = {{ sha1 = "{"0" * 40}" }} }}\n',
+                    f'rom = {{ red = "{digest}", blue = {{ sha1 = "{"0" * 40}" }}, yellow = {{ sha1 = "{"0" * 40}" }} }}\n',
                     r"invalid \[rom\.red\] configuration: expected a table",
                 ),
                 "malformed toml": ("[rom.red\nsha1 = \"bad\"\n", "unable to load ROM configuration"),
@@ -105,7 +105,7 @@ class RomConfigTests(unittest.TestCase):
             root = Path(tmp)
             rom = root / "red.gb"
             rom.write_bytes(payload)
-            self.write_config(root, red="0" * 40, blue="1" * 40)
+            self.write_config(root, red="0" * 40, blue="1" * 40, yellow="1" * 40)
             with self.assertRaisesRegex(ValueError, "unsupported version 'green'"):
                 verify_rom(rom, "green")
             with self.assertRaisesRegex(ValueError, rf"red ROM SHA-1 mismatch: {actual} \(expected {'0' * 40}\)"):

@@ -10,7 +10,7 @@ from pipeline.align import CORPUS_OVERRIDES_SCHEMA, align, apply_corpus_override
 from pipeline.cli import main as cli_main
 from pipeline.corpus import load_corpus
 from pipeline.generate import generate_lua, lua_string
-from pipeline.model import CorpusRecord
+from pipeline.model import Alignment, CorpusRecord
 from pipeline.mod import generate_mod
 from pipeline.join import (
     ENGINE_CATALOG_EXTRA_KEYS,
@@ -77,8 +77,8 @@ class PipelineTests(unittest.TestCase):
         self.assertTrue(any(f["rule"] == "coverage-engine-unmatched" for f in report["findings"]))
     def test_cli_generate_defaults_engine_overrides_to_language_tree(self):
         for language, expected in (
-            ("fr", "overrides/fr/engine_overrides.json"),
-            ("es", "overrides/es/engine_overrides.json"),
+            ("fr", "overrides/fr/shared_engine_overrides.json"),
+            ("es", "overrides/es/shared_engine_overrides.json"),
         ):
             with tempfile.TemporaryDirectory() as tmp:
                 aligned = Path(tmp) / "aligned.json"
@@ -264,6 +264,19 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(report["ambiguous"], {})
         self.assertEqual(report["strategies"]["dialogue"]["_AbraDexEntry"], "canonical_dex_text")
         self.assertEqual(report["strategies"]["dialogue"]["_EndUsedMove1Text"], "engine_alias")
+
+    def test_catalog_join_resolves_engine_aliases_in_yellow_catalog(self):
+        rows = align([
+            CorpusRecord("y.text_2.Used1Text", "en", "Used!"),
+            CorpusRecord("y.text_2.Used1Text", "fr", "Utilisé !"),
+        ], target_lang="fr")
+        output, report = join_catalogs(
+            rows,
+            {"dialogue": [WorksheetEntry("_UsedMove1Text", "Used!", "dialogue")]},
+            target_lang="fr",
+        )
+        self.assertEqual(output["dialogue"]["_UsedMove1Text"], "Utilisé !")
+        self.assertEqual(report["strategies"]["dialogue"]["_UsedMove1Text"], "engine_alias")
 
     def test_item_machine_identifiers_use_french_ct_cs_display(self):
         worksheets = {name: [] for name in ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels")}
@@ -617,3 +630,51 @@ EXPECTED = {
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class YellowCorpusTests(unittest.TestCase):
+    """Yellow corpus reader: line-count parity, qid preservation, game scope."""
+
+    @staticmethod
+    def _write_yellow(root: Path, fr_lines: int | None = None) -> Path:
+        corpus = root / "corpus" / "Yellow"
+        corpus.mkdir(parents=True, exist_ok=True)
+        (corpus / "qid_msg.txt").write_text("y.text.A\ny.names.B\ny.text.C\n", encoding="utf-8")
+        (corpus / "en_msg.txt").write_text("Hello\nPikachu\nWorld\n", encoding="utf-8")
+        lines = ("Bonjour\nPikachu\nMonde\n" if fr_lines is None else "\n".join(["X"] * fr_lines) + "\n")
+        (corpus / "fr_msg.txt").write_text(lines, encoding="utf-8")
+        return corpus
+
+    def test_read_parallel_yellow_preserves_qids_and_scope(self):
+        from pipeline.corpus import read_parallel_yellow
+        with tempfile.TemporaryDirectory() as tmp:
+            corpus = self._write_yellow(Path(tmp))
+            records = read_parallel_yellow(corpus, "fr")
+            qids = {r.qid for r in records}
+            self.assertEqual(qids, {"y.text.A", "y.names.B", "y.text.C"})
+            self.assertTrue(all(r.game == "yellow" for r in records))
+            fr = [r for r in records if r.language == "fr"]
+            self.assertEqual([r.value for r in fr], ["Bonjour", "Pikachu", "Monde"])
+            self.assertEqual([r.metadata["version_scope"] for r in fr], ["yellow"] * 3)
+
+    def test_read_parallel_yellow_rejects_line_count_mismatch(self):
+        from pipeline.corpus import read_parallel_yellow
+        with tempfile.TemporaryDirectory() as tmp:
+            corpus = self._write_yellow(Path(tmp), fr_lines=2)
+            with self.assertRaisesRegex(ValueError, "different line counts"):
+                read_parallel_yellow(corpus, "fr")
+
+    def test_read_parallel_game_redblue_wrapper_keeps_rb_conventions(self):
+        from pipeline.corpus import read_parallel_game, read_parallel_redblue
+        with tempfile.TemporaryDirectory() as tmp:
+            corpus = Path(tmp) / "RedBlue"
+            corpus.mkdir(parents=True)
+            (corpus / "qid_msg.txt").write_text("rb.text.Shard^B\nrb.text.Shared\n", encoding="utf-8")
+            (corpus / "en_msg.txt").write_text("Blue text\nShared text\n", encoding="utf-8")
+            (corpus / "fr_msg.txt").write_text("Texte bleu\nTexte commun\n", encoding="utf-8")
+            records = read_parallel_redblue(corpus, "fr")
+            self.assertTrue(all(r.game in {"blue", "both"} for r in records))
+            scopes = {(r.qid, r.metadata["version_scope"]) for r in records if r.language == "fr"}
+            self.assertEqual(scopes, {("rb.text.Shard^B", "blue"), ("rb.text.Shared", "both")})
+            # The redblue wrapper delegates to the generic reader.
+            self.assertEqual(read_parallel_game(corpus, "fr", "redblue"), records)

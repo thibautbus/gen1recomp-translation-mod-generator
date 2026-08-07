@@ -83,15 +83,17 @@ class BuilderTests(unittest.TestCase):
     def test_gui_validation_requires_output_only(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            red, blue = root / "red.gb", root / "blue.gb"
+            red, blue, yellow = root / "red.gb", root / "blue.gb", root / "yellow.gb"
             red.write_bytes(b"red")
             blue.write_bytes(b"blue")
+            yellow.write_bytes(b"yellow")
             with patch.object(builder, "verify_rom"), self.assertRaisesRegex(builder.BuildError, "output directory"):
-                validate_inputs(red, blue, "fr", "")
+                validate_inputs(red, blue, yellow, "fr", "")
             with patch.object(builder, "verify_rom"):
-                inputs = validate_inputs(red, blue, "fr", root / "out")
+                inputs = validate_inputs(red, blue, yellow, "fr", root / "out")
             self.assertEqual(inputs.language, "fr")
             self.assertEqual(inputs.font_profile, "fusion")
+            self.assertEqual(inputs.yellow_rom, yellow.resolve())
 
     def test_gui_font_profile_is_fixed_for_japanese(self):
         self.assertIn("recommended", font_profile_label("fusion"))
@@ -100,11 +102,12 @@ class BuilderTests(unittest.TestCase):
         self.assertIn("some text may overflow", font_profile_label("pokemon"))
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            red, blue = root / "red.gb", root / "blue.gb"
+            red, blue, yellow = root / "red.gb", root / "blue.gb", root / "yellow.gb"
             red.write_bytes(b"red")
             blue.write_bytes(b"blue")
+            yellow.write_bytes(b"yellow")
             with patch.object(builder, "verify_rom"), self.assertRaisesRegex(ValueError, "only available"):
-                validate_inputs(red, blue, "ja-Hrkt", root / "out", "pokemon")
+                validate_inputs(red, blue, yellow, "ja-Hrkt", root / "out", "pokemon")
     def test_absent_rom_path_config_is_empty(self):
         with tempfile.TemporaryDirectory() as directory:
             paths = load_rom_paths(Path(directory) / "rom_paths.toml")
@@ -222,12 +225,12 @@ class BuilderTests(unittest.TestCase):
     def test_main_autoloads_red_blue_without_localized_prompt(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            red, blue = (root / name for name in ("red.gb", "blue.gb"))
-            for rom in (red, blue):
+            red, blue, yellow = (root / name for name in ("red.gb", "blue.gb", "yellow.gb"))
+            for rom in (red, blue, yellow):
                 rom.write_bytes(b"rom")
-            configured = {"rom": {"red": red, "blue": blue}}
+            configured = {"rom": {"red": red, "blue": blue, "yellow": yellow}}
             prompts = []
-            answers = iter(("", "", "2", ""))
+            answers = iter(("", "", "", "2", ""))
             events = []
 
             def input_fn(prompt):
@@ -243,24 +246,25 @@ class BuilderTests(unittest.TestCase):
                 patch.object(builder, "configured_path", wraps=builder.configured_path) as configured_lookup,
                 patch.object(builder, "verify_rom", side_effect=verify),
                 patch.object(builder, "_confirm", return_value=True),
-                patch.object(builder, "build", return_value=root / "out.zip"),
+                patch.object(builder, "build", return_value=root / "out.zip") as build,
             ):
                 self.assertEqual(builder.main(input_fn), 0)
             load.assert_called_once_with(builder.ROOT / "config" / "rom_paths.toml")
             self.assertEqual([call.args for call in configured_lookup.call_args_list],
-                             [(configured, "rom", "red"), (configured, "rom", "blue")])
-            self.assertEqual([event[0] for event in events], ["verify", "verify"])
-            self.assertEqual([event[1] for event in events[:2]], ["red", "blue"])
+                             [(configured, "rom", "red"), (configured, "rom", "blue"), (configured, "rom", "yellow")])
+            self.assertEqual([event[0] for event in events], ["verify"] * 3)
+            self.assertEqual([event[1] for event in events[:3]], ["red", "blue", "yellow"])
             self.assertFalse(any("localized" in prompt.lower() for prompt in prompts))
+            self.assertEqual(build.call_args.kwargs["yellow_rom"], yellow)
 
     def test_main_japanese_uses_same_red_blue_prompts(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            red, blue = (root / name for name in ("red.gb", "blue.gb"))
-            for rom in (red, blue):
+            red, blue, yellow = (root / name for name in ("red.gb", "blue.gb", "yellow.gb"))
+            for rom in (red, blue, yellow):
                 rom.write_bytes(b"rom")
-            configured = {"rom": {"red": red, "blue": blue}}
-            answers = iter(("", "", "5"))
+            configured = {"rom": {"red": red, "blue": blue, "yellow": yellow}}
+            answers = iter(("", "", "", "5"))
             with (
                 patch.object(builder, "check_prerequisites", return_value="luajit"),
                 patch.object(builder, "load_rom_paths", return_value=configured),
@@ -269,17 +273,18 @@ class BuilderTests(unittest.TestCase):
                 patch.object(builder, "build", return_value=root / "out.zip"),
             ):
                 self.assertEqual(builder.main(lambda prompt: next(answers)), 0)
-            self.assertEqual(configured["rom"].keys(), {"red", "blue"})
+            self.assertEqual(configured["rom"].keys(), {"red", "blue", "yellow"})
 
     def test_main_explicit_pokemon_profile_warns(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            red, blue = (root / name for name in ("red.gb", "blue.gb"))
+            red, blue, yellow = (root / name for name in ("red.gb", "blue.gb", "yellow.gb"))
             red.write_bytes(b"rom")
             blue.write_bytes(b"rom")
-            configured = {"rom": {"red": red, "blue": blue}}
+            yellow.write_bytes(b"rom")
+            configured = {"rom": {"red": red, "blue": blue, "yellow": yellow}}
             output = io.StringIO()
-            answers = iter(("", "", "1"))
+            answers = iter(("", "", "", "1"))
             with redirect_stdout(output):
                 with patch.object(builder, "check_prerequisites", return_value="luajit"), \
                     patch.object(builder, "load_rom_paths", return_value=configured), \
@@ -317,7 +322,7 @@ class BuilderTests(unittest.TestCase):
         )
         self.assertEqual(
             builder._engine_overrides_path("es"),
-            builder.ROOT / "overrides" / "es" / "engine_overrides.json",
+            builder.ROOT / "overrides" / "es" / "shared_engine_overrides.json",
         )
         self.assertTrue(builder._corpus_overrides_path("fr").is_file())
         self.assertTrue(builder._engine_overrides_path("it").is_file())
