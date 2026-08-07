@@ -303,14 +303,22 @@ engine-original translations such as `FOE`, the four gameplay templates with
 no compatible PokeCorpus source, and the Options/launcher labels.
 
 Yellow ROM coverage excludes empty extracted labels that do not render text.
-The Italian stat-change message is counted as covered by composition: its
-`MonsStatsRoseText`, `GreatlyRoseText`, `GreatlyFellText`, and `RoseText`
-fragments produce the complete translated sentence in game, even though some
-individual corpus entries contain only continuation markers or a prompt.
+Italian's `RoseText` dialogue label is counted as covered by a verified,
+harmless exception, not a composed sentence: reading
+`src/battle/MoveEffects.lua`'s `changeStage` (the sole code path for every
+battle stat-stage message, moves and items alike) confirms the recompiled
+engine never reads `RoseText` or its sibling ROM fragments
+(`MonsStatsRoseText`, `GreatlyRoseText`, `GreatlyFellText`) at runtime — they
+are leftover text-bank entries from the original cartridge, where the stock
+engine printed several short text IDs back to back to build one line. The
+actual on-screen message comes from four fixed `Strings()` engine literals
+(`%s's\n%s rose!` and its greatly-rose/fell variants), translated
+independently in `overrides/it/shared_engine_overrides.json`. `RoseText`'s own
+translation status therefore has no effect on what the player sees.
 Other language-specific empty fragments, such as Italian `DexRatingText` and
 the omitted preposition in `IntoText`, must not be treated as missing
-standalone sentences without checking the corresponding screen. The
-composition decision is a reviewed exception recorded in
+standalone sentences without checking the corresponding screen. The exception
+is a reviewed, sourced decision recorded in
 [`config/yellow_composition_overrides.json`](config/yellow_composition_overrides.json),
 not a blind single-key override.
 
