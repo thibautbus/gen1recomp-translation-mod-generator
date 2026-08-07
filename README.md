@@ -71,7 +71,7 @@ before cloning pinned repositories. After validation, it:
    candidate archive, and atomically publishes it to `dist/`.
 
 The final file is `dist/translation-<lang>-<version>.zip` (for example
-`dist/translation-fr-0.5.0.zip`); the command prints its absolute path.
+`dist/translation-fr-0.6.0.zip`); the command prints its absolute path.
 
 ### Optional local path configuration
 
