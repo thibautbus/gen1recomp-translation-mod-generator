@@ -130,7 +130,7 @@ produces a single version-aware mod:
   the dialogue/catalog breakdown and Yellow-specific diff remain available in
   the generated JSON.
   Shared labels are counted through the common Red/Blue catalogs, not
-  duplicated. The current pinned corpus produces 487, 646, 645, 486 and 490
+  duplicated. The current pinned corpus produces 487, 646, 640, 486 and 485
   differing Yellow dialogue layer entries for French, German, Spanish, Italian
   and Japanese, respectively.
   The remaining direct item-name corpus gaps reuse the translated common
@@ -310,8 +310,9 @@ individual corpus entries contain only continuation markers or a prompt.
 Other language-specific empty fragments, such as Italian `DexRatingText` and
 the omitted preposition in `IntoText`, must not be treated as missing
 standalone sentences without checking the corresponding screen. The
-composition decision is recorded by the builder; no blind single-key override
-is applied.
+composition decision is a reviewed exception recorded in
+[`config/yellow_composition_overrides.json`](config/yellow_composition_overrides.json),
+not a blind single-key override.
 
 `RBY-related engine strings` counts 249 keys from Gen1Recomp v0.1.72's
 638-key engine universe whose
@@ -373,6 +374,7 @@ Every translated engine string remains traceable:
 | Manual translation — engine contract gap | PokeCorpus has the text, but Gen1Recomp merges contexts or hides required parameters. | `overrides/<language>/shared_engine_overrides.json`, `reason: "engine-contract-gap"` |
 | Manual translation — engine original | Engine-specific text with no Red/Blue source. | `overrides/<language>/shared_engine_overrides.json`, `reason: "engine-original"` |
 | Editorial correction | Deliberately preferred engine formulation. | `overrides/<language>/shared_engine_overrides.json`, `reason: "editorial-correction"` |
+| Manual translation — Yellow-only engine text | Engine-authored, Yellow-exclusive text (Surfing Pikachu minigame HUD) with no PokeCorpus source; applied only when `GameVersion.isYellow()`. | `overrides/<language>/yellow_engine_overrides.json`, `reason: "yellow-only-engine-text"` |
 | Known limitation | Active anchor/override knowingly imperfect in a context or language; a status, not an origin. | Anchor metadata or override provenance |
 | English fallback | No sufficiently reliable translation; runtime keeps English. | Generation report |
 
@@ -503,7 +505,10 @@ ambiguous recipes leave the English handler active.
 | Module | Responsibility |
 | --- | --- |
 | `pipeline/cli.py` | Defines `parse`, `align`, `generate`, `validate`, and ROM import commands. |
-| `pipeline/corpus.py` | Reads RedBlue files, canonicalizes languages, validates cardinality, and produces records. |
+| `pipeline/builder.py` | Interactive, end-to-end builder: ROM import, corpus matching, the Yellow layer, packaging, and the CLI prompt flow (`build_translation.py`'s entry point). |
+| `pipeline/gui.py` | Tkinter front end that drives `pipeline.builder` in a background thread with a status/log view. |
+| `pipeline/project.py` | Resource/work root resolution (frozen vs. source checkout), pinned `pyproject.toml`/`config/pipeline.toml` metadata. |
+| `pipeline/corpus.py` | Reads RedBlue and Yellow parallel corpus files, canonicalizes languages, validates cardinality, and produces records. |
 | `pipeline/model.py` | Shared `CorpusRecord` and `Alignment` structures. |
 | `pipeline/align.py` | Pairs by qid, applies `corpus_overrides`, and writes aligned data. |
 | `pipeline/worksheet.py` | Loads and writes versioned `corpus_overrides` documents. |
@@ -513,8 +518,12 @@ ambiguous recipes leave the English handler active.
 | `pipeline/literals.py` | Generates qid-driven handlers for Lua literals. |
 | `pipeline/tokens.py` | Converts corpus control tokens and validates placeholders. |
 | `pipeline/mod.py` | Writes Modkit Lua catalogs, manifest, worksheets, and coverage report. |
+| `pipeline/yellow.py` | Builds the versioned Yellow dialogue layer (shared-safe / translation-variant / versioned-required / yellow-only classification). |
+| `pipeline/yellow_audit.py` | Writes the independent `.cache/audit/yellow/<language>.json` Yellow matrix. |
 | `pipeline/validate.py` | Checks placeholders, glyphs, versions, ROM gate, and engine diagnostics. |
-| `pipeline/roms.py` | Verifies hashes and imports private Red/Blue caches. |
+| `pipeline/rom_paths.py` | Loads and validates the optional private `config/rom_paths.toml` (red/blue/yellow paths). |
+| `pipeline/roms.py` | Verifies hashes and imports private Red/Blue/Yellow ROM caches. |
+| `pipeline/dependencies.py` | Downloads and SHA-256-verifies the pinned Gen1Recomp/PokeCorpus/font archives used by the frozen standalone build. |
 | `pipeline/disassembly_audit.py` | Parses private localized disassembly snapshots into audit reports. |
 | `pipeline/engine_backlog.py` | Read-only analyzer for unresolved engine keys, scope, placeholders, fallbacks, and qid candidates. |
 

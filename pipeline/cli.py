@@ -24,9 +24,9 @@ def main(argv=None) -> int:
     gen = sub.add_parser("generate"); gen.add_argument("aligned"); gen.add_argument("-o", "--output", required=True); gen.add_argument("--mod-id", default=None); gen.add_argument("--target-name", default=None); gen.add_argument("--target-lang", default=None); gen.add_argument(*corpus_overrides_option, dest="corpus_overrides"); gen.add_argument("--modkit-worksheet"); gen.add_argument("--engine-catalog"); gen.add_argument("--engine-overrides", default=None); gen.add_argument("--engine-source"); gen.add_argument("--engine-scope"); gen.add_argument("--font-source"); gen.add_argument("--font-profile", choices=("fusion", "pokemon"), default="fusion"); gen.add_argument("--semantic-anchors"); gen.add_argument("--semantic-anchor-decisions"); gen.add_argument("--report")
     refresh = sub.add_parser("refresh"); refresh.add_argument("aligned"); refresh.add_argument("--mod", required=True); refresh.add_argument(*corpus_overrides_option, dest="corpus_overrides")
     val = sub.add_parser("validate"); val.add_argument("aligned"); val.add_argument("--release", action="store_true"); val.add_argument("--version", choices=("red", "blue")); val.add_argument("--report"); val.add_argument("--charmap", help="JSON glyph->byte map required for release"); val.add_argument("--coverage", help="modkit join coverage JSON required for release")
-    cat = sub.add_parser("catalog"); cat.add_argument("--red", required=True); cat.add_argument("--blue", required=True); cat.add_argument("-o", "--output", required=True)
-    imp = sub.add_parser("import"); imp.add_argument("version", choices=("red", "blue")); imp.add_argument("rom"); imp.add_argument("--gen1recomp", required=True); imp.add_argument("--out", required=True); imp.add_argument("--assets", required=True)
-    all_imp = sub.add_parser("import-all"); all_imp.add_argument("--red", required=True); all_imp.add_argument("--blue", required=True); all_imp.add_argument("--gen1recomp", required=True); all_imp.add_argument("--cache-root", required=True)
+    cat = sub.add_parser("catalog"); cat.add_argument("--red", required=True); cat.add_argument("--blue", required=True); cat.add_argument("--yellow"); cat.add_argument("-o", "--output", required=True)
+    imp = sub.add_parser("import"); imp.add_argument("version", choices=("red", "blue", "yellow")); imp.add_argument("rom"); imp.add_argument("--gen1recomp", required=True); imp.add_argument("--out", required=True); imp.add_argument("--assets", required=True)
+    all_imp = sub.add_parser("import-all"); all_imp.add_argument("--red", required=True); all_imp.add_argument("--blue", required=True); all_imp.add_argument("--yellow"); all_imp.add_argument("--gen1recomp", required=True); all_imp.add_argument("--cache-root", required=True)
     sub.add_parser("audit-disassemblies", help="developer-only private localized disassembly audit")
     backlog = sub.add_parser("engine-backlog", help="developer-only private unresolved engine-string backlog")
     backlog.add_argument("--language", "--target-lang", dest="language", default=None)
@@ -44,11 +44,17 @@ def main(argv=None) -> int:
     matrix.add_argument("--engine-catalog", action="append", metavar="LANG=PATH", help="explicit per-language strings.lua scaffold (repeatable)")
     args = p.parse_args(argv)
     if args.command == "catalog":
-        catalog_roms({"red": args.red, "blue": args.blue}, args.output); return 0
+        roms = {"red": args.red, "blue": args.blue}
+        if args.yellow:
+            roms["yellow"] = args.yellow
+        catalog_roms(roms, args.output); return 0
     if args.command == "import":
         import_rom(args.version, args.rom, args.gen1recomp, args.out, args.assets); return 0
     if args.command == "import-all":
-        import_all({"red": args.red, "blue": args.blue}, args.gen1recomp, args.cache_root); return 0
+        roms = {"red": args.red, "blue": args.blue}
+        if args.yellow:
+            roms["yellow"] = args.yellow
+        import_all(roms, args.gen1recomp, args.cache_root); return 0
     if args.command == "audit-disassemblies":
         run_audit()
         return 0

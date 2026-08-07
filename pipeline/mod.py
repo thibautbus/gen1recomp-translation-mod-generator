@@ -17,6 +17,31 @@ from .literals import load_recipes, generate_handlers
 
 CATALOGS = ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels", "type_names", "demo_names")
 
+# Shared between the standalone main.lua this module generates and the
+# scaffold-splice injection in pipeline/builder.py's preserve_scaffold_support
+# — one source of truth so the two injection sites cannot drift apart.
+YELLOW_CATALOG_HOOKS: dict[str, str] = {
+    "dialogue": 'each("dialogue_yellow", function(id, value) mod.content.text:override(id, value) end)',
+    "strings": 'each("strings_yellow", function(id, value) mod.content.strings:override(id, value) end)',
+    "species_names": 'each("species_names_yellow", function(id, value) mod.content.pokemon:patch(id, { name = value }) end)',
+    "move_names": 'each("move_names_yellow", function(id, value) mod.content.moves:patch(id, { name = value }) end)',
+    "item_names": 'each("item_names_yellow", function(id, value) mod.content.items:patch(id, { name = value }) end)',
+    "trainer_names": 'each("trainer_names_yellow", function(id, value) mod.content.trainers:patch(id, { name = value }) end)',
+    "status_labels": 'each("status_labels_yellow", function(id, value) mod.content.statuses:patch(id, { label = value }) end)',
+}
+
+
+def yellow_isyellow_guard_lines() -> str:
+    """The shared ``GameVersion.isYellow()`` pcall guard, defining a local
+    ``yellow_game_version`` boolean. Callers append their own
+    ``if yellow_game_version then ... end`` block after this."""
+    return (
+        '  local okGame, GameVersion = pcall(require, "src.core.GameVersion")\n'
+        "  local yellow_game_version = okGame and type(GameVersion) == \"table\"\n"
+        "      and type(GameVersion.isYellow) == \"function\"\n"
+        "      and GameVersion.isYellow()\n"
+    )
+
 
 def effective_yellow_engine_coverage(engine_rby: dict, yellow_dialogue: dict[str, str] | None) -> dict:
     """Add corpus-backed Yellow dialogue fallbacks to engine coverage."""
@@ -58,7 +83,13 @@ def yellow_coverage_metrics(stats: dict) -> dict:
     dialogue = metric(dialogue_translated, dialogue_total)
     named_catalogs = metric(catalog_translated, catalog_total)
     diff_total = int(stats.get("layer_entries", 0))
-    diff_translated = max(0, diff_total - int(stats.get("unmatched", 0)))
+    # `stats["unmatched"]` counts both unmatched-versioned-fallback labels
+    # (which ARE present in the layer, as the ROM's own English text) and
+    # unmatched yellow-only labels (which are NEVER added to the layer).
+    # Subtracting the full count from `diff_total` therefore double-dips on
+    # the yellow-only ones. `stats["matched"]` already is the exact count of
+    # layer entries that carry a real translation, so use it directly.
+    diff_translated = int(stats.get("matched", 0))
     return {
         "rom": metric(dialogue_translated + catalog_translated,
                        dialogue_total + catalog_total),
@@ -429,11 +460,17 @@ end
 '''
 
 
-def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: str = "translation-fr", language: str = "fr", modkit_worksheet: str | Path | None = None, report_path: str | Path | None = None, engine_catalog: str | Path | None = None, engine_overrides: str | Path | None = None, strict_engine: bool = False, semantic_anchors: str | Path | None = None, semantic_anchor_decisions: str | Path | None = None, target_name: str | None = None, literal_handlers: str | Path | None = None, target_description: str | None = None, engine_source: str | Path | None = None, engine_scope: str | Path | None = None, font_source: str | Path | None = None, font_profile: str = "fusion", yellow_dialogue: dict[str, str] | None = None, yellow_stats: dict | None = None, yellow_catalogs: dict[str, dict[str, str]] | None = None, yellow_engine_overrides: dict[str, str] | None = None) -> Path:
+def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: str = "translation-fr", language: str = "fr", modkit_worksheet: str | Path | None = None, report_path: str | Path | None = None, engine_catalog: str | Path | None = None, engine_overrides: str | Path | None = None, strict_engine: bool = False, semantic_anchors: str | Path | None = None, semantic_anchor_decisions: str | Path | None = None, target_name: str | None = None, literal_handlers: str | Path | None = None, target_description: str | None = None, engine_source: str | Path | None = None, engine_scope: str | Path | None = None, font_source: str | Path | None = None, font_profile: str = "fusion", yellow_dialogue: dict[str, str] | None = None, yellow_stats: dict | None = None, yellow_catalogs: dict[str, dict[str, str]] | None = None, yellow_engine_overrides: dict[str, str] | None = None, precomputed_join: tuple[dict, dict] | None = None) -> Path:
     """Generate a mod; ``strict_engine`` requires scaffold/catalog presence only.
 
     It does not require complete engine translations: unresolved entries remain
     empty and the game uses its English fallback.
+
+    ``precomputed_join`` lets a caller that already ran ``join_catalogs`` on
+    the same ``items``/``modkit_worksheet`` pass the ``(joined, join_report)``
+    result through instead of paying for the same match pass twice — the
+    universal-mod builder needs this join anyway to diff against the Yellow
+    catalogs. Ignored when ``modkit_worksheet`` is not given.
     """
     language = canonical_language(language)
     font_profile = validate_font_profile(language, font_profile)
@@ -455,7 +492,10 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         require_worksheets(modkit_worksheet)
     if modkit_worksheet:
         worksheets = read_worksheets(modkit_worksheet)
-        joined, join_report = join_catalogs(rows, worksheets, language)
+        if precomputed_join is not None:
+            joined, join_report = precomputed_join
+        else:
+            joined, join_report = join_catalogs(rows, worksheets, language)
         if engine_catalog is None and strict_engine:
             engine_catalog = Path(modkit_worksheet) / "strings.lua"
     if engine_catalog:
@@ -607,23 +647,12 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         yellow_hook = (
             "  -- Yellow layer: versioned and Yellow-only catalogs, applied only\n"
             "  -- when running Pokemon Yellow.\n"
-            "  local okGame, GameVersion = pcall(require, \"src.core.GameVersion\")\n"
-            "  if okGame and type(GameVersion) == \"table\"\n"
-            "      and type(GameVersion.isYellow) == \"function\"\n"
-            "      and GameVersion.isYellow() then\n"
+            + yellow_isyellow_guard_lines()
+            + "  if yellow_game_version then\n"
         )
-        hooks = {
-            "dialogue": 'each("dialogue_yellow", function(id, value) mod.content.text:override(id, value) end)',
-            "strings": 'each("strings_yellow", function(id, value) mod.content.strings:override(id, value) end)',
-            "species_names": 'each("species_names_yellow", function(id, value) mod.content.pokemon:patch(id, {name = value}) end)',
-            "move_names": 'each("move_names_yellow", function(id, value) mod.content.moves:patch(id, {name = value}) end)',
-            "item_names": 'each("item_names_yellow", function(id, value) mod.content.items:patch(id, {name = value}) end)',
-            "trainer_names": 'each("trainer_names_yellow", function(id, value) mod.content.trainers:patch(id, {name = value}) end)',
-            "status_labels": 'each("status_labels_yellow", function(id, value) mod.content.statuses:patch(id, {label = value}) end)',
-        }
         for name in CATALOGS:
             if name in yellow_catalogs:
-                yellow_hook += f"    {hooks[name]}\n"
+                yellow_hook += f"    {YELLOW_CATALOG_HOOKS[name]}\n"
         yellow_hook += "  end\n"
         main_body = main_body.replace("__YELLOW_DIALOGUE_REGISTRATION__", yellow_hook)
     else:

@@ -10,25 +10,25 @@
       "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short label, %d preserved."
     },
     "New record!": {
-      "override": "¡NUEVO RECORD!",
+      "override": "¡Nuevo récord!",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short HUD label; no dynamic parameter."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short HUD label; no dynamic parameter. Sentence case matches the English source (\"New record!\"); \"récord\" accented per standard Spanish spelling (cf. es CLÁSICO/ÁRBOLES elsewhere in shared_engine_overrides.json — the es GB font supports accented uppercase, so accents are not dropped)."
     },
     "A: done": {
-      "override": "A: TERMINAR",
+      "override": "A: Terminar",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short HUD label; no dynamic parameter."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short HUD label; no dynamic parameter. Case matches the English source (\"A: done\", lowercase word); not an all-caps engine constant."
     },
     "HI    %d": {
-      "override": "RECORD    %d",
+      "override": "RÉCORD    %d",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short label, %d preserved."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short label, %d preserved. Accented per standard Spanish spelling; the es GB font supports accented uppercase (cf. CLÁSICO/ÁRBOLES)."
     }
   }
 }

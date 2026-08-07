@@ -628,10 +628,6 @@ EXPECTED = {
 }
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class YellowCorpusTests(unittest.TestCase):
     """Yellow corpus reader: line-count parity, qid preservation, game scope."""
 
@@ -678,3 +674,50 @@ class YellowCorpusTests(unittest.TestCase):
             self.assertEqual(scopes, {("rb.text.Shard^B", "blue"), ("rb.text.Shared", "both")})
             # The redblue wrapper delegates to the generic reader.
             self.assertEqual(read_parallel_game(corpus, "fr", "redblue"), records)
+
+
+class YellowCliTests(unittest.TestCase):
+    """CLI import/import-all/catalog accept a Yellow ROM, matching pipeline/roms.py."""
+
+    def test_import_accepts_yellow_version(self):
+        with patch("pipeline.cli.import_rom") as import_rom:
+            self.assertEqual(cli_main([
+                "import", "yellow", "rom.gb",
+                "--gen1recomp", "gen1recomp", "--out", "out", "--assets", "assets",
+            ]), 0)
+        import_rom.assert_called_once_with("yellow", "rom.gb", "gen1recomp", "out", "assets")
+
+    def test_catalog_includes_yellow_when_given(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "catalog.json"
+            with patch("pipeline.cli.catalog_roms") as catalog_roms:
+                self.assertEqual(cli_main([
+                    "catalog", "--red", "red.gb", "--blue", "blue.gb",
+                    "--yellow", "yellow.gb", "-o", str(output),
+                ]), 0)
+            catalog_roms.assert_called_once_with(
+                {"red": "red.gb", "blue": "blue.gb", "yellow": "yellow.gb"}, str(output),
+            )
+
+    def test_catalog_omits_yellow_when_not_given(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "catalog.json"
+            with patch("pipeline.cli.catalog_roms") as catalog_roms:
+                self.assertEqual(cli_main([
+                    "catalog", "--red", "red.gb", "--blue", "blue.gb", "-o", str(output),
+                ]), 0)
+            catalog_roms.assert_called_once_with({"red": "red.gb", "blue": "blue.gb"}, str(output))
+
+    def test_import_all_includes_yellow_when_given(self):
+        with patch("pipeline.cli.import_all") as import_all:
+            self.assertEqual(cli_main([
+                "import-all", "--red", "red.gb", "--blue", "blue.gb", "--yellow", "yellow.gb",
+                "--gen1recomp", "gen1recomp", "--cache-root", "cache",
+            ]), 0)
+        import_all.assert_called_once_with(
+            {"red": "red.gb", "blue": "blue.gb", "yellow": "yellow.gb"}, "gen1recomp", "cache",
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

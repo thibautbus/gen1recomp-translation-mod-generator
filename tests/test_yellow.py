@@ -64,6 +64,9 @@ class YellowDialogueLayerTests(unittest.TestCase):
         )
         self.assertEqual(layer["_BattleCryText"], "Ahh!")
         self.assertEqual(stats["translation_variant"], 1)
+        # Regression: a translation-variant label must not also inflate
+        # versioned_required — the two counters must stay mutually exclusive.
+        self.assertEqual(stats["versioned_required"], 0)
 
     def test_versioned_and_yellow_only_labels_are_emitted(self):
         red = {"_OakSpeechText1": "Hello there!\nWelcome."}
@@ -122,13 +125,27 @@ class YellowCoverageTests(unittest.TestCase):
     def test_yellow_coverage_counts_dialogue_and_named_catalogs(self):
         metrics = yellow_coverage_metrics({
             "yellow_labels": 10, "layer_entries": 4,
-            "unmatched": 1,
+            "matched": 3, "unmatched": 1,
             "catalogs": {"species_names": {"matched": 4, "total": 5}},
         })
         self.assertEqual(metrics["dialogue"], {"translated": 9, "total": 10, "percent": 90.0})
         self.assertEqual(metrics["named_catalogs"], {"translated": 4, "total": 5, "percent": 80.0})
         self.assertEqual(metrics["rom"], {"translated": 13, "total": 15, "percent": 86.67})
         self.assertEqual(metrics["specific_diff"], {"translated": 3, "total": 4, "percent": 75.0})
+
+    def test_yellow_coverage_specific_diff_excludes_yellow_only_unmatched(self):
+        # Regression: stats["unmatched"] counts both unmatched-versioned
+        # labels (present in the layer as a ROM-English fallback) and
+        # unmatched yellow-only labels (never added to the layer at all).
+        # Here layer_entries=4 already excludes 1 unmatched yellow-only
+        # label, so subtracting the full unmatched count from layer_entries
+        # would wrongly report 3/4 translated instead of the true 4/4.
+        metrics = yellow_coverage_metrics({
+            "yellow_labels": 10, "layer_entries": 4,
+            "matched": 4, "unmatched": 1,
+            "catalogs": {},
+        })
+        self.assertEqual(metrics["specific_diff"], {"translated": 4, "total": 4, "percent": 100.0})
 
     def test_yellow_coverage_uses_effective_common_catalog_fallbacks(self):
         metrics = yellow_coverage_metrics({
@@ -185,10 +202,6 @@ class YellowJoinReportTests(unittest.TestCase):
         )
         self.assertEqual(len(layer), 2)
         self.assertEqual(stats["join_report"]["matched"], 2)
-
-
-if __name__ == "__main__":
-    unittest.main()
 
 
 class YellowAuditTests(unittest.TestCase):
@@ -255,6 +268,34 @@ class UniversalBuildTests(unittest.TestCase):
             self.assertIn('"A: FINI"', (mod / "lang" / "strings_yellow.lua").read_text(encoding="utf-8"))
             report = json.loads((root / "report.json").read_text(encoding="utf-8"))
             self.assertEqual(report["yellow"]["layer"]["layer_entries"], 1)
+
+    def test_generate_mod_reuses_precomputed_join_instead_of_rejoining(self):
+        # The universal-mod builder already runs join_catalogs once (to diff
+        # Red/Blue against Yellow) before calling generate_mod; passing that
+        # result through as precomputed_join must skip the second, redundant
+        # match pass over the same rows/worksheet.
+        from unittest.mock import patch
+        from pipeline.corpus import parse_redblue
+        from pipeline.mod import generate_mod
+        from pipeline.join import join_catalogs, read_worksheets
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            corpus = root / "RedBlue"
+            corpus.mkdir(parents=True)
+            (corpus / "qid_msg.txt").write_text("rb.text.HelloText\n", encoding="utf-8")
+            (corpus / "en_msg.txt").write_text("Hello\n", encoding="utf-8")
+            (corpus / "fr_msg.txt").write_text("Bonjour\n", encoding="utf-8")
+            rows = align(parse_redblue(corpus, "fr"), target_lang="fr")
+            worksheet = self._write_minimal_worksheet(root)
+            worksheets = read_worksheets(worksheet)
+            joined, join_report = join_catalogs(rows, worksheets, "fr")
+            mod = root / "mod"
+            with patch("pipeline.mod.join_catalogs") as mocked_join:
+                generate_mod(rows, mod, mod_id="translation-fr", language="fr",
+                             modkit_worksheet=worksheet,
+                             precomputed_join=(joined, join_report))
+            mocked_join.assert_not_called()
+            self.assertTrue((mod / "lang" / "dialogue.lua").is_file())
 
     def test_generate_mod_removes_stale_yellow_catalogs(self):
         from pipeline.corpus import parse_redblue
@@ -371,3 +412,62 @@ class YellowAuditFallbackTests(unittest.TestCase):
             self.assertTrue(entry["rom_fallback"])
             self.assertIn("_RivalIntroText", audit["unmatched_labels"])
             self.assertEqual(audit["statuses"]["unmatched"], 1)
+
+    def test_translation_equal_to_english_is_not_misclassified_as_fallback(self):
+        # Regression: a genuine corpus translation can legitimately equal the
+        # ROM's own English content — e.g. a pure RAM-token placeholder with
+        # nothing to translate, such as "{RAM:wBattleMonNick} ". The old
+        # `fr == yellow_text.get(label)` heuristic flagged this as an
+        # untranslated ROM fallback; it must be reported as translated.
+        import json
+        from pipeline.yellow_audit import write_yellow_audit
+        content = "{RAM:wBattleMonNick} "
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            red_text = {"_PlayerMon2Text": content}
+            yellow_text = {"_PlayerMon2Text": content}
+            records = [
+                Alignment("y.text.PlayerMon2Text", "yellow",
+                          CorpusRecord("y.text.PlayerMon2Text", "en", content, "yellow", "en"),
+                          CorpusRecord("y.text.PlayerMon2Text", "fr", content, "yellow", "fr"),
+                          "anchor"),
+            ]
+            out = root / "audit"
+            path = write_yellow_audit(Path("red.lua"), Path("yellow.lua"), records, "fr", out,
+                                      red_text=red_text, yellow_text=yellow_text,
+                                      red_translation={})
+            audit = json.loads(path.read_text(encoding="utf-8"))
+            entry = audit["translation_variants"][0]
+            self.assertTrue(entry["translated"])
+            self.assertFalse(entry["rom_fallback"])
+            self.assertNotIn("_PlayerMon2Text", audit["unmatched_labels"])
+
+
+class YellowCompositionOverridesTests(unittest.TestCase):
+    def test_loads_entries_as_frozensets_per_language(self):
+        from pipeline.builder import load_yellow_composition_overrides
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "yellow_composition_overrides.json"
+            path.write_text(
+                '{"schema": "x", "version": 1, "entries": '
+                '{"it": {"_RoseText": {"reason": "composition"}}}}',
+                encoding="utf-8",
+            )
+            overrides = load_yellow_composition_overrides(path)
+        self.assertEqual(overrides, {"it": frozenset({"_RoseText"})})
+
+    def test_missing_file_returns_empty_mapping(self):
+        from pipeline.builder import load_yellow_composition_overrides
+        self.assertEqual(load_yellow_composition_overrides(Path("/nonexistent.json")), {})
+
+    def test_repo_config_matches_expected_italian_entry(self):
+        from pipeline.builder import load_yellow_composition_overrides
+        from pipeline.project import resource_root
+        overrides = load_yellow_composition_overrides(
+            resource_root() / "config" / "yellow_composition_overrides.json"
+        )
+        self.assertEqual(overrides.get("it"), frozenset({"_RoseText"}))
+
+
+if __name__ == "__main__":
+    unittest.main()

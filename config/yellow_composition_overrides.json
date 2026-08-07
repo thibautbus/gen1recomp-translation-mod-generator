@@ -1,0 +1,14 @@
+{
+  "schema": "gen1recomp-translation-mods/yellow-composition-overrides",
+  "version": 1,
+  "description": "Human-reviewed exceptions for the Yellow dialogue coverage metric: a label whose own Yellow ROM extraction is not independently translatable (e.g. it carries only a continuation marker or a prompt) but that is proven fully translated in-game because the engine renders it as part of a larger composed sentence together with sibling labels that do carry real corpus-backed translations. This mirrors the review discipline of config/semantic_anchor_decisions.json's \"composition\" decisions, but stays a separate file: those decisions derive an actual translated *value* for the ROM/engine string catalogs via the anchor extraction DSL, while entries here only credit the Yellow coverage *metric* for a label that the dialogue layer itself intentionally leaves untranslated (see pipeline/builder.py's effective_dialogue_translated).",
+  "entries": {
+    "it": {
+      "_RoseText": {
+        "reason": "composition",
+        "rationale": "The Italian stat-change message is assembled in-game from the _MonsStatsRoseText, _GreatlyRoseText, _GreatlyFellText and _RoseText dialogue fragments in sequence. _RoseText's own Yellow ROM content is a short continuation punctuation mark with no independent corpus match, but the full composed sentence renders correctly translated on screen.",
+        "fragments": ["_MonsStatsRoseText", "_GreatlyRoseText", "_GreatlyFellText", "_RoseText"]
+      }
+    }
+  }
+}

@@ -61,6 +61,17 @@ def write_yellow_audit(
             red_text, yellow_text, rows, language, red_translation=red_translation
         )
 
+    # yellow_dialogue_layer already knows, authoritatively, which labels got
+    # no real corpus translation (it explicitly tracks them while building
+    # the layer). Use that list rather than re-deriving it here from value
+    # equality: a genuine translation can legitimately equal the ROM's own
+    # English content (e.g. a pure RAM-token placeholder with nothing to
+    # translate, such as "{RAM:wBattleMonNick} "), which `fr ==
+    # yellow_text.get(label)` cannot distinguish from an actual untranslated
+    # ROM fallback — that false positive previously mislabeled real
+    # translations as "rom_fallback"/"unmatched".
+    unmatched_from_stats = set(stats.get("unmatched_labels", ()))
+
     yellow_only = []
     versioned = []
     translation_variants = []
@@ -72,10 +83,7 @@ def write_yellow_audit(
         if red_content == content and label not in layer:
             continue
         fr = layer.get(label)
-        # A versioned-required label without a corpus match ships the ROM's
-        # own Yellow content (the English fallback), not a translation — the
-        # audit must not report that as translated.
-        is_rom_fallback = fr is not None and red_content is not None and fr == yellow_text.get(label)
+        is_rom_fallback = fr is not None and label in unmatched_from_stats
         entry = {
             "label": label,
             "yellow_only": red_content is None,
@@ -93,7 +101,7 @@ def write_yellow_audit(
             translation_variants.append(entry)
         else:
             versioned.append(entry)
-        if not fr or is_rom_fallback:
+        if not fr or label in unmatched_from_stats:
             unmatched.append(label)
 
     deferred = []

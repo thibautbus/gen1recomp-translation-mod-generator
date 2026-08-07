@@ -131,14 +131,19 @@ def yellow_dialogue_layer(
     unmatched_labels: list[str] = []
     for label, translation in yellow_fr.items():
         red_content = red_text.get(label)
+        is_translation_variant = False
         if red_content is not None and red_content == yellow_text.get(label):
             if red_translation is None or red_translation.get(label, "") == translation:
                 stats["shared_safe"] += 1
                 continue
             stats["translation_variant"] += 1
+            is_translation_variant = True
         if red_content is None:
             stats["yellow_only"] += 1
-        else:
+        elif not is_translation_variant:
+            # A translation-variant label is already counted above; it must
+            # not also inflate versioned_required (both counters would then
+            # double-count the same label).
             stats["versioned_required"] += 1
         if translation:
             stats["matched"] += 1

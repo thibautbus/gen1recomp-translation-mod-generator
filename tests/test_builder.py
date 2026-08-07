@@ -751,5 +751,34 @@ class BuilderTests(unittest.TestCase):
         self.assertIn(f"active virtual environment is {environment}", hint)
         self.assertIn(f'"{expected}" build_translation.py', hint)
 
+    def test_ensure_dependency_rejects_multi_prefix_in_frozen_archive_mode(self):
+        # Regression: a frozen build with more than one selective_prefix and
+        # no archive_files table used to hit a bare `assert`, which silently
+        # no-ops under `python -O` (extracting only the first prefix with no
+        # error) instead of failing loudly. It must now raise a real
+        # BuildError regardless of the -O flag.
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(builder, "is_frozen", return_value=True):
+                with self.assertRaises(builder.BuildError):
+                    builder._ensure_dependency(
+                        {"archive_url": "https://example.invalid/archive.zip", "archive_sha256": "0" * 64},
+                        Path(directory),
+                        selective_prefix=["corpus/RedBlue", "corpus/Yellow"],
+                    )
+
+    def test_ensure_dependency_allows_single_prefix_in_frozen_archive_mode(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with (
+                patch.object(builder, "is_frozen", return_value=True),
+                patch.object(builder, "fetch_archive", return_value=Path(directory)) as fetch,
+            ):
+                builder._ensure_dependency(
+                    {"archive_url": "https://example.invalid/archive.zip", "archive_sha256": "0" * 64},
+                    Path(directory),
+                    selective_prefix=["corpus/RedBlue"],
+                )
+            self.assertEqual(fetch.call_args.kwargs["selective_prefix"], "corpus/RedBlue")
+
+
 if __name__ == "__main__":
     unittest.main()

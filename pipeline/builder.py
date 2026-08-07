@@ -16,10 +16,12 @@ from .align import align, apply_corpus_overrides
 from .corpus import canonical_language, parse_redblue, parse_yellow
 from .mod import (
     FONT_PROFILES,
+    YELLOW_CATALOG_HOOKS,
     font_profile_warning,
     generate_mod,
     ttf_registration,
     validate_font_profile,
+    yellow_isyellow_guard_lines,
 )
 from .project import ROOT, is_frozen, project_config, project_version, resource_root, work_root
 from .dependencies import DependencyError, fetch_archive, fetch_files
@@ -35,9 +37,21 @@ LANGUAGES = (
     ("ja-Hrkt", "Japanese"),
 )
 
-# Italian Yellow stat messages compose the final wording across several ROM
-# fragments; RoseText is intentionally empty in that catalog.
-YELLOW_COMPOSITION_COVERED = {"it": frozenset({"_RoseText"})}
+def load_yellow_composition_overrides(path: str | Path) -> dict[str, frozenset[str]]:
+    """Load ``config/yellow_composition_overrides.json`` reviewed exceptions.
+
+    Mirrors the review discipline of ``config/semantic_anchor_decisions.json``:
+    each entry is a human-reviewed exception, not a blind override.  See that
+    file's ``description`` for why this stays a separate, smaller schema.
+    """
+    path = Path(path)
+    if not path.is_file():
+        return {}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return {
+        language: frozenset(labels)
+        for language, labels in (data.get("entries") or {}).items()
+    }
 
 FORBIDDEN_ARCHIVE_SUFFIXES = {
     ".gb", ".gbc", ".rom", ".ips", ".bps", ".ups", ".patch", ".diff",
@@ -192,10 +206,20 @@ def _ensure_dependency(config: dict, destination: Path, *, selective_prefix: str
             raise BuildError("Pinned archive URL and SHA-256 are required in config/pipeline.toml for standalone mode.")
         try:
             # fetch_archive extracts a single subtree; a multi-prefix request
-            # only makes sense for the git sparse-checkout path below, so
-            # scope the archive extraction to the first prefix (each pinned
-            # dependency ships one archive).
-            assert len(prefixes) <= 1, "fetch_archive supports a single selective prefix"
+            # only makes sense for the git sparse-checkout path below. This
+            # is a real BuildError, not an assert: an assert is silently
+            # stripped under `python -O`, which would make a frozen build
+            # extract only the first prefix (e.g. corpus/RedBlue) and drop
+            # the rest (corpus/Yellow) without any error at all. Callers with
+            # more than one prefix (the corpus) must instead be listed in
+            # config.toml's [*.archive_files] table for standalone mode.
+            if len(prefixes) > 1:
+                raise BuildError(
+                    "Standalone archive extraction supports a single selective "
+                    f"prefix; got {list(prefixes)!r}. Multi-prefix dependencies "
+                    "must use the archive_files table in config/pipeline.toml "
+                    "for standalone mode instead of subtree extraction."
+                )
             single = prefixes[0] if prefixes else None
             return fetch_archive(url, digest, destination, revision=str(config.get("revision", "")), selective_prefix=single, immutable_prefixes=("src",), trusted_tree_sha256=str(config.get("archive_tree_sha256", "")))
         except DependencyError as error:
@@ -527,23 +551,11 @@ def preserve_scaffold_support(
         if (mod / "lang" / f"{name}_yellow.lua").is_file()
     ]
     if yellow_names and "local yellow_game_version" not in scaffold_main:
-        apply_calls = {
-            "dialogue": 'each("dialogue_yellow", function(id, value) mod.content.text:override(id, value) end)',
-            "strings": 'each("strings_yellow", function(id, value) mod.content.strings:override(id, value) end)',
-            "species_names": 'each("species_names_yellow", function(id, value) mod.content.pokemon:patch(id, { name = value }) end)',
-            "move_names": 'each("move_names_yellow", function(id, value) mod.content.moves:patch(id, { name = value }) end)',
-            "item_names": 'each("item_names_yellow", function(id, value) mod.content.items:patch(id, { name = value }) end)',
-            "trainer_names": 'each("trainer_names_yellow", function(id, value) mod.content.trainers:patch(id, { name = value }) end)',
-            "status_labels": 'each("status_labels_yellow", function(id, value) mod.content.statuses:patch(id, { label = value }) end)',
-        }
         yellow_injection = (
             "\n  -- Injected: versioned catalogs for Pokémon Yellow.\n"
-            '  local okGame, GameVersion = pcall(require, "src.core.GameVersion")\n'
-            "  local yellow_game_version = okGame and type(GameVersion) == \"table\"\n"
-            "      and type(GameVersion.isYellow) == \"function\"\n"
-            "      and GameVersion.isYellow()\n"
-            "  if yellow_game_version then\n"
-            + "\n".join(f"    {apply_calls[name]}" for name in yellow_names)
+            + yellow_isyellow_guard_lines()
+            + "  if yellow_game_version then\n"
+            + "\n".join(f"    {YELLOW_CATALOG_HOOKS[name]}" for name in yellow_names)
             + "\n  end\n"
         )
         end = scaffold_main.rfind("\nend")
@@ -885,6 +897,8 @@ def build(
     yellow_stats = None
     yellow_catalogs: dict[str, dict[str, str]] = {}
     yellow_engine_values: dict[str, str] = {}
+    red_joined = None
+    red_join_report = None
     if yellow_rom is not None:
         log("\nBuilding Yellow dialogue layer...")
         status("Building Yellow dialogue layer")
@@ -894,7 +908,7 @@ def build(
         yellow_text = parse_text_catalog(gen1recomp / "yellow" / "data" / "generated" / "text.lua")
         yellow_rows = align(parse_yellow(corpus, language), target_lang=language)
         red_worksheets = read_worksheets(worksheet)
-        red_joined, _ = join_catalogs(rows, red_worksheets, language)
+        red_joined, red_join_report = join_catalogs(rows, red_worksheets, language)
         yellow_worksheets = read_worksheets(yellow_worksheet)
         yellow_joined, yellow_join_report = join_catalogs(
             yellow_rows, yellow_worksheets, language
@@ -927,7 +941,10 @@ def build(
         common_dialogue = red_joined.get("dialogue", {})
         yellow_dialogue_joined = yellow_joined.get("dialogue", {})
         unmatched_labels = set(yellow_stats.get("unmatched_labels", ()))
-        composition_covered = YELLOW_COMPOSITION_COVERED.get(language, frozenset())
+        composition_overrides = load_yellow_composition_overrides(
+            resource_root() / "config" / "yellow_composition_overrides.json"
+        )
+        composition_covered = composition_overrides.get(language, frozenset())
         yellow_stats["effective_dialogue_translated"] = sum(
             label not in unmatched_labels
             and (
@@ -943,8 +960,14 @@ def build(
         yellow_stats["composition_covered_labels"] = sorted(
             composition_covered & set(yellow_text)
         )
+        # A composition-covered label is credited unconditionally in the
+        # numerator above regardless of its own (possibly empty) ROM
+        # content, so it must be credited unconditionally in the
+        # denominator too — otherwise the numerator could exceed the
+        # denominator and report >100% coverage.
         yellow_stats["effective_dialogue_total"] = sum(
-            bool(content) for content in yellow_text.values()
+            bool(content) or label in composition_covered
+            for label, content in yellow_text.items()
         )
         effective_named = 0
         for name, entries in yellow_worksheets.items():
@@ -954,8 +977,8 @@ def build(
             common_values = red_joined.get(name, {})
             yellow_values = yellow_joined.get(name, {})
             effective_named += sum(
-                key in yellow_values
-                or (key in common_values and common_entries.get(key) == entry.english)
+                bool(yellow_values.get(key))
+                or (bool(common_values.get(key)) and common_entries.get(key) == entry.english)
                 for entry in entries
                 for key in (entry.key,)
             )
@@ -964,7 +987,7 @@ def build(
         if override_path:
             from .engine import check_printf_directives, load_engine_overrides, read_engine_catalog
             overrides = load_engine_overrides(override_path)
-            engine_catalog_values = read_engine_catalog(worksheet / "strings.lua")
+            engine_catalog_values = read_engine_catalog(yellow_worksheet / "strings.lua")
             for source, row in overrides.items():
                 if source not in engine_catalog_values:
                     raise BuildError(f"Yellow engine override contains unknown key: {source!r}")
@@ -1019,6 +1042,7 @@ def build(
         yellow_stats=yellow_stats,
         yellow_catalogs=yellow_catalogs,
         yellow_engine_overrides=yellow_engine_values,
+        precomputed_join=(red_joined, red_join_report) if red_joined is not None else None,
     )
     preserve_scaffold_support(scaffold, mod, language, font_source, font_profile)
 
