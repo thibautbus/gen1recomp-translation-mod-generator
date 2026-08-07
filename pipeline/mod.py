@@ -643,8 +643,8 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
     import json
     display_name = target_name or f"{language} translation"
     description = target_description or (
-        f"{display_name} for Pokémon Red, Blue and Yellow, generated from PokeCorpus. "
-        "Some special characters may not display correctly in game, and some text remains untranslated."
+        f"{display_name} for Pokémon Red, Blue and Yellow, based mostly on PokeCorpus. "
+        "Some engine-specific text remains untranslated."
     )
     manifest_body = {"id": mod_id, "name": display_name, "version": project_version(), "api": 2, "entry": "main.lua", "profile": "content", "game_version": ">=0.0.0-dev <1.0.0", "category": "GAMEPLAY", "priority": TRANSLATION_MOD_PRIORITY, "dependencies": [], "optional_dependencies": [], "conflicts": [], "description": description}
     manifest = json.dumps(manifest_body, ensure_ascii=False, indent=2) + "\n"

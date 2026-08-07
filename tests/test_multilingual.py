@@ -1437,7 +1437,7 @@ class MultilingualTests(unittest.TestCase):
             manifest = json.loads((mod / "manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["id"], mod_id)
             self.assertEqual(manifest["name"], target_name)
-            self.assertEqual(manifest["description"], f"{target_name} for Pokémon Red, Blue and Yellow, generated from PokeCorpus. Some special characters may not display correctly in game, and some text remains untranslated.")
+            self.assertEqual(manifest["description"], f"{target_name} for Pokémon Red, Blue and Yellow, based mostly on PokeCorpus. Some engine-specific text remains untranslated.")
             default_mod = generate_mod([row], Path(tmp) / "default")
             default_manifest = json.loads((default_mod / "manifest.json").read_text(encoding="utf-8"))
             described_mod = generate_mod(
@@ -1445,7 +1445,7 @@ class MultilingualTests(unittest.TestCase):
             )
             described_manifest = json.loads((described_mod / "manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(default_manifest["name"], "fr translation")
-        self.assertEqual(default_manifest["description"], "fr translation for Pokémon Red, Blue and Yellow, generated from PokeCorpus. Some special characters may not display correctly in game, and some text remains untranslated.")
+        self.assertEqual(default_manifest["description"], "fr translation for Pokémon Red, Blue and Yellow, based mostly on PokeCorpus. Some engine-specific text remains untranslated.")
         self.assertEqual(described_manifest["description"], "Use the supplied description.")
 
     def test_manifest_fallbacks_are_language_neutral_with_uniform_priority(self):
@@ -1459,7 +1459,7 @@ class MultilingualTests(unittest.TestCase):
 
         for language, code in expected_codes.items():
             self.assertEqual(manifests[language]["name"], f"{code} translation")
-            self.assertEqual(manifests[language]["description"], f"{code} translation for Pokémon Red, Blue and Yellow, generated from PokeCorpus. Some special characters may not display correctly in game, and some text remains untranslated.")
+            self.assertEqual(manifests[language]["description"], f"{code} translation for Pokémon Red, Blue and Yellow, based mostly on PokeCorpus. Some engine-specific text remains untranslated.")
             self.assertEqual(manifests[language]["priority"], 100)
 
 
