@@ -21,10 +21,34 @@ def reflow_for_display(text: str) -> str:
     return text
 
 
-def display_value(value: str, reflow_line_breaks: bool) -> str:
+def display_value(
+    value: str,
+    reflow_line_breaks: bool,
+    font_path: str | Path | None = None,
+    font_size: int | None = None,
+) -> str:
     """Apply the optional full-width reflow to a display string before it's
-    Lua-escaped.  Never call this on identifiers (qids, flags, item names)."""
-    return reflow_for_display(value) if reflow_line_breaks else value
+    Lua-escaped.  Never call this on identifiers (qids, flags, item names).
+
+    When a font is known, also re-paginate every two greedily-wrapped lines
+    (see :mod:`pipeline.text_pacing`) so the reflowed text still pauses at
+    roughly the box's original cadence instead of running on to the next
+    real page break.  Without a font (no ``font_source`` for this build),
+    the reflow still happens, just without that pacing.
+    """
+    if not reflow_line_breaks:
+        return value
+    value = reflow_for_display(value)
+    if font_path is not None and font_size is not None:
+        from .text_pacing import paginate_for_pacing
+
+        try:
+            value = paginate_for_pacing(value, font_path, font_size)
+        except OSError:
+            # Font metrics unavailable (missing/corrupt file): keep the
+            # width reflow, just without font-aware pacing.
+            pass
+    return value
 
 
 def lua_string(value: str) -> str:
