@@ -255,7 +255,11 @@ class BuilderTests(unittest.TestCase):
             self.assertEqual([event[0] for event in events], ["verify"] * 3)
             self.assertEqual([event[1] for event in events[:3]], ["red", "blue", "yellow"])
             self.assertFalse(any("localized" in prompt.lower() for prompt in prompts))
-            self.assertEqual(build.call_args.kwargs["yellow_rom"], yellow)
+            # _prompt_configured_path returns configured.resolve(): on some
+            # Windows runners the tempdir is handed out as an 8.3 short name
+            # (RUNNER~1) that resolve() canonicalizes to the long form, so
+            # compare against the same resolved path rather than the raw one.
+            self.assertEqual(build.call_args.kwargs["yellow_rom"], yellow.resolve())
 
     def test_main_japanese_uses_same_red_blue_prompts(self):
         with tempfile.TemporaryDirectory() as directory:
