@@ -1,9 +1,30 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Iterable
 
 from .model import Alignment
+
+
+def reflow_for_display(text: str) -> str:
+    """Replace mid-page line breaks with a space so Gen1Recomp's own
+    pixel-width wrap (TextBox.paginate) lays the text edge-to-edge, instead
+    of the shorter lines/CONT pauses baked into the original ROM's
+    disassembly (``<LINE>``/``<CONT>``/``<NEXT>`` -> ``\\n``/``\\v``).  Page
+    breaks (``\\f``, from ``<PARA>``/``<PAGE>``) are left alone: they clear
+    the box and aren't a wrap concern.
+    """
+    text = text.replace("\n", " ").replace("\v", " ")
+    text = re.sub(r" {2,}", " ", text)
+    text = re.sub(r" *\f *", "\f", text)
+    return text
+
+
+def display_value(value: str, reflow_line_breaks: bool) -> str:
+    """Apply the optional full-width reflow to a display string before it's
+    Lua-escaped.  Never call this on identifiers (qids, flags, item names)."""
+    return reflow_for_display(value) if reflow_line_breaks else value
 
 
 def lua_string(value: str) -> str:

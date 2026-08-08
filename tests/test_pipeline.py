@@ -9,7 +9,7 @@ from unittest.mock import patch
 from pipeline.align import CORPUS_OVERRIDES_SCHEMA, align, apply_corpus_overrides
 from pipeline.cli import main as cli_main
 from pipeline.corpus import load_corpus
-from pipeline.generate import generate_lua, lua_string
+from pipeline.generate import generate_lua, lua_string, reflow_for_display
 from pipeline.model import Alignment, CorpusRecord
 from pipeline.mod import generate_mod
 from pipeline.join import (
@@ -198,6 +198,31 @@ class PipelineTests(unittest.TestCase):
     def test_lua_string_pads_control_escapes_before_digits(self):
         self.assertEqual(lua_string("Rapport:\f1er"), '"Rapport:\\0121er"')
         self.assertEqual(lua_string("Note:\v2e"), '"Note:\\0112e"')
+
+    def test_reflow_for_display_converts_line_and_cont_to_space(self):
+        self.assertEqual(reflow_for_display("Mon\nPOKéMON est\vplus fort."), "Mon POKéMON est plus fort.")
+
+    def test_reflow_for_display_collapses_space_already_next_to_a_break(self):
+        self.assertEqual(reflow_for_display("les garçons. \vOh que oui!"), "les garçons. Oh que oui!")
+
+    def test_reflow_for_display_keeps_page_breaks_and_trims_around_them(self):
+        self.assertEqual(reflow_for_display("Bye\vnow.\fNext page"), "Bye now.\fNext page")
+        self.assertEqual(reflow_for_display("End.\v\fNext"), "End.\fNext")
+
+    def test_generate_mod_reflow_line_breaks_flag(self):
+        items = align([
+            CorpusRecord("rb.test.Qid", "en", "src"),
+            CorpusRecord("rb.test.Qid", "fr", "Mon\nPOKéMON est\vplus fort."),
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            faithful = generate_mod(items, Path(tmp) / "faithful")
+            body = (faithful / "lang" / "dialogue.lua").read_text(encoding="utf-8")
+            self.assertIn("Mon\\nPOKéMON est\\011plus fort.", body)
+            optimized = generate_mod(items, Path(tmp) / "optimized", reflow_line_breaks=True)
+            body = (optimized / "lang" / "dialogue.lua").read_text(encoding="utf-8")
+            self.assertIn("Mon POKéMON est plus fort.", body)
+            self.assertNotIn("\\n", body)
+            self.assertNotIn("\\011", body)
 
     def test_read_worksheets_repairs_cp1252_mojibake(self):
         def mojibake(value):

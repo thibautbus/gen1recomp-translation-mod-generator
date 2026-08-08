@@ -230,7 +230,7 @@ class BuilderTests(unittest.TestCase):
                 rom.write_bytes(b"rom")
             configured = {"rom": {"red": red, "blue": blue, "yellow": yellow}}
             prompts = []
-            answers = iter(("", "", "", "2", ""))
+            answers = iter(("", "", "", "2", "", ""))
             events = []
 
             def input_fn(prompt):
@@ -268,7 +268,7 @@ class BuilderTests(unittest.TestCase):
             for rom in (red, blue, yellow):
                 rom.write_bytes(b"rom")
             configured = {"rom": {"red": red, "blue": blue, "yellow": yellow}}
-            answers = iter(("", "", "", "5"))
+            answers = iter(("", "", "", "5", ""))
             with (
                 patch.object(builder, "check_prerequisites", return_value="luajit"),
                 patch.object(builder, "load_rom_paths", return_value=configured),
@@ -288,7 +288,7 @@ class BuilderTests(unittest.TestCase):
             yellow.write_bytes(b"rom")
             configured = {"rom": {"red": red, "blue": blue, "yellow": yellow}}
             output = io.StringIO()
-            answers = iter(("", "", "", "1"))
+            answers = iter(("", "", "", "1", ""))
             with redirect_stdout(output):
                 with patch.object(builder, "check_prerequisites", return_value="luajit"), \
                     patch.object(builder, "load_rom_paths", return_value=configured), \
@@ -298,6 +298,41 @@ class BuilderTests(unittest.TestCase):
                     self.assertEqual(builder.main(lambda _: next(answers), font_profile="pokemon"), 0)
             self.assertIn("some translated text may overflow", output.getvalue())
             self.assertEqual(build.call_args.kwargs["font_profile"], "pokemon")
+
+    def test_main_explicit_reflow_line_breaks_skips_prompt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            red, blue, yellow = (root / name for name in ("red.gb", "blue.gb", "yellow.gb"))
+            for rom in (red, blue, yellow):
+                rom.write_bytes(b"rom")
+            configured = {"rom": {"red": red, "blue": blue, "yellow": yellow}}
+            prompts = []
+            answers = iter(("", "", "", "1", ""))
+
+            def input_fn(prompt):
+                prompts.append(prompt)
+                return next(answers)
+
+            with (
+                patch.object(builder, "check_prerequisites", return_value="luajit"),
+                patch.object(builder, "load_rom_paths", return_value=configured),
+                patch.object(builder, "verify_rom"),
+                patch.object(builder, "_confirm", return_value=True),
+                patch.object(builder, "build", return_value=root / "out.zip") as build,
+            ):
+                self.assertEqual(builder.main(input_fn, reflow_line_breaks=True), 0)
+            self.assertFalse(any("line-break" in prompt.lower() for prompt in prompts))
+            self.assertEqual(build.call_args.kwargs["reflow_line_breaks"], True)
+
+    def test_line_break_mode_menu(self):
+        with patch("builtins.print"):
+            self.assertFalse(builder._prompt_line_break_mode(lambda _: ""))
+            self.assertFalse(builder._prompt_line_break_mode(lambda _: "1"))
+            self.assertTrue(builder._prompt_line_break_mode(lambda _: "2"))
+
+    def test_invalid_line_break_mode_menu(self):
+        with patch("builtins.print"), self.assertRaises(builder.BuildError):
+            builder._prompt_line_break_mode(lambda _: "99")
 
     def test_project_version_comes_from_pyproject(self):
         with tempfile.TemporaryDirectory() as directory:

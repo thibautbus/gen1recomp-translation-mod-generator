@@ -20,6 +20,7 @@ class GuiInputs:
     language: str
     font_profile: str
     output_dir: Path
+    reflow_line_breaks: bool = False
 
 
 def language_code(value: str) -> str:
@@ -67,6 +68,7 @@ def validate_inputs(
     language: str,
     output_dir: str | Path,
     font_profile: str = "fusion",
+    reflow_line_breaks: bool = False,
 ) -> GuiInputs:
     """Validate GUI values using the same ROM checks as the CLI."""
     code = language_code(language)
@@ -86,7 +88,7 @@ def validate_inputs(
     builder.verify_rom(red, "red")
     builder.verify_rom(blue, "blue")
     builder.verify_rom(yellow, "yellow")
-    return GuiInputs(red.resolve(), blue.resolve(), yellow.resolve(), code, profile, output.resolve())
+    return GuiInputs(red.resolve(), blue.resolve(), yellow.resolve(), code, profile, output.resolve(), bool(reflow_line_breaks))
 
 
 def coverage_lines(path: str | Path) -> list[str]:
@@ -166,6 +168,7 @@ class TranslationBuilderApp:
         self.yellow_var = tk.StringVar()
         self.language_var = tk.StringVar(value=language_label("fr"))
         self.font_profile_var = tk.StringVar(value=font_profile_label("fusion"))
+        self.reflow_var = tk.BooleanVar(value=False)
         self.output_var = tk.StringVar()
         self.status_var = tk.StringVar(value="Ready")
         frame = ttk.Frame(self.root, padding=18)
@@ -174,7 +177,7 @@ class TranslationBuilderApp:
             (0, "Required to extract shared and Pokémon Red-specific game text and data.", "Pokemon Red ROM (US)", self.red_var, self._browse_file),
             (2, "Required to extract Pokémon Blue-specific game text and data.", "Pokemon Blue ROM (US)", self.blue_var, self._browse_file),
             (4, "Required to extract Pokémon Yellow-specific game text and data.", "Pokemon Yellow ROM (US)", self.yellow_var, self._browse_file),
-            (10, "The generated translation mod ZIP and temporary .cache workspace will be placed here.", "Output directory", self.output_var, self._browse_directory),
+            (12, "The generated translation mod ZIP and temporary .cache workspace will be placed here.", "Output directory", self.output_var, self._browse_directory),
         )
         for row, description, label, variable, command in fields:
             ttk.Label(frame, text=description, style="Hint.TLabel").grid(row=row, column=0, columnspan=3, sticky="w", pady=(8, 2))
@@ -203,15 +206,19 @@ class TranslationBuilderApp:
         self.font_profile_box.grid(row=9, column=1, columnspan=2, sticky="ew", padx=8)
         self._controls.append((self.font_profile_box, "readonly"))
         self._sync_font_profile()
+        ttk.Label(frame, text="Optimized reflows dialogue to the box's full width instead of the ROM-original line breaks/CONT pauses.", style="Hint.TLabel").grid(row=10, column=0, columnspan=3, sticky="w", pady=(8, 2))
+        self.reflow_check = ttk.Checkbutton(frame, text="Optimize line breaks", variable=self.reflow_var)
+        self.reflow_check.grid(row=11, column=0, columnspan=2, sticky="w", pady=(0, 6))
+        self._controls.append((self.reflow_check, "normal"))
         self.log_toggle = ttk.Button(frame, text="Show log", command=self.toggle_log)
-        self.log_toggle.grid(row=12, column=0, sticky="w", pady=(16, 4))
+        self.log_toggle.grid(row=14, column=0, sticky="w", pady=(16, 4))
         self.log_text = tk.Text(frame, height=8, bg="#111315", fg="#d8dee9", insertbackground="#f1f3f4", state="disabled")
         self.progress = ttk.Progressbar(frame, mode="indeterminate")
-        self.progress.grid(row=13, column=0, columnspan=3, sticky="ew", pady=8)
+        self.progress.grid(row=15, column=0, columnspan=3, sticky="ew", pady=8)
         self.status_label = ttk.Label(frame, textvariable=self.status_var)
-        self.status_label.grid(row=14, column=0, columnspan=2, sticky="w")
+        self.status_label.grid(row=16, column=0, columnspan=2, sticky="w")
         self.start_button = ttk.Button(frame, text="Build translation mod", command=self.start)
-        self.start_button.grid(row=14, column=2, sticky="e")
+        self.start_button.grid(row=16, column=2, sticky="e")
         self._controls.append((self.start_button, "normal"))
         frame.columnconfigure(1, weight=1)
         self.toggle_log()
@@ -258,22 +265,22 @@ class TranslationBuilderApp:
     def toggle_log(self):
         self._log_visible = not self._log_visible
         if self._log_visible:
-            self.log_text.grid(row=13, column=0, columnspan=3, sticky="nsew")
-            self.progress.grid(row=14, column=0, columnspan=3, sticky="ew", pady=8)
-            self.status_label.grid(row=15, column=0, columnspan=2, sticky="w")
-            self.start_button.grid(row=15, column=2, sticky="e")
+            self.log_text.grid(row=15, column=0, columnspan=3, sticky="nsew")
+            self.progress.grid(row=16, column=0, columnspan=3, sticky="ew", pady=8)
+            self.status_label.grid(row=17, column=0, columnspan=2, sticky="w")
+            self.start_button.grid(row=17, column=2, sticky="e")
             self.log_toggle.configure(text="Hide log")
         else:
             self.log_text.grid_remove()
-            self.progress.grid(row=13, column=0, columnspan=3, sticky="ew", pady=8)
-            self.status_label.grid(row=14, column=0, columnspan=2, sticky="w")
-            self.start_button.grid(row=14, column=2, sticky="e")
+            self.progress.grid(row=15, column=0, columnspan=3, sticky="ew", pady=8)
+            self.status_label.grid(row=16, column=0, columnspan=2, sticky="w")
+            self.start_button.grid(row=16, column=2, sticky="e")
             self.log_toggle.configure(text="Show log")
 
     def start(self):
         from tkinter import messagebox
         try:
-            inputs = validate_inputs(self.red_var.get(), self.blue_var.get(), self.yellow_var.get(), self.language_var.get(), self.output_var.get(), self.font_profile_var.get())
+            inputs = validate_inputs(self.red_var.get(), self.blue_var.get(), self.yellow_var.get(), self.language_var.get(), self.output_var.get(), self.font_profile_var.get(), self.reflow_var.get())
         except (builder.BuildError, OSError, ValueError) as error:
             messagebox.showerror("Unable to build", str(error), parent=self.root)
             return
@@ -298,6 +305,7 @@ class TranslationBuilderApp:
                 dict(builder.LANGUAGES)[inputs.language], luajit,
                 font_profile=inputs.font_profile,
                 yellow_rom=inputs.yellow_rom,
+                reflow_line_breaks=inputs.reflow_line_breaks,
                 workspace_root=inputs.output_dir / ".cache",
                 output_dir=inputs.output_dir,
                 log_fn=lambda message: self._append_log(message),

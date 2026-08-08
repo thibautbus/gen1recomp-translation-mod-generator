@@ -15,7 +15,7 @@ from typing import Any, Iterable, Mapping
 
 from .model import Alignment
 from .tokens import corpus_to_engine
-from .generate import lua_string
+from .generate import lua_string, display_value as _display
 
 SCHEMA = "gen1recomp-translation-mods/literal-handlers"
 
@@ -275,7 +275,7 @@ def extract_handlers(items: Iterable[Alignment], recipes: Iterable[Mapping[str, 
     return result
 
 
-def generate_handlers(items: Iterable[Alignment], recipes: Iterable[Mapping[str, object]], output: str | Path) -> tuple[Path, list[LiteralHandler]]:
+def generate_handlers(items: Iterable[Alignment], recipes: Iterable[Mapping[str, object]], output: str | Path, reflow_line_breaks: bool = False) -> tuple[Path, list[LiteralHandler]]:
     """Generate a Lua module returning a setup function for literal handlers."""
     handlers = extract_handlers(items, recipes)
     output = Path(output)
@@ -290,12 +290,15 @@ def generate_handlers(items: Iterable[Alignment], recipes: Iterable[Mapping[str,
         lines.append(f"  mod.content.map_scripts:register({lua_string(handler.map_id)}, {{talk = {{")
         lines.append(f"    [{lua_string(handler.text_constant)}] = function(game, ow, npc, done)")
         if handler.flow:
-            lines.extend(_render_flow(handler.flow, 6, "done"))
+            lines.extend(_render_flow(handler.flow, 6, "done", reflow_line_breaks))
         else:
+            prompt = lua_string(_display(handler.prompt, reflow_line_breaks))
+            yes = lua_string(_display(handler.yes, reflow_line_breaks))
+            no = lua_string(_display(handler.no, reflow_line_breaks))
             lines.extend([
-                f"      game.stack:push(TextBox.new(game, {lua_string(handler.prompt)}, function()",
+                f"      game.stack:push(TextBox.new(game, {prompt}, function()",
                 "        game.stack:push(ChoiceBox.new(game, function(yes)",
-                f"          game.stack:push(TextBox.new(game, yes and {lua_string(handler.yes)} or {lua_string(handler.no)}, done))",
+                f"          game.stack:push(TextBox.new(game, yes and {yes} or {no}, done))",
                 "        end))",
                 "      end))",
             ])
@@ -305,7 +308,7 @@ def generate_handlers(items: Iterable[Alignment], recipes: Iterable[Mapping[str,
             lines.append(f"    onStep = function(game, ow, x, y)")
             lines.append(f"      if {condition} then")
             lines.append("        local function on_done() end")
-            lines.extend(_render_flow(handler.on_step, 8, "on_done"))
+            lines.extend(_render_flow(handler.on_step, 8, "on_done", reflow_line_breaks))
             lines.extend(["        return true", "      end", "      return false", "    end,"])
         lines.append("  })")
     lines.append("end")
@@ -341,7 +344,7 @@ def _condition(value: object) -> str:
     raise ValueError("unsupported literal handler condition")
 
 
-def _render_flow(nodes: tuple[Mapping[str, Any], ...], indent: int, done_expr: str) -> list[str]:
+def _render_flow(nodes: tuple[Mapping[str, Any], ...], indent: int, done_expr: str, reflow_line_breaks: bool = False) -> list[str]:
     """Render the flow DSL, carrying all remaining nodes through branches."""
     def invoke(expr: str, pad: str) -> str:
         return f"{pad}{expr}()"
@@ -357,7 +360,7 @@ def _render_flow(nodes: tuple[Mapping[str, Any], ...], indent: int, done_expr: s
                 callback = "function()\n" + "\n".join(seq(rest, level + 2, continuation)) + f"\n{pad}end"
             else:
                 callback = continuation
-            return [f"{pad}game.stack:push(TextBox.new(game, {lua_string(payload)}, {callback}))"]
+            return [f"{pad}game.stack:push(TextBox.new(game, {lua_string(_display(payload, reflow_line_breaks))}, {callback}))"]
         if op == "choice":
             lines = [f"{pad}game.stack:push(ChoiceBox.new(game, function(yes)", f"{pad}  if yes then"]
             lines.extend(seq(tuple(payload.get("yes", ())) + rest, level + 4, continuation))

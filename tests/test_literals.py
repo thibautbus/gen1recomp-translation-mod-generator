@@ -94,6 +94,17 @@ class LiteralHandlerTests(unittest.TestCase):
             self.assertIn("Question?", body)
             self.assertIn("Oui", body)
 
+    def test_generated_runtime_reflows_line_breaks_when_requested(self):
+        with tempfile.TemporaryDirectory() as directory:
+            recipes = load_recipes(Path(__file__).parents[1] / "config" / "literal_handlers.json")
+            rows = [row(QPROMPT, "Une\nquestion?"), row(QYES, "Oui"), row(QNO, "Non")]
+            faithful, _ = generate_handlers(rows, recipes, Path(directory) / "faithful.lua")
+            self.assertIn("Une\\nquestion?", faithful.read_text(encoding="utf-8"))
+            optimized, _ = generate_handlers(rows, recipes, Path(directory) / "optimized.lua", reflow_line_breaks=True)
+            body = optimized.read_text(encoding="utf-8")
+            self.assertIn("Une question?", body)
+            self.assertNotIn("\\n", body)
+
     def test_flow_recipe_preserves_state_and_choice_semantics(self):
         recipes = [{
             "map": "MUSEUM_1F", "text_constant": "TEXT_MUSEUM1F_SCIENTIST1",

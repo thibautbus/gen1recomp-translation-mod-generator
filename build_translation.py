@@ -82,5 +82,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Build a Gen1Recomp translation mod")
     parser.add_argument("--font-profile", choices=("fusion", "pokemon"), default=None)
+    parser.add_argument("--reflow-line-breaks", action=argparse.BooleanOptionalAction, default=None,
+                         help="Reflow dialogue to the box's full width instead of the ROM-original line breaks/CONT pauses.")
     args = parser.parse_args()
-    raise SystemExit(main(font_profile=args.font_profile))
+    raise SystemExit(main(font_profile=args.font_profile, reflow_line_breaks=args.reflow_line_breaks))

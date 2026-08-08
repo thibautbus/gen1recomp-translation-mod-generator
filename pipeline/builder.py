@@ -365,6 +365,20 @@ def _prompt_font_profile(language: str, input_fn: Callable[[str], str]) -> str:
     raise BuildError(f"Invalid font profile selection: {raw!r}")
 
 
+def _prompt_line_break_mode(input_fn: Callable[[str], str]) -> bool:
+    """Choose whether dialogue keeps the ROM-original mid-text line breaks
+    and CONT pauses, or reflows to the text box's full pixel width."""
+    print("\nPlease choose a line-break style:")
+    print("  1 - Faithful: keep the original ROM's line breaks and CONT pauses (recommended)")
+    print("  2 - Optimized: reflow text to the full box width, fewer forced pauses")
+    raw = input_fn("Line-break style [1]: ").strip()
+    if raw in {"", "1", "faithful"}:
+        return False
+    if raw in {"2", "optimized"}:
+        return True
+    raise BuildError(f"Invalid line-break style selection: {raw!r}")
+
+
 def _confirm(input_fn: Callable[[str], str]) -> bool:
     action = "downloaded" if is_frozen() else "cloned"
     answer = input_fn(
@@ -787,6 +801,7 @@ def build(
     status_fn: Callable[[str], None] | None = None,
     font_profile: str = "fusion",
     yellow_rom: Path | None = None,
+    reflow_line_breaks: bool = False,
 ) -> Path:
     """Execute the complete private extraction, translation, and pack flow.
 
@@ -1055,6 +1070,7 @@ def build(
         yellow_catalogs=yellow_catalogs,
         yellow_engine_overrides=yellow_engine_values,
         precomputed_join=(red_joined, red_join_report) if red_joined is not None else None,
+        reflow_line_breaks=reflow_line_breaks,
     )
     preserve_scaffold_support(scaffold, mod, language, font_source, font_profile)
 
@@ -1076,7 +1092,7 @@ def build(
     return published
 
 
-def main(input_fn: Callable[[str], str] = input, font_profile: str | None = None) -> int:
+def main(input_fn: Callable[[str], str] = input, font_profile: str | None = None, reflow_line_breaks: bool | None = None) -> int:
     print("Gen1Recomp translation mod builder\n")
     try:
         luajit = check_prerequisites()
@@ -1109,6 +1125,7 @@ def main(input_fn: Callable[[str], str] = input, font_profile: str | None = None
             warning = font_profile_warning(selected_profile)
             if warning:
                 print(f"Warning: {warning}")
+        selected_reflow = reflow_line_breaks if reflow_line_breaks is not None else _prompt_line_break_mode(input_fn)
         verify_rom(red, "red")
         verify_rom(blue, "blue")
         verify_rom(yellow, "yellow")
@@ -1126,6 +1143,7 @@ def main(input_fn: Callable[[str], str] = input, font_profile: str | None = None
             luajit,
             font_profile=selected_profile,
             yellow_rom=yellow,
+            reflow_line_breaks=selected_reflow,
         )
     except (BuildError, ValueError, OSError) as error:
         print(f"\nError: {error}", file=sys.stderr)
