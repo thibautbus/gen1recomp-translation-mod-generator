@@ -87,7 +87,7 @@ class DependencyTests(unittest.TestCase):
         self.assertIn('$Version-$Variant-windows-x64.exe', script)
 
     def test_windows_release_downloads_artifact_after_checkout(self):
-        workflow = (Path(__file__).parents[1] / ".github/workflows/windows-executable.yml").read_text()
+        workflow = (Path(__file__).parents[1] / ".github/workflows/standalone-executables.yml").read_text()
         release = workflow.split("\n  release:\n", 1)[1]
         checkout = release.index("actions/checkout@")
         download = release.index("actions/download-artifact@")
@@ -118,7 +118,7 @@ class DependencyTests(unittest.TestCase):
         self.assertIn('rm -rf -- "$RUNTIME"', script)
 
     def test_standalone_workflow_builds_both_platforms_and_releases_both_assets(self):
-        workflow = (Path(__file__).parents[1] / ".github/workflows/windows-executable.yml").read_text()
+        workflow = (Path(__file__).parents[1] / ".github/workflows/standalone-executables.yml").read_text()
         self.assertIn("build-windows:", workflow)
         self.assertIn("runs-on: windows-2022", workflow)
         self.assertIn("build-linux:", workflow)
