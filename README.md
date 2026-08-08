@@ -208,7 +208,7 @@ utilizar a`), adapted for de (the nick's verb phrase moves into the
 whose ROM form has no placeholder) and ja (`%sは\u3000` / `%sを...` / `%sも
 \u3000POKéMONを...`). Engines since commit #565 merged the first two parts into
 one template (`%s is\nabout to use\v%s!`, two placeholders); with the engine
-pinned to v0.1.72 (commit `a83d18fc`) that merged key is the worksheet's
+pinned to v0.1.75 (commit `60cf07fb`) that merged key is the worksheet's
 own entry; the pre-#565 split forms were dropped with the pin.
 The Pokédex footer (`SEEN %3d  OWN %3d`) is similarly joined qid-driven from
 the two corpus label rows `rb.pokedex.PokedexSeenText` and
@@ -234,7 +234,7 @@ in-game Options menu (`COLORS`, video mode, void fill, music filter and game
 speed). Gen1Recomp's label helpers return these values without calling
 `Strings()`, so they use documented manual overrides. Numeric values and
 acronyms remain unchanged. The desktop launcher uses a separate Kit renderer
-and is intentionally outside this hook. The v0.1.72 Options menu also exposes
+and is intentionally outside this hook. The v0.1.75 Options menu also exposes
 `VIBRATION`; its `LIGHT`/`MEDIUM`/`HEAVY` labels are tracked as dynamic engine
 values alongside the existing option labels.
 
@@ -261,8 +261,8 @@ shared dialogues twice.
 > The `Corpus-derived runtime extras` column is the sum `15 + 5 + 2 + 2 + 1 + 2 + 1 = 28`
 > (romText fallbacks + the enemy qualifier), so `3130 = 3102 + 28` reads
 > directly off the table. Engine-string counts also
-> move between revisions because the engine re-channels texts. The v0.1.72
-> denominator (638, scope classifier v4) contains the union of the 604-key
+> move between revisions because the engine re-channels texts. The v0.1.75
+> denominator (640, scope classifier v4) contains the union of the 606-key
 > Modkit scaffold and 31 option-value keys
 > (`FAST`/`MEDIUM`/`SLOW`, `low`/`balanced`/`high`/`auto`, `AUTO`/
 > `PORTRAIT`/`LANDSCAPE`/`REVERSE LANDSCAPE`, plus haptic `LIGHT`/`HEAVY`)
@@ -286,11 +286,11 @@ shared dialogues twice.
 
 | Target | Red/Blue ROM aggregate | Yellow ROM catalogs | RBY-related engine strings | All engine strings |
 | --- | ---: | ---: | ---: | ---: |
-| `fr` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 338/638 (52.98%) |
-| `de` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 338/638 (52.98%) |
-| `es` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 337/638 (52.82%) |
-| `it` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 339/638 (53.13%) |
-| `ja-Hrkt` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 338/638 (52.98%) |
+| `fr` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 338/640 (52.81%) |
+| `de` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 338/640 (52.81%) |
+| `es` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 337/640 (52.66%) |
+| `it` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 339/640 (52.97%) |
+| `ja-Hrkt` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 338/640 (52.81%) |
 
 The corpus-derived runtime extras are fully translated (28/28): fifteen type names,
 five literal handlers (15/15 unique corpus qids), two demo names, the
@@ -322,13 +322,13 @@ is a reviewed, sourced decision recorded in
 [`config/yellow_coverage_exceptions.json`](config/yellow_coverage_exceptions.json),
 not a blind single-key override.
 
-`RBY-related engine strings` counts 249 keys from Gen1Recomp v0.1.72's
-638-key engine universe whose
+`RBY-related engine strings` counts 249 keys from Gen1Recomp v0.1.75's
+640-key engine universe whose
 production callsites reproduce original Red/Blue gameplay or interfaces; `All
 engine strings` covers the complete catalog, including modern surfaces. The
 versioned [`engine_scope.json`](config/engine_scope.json) classifier (revision
-`a83d18fc5139b99305e010ab077028a91a65074a`) scans production `src` callsites:
-249 keys form the eligible denominator, seven require review, and 382 modern,
+`60cf07fb0a1ffce0ec6d5d0d2f78a921a6d0b7da`) scans production `src` callsites:
+249 keys form the eligible denominator, seven require review, and 384 modern,
 network/link, import, core, diagnostic, defensive, fallback-only, or
 ROM/generated-path keys are ineligible. Coverage comes from
 isolated clean rebuilds using pinned snapshots; if the engine source is

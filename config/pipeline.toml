@@ -27,10 +27,10 @@ target_lang = "fr"
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "a83d18fc5139b99305e010ab077028a91a65074a"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/a83d18fc5139b99305e010ab077028a91a65074a"
-archive_sha256 = "7f565985f5c20f40d231ea64aa56e1ea067a2cb1cdf135eae7814b6ef6e4fcd8"
-archive_tree_sha256 = "42712839fc04ad0f74a420f4e3ca0e4b69f9596517f027e765b28f3d359a8a3f"
+revision = "60cf07fb0a1ffce0ec6d5d0d2f78a921a6d0b7da"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/60cf07fb0a1ffce0ec6d5d0d2f78a921a6d0b7da"
+archive_sha256 = "95dafa9db3e3bb10eb8381d6b409e116b537c0b3d38349f443f425da211e0e5f"
+archive_tree_sha256 = "00208112e5f226ac5af2097cb5de336a579cb7277e35a2c377ecd633bc287ad2"
 
 [fonts.pokemon]
 revision = "81b60805150c75ebfdfcec6d8352c67e491f8a6c"
