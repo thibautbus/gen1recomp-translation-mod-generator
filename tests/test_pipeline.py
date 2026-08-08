@@ -224,6 +224,24 @@ class PipelineTests(unittest.TestCase):
             self.assertNotIn("\\n", body)
             self.assertNotIn("\\011", body)
 
+    @unittest.skipUnless(Path("/home/thibaut/code/perso/gen1recomp/src").is_dir(), "gen1recomp checkout not available")
+    def test_generate_mod_reflow_excludes_battle_adjacent_qid(self):
+        items = align([
+            CorpusRecord("rb.CeruleanCity.CeruleanCityRivalDefeatedText", "en", "src"),
+            CorpusRecord("rb.CeruleanCity.CeruleanCityRivalDefeatedText", "fr", "Houlà!\nCalmos minable!\vT'as gagné, OK!"),
+            CorpusRecord("rb.test.SafeQid", "en", "src"),
+            CorpusRecord("rb.test.SafeQid", "fr", "Un texte\nde terrain\vtout a fait normal."),
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            mod = generate_mod(
+                items, Path(tmp) / "mod",
+                engine_source=Path("/home/thibaut/code/perso/gen1recomp/src"),
+                reflow_line_breaks=True,
+            )
+            body = (mod / "lang" / "dialogue.lua").read_text(encoding="utf-8")
+            self.assertIn('"Houlà!\\nCalmos minable!\\011T\'as gagné, OK!"', body)
+            self.assertIn('"Un texte de terrain tout a fait normal."', body)
+
     def test_read_worksheets_repairs_cp1252_mojibake(self):
         def mojibake(value):
             return value.encode("utf-8").decode("cp1252")

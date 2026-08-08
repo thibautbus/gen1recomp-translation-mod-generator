@@ -275,8 +275,10 @@ def extract_handlers(items: Iterable[Alignment], recipes: Iterable[Mapping[str, 
     return result
 
 
-def generate_handlers(items: Iterable[Alignment], recipes: Iterable[Mapping[str, object]], output: str | Path, reflow_line_breaks: bool = False, font_path: str | Path | None = None, font_size: int | None = None) -> tuple[Path, list[LiteralHandler]]:
+def generate_handlers(items: Iterable[Alignment], recipes: Iterable[Mapping[str, object]], output: str | Path, reflow_line_breaks: bool = False, font_path: str | Path | None = None, font_size: int | None = None, excluded_from_reflow: set[str] | None = None) -> tuple[Path, list[LiteralHandler]]:
     """Generate a Lua module returning a setup function for literal handlers."""
+    from .battle_scope import is_excluded_qid
+    excluded_from_reflow = excluded_from_reflow or set()
     handlers = extract_handlers(items, recipes)
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -290,11 +292,17 @@ def generate_handlers(items: Iterable[Alignment], recipes: Iterable[Mapping[str,
         lines.append(f"  mod.content.map_scripts:register({lua_string(handler.map_id)}, {{talk = {{")
         lines.append(f"    [{lua_string(handler.text_constant)}] = function(game, ow, npc, done)")
         if handler.flow:
-            lines.extend(_render_flow(handler.flow, 6, "done", reflow_line_breaks, font_path, font_size))
+            # One reflow decision for the whole flow: any battle-adjacent
+            # qid in it is reason enough to leave the flow's pacing alone.
+            flow_reflow = reflow_line_breaks and not any(is_excluded_qid(qid, excluded_from_reflow) for qid in handler.flow_qids)
+            lines.extend(_render_flow(handler.flow, 6, "done", flow_reflow, font_path, font_size))
         else:
-            prompt = lua_string(_display(handler.prompt, reflow_line_breaks, font_path, font_size))
-            yes = lua_string(_display(handler.yes, reflow_line_breaks, font_path, font_size))
-            no = lua_string(_display(handler.no, reflow_line_breaks, font_path, font_size))
+            prompt_reflow = reflow_line_breaks and not is_excluded_qid(handler.prompt_qid, excluded_from_reflow)
+            yes_reflow = reflow_line_breaks and not is_excluded_qid(handler.yes_qid, excluded_from_reflow)
+            no_reflow = reflow_line_breaks and not is_excluded_qid(handler.no_qid, excluded_from_reflow)
+            prompt = lua_string(_display(handler.prompt, prompt_reflow, font_path, font_size))
+            yes = lua_string(_display(handler.yes, yes_reflow, font_path, font_size))
+            no = lua_string(_display(handler.no, no_reflow, font_path, font_size))
             lines.extend([
                 f"      game.stack:push(TextBox.new(game, {prompt}, function()",
                 "        game.stack:push(ChoiceBox.new(game, function(yes)",
@@ -305,10 +313,11 @@ def generate_handlers(items: Iterable[Alignment], recipes: Iterable[Mapping[str,
         lines.extend(["    end,", "  },"])
         if handler.on_step:
             condition = _step_condition_lua(handler.on_step_condition or {})
+            on_step_reflow = reflow_line_breaks and not any(is_excluded_qid(qid, excluded_from_reflow) for qid in handler.flow_qids)
             lines.append(f"    onStep = function(game, ow, x, y)")
             lines.append(f"      if {condition} then")
             lines.append("        local function on_done() end")
-            lines.extend(_render_flow(handler.on_step, 8, "on_done", reflow_line_breaks, font_path, font_size))
+            lines.extend(_render_flow(handler.on_step, 8, "on_done", on_step_reflow, font_path, font_size))
             lines.extend(["        return true", "      end", "      return false", "    end,"])
         lines.append("  })")
     lines.append("end")
