@@ -160,11 +160,11 @@ def _run(
         log_fn(line)
     try:
         if log_fn is None:
-            subprocess.run(command, cwd=cwd, env=env, check=True, stdin=subprocess.DEVNULL)
+            subprocess.run(command, cwd=cwd, env=env, check=True)
         else:
             process = subprocess.Popen(
                 command, cwd=cwd, env=env, text=True, errors="replace",
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             )
             assert process.stdout is not None
             for output_line in process.stdout:

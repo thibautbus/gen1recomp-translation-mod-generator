@@ -130,7 +130,7 @@ def import_rom(version: str, rom: str | Path, gen1recomp: str | Path, out: str |
     command.extend(["--rom", str(rom), "--manifest", str(manifest), "--out", str(out), "--assets", str(assets), "--clean"])
     for dataset in only or []:
         command.extend(["--only", dataset])
-    subprocess.run(command, cwd=root / "tools", check=True, stdin=subprocess.DEVNULL)
+    subprocess.run(command, cwd=root / "tools", check=True)
 
 
 def import_all(roms: dict[str, str | Path], gen1recomp: str | Path, cache_root: str | Path) -> dict[str, dict[str, Any]]:
