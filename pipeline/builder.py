@@ -160,11 +160,11 @@ def _run(
         log_fn(line)
     try:
         if log_fn is None:
-            subprocess.run(command, cwd=cwd, env=env, check=True)
+            subprocess.run(command, cwd=cwd, env=env, check=True, stdin=subprocess.DEVNULL)
         else:
             process = subprocess.Popen(
                 command, cwd=cwd, env=env, text=True, errors="replace",
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
             )
             assert process.stdout is not None
             for output_line in process.stdout:
@@ -853,6 +853,15 @@ def build(
     env = dict(os.environ)
     env["MODKIT_LUAJIT"] = luajit
     env["LUA"] = luajit
+    # Modkit's dump_dataset() decodes the LuaJIT dump with subprocess
+    # text=True and no explicit encoding, which falls back to the OS locale
+    # codepage (e.g. cp1252 on Windows). Some dumped text (observed in the
+    # Yellow-layer dataset, across target languages) isn't representable in
+    # that codepage and crashes the internal reader thread with a
+    # UnicodeDecodeError, leaving proc.stdout as None. Force Python-wide
+    # UTF-8 mode (PEP 540) for this worker so that fallback decodes as UTF-8
+    # instead, matching the UTF-8 the Lua source files are read/written as.
+    env["PYTHONUTF8"] = "1"
     # v0.1.69+'s modkit pack/validate drives the real loader headlessly.
     # Data.loadModule supports POKEPORT_DATA_DIR, which loadfiles the
     # imported dataset directly and skips the love.filesystem-dependent
