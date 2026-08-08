@@ -1,0 +1,34 @@
+{
+  "schema": "gen1recomp-translation-mods/engine-overrides",
+  "version": 1,
+  "entries": {
+    "SCORE %d": {
+      "override": "SCORE %d",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "Kept as-is: \"score\" is a standard French word identical to the English source (cf. poke-corpus y.SummerBeachHouse.SummerBeachHousePrinterText3 'le meilleur score', y.text_9.*HiScoreText 'Score de'); engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source for this exact HUD string; short label, %d preserved."
+    },
+    "New record!": {
+      "override": "Nouveau record!",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short HUD label; no dynamic parameter. Sentence case matches the English source (\"New record!\") and the fr GB font's supported lowercase glyphs; not an all-caps engine constant."
+    },
+    "A: done": {
+      "override": "A: Terminer",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short HUD label; no dynamic parameter. Case matches the English source (\"A: done\", lowercase word) and the fr GB font's supported lowercase glyphs; not an all-caps engine constant."
+    },
+    "HI    %d": {
+      "override": "RECORD    %d",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short label, %d preserved."
+    }
+  }
+}

@@ -599,7 +599,8 @@ def _markdown(report: Mapping[str, Any]) -> str:
     lines = [f"# Engine backlog: `{report['language']}`", "", "Private developer report; no review data or catalogs were modified.", "", "## Statistics", "", "| catalog | unresolved | ambiguous | literal callsites | RBY eligible |", "| ---: | ---: | ---: | ---: | ---: |", f"| {stats['catalog_total']} | {stats['unmatched']} | {stats['ambiguous']} | {stats['callsites']} | {stats['rby_eligible']} |", "", "## Entries", "", "| key | status | category | RBY | callsites | fallback | qid candidates |", "| --- | --- | --- | --- | ---: | --- | --- |"]
     for item in report["entries"]:
         candidates = ", ".join(f"{row['qid']} ({row['method']},{row['confidence']})" for row in item["qid_candidates"][:3]) or "—"
-        lines.append(f"| `{item['key'].replace('|', '\\|')}` | {item['status']} | {item['category']} | {item['rby_eligibility']} | {len(item['callsites'])} | {item['fallback_reason']} | {candidates} |")
+        escaped_key = item["key"].replace("|", "\\|")
+        lines.append(f"| `{escaped_key}` | {item['status']} | {item['category']} | {item['rby_eligibility']} | {len(item['callsites'])} | {item['fallback_reason']} | {candidates} |")
     return "\n".join(lines) + "\n"
 
 

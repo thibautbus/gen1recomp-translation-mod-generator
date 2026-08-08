@@ -1,10 +1,14 @@
-# Gen1Recomp translation mods
+# Gen1Recomp translation mod generator
 
 [![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
 
 This repository reproducibly generates multilingual `Gen1Recomp` translation
-mods. It turns the parallel Red/Blue data in `poke-corpus` into ROM catalogs
-and engine string overrides without storing a ROM or ROM extract here.
+mods. It turns the parallel Red/Blue and Yellow data in `poke-corpus` into ROM
+catalogs and engine string overrides without storing a ROM or ROM extract
+here. Each generated ZIP is a single **universal mod** for Pokémon Red, Blue
+and Yellow: the shared texts are translated once, and the versioned dialogue
+layer (Yellow-only and reworded labels) is applied at runtime only when the
+game is Yellow (`GameVersion.isYellow()`).
 
 > **AI-assisted development disclosure:** The repository and pipeline were
 > developed with AI assistance. Changes are checked through automated tests,
@@ -20,7 +24,7 @@ then select:
 
 ![Gen1Recomp translation mod generator GUI](docs/gui.png)
 
-1. your own canonical US Pokémon Red and Blue ROM dumps;
+1. your own canonical US Pokémon Red, Blue and Yellow ROM dumps;
 2. the target language;
 3. the output directory.
 
@@ -54,24 +58,29 @@ With a virtual environment, use its interpreter explicitly, for example
 `./venv/bin/python build_translation.py` or
 `venv\Scripts\python.exe build_translation.py` on Windows.
 
-The assistant asks for full paths to canonical US Pokémon Red and Blue ROM
-dumps, then a target language. It verifies US SHA-1 fingerprints and asks
+The assistant asks for full paths to canonical US Pokémon Red, Blue and Yellow
+ROM dumps, then a target language. It verifies US SHA-1 fingerprints and asks
 before cloning pinned repositories. After validation, it:
 
-1. clones the pinned Gen1Recomp revision and required
-   `poke-corpus/corpus/RedBlue` subtree under `.cache/`;
-2. extracts both ROMs into private ignored directories and creates the complete
-   Modkit worksheet;
+1. clones the pinned Gen1Recomp revision and the required
+   `poke-corpus/corpus/RedBlue` and `corpus/Yellow` subtrees under `.cache/`;
+2. extracts the three ROMs into private ignored directories (Yellow into its
+   own `yellow/` cache) and creates the complete Modkit worksheet;
 3. matches ROM and engine catalogs against the selected corpus language;
-4. downloads the pinned dependency for the selected font profile into the
+4. builds versioned Yellow catalog layers: every label is classified
+   shared-safe (identical English and target translation), translation-variant,
+   versioned-required (reworded in Yellow), or Yellow-only; the differing
+   catalog values are emitted into `lang/*_yellow.lua` and applied by
+   `main.lua` only when `GameVersion.isYellow()`;
+5. downloads the pinned dependency for the selected font profile into the
    private workspace cache, then bundles only that TTF and its license
    notices (keeping macro and tile glyphs on the engine's tile pages) and applies the
    selected language's optional corpus overrides;
-5. runs strict validation and ROM-content lint while packing, scans a private
+6. runs strict validation and ROM-content lint while packing, scans a private
    candidate archive, and atomically publishes it to `dist/`.
 
 The final file is `dist/translation-<lang>-<version>.zip` (for example
-`dist/translation-fr-0.5.0.zip`); the command prints its absolute path.
+`dist/translation-fr-0.6.0.zip`); the command prints its absolute path.
 
 ### Optional local path configuration
 
@@ -82,24 +91,65 @@ ignored `config/rom_paths.toml` and edit it:
 [rom]
 red = "/absolute/path/to/PokemonRed.gb"
 blue = "/absolute/path/to/PokemonBlue.gb"
+yellow = "/absolute/path/to/PokemonYellow.gb"
 
 ```
 
-Red and Blue entries may be independent. `~` expands and relative paths resolve relative to this file;
+All three entries are required for the universal build. `~` expands and relative paths resolve relative to this file;
 absolute paths are recommended. On Windows use forward slashes or TOML
 literal single-quoted paths such as `red = 'C:\Games\PokemonRed.gb'` (a
 double-quoted string must double each backslash). A configured path is still
 validated for existence and SHA-1; choosing No
 returns to the normal prompt. The ROM file remains private and Git-ignored.
 
-## Legal inputs and privacy
+## Universal Yellow support
 
+One ZIP per language works on Pokémon Red, Blue and Yellow US. The build
+extracts the three ROMs (each into its own private cache directory) and
+produces a single version-aware mod:
+
+- **Common catalogs** (`lang/dialogue.lua`, `strings.lua`, species/moves/items/
+  trainers, …) carry the Red/Blue data. Versioned Yellow catalog layers are
+  emitted for dialogue and other catalog entries whose Yellow translation or
+  English source differs.
+- **Yellow layers** (`lang/*_yellow.lua`) are applied only when
+  `GameVersion.isYellow()`. Labels with identical English are skipped only
+  when their localized translation is also identical; language-specific
+  variants are retained. A versioned label with no Yellow corpus match keeps
+  the Yellow ROM's English text, while a Yellow-only unmatched label remains
+  untouched in the ROM.
+- **Runtime selection**: `main.lua` requires `src.core.GameVersion` and applies
+  the Yellow layer after the common/Red-Blue dialogue only when
+  `GameVersion.isYellow()`.
+- **Independent audit**: `.cache/audit/yellow/<language>.json` records the
+  Yellow matrix (shared-safe / translation-variant / versioned-required /
+  yellow-only / matched / unmatched) and the deferred Yellow-only engine strings (Surfing Pikachu
+  minigame HUD: `SCORE %d`, `New record!`, `A: done`, `HI    %d` — no
+  PokeCorpus source; the refusing message is covered through the `_RefusingText`
+  dialogue label). Yellow coverage is reported as one aggregate in the table;
+  the dialogue/catalog breakdown and Yellow-specific diff remain available in
+  the generated JSON.
+  Shared labels are counted through the common Red/Blue catalogs, not
+  duplicated. The current pinned corpus produces 487, 646, 640, 486 and 485
+  differing Yellow dialogue layer entries for French, German, Spanish, Italian
+  and Japanese, respectively.
+  The remaining direct item-name corpus gaps reuse the translated common
+  Red/Blue catalog in the effective metric.
+
+Config: `config/pipeline.toml` pins the Yellow ROM SHA-1 and the
+SHA-256-pinned `corpus/Yellow` files; `config/rom_paths.toml` accepts a
+`yellow` path. Per-version manual translations go to
+`overrides/<language>/yellow_engine_overrides.json` (merged after the shared
+`shared_engine_overrides.json`).
+
+## Legal inputs and privacy
 Use dumps from your own original US Red
 (`ea9bcae617fdf159b045185467ae58b2e4a48b9a`) and Blue
-(`d7037c83e1ae5b39bde3c30787637ba1d4c48ce2`) cartridges. These canonical
+(`d7037c83e1ae5b39bde3c30787637ba1d4c48ce2`) and Yellow
+(`cc7d03262ebfaf2f06772c1a480c7d9d5f4a38e1`) cartridges. These canonical
 files are local and configurable; the pipeline never downloads, provides, or
 redistributes ROMs, patches, or copyrighted text extracts. Import verifies
-both SHA-1 values before reading.
+all three SHA-1 values before reading.
 
 `config/pipeline.toml` records
 the canonical hashes and pinned Gen1Recomp/`poke-corpus` revisions;
@@ -158,7 +208,7 @@ utilizar a`), adapted for de (the nick's verb phrase moves into the
 whose ROM form has no placeholder) and ja (`%sは\u3000` / `%sを...` / `%sも
 \u3000POKéMONを...`). Engines since commit #565 merged the first two parts into
 one template (`%s is\nabout to use\v%s!`, two placeholders); with the engine
-pinned to v0.1.72 (commit `a83d18fc`) that merged key is the worksheet's
+pinned to v0.1.75 (commit `60cf07fb`) that merged key is the worksheet's
 own entry; the pre-#565 split forms were dropped with the pin.
 The Pokédex footer (`SEEN %3d  OWN %3d`) is similarly joined qid-driven from
 the two corpus label rows `rb.pokedex.PokedexSeenText` and
@@ -184,7 +234,7 @@ in-game Options menu (`COLORS`, video mode, void fill, music filter and game
 speed). Gen1Recomp's label helpers return these values without calling
 `Strings()`, so they use documented manual overrides. Numeric values and
 acronyms remain unchanged. The desktop launcher uses a separate Kit renderer
-and is intentionally outside this hook. The v0.1.72 Options menu also exposes
+and is intentionally outside this hook. The v0.1.75 Options menu also exposes
 `VIBRATION`; its `LIGHT`/`MEDIUM`/`HEAVY` labels are tracked as dynamic engine
 values alongside the existing option labels.
 
@@ -200,11 +250,19 @@ columns are informational; English fallback keeps untranslated entries
 playable. Reports are generated from cached ROM imports and corpus
 snapshots, so revisions can change these values.
 
+The generated ZIP is universal: it contains a shared Red/Blue catalog layer
+and a Yellow-only layer selected at runtime by `GameVersion.isYellow()`. A
+dialogue shared by the games is counted once; a dialogue that differs in
+Yellow is counted as an additional Yellow-specific entry. Therefore a future
+universal ROM metric must use the union of the Red/Blue catalog and the
+Yellow-specific diff, rather than adding the full Yellow catalog and counting
+shared dialogues twice.
+
 > The `Corpus-derived runtime extras` column is the sum `15 + 5 + 2 + 2 + 1 + 2 + 1 = 28`
 > (romText fallbacks + the enemy qualifier), so `3130 = 3102 + 28` reads
 > directly off the table. Engine-string counts also
-> move between revisions because the engine re-channels texts. The v0.1.72
-> denominator (638, scope classifier v4) contains the union of the 604-key
+> move between revisions because the engine re-channels texts. The v0.1.75
+> denominator (640, scope classifier v4) contains the union of the 606-key
 > Modkit scaffold and 31 option-value keys
 > (`FAST`/`MEDIUM`/`SLOW`, `low`/`balanced`/`high`/`auto`, `AUTO`/
 > `PORTRAIT`/`LANDSCAPE`/`REVERSE LANDSCAPE`, plus haptic `LIGHT`/`HEAVY`)
@@ -226,13 +284,13 @@ snapshots, so revisions can change these values.
 > `Enemy %s`). Their shipped values are synced back into the report so its
 > count stays accurate; existing semantic or override provenance is retained.
 
-| Target | ROM catalogs | Corpus-derived runtime extras | ROM aggregate | RBY-related engine strings | All engine strings |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| `fr` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 338/638 (52.98%) |
-| `de` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 338/638 (52.98%) |
-| `es` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 337/638 (52.82%) |
-| `it` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 339/638 (53.13%) |
-| `ja-Hrkt` | 3102/3102 (100%) | 28/28 (100%) | 3130/3130 (100%) | 248/249 (99.60%) | 338/638 (52.98%) |
+| Target | Red/Blue ROM aggregate | Yellow ROM catalogs | RBY-related engine strings | All engine strings |
+| --- | ---: | ---: | ---: | ---: |
+| `fr` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 338/640 (52.81%) |
+| `de` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 338/640 (52.81%) |
+| `es` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 337/640 (52.66%) |
+| `it` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 339/640 (52.97%) |
+| `ja-Hrkt` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 338/640 (52.81%) |
 
 The corpus-derived runtime extras are fully translated (28/28): fifteen type names,
 five literal handlers (15/15 unique corpus qids), two demo names, the
@@ -243,13 +301,34 @@ fewer slots than the calls pass), and the enemy qualifier `Enemy %s` (words
 from `rb.text.EnemyText`). Engine coverage separately includes manual
 engine-original translations such as `FOE`, the four gameplay templates with
 no compatible PokeCorpus source, and the Options/launcher labels.
-`RBY-related engine strings` counts 249 keys from Gen1Recomp v0.1.72's
-638-key engine universe whose
+
+Yellow ROM coverage excludes empty extracted labels that do not render text.
+Italian's `RoseText` dialogue label is counted as covered by a verified,
+harmless exception, not a composed sentence: reading
+`src/battle/MoveEffects.lua`'s `changeStage` (the sole code path for every
+battle stat-stage message, moves and items alike) confirms the recompiled
+engine never reads `RoseText` or its sibling ROM fragments
+(`MonsStatsRoseText`, `GreatlyRoseText`, `GreatlyFellText`) at runtime — they
+are leftover text-bank entries from the original cartridge, where the stock
+engine printed several short text IDs back to back to build one line. The
+actual on-screen message comes from four fixed `Strings()` engine literals
+(`%s's\n%s rose!` and its greatly-rose/fell variants), translated
+independently in `overrides/it/shared_engine_overrides.json`. `RoseText`'s own
+translation status therefore has no effect on what the player sees.
+Other language-specific empty fragments, such as Italian `DexRatingText` and
+the omitted preposition in `IntoText`, must not be treated as missing
+standalone sentences without checking the corresponding screen. The exception
+is a reviewed, sourced decision recorded in
+[`config/yellow_coverage_exceptions.json`](config/yellow_coverage_exceptions.json),
+not a blind single-key override.
+
+`RBY-related engine strings` counts 249 keys from Gen1Recomp v0.1.75's
+640-key engine universe whose
 production callsites reproduce original Red/Blue gameplay or interfaces; `All
 engine strings` covers the complete catalog, including modern surfaces. The
 versioned [`engine_scope.json`](config/engine_scope.json) classifier (revision
-`a83d18fc5139b99305e010ab077028a91a65074a`) scans production `src` callsites:
-249 keys form the eligible denominator, seven require review, and 382 modern,
+`60cf07fb0a1ffce0ec6d5d0d2f78a921a6d0b7da`) scans production `src` callsites:
+249 keys form the eligible denominator, seven require review, and 384 modern,
 network/link, import, core, diagnostic, defensive, fallback-only, or
 ROM/generated-path keys are ineligible. Coverage comes from
 isolated clean rebuilds using pinned snapshots; if the engine source is
@@ -265,11 +344,13 @@ shared link+RBY keys are therefore not silently counted as RBY coverage.
 `_OakSpeechText2A` is intentionally excluded from the engine denominator: its
 localized text is supplied by the ROM/Data.text dialogue catalog, while the
 engine symbol remains empty to avoid OakSpeech's double lookup. The 249
-eligible RBY keys (the `Strings(...)` callsites plus the rendered romText
-fallbacks `%s\nused %s!`, `The enemy's weak!\nGet'm! %s!` and the
-Yellow-only `%s\nis refusing!`) are translated 248/249 (99.60%) — the sole
-gap is the deliberately English Yellow Pikachu-stone line, deferred to
-Yellow support.
+eligible Red/Blue engine keys (the `Strings(...)` callsites plus the rendered
+romText fallbacks `%s\nused %s!`, `The enemy's weak!\nGet'm! %s!` and the
+Yellow-only `%s\nis refusing!`) include one key rendered through the Yellow
+ROM-backed `_RefusingText` dialogue label. Its corpus-backed translation is included in
+the single RBY-related engine metric, giving 249/249 (100%) for the universal
+Yellow build. The report retains the provenance under
+`yellow.engine_coverage_provenance`.
 
 Fallback-only labels shown exclusively when generated assets or vanilla
 reward metadata are missing remain in English and outside RBY coverage. This
@@ -298,9 +379,10 @@ Every translated engine string remains traceable:
 | Deterministic anchor | Reliable PokeCorpus qid, composition, or extraction rule. | `config/semantic_anchors.json` |
 | Human-reviewed anchor | Contextual or language-specific extraction reviewed by a maintainer; text still comes from PokeCorpus. | `config/semantic_anchor_decisions.json` |
 | Manual corpus correction | A maintainer corrects one selected-language corpus translation without changing the upstream corpus. Entries are indexed by qid. | `overrides/<language>/corpus_overrides.json` |
-| Manual translation — engine contract gap | PokeCorpus has the text, but Gen1Recomp merges contexts or hides required parameters. | `overrides/<language>/engine_overrides.json`, `reason: "engine-contract-gap"` |
-| Manual translation — engine original | Engine-specific text with no Red/Blue source. | `overrides/<language>/engine_overrides.json`, `reason: "engine-original"` |
-| Editorial correction | Deliberately preferred engine formulation. | `overrides/<language>/engine_overrides.json`, `reason: "editorial-correction"` |
+| Manual translation — engine contract gap | PokeCorpus has the text, but Gen1Recomp merges contexts or hides required parameters. | `overrides/<language>/shared_engine_overrides.json`, `reason: "engine-contract-gap"` |
+| Manual translation — engine original | Engine-specific text with no Red/Blue source. | `overrides/<language>/shared_engine_overrides.json`, `reason: "engine-original"` |
+| Editorial correction | Deliberately preferred engine formulation. | `overrides/<language>/shared_engine_overrides.json`, `reason: "editorial-correction"` |
+| Manual translation — Yellow-only engine text | Engine-authored, Yellow-exclusive text (Surfing Pikachu minigame HUD) with no PokeCorpus source; applied only when `GameVersion.isYellow()`. | `overrides/<language>/yellow_engine_overrides.json`, `reason: "yellow-only-engine-text"` |
 | Known limitation | Active anchor/override knowingly imperfect in a context or language; a status, not an origin. | Anchor metadata or override provenance |
 | English fallback | No sufficiently reliable translation; runtime keeps English. | Generation report |
 
@@ -391,7 +473,7 @@ Manual engine translations and corpus corrections live in separate versioned
 files and are applied automatically. Each language has a checked-in
 `overrides/<language>/corpus_overrides.json` skeleton as an extension point;
 its `entries` object is keyed by corpus qid and is empty until a real
-correction is needed. `engine_overrides.json` remains reserved for engine
+correction is needed. `shared_engine_overrides.json` remains reserved for engine
 contract gaps, engine-original strings, and their explicit provenance.
 Corpus sources and private generated catalogs are never rewritten.
 
@@ -431,7 +513,10 @@ ambiguous recipes leave the English handler active.
 | Module | Responsibility |
 | --- | --- |
 | `pipeline/cli.py` | Defines `parse`, `align`, `generate`, `validate`, and ROM import commands. |
-| `pipeline/corpus.py` | Reads RedBlue files, canonicalizes languages, validates cardinality, and produces records. |
+| `pipeline/builder.py` | Interactive, end-to-end builder: ROM import, corpus matching, the Yellow layer, packaging, and the CLI prompt flow (`build_translation.py`'s entry point). |
+| `pipeline/gui.py` | Tkinter front end that drives `pipeline.builder` in a background thread with a status/log view. |
+| `pipeline/project.py` | Resource/work root resolution (frozen vs. source checkout), pinned `pyproject.toml`/`config/pipeline.toml` metadata. |
+| `pipeline/corpus.py` | Reads RedBlue and Yellow parallel corpus files, canonicalizes languages, validates cardinality, and produces records. |
 | `pipeline/model.py` | Shared `CorpusRecord` and `Alignment` structures. |
 | `pipeline/align.py` | Pairs by qid, applies `corpus_overrides`, and writes aligned data. |
 | `pipeline/worksheet.py` | Loads and writes versioned `corpus_overrides` documents. |
@@ -441,8 +526,12 @@ ambiguous recipes leave the English handler active.
 | `pipeline/literals.py` | Generates qid-driven handlers for Lua literals. |
 | `pipeline/tokens.py` | Converts corpus control tokens and validates placeholders. |
 | `pipeline/mod.py` | Writes Modkit Lua catalogs, manifest, worksheets, and coverage report. |
+| `pipeline/yellow.py` | Builds the versioned Yellow dialogue layer (shared-safe / translation-variant / versioned-required / yellow-only classification). |
+| `pipeline/yellow_audit.py` | Writes the independent `.cache/audit/yellow/<language>.json` Yellow matrix. |
 | `pipeline/validate.py` | Checks placeholders, glyphs, versions, ROM gate, and engine diagnostics. |
-| `pipeline/roms.py` | Verifies hashes and imports private Red/Blue caches. |
+| `pipeline/rom_paths.py` | Loads and validates the optional private `config/rom_paths.toml` (red/blue/yellow paths). |
+| `pipeline/roms.py` | Verifies hashes and imports private Red/Blue/Yellow ROM caches. |
+| `pipeline/dependencies.py` | Downloads and SHA-256-verifies the pinned Gen1Recomp/PokeCorpus/font archives used by the frozen standalone build. |
 | `pipeline/disassembly_audit.py` | Parses private localized disassembly snapshots into audit reports. |
 | `pipeline/engine_backlog.py` | Read-only analyzer for unresolved engine keys, scope, placeholders, fallbacks, and qid candidates. |
 

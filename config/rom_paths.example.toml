@@ -5,6 +5,8 @@
 [rom]
 red = "/absolute/path/to/PokemonRed.gb"
 blue = "/absolute/path/to/PokemonBlue.gb"
+yellow = "/absolute/path/to/PokemonYellow.gb"
 # On Windows, TOML literal strings keep backslashes readable:
 # red = 'C:\Games\PokemonRed.gb'
 # blue = 'D:\Games\PokemonBlue.gb'
+# yellow = 'D:\Games\PokemonYellow.gb'

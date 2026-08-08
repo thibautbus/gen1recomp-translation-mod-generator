@@ -71,7 +71,7 @@ COLLISION_KEYS = (
 class ManualCorpusGapOverrideTests(unittest.TestCase):
     def test_all_languages_have_exact_manual_corpus_gap_values(self):
         for language, values in EXPECTED.items():
-            path = Path("overrides") / language / "engine_overrides.json"
+            path = Path("overrides") / language / "shared_engine_overrides.json"
             overrides = load_engine_overrides(path)
             self.assertTrue(set(KEYS) <= set(overrides), language)
             for source, expected in zip(KEYS, values):
@@ -91,7 +91,7 @@ class ManualCorpusGapOverrideTests(unittest.TestCase):
             "requires in-game visual validation",
         )
         for language in EXPECTED:
-            overrides = load_engine_overrides(Path("overrides") / language / "engine_overrides.json")
+            overrides = load_engine_overrides(Path("overrides") / language / "shared_engine_overrides.json")
             self.assertTrue(set(CONTRACT_GAP_KEYS) <= set(overrides), language)
             for source in CONTRACT_GAP_KEYS:
                 row = overrides[source]
@@ -109,7 +109,7 @@ class ManualCorpusGapOverrideTests(unittest.TestCase):
             "in-game validation of all callsites",
         )
         for language in EXPECTED:
-            overrides = load_engine_overrides(Path("overrides") / language / "engine_overrides.json")
+            overrides = load_engine_overrides(Path("overrides") / language / "shared_engine_overrides.json")
             for source in COLLISION_KEYS:
                 row = overrides[source]
                 self.assertEqual(row["reason"], "engine-contract-gap", (language, source))

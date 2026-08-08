@@ -25,7 +25,7 @@ else
     LANG_DIR="$ROOT_DIR/.cache/build/$TARGET_LANG"
 fi
 CORPUS_OVERRIDES=${CORPUS_OVERRIDES:-"$ROOT_DIR/overrides/$TARGET_LANG/corpus_overrides.json"}
-ENGINE_OVERRIDES=${ENGINE_OVERRIDES:-"$ROOT_DIR/overrides/$TARGET_LANG/engine_overrides.json"}
+ENGINE_OVERRIDES=${ENGINE_OVERRIDES:-"$ROOT_DIR/overrides/$TARGET_LANG/shared_engine_overrides.json"}
 
 BUILD_DIR=${BUILD_DIR:-"$LANG_DIR"}
 if [ -n "${REPORT_DIR:-}" ]; then :; elif [ "$TARGET_LANG" = fr ]; then REPORT_DIR="$ROOT_DIR/.cache/reports"; else REPORT_DIR="$ROOT_DIR/.cache/reports/$TARGET_LANG"; fi

@@ -74,6 +74,9 @@ def _validate_terminology_anchors(body: object) -> dict:
 # manual review instead of being guessed from English text.
 ENGINE_ALIASES = {
     "_ActorNameText": "rb.text_2.MonName1Text",
+    "_PlayerMon2Text": "rb.text_2.PlayerMon2Text",
+    "_PokemonMansion3FSuperNerdEndBattleText": "rb.PokemonMansion3F.PokemonMansion3FSuperNerdEndBattleText",
+    "_RoseText": "rb.text_3.RoseText",
     "_UsedMove1Text": "rb.text_2.Used1Text",
     "_UsedMove2Text": "rb.text_2.Used2Text",
     **{f"_EndUsedMove{index}Text": f"rb.text_2.ExclamationPoint{index}Text" for index in range(1, 6)},
@@ -301,6 +304,15 @@ def _same_value(candidates: list[Alignment]) -> list[Alignment]:
     return candidates
 
 
+def _game_prefix(candidates: list[Alignment]) -> str:
+    """Corpus game prefix for the candidate set ('y.' for Yellow, else 'rb.').
+
+    Both corpora share the section layout (``dex_text``, ``names.MoveNames``,
+    ...); only the game-scoped prefix differs.
+    """
+    return "y." if any(item.qid.startswith("y.") for item in candidates) else "rb."
+
+
 def _canonical_candidates(catalog: str, key: str, candidates: list[Alignment]) -> tuple[list[Alignment], str | None, str | None]:
     """Apply catalogue-specific canonical selection rules.
 
@@ -312,11 +324,14 @@ def _canonical_candidates(catalog: str, key: str, candidates: list[Alignment]) -
     alias = ENGINE_ALIASES.get(key) if catalog == "dialogue" else None
     if alias:
         selected = [item for item in candidates if item.qid == alias]
+        if not selected and any(item.qid.startswith("y.") for item in candidates):
+            selected = [item for item in candidates if item.qid == alias.replace("rb.", "y.", 1)]
         if selected:
-            return selected, "engine_alias", f"Gen1Recomp engine alias {key} -> {alias}"
+            return selected, "engine_alias", f"Gen1Recomp engine alias {key} -> {selected[0].qid}"
 
     if catalog == "dialogue" and key.startswith("_") and key.endswith("DexEntry"):
-        expected = f"rb.dex_text.{key[1:]}"
+        prefix = _game_prefix(candidates)
+        expected = f"{prefix}dex_text.{key[1:]}"
         selected = [
             item for item in candidates
             if item.qid == expected
@@ -326,16 +341,18 @@ def _canonical_candidates(catalog: str, key: str, candidates: list[Alignment]) -
             and (item.english.metadata.get("version_scope") == "both" or "^" not in item.qid)
             and item.english.text != "[NULL]"
         ]
-        return selected, "canonical_dex_text", f"canonical rb.dex_text entry {expected}; excluded dex_entries Species and scoped NULL rows"
+        return selected, "canonical_dex_text", f"canonical {prefix}dex_text entry {expected}; excluded dex_entries Species and scoped NULL rows"
 
     canonical_prefix = {
-        "move_names": "rb.names.MoveNames.",
-        "item_names": "rb.names.ItemNames.",
-        "trainer_names": "rb.names.TrainerNames.",
+        "move_names": ("rb.names.MoveNames.", "y.names.MoveNames."),
+        "item_names": ("rb.names.ItemNames.", "y.names.ItemNames."),
+        "trainer_names": ("rb.names.TrainerNames.", "y.names.TrainerNames."),
     }.get(catalog)
     if canonical_prefix:
-        selected = [item for item in candidates if item.qid.startswith(canonical_prefix)]
-        return _same_value(selected), f"canonical_{catalog}", f"selected {canonical_prefix} catalogue"
+        rb_prefix, y_prefix = canonical_prefix
+        prefix = y_prefix if _game_prefix(candidates) == "y." else rb_prefix
+        selected = [item for item in candidates if item.qid.startswith(prefix)]
+        return _same_value(selected), f"canonical_{catalog}", f"selected {prefix} catalogue"
 
     return candidates, None, None
 
@@ -511,7 +528,7 @@ ENEMY_QUALIFIER_VALUES = {
 
 # Keys supplied by dedicated qid joins instead of the generic matcher.  Keep
 # them in the engine coverage universe even when Modkit's scaffold omits a
-# rendered fallback (currently the two romText keys below).
+# rendered fallback, including Yellow's refusal message.
 QID_DRIVEN_ENGINE_KEYS = frozenset({
     *SENDOUT_ENGINE_KEYS,
     *POKEDEX_FOOTER_ENGINE_KEYS,
@@ -522,8 +539,8 @@ QID_DRIVEN_ENGINE_KEYS = frozenset({
 
 # Rendered romText fallbacks omitted by Modkit's strings.lua harvester still
 # belong to the engine universe.  The two translated fallbacks are already in
-# QID_DRIVEN_ENGINE_KEYS; Yellow's starter-Pikachu refusal deliberately stays
-# English until Yellow corpus support exists.
+# QID_DRIVEN_ENGINE_KEYS; Yellow's starter-Pikachu refusal is supplied
+# indirectly by the Yellow ROM/dialogue layer.
 YELLOW_REFUSING_KEY = "%s\nis refusing!"
 ENGINE_CATALOG_EXTRA_KEYS = QID_DRIVEN_ENGINE_KEYS | {YELLOW_REFUSING_KEY}
 

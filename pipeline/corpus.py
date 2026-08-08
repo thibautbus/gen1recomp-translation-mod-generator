@@ -17,7 +17,7 @@ from .model import CorpusRecord
 _TEXT_KEYS = ("text", "translation", "value", "line", "content", "string")
 _QID_KEYS = ("qid", "q_id", "id", "key", "label", "pointer", "address")
 _LANG_RE = re.compile(r"(?:^|[-_.])(en|eng|fr|fra|french|english|de|deu|german|es|spa|spanish|it|ita|italian|ja|ja-hrkt|jpn|japanese)(?:$|[-_.])", re.I)
-_GAME_RE = re.compile(r"(?:^|[-_.])(red|blue|redblue)(?:$|[-_.])", re.I)
+_GAME_RE = re.compile(r"(?:^|[-_.])(red|blue|yellow|redblue)(?:$|[-_.])", re.I)
 _VERSION_SUFFIX = re.compile(r"\^(RG|R|G|B)(?=\.|$)")
 
 
@@ -45,10 +45,10 @@ def _language(value: Any, path: Path, default: str = "en") -> str:
 
 def _game(value: Any, path: Path) -> str:
     text = str(value or "").lower()
-    if text in {"red", "blue"}:
+    if text in {"red", "blue", "yellow"}:
         return text
     match = _GAME_RE.search(path.stem)
-    if match and match.group(1).lower() in {"red", "blue"}:
+    if match and match.group(1).lower() in {"red", "blue", "yellow"}:
         return match.group(1).lower()
     return "red"
 
@@ -119,12 +119,16 @@ def read_file(path: str | Path, target_lang: str = "fr") -> list[CorpusRecord]:
     return []
 
 
-def read_parallel_redblue(directory: str | Path, target_lang: str = "fr") -> list[CorpusRecord]:
-    """Read the canonical poke-corpus RedBlue parallel message files.
+def read_parallel_game(directory: str | Path, target_lang: str = "fr", game: str = "redblue") -> list[CorpusRecord]:
+    """Read the canonical poke-corpus parallel message files for a game family.
+
+    ``game`` selects the corpus convention: ``redblue`` (version-suffixed qids,
+    e.g. ``^RG``/``^B``) or ``yellow`` (single game, qids prefixed ``y.``).
 
     Each file is UTF-8 and has exactly one logical entry per line.  We keep
     empty lines and backslash escapes (``\\x60``) verbatim: token conversion is
-    a later, explicit pipeline step.
+    a later, explicit pipeline step.  Qids are preserved as-is (``y.*`` qids
+    are never rewritten into ``rb.*``).
     """
     directory = Path(directory)
     target_lang = canonical_language(target_lang)
@@ -135,25 +139,54 @@ def read_parallel_redblue(directory: str | Path, target_lang: str = "fr") -> lis
     paths = {"qid": directory / "qid_msg.txt", "en": directory / "en_msg.txt", target_file_lang: target_path}
     missing = [str(p) for p in paths.values() if not p.is_file()]
     if missing:
-        raise FileNotFoundError("RedBlue parallel corpus missing: " + ", ".join(missing))
+        raise FileNotFoundError(f"{game} parallel corpus missing: " + ", ".join(missing))
     lines = {name: path.read_text(encoding="utf-8").splitlines() for name, path in paths.items()}
     counts = {name: len(values) for name, values in lines.items()}
     if len(set(counts.values())) != 1:
-        raise ValueError(f"RedBlue parallel files have different line counts: {counts}")
+        raise ValueError(f"{game} parallel files have different line counts: {counts}")
     result: list[CorpusRecord] = []
     for index, (qid, english, translation) in enumerate(zip(lines["qid"], lines["en"], lines[target_file_lang])):
-        suffix_match = _VERSION_SUFFIX.search(qid)
-        suffix = suffix_match.group(1) if suffix_match else ""
-        # ^B is Blue-only; ^RG/^R are Red-side data. Unsuffixed rows are
-        # shared. ^G is retained explicitly (not silently treated as Red).
-        scope = {"B": "blue", "R": "red", "RG": "red", "G": "green"}.get(suffix, "both")
-        base_qid = qid[:suffix_match.start()] if suffix_match else qid
+        if game == "yellow":
+            scope = "yellow"
+            suffix = None
+            base_qid = qid
+        else:
+            suffix_match = _VERSION_SUFFIX.search(qid)
+            suffix = suffix_match.group(1) if suffix_match else ""
+            # ^B is Blue-only; ^RG/^R are Red-side data. Unsuffixed rows are
+            # shared. ^G is retained explicitly (not silently treated as Red).
+            scope = {"B": "blue", "R": "red", "RG": "red", "G": "green"}.get(suffix, "both")
+            base_qid = qid[:suffix_match.start()] if suffix_match else qid
         metadata = {"version_suffix": suffix or None, "version_scope": scope, "base_qid": base_qid, "line": index + 1, "format": "parallel-msg"}
         result.append(CorpusRecord(qid, "en", english, scope, str(paths["en"]), metadata=metadata))
-        # English is retained on the French record to make exact fallback
-        # auditable even when a qid is absent in future corpus revisions.
+        # English is retained on the target-language record to make exact
+        # fallback auditable even when a qid is absent in future corpus
+        # revisions.
         result.append(CorpusRecord(qid, target_lang, translation, scope, str(paths[target_file_lang]), english=english, metadata=metadata.copy()))
     return result
+
+
+def read_parallel_redblue(directory: str | Path, target_lang: str = "fr") -> list[CorpusRecord]:
+    """Read the canonical poke-corpus RedBlue parallel message files."""
+    return read_parallel_game(directory, target_lang, "redblue")
+
+
+def read_parallel_yellow(directory: str | Path, target_lang: str = "fr") -> list[CorpusRecord]:
+    """Read the canonical poke-corpus Yellow parallel message files."""
+    return read_parallel_game(directory, target_lang, "yellow")
+
+
+def parse_yellow(root: str | Path, target_lang: str = "fr") -> list[CorpusRecord]:
+    """Parse Yellow exports while retaining qids and source provenance."""
+    root = Path(root)
+    if root.is_dir() and (root / "qid_msg.txt").is_file():
+        return read_parallel_yellow(root, target_lang)
+    yellow = root / "Yellow"
+    if not yellow.is_dir():
+        yellow = root / "corpus" / "Yellow"
+    if yellow.is_dir() and (yellow / "qid_msg.txt").is_file():
+        return read_parallel_yellow(yellow, target_lang)
+    raise FileNotFoundError(f"Yellow corpus not found under {root}")
 
 
 def load_corpus(root: str | Path, target_lang: str = "fr") -> list[CorpusRecord]:

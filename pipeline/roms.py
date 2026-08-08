@@ -13,10 +13,15 @@ from typing import Any
 from .project import is_frozen, project_config
 
 
-# Product support is intentionally limited to the canonical US Red/Blue pair;
-# this allowlist is independent of whatever sections a config may contain.
-SUPPORTED_VERSIONS = frozenset(("red", "blue"))
+# Product support is intentionally limited to the canonical US games; this
+# allowlist is independent of whatever sections a config may contain.
+SUPPORTED_VERSIONS = frozenset(("red", "blue", "yellow"))
 _SHA1 = re.compile(r"[0-9a-f]{40}\Z")
+_MANIFESTS = {
+    "red": "rom_manifest.json",
+    "blue": "rom_manifest_blue.json",
+    "yellow": "rom_manifest_yellow.json",
+}
 
 
 def _canonical_hashes(root: str | Path | None = None) -> dict[str, str]:
@@ -105,7 +110,7 @@ def import_rom(version: str, rom: str | Path, gen1recomp: str | Path, out: str |
     rom = Path(rom).resolve()
     out = Path(out).resolve()
     assets = Path(assets).resolve()
-    manifest = root / "tools" / ("rom_manifest_blue.json" if version == "blue" else "rom_manifest.json")
+    manifest = root / "tools" / _MANIFESTS[version]
     unix_venv_python = root / ".venv" / "bin" / "python"
     windows_venv_python = root / ".venv" / "Scripts" / "python.exe"
     if unix_venv_python.is_file():

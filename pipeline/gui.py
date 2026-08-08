@@ -16,6 +16,7 @@ from .project import project_version
 class GuiInputs:
     red_rom: Path
     blue_rom: Path
+    yellow_rom: Path
     language: str
     font_profile: str
     output_dir: Path
@@ -62,6 +63,7 @@ def font_profile_code(value: str) -> str:
 def validate_inputs(
     red_rom: str | Path,
     blue_rom: str | Path,
+    yellow_rom: str | Path,
     language: str,
     output_dir: str | Path,
     font_profile: str = "fusion",
@@ -71,6 +73,7 @@ def validate_inputs(
     profile = builder.validate_font_profile(code, font_profile_code(font_profile))
     red = Path(red_rom).expanduser()
     blue = Path(blue_rom).expanduser()
+    yellow = Path(yellow_rom).expanduser()
     if not str(output_dir).strip():
         raise builder.BuildError("An output directory is required.")
     output = Path(output_dir).expanduser()
@@ -78,9 +81,12 @@ def validate_inputs(
         raise builder.BuildError(f"File not found: {red}")
     if not blue.is_file():
         raise builder.BuildError(f"File not found: {blue}")
+    if not yellow.is_file():
+        raise builder.BuildError(f"File not found: {yellow}")
     builder.verify_rom(red, "red")
     builder.verify_rom(blue, "blue")
-    return GuiInputs(red.resolve(), blue.resolve(), code, profile, output.resolve())
+    builder.verify_rom(yellow, "yellow")
+    return GuiInputs(red.resolve(), blue.resolve(), yellow.resolve(), code, profile, output.resolve())
 
 
 def coverage_lines(path: str | Path) -> list[str]:
@@ -102,6 +108,9 @@ def coverage_lines(path: str | Path) -> list[str]:
         )
     elif report.get("engine_rby_warning"):
         lines.append(f"RBY-related engine strings: unavailable ({report['engine_rby_warning']})")
+    yellow = (report.get("yellow") or {}).get("coverage", {}).get("rom") or {}
+    if yellow.get("total"):
+        lines.append(f"Yellow ROM catalogs: {int(yellow.get('translated', 0))}/{int(yellow.get('total', 0))} ({float(yellow.get('percent', 0.0)):.2f}%)")
     return lines
 
 
@@ -154,6 +163,7 @@ class TranslationBuilderApp:
         tk, ttk = self.tk, self.ttk
         self.red_var = tk.StringVar()
         self.blue_var = tk.StringVar()
+        self.yellow_var = tk.StringVar()
         self.language_var = tk.StringVar(value=language_label("fr"))
         self.font_profile_var = tk.StringVar(value=font_profile_label("fusion"))
         self.output_var = tk.StringVar()
@@ -163,7 +173,8 @@ class TranslationBuilderApp:
         fields = (
             (0, "Required to extract shared and Pokémon Red-specific game text and data.", "Pokemon Red ROM (US)", self.red_var, self._browse_file),
             (2, "Required to extract Pokémon Blue-specific game text and data.", "Pokemon Blue ROM (US)", self.blue_var, self._browse_file),
-            (8, "The generated translation mod ZIP and temporary .cache workspace will be placed here.", "Output directory", self.output_var, self._browse_directory),
+            (4, "Required to extract Pokémon Yellow-specific game text and data.", "Pokemon Yellow ROM (US)", self.yellow_var, self._browse_file),
+            (10, "The generated translation mod ZIP and temporary .cache workspace will be placed here.", "Output directory", self.output_var, self._browse_directory),
         )
         for row, description, label, variable, command in fields:
             ttk.Label(frame, text=description, style="Hint.TLabel").grid(row=row, column=0, columnspan=3, sticky="w", pady=(8, 2))
@@ -173,34 +184,34 @@ class TranslationBuilderApp:
             browse = ttk.Button(frame, text="Browse…", command=lambda v=variable, c=command: c(v))
             browse.grid(row=row + 1, column=2)
             self._controls.extend(((entry, "normal"), (browse, "normal")))
-        ttk.Label(frame, text="Select the language used for the generated translation mod.", style="Hint.TLabel").grid(row=4, column=0, columnspan=3, sticky="w", pady=(8, 2))
-        ttk.Label(frame, text="Language").grid(row=5, column=0, sticky="w", pady=(0, 6))
+        ttk.Label(frame, text="Select the language used for the generated translation mod.", style="Hint.TLabel").grid(row=6, column=0, columnspan=3, sticky="w", pady=(8, 2))
+        ttk.Label(frame, text="Language").grid(row=7, column=0, sticky="w", pady=(0, 6))
         self.language_box = ttk.Combobox(
             frame, textvariable=self.language_var,
             values=[language_label(code) for code, _ in builder.LANGUAGES], state="readonly",
         )
-        self.language_box.grid(row=5, column=1, columnspan=2, sticky="ew", padx=8)
+        self.language_box.grid(row=7, column=1, columnspan=2, sticky="ew", padx=8)
         self.language_box.bind("<<ComboboxSelected>>", lambda _event: self._sync_font_profile())
         self._controls.append((self.language_box, "readonly"))
-        ttk.Label(frame, text="Select the font used for translated text.", style="Hint.TLabel").grid(row=6, column=0, columnspan=3, sticky="w", pady=(8, 2))
-        ttk.Label(frame, text="Font profile").grid(row=7, column=0, sticky="w", pady=(0, 6))
+        ttk.Label(frame, text="Select the font used for translated text.", style="Hint.TLabel").grid(row=8, column=0, columnspan=3, sticky="w", pady=(8, 2))
+        ttk.Label(frame, text="Font profile").grid(row=9, column=0, sticky="w", pady=(0, 6))
         self.font_profile_box = ttk.Combobox(
             frame, textvariable=self.font_profile_var,
             values=[font_profile_label(profile, self.language_var.get()) for profile in ("fusion", "pokemon")],
             state="readonly",
         )
-        self.font_profile_box.grid(row=7, column=1, columnspan=2, sticky="ew", padx=8)
+        self.font_profile_box.grid(row=9, column=1, columnspan=2, sticky="ew", padx=8)
         self._controls.append((self.font_profile_box, "readonly"))
         self._sync_font_profile()
         self.log_toggle = ttk.Button(frame, text="Show log", command=self.toggle_log)
-        self.log_toggle.grid(row=10, column=0, sticky="w", pady=(16, 4))
+        self.log_toggle.grid(row=12, column=0, sticky="w", pady=(16, 4))
         self.log_text = tk.Text(frame, height=8, bg="#111315", fg="#d8dee9", insertbackground="#f1f3f4", state="disabled")
         self.progress = ttk.Progressbar(frame, mode="indeterminate")
-        self.progress.grid(row=11, column=0, columnspan=3, sticky="ew", pady=8)
+        self.progress.grid(row=13, column=0, columnspan=3, sticky="ew", pady=8)
         self.status_label = ttk.Label(frame, textvariable=self.status_var)
-        self.status_label.grid(row=12, column=0, columnspan=2, sticky="w")
+        self.status_label.grid(row=14, column=0, columnspan=2, sticky="w")
         self.start_button = ttk.Button(frame, text="Build translation mod", command=self.start)
-        self.start_button.grid(row=12, column=2, sticky="e")
+        self.start_button.grid(row=14, column=2, sticky="e")
         self._controls.append((self.start_button, "normal"))
         frame.columnconfigure(1, weight=1)
         self.toggle_log()
@@ -247,22 +258,22 @@ class TranslationBuilderApp:
     def toggle_log(self):
         self._log_visible = not self._log_visible
         if self._log_visible:
-            self.log_text.grid(row=11, column=0, columnspan=3, sticky="nsew")
-            self.progress.grid(row=12, column=0, columnspan=3, sticky="ew", pady=8)
-            self.status_label.grid(row=13, column=0, columnspan=2, sticky="w")
-            self.start_button.grid(row=13, column=2, sticky="e")
+            self.log_text.grid(row=13, column=0, columnspan=3, sticky="nsew")
+            self.progress.grid(row=14, column=0, columnspan=3, sticky="ew", pady=8)
+            self.status_label.grid(row=15, column=0, columnspan=2, sticky="w")
+            self.start_button.grid(row=15, column=2, sticky="e")
             self.log_toggle.configure(text="Hide log")
         else:
             self.log_text.grid_remove()
-            self.progress.grid(row=11, column=0, columnspan=3, sticky="ew", pady=8)
-            self.status_label.grid(row=12, column=0, columnspan=2, sticky="w")
-            self.start_button.grid(row=12, column=2, sticky="e")
+            self.progress.grid(row=13, column=0, columnspan=3, sticky="ew", pady=8)
+            self.status_label.grid(row=14, column=0, columnspan=2, sticky="w")
+            self.start_button.grid(row=14, column=2, sticky="e")
             self.log_toggle.configure(text="Show log")
 
     def start(self):
         from tkinter import messagebox
         try:
-            inputs = validate_inputs(self.red_var.get(), self.blue_var.get(), self.language_var.get(), self.output_var.get(), self.font_profile_var.get())
+            inputs = validate_inputs(self.red_var.get(), self.blue_var.get(), self.yellow_var.get(), self.language_var.get(), self.output_var.get(), self.font_profile_var.get())
         except (builder.BuildError, OSError, ValueError) as error:
             messagebox.showerror("Unable to build", str(error), parent=self.root)
             return
@@ -286,6 +297,7 @@ class TranslationBuilderApp:
                 inputs.red_rom, inputs.blue_rom, inputs.language,
                 dict(builder.LANGUAGES)[inputs.language], luajit,
                 font_profile=inputs.font_profile,
+                yellow_rom=inputs.yellow_rom,
                 workspace_root=inputs.output_dir / ".cache",
                 output_dir=inputs.output_dir,
                 log_fn=lambda message: self._append_log(message),

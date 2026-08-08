@@ -1,0 +1,15 @@
+{
+  "schema": "gen1recomp-translation-mods/yellow-composition-overrides",
+  "version": 1,
+  "description": "Human-reviewed exceptions for the Yellow dialogue coverage metric: a label whose own Yellow ROM extraction has no independent corpus match but that is proven harmless to leave untranslated, with a verified reason recorded per entry. Entries only credit the Yellow coverage *metric* for a label the dialogue layer itself intentionally leaves untranslated (see pipeline/builder.py's effective_dialogue_translated); they never derive or inject a translated *value* — that is config/semantic_anchor_decisions.json's job, via the anchor extraction DSL.",
+  "entries": {
+    "it": {
+      "_RoseText": {
+        "reason": "engine-unreferenced",
+        "rationale": "_RoseText, and its sibling ROM dialogue-catalog fragments _MonsStatsRoseText/_GreatlyRoseText/_GreatlyFellText, are leftover text-bank entries from the original cartridge (where the stock game engine printed several short text IDs back to back to build one line). Verified by reading src/battle/MoveEffects.lua (changeStage, the sole code path for every battle stat-stage message, moves and items alike): the recompiled engine does not read any of these four dialogue labels at runtime. It instead renders the message through four fixed Strings() engine-literal calls (\"%s's\\n%s rose!\", \"%s's\\n%s\\ngreatly rose!\", \"%s's\\n%s fell!\", \"%s's\\n%s\\ngreatly fell!\"), which are translated independently in overrides/it/shared_engine_overrides.json (reason: editorial-correction) and were confirmed present there. So _RoseText's own translation status has no effect on what the player sees; it is credited here as a known, harmless gap rather than a real missing translation to chase.",
+        "verified_unreferenced_in": "src/battle/MoveEffects.lua:changeStage",
+        "actual_render_mechanism": "overrides/it/shared_engine_overrides.json entries for \"%s's\\n%s rose!\", \"%s's\\n%s\\ngreatly rose!\", \"%s's\\n%s fell!\", \"%s's\\n%s\\ngreatly fell!\""
+      }
+    }
+  }
+}
