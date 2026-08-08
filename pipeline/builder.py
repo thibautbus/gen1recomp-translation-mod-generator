@@ -37,8 +37,8 @@ LANGUAGES = (
     ("ja-Hrkt", "Japanese"),
 )
 
-def load_yellow_composition_overrides(path: str | Path) -> dict[str, frozenset[str]]:
-    """Load ``config/yellow_composition_overrides.json`` reviewed exceptions.
+def load_yellow_coverage_exceptions(path: str | Path) -> dict[str, frozenset[str]]:
+    """Load ``config/yellow_coverage_exceptions.json`` reviewed exceptions.
 
     Mirrors the review discipline of ``config/semantic_anchor_decisions.json``:
     each entry is a human-reviewed exception, not a blind override.  See that
@@ -941,10 +941,10 @@ def build(
         common_dialogue = red_joined.get("dialogue", {})
         yellow_dialogue_joined = yellow_joined.get("dialogue", {})
         unmatched_labels = set(yellow_stats.get("unmatched_labels", ()))
-        composition_overrides = load_yellow_composition_overrides(
-            resource_root() / "config" / "yellow_composition_overrides.json"
+        coverage_exceptions = load_yellow_coverage_exceptions(
+            resource_root() / "config" / "yellow_coverage_exceptions.json"
         )
-        composition_covered = composition_overrides.get(language, frozenset())
+        composition_covered = coverage_exceptions.get(language, frozenset())
         yellow_stats["effective_dialogue_translated"] = sum(
             label not in unmatched_labels
             and (

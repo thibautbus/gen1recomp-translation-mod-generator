@@ -319,7 +319,7 @@ Other language-specific empty fragments, such as Italian `DexRatingText` and
 the omitted preposition in `IntoText`, must not be treated as missing
 standalone sentences without checking the corresponding screen. The exception
 is a reviewed, sourced decision recorded in
-[`config/yellow_composition_overrides.json`](config/yellow_composition_overrides.json),
+[`config/yellow_coverage_exceptions.json`](config/yellow_coverage_exceptions.json),
 not a blind single-key override.
 
 `RBY-related engine strings` counts 249 keys from Gen1Recomp v0.1.72's

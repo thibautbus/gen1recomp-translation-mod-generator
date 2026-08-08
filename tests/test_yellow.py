@@ -443,28 +443,28 @@ class YellowAuditFallbackTests(unittest.TestCase):
             self.assertNotIn("_PlayerMon2Text", audit["unmatched_labels"])
 
 
-class YellowCompositionOverridesTests(unittest.TestCase):
+class YellowCoverageExceptionsTests(unittest.TestCase):
     def test_loads_entries_as_frozensets_per_language(self):
-        from pipeline.builder import load_yellow_composition_overrides
+        from pipeline.builder import load_yellow_coverage_exceptions
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "yellow_composition_overrides.json"
+            path = Path(tmp) / "yellow_coverage_exceptions.json"
             path.write_text(
                 '{"schema": "x", "version": 1, "entries": '
                 '{"it": {"_RoseText": {"reason": "composition"}}}}',
                 encoding="utf-8",
             )
-            overrides = load_yellow_composition_overrides(path)
+            overrides = load_yellow_coverage_exceptions(path)
         self.assertEqual(overrides, {"it": frozenset({"_RoseText"})})
 
     def test_missing_file_returns_empty_mapping(self):
-        from pipeline.builder import load_yellow_composition_overrides
-        self.assertEqual(load_yellow_composition_overrides(Path("/nonexistent.json")), {})
+        from pipeline.builder import load_yellow_coverage_exceptions
+        self.assertEqual(load_yellow_coverage_exceptions(Path("/nonexistent.json")), {})
 
     def test_repo_config_matches_expected_italian_entry(self):
-        from pipeline.builder import load_yellow_composition_overrides
+        from pipeline.builder import load_yellow_coverage_exceptions
         from pipeline.project import resource_root
-        overrides = load_yellow_composition_overrides(
-            resource_root() / "config" / "yellow_composition_overrides.json"
+        overrides = load_yellow_coverage_exceptions(
+            resource_root() / "config" / "yellow_coverage_exceptions.json"
         )
         self.assertEqual(overrides.get("it"), frozenset({"_RoseText"}))
 
