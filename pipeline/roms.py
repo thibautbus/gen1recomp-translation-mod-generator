@@ -8,7 +8,7 @@ import re
 import subprocess
 import sys
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Callable
 
 from .project import is_frozen, project_config
 
@@ -103,7 +103,7 @@ def catalog_roms(roms: dict[str, str | Path], output: str | Path) -> dict[str, A
     return catalog
 
 
-def import_rom(version: str, rom: str | Path, gen1recomp: str | Path, out: str | Path, assets: str | Path, only: list[str] | None = None) -> None:
+def import_rom(version: str, rom: str | Path, gen1recomp: str | Path, out: str | Path, assets: str | Path, only: list[str] | None = None, log_fn: Callable[[str], None] | None = None) -> None:
     """Run the canonical gen1recomp extractor; outputs must be ignored paths."""
     verify_rom(rom, version)
     root = Path(gen1recomp).resolve()
@@ -130,7 +130,29 @@ def import_rom(version: str, rom: str | Path, gen1recomp: str | Path, out: str |
     command.extend(["--rom", str(rom), "--manifest", str(manifest), "--out", str(out), "--assets", str(assets), "--clean"])
     for dataset in only or []:
         command.extend(["--only", dataset])
-    subprocess.run(command, cwd=root / "tools", check=True)
+    if log_fn is None:
+        subprocess.run(command, cwd=root / "tools", check=True)
+        return
+    # Mirror pipeline.builder._run(): stream combined stdout/stderr live
+    # instead of letting the child inherit the parent's own streams, which
+    # are invalid in the frozen GUI's console-less window and would
+    # otherwise leave a failure here as an opaque exit code with no output.
+    printable = " ".join(command)
+    line = f"\n> {printable}"
+    print(line)
+    log_fn(line)
+    process = subprocess.Popen(
+        command, cwd=root / "tools", text=True, errors="replace",
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    )
+    assert process.stdout is not None
+    for output_line in process.stdout:
+        output_line = output_line.rstrip("\r\n")
+        print(output_line)
+        log_fn(output_line)
+    returncode = process.wait()
+    if returncode:
+        raise subprocess.CalledProcessError(returncode, command)
 
 
 def import_all(roms: dict[str, str | Path], gen1recomp: str | Path, cache_root: str | Path) -> dict[str, dict[str, Any]]:

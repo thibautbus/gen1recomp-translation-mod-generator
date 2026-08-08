@@ -834,17 +834,20 @@ def build(
         "red", red_rom, gen1recomp,
         gen1recomp / "data" / "generated",
         gen1recomp / "assets" / "generated",
+        log_fn=log_fn,
     )
     import_rom(
         "blue", blue_rom, gen1recomp,
         gen1recomp / "blue" / "data" / "generated",
         gen1recomp / "blue" / "assets" / "generated",
+        log_fn=log_fn,
     )
     if yellow_rom is not None:
         import_rom(
             "yellow", yellow_rom, gen1recomp,
             gen1recomp / "yellow" / "data" / "generated",
             gen1recomp / "yellow" / "assets" / "generated",
+            log_fn=log_fn,
         )
 
     build_root = workspace / "interactive" / language
