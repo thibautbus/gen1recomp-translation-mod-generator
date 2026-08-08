@@ -1,5 +1,6 @@
 import hashlib
 import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -153,6 +154,56 @@ class RomConfigTests(unittest.TestCase):
             self.assertEqual(command[0], "/venv/bin/python")
             self.assertTrue(os.path.samefile(command[1], script))
             self.assertNotIn("--internal-worker", command)
+
+    def test_import_rom_streams_subprocess_output_to_log_fn(self):
+        class Process:
+            stdout = iter(("created dataset\n", "  lang/dialogue.lua   2582 entries\n"))
+
+            @staticmethod
+            def wait():
+                return 0
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rom = root / "red.gb"
+            out = root / "out"
+            assets = root / "assets"
+            (root / "tools").mkdir()
+            (root / "tools" / "build_rom_data.py").write_text("# test fixture\n", encoding="utf-8")
+            messages: list[str] = []
+            with (
+                patch("pipeline.roms.verify_rom"),
+                patch("pipeline.roms.is_frozen", return_value=False),
+                patch("pipeline.roms.subprocess.Popen", return_value=Process()) as popen,
+            ):
+                import_rom("red", rom, root, out, assets, log_fn=messages.append)
+            self.assertEqual(messages[1:], ["created dataset", "  lang/dialogue.lua   2582 entries"])
+            self.assertTrue(messages[0].startswith("\n> "))
+            self.assertTrue(os.path.samefile(popen.call_args.kwargs["cwd"], root / "tools"))
+
+    def test_import_rom_raises_on_nonzero_exit_with_log_fn(self):
+        class Process:
+            stdout = iter(())
+
+            @staticmethod
+            def wait():
+                return 120
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rom = root / "red.gb"
+            out = root / "out"
+            assets = root / "assets"
+            (root / "tools").mkdir()
+            (root / "tools" / "build_rom_data.py").write_text("# test fixture\n", encoding="utf-8")
+            with (
+                patch("pipeline.roms.verify_rom"),
+                patch("pipeline.roms.is_frozen", return_value=False),
+                patch("pipeline.roms.subprocess.Popen", return_value=Process()),
+                self.assertRaises(subprocess.CalledProcessError) as caught,
+            ):
+                import_rom("red", rom, root, out, assets, log_fn=lambda message: None)
+            self.assertEqual(caught.exception.returncode, 120)
 
 
 if __name__ == "__main__":
