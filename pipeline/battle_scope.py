@@ -38,6 +38,20 @@ _ENTRY_RE = re.compile(r'^\s*\{\s*"(\w+)"\s*(?:,\s*"((?:[^"\\]|\\.)*)")?')
 # deliberately skips any call whose argument isn't a literal string.
 _DYNAMIC_TEXT_RE = re.compile(r"\.text\.(_\w+)")
 
+# data/generated/trainer_headers.lua: one {after, battle, event, won} record
+# per generic trainer.  Only `won` renders on the battle screen itself
+# (src/world/OverworldController.lua's engageTrainer -> battle.endBattleText
+# -> PrintEndBattleText, "before MoneyForWinningText").  `battle` (the
+# pre-fight challenge) and `after` (talking to the trainer post-defeat) are
+# both plain TextBox.new calls on the field and stay eligible for reflow.
+_TRAINER_WON_RE = re.compile(r'\bwon\s*=\s*"([^"]+)"')
+
+# Files outside src/battle/ whose Strings(...) literals are still
+# battle-screen-only in the original game's rules: X items/Guard Spec only
+# work while a battle is active, even though BagMenu/PartyMenu (which call
+# into ItemEffects) are also used in the field for other items.
+_EXTRA_BATTLE_LITERAL_FILES = {"inventory/ItemEffects.lua"}
+
 
 def _script_entries(path: Path) -> list[tuple[str, str | None]]:
     entries: list[tuple[str, str | None]] = []
@@ -92,6 +106,27 @@ def battle_module_dynamic_keys(engine_source: str | Path) -> set[str]:
         for match in _DYNAMIC_TEXT_RE.finditer(path.read_text(encoding="utf-8", errors="replace")):
             keys.add(match.group(1))
     return keys
+
+
+def trainer_won_text_keys(engine_source: str | Path) -> set[str]:
+    """Every generic trainer's post-battle 'won' (defeat) line -- shown
+    directly on the battle screen, not after returning to the field."""
+    path = gen1recomp_root(engine_source) / "data" / "generated" / "trainer_headers.lua"
+    if not path.is_file():
+        return set()
+    return set(_TRAINER_WON_RE.findall(path.read_text(encoding="utf-8", errors="replace")))
+
+
+def is_battle_engine_path(path: str) -> bool:
+    """True for an engine-literal callsite path that's battle-only, whether
+    it lives under ``src/battle/`` or is one of the known exceptions
+    (``_EXTRA_BATTLE_LITERAL_FILES``) elsewhere in the tree."""
+    parts = Path(path).parts
+    if parts and parts[0] == "src":
+        parts = parts[1:]
+    if parts and parts[0] == "battle":
+        return True
+    return "/".join(parts) in _EXTRA_BATTLE_LITERAL_FILES
 
 
 def is_excluded_qid(qid: str, excluded: set[str]) -> bool:
