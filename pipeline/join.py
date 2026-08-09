@@ -901,6 +901,24 @@ def join_catalogs(items: list[Alignment], worksheets: dict[str, list[WorksheetEn
         report["unmatched"]["type_names"] = type_report["unmatched"]
         report["strategies"]["type_names"] = type_report["strategies"]
         report["reasons"]["type_names"] = type_report["reasons"]
+    # Pokedex categories (dexEntry.kind) are pokemon content with no modkit
+    # worksheet either.  Keys come from the species catalog joined just above,
+    # so a corpus row with no matching species is excluded rather than emitted.
+    kind_values, kind_report = species_kinds_catalog(
+        items, target_lang, output.get("species_names", {}).keys())
+    output["species_kinds"] = kind_values
+    report["species_kinds"] = kind_report
+    if kind_values:
+        report["matched"]["species_kinds"] = kind_report["translated"]
+        report["strategies"]["species_kinds"] = kind_report["strategies"]
+        report["reasons"]["species_kinds"] = kind_report["reasons"]
+        # Only report unmatched keys when there are some.  type_names can
+        # record an empty list because it emits nothing unless the corpus
+        # carries TypeNames rows, whereas the dex-entry rows are almost always
+        # present; an empty entry here would make report["unmatched"] non-empty
+        # for a join that matched everything.
+        if kind_report["unmatched"]:
+            report["unmatched"]["species_kinds"] = kind_report["unmatched"]
     # Engine hard-coded demo-battle names (makeOldManDemo's "OLD MAN") are
     # joined the same qid-driven way and gated when the corpus provides rows.
     demo_values, demo_report = demo_names_catalog(items, target_lang)
