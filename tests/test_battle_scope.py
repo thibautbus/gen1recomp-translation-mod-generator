@@ -3,8 +3,10 @@ import unittest
 from pathlib import Path
 
 from pipeline.battle_scope import (
-    _script_entries, battle_adjacent_text_keys, dynamic_text_lookup_keys,
-    gen1recomp_root, is_excluded_qid, trainer_won_text_keys,
+    _script_entries, _symbol_forms, battle_adjacent_text_keys, dex_entry_text_keys,
+    dynamic_text_lookup_keys, field_dialogue_text_keys, gen1recomp_root, is_excluded_qid,
+    is_reflow_safe_qid, map_text_pointer_keys, reflow_safe_keys, script_dialogue_text_keys,
+    trainer_challenge_text_keys, trainer_won_text_keys,
 )
 
 GEN1RECOMP_SRC = Path("/home/thibaut/code/perso/gen1recomp/src")
@@ -220,6 +222,53 @@ class BattleScopeTests(unittest.TestCase):
     def test_trainer_won_text_keys_missing_file_returns_empty_set(self):
         self.assertEqual(trainer_won_text_keys("/no/such/src"), set())
 
+    def test_trainer_won_text_keys_merges_red_blue_and_yellow_layers(self):
+        # Regression: Red, Blue and Yellow each import their own ROM into a
+        # separate trainer_headers.lua (pipeline.builder.build's
+        # import_rom); a defeat line that only exists in one layer (e.g.
+        # four real Yellow-only encounters -- Rocket Hideout B4F, Route 9,
+        # two Viridian Forest trainers) must still be excluded, not just
+        # the ones Red happens to also have.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            src = root / "src"
+            src.mkdir()
+            (root / "data" / "generated").mkdir(parents=True)
+            (root / "data" / "generated" / "trainer_headers.lua").write_text(
+                'return { Room = { [1] = { won = "_RedOnlyEndBattleText" } } }\n',
+                encoding="utf-8",
+            )
+            (root / "blue" / "data" / "generated").mkdir(parents=True)
+            (root / "blue" / "data" / "generated" / "trainer_headers.lua").write_text(
+                'return { Room = { [1] = { won = "_BlueOnlyEndBattleText" } } }\n',
+                encoding="utf-8",
+            )
+            (root / "yellow" / "data" / "generated").mkdir(parents=True)
+            (root / "yellow" / "data" / "generated" / "trainer_headers.lua").write_text(
+                'return { Room = { [1] = { won = "_ViridianForestYoungster5EndBattleText" } } }\n',
+                encoding="utf-8",
+            )
+            keys = trainer_won_text_keys(src)
+            self.assertEqual(
+                keys,
+                {"_RedOnlyEndBattleText", "_BlueOnlyEndBattleText", "_ViridianForestYoungster5EndBattleText"},
+            )
+
+    def test_trainer_won_text_keys_tolerates_a_missing_yellow_layer(self):
+        # A build without a Yellow ROM has no yellow/data/generated at all
+        # -- must not raise, just contribute nothing from that layer.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            src = root / "src"
+            src.mkdir()
+            (root / "data" / "generated").mkdir(parents=True)
+            (root / "data" / "generated" / "trainer_headers.lua").write_text(
+                'return { Room = { [1] = { won = "_RedOnlyEndBattleText" } } }\n',
+                encoding="utf-8",
+            )
+            keys = trainer_won_text_keys(src)
+            self.assertEqual(keys, {"_RedOnlyEndBattleText"})
+
     def test_is_excluded_qid_matches_runtime_symbol(self):
         excluded = {"_CeruleanCityRivalDefeatedText"}
         self.assertTrue(is_excluded_qid("rb.CeruleanCity.CeruleanCityRivalDefeatedText", excluded))
@@ -263,6 +312,177 @@ class BattleScopeTests(unittest.TestCase):
         # The rival's actual parting line right after that same battle,
         # before hide_object fires: still correctly excluded.
         self.assertTrue(is_excluded_qid("rb.OaksLab.OaksLabRivalSmellYouLaterText", keys))
+
+    def test_symbol_forms_normalizes_bare_and_prefixed(self):
+        self.assertEqual(_symbol_forms({"RouteSignText"}), {"RouteSignText", "_RouteSignText"})
+        self.assertEqual(_symbol_forms({"_RouteSignText"}), {"RouteSignText", "_RouteSignText"})
+
+    def test_map_text_pointer_keys_reads_labels_in_both_forms(self):
+        # Regression: data/generated/text_pointers.lua's "label" field is
+        # bare (no leading underscore), unlike the raw runtime-symbol keys
+        # a Modkit-worksheet-built catalog checks membership against
+        # directly -- without normalization this source silently failed to
+        # match any real qid.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            src = root / "src"
+            src.mkdir()
+            (root / "data" / "generated").mkdir(parents=True)
+            (root / "data" / "generated" / "text_pointers.lua").write_text(
+                'return {\n'
+                '  Route17 = {\n'
+                '    TEXT_ROUTE17_SIGN = {\n'
+                '      label = "Route17SignText",\n'
+                '      text = "_Route17SignText",\n'
+                '    },\n'
+                '  },\n'
+                '}\n',
+                encoding="utf-8",
+            )
+            keys = map_text_pointer_keys(src)
+            self.assertEqual(keys, {"Route17SignText", "_Route17SignText"})
+
+    def test_field_dialogue_text_keys_reads_named_fields_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            src = root / "src"
+            src.mkdir()
+            (root / "data" / "generated").mkdir(parents=True)
+            (root / "data" / "generated" / "field.lua").write_text(
+                'return {\n'
+                '  badgeGates = {\n'
+                '    ROUTE_22_GATE = {\n'
+                '      failText = "Route22GateGuardNoBoulderbadgeText",\n'
+                '      text = "Route22GateGuardText",\n'
+                '    },\n'
+                '  },\n'
+                '  signs = {\n'
+                '    afterText = "ViridianCityOldManYouNeedToWeakenTheTargetText",\n'
+                '    textFacing = "left",\n'
+                '    gamefreakText = {\n'
+                '      path = "assets/generated/intro/gamefreak_text.png",\n'
+                '    },\n'
+                '  },\n'
+                '}\n',
+                encoding="utf-8",
+            )
+            keys = field_dialogue_text_keys(src)
+            self.assertIn("Route22GateGuardText", keys)
+            self.assertIn("_Route22GateGuardText", keys)
+            self.assertIn("Route22GateGuardNoBoulderbadgeText", keys)
+            self.assertIn("ViridianCityOldManYouNeedToWeakenTheTargetText", keys)
+            # "textFacing" (a direction word) and "gamefreakText" (an intro
+            # image asset, not even a string value) share the "text"
+            # substring but aren't text pointers.
+            self.assertNotIn("left", keys)
+            self.assertNotIn("_left", keys)
+            self.assertNotIn("assets/generated/intro/gamefreak_text.png", keys)
+
+    def test_dex_entry_text_keys_reads_pokemon_dex_entries(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            src = root / "src"
+            src.mkdir()
+            (root / "data" / "generated").mkdir(parents=True)
+            (root / "data" / "generated" / "pokemon.lua").write_text(
+                'return {\n'
+                '  ABRA = {\n'
+                '    dex = 63,\n'
+                '    dexEntry = {\n'
+                '      heightFt = 2,\n'
+                '      kind = "PSI",\n'
+                '      text = "_AbraDexEntry",\n'
+                '      weight = 430,\n'
+                '    },\n'
+                '  },\n'
+                '}\n',
+                encoding="utf-8",
+            )
+            self.assertIn("_AbraDexEntry", dex_entry_text_keys(src))
+
+    def test_trainer_challenge_text_keys_reads_battle_and_after_not_won(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            src = root / "src"
+            src.mkdir()
+            (root / "data" / "generated").mkdir(parents=True)
+            (root / "data" / "generated" / "trainer_headers.lua").write_text(
+                'return {\n'
+                '  AgathasRoom = {\n'
+                '    [1] = {\n'
+                '      after = "_AgathaAfterBattleText",\n'
+                '      battle = "_AgathaBeforeBattleText",\n'
+                '      won = "_AgathaEndBattleText",\n'
+                '    },\n'
+                '  },\n'
+                '}\n',
+                encoding="utf-8",
+            )
+            keys = trainer_challenge_text_keys(src)
+            self.assertEqual(keys, {"_AgathaAfterBattleText", "_AgathaBeforeBattleText"})
+
+    def test_script_dialogue_text_keys_is_the_complement_of_battle_adjacent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            script = Path(directory) / "a.lua"
+            script.write_text(
+                'return {\n'
+                '  { "show_text", "_ChallengeText" },\n'
+                '  { "rival_battle", "OPP_RIVAL1", 1 },\n'
+                '  { "show_text", "_VictoryTauntText" },\n'
+                '}\n',
+                encoding="utf-8",
+            )
+            safe = script_dialogue_text_keys(directory)
+            battle = battle_adjacent_text_keys(directory)
+            self.assertIn("_ChallengeText", safe)
+            self.assertNotIn("_ChallengeText", battle)
+            self.assertIn("_VictoryTauntText", battle)
+            self.assertNotIn("_VictoryTauntText", safe)
+
+    def test_reflow_safe_keys_subtracts_negative_signals_from_positive_ones(self):
+        # A qid a positive source names but a negative signal also catches
+        # (e.g. referenced both generically and from a special-cased
+        # engine callsite) must stay excluded: the negative signals are a
+        # second, independent check, not superseded by the whitelist.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            src = root / "src"
+            (src / "battle").mkdir(parents=True)
+            (root / "data" / "generated").mkdir(parents=True)
+            (root / "data" / "scripts").mkdir(parents=True)
+            (root / "data" / "generated" / "text_pointers.lua").write_text(
+                'return { Route1 = { TEXT_X = { label = "DoublyReferencedText" } } }\n',
+                encoding="utf-8",
+            )
+            (src / "battle" / "BattleState.lua").write_text(
+                'local raw = self.data.text._DoublyReferencedText\n',
+                encoding="utf-8",
+            )
+            safe = reflow_safe_keys(src)
+            self.assertNotIn("_DoublyReferencedText", safe)
+            self.assertNotIn("DoublyReferencedText", safe)
+
+    def test_is_reflow_safe_qid_matches_runtime_symbol(self):
+        safe = {"Route17SignText", "_Route17SignText"}
+        self.assertTrue(is_reflow_safe_qid("rb.Route17.Route17SignText", safe))
+        self.assertFalse(is_reflow_safe_qid("rb.PalletTown.PalletTownSomeOtherText", safe))
+
+    @unittest.skipUnless(GEN1RECOMP_SRC.parent.is_dir(), "gen1recomp checkout not available")
+    def test_real_checkout_reflow_safe_keys_covers_known_safe_and_excludes_known_risky(self):
+        safe = reflow_safe_keys(GEN1RECOMP_SRC)
+        # An ordinary route sign (data/generated/field.lua), unrelated to
+        # any battle.
+        self.assertTrue(is_reflow_safe_qid("rb.Route17.Route17SignText", safe))
+        # A generic trainer's pre-fight challenge and post-defeat rematch
+        # lines: plain field TextBox calls, unlike `won`.
+        self.assertTrue(is_reflow_safe_qid("rb.AgathasRoom.AgathaBeforeBattleText", safe))
+        self.assertTrue(is_reflow_safe_qid("rb.AgathasRoom.AgathaAfterBattleText", safe))
+        # A battle-screen defeat line and a dynamically-looked-up rival
+        # win text must never end up in the whitelist, whatever positive
+        # source might otherwise have named them.
+        self.assertFalse(is_reflow_safe_qid("rb.AgathasRoom.AgathaEndBattleText", safe))
+        self.assertFalse(is_reflow_safe_qid("rb.CeruleanCity.CeruleanCityRivalDefeatedText", safe))
+        self.assertFalse(is_reflow_safe_qid("y.text_2.Rival1WinText", safe))
 
 
 if __name__ == "__main__":

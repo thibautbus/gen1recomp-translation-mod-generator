@@ -226,19 +226,41 @@ class PipelineTests(unittest.TestCase):
             faithful = generate_mod(items, Path(tmp) / "faithful")
             body = (faithful / "lang" / "dialogue.lua").read_text(encoding="utf-8")
             self.assertIn("Mon\\nPOKéMON est\\011plus fort.", body)
-            optimized = generate_mod(items, Path(tmp) / "optimized", reflow_line_breaks=True)
+            # reflow_safe_keys is a real per-qid whitelist (see
+            # pipeline.battle_scope): without engine_source there's nothing
+            # to positively prove safe, so this qid must be confirmed safe
+            # some other way for the flag to actually reflow it.
+            with patch("pipeline.battle_scope.reflow_safe_keys", return_value={"_Qid", "Qid"}):
+                optimized = generate_mod(items, Path(tmp) / "optimized", reflow_line_breaks=True, engine_source=Path(tmp) / "engine" / "src")
             body = (optimized / "lang" / "dialogue.lua").read_text(encoding="utf-8")
             self.assertIn("Mon POKéMON est plus fort.", body)
             self.assertNotIn("\\n", body)
             self.assertNotIn("\\011", body)
+
+    def test_generate_mod_reflow_line_breaks_flag_without_engine_source_stays_faithful(self):
+        # No engine_source means no way to positively prove any qid safe,
+        # so the whitelist stays empty and reflow_line_breaks=True must not
+        # blindly reflow everything -- the opposite default from the old
+        # blocklist design, and the safer one.
+        items = align([
+            CorpusRecord("rb.test.Qid", "en", "src"),
+            CorpusRecord("rb.test.Qid", "fr", "Mon\nPOKéMON est\vplus fort."),
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            mod = generate_mod(items, Path(tmp) / "mod", reflow_line_breaks=True)
+            body = (mod / "lang" / "dialogue.lua").read_text(encoding="utf-8")
+            self.assertIn("Mon\\nPOKéMON est\\011plus fort.", body)
 
     @unittest.skipUnless(Path("/home/thibaut/code/perso/gen1recomp/src").is_dir(), "gen1recomp checkout not available")
     def test_generate_mod_reflow_excludes_battle_adjacent_qid(self):
         items = align([
             CorpusRecord("rb.CeruleanCity.CeruleanCityRivalDefeatedText", "en", "src"),
             CorpusRecord("rb.CeruleanCity.CeruleanCityRivalDefeatedText", "fr", "Houlà!\nCalmos minable!\vT'as gagné, OK!"),
-            CorpusRecord("rb.test.SafeQid", "en", "src"),
-            CorpusRecord("rb.test.SafeQid", "fr", "Un texte\nde terrain\vtout a fait normal."),
+            # A real corpus qid whose runtime symbol is positively proven
+            # safe by data/generated/text_pointers.lua's "Route17SignText"
+            # label (an ordinary field sign, unrelated to any battle).
+            CorpusRecord("rb.Route17.Route17SignText", "en", "src"),
+            CorpusRecord("rb.Route17.Route17SignText", "fr", "Un texte\nde terrain\vtout a fait normal."),
         ])
         with tempfile.TemporaryDirectory() as tmp:
             mod = generate_mod(

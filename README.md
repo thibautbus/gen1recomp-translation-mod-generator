@@ -26,7 +26,21 @@ then select:
 
 1. your own canonical US Pokémon Red, Blue and Yellow ROM dumps;
 2. the target language;
-3. the output directory.
+3. the output directory;
+4. optionally, the "Optimize line breaks" checkbox. Unchecked (the default)
+   keeps the ROM-original `<LINE>`/`<CONT>` line breaks and pauses exactly
+   as the original game shows them. Checking it reflows dialogue to the
+   text box's full pixel width instead, using the selected font's real
+   glyph widths, still pausing roughly every two lines. Non-dialogue
+   catalogs (item/move/species/trainer names, and any engine-hardcoded
+   string) are never affected either way; within dialogue, a qid is only
+   ever reflowed if it's positively confirmed to render through the
+   ordinary field text box (an actual structural pointer to it in
+   Gen1Recomp's own generated data or scripts) -- text that isn't
+   confirmed this way, whether it's genuinely battle-screen/engine-hooked
+   content or simply not yet audited, keeps its original line breaks by
+   default (currently about half of all dialogue; see
+   `pipeline/battle_scope.py`).
 
 The GUI runs the same verified matching and packaging pipeline as the CLI and
 writes the ready-to-import ZIP into the selected directory. The standalone
@@ -52,6 +66,16 @@ python build_translation.py
 
 Latin builds default to Fusion Pixel by TakWolf at 10px; advanced users can select the optional
 8px Pokemon Font clone by Superpencil profile with `python build_translation.py --font-profile pokemon`.
+
+The assistant also prompts for a line-break style: Faithful (the default,
+recommended) keeps the ROM-original `<LINE>`/`<CONT>` line breaks and CONT
+pauses; Optimized reflows dialogue to the text box's full width instead,
+for fewer forced pauses. Non-dialogue catalogs and engine-hardcoded
+strings are never affected either way; within dialogue, a qid is only
+reflowed once positively confirmed safe (see the GUI section above for
+what that means and `pipeline/battle_scope.py` for the detail). Skip the
+prompt with `--reflow-line-breaks` (Optimized) or
+`--no-reflow-line-breaks` (Faithful).
 
 Use `python3 build_translation.py` or `py -3 build_translation.py` when needed.
 With a virtual environment, use its interpreter explicitly, for example
@@ -526,6 +550,8 @@ ambiguous recipes leave the English handler active.
 | `pipeline/literals.py` | Generates qid-driven handlers for Lua literals. |
 | `pipeline/tokens.py` | Converts corpus control tokens and validates placeholders. |
 | `pipeline/mod.py` | Writes Modkit Lua catalogs, manifest, worksheets, and coverage report. |
+| `pipeline/text_pacing.py` | Font-aware line/page pacing for the optional line-break reflow, mirroring Gen1Recomp's own text box wrap. |
+| `pipeline/battle_scope.py` | Per-qid whitelist for the optional reflow: a qid is only reflowed once a structural source positively confirms it renders through the ordinary field text box. |
 | `pipeline/yellow.py` | Builds the versioned Yellow dialogue layer (shared-safe / translation-variant / versioned-required / yellow-only classification). |
 | `pipeline/yellow_audit.py` | Writes the independent `.cache/audit/yellow/<language>.json` Yellow matrix. |
 | `pipeline/validate.py` | Checks placeholders, glyphs, versions, ROM gate, and engine diagnostics. |

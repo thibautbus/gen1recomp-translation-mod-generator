@@ -95,12 +95,21 @@ class LiteralHandlerTests(unittest.TestCase):
             self.assertIn("Oui", body)
 
     def test_generated_runtime_reflows_line_breaks_when_requested(self):
+        from pipeline.join import _symbols
+
         with tempfile.TemporaryDirectory() as directory:
             recipes = load_recipes(Path(__file__).parents[1] / "config" / "literal_handlers.json")
             rows = [row(QPROMPT, "Une\nquestion?"), row(QYES, "Oui"), row(QNO, "Non")]
             faithful, _ = generate_handlers(rows, recipes, Path(directory) / "faithful.lua")
             self.assertIn("Une\\nquestion?", faithful.read_text(encoding="utf-8"))
-            optimized, _ = generate_handlers(rows, recipes, Path(directory) / "optimized.lua", reflow_line_breaks=True)
+            # reflow_safe is a real per-qid whitelist (see
+            # pipeline.battle_scope): each qid must be positively confirmed
+            # safe, here directly via the same qid -> runtime-symbol
+            # convention generate_handlers checks against.
+            reflow_safe: set[str] = set()
+            for qid in (QPROMPT, QYES, QNO):
+                reflow_safe |= _symbols(qid)
+            optimized, _ = generate_handlers(rows, recipes, Path(directory) / "optimized.lua", reflow_line_breaks=True, reflow_safe=reflow_safe)
             body = optimized.read_text(encoding="utf-8")
             self.assertIn("Une question?", body)
             self.assertNotIn("\\n", body)
