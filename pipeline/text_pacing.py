@@ -13,15 +13,19 @@ next real page break.  The budget and cut rule are ported from the engine:
   fits noticeably more per line than a fixed-width one (Pokemon Font).
 
 Runtime placeholders (``{PLAYER}`` etc.) can't be measured directly: the
-substituted value isn't known until the player actually picks a name.
-Each name-shaped placeholder is priced at its true worst case instead:
-the game's own max length for that field (NamingScreen.lua's ``maxLen``
--- 7 for a trainer, 10 for a Pokémon nickname) times the widest single
-letter glyph in the font.  No valid name can measure wider than that, so
-a page never needs a 3rd wrapped line no matter what the player typed --
-deliberately chosen over a narrower "typical name" estimate (e.g. the
-font's average letter width), which packs better for the common case but
-can't rule out a wide-lettered name pushing a two-line page to three.
+substituted value isn't known until the player actually picks a name, or
+the ROM buffer it reads from isn't known until the game runs. every one
+of them is priced at a worst case instead: the game's own max length for
+that field (NamingScreen.lua's ``maxLen`` -- 7 for a trainer, 10 for a
+Pokémon nickname, 5 fixed digits for a trainer ID) times the widest
+single letter glyph in the font; ``{RAM:...}``/``{NUM:...}`` (an item,
+move, or species name pulled from RAM, with no maxLen to read) fall back
+to Gen1's own 12-character text-data convention.  No valid substitution
+can measure wider than that, so a page never needs a 3rd wrapped line no
+matter what the player typed or the ROM buffer holds -- deliberately
+chosen over a narrower "typical" estimate (e.g. the font's average
+letter width), which packs better for the common case but can't rule out
+a wide-lettered name pushing a two-line page to three.
 """
 from __future__ import annotations
 
@@ -35,8 +39,19 @@ TEXTBOX_MAX_COLS = 18
 TEXTBOX_LINE_BUDGET_PX = TEXTBOX_MAX_COLS * 8
 
 # NamingScreen.lua: opts.maxLen defaults to 7 for a trainer (player/rival);
-# Pokémon nicknames (BattleState.lua/Commands.lua askNicknameUI) use 10.
-_NAME_TOKEN_MAX_LEN = {"PLAYER": 7, "RIVAL": 7, "TARGET": 10, "USER": 10}
+# Pokémon nicknames (BattleState.lua/Commands.lua askNicknameUI) use 10;
+# the trainer ID is always exactly 5 digits (src/ui/TradeAnim.lua/
+# SummaryMenu.lua: ("%05d"):format(...)).
+_NAME_TOKEN_MAX_LEN = {"PLAYER": 7, "RIVAL": 7, "TARGET": 10, "USER": 10, "ID": 5}
+
+# {RAM:...}/{NUM:...} (and bare {RAM}) substitute whatever the ROM buffer
+# holds -- an item, move, or species name, with no single source to read a
+# maxLen from.  Gen1's own text data conventionally caps those at 12
+# characters (e.g. "HYPER POTION", "THUNDERSTONE", "SELFDESTRUCT"); used as
+# the same kind of worst-case bound as the named tokens above rather than
+# falling back to the literal "{RAM:wStringBuffer}" token text, which is
+# neither a real bound nor representative of what's actually substituted.
+_DEFAULT_TOKEN_MAX_LEN = 12
 
 
 @lru_cache(maxsize=None)
@@ -71,9 +86,8 @@ def _spans(text: str) -> list[tuple[int, str]]:
 def _span_width(span_text: str, font, widest_letter_px: float) -> float:
     if span_text.startswith("{") and span_text.endswith("}"):
         name = span_text[1:-1].split(":")[0]
-        max_len = _NAME_TOKEN_MAX_LEN.get(name)
-        if max_len is not None:
-            return widest_letter_px * max_len
+        max_len = _NAME_TOKEN_MAX_LEN.get(name, _DEFAULT_TOKEN_MAX_LEN)
+        return widest_letter_px * max_len
     return font.getlength(span_text)
 
 

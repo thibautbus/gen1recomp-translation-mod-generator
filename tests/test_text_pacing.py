@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from pipeline.generate import display_value
-from pipeline.text_pacing import TEXTBOX_LINE_BUDGET_PX, _fit_one_line, _widest_letter_width, paginate_for_pacing
+from pipeline.text_pacing import TEXTBOX_LINE_BUDGET_PX, _fit_one_line, _span_width, _widest_letter_width, paginate_for_pacing
 
 FUSION_LATIN = Path(".cache/dependencies/fusion-pixel-font/fusion-pixel-10px-proportional-latin.ttf")
 
@@ -51,6 +51,25 @@ class TextPacingTests(unittest.TestCase):
         # widest real 7-letter name in this stand-in alphabet (7 * 8 = 56).
         cut = _fit_one_line("{PLAYER}", font, 56, 8.0)
         self.assertEqual(cut, len("{PLAYER}"))
+
+    def test_span_width_prices_id_at_its_fixed_five_digits(self):
+        # Regression: {ID} fell through to the literal 4-character "{ID}"
+        # token text (narrower than the real 5-digit trainer ID it
+        # substitutes) because it wasn't in the name-token table at all.
+        font = _FixedWidthFont()
+        self.assertEqual(_span_width("{ID}", font, 8.0), 5 * 8.0)
+
+    def test_span_width_prices_ram_and_num_at_the_generic_fallback(self):
+        # Regression: {RAM:...}/{NUM:...}/bare {RAM} have no maxLen to read
+        # (an item/move/species name pulled from RAM at runtime) and fell
+        # through to the literal token text -- e.g. "{RAM:wStringBuffer}"
+        # measured far narrower than a real substituted item name like
+        # "HYPER POTION". Priced at Gen1's 12-character text-data
+        # convention instead, the same worst-case-bound approach as the
+        # named tokens.
+        font = _FixedWidthFont()
+        for token in ("{RAM}", "{RAM:wStringBuffer}", "{NUM:wMoney}"):
+            self.assertEqual(_span_width(token, font, 8.0), 12 * 8.0, token)
 
     def test_paginate_leaves_short_text_as_one_page(self):
         from pipeline.text_pacing import _paginate_page

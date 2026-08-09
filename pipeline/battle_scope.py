@@ -76,8 +76,11 @@ _TRAINER_WON_RE = re.compile(r'\bwon\s*=\s*"([^"]+)"')
 def _script_entries(path: Path) -> list[tuple[str, str | None]]:
     entries: list[tuple[str, str | None]] = []
     for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        match = _ENTRY_RE.search(line)
-        if match:
+        # finditer, not search-first-match-only: a line can hold more than
+        # one entry (e.g. "{ face_player }, { show_text, ... },"), and a
+        # dropped opcode could hide a real battle trigger or show_text from
+        # the zone state machine.
+        for match in _ENTRY_RE.finditer(line):
             entries.append((match.group(1), match.group(2)))
     return entries
 

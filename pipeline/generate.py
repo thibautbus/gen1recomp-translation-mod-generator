@@ -18,7 +18,10 @@ def reflow_for_display(text: str) -> str:
     text = text.replace("\n", " ").replace("\v", " ")
     text = re.sub(r" {2,}", " ", text)
     text = re.sub(r" *\f *", "\f", text)
-    return text
+    # A leading/trailing \n or \v (the original text started or ended on a
+    # ROM-original line break) is now a stray edge space the regexes above
+    # don't reach: they only collapse runs and trim around internal \f.
+    return text.strip(" ")
 
 
 def display_value(

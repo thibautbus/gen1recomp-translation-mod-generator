@@ -209,6 +209,14 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(reflow_for_display("Bye\vnow.\fNext page"), "Bye now.\fNext page")
         self.assertEqual(reflow_for_display("End.\v\fNext"), "End.\fNext")
 
+    def test_reflow_for_display_strips_a_leading_or_trailing_break(self):
+        # Regression: a \n/\v at the very start or end of the string became
+        # a stray edge space -- the collapse-runs and trim-around-\f
+        # regexes only reach spaces next to another break or a \f.
+        self.assertEqual(reflow_for_display("\nHello world."), "Hello world.")
+        self.assertEqual(reflow_for_display("Hello world.\n"), "Hello world.")
+        self.assertEqual(reflow_for_display("\vHello\vworld.\v"), "Hello world.")
+
     def test_generate_mod_reflow_line_breaks_flag(self):
         items = align([
             CorpusRecord("rb.test.Qid", "en", "src"),

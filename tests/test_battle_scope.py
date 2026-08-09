@@ -3,8 +3,8 @@ import unittest
 from pathlib import Path
 
 from pipeline.battle_scope import (
-    battle_adjacent_text_keys, dynamic_text_lookup_keys, gen1recomp_root,
-    is_excluded_qid, trainer_won_text_keys,
+    _script_entries, battle_adjacent_text_keys, dynamic_text_lookup_keys,
+    gen1recomp_root, is_excluded_qid, trainer_won_text_keys,
 )
 
 GEN1RECOMP_SRC = Path("/home/thibaut/code/perso/gen1recomp/src")
@@ -25,6 +25,20 @@ class BattleScopeTests(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertEqual(battle_adjacent_text_keys(directory), set())
+
+    def test_script_entries_finds_every_opcode_on_a_shared_line(self):
+        # Regression: a search()-first-match-only scan silently dropped a
+        # second entry sharing a line with a preceding one (e.g.
+        # data/scripts/yellow_jessie_james.lua's
+        # '{ "face_player" }, { "show_text", "..." },'), which could hide a
+        # real battle trigger or show_text from the zone state machine.
+        with tempfile.TemporaryDirectory() as directory:
+            script = Path(directory) / "a.lua"
+            script.write_text('{ "face_player" }, { "show_text", "_SomeText" },\n', encoding="utf-8")
+            self.assertEqual(
+                _script_entries(script),
+                [("face_player", None), ("show_text", "_SomeText")],
+            )
 
     def test_direct_opcode_argument_is_captured(self):
         with tempfile.TemporaryDirectory() as directory:
