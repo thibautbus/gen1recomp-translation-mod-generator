@@ -38,42 +38,73 @@ class BattleScopeTests(unittest.TestCase):
             )
             self.assertIn("_SomeJessieJamesText3", battle_adjacent_text_keys(directory))
 
-    def test_whole_file_is_excluded_once_it_contains_a_battle_opcode(self):
+    def test_show_text_before_the_first_trigger_stays_eligible(self):
         with tempfile.TemporaryDirectory() as directory:
             script = Path(directory) / "a.lua"
-            lines = ['return {', '  { "show_text", "_FarBeforeText" },']
-            for i in range(10):
-                lines.append(f'  {{ "face_object", {i}, "down" }},')
-            lines.append('  { "rival_battle", "OPP_RIVAL1", 1 },')
+            script.write_text(
+                'return {\n'
+                '  { "show_text", "_ChallengeText" },\n'
+                '  { "rival_battle", "OPP_RIVAL1", 1 },\n'
+                '  { "show_text", "_VictoryTauntText" },\n'
+                '}\n',
+                encoding="utf-8",
+            )
+            keys = battle_adjacent_text_keys(directory)
+            # The opening challenge, shown before the fight even starts, is
+            # the same kind of plain pre-fight TextBox call as
+            # trainer_headers.lua's `battle` field: stays eligible.
+            self.assertNotIn("_ChallengeText", keys)
+            # Anything from the trigger onward (post-battle reaction) is
+            # conservatively excluded, however far from the opcode it sits.
+            self.assertIn("_VictoryTauntText", keys)
+
+    def test_far_show_text_after_the_trigger_is_still_excluded(self):
+        with tempfile.TemporaryDirectory() as directory:
+            script = Path(directory) / "a.lua"
+            lines = ['return {', '  { "rival_battle", "OPP_RIVAL1", 1 },']
             for i in range(10):
                 lines.append(f'  {{ "face_object", {i}, "up" }},')
             lines.append('  { "show_text", "_FarAfterText" },')
             lines.append('}')
             script.write_text("\n".join(lines) + "\n", encoding="utf-8")
-            keys = battle_adjacent_text_keys(directory)
-            # No proximity window anymore: a battle opcode anywhere in the
-            # file puts every show_text in that file out of scope, however
-            # far away it sits.
-            self.assertIn("_FarBeforeText", keys)
-            self.assertIn("_FarAfterText", keys)
+            self.assertIn("_FarAfterText", battle_adjacent_text_keys(directory))
+
+    def test_save_end_battle_text_is_captured_regardless_of_position(self):
+        # save_end_battle_text *registers* text for the battle to show once
+        # it ends; it's routinely written before start_battle in the script
+        # (yellow_jessie_james.lua), so unlike show_text its position
+        # relative to the trigger doesn't matter.
+        with tempfile.TemporaryDirectory() as directory:
+            script = Path(directory) / "a.lua"
+            script.write_text(
+                'return {\n'
+                '  { "save_end_battle_text", "_SomeJessieJamesText3" },\n'
+                '  { "start_battle", "trainer", "OPP_ROCKET", 1 },\n'
+                '}\n',
+                encoding="utf-8",
+            )
+            self.assertIn("_SomeJessieJamesText3", battle_adjacent_text_keys(directory))
 
     def test_battle_opcode_inside_table_insert_is_still_found(self):
         # Regression: data/scripts/oaks_lab.lua builds its rival encounter
         # via table.insert(rows, { "start_battle", ... }), which doesn't
         # start the line with `{` the way a bare list entry does. A scan
         # anchored to line-start silently missed this file's battle opcode
-        # entirely, leaving every show_text in it -- including the actual
-        # rival challenge line shown to the player -- eligible for reflow.
+        # entirely, so the post-battle reaction below was never recognized
+        # as battle-adjacent either.
         with tempfile.TemporaryDirectory() as directory:
             script = Path(directory) / "a.lua"
             script.write_text(
                 'local rows = {\n'
                 '  { "show_text", "_ChallengeText" },\n'
                 '}\n'
-                'table.insert(rows, { "start_battle", "trainer", "OPP_RIVAL1", party })\n',
+                'table.insert(rows, { "start_battle", "trainer", "OPP_RIVAL1", party })\n'
+                'table.insert(rows, { "show_text", "_VictoryTauntText" })\n',
                 encoding="utf-8",
             )
-            self.assertIn("_ChallengeText", battle_adjacent_text_keys(directory))
+            keys = battle_adjacent_text_keys(directory)
+            self.assertNotIn("_ChallengeText", keys)
+            self.assertIn("_VictoryTauntText", keys)
 
     def test_literal_inline_text_argument_is_captured(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -155,13 +186,17 @@ class BattleScopeTests(unittest.TestCase):
         # That same trainer's pre-fight challenge line renders on the
         # ordinary field TextBox, before the battle screen even opens.
         self.assertFalse(is_excluded_qid("rb.AgathasRoom.AgathaBeforeBattleText", keys))
-        # A taunt shown while waiting for a separate onStep coordinate
-        # trigger, not directly next to the start_battle opcode -- but
-        # oaks_lab.lua builds that opcode via table.insert(rows, {...})
-        # rather than a bare list entry, and the whole-file rule doesn't
-        # care where in the file the opcode sits: this qid shares the file
-        # with a real battle, so it's conservatively excluded too.
-        self.assertTrue(is_excluded_qid("rb.OaksLab.OaksLabRivalMyPokemonLooksStrongerText", keys))
+        # A taunt shown before the rival battle actually triggers (a
+        # separate onStep coordinate check) -- shown via show_text earlier
+        # in oaks_lab.lua than the table.insert(rows, {"start_battle",...})
+        # line, so it's the same "opening challenge" shape as
+        # OaksLabRivalIllTakeYouOnText below: stays eligible.
+        self.assertFalse(is_excluded_qid("rb.OaksLab.OaksLabRivalMyPokemonLooksStrongerText", keys))
+        # The rival's actual pre-fight challenge line, also before the
+        # table.insert-hidden start_battle opcode in the same file --
+        # confirms the table.insert fix restores detection of the file's
+        # battle opcode without over-excluding what comes before it.
+        self.assertFalse(is_excluded_qid("y.OaksLab.OaksLabRivalIllTakeYouOnText", keys))
 
 
 if __name__ == "__main__":

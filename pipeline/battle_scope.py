@@ -75,12 +75,17 @@ def _script_entries(path: Path) -> list[tuple[str, str | None]]:
 
 
 def battle_adjacent_text_keys(scripts_root: str | Path) -> set[str]:
-    """Scan every ``data/scripts/*.lua`` file; if it contains a scripted
-    trainer-battle opcode, every ``show_text``/``save_end_battle_text``
-    argument in that file is treated as battle-adjacent.  Returns the raw
-    argument strings found: either a dialogue runtime ID (``_XxxText``,
-    matching pipeline.join's qid -> runtime-key convention) or, for
-    hardcoded lines, the literal English text as written in the script.
+    """Scan every ``data/scripts/*.lua`` file for text tied to a scripted
+    trainer battle.  Everything from the file's first battle-trigger opcode
+    onward is treated as battle-adjacent (post-battle victory/defeat,
+    inter-battle reactions in a multi-round fight) -- but a ``show_text``
+    *before* that point is the opening challenge line, the same kind of
+    plain pre-fight TextBox call as ``trainer_headers.lua``'s ``battle``
+    field (see ``trainer_won_text_keys``), so it stays eligible.  Returns
+    the raw argument strings found: either a dialogue runtime ID
+    (``_XxxText``, matching pipeline.join's qid -> runtime-key convention)
+    or, for hardcoded lines, the literal English text as written in the
+    script.
     """
     root = Path(scripts_root)
     keys: set[str] = set()
@@ -88,10 +93,22 @@ def battle_adjacent_text_keys(scripts_root: str | Path) -> set[str]:
         return keys
     for path in sorted(root.glob("*.lua")):
         entries = _script_entries(path)
-        if not any(opcode in _BATTLE_TRIGGER_OPCODES for opcode, _ in entries):
+        trigger_index = next(
+            (index for index, (opcode, _) in enumerate(entries) if opcode in _BATTLE_TRIGGER_OPCODES),
+            None,
+        )
+        if trigger_index is None:
             continue
-        for opcode, arg in entries:
-            if arg and (opcode == _SHOW_TEXT_OPCODE or opcode in _DIRECT_BATTLE_TEXT_OPCODES):
+        for index, (opcode, arg) in enumerate(entries):
+            if not arg:
+                continue
+            if opcode in _DIRECT_BATTLE_TEXT_OPCODES:
+                # save_end_battle_text *registers* text the battle shows
+                # once it ends; it's routinely written before start_battle
+                # in the script (see yellow_jessie_james.lua), so position
+                # doesn't matter -- it's always battle-screen text.
+                keys.add(arg)
+            elif opcode == _SHOW_TEXT_OPCODE and index >= trigger_index:
                 keys.add(arg)
     return keys
 

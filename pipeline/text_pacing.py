@@ -12,18 +12,31 @@ next real page break.  The budget and cut rule are ported from the engine:
   from the same TTF the mod ships, so a proportional font (Fusion Pixel)
   fits noticeably more per line than a fixed-width one (Pokemon Font).
 
-This is a pacing aid, not a promise of pixel-identical wrapping: runtime
-placeholders (``{PLAYER}`` etc.) are measured as their literal token text
-since the substituted value isn't known ahead of time -- the same
-uncertainty the engine itself has at pagination time.
+Runtime placeholders (``{PLAYER}`` etc.) can't be measured directly: the
+substituted value isn't known until the player actually picks a name.
+Each name-shaped placeholder is priced at its true worst case instead:
+the game's own max length for that field (NamingScreen.lua's ``maxLen``
+-- 7 for a trainer, 10 for a Pokémon nickname) times the widest single
+letter glyph in the font.  No valid name can measure wider than that, so
+a page never needs a 3rd wrapped line no matter what the player typed --
+deliberately chosen over a narrower "typical name" estimate (e.g. the
+font's average letter width), which packs better for the common case but
+can't rule out a wide-lettered name pushing a two-line page to three.
 """
 from __future__ import annotations
 
+import string
 from functools import lru_cache
 from pathlib import Path
 
+from .tokens import DYNAMIC_TOKEN_RE
+
 TEXTBOX_MAX_COLS = 18
 TEXTBOX_LINE_BUDGET_PX = TEXTBOX_MAX_COLS * 8
+
+# NamingScreen.lua: opts.maxLen defaults to 7 for a trainer (player/rival);
+# Pokémon nicknames (BattleState.lua/Commands.lua askNicknameUI) use 10.
+_NAME_TOKEN_MAX_LEN = {"PLAYER": 7, "RIVAL": 7, "TARGET": 10, "USER": 10}
 
 
 @lru_cache(maxsize=None)
@@ -33,24 +46,58 @@ def _load_font(path: str, size: int):
     return ImageFont.truetype(path, size)
 
 
-def _fit_one_line(text: str, font, budget_px: float) -> int:
+@lru_cache(maxsize=None)
+def _widest_letter_width(path: str, size: int) -> float:
+    font = _load_font(path, size)
+    return max(font.getlength(letter) for letter in string.ascii_letters)
+
+
+def _spans(text: str) -> list[tuple[int, str]]:
+    """(end_offset, span_text) pairs: a whole ``{TOKEN}`` is one span (a
+    cut can fall before or after it, never inside it), everything else is
+    one character per span -- mirrors the engine's own ``Font.split``."""
+    spans: list[tuple[int, str]] = []
+    pos = 0
+    for match in DYNAMIC_TOKEN_RE.finditer(text):
+        for index in range(pos, match.start()):
+            spans.append((index + 1, text[index]))
+        spans.append((match.end(), match.group(0)))
+        pos = match.end()
+    for index in range(pos, len(text)):
+        spans.append((index + 1, text[index]))
+    return spans
+
+
+def _span_width(span_text: str, font, widest_letter_px: float) -> float:
+    if span_text.startswith("{") and span_text.endswith("}"):
+        name = span_text[1:-1].split(":")[0]
+        max_len = _NAME_TOKEN_MAX_LEN.get(name)
+        if max_len is not None:
+            return widest_letter_px * max_len
+    return font.getlength(span_text)
+
+
+def _fit_one_line(text: str, font, budget_px: float, widest_letter_px: float) -> int:
     """Return the cut point (character index) for one line: how much of
-    ``text`` fits in ``budget_px``, preferring the last space over splitting
-    a word.  Mirrors ``Font.spansFitting`` + ``pushLine``'s space search."""
+    ``text`` fits in ``budget_px``, preferring the last space over
+    splitting a word.  Mirrors ``Font.spansFitting`` + ``pushLine``'s
+    space search, treating a ``{PLACEHOLDER}`` as one unbreakable span."""
+    spans = _spans(text)
     used = 0.0
     fit = 0
-    for index, char in enumerate(text):
-        used += font.getlength(char)
+    for span_end, span_text in spans:
+        used += _span_width(span_text, font, widest_letter_px)
         if used > budget_px:
             break
-        fit = index + 1
-    if fit >= len(text):
+        fit += 1
+    if fit >= len(spans):
         return len(text)
     fit = max(fit, 1)
-    for index in range(fit, 0, -1):
-        if text[index - 1] == " ":
-            return index
-    return fit
+    cut = spans[fit - 1][0]
+    for index in range(fit - 1, -1, -1):
+        if spans[index][1] == " ":
+            return spans[index][0]
+    return cut
 
 
 def paginate_for_pacing(text: str, font_path: str | Path, font_size: int, lines_per_page: int = 2) -> str:
@@ -62,13 +109,14 @@ def paginate_for_pacing(text: str, font_path: str | Path, font_size: int, lines_
     become spaces -- this function assumes there are none left to handle.
     """
     font = _load_font(str(font_path), font_size)
+    widest_letter_px = _widest_letter_width(str(font_path), font_size)
     return "\f".join(
-        _paginate_page(page, font, lines_per_page)
+        _paginate_page(page, font, widest_letter_px, lines_per_page)
         for page in text.split("\f")
     )
 
 
-def _paginate_page(page: str, font, lines_per_page: int) -> str:
+def _paginate_page(page: str, font, widest_letter_px: float, lines_per_page: int) -> str:
     chunks: list[str] = []
     remaining = page
     while remaining:
@@ -77,7 +125,7 @@ def _paginate_page(page: str, font, lines_per_page: int) -> str:
         for _ in range(lines_per_page):
             if not cursor:
                 break
-            cut = _fit_one_line(cursor, font, TEXTBOX_LINE_BUDGET_PX)
+            cut = _fit_one_line(cursor, font, TEXTBOX_LINE_BUDGET_PX, widest_letter_px)
             consumed += cut
             cursor = cursor[cut:]
         chunk = remaining[:consumed].strip(" ")
