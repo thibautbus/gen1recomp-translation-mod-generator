@@ -32,6 +32,12 @@ _SHOW_TEXT_OPCODE = "show_text"
 
 _ENTRY_RE = re.compile(r'^\s*\{\s*"(\w+)"\s*(?:,\s*"((?:[^"\\]|\\.)*)")?')
 
+# self.data.text._Rival1WinText-style lookups: BattleState pulls these
+# straight off the dialogue table at runtime instead of a literal
+# Strings(...)/romText(...) call, so iter_callsites can't see them -- it
+# deliberately skips any call whose argument isn't a literal string.
+_DYNAMIC_TEXT_RE = re.compile(r"\.text\.(_\w+)")
+
 
 def _script_entries(path: Path) -> list[tuple[str, str | None]]:
     entries: list[tuple[str, str | None]] = []
@@ -71,6 +77,21 @@ def gen1recomp_root(engine_source: str | Path) -> Path:
     scripts live in the sibling ``data/`` directory."""
     path = Path(engine_source)
     return path.parent if path.name == "src" else path
+
+
+def battle_module_dynamic_keys(engine_source: str | Path) -> set[str]:
+    """Runtime IDs read directly off the dialogue table by ``src/battle/``
+    (e.g. ``self.data.text._Rival1WinText``, ``BattleState.lua``) rather
+    than through a literal call -- the one gap ``iter_callsites`` leaves,
+    since it deliberately skips dynamic/variable lookups."""
+    battle_dir = gen1recomp_root(engine_source) / "src" / "battle"
+    keys: set[str] = set()
+    if not battle_dir.is_dir():
+        return keys
+    for path in sorted(battle_dir.glob("*.lua")):
+        for match in _DYNAMIC_TEXT_RE.finditer(path.read_text(encoding="utf-8", errors="replace")):
+            keys.add(match.group(1))
+    return keys
 
 
 def is_excluded_qid(qid: str, excluded: set[str]) -> bool:

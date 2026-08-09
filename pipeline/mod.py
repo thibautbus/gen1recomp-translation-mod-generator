@@ -486,7 +486,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
             pacing_font_path = _font_source_file(Path(font_source), Path(pacing_filename))
     excluded_from_reflow: set[str] = set()
     if reflow_line_breaks and engine_source is not None:
-        from .battle_scope import battle_adjacent_text_keys, gen1recomp_root
+        from .battle_scope import battle_adjacent_text_keys, battle_module_dynamic_keys, gen1recomp_root
         try:
             from .engine_scope import iter_callsites
             for row in iter_callsites(engine_source):
@@ -498,6 +498,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         except (ValueError, FileNotFoundError, OSError):
             pass
         excluded_from_reflow |= battle_adjacent_text_keys(gen1recomp_root(engine_source) / "data" / "scripts")
+        excluded_from_reflow |= battle_module_dynamic_keys(engine_source)
     destination = Path(destination); destination.mkdir(parents=True, exist_ok=True)
     existing_registration = None
     existing_main = destination / "main.lua"
