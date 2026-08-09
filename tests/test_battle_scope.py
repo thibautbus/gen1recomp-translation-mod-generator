@@ -57,6 +57,24 @@ class BattleScopeTests(unittest.TestCase):
             self.assertIn("_FarBeforeText", keys)
             self.assertIn("_FarAfterText", keys)
 
+    def test_battle_opcode_inside_table_insert_is_still_found(self):
+        # Regression: data/scripts/oaks_lab.lua builds its rival encounter
+        # via table.insert(rows, { "start_battle", ... }), which doesn't
+        # start the line with `{` the way a bare list entry does. A scan
+        # anchored to line-start silently missed this file's battle opcode
+        # entirely, leaving every show_text in it -- including the actual
+        # rival challenge line shown to the player -- eligible for reflow.
+        with tempfile.TemporaryDirectory() as directory:
+            script = Path(directory) / "a.lua"
+            script.write_text(
+                'local rows = {\n'
+                '  { "show_text", "_ChallengeText" },\n'
+                '}\n'
+                'table.insert(rows, { "start_battle", "trainer", "OPP_RIVAL1", party })\n',
+                encoding="utf-8",
+            )
+            self.assertIn("_ChallengeText", battle_adjacent_text_keys(directory))
+
     def test_literal_inline_text_argument_is_captured(self):
         with tempfile.TemporaryDirectory() as directory:
             script = Path(directory) / "a.lua"
@@ -137,9 +155,13 @@ class BattleScopeTests(unittest.TestCase):
         # That same trainer's pre-fight challenge line renders on the
         # ordinary field TextBox, before the battle screen even opens.
         self.assertFalse(is_excluded_qid("rb.AgathasRoom.AgathaBeforeBattleText", keys))
-        # A plain pre-battle field taunt triggered by a separate onStep
-        # coordinate check, not an inline battle opcode: stays eligible.
-        self.assertFalse(is_excluded_qid("rb.OaksLab.OaksLabRivalMyPokemonLooksStrongerText", keys))
+        # A taunt shown while waiting for a separate onStep coordinate
+        # trigger, not directly next to the start_battle opcode -- but
+        # oaks_lab.lua builds that opcode via table.insert(rows, {...})
+        # rather than a bare list entry, and the whole-file rule doesn't
+        # care where in the file the opcode sits: this qid shares the file
+        # with a real battle, so it's conservatively excluded too.
+        self.assertTrue(is_excluded_qid("rb.OaksLab.OaksLabRivalMyPokemonLooksStrongerText", keys))
 
 
 if __name__ == "__main__":

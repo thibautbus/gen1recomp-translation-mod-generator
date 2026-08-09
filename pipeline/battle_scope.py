@@ -42,7 +42,11 @@ _BATTLE_TRIGGER_OPCODES = {"start_battle", "rival_battle", "static_battle", "che
 
 _SHOW_TEXT_OPCODE = "show_text"
 
-_ENTRY_RE = re.compile(r'^\s*\{\s*"(\w+)"\s*(?:,\s*"((?:[^"\\]|\\.)*)")?')
+# Not anchored to the start of the line: table.insert(rows, { "start_battle",
+# ... }) (data/scripts/oaks_lab.lua's conditionally-built rival encounter,
+# among others) puts the entry after a wrapping call rather than as a bare
+# list literal, and a battle opcode hidden that way must still be found.
+_ENTRY_RE = re.compile(r'\{\s*"(\w+)"\s*(?:,\s*"((?:[^"\\]|\\.)*)")?')
 
 # self.data.text._Rival1WinText-style lookups: read straight off the
 # dialogue table at runtime instead of a literal Strings(...)/romText(...)
@@ -64,7 +68,7 @@ _TRAINER_WON_RE = re.compile(r'\bwon\s*=\s*"([^"]+)"')
 def _script_entries(path: Path) -> list[tuple[str, str | None]]:
     entries: list[tuple[str, str | None]] = []
     for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        match = _ENTRY_RE.match(line)
+        match = _ENTRY_RE.search(line)
         if match:
             entries.append((match.group(1), match.group(2)))
     return entries
