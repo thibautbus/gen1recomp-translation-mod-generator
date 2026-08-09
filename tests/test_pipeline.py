@@ -586,6 +586,22 @@ class PipelineTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "unknown key.*Stale"):
                 generate_mod([], root / "mod", engine_catalog=catalog, engine_overrides=overrides)
 
+    def test_generate_mod_never_reflows_the_strings_catalog(self):
+        # Fails safe: the engine-literal catalog is out of scope for reflow
+        # unconditionally, regardless of whether a battle-scope signal
+        # would have flagged this particular key -- there's no
+        # engine_source here at all, so excluded_from_reflow stays empty,
+        # and the line breaks must still survive untouched.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            catalog = root / "strings.lua"
+            catalog.write_text('return { ["Hits\\nnever miss!"] = "" }\n', encoding="utf-8")
+            overrides = root / "overrides.json"
+            overrides.write_text(json.dumps({"entries": {"Hits\nnever miss!": {"override": "Rate\njamais!"}}}), encoding="utf-8")
+            mod = generate_mod([], root / "mod", engine_catalog=catalog, engine_overrides=overrides, reflow_line_breaks=True)
+            body = (mod / "lang" / "strings.lua").read_text(encoding="utf-8")
+            self.assertIn("Rate\\njamais!", body)
+
     def test_sendout_derive_partition_guard_returns_empty(self):
         # A corpus value missing the RAM tokens would embed raw nick/trainer
         # text; the derivation must yield nothing so the keys stay unmatched.
