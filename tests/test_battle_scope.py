@@ -69,6 +69,49 @@ class BattleScopeTests(unittest.TestCase):
             script.write_text("\n".join(lines) + "\n", encoding="utf-8")
             self.assertIn("_FarAfterText", battle_adjacent_text_keys(directory))
 
+    def test_scene_reset_ends_the_battle_zone(self):
+        # Regression: a big script file (data/scripts/story.lua) routinely
+        # concatenates several unrelated encounters. Once the NPC leaves
+        # (hide_object) or the screen changes (warp/fade), a later
+        # show_text is a new, unrelated story beat, not this battle's
+        # aftermath -- however close it sits in the file.
+        for reset_opcode in ("hide_object", "warp", "fade"):
+            with tempfile.TemporaryDirectory() as directory:
+                script = Path(directory) / "a.lua"
+                script.write_text(
+                    'return {\n'
+                    '  { "rival_battle", "OPP_RIVAL1", 1 },\n'
+                    '  { "show_text", "_DefeatedText" },\n'
+                    f'  {{ "{reset_opcode}", "SOME_MAP" }},\n'
+                    '  { "show_text", "_UnrelatedLaterText" },\n'
+                    '}\n',
+                    encoding="utf-8",
+                )
+                keys = battle_adjacent_text_keys(directory)
+                self.assertIn("_DefeatedText", keys, reset_opcode)
+                self.assertNotIn("_UnrelatedLaterText", keys, reset_opcode)
+
+    def test_a_second_trigger_reopens_the_zone_after_a_reset(self):
+        # Two independent battles in one file (e.g. story5.lua's Route 22
+        # then Cerulean City rival fights): each gets its own zone.
+        with tempfile.TemporaryDirectory() as directory:
+            script = Path(directory) / "a.lua"
+            script.write_text(
+                'return {\n'
+                '  { "rival_battle", "OPP_RIVAL1", 1 },\n'
+                '  { "show_text", "_FirstDefeatedText" },\n'
+                '  { "hide_object", "ROUTE_22" },\n'
+                '  { "show_text", "_SecondChallengeText" },\n'
+                '  { "rival_battle", "OPP_RIVAL1", 1 },\n'
+                '  { "show_text", "_SecondDefeatedText" },\n'
+                '}\n',
+                encoding="utf-8",
+            )
+            keys = battle_adjacent_text_keys(directory)
+            self.assertIn("_FirstDefeatedText", keys)
+            self.assertNotIn("_SecondChallengeText", keys)  # pre-fight again, before the 2nd trigger
+            self.assertIn("_SecondDefeatedText", keys)
+
     def test_save_end_battle_text_is_captured_regardless_of_position(self):
         # save_end_battle_text *registers* text for the battle to show once
         # it ends; it's routinely written before start_battle in the script
@@ -197,6 +240,15 @@ class BattleScopeTests(unittest.TestCase):
         # confirms the table.insert fix restores detection of the file's
         # battle opcode without over-excluding what comes before it.
         self.assertFalse(is_excluded_qid("y.OaksLab.OaksLabRivalIllTakeYouOnText", keys))
+        # The reported case: Oak's Pikachu-dislikes-Poké-Balls speech,
+        # scripted after the same rival battle in oaks_lab_yellow.lua but
+        # past the rival's hide_object (he's walked off-screen by then) --
+        # unrelated to the fight, now correctly eligible again.
+        self.assertFalse(is_excluded_qid("y.OaksLab.OaksLabPikachuDislikesPokeballsText1", keys))
+        self.assertFalse(is_excluded_qid("y.OaksLab.OaksLabPikachuDislikesPokeballsText2", keys))
+        # The rival's actual parting line right after that same battle,
+        # before hide_object fires: still correctly excluded.
+        self.assertTrue(is_excluded_qid("rb.OaksLab.OaksLabRivalSmellYouLaterText", keys))
 
 
 if __name__ == "__main__":

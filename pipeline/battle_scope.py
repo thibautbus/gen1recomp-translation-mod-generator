@@ -19,9 +19,14 @@ deliberately erring toward excluding more rather than less:
   off the dialogue table by engine code, wherever that code lives, is
   engine-adjacent and stays untouched.
 - ``show_text``/``save_end_battle_text`` targets in any
-  ``data/scripts/*.lua`` file that contains at least one scripted
-  trainer-battle opcode: the whole file is treated as battle-adjacent,
-  not just entries near the opcode.
+  ``data/scripts/*.lua`` file, from a scripted trainer-battle opcode
+  until the scene visibly resets (``hide_object``/``warp``/``fade``,
+  the NPC leaving or the screen changing) -- not the whole file: a big
+  script like ``story.lua`` concatenates many unrelated encounters, and
+  a napkin-math distance from *some* battle earlier in the same file
+  isn't a reliable signal (a scripted challenge 100+ entries after the
+  file's first, unrelated trigger turned out to sit 4 entries after its
+  own, separate one).
 """
 from __future__ import annotations
 
@@ -33,12 +38,15 @@ from pathlib import Path
 # screen ahead of MoneyForWinningText").
 _DIRECT_BATTLE_TEXT_OPCODES = {"save_end_battle_text"}
 
-# Opcodes that trigger or resolve a scripted trainer battle.  Any
-# show_text elsewhere in the same file is treated as battle-adjacent too
-# (pre-battle taunt, post-battle victory/defeat speech): scripts are
-# organized per area/story chunk, so a file with a battle in it is safer
-# to exclude wholesale than to try to bound how far its narrative reaches.
+# Opcodes that trigger or resolve a scripted trainer battle: everything
+# from here forward is "inside" that battle's aftermath until the scene
+# visibly resets (see _SCENE_RESET_OPCODES below).
 _BATTLE_TRIGGER_OPCODES = {"start_battle", "rival_battle", "static_battle", "check_battle_result"}
+
+# The NPC leaving (hide_object) or the screen changing (warp/fade): once
+# any of these fires, a battle's aftermath is over and later show_text
+# entries in the same file are a new, unrelated story beat again.
+_SCENE_RESET_OPCODES = {"hide_object", "warp", "fade"}
 
 _SHOW_TEXT_OPCODE = "show_text"
 
@@ -76,13 +84,16 @@ def _script_entries(path: Path) -> list[tuple[str, str | None]]:
 
 def battle_adjacent_text_keys(scripts_root: str | Path) -> set[str]:
     """Scan every ``data/scripts/*.lua`` file for text tied to a scripted
-    trainer battle.  Everything from the file's first battle-trigger opcode
-    onward is treated as battle-adjacent (post-battle victory/defeat,
-    inter-battle reactions in a multi-round fight) -- but a ``show_text``
-    *before* that point is the opening challenge line, the same kind of
-    plain pre-fight TextBox call as ``trainer_headers.lua``'s ``battle``
-    field (see ``trainer_won_text_keys``), so it stays eligible.  Returns
-    the raw argument strings found: either a dialogue runtime ID
+    trainer battle: a ``show_text`` is battle-adjacent (pre-fight taunt
+    excepted) from a battle-trigger opcode until the scene next resets
+    (``_SCENE_RESET_OPCODES``) -- a state machine over the file's entries
+    in order, not a whole-file or fixed-distance rule, since one script
+    file routinely holds several unrelated encounters back to back (see
+    the module docstring).  A ``show_text`` *before* any trigger (or after
+    a reset, before the next one) is a plain pre-fight challenge line, the
+    same kind of ordinary field TextBox call as ``trainer_headers.lua``'s
+    ``battle`` field (see ``trainer_won_text_keys``), so it stays eligible.
+    Returns the raw argument strings found: either a dialogue runtime ID
     (``_XxxText``, matching pipeline.join's qid -> runtime-key convention)
     or, for hardcoded lines, the literal English text as written in the
     script.
@@ -92,23 +103,23 @@ def battle_adjacent_text_keys(scripts_root: str | Path) -> set[str]:
     if not root.is_dir():
         return keys
     for path in sorted(root.glob("*.lua")):
-        entries = _script_entries(path)
-        trigger_index = next(
-            (index for index, (opcode, _) in enumerate(entries) if opcode in _BATTLE_TRIGGER_OPCODES),
-            None,
-        )
-        if trigger_index is None:
-            continue
-        for index, (opcode, arg) in enumerate(entries):
-            if not arg:
-                continue
+        in_battle_zone = False
+        for opcode, arg in _script_entries(path):
             if opcode in _DIRECT_BATTLE_TEXT_OPCODES:
                 # save_end_battle_text *registers* text the battle shows
                 # once it ends; it's routinely written before start_battle
-                # in the script (see yellow_jessie_james.lua), so position
-                # doesn't matter -- it's always battle-screen text.
-                keys.add(arg)
-            elif opcode == _SHOW_TEXT_OPCODE and index >= trigger_index:
+                # in the script (see yellow_jessie_james.lua), so its
+                # position relative to the zone doesn't matter.
+                if arg:
+                    keys.add(arg)
+                continue
+            if opcode in _BATTLE_TRIGGER_OPCODES:
+                in_battle_zone = True
+                continue
+            if opcode in _SCENE_RESET_OPCODES:
+                in_battle_zone = False
+                continue
+            if in_battle_zone and opcode == _SHOW_TEXT_OPCODE and arg:
                 keys.add(arg)
     return keys
 
