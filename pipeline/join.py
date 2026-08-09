@@ -6,6 +6,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 from collections import defaultdict
+from typing import Iterable
 
 from .model import Alignment
 from .tokens import corpus_to_engine
@@ -370,6 +371,82 @@ def _type_name_tail(qid: str) -> str | None:
     if not cleaned.startswith(TYPE_NAMES_QID_PREFIX):
         return None
     return cleaned[len(TYPE_NAMES_QID_PREFIX):]
+
+
+SPECIES_KINDS_QID_PREFIX = "rb.dex_entries."
+SPECIES_KINDS_QID_SUFFIX = "DexEntry.Species"
+
+
+def _species_kind_tail(qid: str) -> str | None:
+    # Scope markers are internal (e.g. ^RG.rb.dex_entries.RhydonDexEntry.Species),
+    # not part of the symbol.
+    cleaned = _base_qid(qid)
+    if not (cleaned.startswith(SPECIES_KINDS_QID_PREFIX)
+            and cleaned.endswith(SPECIES_KINDS_QID_SUFFIX)):
+        return None
+    return cleaned[len(SPECIES_KINDS_QID_PREFIX):-len(SPECIES_KINDS_QID_SUFFIX)]
+
+
+def _fold_species(name: str) -> str:
+    """CamelCase corpus name -> the runtime species id ("NidoranM" -> NIDORANM)."""
+    return re.sub(r"[^A-Z0-9]", "", name.upper())
+
+
+def species_kinds_catalog(items: list[Alignment], target_lang: str = "fr",
+                          species_ids: Iterable[str] = ()) -> tuple[dict[str, str], dict]:
+    """Join the corpus dex-entry Species rows onto the engine's pokemon ids.
+
+    The one-word category under a Pokemon's sprite on the dex page
+    (``dexEntry.kind``: SEED, FLAME, MOUSE).  Modkit emits no worksheet for
+    this field, so without this join the category alone stays English on an
+    otherwise localized page.
+
+    ``species_ids`` are the ids the pokemon catalog actually carries; the
+    corpus holds 154 ``.Species`` rows against 151 species, so a row with no
+    matching id is recorded in ``report["excluded"]`` rather than inventing a
+    key.  When no ids are supplied the ids are taken from the corpus names,
+    which is what a caller without a pokemon catalog can do.
+    """
+    by_tail: dict[str, list[Alignment]] = defaultdict(list)
+    for item in items:
+        tail = _species_kind_tail(item.qid)
+        if tail:
+            by_tail[tail].append(item)
+
+    output: dict[str, str] = {}
+    report = {"translated": 0, "unmatched": [], "strategies": {},
+              "reasons": {}, "qids": {}, "excluded": {}}
+    if not by_tail:
+        return output, report
+
+    known = {_fold_species(i): i for i in species_ids}
+    for tail in sorted(by_tail):
+        folded = _fold_species(tail)
+        runtime_id = known.get(folded, folded if not known else None)
+        qid = SPECIES_KINDS_QID_PREFIX + tail + SPECIES_KINDS_QID_SUFFIX
+        if runtime_id is None:
+            report["excluded"][tail] = {
+                "qid": qid,
+                "reason": "no species carries this id, so nothing would "
+                          "display the row",
+            }
+            continue
+        report["qids"][runtime_id] = qid
+        candidates = _same_value(by_tail[tail])
+        if len(candidates) == 1 and candidates[0].translation is not None:
+            output[runtime_id] = corpus_to_engine(str(candidates[0].translation))
+            report["translated"] += 1
+            report["strategies"][runtime_id] = "species_kind_qid"
+        else:
+            output[runtime_id] = ""
+            report["unmatched"].append(runtime_id)
+            report["strategies"][runtime_id] = "manual_review"
+            report["reasons"][runtime_id] = (
+                f"{qid}: no {target_lang} translation; manual review required"
+                if len(candidates) == 1
+                else (f"ambiguous {qid}: {[x.qid for x in candidates]}"
+                      if candidates else f"no canonical candidate for {qid}"))
+    return output, report
 
 
 def type_names_catalog(items: list[Alignment], target_lang: str = "fr") -> tuple[dict[str, str], dict]:
