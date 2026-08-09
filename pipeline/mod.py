@@ -29,13 +29,16 @@ CATALOGS = ("dialogue", "strings", "species_names", "move_names", "item_names", 
 # Inside "dialogue" itself, pipeline.battle_scope.reflow_safe_keys is a
 # real per-qid whitelist, not a blocklist: a qid is only reflowed if a
 # structural source positively proves it renders through the plain,
-# generic text box (map/field/Pokédex text pointers, non-battle scripted
-# show_text targets, trainer challenge/rematch lines). Measured against
-# the real generated dialogue catalog (2582 qids), those sources cover
-# ~52% of it; the rest keeps its ROM-original line breaks by default,
-# whether it's genuinely risky (most of it likely is: battle-screen
-# defeat lines for scripted, non-generic trainers, engine-hardcoded UI
-# sequences like the intro OakSpeech screen) or just not yet audited.
+# generic text box (map/field text pointers, non-battle scripted
+# show_text targets, trainer challenge/rematch lines) -- signs and
+# Pokédex entries are deliberately excluded despite an otherwise-safe
+# display path (see pipeline.battle_scope's module docstring). Measured
+# against the real generated dialogue catalog (2582 qids), those sources
+# cover ~45% of it; the rest keeps its ROM-original line breaks by
+# default, whether it's genuinely risky (battle-screen defeat lines for
+# scripted, non-generic trainers, engine-hardcoded UI sequences like the
+# intro OakSpeech screen), structurally excluded on purpose, or just not
+# yet audited.
 _REFLOW_ELIGIBLE_CATALOGS = {"dialogue"}
 
 # Shared between the standalone main.lua this module generates and the

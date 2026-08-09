@@ -13,17 +13,20 @@ change none of these sources anticipate -- keeps its ROM-original line
 breaks by default, the same as any qid in a catalog
 ``pipeline.mod._REFLOW_ELIGIBLE_CATALOGS`` doesn't even consider. The
 *negative* signals (``dynamic_text_lookup_keys``, ``battle_adjacent_text_keys``,
-``trainer_won_text_keys``) still run and are subtracted from the union of
-positive sources as a second, independent check: a qid a positive source
-names but a negative one also catches (e.g. because it's referenced both
-generically and from a special-cased engine callsite) stays excluded.
+``trainer_won_text_keys``, ``sign_title_text_keys``) still run and are
+subtracted from the union of positive sources as a second, independent
+check: a qid a positive source names but a negative one also catches
+(e.g. because it's referenced both generically and from a special-cased
+engine callsite, or because it's a sign whose title-line layout reflow
+would disrupt even though its display path is otherwise safe) stays
+excluded.
 
 Positive sources, each a real structural pointer to a runtime text
 symbol, not a guess:
 
-- ``data/generated/text_pointers.lua``: every map object's ``label`` --
-  the resolved runtime symbol behind a ``data/generated/maps.lua`` NPC's
-  ``text`` pointer, read generically by
+- ``data/generated/text_pointers.lua``: every map object's ``label``/
+  ``text`` fields -- the resolved runtime symbol behind a
+  ``data/generated/maps.lua`` NPC's ``text`` pointer, read generically by
   ``OverworldController.lua``/``Commands.lua`` via ``Game.data.text[key]``
   or ``Game.data:resolveText(...)`` when the player talks to that NPC.
   This is the bulk of ordinary overworld dialogue.
@@ -32,9 +35,6 @@ symbol, not a guess:
   generic ``Game.data.text[key]`` display path as an NPC, just for
   non-NPC field objects (confirmed for badge gates specifically at
   ``OverworldController.lua``'s badge-gate handler).
-- ``data/generated/pokemon.lua``: each species' ``dexEntry.text`` --
-  ``DexEntryMenu.lua``'s ``game.data.text[e.text]`` lookup, the Pokédex
-  entry screen, unrelated to battle.
 - ``data/generated/trainer_headers.lua``'s ``battle``/``after`` fields
   (not ``won``, see ``trainer_won_text_keys``): the pre-fight challenge
   line and the post-defeat rematch line, both plain
@@ -52,15 +52,25 @@ positive source here is read across all three and merged the same way,
 so a Yellow-only (or Blue-only) NPC/trainer/sign is covered too.
 
 Measured against the real generated "dialogue" catalog (2582 qids), this
-whitelist covers ~52% of it. The rest keeps its ROM-original line breaks
-by default -- some of it genuinely risky (battle-screen defeat lines for
-scripted, non-generic trainers; engine-hardcoded UI sequences like the
-intro OakSpeech screen), some of it simply not yet audited (e.g. no
-generic per-item/move description text pointer was found in
-``items.lua``/``moves.lua``/``trainers.lua`` -- checked and empty, not
-skipped). Either way, "not proven safe" already means "not reflowed"
-here, so an unaudited case degrades to a missed optimization, never a
-broken display.
+whitelist covers ~45% of it. The rest keeps its ROM-original line breaks
+by default, for one of three reasons:
+
+- genuinely battle/engine-risky (battle-screen defeat lines for
+  scripted, non-generic trainers; engine-hardcoded UI sequences like the
+  intro OakSpeech screen);
+- structurally excluded on purpose despite a safe display path: signs
+  (``sign_title_text_keys``) and Pokédex entries, which render through
+  ``DexEntryMenu.lua``'s own non-paginating, truncating display path
+  rather than the ordinary field TextBox this whitelist otherwise models
+  (``dex_entry_text_keys`` is kept only as a structural inventory --
+  deliberately not fed into the positive union below);
+- simply not yet audited (e.g. no generic per-item/move description text
+  pointer was found in ``items.lua``/``moves.lua``/``trainers.lua`` --
+  checked and empty, not skipped).
+
+Either way, "not proven safe" already means "not reflowed" here, so a
+gap in any of these categories degrades to a missed optimization, never
+a broken display.
 """
 from __future__ import annotations
 
@@ -107,12 +117,19 @@ _TRAINER_WON_RE = re.compile(r'\bwon\s*=\s*"([^"]+)"')
 _TRAINER_BATTLE_RE = re.compile(r'\bbattle\s*=\s*"([^"]+)"')
 _TRAINER_AFTER_RE = re.compile(r'\bafter\s*=\s*"([^"]+)"')
 
-# data/generated/text_pointers.lua: { TEXT_XXX = { label = "...", ... } }
-# per map -- label is the resolved runtime symbol regardless of whether
-# this particular pointer has a Lua-side "text" value yet or is still
-# "asm = true" (extraction-provenance metadata, not a different runtime
-# path): both kinds of entry resolve to the same generic display call.
+# data/generated/text_pointers.lua: { TEXT_XXX = { label = "...", text =
+# "_...", ... } }. "text", when present, is the verified real runtime
+# symbol (present in data/generated/text.lua); "label" is only a
+# provenance-naming guess by the extraction tool and can diverge from it
+# for an "asm = true" pointer not yet migrated off the raw ROM text
+# stream -- e.g. TEXT_PALLETTOWN_OAK's label is "PalletTownOakText", which
+# doesn't exist anywhere in text.lua, while its real symbol is
+# "_PalletTownOakHeyWaitDontGoOutText" ("text" field). Both regexes are
+# still read file-wide rather than block-scoped: every label/text value
+# in the file is a real possible symbol regardless of which TEXT_XXX
+# block it came from, so there's nothing to mismatch by not pairing them.
 _TEXT_POINTER_LABEL_RE = re.compile(r'\blabel\s*=\s*"([^"]+)"')
+_TEXT_POINTER_TEXT_RE = re.compile(r'\btext\s*=\s*"([^"]+)"')
 
 # data/generated/field.lua: badge-gate/guard/sign text pointer fields.
 # "textFacing"/"gamefreakText" (a direction word and an intro-screen
@@ -124,6 +141,17 @@ _FIELD_TEXT_RE = re.compile(r'\b(?:text|failText|passText|afterText)\s*=\s*"([^"
 # data/generated/pokemon.lua: dexEntry = { ..., text = "_XxxDexEntry", ... }
 # -- no nested {} between the field's opening brace and its "text" value.
 _DEX_ENTRY_TEXT_RE = re.compile(r"dexEntry\s*=\s*\{[^}]*?\btext\s*=\s*\"([^\"]+)\"", re.S)
+
+# data/generated/text_pointers.lua: a TEXT_XXX_SIGN constant (130 across
+# the game) is a physical sign/plaque -- these routinely open with a short
+# title line by design (a town/route/floor name) before the ROM's own
+# "<LINE>" break, e.g. _PalletTownSignText = "PALLET TOWN\nShades of your
+# journey await!". Reflowing runs that title into the following prose
+# instead of respecting the original two-part layout: still readable, not
+# a broken display, but a real cosmetic regression for this one category
+# (see sign_title_text_keys), so it's excluded even though the underlying
+# display call is the same generic one as any other sign/field object.
+_SIGN_CONSTANT_RE = re.compile(r"\bTEXT_\w*_SIGN\s*=\s*\{([^}]*)\}", re.S)
 
 
 def _script_entries(path: Path) -> list[tuple[str, str | None]]:
@@ -291,13 +319,16 @@ def _symbol_forms(raw_values: set[str]) -> set[str]:
 
 def map_text_pointer_keys(engine_source: str | Path) -> set[str]:
     """Every map object's resolved runtime text symbol
-    (``data/generated/text_pointers.lua``'s ``label`` fields) -- the bulk
-    of ordinary overworld NPC dialogue, read generically off
-    ``data.text[key]`` when the player talks to that NPC. Read across all
+    (``data/generated/text_pointers.lua``'s ``label``/``text`` fields) --
+    the bulk of ordinary overworld NPC dialogue, read generically off
+    ``data.text[key]`` when the player talks to that NPC. Both fields are
+    unioned (see the regex definitions for why ``text`` can diverge from
+    ``label`` and is the one to trust when it's there). Read across all
     three Red/Blue/Yellow layers."""
     keys: set[str] = set()
-    for text in _read_layers(engine_source, "data/generated/text_pointers.lua"):
-        keys |= set(_TEXT_POINTER_LABEL_RE.findall(text))
+    for content in _read_layers(engine_source, "data/generated/text_pointers.lua"):
+        keys |= set(_TEXT_POINTER_LABEL_RE.findall(content))
+        keys |= set(_TEXT_POINTER_TEXT_RE.findall(content))
     return _symbol_forms(keys)
 
 
@@ -314,12 +345,46 @@ def field_dialogue_text_keys(engine_source: str | Path) -> set[str]:
 
 def dex_entry_text_keys(engine_source: str | Path) -> set[str]:
     """Every species' Pokédex entry text (``data/generated/pokemon.lua``'s
-    ``dexEntry.text`` fields) -- the Pokédex info screen, unrelated to
-    battle. Read across all three Red/Blue/Yellow layers."""
+    ``dexEntry.text`` fields). NOT a positive source for
+    ``reflow_safe_keys`` -- kept here only as a structural inventory (and
+    for tests) of what these qids are, not a recommendation to reflow
+    them.
+
+    ``src/ui/DexEntryMenu.lua`` renders this text through a third display
+    path, neither the ordinary field TextBox nor a battle screen: it
+    splits purely on the ``\\n``/``\\v``/``\\f`` bytes already in the
+    string (no pixel-width wrap of its own, unlike
+    ``Font.spansFitting``/``TextBox.paginate``) and silently truncates
+    past a fixed ~6-line vertical budget (``if y > 132 then break``),
+    treating ``\\f`` as just another line break rather than a real page
+    turn. ``pipeline.text_pacing`` targets the ordinary TextBox's 2-line
+    paging instead, so a reflowed entry can come out with a different
+    line count than the original -- for a language that runs longer than
+    English (French routinely does), that risks silently cutting off the
+    end of the description, not just an uglier wrap. Excluded until this
+    renderer's own layout is modeled specifically.
+    """
     keys: set[str] = set()
     for text in _read_layers(engine_source, "data/generated/pokemon.lua"):
         keys |= set(_DEX_ENTRY_TEXT_RE.findall(text))
     return keys
+
+
+def sign_title_text_keys(engine_source: str | Path) -> set[str]:
+    """Every physical sign/plaque's runtime symbol
+    (``data/generated/text_pointers.lua``'s ``TEXT_XXX_SIGN`` constants,
+    read off their ``label``/``text`` fields) -- a *negative* signal, not
+    a positive one: signs are still generic field-object text (already
+    covered by ``map_text_pointer_keys``/``field_dialogue_text_keys``),
+    but routinely open with a short title line by design (see module
+    docstring), so they're carved back out even though the display path
+    itself is safe. Read across all three Red/Blue/Yellow layers."""
+    keys: set[str] = set()
+    for text in _read_layers(engine_source, "data/generated/text_pointers.lua"):
+        for block in _SIGN_CONSTANT_RE.findall(text):
+            keys |= set(_TEXT_POINTER_LABEL_RE.findall(block))
+            keys |= set(_TEXT_POINTER_TEXT_RE.findall(block))
+    return _symbol_forms(keys)
 
 
 def reflow_safe_keys(engine_source: str | Path, scripts_root: str | Path | None = None) -> set[str]:
@@ -334,14 +399,18 @@ def reflow_safe_keys(engine_source: str | Path, scripts_root: str | Path | None 
     positive = (
         map_text_pointer_keys(engine_source)
         | field_dialogue_text_keys(engine_source)
-        | dex_entry_text_keys(engine_source)
         | trainer_challenge_text_keys(engine_source)
         | script_dialogue_text_keys(scripts_root)
+        # dex_entry_text_keys deliberately NOT included: DexEntryMenu.lua
+        # renders through a third display path this whitelist doesn't
+        # model (see dex_entry_text_keys' docstring) -- reflowing risks
+        # silent truncation, not just a worse wrap.
     )
     negative = (
         dynamic_text_lookup_keys(engine_source)
         | battle_adjacent_text_keys(scripts_root)
         | trainer_won_text_keys(engine_source)
+        | sign_title_text_keys(engine_source)
     )
     # Both sides normalized to bare + "_"-prefixed before subtracting: a
     # source on either side may only produce one spelling (see

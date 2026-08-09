@@ -257,10 +257,12 @@ class PipelineTests(unittest.TestCase):
             CorpusRecord("rb.CeruleanCity.CeruleanCityRivalDefeatedText", "en", "src"),
             CorpusRecord("rb.CeruleanCity.CeruleanCityRivalDefeatedText", "fr", "Houlà!\nCalmos minable!\vT'as gagné, OK!"),
             # A real corpus qid whose runtime symbol is positively proven
-            # safe by data/generated/text_pointers.lua's "Route17SignText"
-            # label (an ordinary field sign, unrelated to any battle).
-            CorpusRecord("rb.Route17.Route17SignText", "en", "src"),
-            CorpusRecord("rb.Route17.Route17SignText", "fr", "Un texte\nde terrain\vtout a fait normal."),
+            # safe by data/generated/text_pointers.lua's "label" field --
+            # an ordinary Viridian City NPC, unrelated to any battle or
+            # sign (a sign's title-line layout is itself excluded; see
+            # pipeline.battle_scope.sign_title_text_keys).
+            CorpusRecord("rb.ViridianCity.ViridianCityYoungster1Text", "en", "src"),
+            CorpusRecord("rb.ViridianCity.ViridianCityYoungster1Text", "fr", "Un texte\nde terrain\vtout a fait normal."),
         ])
         with tempfile.TemporaryDirectory() as tmp:
             mod = generate_mod(

@@ -6,7 +6,7 @@ from pipeline.battle_scope import (
     _script_entries, _symbol_forms, battle_adjacent_text_keys, dex_entry_text_keys,
     dynamic_text_lookup_keys, field_dialogue_text_keys, gen1recomp_root, is_excluded_qid,
     is_reflow_safe_qid, map_text_pointer_keys, reflow_safe_keys, script_dialogue_text_keys,
-    trainer_challenge_text_keys, trainer_won_text_keys,
+    sign_title_text_keys, trainer_challenge_text_keys, trainer_won_text_keys,
 )
 
 GEN1RECOMP_SRC = Path("/home/thibaut/code/perso/gen1recomp/src")
@@ -342,6 +342,36 @@ class BattleScopeTests(unittest.TestCase):
             keys = map_text_pointer_keys(src)
             self.assertEqual(keys, {"Route17SignText", "_Route17SignText"})
 
+    def test_map_text_pointer_keys_trusts_text_over_a_diverging_label(self):
+        # Regression: an "asm = true" pointer not yet migrated off the raw
+        # ROM text stream can have a "label" that's just a provenance
+        # naming guess, not an actual symbol in text.lua -- e.g. the real
+        # TEXT_PALLETTOWN_OAK entry's label is "PalletTownOakText" (which
+        # doesn't exist anywhere in text.lua) while its real, displayed
+        # symbol is "_PalletTownOakHeyWaitDontGoOutText" (the "text"
+        # field). Reading only "label" silently missed every qid like
+        # this one.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            src = root / "src"
+            src.mkdir()
+            (root / "data" / "generated").mkdir(parents=True)
+            (root / "data" / "generated" / "text_pointers.lua").write_text(
+                'return {\n'
+                '  PalletTown = {\n'
+                '    TEXT_PALLETTOWN_OAK = {\n'
+                '      asm = true,\n'
+                '      label = "PalletTownOakText",\n'
+                '      text = "_PalletTownOakHeyWaitDontGoOutText",\n'
+                '    },\n'
+                '  },\n'
+                '}\n',
+                encoding="utf-8",
+            )
+            keys = map_text_pointer_keys(src)
+            self.assertIn("_PalletTownOakHeyWaitDontGoOutText", keys)
+            self.assertIn("PalletTownOakHeyWaitDontGoOutText", keys)
+
     def test_field_dialogue_text_keys_reads_named_fields_only(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -379,6 +409,10 @@ class BattleScopeTests(unittest.TestCase):
             self.assertNotIn("assets/generated/intro/gamefreak_text.png", keys)
 
     def test_dex_entry_text_keys_reads_pokemon_dex_entries(self):
+        # dex_entry_text_keys itself still finds these (a structural
+        # inventory, and DexEntryMenu.lua's own qid -> symbol mapping is
+        # real) -- it's simply not fed into reflow_safe_keys' positive
+        # union (see test_reflow_safe_keys_never_includes_dex_entries).
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             src = root / "src"
@@ -399,6 +433,80 @@ class BattleScopeTests(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertIn("_AbraDexEntry", dex_entry_text_keys(src))
+
+    def test_reflow_safe_keys_never_includes_dex_entries(self):
+        # DexEntryMenu.lua renders through a third display path (no
+        # pixel-width wrap of its own, silently truncates past a fixed
+        # ~6-line budget) that pipeline.text_pacing doesn't model -- a
+        # reflowed entry could come out with a different line count than
+        # the original and get cut off. dex_entry_text_keys finding the
+        # symbol must not be enough to make it reflow-eligible.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            src = root / "src"
+            (src / "battle").mkdir(parents=True)
+            (root / "data" / "generated").mkdir(parents=True)
+            (root / "data" / "scripts").mkdir(parents=True)
+            (root / "data" / "generated" / "pokemon.lua").write_text(
+                'return {\n'
+                '  ABRA = { dexEntry = { text = "_AbraDexEntry" } },\n'
+                '}\n',
+                encoding="utf-8",
+            )
+            safe = reflow_safe_keys(src)
+            self.assertNotIn("_AbraDexEntry", safe)
+            self.assertNotIn("AbraDexEntry", safe)
+
+    def test_sign_title_text_keys_reads_sign_constants_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            src = root / "src"
+            src.mkdir()
+            (root / "data" / "generated").mkdir(parents=True)
+            (root / "data" / "generated" / "text_pointers.lua").write_text(
+                'return {\n'
+                '  PalletTown = {\n'
+                '    TEXT_PALLETTOWN_SIGN = {\n'
+                '      label = "PalletTownSignText",\n'
+                '      text = "_PalletTownSignText",\n'
+                '    },\n'
+                '    TEXT_PALLETTOWN_OAK = {\n'
+                '      label = "PalletTownOakText",\n'
+                '      text = "_PalletTownOakHeyWaitDontGoOutText",\n'
+                '    },\n'
+                '  },\n'
+                '}\n',
+                encoding="utf-8",
+            )
+            keys = sign_title_text_keys(src)
+            self.assertIn("_PalletTownSignText", keys)
+            self.assertNotIn("_PalletTownOakHeyWaitDontGoOutText", keys)
+
+    def test_reflow_safe_keys_never_includes_signs(self):
+        # A sign is still an ordinary field text pointer (map_text_pointer_keys
+        # finds it too), but opens with a title line by design -- reflow
+        # would run it into the following prose. sign_title_text_keys must
+        # carve it back out of the positive union.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            src = root / "src"
+            (src / "battle").mkdir(parents=True)
+            (root / "data" / "generated").mkdir(parents=True)
+            (root / "data" / "scripts").mkdir(parents=True)
+            (root / "data" / "generated" / "text_pointers.lua").write_text(
+                'return {\n'
+                '  PalletTown = {\n'
+                '    TEXT_PALLETTOWN_SIGN = {\n'
+                '      label = "PalletTownSignText",\n'
+                '      text = "_PalletTownSignText",\n'
+                '    },\n'
+                '  },\n'
+                '}\n',
+                encoding="utf-8",
+            )
+            safe = reflow_safe_keys(src)
+            self.assertNotIn("_PalletTownSignText", safe)
+            self.assertNotIn("PalletTownSignText", safe)
 
     def test_trainer_challenge_text_keys_reads_battle_and_after_not_won(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -470,9 +578,10 @@ class BattleScopeTests(unittest.TestCase):
     @unittest.skipUnless(GEN1RECOMP_SRC.parent.is_dir(), "gen1recomp checkout not available")
     def test_real_checkout_reflow_safe_keys_covers_known_safe_and_excludes_known_risky(self):
         safe = reflow_safe_keys(GEN1RECOMP_SRC)
-        # An ordinary route sign (data/generated/field.lua), unrelated to
-        # any battle.
-        self.assertTrue(is_reflow_safe_qid("rb.Route17.Route17SignText", safe))
+        # Ordinary NPC dialogue via a map text pointer (a Youngster and an
+        # Old Man in Viridian City), unrelated to any battle or sign.
+        self.assertTrue(is_reflow_safe_qid("rb.ViridianCity.ViridianCityYoungster1Text", safe))
+        self.assertTrue(is_reflow_safe_qid("rb.ViridianCity.ViridianCityOldManSleepyPrivatePropertyText", safe))
         # A generic trainer's pre-fight challenge and post-defeat rematch
         # lines: plain field TextBox calls, unlike `won`.
         self.assertTrue(is_reflow_safe_qid("rb.AgathasRoom.AgathaBeforeBattleText", safe))
@@ -483,6 +592,14 @@ class BattleScopeTests(unittest.TestCase):
         self.assertFalse(is_reflow_safe_qid("rb.AgathasRoom.AgathaEndBattleText", safe))
         self.assertFalse(is_reflow_safe_qid("rb.CeruleanCity.CeruleanCityRivalDefeatedText", safe))
         self.assertFalse(is_reflow_safe_qid("y.text_2.Rival1WinText", safe))
+        # A physical sign (an ordinary field text pointer otherwise) opens
+        # with a title line by design -- reflow would disrupt that layout,
+        # so it's excluded even though it isn't remotely battle-related.
+        self.assertFalse(is_reflow_safe_qid("rb.Route17.Route17SignText", safe))
+        # Pokédex entries render through DexEntryMenu.lua's own display
+        # path, not the ordinary field TextBox this whitelist models --
+        # never eligible, whatever pokemon.lua's dexEntry.text says.
+        self.assertFalse(is_reflow_safe_qid("rb.PokemonList.AbraDexEntry", safe))
 
 
 if __name__ == "__main__":

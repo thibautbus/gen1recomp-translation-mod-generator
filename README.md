@@ -36,10 +36,13 @@ then select:
    string) are never affected either way; within dialogue, a qid is only
    ever reflowed if it's positively confirmed to render through the
    ordinary field text box (an actual structural pointer to it in
-   Gen1Recomp's own generated data or scripts) -- text that isn't
-   confirmed this way, whether it's genuinely battle-screen/engine-hooked
-   content or simply not yet audited, keeps its original line breaks by
-   default (currently about half of all dialogue; see
+   Gen1Recomp's own generated data or scripts). Text that isn't confirmed
+   this way keeps its original line breaks by default (currently just
+   under half of all dialogue) -- whether it's genuinely
+   battle-screen/engine-hooked content, a sign (which routinely opens
+   with a title line the reflow would run into the following text) or a
+   Pokédex entry (rendered by a different, non-wrapping screen), or
+   simply not yet audited; see
    `pipeline/battle_scope.py`).
 
 The GUI runs the same verified matching and packaging pipeline as the CLI and
