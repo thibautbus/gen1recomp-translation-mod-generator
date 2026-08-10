@@ -256,7 +256,14 @@ def validate_commands_show_text_collisions(engine_values: dict[str, str], dialog
 
 def catalog_for(qid: str) -> str:
     value = qid.lower()
-    from .join import _type_name_tail, _base_qid, DEMO_NAMES_QIDS, SENDOUT_QID, POKEDEX_FOOTER_LABEL_QIDS
+    from .join import (
+        _type_name_tail,
+        _species_kind_tail,
+        _base_qid,
+        DEMO_NAMES_QIDS,
+        SENDOUT_QID,
+        POKEDEX_FOOTER_LABEL_QIDS,
+    )
     if _base_qid(qid) == SENDOUT_QID:
         return "strings"
     if _base_qid(qid) in POKEDEX_FOOTER_LABEL_QIDS.values():
@@ -265,7 +272,7 @@ def catalog_for(qid: str) -> str:
         return "demo_names"
     if _type_name_tail(qid):
         return "type_names"
-    if qid.startswith("rb.dex_entries.") and qid.endswith("DexEntry.Species"):
+    if _species_kind_tail(qid):
         return "species_kinds"
     if "status" in value or "condition" in value:
         return "status_labels"
@@ -735,6 +742,8 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         type_names_translated = join_report.get("matched", {}).get("type_names", 0)
         rom_total = (sum(len(read_worksheets(modkit_worksheet)[name]) for name in ROM_CATALOGS) if modkit_worksheet else 0) + literal_total + type_names_total
         rom_translated = sum(join_report.get("matched", {}).get(name, 0) for name in ROM_CATALOGS) + literal_translated + type_names_translated
+        rom_total += species_kinds_total
+        rom_translated += species_kinds_translated
         report = dict(join_report)
         rom_details = {name: {"translated": join_report.get("matched", {}).get(name, 0), "total": len(read_worksheets(modkit_worksheet)[name])} for name in ROM_CATALOGS} if modkit_worksheet else {}
         rom_details["literal_handlers"] = {
@@ -745,6 +754,10 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         rom_details["type_names"] = {
             "translated": type_names_translated, "total": type_names_total,
             "excluded": (join_report.get("type_names") or {}).get("excluded"),
+        }
+        rom_details["species_kinds"] = {
+            "translated": species_kinds_translated, "total": species_kinds_total,
+            "excluded": (join_report.get("species_kinds") or {}).get("excluded"),
         }
         demo_names = joined.get("demo_names", {}) if joined is not None else {}
         demo_names_total = len(demo_names)
