@@ -11,7 +11,7 @@ from pipeline.cli import main as cli_main
 from pipeline.corpus import load_corpus
 from pipeline.generate import generate_lua, lua_string
 from pipeline.model import Alignment, CorpusRecord
-from pipeline.mod import generate_mod
+from pipeline.mod import catalog_for, generate_mod
 from pipeline.join import (
     ENGINE_CATALOG_EXTRA_KEYS,
     SENDOUT_ENGINE_KEYS,
@@ -278,6 +278,15 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(output["dialogue"]["_UsedMove1Text"], "Utilisé !")
         self.assertEqual(report["strategies"]["dialogue"]["_UsedMove1Text"], "engine_alias")
 
+    def test_catalog_for_species_kind_accepts_scoped_qids(self):
+        for qid in (
+            "rb.dex_entries.RhydonDexEntry.Species",
+            "^RG.rb.dex_entries.RhydonDexEntry.Species",
+            "rb.dex_entries.RhydonDexEntry.Species^RG",
+        ):
+            with self.subTest(qid=qid):
+                self.assertEqual(catalog_for(qid), "species_kinds")
+
     def test_item_machine_identifiers_use_french_ct_cs_display(self):
         worksheets = {name: [] for name in ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels")}
         worksheets["item_names"] = [
@@ -517,6 +526,47 @@ class PipelineTests(unittest.TestCase):
             report = json.loads(report_path.read_text(encoding="utf-8"))
             self.assertEqual(report["rom"]["details"]["strings_pokedex"]["translated"], 0)
             self.assertGreaterEqual(report["rom"]["translated"], 0)
+
+    def test_generate_mod_reports_species_kind_coverage(self):
+        catalog_names = (
+            "dialogue", "strings", "species_names", "move_names",
+            "item_names", "trainer_names", "status_labels", "type_names",
+            "demo_names", "species_kinds",
+        )
+        joined = {name: {} for name in catalog_names}
+        joined["species_kinds"] = {"ABRA": "SEED", "RHYDON": "DRILL"}
+        join_report = {
+            "matched": {"species_kinds": 1},
+            "unmatched": {}, "ambiguous": {}, "strategies": {}, "reasons": {},
+            "species_kinds": {
+                "excluded": {"MissingNo": {"qid": "rb.dex_entries.MissingNoDexEntry.Species"}},
+            },
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            worksheet = root / "ws"
+            worksheet.mkdir()
+            for name in ("dialogue", "species_names", "move_names", "item_names", "trainer_names", "status_labels"):
+                (worksheet / f"{name}.txt").write_text("# header\n", encoding="utf-8")
+            (worksheet / "strings.lua").write_text("return {}\n", encoding="utf-8")
+            report_path = root / "coverage.json"
+            generate_mod(
+                [], root / "mod", language="fr", modkit_worksheet=worksheet,
+                report_path=report_path,
+                precomputed_join=(joined, join_report),
+            )
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(report["rom"]["details"]["species_kinds"], {
+            "translated": 1,
+            "total": 2,
+            "excluded": join_report["species_kinds"]["excluded"],
+        })
+        self.assertEqual(report["rom"]["translated"], 1)
+        self.assertEqual(
+            report["rom"]["total"],
+            sum(detail["total"] for detail in report["rom"]["details"].values()),
+        )
 
     def test_engine_report_uses_the_same_key_universe_as_generated_strings(self):
         with tempfile.TemporaryDirectory() as tmp:

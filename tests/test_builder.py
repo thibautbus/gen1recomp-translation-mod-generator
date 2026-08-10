@@ -536,6 +536,38 @@ class BuilderTests(unittest.TestCase):
             self.assertNotIn('BS.makeOldManDemo = function', main)
             self.assertNotIn('mod.content.type_chart:patch', main)
 
+    def test_scaffold_species_kinds_injection_applies_generated_catalog(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            scaffold = root / "scaffold"
+            mod = root / "mod"
+            (scaffold / "lang").mkdir(parents=True)
+            (scaffold / "assets" / "font").mkdir(parents=True)
+            (mod / "lang").mkdir(parents=True)
+            (scaffold / "main.lua").write_text(
+                "return function(mod)\n"
+                '  counts.statuses = each("status_labels", function(id, value)\n'
+                "    mod.content.statuses:patch(id, { label = value })\n"
+                "  end)\n"
+                "end\n",
+                encoding="utf-8",
+            )
+            for name in ("font.lua", "charmap.lua", "naming.lua"):
+                (scaffold / "lang" / name).write_text("return {}", encoding="utf-8")
+            (mod / "lang" / "species_kinds.lua").write_text(
+                'return {\n  ["ABRA"] = "SEED",\n}\n', encoding="utf-8"
+            )
+
+            builder.preserve_scaffold_support(scaffold, mod)
+
+            main = (mod / "main.lua").read_text(encoding="utf-8")
+            self.assertIn('counts.species_kinds = each("species_kinds"', main)
+            self.assertIn(
+                'mod.content.pokemon:patch(id, { dexEntry = { kind = value } })',
+                main,
+            )
+            self.assertLess(main.index("counts.species_kinds"), main.rfind("\nend"))
+
     def test_scaffold_type_names_injection_falls_back_when_block_drifts(self):
         # The exact statuses block is scaffold-owned; if its spacing drifts
         # upstream, the injection must still land before the closing function

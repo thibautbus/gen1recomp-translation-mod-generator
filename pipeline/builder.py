@@ -60,6 +60,11 @@ FORBIDDEN_ARCHIVE_PARTS = {
     "data/generated", "assets/generated", "gameversion", "worksheet",
 }
 
+# Anchor for scaffold-splice injections that append after the status_labels
+# patch (type_names, species_kinds): the last catalog the scaffold itself
+# emits, so anything appended here runs after every scaffold-owned patch.
+STATUS_LABELS_BLOCK = '  counts.statuses = each("status_labels", function(id, value)\n    mod.content.statuses:patch(id, { label = value })\n  end)'
+
 
 class BuildError(RuntimeError):
     """An expected failure that can be presented directly to the user."""
@@ -528,9 +533,8 @@ def preserve_scaffold_support(
                 "  end\n"
             )
             if "counts.type_names" not in scaffold_main:
-                type_marker = '  counts.statuses = each("status_labels", function(id, value)\n    mod.content.statuses:patch(id, { label = value })\n  end)'
-                if type_marker in scaffold_main:
-                    scaffold_main = scaffold_main.replace(type_marker, type_marker + type_injection, 1)
+                if STATUS_LABELS_BLOCK in scaffold_main:
+                    scaffold_main = scaffold_main.replace(STATUS_LABELS_BLOCK, STATUS_LABELS_BLOCK + type_injection, 1)
                 elif 'each("status_labels"' in scaffold_main:
                     # The statuses block drifted from the exact scaffold shape;
                     # fall back to the closing function boundary like the
@@ -542,6 +546,33 @@ def preserve_scaffold_support(
                     scaffold_main = scaffold_main[:end] + type_injection + scaffold_main[end:]
                 else:
                     raise BuildError(f"Modkit scaffold main has no statuses block to extend: {main}")
+    # Pokedex categories are translated on the pokemon record's nested
+    # ``dexEntry.kind`` field.  Keep this separate from the species name patch
+    # so the two patches compose without replacing ``dexEntry.text``.
+    species_kind_catalog = mod / "lang" / "species_kinds.lua"
+    if species_kind_catalog.is_file():
+        species_kind_body = species_kind_catalog.read_text(encoding="utf-8")
+        has_species_kind_values = any(
+            line.lstrip().startswith("[") and '= "' in line
+            and not line.rstrip().endswith('"",')
+            for line in species_kind_body.splitlines()
+        )
+        if has_species_kind_values and "counts.species_kinds" not in scaffold_main:
+            species_kind_injection = (
+                "\n  -- Injected: localized Pokedex categories from generated lang/species_kinds.lua\n"
+                '  counts.species_kinds = each("species_kinds", function(id, value)\n'
+                "    mod.content.pokemon:patch(id, { dexEntry = { kind = value } })\n"
+                "  end)\n"
+            )
+            if STATUS_LABELS_BLOCK in scaffold_main:
+                scaffold_main = scaffold_main.replace(STATUS_LABELS_BLOCK, STATUS_LABELS_BLOCK + species_kind_injection, 1)
+            elif 'each("status_labels"' in scaffold_main:
+                end = scaffold_main.rfind("\nend")
+                if end < 0:
+                    raise BuildError(f"Modkit scaffold main has no closing function: {main}")
+                scaffold_main = scaffold_main[:end] + species_kind_injection + scaffold_main[end:]
+            else:
+                raise BuildError(f"Modkit scaffold main has no statuses block to extend: {main}")
     # Yellow layers are applied only after the shared catalogs and only for
     # the Yellow game.  Keep the hook in the final scaffold-owned main.lua;
     # generate_mod's standalone main remains useful for unit tests.
