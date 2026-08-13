@@ -105,6 +105,7 @@ FONT_PROFILES = {
         "files": {
             "latin": ("fusion-pixel-10px-proportional-latin.ttf", 10),
             "ja": ("fusion-pixel-8px-proportional-ja.ttf", 8),
+            "ko": ("fusion-pixel-10px-proportional-ko.ttf", 10),
         },
         "licenses": (
             Path("OFL.txt"),
@@ -115,22 +116,32 @@ FONT_PROFILES = {
     },
     "pokemon": {
         "warning": "Pokemon Font is 8px; some translated text may overflow.",
-        "files": {"latin": ("pokemon-font.ttf", 8), "ja": None},
+        "files": {"latin": ("pokemon-font.ttf", 8), "ja": None, "ko": None},
         "licenses": (Path("LICENSES/pokemon-font/LICENSE.md"),),
     },
 }
 
 
 def _font_variant(language: str) -> str:
-    return "ja" if canonical_language(language) == "ja-Hrkt" else "latin"
+    language = canonical_language(language)
+    if language == "ja-Hrkt":
+        return "ja"
+    if language == "ko":
+        return "ko"
+    return "latin"
 
 
 def validate_font_profile(language: str, font_profile: str = "fusion") -> str:
     profile = str(font_profile or "fusion").strip().lower()
     if profile not in FONT_PROFILES:
         raise ValueError(f"Unsupported font profile: {font_profile!r}")
-    if _font_variant(language) == "ja" and FONT_PROFILES[profile]["files"]["ja"] is None:
-        raise ValueError("Pokemon Font is only available for French, German, Spanish, and Italian.")
+    variant = _font_variant(language)
+    if FONT_PROFILES[profile]["files"].get(variant) is None:
+        raise ValueError(
+            f"Font profile {profile!r} has no {canonical_language(language)} glyph variant; "
+            "use Fusion Pixel for this language; Pokemon Font is only available "
+            "for French, German, Spanish, and Italian."
+        )
     return profile
 
 

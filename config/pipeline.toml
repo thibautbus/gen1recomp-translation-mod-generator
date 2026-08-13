@@ -24,11 +24,17 @@ target_lang = "fr"
 "corpus/Yellow/it_msg.txt" = "86558cb6c5ab39aba56d9b286a98fdee94389ab302694a9a5b264a6d77fcc643"
 "corpus/Yellow/ja-Hrkt_msg.txt" = "542a88559b8695d5635ca107107f18d4becc03561d9827df3f80503ab6166505"
 # GoldSilver is a single corpus collection covering both Gold and Silver
-# (poke-corpus does not split them); only qid/en/fr are pinned here, since
-# fr is the only target language this project ships so far.
+# (poke-corpus does not split them). All target language files are pinned,
+# not just fr: the corpus collection determines the language domain the
+# CLI/GUI actually offers for a Gold release, including Korean.
 "corpus/GoldSilver/qid_msg.txt" = "07be64a14e52e1697902c2acb1d781d48afcbbe57f31ff6368e76b08f553c043"
 "corpus/GoldSilver/en_msg.txt" = "93def21b6ea05d52c572b2057e3b3a3165e2507189ccffad599372b8bc1fd1c1"
 "corpus/GoldSilver/fr_msg.txt" = "45fa1ada83eef176f61aca3617d64b59739e2f2947a8aad2861703b8e27bd9fa"
+"corpus/GoldSilver/de_msg.txt" = "9a21f682bdfbbee82cbf8ff5c8da89a09b03084eafda9cb535ecffa9c2443e91"
+"corpus/GoldSilver/es_msg.txt" = "3b56be75152720fa4f009ffba09223654e1bd9b1d1fc5beb9baefef2d113d4ee"
+"corpus/GoldSilver/it_msg.txt" = "05ea5658d209a598b963099750d6f5f395de7dea447f535669f6c1f96496bcd4"
+"corpus/GoldSilver/ja-Hrkt_msg.txt" = "7fd5a33ff3b83d63c354271c67b6557a476aed8b3875bf2aaf012cacf55b9612"
+"corpus/GoldSilver/ko_msg.txt" = "05c2d2d1cbabfd3de04106c82580fe3fa090e83d0f09a39df5dd359f195d0f1d"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.

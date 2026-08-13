@@ -10,30 +10,61 @@ from typing import Callable
 
 from . import builder
 from .project import project_version
+from .orchestration import build_request
+from .specs import BuildRequest, release_profile_for_generation
 
 
 @dataclass(frozen=True)
 class GuiInputs:
-    red_rom: Path
-    blue_rom: Path
-    yellow_rom: Path
+    generation: int
+    rom_paths: dict[str, Path]
     language: str
     font_profile: str
     output_dir: Path
 
 
-def language_code(value: str) -> str:
+# Named by game, not by generation, matching the CLI's _prompt_generation --
+# "generation" is engine vocabulary the user does not need.
+GENERATIONS = (
+    (1, "Red, Blue and Yellow"),
+    (2, "Gold"),
+)
+
+ROMS_BY_GENERATION = {1: ("red", "blue", "yellow"), 2: ("gold",)}
+
+
+def generation_label(value: int) -> str:
+    value = int(value)
+    for code, name in GENERATIONS:
+        if code == value:
+            return f"{name} (generation {code})"
+    raise builder.BuildError(f"Invalid games selection: {value!r}")
+
+
+def generation_code(value: str) -> int:
+    raw = value.strip()
+    for code, name in GENERATIONS:
+        if raw == str(code) or raw == f"{name} (generation {code})":
+            return code
+    raise builder.BuildError(f"Invalid games selection: {value!r}")
+
+
+def language_code(value: str, generation: int = 1) -> str:
     """Return a canonical language code from a combobox label or code."""
     raw = value.strip()
-    for code, name in builder.LANGUAGES:
+    for code, name in builder.languages_for_generation(generation):
         if raw == code or raw == f"{name} ({code})":
             return code
     raise builder.BuildError(f"Invalid language selection: {value!r}")
 
 
-def language_label(code: str) -> str:
+def languages_for_generation(generation: int) -> tuple[tuple[str, str], ...]:
+    return builder.languages_for_generation(generation)
+
+
+def language_label(code: str, generation: int = 1) -> str:
     code = builder.canonical_language(code)
-    for candidate, name in builder.LANGUAGES:
+    for candidate, name in languages_for_generation(generation):
         if candidate == code:
             return f"{name} ({candidate})"
     raise builder.BuildError(f"Invalid language selection: {code!r}")
@@ -60,33 +91,45 @@ def font_profile_code(value: str) -> str:
     raise builder.BuildError(f"Invalid font profile selection: {value!r}")
 
 
+def available_font_profiles(language: str) -> tuple[str, ...]:
+    """Profiles the form may offer for a language's glyph coverage."""
+    return ("fusion",) if builder.canonical_language(language) in {"ja-Hrkt", "ko"} else ("fusion", "pokemon")
+
+
 def validate_inputs(
-    red_rom: str | Path,
-    blue_rom: str | Path,
-    yellow_rom: str | Path,
+    generation: int,
+    rom_paths: dict[str, str | Path],
     language: str,
     output_dir: str | Path,
     font_profile: str = "fusion",
 ) -> GuiInputs:
-    """Validate GUI values using the same ROM checks as the CLI."""
-    code = language_code(language)
+    """Validate GUI values using the same ROM checks as the CLI.
+
+    ``rom_paths`` is a game -> path association, not a positional
+    red/blue/yellow triplet: which games it must contain depends on
+    ``generation``.
+    """
+    if generation not in ROMS_BY_GENERATION:
+        raise builder.BuildError(f"Invalid games selection: {generation!r}")
+    code = language_code(language, generation)
     profile = builder.validate_font_profile(code, font_profile_code(font_profile))
-    red = Path(red_rom).expanduser()
-    blue = Path(blue_rom).expanduser()
-    yellow = Path(yellow_rom).expanduser()
     if not str(output_dir).strip():
         raise builder.BuildError("An output directory is required.")
     output = Path(output_dir).expanduser()
-    if not red.is_file():
-        raise builder.BuildError(f"File not found: {red}")
-    if not blue.is_file():
-        raise builder.BuildError(f"File not found: {blue}")
-    if not yellow.is_file():
-        raise builder.BuildError(f"File not found: {yellow}")
-    builder.verify_rom(red, "red")
-    builder.verify_rom(blue, "blue")
-    builder.verify_rom(yellow, "yellow")
-    return GuiInputs(red.resolve(), blue.resolve(), yellow.resolve(), code, profile, output.resolve())
+    resolved: dict[str, Path] = {}
+    for game in ROMS_BY_GENERATION[generation]:
+        raw = rom_paths.get(game)
+        if not raw or not str(raw).strip():
+            raise builder.BuildError(f"A Pokemon {game.capitalize()} ROM path is required.")
+        path = Path(raw).expanduser()
+        if not path.is_file():
+            raise builder.BuildError(f"File not found: {path}")
+        if generation == 1:
+            builder.verify_rom(path, game)
+        else:
+            builder.verify_gold_rom(path)
+        resolved[game] = path.resolve()
+    return GuiInputs(generation, resolved, code, profile, output.resolve())
 
 
 def coverage_lines(path: str | Path) -> list[str]:
@@ -161,60 +204,112 @@ class TranslationBuilderApp:
 
     def _build_widgets(self):
         tk, ttk = self.tk, self.ttk
-        self.red_var = tk.StringVar()
-        self.blue_var = tk.StringVar()
-        self.yellow_var = tk.StringVar()
+        self.generation_var = tk.StringVar(value=generation_label(1))
+        self.rom_vars = {game: tk.StringVar() for game in ("red", "blue", "yellow", "gold")}
         self.language_var = tk.StringVar(value=language_label("fr"))
         self.font_profile_var = tk.StringVar(value=font_profile_label("fusion"))
         self.output_var = tk.StringVar()
         self.status_var = tk.StringVar(value="Ready")
         frame = ttk.Frame(self.root, padding=18)
         frame.pack(fill="both", expand=True)
-        fields = (
-            (0, "Required to extract shared and Pokémon Red-specific game text and data.", "Pokemon Red ROM (US)", self.red_var, self._browse_file),
-            (2, "Required to extract Pokémon Blue-specific game text and data.", "Pokemon Blue ROM (US)", self.blue_var, self._browse_file),
-            (4, "Required to extract Pokémon Yellow-specific game text and data.", "Pokemon Yellow ROM (US)", self.yellow_var, self._browse_file),
-            (10, "The generated translation mod ZIP and temporary .cache workspace will be placed here.", "Output directory", self.output_var, self._browse_directory),
+
+        ttk.Label(frame, text="Which games do you want to translate?", style="Hint.TLabel").grid(row=0, column=0, columnspan=3, sticky="w", pady=(8, 2))
+        ttk.Label(frame, text="Games").grid(row=1, column=0, sticky="w", pady=(0, 6))
+        self.generation_box = ttk.Combobox(
+            frame, textvariable=self.generation_var,
+            values=[generation_label(code) for code, _ in GENERATIONS], state="readonly",
         )
-        for row, description, label, variable, command in fields:
-            ttk.Label(frame, text=description, style="Hint.TLabel").grid(row=row, column=0, columnspan=3, sticky="w", pady=(8, 2))
-            ttk.Label(frame, text=label).grid(row=row + 1, column=0, sticky="w", pady=(0, 6))
-            entry = ttk.Entry(frame, textvariable=variable)
+        self.generation_box.grid(row=1, column=1, columnspan=2, sticky="ew", padx=8)
+        self.generation_box.bind("<<ComboboxSelected>>", lambda _event: self._sync_generation())
+        self._controls.append((self.generation_box, "readonly"))
+
+        # Gold occupies the same grid rows as Red: only one game's ROM row
+        # is ever shown at a time, toggled by _sync_generation (the GUI is
+        # a flat form, not a wizard).
+        rom_fields = (
+            ("red", 2, "Required to extract shared and Pokémon Red-specific game text and data.", "Pokemon Red ROM (US)"),
+            ("gold", 2, "Required to extract Pokémon Gold game text and data.", "Pokemon Gold ROM (US/Europe)"),
+            ("blue", 4, "Required to extract Pokémon Blue-specific game text and data.", "Pokemon Blue ROM (US)"),
+            ("yellow", 6, "Required to extract Pokémon Yellow-specific game text and data.", "Pokemon Yellow ROM (US)"),
+        )
+        self.rom_widgets: dict[str, tuple] = {}
+        for game, row, description, label in rom_fields:
+            hint = ttk.Label(frame, text=description, style="Hint.TLabel")
+            hint.grid(row=row, column=0, columnspan=3, sticky="w", pady=(8, 2))
+            name = ttk.Label(frame, text=label)
+            name.grid(row=row + 1, column=0, sticky="w", pady=(0, 6))
+            entry = ttk.Entry(frame, textvariable=self.rom_vars[game])
             entry.grid(row=row + 1, column=1, sticky="ew", padx=8)
-            browse = ttk.Button(frame, text="Browse…", command=lambda v=variable, c=command: c(v))
+            browse = ttk.Button(frame, text="Browse…", command=lambda v=self.rom_vars[game]: self._browse_file(v))
             browse.grid(row=row + 1, column=2)
+            self.rom_widgets[game] = (hint, name, entry, browse)
             self._controls.extend(((entry, "normal"), (browse, "normal")))
-        ttk.Label(frame, text="Select the language used for the generated translation mod.", style="Hint.TLabel").grid(row=6, column=0, columnspan=3, sticky="w", pady=(8, 2))
-        ttk.Label(frame, text="Language").grid(row=7, column=0, sticky="w", pady=(0, 6))
+
+        ttk.Label(frame, text="The generated translation mod ZIP and temporary .cache workspace will be placed here.", style="Hint.TLabel").grid(row=12, column=0, columnspan=3, sticky="w", pady=(8, 2))
+        ttk.Label(frame, text="Output directory").grid(row=13, column=0, sticky="w", pady=(0, 6))
+        output_entry = ttk.Entry(frame, textvariable=self.output_var)
+        output_entry.grid(row=13, column=1, sticky="ew", padx=8)
+        output_browse = ttk.Button(frame, text="Browse…", command=lambda: self._browse_directory(self.output_var))
+        output_browse.grid(row=13, column=2)
+        self._controls.extend(((output_entry, "normal"), (output_browse, "normal")))
+
+        ttk.Label(frame, text="Select the language used for the generated translation mod.", style="Hint.TLabel").grid(row=8, column=0, columnspan=3, sticky="w", pady=(8, 2))
+        ttk.Label(frame, text="Language").grid(row=9, column=0, sticky="w", pady=(0, 6))
         self.language_box = ttk.Combobox(
             frame, textvariable=self.language_var,
-            values=[language_label(code) for code, _ in builder.LANGUAGES], state="readonly",
+            values=[language_label(code, 1) for code, _ in languages_for_generation(1)], state="readonly",
         )
-        self.language_box.grid(row=7, column=1, columnspan=2, sticky="ew", padx=8)
+        self.language_box.grid(row=9, column=1, columnspan=2, sticky="ew", padx=8)
         self.language_box.bind("<<ComboboxSelected>>", lambda _event: self._sync_font_profile())
         self._controls.append((self.language_box, "readonly"))
-        ttk.Label(frame, text="Select the font used for translated text.", style="Hint.TLabel").grid(row=8, column=0, columnspan=3, sticky="w", pady=(8, 2))
-        ttk.Label(frame, text="Font profile").grid(row=9, column=0, sticky="w", pady=(0, 6))
+        ttk.Label(frame, text="Select the font used for translated text.", style="Hint.TLabel").grid(row=10, column=0, columnspan=3, sticky="w", pady=(8, 2))
+        ttk.Label(frame, text="Font profile").grid(row=11, column=0, sticky="w", pady=(0, 6))
         self.font_profile_box = ttk.Combobox(
             frame, textvariable=self.font_profile_var,
             values=[font_profile_label(profile, self.language_var.get()) for profile in ("fusion", "pokemon")],
             state="readonly",
         )
-        self.font_profile_box.grid(row=9, column=1, columnspan=2, sticky="ew", padx=8)
+        self.font_profile_box.grid(row=11, column=1, columnspan=2, sticky="ew", padx=8)
         self._controls.append((self.font_profile_box, "readonly"))
         self._sync_font_profile()
         self.log_toggle = ttk.Button(frame, text="Show log", command=self.toggle_log)
-        self.log_toggle.grid(row=12, column=0, sticky="w", pady=(16, 4))
+        self.log_toggle.grid(row=14, column=0, sticky="w", pady=(16, 4))
         self.log_text = tk.Text(frame, height=8, bg="#111315", fg="#d8dee9", insertbackground="#f1f3f4", state="disabled")
         self.progress = ttk.Progressbar(frame, mode="indeterminate")
-        self.progress.grid(row=13, column=0, columnspan=3, sticky="ew", pady=8)
+        self.progress.grid(row=15, column=0, columnspan=3, sticky="ew", pady=8)
         self.status_label = ttk.Label(frame, textvariable=self.status_var)
-        self.status_label.grid(row=14, column=0, columnspan=2, sticky="w")
+        self.status_label.grid(row=16, column=0, columnspan=2, sticky="w")
         self.start_button = ttk.Button(frame, text="Build translation mod", command=self.start)
-        self.start_button.grid(row=14, column=2, sticky="e")
+        self.start_button.grid(row=16, column=2, sticky="e")
         self._controls.append((self.start_button, "normal"))
         frame.columnconfigure(1, weight=1)
         self.toggle_log()
+        self._sync_generation()
+
+    def _sync_generation(self):
+        generation = generation_code(self.generation_var.get())
+        active = set(ROMS_BY_GENERATION[generation])
+        for game, widgets in self.rom_widgets.items():
+            for widget in widgets:
+                if game in active:
+                    widget.grid()
+                else:
+                    widget.grid_remove()
+        languages = languages_for_generation(generation)
+        current = builder.canonical_language(self.language_var.get())
+        allowed = {code for code, _ in languages}
+        if current not in allowed:
+            current = languages[0][0]
+            self.language_var.set(language_label(current, generation))
+        self.language_box.configure(values=[language_label(code, generation) for code, _ in languages])
+        # Setting language_var programmatically (above) does not fire the
+        # language box's own <<ComboboxSelected>> handler, so the font
+        # profile box must be resynced here too -- otherwise switching
+        # generation away from a language that locks the font profile
+        # (Japanese, Korean) leaves it showing the locked value and
+        # disabled even after the language reset to one that allows a
+        # choice.
+        self._sync_font_profile()
 
     def _browse_file(self, variable):
         from tkinter import filedialog
@@ -229,15 +324,17 @@ class TranslationBuilderApp:
             variable.set(value)
 
     def _sync_font_profile(self):
-        japanese = language_code(self.language_var.get()) == "ja-Hrkt"
-        if japanese:
-            self.font_profile_var.set(font_profile_label("fusion", "ja-Hrkt"))
+        generation = generation_code(self.generation_var.get())
+        language = language_code(self.language_var.get(), generation)
+        profiles = available_font_profiles(language)
+        if len(profiles) == 1:
+            self.font_profile_var.set(font_profile_label("fusion", language))
         elif font_profile_code(self.font_profile_var.get()) == "fusion":
             self.font_profile_var.set(font_profile_label("fusion", self.language_var.get()))
         self.font_profile_box.configure(
-            values=[font_profile_label(profile, self.language_var.get()) for profile in ("fusion", "pokemon")],
+            values=[font_profile_label(profile, language) for profile in profiles],
         )
-        self.font_profile_box.configure(state="disabled" if japanese else "readonly")
+        self.font_profile_box.configure(state="disabled" if len(profiles) == 1 else "readonly")
 
     def _post(self, callback: Callable[[], None]):
         self._events.put(callback)
@@ -258,22 +355,24 @@ class TranslationBuilderApp:
     def toggle_log(self):
         self._log_visible = not self._log_visible
         if self._log_visible:
-            self.log_text.grid(row=13, column=0, columnspan=3, sticky="nsew")
-            self.progress.grid(row=14, column=0, columnspan=3, sticky="ew", pady=8)
-            self.status_label.grid(row=15, column=0, columnspan=2, sticky="w")
-            self.start_button.grid(row=15, column=2, sticky="e")
+            self.log_text.grid(row=15, column=0, columnspan=3, sticky="nsew")
+            self.progress.grid(row=16, column=0, columnspan=3, sticky="ew", pady=8)
+            self.status_label.grid(row=17, column=0, columnspan=2, sticky="w")
+            self.start_button.grid(row=17, column=2, sticky="e")
             self.log_toggle.configure(text="Hide log")
         else:
             self.log_text.grid_remove()
-            self.progress.grid(row=13, column=0, columnspan=3, sticky="ew", pady=8)
-            self.status_label.grid(row=14, column=0, columnspan=2, sticky="w")
-            self.start_button.grid(row=14, column=2, sticky="e")
+            self.progress.grid(row=15, column=0, columnspan=3, sticky="ew", pady=8)
+            self.status_label.grid(row=16, column=0, columnspan=2, sticky="w")
+            self.start_button.grid(row=16, column=2, sticky="e")
             self.log_toggle.configure(text="Show log")
 
     def start(self):
         from tkinter import messagebox
         try:
-            inputs = validate_inputs(self.red_var.get(), self.blue_var.get(), self.yellow_var.get(), self.language_var.get(), self.output_var.get(), self.font_profile_var.get())
+            generation = generation_code(self.generation_var.get())
+            rom_paths = {game: self.rom_vars[game].get() for game in ROMS_BY_GENERATION[generation]}
+            inputs = validate_inputs(generation, rom_paths, self.language_var.get(), self.output_var.get(), self.font_profile_var.get())
         except (builder.BuildError, OSError, ValueError) as error:
             messagebox.showerror("Unable to build", str(error), parent=self.root)
             return
@@ -293,17 +392,19 @@ class TranslationBuilderApp:
     def _worker(self, inputs: GuiInputs):
         try:
             luajit = builder.check_prerequisites()
-            output = builder.build(
-                inputs.red_rom, inputs.blue_rom, inputs.language,
-                dict(builder.LANGUAGES)[inputs.language], luajit,
-                font_profile=inputs.font_profile,
-                yellow_rom=inputs.yellow_rom,
-                workspace_root=inputs.output_dir / ".cache",
-                output_dir=inputs.output_dir,
+            language_name = dict(languages_for_generation(inputs.generation))[inputs.language]
+            request = BuildRequest(
+                inputs.rom_paths,
+                release_profile_for_generation(inputs.generation),
+                inputs.language, inputs.output_dir, inputs.font_profile,
+            )
+            output = build_request(
+                request, language_name=language_name, luajit=luajit,
+                workspace_root=inputs.output_dir / ".cache", output_dir=inputs.output_dir,
                 log_fn=lambda message: self._append_log(message),
                 status_fn=lambda message: self._post(lambda: self.status_var.set(message)),
             )
-            coverage = inputs.output_dir / ".cache" / "interactive" / inputs.language / "coverage.json"
+            coverage = (inputs.output_dir / ".cache" / "interactive" / inputs.language / "coverage.json") if inputs.generation == 1 else None
             self._post(lambda: self._complete(output, coverage))
         except (builder.BuildError, ValueError, OSError) as error:
             message = str(error)
@@ -313,11 +414,11 @@ class TranslationBuilderApp:
             self._append_log(message)
             self._post(lambda: self._failed(message))
 
-    def _complete(self, output: Path, coverage: Path):
+    def _complete(self, output: Path, coverage: Path | None):
         from tkinter import messagebox
         self._finish()
         details = f"File generated at:\n{output}"
-        if coverage.is_file():
+        if coverage is not None and coverage.is_file():
             details += "\n\n" + "\n".join(coverage_lines(coverage))
         self.status_var.set("Build complete")
         messagebox.showinfo("Build complete", details, parent=self.root)
