@@ -23,11 +23,12 @@ def main(argv=None) -> int:
     al = sub.add_parser("align"); al.add_argument("records"); al.add_argument("-o", "--output", required=True); al.add_argument("--target-lang", default="fr"); al.add_argument(*corpus_overrides_option, dest="corpus_overrides")
     gen = sub.add_parser("generate"); gen.add_argument("aligned"); gen.add_argument("-o", "--output", required=True); gen.add_argument("--mod-id", default=None); gen.add_argument("--target-name", default=None); gen.add_argument("--target-lang", default=None); gen.add_argument(*corpus_overrides_option, dest="corpus_overrides"); gen.add_argument("--modkit-worksheet"); gen.add_argument("--engine-catalog"); gen.add_argument("--engine-overrides", default=None); gen.add_argument("--engine-source"); gen.add_argument("--engine-scope"); gen.add_argument("--font-source"); gen.add_argument("--font-profile", choices=("fusion", "pokemon"), default="fusion"); gen.add_argument("--semantic-anchors"); gen.add_argument("--semantic-anchor-decisions"); gen.add_argument("--report")
     refresh = sub.add_parser("refresh"); refresh.add_argument("aligned"); refresh.add_argument("--mod", required=True); refresh.add_argument(*corpus_overrides_option, dest="corpus_overrides")
-    val = sub.add_parser("validate"); val.add_argument("aligned"); val.add_argument("--release", action="store_true"); val.add_argument("--version", choices=("red", "blue")); val.add_argument("--report"); val.add_argument("--charmap", help="JSON glyph->byte map required for release"); val.add_argument("--coverage", help="modkit join coverage JSON required for release")
+    val = sub.add_parser("validate"); val.add_argument("aligned"); val.add_argument("--release", action="store_true"); val.add_argument("--version", choices=("red", "blue", "gold")); val.add_argument("--report"); val.add_argument("--charmap", help="JSON glyph->byte map required for release"); val.add_argument("--coverage", help="modkit join coverage JSON required for release")
     cat = sub.add_parser("catalog"); cat.add_argument("--red", required=True); cat.add_argument("--blue", required=True); cat.add_argument("--yellow"); cat.add_argument("-o", "--output", required=True)
     imp = sub.add_parser("import"); imp.add_argument("version", choices=("red", "blue", "yellow")); imp.add_argument("rom"); imp.add_argument("--gen1recomp", required=True); imp.add_argument("--out", required=True); imp.add_argument("--assets", required=True)
     all_imp = sub.add_parser("import-all"); all_imp.add_argument("--red", required=True); all_imp.add_argument("--blue", required=True); all_imp.add_argument("--yellow"); all_imp.add_argument("--gen1recomp", required=True); all_imp.add_argument("--cache-root", required=True)
     imp_gold = sub.add_parser("import-gold", help="developer-only: extract Gold's text catalog under LuaJIT, no LOVE"); imp_gold.add_argument("rom"); imp_gold.add_argument("--gen1recomp", required=True); imp_gold.add_argument("--out", required=True)
+    build_gold = sub.add_parser("build-gold", help="developer-only: join tools/gold_extract.lua's output against the corpus and write a loadable Gold mod"); build_gold.add_argument("--gold-out", required=True, help="directory containing gold_text.tsv/gold_labels.tsv/gold_maps.tsv"); build_gold.add_argument("--corpus", required=True, help="GoldSilver corpus directory"); build_gold.add_argument("-o", "--output", required=True); build_gold.add_argument("--target-lang", default="fr"); build_gold.add_argument("--mod-id"); build_gold.add_argument("--font-source"); build_gold.add_argument("--font-profile", choices=("fusion", "pokemon"), default="fusion")
     sub.add_parser("audit-disassemblies", help="developer-only private localized disassembly audit")
     backlog = sub.add_parser("engine-backlog", help="developer-only private unresolved engine-string backlog")
     backlog.add_argument("--language", "--target-lang", dest="language", default=None)
@@ -58,6 +59,14 @@ def main(argv=None) -> int:
         import_all(roms, args.gen1recomp, args.cache_root); return 0
     if args.command == "import-gold":
         import_gold_rom(args.rom, args.gen1recomp, args.out); return 0
+    if args.command == "build-gold":
+        from .gold_mod import build_gold_dialogue_mod
+        mod_dir, entries, stats = build_gold_dialogue_mod(
+            args.gold_out, args.corpus, args.output, mod_id=args.mod_id, language=args.target_lang,
+            font_source=args.font_source, font_profile=args.font_profile,
+        )
+        print(json.dumps({"mod": str(mod_dir), "stats": stats}, ensure_ascii=False, indent=2))
+        return 0
     if args.command == "audit-disassemblies":
         run_audit()
         return 0
