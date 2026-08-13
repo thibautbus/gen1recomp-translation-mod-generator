@@ -1,7 +1,7 @@
 {
   "schema": "gen1recomp-translation-mods/engine-scope",
   "classifier_version": 4,
-  "gen1recomp_revision": "60cf07fb0a1ffce0ec6d5d0d2f78a921a6d0b7da",
+  "gen1recomp_revision": "04490c9b9ad03b814f297793dd7a950dad7c3adf",
   "source_subdir": "src",
   "rby_paths": [
     "battle",

@@ -5,7 +5,7 @@ source = "https://github.com/abcboy101/poke-corpus.git"
 revision = "aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
 # Standalone mode downloads only these exact files from the pinned commit.
 archive_base_url = "https://raw.githubusercontent.com/abcboy101/poke-corpus/aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
-format = "corpus/{RedBlue,Yellow}/{qid,en,<target_lang>}_msg.txt (UTF-8 parallel lines)"
+format = "corpus/{RedBlue,Yellow,GoldSilver}/{qid,en,<target_lang>}_msg.txt (UTF-8 parallel lines)"
 target_lang = "fr"
 
 [corpus.archive_files]
@@ -23,14 +23,22 @@ target_lang = "fr"
 "corpus/Yellow/es_msg.txt" = "e66234e25849a6b8ac8d51c934947d545f8f52a84a7a28c5905a801c19768ac0"
 "corpus/Yellow/it_msg.txt" = "86558cb6c5ab39aba56d9b286a98fdee94389ab302694a9a5b264a6d77fcc643"
 "corpus/Yellow/ja-Hrkt_msg.txt" = "542a88559b8695d5635ca107107f18d4becc03561d9827df3f80503ab6166505"
+# GoldSilver is a single corpus collection covering both Gold and Silver
+# (poke-corpus does not split them); only qid/en/fr are pinned here, since
+# fr is the only target language this project ships so far.
+"corpus/GoldSilver/qid_msg.txt" = "07be64a14e52e1697902c2acb1d781d48afcbbe57f31ff6368e76b08f553c043"
+"corpus/GoldSilver/en_msg.txt" = "93def21b6ea05d52c572b2057e3b3a3165e2507189ccffad599372b8bc1fd1c1"
+"corpus/GoldSilver/fr_msg.txt" = "45fa1ada83eef176f61aca3617d64b59739e2f2947a8aad2861703b8e27bd9fa"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
+# Pinned at v0.1.79: the first tag whose Lua tree carries the Gen 2 (Gold)
+# import path and loading gate this project's Gold support depends on.
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "60cf07fb0a1ffce0ec6d5d0d2f78a921a6d0b7da"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/60cf07fb0a1ffce0ec6d5d0d2f78a921a6d0b7da"
-archive_sha256 = "95dafa9db3e3bb10eb8381d6b409e116b537c0b3d38349f443f425da211e0e5f"
-archive_tree_sha256 = "00208112e5f226ac5af2097cb5de336a579cb7277e35a2c377ecd633bc287ad2"
+revision = "04490c9b9ad03b814f297793dd7a950dad7c3adf"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/04490c9b9ad03b814f297793dd7a950dad7c3adf"
+archive_sha256 = "b1c069cea13674fde2299c778237a6a82a37808d6bd9d6b28adf1ded1267531f"
+archive_tree_sha256 = "d1d777183e91d72e1075cc285f3eee8f8b405a08d3ac36f53b21c55fa7a42fc6"
 
 [fonts.pokemon]
 revision = "81b60805150c75ebfdfcec6d8352c67e491f8a6c"

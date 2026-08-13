@@ -15,7 +15,7 @@ from typing import Any, Iterable, Mapping
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "config" / "engine_scope.json"
 
-_SCOPE_CATEGORIES = {"rby", "ui", "link", "import", "core", "modern", "unknown", "mixed"}
+_SCOPE_CATEGORIES = {"rby", "ui", "link", "import", "core", "modern", "gen2", "unknown", "mixed"}
 _SCOPE_ELIGIBILITIES = {"eligible", "review", "ineligible"}
 _SCOPE_REASONS = {"modern", "diagnostic", "engine-fallback", "engine-contract-gap", "fallback-only", "covered-by-rom", "defensive", "dead"}
 
@@ -216,6 +216,14 @@ def classify_path(path: str, key: str | None = None, scope: Mapping[str, Any] | 
         return "core"
     if "mods" in parts or any(token in lowered for token in ("modmanager", "discord", "updater")):
         return "modern"
+    if "gen2" in parts:
+        # Gen 2 subtrees (src/{battle,world,script,ui}/gen2/...) reuse RBY
+        # top-level directory names and, under ui/, RBY module basenames
+        # (BoxMenu.lua, PartyMenu.lua...). Both the rby_paths first-segment
+        # check and the ui module-name check below are basename/prefix
+        # matches that do not see the gen2 segment, so without this early
+        # return a Gen 2 callsite is silently folded into "rby"/"eligible".
+        return "gen2"
     if parts and parts[0] == "ui":
         if module in set(scope.get("link_modules", ())):
             return "link"

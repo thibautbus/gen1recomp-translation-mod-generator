@@ -1,0 +1,8 @@
+{
+  "id": "broken_gold",
+  "name": "Broken Gold Fixture",
+  "version": "1.0.0",
+  "entry": "main.lua",
+  "api": 2,
+  "games": ["gold"]
+}
