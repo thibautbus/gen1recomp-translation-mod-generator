@@ -10,7 +10,7 @@ import sys
 from types import MappingProxyType
 from typing import Any, Callable
 
-from .project import is_frozen, project_config
+from .project import is_frozen, project_config, resource_root, which_luajit
 
 
 # Product support is intentionally limited to the canonical US games; this
@@ -143,6 +143,70 @@ def import_rom(version: str, rom: str | Path, gen1recomp: str | Path, out: str |
     log_fn(line)
     process = subprocess.Popen(
         command, cwd=root / "tools", text=True, errors="replace",
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    )
+    assert process.stdout is not None
+    for output_line in process.stdout:
+        output_line = output_line.rstrip("\r\n")
+        print(output_line)
+        log_fn(output_line)
+    returncode = process.wait()
+    if returncode:
+        raise subprocess.CalledProcessError(returncode, command)
+
+
+# Gold's fingerprint is intentionally kept out of SUPPORTED_VERSIONS/[rom.*]:
+# _canonical_hashes() asserts that table's keys are EXACTLY
+# SUPPORTED_VERSIONS, so adding [rom.gold] there would force every RBY call
+# site to learn about a fourth, differently-shaped import path -- one with
+# no build_rom_data.py equivalent (its VERSION_MANIFESTS only knows
+# red/blue/yellow) and no _MANIFESTS entry -- before that unification is
+# due.
+GOLD_SHA1 = "d8b8a3600a465308c9953dfa04f0081c05bdcb94"
+
+
+def verify_gold_rom(path: str | Path) -> dict[str, Any]:
+    path = Path(path)
+    actual = sha1(path)
+    if actual != GOLD_SHA1:
+        raise ValueError(f"gold ROM SHA-1 mismatch: {actual} (expected {GOLD_SHA1})")
+    return {"version": "gold", "path": str(path.resolve()), "sha1": actual, "size": path.stat().st_size}
+
+
+def import_gold_rom(rom: str | Path, gen1recomp: str | Path, out: str | Path, log_fn: Callable[[str], None] | None = None) -> None:
+    """Extract Gold's text catalog under plain LuaJIT; no LÖVE, no ROM in git.
+
+    Mirrors import_rom's subprocess shape (verify hash -> resolve
+    interpreter -> build command -> stream log -> raise on nonzero exit),
+    but drives tools/gold_extract.lua against RomExtractorGen2 instead of
+    build_rom_data.py: Gold's import has no Python-side equivalent, and the
+    underlying extraction pilot runs under LuaJIT alone, with
+    tests/love_stub standing in for LÖVE.
+
+    Writes gold_text.tsv, gold_labels.tsv and gold_stages.tsv into ``out``.
+    """
+    verify_gold_rom(rom)
+    root = Path(gen1recomp).resolve()
+    rom = Path(rom).resolve()
+    out = Path(out).resolve()
+    out.mkdir(parents=True, exist_ok=True)
+    luajit = which_luajit()
+    if luajit is None:
+        raise RuntimeError("LuaJIT is required to import a Gold ROM; see MODKIT_LUAJIT")
+    script = resource_root() / "tools" / "gold_extract.lua"
+    command = [luajit, str(script), str(root), str(rom), str(out)]
+    if log_fn is None:
+        subprocess.run(command, check=True)
+        return
+    # Mirror pipeline.builder._run() / import_rom(): stream combined
+    # stdout/stderr live instead of letting the child inherit the parent's
+    # own streams, which are invalid in the frozen GUI's console-less window.
+    printable = " ".join(command)
+    line = f"\n> {printable}"
+    print(line)
+    log_fn(line)
+    process = subprocess.Popen(
+        command, text=True, errors="replace",
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
     )
     assert process.stdout is not None

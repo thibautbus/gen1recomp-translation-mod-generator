@@ -237,6 +237,31 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(printf_directives("%% %s %.1f"), ["%%", "%s", "%.1f"])
         self.assertEqual(check_printf_directives("%% %s", "%% %s"), [])
 
+    def test_override_ships_unmapped_tokens_verbatim_without_corpus_to_engine(self):
+        # This is how RBY's own preexisting unmapped tokens (<PK>, <MN>:
+        # absent from pipeline/tokens.py's _CORPUS_EXPANSIONS) ship today --
+        # an engine override is used verbatim, bypassing corpus_to_engine
+        # entirely, so an override author can hand-translate a raw token
+        # without pipeline support for it. Automated (non-override) matches
+        # have no such escape hatch: they always go through corpus_to_engine.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "engine.json"
+            path.write_text(json.dumps({
+                "schema": "gen1recomp-translation-mods/engine-overrides", "version": 1,
+                "entries": {"WITHDRAW <PK><MN>": {"override": "RETIRER <PK><MN>"}},
+            }), encoding="utf-8")
+            overrides = load_engine_overrides(path)
+        output, report = match_engine_catalog(
+            {"WITHDRAW <PK><MN>": ""}, [row("WITHDRAW <PK><MN>", "RETIRER POKéMON")], overrides,
+        )
+        # The override's raw <PK><MN> is untouched -- proof it never passed
+        # through corpus_to_engine, which would leave it exactly as-is
+        # anyway (it is unmapped) but for a different, non-bypass reason:
+        # an automated match, without the override, keeps the corpus
+        # translation instead, also unconverted since <PK>/<MN> are unmapped.
+        self.assertEqual(output["WITHDRAW <PK><MN>"], "RETIRER <PK><MN>")
+        self.assertEqual(report["override"], 1)
+
     def test_printf_parser_matches_luajit_formats_without_false_percent_hits(self):
         self.assertEqual(
             printf_directives("100% ready: %q %r"), [],

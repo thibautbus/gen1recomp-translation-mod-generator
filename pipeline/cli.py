@@ -9,7 +9,7 @@ from .align import align, apply_corpus_overrides
 from .corpus import load_corpus, parse_redblue, canonical_language
 from .generate import generate_lua
 from .validate import release_gate, validate
-from .roms import catalog_roms, import_rom, import_all
+from .roms import catalog_roms, import_rom, import_all, import_gold_rom
 from .mod import font_profile_warning, generate_mod
 from .disassembly_audit import run_audit
 from .engine_backlog import MATRIX_LANGUAGES, run_backlog, run_backlog_matrix
@@ -27,6 +27,7 @@ def main(argv=None) -> int:
     cat = sub.add_parser("catalog"); cat.add_argument("--red", required=True); cat.add_argument("--blue", required=True); cat.add_argument("--yellow"); cat.add_argument("-o", "--output", required=True)
     imp = sub.add_parser("import"); imp.add_argument("version", choices=("red", "blue", "yellow")); imp.add_argument("rom"); imp.add_argument("--gen1recomp", required=True); imp.add_argument("--out", required=True); imp.add_argument("--assets", required=True)
     all_imp = sub.add_parser("import-all"); all_imp.add_argument("--red", required=True); all_imp.add_argument("--blue", required=True); all_imp.add_argument("--yellow"); all_imp.add_argument("--gen1recomp", required=True); all_imp.add_argument("--cache-root", required=True)
+    imp_gold = sub.add_parser("import-gold", help="developer-only: extract Gold's text catalog under LuaJIT, no LOVE"); imp_gold.add_argument("rom"); imp_gold.add_argument("--gen1recomp", required=True); imp_gold.add_argument("--out", required=True)
     sub.add_parser("audit-disassemblies", help="developer-only private localized disassembly audit")
     backlog = sub.add_parser("engine-backlog", help="developer-only private unresolved engine-string backlog")
     backlog.add_argument("--language", "--target-lang", dest="language", default=None)
@@ -55,6 +56,8 @@ def main(argv=None) -> int:
         if args.yellow:
             roms["yellow"] = args.yellow
         import_all(roms, args.gen1recomp, args.cache_root); return 0
+    if args.command == "import-gold":
+        import_gold_rom(args.rom, args.gen1recomp, args.out); return 0
     if args.command == "audit-disassemblies":
         run_audit()
         return 0
