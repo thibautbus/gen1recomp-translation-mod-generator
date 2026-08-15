@@ -1204,7 +1204,7 @@ def main(
                 BuildRequest({"gold": gold}, release_profile("gold"), language, None, selected_profile),
                 language_name=language_name, luajit=luajit,
             )
-    except (BuildError, ValueError, OSError) as error:
+    except (RuntimeError, ValueError, OSError) as error:
         print(f"\nError: {error}", file=sys.stderr)
         return 1
     print(f"\nFile generated at {output}")

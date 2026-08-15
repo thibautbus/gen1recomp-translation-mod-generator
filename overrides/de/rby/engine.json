@@ -60,11 +60,6 @@
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
-    "PRINT BOX": {
-      "override": "BOX DRUCKEN",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
-    },
     "PRNT": {
       "override": "PRNT",
       "reason": "engine-original",

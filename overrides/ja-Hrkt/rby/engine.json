@@ -35,6 +35,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-inspired neutral localization; PlayerPC.lua:47 shares one key across deposit and withdrawal; rb.text_2.DepositHowManyText, rb.text_2.WithdrawHowManyText, and rb.text_2.TossHowManyText provide the common いくつ phrase; the engine omits the operation-specific verb; could be improved by splitting the key upstream in Gen1Recomp; requires in-game validation of both callsites."
     },
+    "No.": {
+      "override": "№",
+      "reason": "engine-original",
+      "provenance": "Corpus-inspired engine-original localization; DexEntryMenu.lua:97 Pokédex-number label; rb.status_screen.TypesIDNoOTText and rb.trade2.Trade_MonInfoText use № in Japanese too; no standalone compatible PokeCorpus qid; requires in-game visual validation."
+    },
     "Empty.": {
       "override": "からっぽ。",
       "reason": "engine-original",
@@ -47,11 +52,6 @@
     },
     "PP": {
       "override": "PP",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
-    },
-    "PRINT BOX": {
-      "override": "ボックスを　プリント",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },

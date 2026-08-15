@@ -518,7 +518,7 @@ end
 '''
 
 
-def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: str = "translation-fr", language: str = "fr", modkit_worksheet: str | Path | None = None, report_path: str | Path | None = None, engine_catalog: str | Path | None = None, engine_overrides: str | Path | None = None, strict_engine: bool = False, semantic_anchors: str | Path | None = None, semantic_anchor_decisions: str | Path | None = None, target_name: str | None = None, literal_handlers: str | Path | None = None, target_description: str | None = None, engine_source: str | Path | None = None, engine_scope: str | Path | None = None, font_source: str | Path | None = None, font_profile: str = "fusion", yellow_dialogue: dict[str, str] | None = None, yellow_stats: dict | None = None, yellow_catalogs: dict[str, dict[str, str]] | None = None, yellow_engine_overrides: dict[str, str] | None = None, precomputed_join: tuple[dict, dict] | None = None) -> Path:
+def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: str = "translation-fr", language: str = "fr", modkit_worksheet: str | Path | None = None, report_path: str | Path | None = None, engine_catalog: str | Path | None = None, engine_overrides: str | Path | None = None, strict_engine: bool = False, semantic_anchors: str | Path | None = None, semantic_anchor_decisions: str | Path | None = None, target_name: str | None = None, literal_handlers: str | Path | None = None, target_description: str | None = None, engine_source: str | Path | None = None, engine_scope: str | Path | None = None, engine_manifest: str | Path | None = None, font_source: str | Path | None = None, font_profile: str = "fusion", yellow_dialogue: dict[str, str] | None = None, yellow_stats: dict | None = None, yellow_catalogs: dict[str, dict[str, str]] | None = None, yellow_engine_overrides: dict[str, str] | None = None, precomputed_join: tuple[dict, dict] | None = None) -> Path:
     """Generate a mod; ``strict_engine`` requires scaffold/catalog presence only.
 
     It does not require complete engine translations: unresolved entries remain
@@ -561,7 +561,12 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
             complete_engine_keys, engine_dynamic_values, forced_dynamic_keys,
             iter_callsites, load_scope, verified_source,
         )
-        scope = load_scope(engine_scope) if engine_scope else load_scope()
+        scope_kwargs = {}
+        if engine_scope:
+            scope_kwargs["path"] = engine_scope
+        if engine_manifest:
+            scope_kwargs["manifest_path"] = engine_manifest
+        scope = load_scope(**scope_kwargs)
         from .join import ENGINE_CATALOG_EXTRA_KEYS
         catalog = read_engine_catalog(engine_catalog)
         for key in sorted(forced_dynamic_keys(scope)):

@@ -237,14 +237,14 @@ def _printf_marker_type(directive: str) -> str:
 
 def _dynamic_marker_type(token: str) -> str | None:
     """Map a corpus runtime token to a conservative structural type."""
-    if token.startswith("{NUM:"):
+    if token == "{NUM}" or token.startswith("{NUM:"):
         return "number"
     if token == "{RAM}" or token.startswith("{RAM:") or token == "{STRBUF}":
         return "string"
     # These are runtime substitutions containing textual names/labels.  Keep
     # them in one class: their concrete identity is not stable across games or
     # languages, whereas their ordering and string nature are stable.
-    if token in {"{PLAYER}", "{RIVAL}", "{TARGET}", "{USER}", "{ID}"}:
+    if token in {"{PLAYER}", "{RIVAL}", "{TARGET}", "{USER}", "{ID}", "{ENEMY}"}:
         return "string"
     return None
 

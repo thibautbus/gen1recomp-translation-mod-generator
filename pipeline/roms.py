@@ -39,7 +39,10 @@ def _canonical_hashes(root: str | Path | None = None) -> dict[str, str]:
         raise ValueError("invalid ROM configuration: missing [rom] section")
 
     keys = set(rom_config)
-    missing = sorted(CONFIGURED_VERSIONS - keys)
+    # Gold is validated if present but, unlike RBY, not required: a
+    # deployment that never touches Gold can keep a pared-down
+    # pipeline.toml without [rom.gold].
+    missing = sorted(SUPPORTED_VERSIONS - keys)
     unsupported = sorted(keys - CONFIGURED_VERSIONS)
     if missing or unsupported:
         details = []
@@ -50,7 +53,7 @@ def _canonical_hashes(root: str | Path | None = None) -> dict[str, str]:
         raise ValueError("invalid ROM configuration: " + "; ".join(details))
 
     hashes: dict[str, str] = {}
-    for version in sorted(CONFIGURED_VERSIONS):
+    for version in sorted(CONFIGURED_VERSIONS & keys):
         section = rom_config[version]
         if not isinstance(section, dict):
             raise ValueError(f"invalid [rom.{version}] configuration: expected a table")
@@ -160,7 +163,10 @@ def import_rom(version: str, rom: str | Path, gen1recomp: str | Path, out: str |
 
 # Gold shares the canonical fingerprint registry with RBY, while remaining
 # outside SUPPORTED_VERSIONS because it has a different extractor contract.
-GOLD_SHA1 = CANONICAL["gold"]
+# Unlike RBY, [rom.gold] is optional in pipeline.toml, so this is None
+# rather than a KeyError at import time when a deployment omits it;
+# verify_gold_rom() raises a clear error instead when Gold is actually used.
+GOLD_SHA1 = CANONICAL.get("gold")
 
 # Complete output contract of tools/gold_extract.lua.  Keeping the list next
 # to the importer lets it validate a fresh extraction before publishing it;
@@ -174,6 +180,11 @@ GOLD_REQUIRED_TSV = (
 
 
 def verify_gold_rom(path: str | Path) -> dict[str, Any]:
+    if GOLD_SHA1 is None:
+        raise ValueError(
+            "missing [rom.gold] configuration: Gold ROM verification requires "
+            "a [rom.gold] section in config/pipeline.toml"
+        )
     path = Path(path)
     actual = sha1(path)
     if actual != GOLD_SHA1:

@@ -99,10 +99,12 @@ def parse_gold_text_catalog(
     - a label naming a pointer absent from gold_text.tsv raises: the
       labels and pointer tables have drifted, and silently dropping the
       label would hide that;
-    - two different labels naming the same pointer raise: NAMED_TEXT is
+    - two different labels naming the same pointer raise, and the same
+      label naming two different pointers also raises: NAMED_TEXT is
       documented as an allowlist of unambiguous names
-      (RomExtractorGen2.lua:2786), so a collision means that assumption no
-      longer holds and needs a human, not a guess at which name wins.
+      (RomExtractorGen2.lua:2786), so either collision means that
+      assumption no longer holds and needs a human, not a guess at which
+      name or pointer wins.
 
     Records are returned sorted by pointer, for a deterministic diff
     between runs.
@@ -120,6 +122,7 @@ def parse_gold_text_catalog(
     labels: dict[str, str] = {}
     if labels_tsv is not None and Path(labels_tsv).is_file():
         pointer_labels: dict[str, str] = {}
+        label_pointers: dict[str, str] = {}
         for line in split_lines(Path(labels_tsv).read_text(encoding="utf-8")):
             if not line:
                 continue
@@ -130,7 +133,12 @@ def parse_gold_text_catalog(
                 raise ValueError(
                     f"ambiguous label for pointer {pointer!r}: {pointer_labels[pointer]!r} and {label!r}"
                 )
+            if label in label_pointers and label_pointers[label] != pointer:
+                raise ValueError(
+                    f"ambiguous pointer for label {label!r}: {label_pointers[label]!r} and {pointer!r}"
+                )
             pointer_labels[pointer] = label
+            label_pointers[label] = pointer
             labels[pointer] = label
 
     return [

@@ -20,6 +20,7 @@ for relative in (
     "config/rby/terminology_anchors.json", "config/rby/semantic_anchors.json", "config/rby/semantic_anchor_decisions.json",
     "config/rby/literal_handlers.json", "config/rby/yellow_coverage_exceptions.json",
     "config/gold/semantic_anchors.json", "config/gold/pointer_decisions.json",
+    "config/gold/literal_handlers.json", "config/gold/placeholder_decisions.json",
     "config/rom_paths.example.toml",
     "pyproject.toml",
 ):

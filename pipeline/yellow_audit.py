@@ -37,6 +37,7 @@ DEFERRED_ENGINE_STRINGS = [
     {"engine_key": "%s looks\nunhappy about it!", "corpus_qid": "y.text_3.PikachuUnhappyText", "status": "manual-translation", "note": "rby/yellow_engine.json"},
     {"engine_key": "There isn't any\nresponse...", "corpus_qid": "y.text_3.SleepingPikachuText1", "status": "manual-translation", "note": "rby/yellow_engine.json"},
     {"engine_key": "PIKACHU looks\ncontent.", "corpus_qid": "y.text_7.LooksContentText", "status": "manual-translation", "note": "rby/yellow_engine.json; related row wording differs from the shorter engine text"},
+    {"engine_key": "PRINT BOX", "corpus_qid": "y.bills_pc.BillsPCMenuText", "status": "manual-translation", "note": "rby/yellow_engine.json"},
     {"engine_key": "A: done", "corpus_qid": None, "status": "manual-translation", "note": "rby/yellow_engine.json"},
     {"engine_key": "HI    %d", "corpus_qid": None, "status": "manual-translation", "note": "rby/yellow_engine.json"},
     {"engine_key": "New record!", "corpus_qid": None, "status": "manual-translation", "note": "rby/yellow_engine.json"},

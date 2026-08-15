@@ -162,7 +162,7 @@ engine's English fallback.
 | `de` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
 | `es` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
 | `it` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
-| `ja-Hrkt` | 3281/3281 (100%) | 3405/3405 (100%) | 255/256 (99.61%) |
+| `ja-Hrkt` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
 
 The ROM aggregates exclude extracted labels that do not render visible text.
 Reviewed exceptions are recorded in
@@ -208,7 +208,7 @@ that every key is present in both games.
 | `es` | 109/485 (22.47%) |
 | `it` | 111/485 (22.89%) |
 | `ja-Hrkt` | 110/485 (22.68%) |
-| `ko` | 30/485 (6.19%) |
+| `ko` | 31/485 (6.39%) |
 
 The denominator is calculated as follows: `951` total engine keys, minus the
 `256` RBY-related keys and the `218` Gold-related keys, plus back the `8` keys

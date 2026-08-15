@@ -417,7 +417,7 @@ class TranslationBuilderApp:
             build_cache = "interactive" if inputs.generation == 1 else "interactive-gold"
             coverage = inputs.output_dir / ".cache" / build_cache / inputs.language / "coverage.json"
             self._post(lambda: self._complete(output, coverage))
-        except (builder.BuildError, ValueError, OSError) as error:
+        except (RuntimeError, ValueError, OSError) as error:
             message = str(error)
             self._post(lambda: self._failed(message))
         except Exception as error:  # GUI boundary: never strand the disabled form.

@@ -78,7 +78,8 @@ def _load_gold_ui_handlers() -> dict[str, tuple[str, int, int | None]]:
         if (not isinstance(source, str) or not source or not isinstance(row, dict)
                 or not isinstance(row.get("qid"), str) or not row["qid"].startswith("gs.")
                 or (not isinstance(row.get("segment"), int) and row.get("full") is not True)
-                or (isinstance(row.get("segment"), int) and row["segment"] < 0)):
+                or (isinstance(row.get("segment"), int) and row["segment"] < 0)
+                or (row.get("full") is True and isinstance(row.get("segment"), int))):
             raise ValueError(f"invalid Gold literal handler for {source!r}")
         page = row.get("page")
         if page is not None and (not isinstance(page, int) or page < 0):
@@ -258,6 +259,11 @@ def package_gold_mod(
         env = dict(os.environ)
         env["MODKIT_LUAJIT"] = str(luajit)
         env["LUA"] = str(luajit)
+        # Matches builder.py's build(): modkit's dump_dataset() decodes the
+        # LuaJIT dump with subprocess text=True and no explicit encoding,
+        # which falls back to the OS locale codepage (e.g. cp1252 on
+        # Windows) and can crash on dumped text outside it.
+        env["PYTHONUTF8"] = "1"
         if is_frozen():
             lua_dir = str(Path(luajit).resolve().parent)
             env["PATH"] = lua_dir + os.pathsep + env.get("PATH", "")

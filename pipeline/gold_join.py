@@ -349,6 +349,6 @@ def gold_coverage_report(entries: list[GoldJoinEntry]) -> dict:
         "ignored_markup_only": sum(1 for entry in entries if entry.provenance == MARKUP_ONLY),
         "rom": {
             "translated": translated, "total": total,
-            "percent": round(100.0 * translated / total, 2) if total else 0.0,
+            "percent": round(100.0 * translated / total, 2) if total else 100.0,
         },
     }

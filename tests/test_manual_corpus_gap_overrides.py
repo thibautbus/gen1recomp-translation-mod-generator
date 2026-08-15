@@ -10,7 +10,6 @@ KEYS = (
     "Empty.",
     "No good! It's not\neven near water.",
     "PP",
-    "PRINT BOX",
     "PRNT",
     "BOX %d (WITHDRAW)",
     "BOX %d (RELEASE)",
@@ -21,31 +20,31 @@ KEYS = (
 EXPECTED = {
     "fr": [
         "%s :N%d", ":N%d No.%03d", "Vide.",
-        "Pas bon! Même pas\nprès de l'eau.", "PP", "IMPRIMER BOITE", "PRNT",
+        "Pas bon! Même pas\nprès de l'eau.", "PP", "PRNT",
         "BOITE %d (RETIRER)", "BOITE %d (RELACHER)", "Données inconnues.",
         "Le rocher est tombé\ndans le trou!",
     ],
     "de": [
         "%s :L%d", ":L%d Nr.%03d", "Leer.",
-        "Schade! Nicht mal\nin Wassernähe.", "PP", "BOX DRUCKEN", "PRNT",
+        "Schade! Nicht mal\nin Wassernähe.", "PP", "PRNT",
         "BOX %d (MITNEHMEN)", "BOX %d (FREILASSEN)", "Daten unbekannt.",
         "Der Felsen fiel\ndurch das Loch!",
     ],
     "es": [
         "%s :N%d", ":N%d Nº%03d", "Vacía.",
-        "¡Qué mal! No estás\nni cerca del agua.", "PP", "IMPRIMIR CAJA", "PRNT",
+        "¡Qué mal! No estás\nni cerca del agua.", "PP", "PRNT",
         "CAJA %d (SACAR)", "CAJA %d (SOLTAR)", "Datos desconocidos.",
         "¡La roca cayó\npor el agujero!",
     ],
     "it": [
         "%s :L%d", ":L%d Nº%03d", "Vuoto.",
-        "Niente da fare!\nLontano dall'acqua.", "PP", "STAMPA BOX", "PRNT",
+        "Niente da fare!\nLontano dall'acqua.", "PP", "PRNT",
         "BOX %d (RITIRA)", "BOX %d (LIBERA)", "Dati sconosciuti.",
         "Il masso è caduto\nnel buco!",
     ],
     "ja-Hrkt": [
         "%s :L%d", ":L%d No.%03d", "からっぽ。",
-        "だめだ！\nみずの　そばじゃ　ない！", "PP", "ボックスを　プリント", "PRNT",
+        "だめだ！\nみずの　そばじゃ　ない！", "PP", "PRNT",
         "ボックス%d（つれていく）", "ボックス%d（にがす）", "データ　ふめい。",
         "いわが　あなに\nおちた！",
     ],
@@ -72,6 +71,7 @@ POKEDEX_NUMBER_LABELS = {
     "de": "Nr.",
     "es": "Nº",
     "it": "Nº",
+    "ja-Hrkt": "№",
 }
 
 

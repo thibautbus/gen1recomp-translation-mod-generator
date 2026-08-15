@@ -21,7 +21,12 @@ def parse_indexed_catalog(tsv: str | Path) -> list[IndexedEntry]:
     for line in split_lines(Path(tsv).read_text(encoding="utf-8")):
         if not line:
             continue
-        id_, index, name = line.split("\t")
+        # maxsplit=2: a name legitimately containing a tab must still land
+        # entirely in the third field, not raise or get truncated.
+        fields = line.split("\t", 2)
+        if len(fields) != 3:
+            raise ValueError(f"malformed indexed catalog row in {tsv}: expected id\\tindex\\tname, got {line!r}")
+        id_, index, name = fields
         if not index.isdigit():
             # A handful of extracted entries carry no index (unused
             # slots); they cannot be joined by index at all, so they are

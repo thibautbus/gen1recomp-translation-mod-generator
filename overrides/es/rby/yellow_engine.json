@@ -37,6 +37,13 @@
       "warning": "Requires in-game visual validation",
       "provenance": "AI-generated translation; engine-authored Yellow Pewter POKéMON CENTER sleeping-Pikachu text (src/world/OverworldController.lua, _LooksContentText fallback); the related corpus row y.text_7.LooksContentText differs in wording, so the shorter engine text is translated directly; no dynamic parameter."
     },
+    "PRINT BOX": {
+      "override": "IMPRIMIR",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "Corpus-backed from poke-corpus y.bills_pc.BillsPCMenuText (Yellow-only sixth <NEXT>-separated menu item; RedBlue's rb.bills_pc.BillsPCMenuText has only five); official Spanish shortens the button to the single word \"IMPRIMIR\"."
+    },
     "SCORE %d": {
       "override": "PUNTOS %d",
       "reason": "yellow-only-engine-text",
