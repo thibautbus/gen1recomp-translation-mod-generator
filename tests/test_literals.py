@@ -36,7 +36,7 @@ class LiteralHandlerTests(unittest.TestCase):
                 row(QYES, "CATERPIE <LINE> poison, but <CONT>WEEDLE does.<PAGE>Watch"),
                 row(QNO, "Oh, OK then!"),
             ],
-            load_recipes(Path(__file__).parents[1] / "config" / "literal_handlers.json"),
+            load_recipes(Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json"),
         )
         self.assertEqual(len(handlers), 1)
         self.assertEqual(handlers[0].prompt_qid, QPROMPT)
@@ -49,7 +49,7 @@ class LiteralHandlerTests(unittest.TestCase):
         handlers = extract_handlers(
             [row(QPROMPT, "Prompt"), row(QYES, "YES")],
             load_recipes(
-                Path(__file__).parents[1] / "config" / "literal_handlers.json"
+                Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json"
             ),
         )
         self.assertEqual(handlers, [])
@@ -63,7 +63,7 @@ class LiteralHandlerTests(unittest.TestCase):
                 row(QPROMPT, "prompt"),
             ],
             load_recipes(
-                Path(__file__).parents[1] / "config" / "literal_handlers.json"
+                Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json"
             ),
         )
         self.assertEqual(handlers, [])
@@ -82,7 +82,7 @@ class LiteralHandlerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path, handlers = generate_handlers(
                 [row(QPROMPT, "Question?"), row(QYES, "Oui"), row(QNO, "Non")],
-                load_recipes(Path(__file__).parents[1] / "config" / "literal_handlers.json"),
+                load_recipes(Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json"),
                 Path(directory) / "lang" / "literal_handlers.lua",
             )
             body = path.read_text(encoding="utf-8")
@@ -135,7 +135,7 @@ class LiteralHandlerTests(unittest.TestCase):
             row(QMUSEUM_NO_MONEY, "Pas assez."), row(QMUSEUM_NO, "A bientôt!"),
             row(QMUSEUM_ALREADY, "Profitez-en."),
         ]
-        recipes = load_recipes(Path(__file__).parents[1] / "config" / "literal_handlers.json")
+        recipes = load_recipes(Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json")
         with tempfile.TemporaryDirectory() as directory:
             path, handlers = generate_handlers(rows, recipes, Path(directory) / "handlers.lua")
             museum = [h for h in handlers if h.text_constant == "TEXT_MUSEUM1F_SCIENTIST1"]
@@ -161,7 +161,7 @@ class LiteralHandlerTests(unittest.TestCase):
 
     def test_bike_flavor_handlers_use_corpus_and_track_bicycle_state(self):
         rows = [row(QBIKE_WOMAN, "Un vélo de ville."), row(QBIKE_YOUNG, "Ces vélos sont chers."), row(QBIKE_COOL, "Ton vélo est super!")]
-        recipes = load_recipes(Path(__file__).parents[1] / "config" / "literal_handlers.json")
+        recipes = load_recipes(Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json")
         with tempfile.TemporaryDirectory() as directory:
             path, handlers = generate_handlers(rows, recipes, Path(directory) / "handlers.lua")
             constants = {h.text_constant for h in handlers}

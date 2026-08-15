@@ -136,7 +136,10 @@ def coverage_lines(path: str | Path) -> list[str]:
     """Return the compact coverage text shown after a successful build."""
     report = json.loads(Path(path).read_text(encoding="utf-8"))
     lines: list[str] = []
-    for key, label in (("rom", "ROM catalog"), ("engine", "All engine strings")):
+    for key, label in (
+        ("rom", "ROM aggregate"),
+        ("engine", "All engine strings"),
+    ):
         section = report.get(key) or {}
         lines.append(
             f"{label}: {int(section.get('translated', 0))}/{int(section.get('total', 0))} "
@@ -151,9 +154,16 @@ def coverage_lines(path: str | Path) -> list[str]:
         )
     elif report.get("engine_rby_warning"):
         lines.append(f"RBY-related engine strings: unavailable ({report['engine_rby_warning']})")
+    section = report.get("engine_gen2") or {}
+    if section.get("total"):
+        lines.append(
+            "Gold-related engine strings: "
+            f"{int(section.get('translated', 0))}/{int(section.get('total', 0))} "
+            f"({float(section.get('percent', 0.0)):.2f}%)"
+        )
     yellow = (report.get("yellow") or {}).get("coverage", {}).get("rom") or {}
     if yellow.get("total"):
-        lines.append(f"Yellow ROM catalogs: {int(yellow.get('translated', 0))}/{int(yellow.get('total', 0))} ({float(yellow.get('percent', 0.0)):.2f}%)")
+        lines.append(f"Yellow ROM aggregate: {int(yellow.get('translated', 0))}/{int(yellow.get('total', 0))} ({float(yellow.get('percent', 0.0)):.2f}%)")
     return lines
 
 
@@ -404,7 +414,8 @@ class TranslationBuilderApp:
                 log_fn=lambda message: self._append_log(message),
                 status_fn=lambda message: self._post(lambda: self.status_var.set(message)),
             )
-            coverage = (inputs.output_dir / ".cache" / "interactive" / inputs.language / "coverage.json") if inputs.generation == 1 else None
+            build_cache = "interactive" if inputs.generation == 1 else "interactive-gold"
+            coverage = inputs.output_dir / ".cache" / build_cache / inputs.language / "coverage.json"
             self._post(lambda: self._complete(output, coverage))
         except (builder.BuildError, ValueError, OSError) as error:
             message = str(error)

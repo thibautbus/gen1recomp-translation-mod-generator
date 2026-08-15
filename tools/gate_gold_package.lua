@@ -1,9 +1,7 @@
--- Side-by-side installation gate: the real RBY archive's shape (no
+-- Side-by-side headless loader gate: the real RBY archive's shape (no
 -- `games` field) and a Gold mod (games=["gold"]) loaded from the SAME
--- mods/ directory, proving they never collide and each is active on its
--- own boot -- the two archives coexist on disk under distinct file
--- names, side-by-side installation verified, both mods active on a
--- Gen 1 boot and on a Gen 2 boot.
+-- virtual mods directory, proving they never collide and each is selected
+-- for its own generation. This is not a LÖVE boot or rendering test.
 --
 -- Usage: luajit gate_gold_package.lua <gen1recomp_root> <rby_mod_dir> <gold_mod_dir>
 

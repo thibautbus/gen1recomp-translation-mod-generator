@@ -4,32 +4,11 @@ from pathlib import Path
 
 from pipeline.gold_text import GoldTextRecord
 from pipeline.gold_join import (
-    HARMLESS_AMBIGUOUS, MAP_CONTEXT, MARKUP_ONLY, NO_MATCH, OVERRIDE, UNIQUE, UNRESOLVED,
-    audit_join, convert_manifest_map_name, gold_charmap, gold_coverage_report, join_gold_pointers,
-    load_map_banks, read_corpus_rows, to_aligned_rows, unresolved_report,
+    GoldPlaceholderDecision, HARMLESS_AMBIGUOUS, MARKUP_ONLY, NO_MATCH, OVERRIDE, REVIEWED_QID,
+    UNIQUE, UNRESOLVED, audit_join, gold_coverage_report, join_gold_pointers,
+    load_gold_placeholder_decisions, load_gold_pointer_decisions, read_corpus_rows, to_aligned_rows,
+    unresolved_report,
 )
-
-
-class ConvertManifestMapNameTests(unittest.TestCase):
-    def test_simple_names(self):
-        self.assertEqual(convert_manifest_map_name("AZALEA_GYM"), "AzaleaGym")
-        self.assertEqual(convert_manifest_map_name("CHARCOAL_KILN"), "CharcoalKiln")
-
-    def test_floor_suffixes_stay_uppercase(self):
-        self.assertEqual(convert_manifest_map_name("BLACKTHORN_GYM_1F"), "BlackthornGym1F")
-        self.assertEqual(convert_manifest_map_name("DRAGONS_DEN_B1F"), "DragonsDenB1F")
-
-    def test_route_numbers(self):
-        self.assertEqual(convert_manifest_map_name("ROUTE_34_ILEX_FOREST_GATE"), "Route34IlexForestGate")
-
-
-class LoadMapBanksTests(unittest.TestCase):
-    def test_reads_and_converts_map_bank_pairs(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "gold_maps.tsv"
-            path.write_text("ILEX_FOREST\t45\nCHARCOAL_KILN\t55\n", encoding="utf-8")
-            banks = load_map_banks(path)
-            self.assertEqual(banks, {"IlexForest": {"45"}, "CharcoalKiln": {"55"}})
 
 
 class ReadCorpusRowsTests(unittest.TestCase):
@@ -66,20 +45,17 @@ class JoinGoldPointersTests(unittest.TestCase):
         records = [GoldTextRecord("55:0001", "<PARA><DONE>")]
         entries, stats = join_gold_pointers(records, [])
         self.assertEqual(entries[0].provenance, MARKUP_ONLY)
+        self.assertIsNone(entries[0].translation)
         self.assertEqual(stats["markup_only"], 1)
 
     def test_markup_only_sound_and_timing_controls_are_dropped(self):
-        # Regression test: the ROM's own decoder (RomExtractorGen2.lua's
-        # TEXT_NO_GLYPH branch) drops these bytes from decoded text with no
-        # replacement and no side effect visible to a mod override, so
-        # dropping the corpus's markup for them here must not raise --
-        # earlier code briefly treated this as unsafe and made a real,
-        # boot-verified build of the actual corpus crash outright.
+        # RomExtractorGen2's TEXT_NO_GLYPH branch drops these controls, so
+        # they do not produce a catalog override.
         for control in ("{sound_item}", "{text_pause}"):
             with self.subTest(control=control):
                 records = [GoldTextRecord("55:0001", control)]
                 entries, _ = join_gold_pointers(records, [])
-                self.assertEqual(entries[0].translation, "")
+                self.assertIsNone(entries[0].translation)
 
     def test_no_match_keeps_english_and_is_flagged(self):
         records = [GoldTextRecord("55:0001", "Nothing matches this.")]
@@ -112,34 +88,39 @@ class JoinGoldPointersTests(unittest.TestCase):
         entries, _ = join_gold_pointers(records, rows)
         self.assertEqual(entries[0].translation, "Même texte")
 
-    def test_map_context_disambiguates_when_banks_differ(self):
-        records = [GoldTextRecord("45:0001", "What?!")]
-        rows = [
-            ("gs.IlexForest.Grunt", "What?!", "Quoi?!"),
-            ("gs.CharcoalKiln.Grunt", "What?!", "De quoi?!"),
-        ]
-        map_banks = {"IlexForest": {"45"}, "CharcoalKiln": {"55"}}
-        entries, stats = join_gold_pointers(records, rows, map_banks=map_banks)
-        self.assertEqual(entries[0].provenance, MAP_CONTEXT)
-        self.assertEqual(entries[0].translation, "Quoi?!")
-        self.assertEqual(entries[0].qid, "gs.IlexForest.Grunt")
-        self.assertEqual(stats["map_context"], 1)
-
-    def test_unresolved_when_map_context_does_not_narrow_it_down(self):
-        # Both candidates live on the same map (a lost/won branch pair):
-        # map context cannot distinguish them, so this must fall back
-        # rather than silently pick one.
+    def test_ambiguous_candidates_stay_unresolved(self):
         records = [GoldTextRecord("48:0001", "...\x0cMy name's ???.")]
         rows = [
             ("gs.CherrygroveCity.YouLost", "...\x0cMy name's ???.", "...Perdu."),
             ("gs.CherrygroveCity.YouWon", "...\x0cMy name's ???.", "...Gagne."),
         ]
-        map_banks = {"CherrygroveCity": {"48"}}
-        entries, stats = join_gold_pointers(records, rows, map_banks=map_banks)
+        entries, stats = join_gold_pointers(records, rows)
         self.assertEqual(entries[0].provenance, UNRESOLVED)
         self.assertIsNone(entries[0].translation)
         self.assertEqual(entries[0].candidate_qids, ("gs.CherrygroveCity.YouLost", "gs.CherrygroveCity.YouWon"))
         self.assertEqual(stats["unresolved"], 1)
+
+    def test_reviewed_qid_resolves_ambiguity_in_the_target_language(self):
+        records = [GoldTextRecord("48:0001", "...\fMy name's ???.")]
+        rows = [
+            ("gs.city.YouLost", "...\fMy name's ???.", "...Perdu."),
+            ("gs.city.YouWon", "...\fMy name's ???.", "...Gagné."),
+        ]
+        entries, stats = join_gold_pointers(
+            records, rows, qid_decisions={"48:0001": "gs.city.YouWon"},
+        )
+        self.assertEqual(entries[0].provenance, REVIEWED_QID)
+        self.assertEqual(entries[0].qid, "gs.city.YouWon")
+        self.assertEqual(entries[0].translation, "...Gagné.")
+        self.assertEqual(stats["reviewed_qid"], 1)
+
+    def test_reviewed_qid_must_match_the_pointer_source(self):
+        records = [GoldTextRecord("48:0001", "Original")]
+        with self.assertRaisesRegex(ValueError, "source mismatch"):
+            join_gold_pointers(
+                records, [("gs.city.Other", "Other", "Autre")],
+                qid_decisions={"48:0001": "gs.city.Other"},
+            )
 
     def test_override_wins_over_everything_else(self):
         records = [GoldTextRecord("45:0001", "What?!")]
@@ -151,6 +132,27 @@ class JoinGoldPointersTests(unittest.TestCase):
         self.assertEqual(entries[0].provenance, OVERRIDE)
         self.assertEqual(entries[0].translation, "Hand-picked!")
         self.assertEqual(stats["override"], 1)
+
+    def test_empty_override_is_rejected(self):
+        records = [GoldTextRecord("45:0001", "What?!")]
+        with self.assertRaisesRegex(ValueError, "empty Gold pointer override"):
+            join_gold_pointers(records, [], overrides={"45:0001": ""})
+
+    def test_blank_corpus_translation_is_not_counted_as_a_match(self):
+        records = [GoldTextRecord("55:0001", "Hello there!")]
+        rows = [("gs.a.Greeting", "Hello there!", "")]
+        entries, stats = join_gold_pointers(records, rows)
+        self.assertEqual(entries[0].provenance, NO_MATCH)
+        self.assertIsNone(entries[0].translation)
+        self.assertEqual(stats["no_match"], 1)
+
+    def test_control_only_corpus_translation_falls_back_to_english(self):
+        records = [GoldTextRecord("55:0001", "Hello there!")]
+        rows = [("gs.a.Greeting", "Hello there!", "{sound_item}")]
+        entries, stats = join_gold_pointers(records, rows)
+        self.assertEqual(entries[0].provenance, NO_MATCH)
+        self.assertIsNone(entries[0].translation)
+        self.assertEqual(stats["no_match"], 1)
 
     def test_translation_is_converted_to_engine_form(self):
         records = [GoldTextRecord("55:0001", "Hello<LINE>there!")]
@@ -188,10 +190,49 @@ class AuditJoinTests(unittest.TestCase):
         )
         self.assertEqual(audit_join(entries), [])
 
+
+class GoldPointerDecisionConfigTests(unittest.TestCase):
+    def test_repository_decisions_are_valid_and_qid_based(self):
+        decisions = load_gold_pointer_decisions()
+        self.assertEqual(decisions["48:4961"], "gs.CherrygroveCity.CherrygroveRivalText_YouLost")
+
     def test_clean_join_has_no_problems(self):
         records = [GoldTextRecord("55:0001", "Hello there!")]
         entries, _ = join_gold_pointers(records, [("gs.a.Greeting", "Hello there!", "Bonjour!")])
         self.assertEqual(audit_join(entries), [])
+
+
+class GoldPlaceholderDecisionConfigTests(unittest.TestCase):
+    def test_repository_decisions_are_valid_and_qid_based(self):
+        for language in ("de", "es", "it", "ja-Hrkt", "ko"):
+            with self.subTest(language=language):
+                self.assertTrue(load_gold_placeholder_decisions(language))
+        self.assertEqual(
+            load_gold_placeholder_decisions("de")["65:6092"].qid,
+            "gs.common_2.MartBoughtText",
+        )
+
+    def test_exact_reviewed_difference_is_accepted(self):
+        records = [GoldTextRecord("55:0001", "Hello {PLAYER}!")]
+        entries, _ = join_gold_pointers(records, [("gs.a.Greeting", "Hello <PLAYER>!", "Bonjour!")])
+        decisions = {
+            "55:0001": GoldPlaceholderDecision(
+                "gs.a.Greeting", frozenset({"missing placeholder {PLAYER} x1"}),
+            ),
+        }
+        self.assertEqual(audit_join(entries, decisions), [])
+
+    def test_stale_decision_fails_closed(self):
+        records = [GoldTextRecord("55:0001", "Hello {PLAYER}!")]
+        entries, _ = join_gold_pointers(records, [("gs.a.Greeting", "Hello <PLAYER>!", "Bonjour!")])
+        decisions = {
+            "55:0001": GoldPlaceholderDecision(
+                "gs.a.Greeting", frozenset({"unexpected placeholder {NUM} x1"}),
+            ),
+        }
+        problems = audit_join(entries, decisions)
+        self.assertTrue(any("missing placeholder {PLAYER}" in item for item in problems))
+        self.assertTrue(any("unused placeholder decision" in item for item in problems))
 
 
 class UnresolvedReportTests(unittest.TestCase):
@@ -264,6 +305,18 @@ class GoldCoverageReportTests(unittest.TestCase):
         self.assertEqual(coverage["rom"], {"translated": 1, "total": 2, "percent": 50.0})
         self.assertEqual(coverage["unmatched"], {"55:0002": ["Unmatched."]})
         self.assertEqual(coverage["ambiguous"], {})
+        self.assertEqual(coverage["ignored_markup_only"], 0)
+
+    def test_markup_only_records_are_excluded_from_coverage(self):
+        records = [
+            GoldTextRecord("55:0001", "Matched."),
+            GoldTextRecord("55:0002", "<PARA><DONE>"),
+        ]
+        rows = [("gs.a.One", "Matched.", "Traduit.")]
+        entries, _ = join_gold_pointers(records, rows)
+        coverage = gold_coverage_report(entries)
+        self.assertEqual(coverage["rom"], {"translated": 1, "total": 1, "percent": 100.0})
+        self.assertEqual(coverage["ignored_markup_only"], 1)
 
     def test_feeds_release_gate_directly(self):
         from pipeline.validate import release_gate
@@ -278,17 +331,6 @@ class GoldCoverageReportTests(unittest.TestCase):
         ok, summary = release_gate(items, [], charmap={"T": 1, "r": 2, "a": 3, "d": 4, "u": 5, "i": 6, "t": 7, ".": 8},
                                     coverage=coverage)
         self.assertTrue(ok, summary)
-
-
-class GoldCharmapTests(unittest.TestCase):
-    def test_extracts_single_character_glyphs_only(self):
-        manifest = {"charmap": {"10": "A", "11": "<BOLD_A>", "12": "b"}}
-        self.assertEqual(gold_charmap(manifest), {"A": 10, "b": 12})
-
-    def test_requires_a_charmap_table(self):
-        with self.assertRaisesRegex(ValueError, "charmap"):
-            gold_charmap({})
-
 
 if __name__ == "__main__":
     unittest.main()

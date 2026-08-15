@@ -35,6 +35,15 @@ class GoldTokenExpansionTests(unittest.TestCase):
     def test_lf_renders_as_a_newline(self):
         self.assertEqual(corpus_to_engine("TEXT SPEED<LF>BATTLE SCENE"), "TEXT SPEED\nBATTLE SCENE")
 
+    def test_japanese_gold_abbreviations_expand_to_prose(self):
+        source = "ここ<WA>わたし<NO><KOUGEKI><NI>つよくな<TTE><TA!>"
+        self.assertEqual(corpus_to_engine(source), "ここは　わたしの　こうげきに　つよくなってた！")
+        self.assertEqual(corpus_to_engine("<ROUTE><WO><KOKO_WA><GA><zu><do>"),
+                         "ばん　どうろを　ここはが　ずど")
+
+    def test_japanese_gold_text_controls_do_not_ship_as_tokens(self):
+        self.assertEqual(corpus_to_engine("<_CONT><SCROLL>ずかん<DEXEND>"), "\vずかん")
+
     def test_po_and_ke_are_deliberately_left_unmapped(self):
         # Matches this table's existing <PK>/<MN> precedent: naming-screen
         # alphabet fragments, not prose -- see pipeline/tokens.py's comment.

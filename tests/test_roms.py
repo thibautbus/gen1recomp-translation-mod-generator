@@ -7,16 +7,25 @@ from pathlib import Path
 from unittest.mock import patch
 
 from pipeline.project import project_config
-from pipeline.roms import CANONICAL, GOLD_SHA1, import_rom, verify_rom, verify_gold_rom, import_gold_rom
+from pipeline.roms import (
+    CANONICAL, GOLD_REQUIRED_TSV, GOLD_SHA1, import_gold_rom, import_rom,
+    verify_gold_rom, verify_rom,
+)
 
 
 class RomConfigTests(unittest.TestCase):
     @staticmethod
-    def write_config(root: Path, red: str | None = None, blue: str | None = None, yellow: str | None = None) -> None:
+    def write_config(
+        root: Path,
+        red: str | None = None,
+        blue: str | None = None,
+        yellow: str | None = None,
+        gold: str | None = "0" * 40,
+    ) -> None:
         config = root / "config"
         config.mkdir(parents=True, exist_ok=True)
         lines: list[str] = []
-        for section, value in (("red", red), ("blue", blue), ("yellow", yellow)):
+        for section, value in (("red", red), ("blue", blue), ("yellow", yellow), ("gold", gold)):
             lines.append(f"[rom.{section}]")
             if value is not None:
                 lines.append(f'sha1 = "{value}"')
@@ -25,7 +34,7 @@ class RomConfigTests(unittest.TestCase):
 
     def test_checked_in_rom_sections_have_no_paths(self):
         config = project_config()
-        self.assertEqual(set(config["rom"]), {"red", "blue", "yellow"})
+        self.assertEqual(set(config["rom"]), {"red", "blue", "yellow", "gold"})
         for section in config["rom"].values():
             self.assertNotIn("path", section)
 
@@ -44,6 +53,8 @@ class RomConfigTests(unittest.TestCase):
         self.assertEqual(CANONICAL["red"], config["rom"]["red"]["sha1"])
         self.assertEqual(CANONICAL["blue"], config["rom"]["blue"]["sha1"])
         self.assertEqual(CANONICAL["yellow"], config["rom"]["yellow"]["sha1"])
+        self.assertEqual(CANONICAL["gold"], config["rom"]["gold"]["sha1"])
+        self.assertEqual(GOLD_SHA1, config["rom"]["gold"]["sha1"])
         with self.assertRaises(TypeError):
             CANONICAL["red"] = "0" * 40
 
@@ -74,7 +85,8 @@ class RomConfigTests(unittest.TestCase):
                 "unknown field": (
                     f'[rom.red]\nsha1 = "{digest}"\npath = "old.gb"\n'
                     f'[rom.blue]\nsha1 = "{"0" * 40}"\n'
-                    f'[rom.yellow]\nsha1 = "{"0" * 40}"\n',
+                    f'[rom.yellow]\nsha1 = "{"0" * 40}"\n'
+                    f'[rom.gold]\nsha1 = "{"0" * 40}"\n',
                     "unsupported keys: path",
                 ),
                 "missing rom": ("[output]\nname = \"test\"\n", r"missing \[rom\] section"),
@@ -82,11 +94,12 @@ class RomConfigTests(unittest.TestCase):
                     f'[rom.red]\nsha1 = "{digest}"\n'
                     f'[rom.blue]\nsha1 = "{"0" * 40}"\n'
                     f'[rom.yellow]\nsha1 = "{"0" * 40}"\n'
+                    f'[rom.gold]\nsha1 = "{"0" * 40}"\n'
                     f'[rom.green]\nsha1 = "{"1" * 40}"\n',
                     "unsupported versions: green",
                 ),
                 "non-table": (
-                    f'rom = {{ red = "{digest}", blue = {{ sha1 = "{"0" * 40}" }}, yellow = {{ sha1 = "{"0" * 40}" }} }}\n',
+                    f'rom = {{ red = "{digest}", blue = {{ sha1 = "{"0" * 40}" }}, yellow = {{ sha1 = "{"0" * 40}" }}, gold = {{ sha1 = "{"0" * 40}" }} }}\n',
                     r"invalid \[rom\.red\] configuration: expected a table",
                 ),
                 "malformed toml": ("[rom.red\nsha1 = \"bad\"\n", "unable to load ROM configuration"),
@@ -207,11 +220,14 @@ class RomConfigTests(unittest.TestCase):
 
 
 class GoldImportTests(unittest.TestCase):
-    """verify_gold_rom/import_gold_rom mirror verify_rom/import_rom's shape,
-    but stay outside SUPPORTED_VERSIONS/[rom.*] on purpose (see roms.py's
-    comment above GOLD_SHA1): the two are tested separately rather than by
-    parametrizing RomConfigTests/RomImportTests over a fourth version.
-    """
+    """Gold has a separate extractor contract despite sharing ROM config."""
+
+    @staticmethod
+    def write_extractor_outputs(destination: str | Path) -> None:
+        destination = Path(destination)
+        destination.mkdir(parents=True, exist_ok=True)
+        for name in GOLD_REQUIRED_TSV:
+            (destination / name).write_text("fixture\n", encoding="utf-8")
 
     def test_verify_gold_rom_accepts_the_canonical_fingerprint(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -240,7 +256,10 @@ class GoldImportTests(unittest.TestCase):
                 patch("pipeline.roms.verify_gold_rom"),
                 patch("pipeline.roms.which_luajit", return_value="/usr/bin/luajit"),
                 patch("pipeline.roms.resource_root", return_value=root),
-                patch("pipeline.roms.subprocess.run") as run,
+                patch(
+                    "pipeline.roms.subprocess.run",
+                    side_effect=lambda command, **_: self.write_extractor_outputs(command[-1]),
+                ) as run,
             ):
                 import_gold_rom(rom, root / "engine", out)
             command = run.call_args.args[0]
@@ -249,6 +268,7 @@ class GoldImportTests(unittest.TestCase):
             self.assertEqual(Path(command[2]), (root / "engine").resolve())
             self.assertEqual(Path(command[3]), rom.resolve())
             self.assertTrue(out.is_dir())
+            self.assertEqual({path.name for path in out.iterdir()}, set(GOLD_REQUIRED_TSV))
 
     def test_import_gold_rom_raises_without_luajit(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -275,11 +295,57 @@ class GoldImportTests(unittest.TestCase):
                 patch("pipeline.roms.verify_gold_rom"),
                 patch("pipeline.roms.which_luajit", return_value="/usr/bin/luajit"),
                 patch("pipeline.roms.resource_root", return_value=root),
-                patch("pipeline.roms.subprocess.Popen", return_value=Process()),
+                patch(
+                    "pipeline.roms.subprocess.Popen",
+                    side_effect=lambda command, **_: (
+                        self.write_extractor_outputs(command[-1]) or Process()
+                    ),
+                ),
             ):
                 import_gold_rom(root / "gold.gbc", root / "engine", root / "out", log_fn=messages.append)
             self.assertEqual(messages[1:], ["constants      ok", "text pointers   : 3044"])
             self.assertTrue(messages[0].startswith("\n> "))
+
+    def test_import_gold_rom_rejects_incomplete_output_without_replacing_cache(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            out = root / "out"
+            out.mkdir()
+            (out / "keep.txt").write_text("old cache", encoding="utf-8")
+
+            def incomplete(command, **_):
+                destination = Path(command[-1])
+                destination.mkdir(parents=True, exist_ok=True)
+                (destination / GOLD_REQUIRED_TSV[0]).write_text("partial\n", encoding="utf-8")
+
+            with (
+                patch("pipeline.roms.verify_gold_rom"),
+                patch("pipeline.roms.which_luajit", return_value="/usr/bin/luajit"),
+                patch("pipeline.roms.resource_root", return_value=root),
+                patch("pipeline.roms.subprocess.run", side_effect=incomplete),
+                self.assertRaisesRegex(RuntimeError, "required non-empty outputs"),
+            ):
+                import_gold_rom(root / "gold.gbc", root / "engine", out)
+            self.assertEqual((out / "keep.txt").read_text(encoding="utf-8"), "old cache")
+
+    def test_import_gold_rom_preserves_cache_when_extractor_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            out = root / "out"
+            out.mkdir()
+            (out / "keep.txt").write_text("old cache", encoding="utf-8")
+            with (
+                patch("pipeline.roms.verify_gold_rom"),
+                patch("pipeline.roms.which_luajit", return_value="/usr/bin/luajit"),
+                patch("pipeline.roms.resource_root", return_value=root),
+                patch(
+                    "pipeline.roms.subprocess.run",
+                    side_effect=subprocess.CalledProcessError(1, ["luajit"]),
+                ),
+                self.assertRaises(subprocess.CalledProcessError),
+            ):
+                import_gold_rom(root / "gold.gbc", root / "engine", out)
+            self.assertEqual((out / "keep.txt").read_text(encoding="utf-8"), "old cache")
 
     def test_import_gold_rom_raises_on_nonzero_exit_with_log_fn(self):
         class Process:

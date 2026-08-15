@@ -9,8 +9,10 @@ from unittest.mock import patch
 from pipeline.builder import _which_luajit
 from pipeline.gold_join import GoldJoinEntry, NO_MATCH, UNIQUE
 from pipeline.gold_mod import (
-    build_gold_dialogue_mod, gold_archive_name, gold_mod_id, gold_text_catalog_from_join,
-    generate_gold_mod, package_gold_mod, run_gold_release_gates,
+    attach_gold_validation, build_gold_dialogue_mod, gold_archive_name,
+    gold_mod_id, gold_oak_speech_catalog_from_join,
+    gold_text_catalog_from_join, generate_gold_mod, package_gold_mod,
+    run_gold_release_gates,
 )
 from pipeline.gold_mod import _write_gate_expectations
 from pipeline.project import project_version
@@ -46,6 +48,7 @@ class GenerateGoldModTests(unittest.TestCase):
             self.assertEqual(manifest["games"], ["gold"])
             self.assertEqual(manifest["api"], 2)
             self.assertEqual(manifest["entry"], "main.lua")
+            self.assertEqual(manifest["permissions"], [])
             self.assertIn("Gold", manifest["description"])
 
     def test_main_lua_has_no_content_registrations_yet(self):
@@ -74,8 +77,8 @@ class GoldReleaseGateFlowTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "incomplete"):
                 _write_gate_expectations(Path(tmp) / "mod", {})
             catalogs = {name: {"ID": "VALUE"} for name in (
-                "species_names", "species_kinds", "species_dex_text", "move_names",
-                "item_names", "trainer_class_names", "landmarks",
+                "strings", "species_names", "species_kinds", "species_dex_text", "move_names",
+                "item_names", "trainer_class_names", "landmarks", "oak_speech",
             )}
             catalogs["landmarks"] = {}
             with self.assertRaisesRegex(RuntimeError, "empty"):
@@ -92,19 +95,79 @@ class GoldReleaseGateFlowTests(unittest.TestCase):
                 report = run_gold_release_gates(
                     mod, entries, engine, "/usr/bin/luajit",
                     catalogs={name: {"ID": "X"} for name in (
-                        "species_names", "species_kinds", "species_dex_text", "move_names",
-                        "item_names", "trainer_class_names", "landmarks",
+                        "strings", "species_names", "species_kinds", "species_dex_text", "move_names",
+                        "item_names", "trainer_class_names", "landmarks", "oak_speech",
                     )},
                 )
             self.assertIn("coverage", report)
+            self.assertEqual(report["validation"]["policy"], "english-fallback")
+            self.assertEqual(report["validation"]["coverage"]["translated"], 1)
+            self.assertEqual(len(report["validation"]["checks"]), 4)
+            self.assertTrue(all(check["status"] == "passed" for check in report["validation"]["checks"]))
             commands = [Path(call.args[0][1]).name for call in run.call_args_list]
             self.assertEqual(commands, ["gate_gen2.lua", "gate_gold_dialogue.lua", "gate_gold_registries.lua"])
+
+    def test_manifest_keeps_only_compact_engine_coverage(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            engine = root / "engine"
+            (engine / "tools").mkdir(parents=True)
+            mod = generate_gold_mod(root / "mod", language="fr", text_catalog={"55:0001": "Bonjour!"})
+            entries = [GoldJoinEntry("55:0001", None, "Hello", "Bonjour!", UNIQUE, "gs.a.One")]
+            coverage = {
+                "rom": {"translated": 8, "total": 9, "percent": 88.89},
+                "rom_dialogue": {"translated": 1, "total": 2, "percent": 50.0},
+                "rom_catalogs": {"translated": 7, "total": 7, "percent": 100.0},
+                "ambiguous": [], "unmatched": [], "ignored_markup_only": 0,
+                "engine": {
+                    "translated": 2, "total": 4, "percent": 50.0,
+                    "source_revision": "abc", "details": {"Private English": "unmatched"},
+                },
+                "engine_gen2": {
+                    "translated": 1, "total": 2, "percent": 50.0,
+                    "source_revision": "abc", "scope": "gen2",
+                },
+            }
+            catalogs = {name: {"ID": "X"} for name in (
+                "strings", "species_names", "species_kinds", "species_dex_text", "move_names",
+                "item_names", "trainer_class_names", "landmarks", "oak_speech",
+            )}
+            with patch("pipeline.gold_mod._run"):
+                report = run_gold_release_gates(
+                    mod, entries, engine, "/usr/bin/luajit", catalogs=catalogs, coverage=coverage,
+                )
+        manifest_coverage = report["validation"]["coverage"]
+        self.assertEqual(manifest_coverage["translated"], 8)
+        self.assertNotIn("rom_dialogue", manifest_coverage)
+        self.assertNotIn("rom_catalogs", manifest_coverage)
+        self.assertEqual(manifest_coverage["engine"], {
+            "translated": 2, "total": 4, "percent": 50.0, "source_revision": "abc",
+        })
+        self.assertNotIn("details", manifest_coverage["engine"])
+
+    def test_validation_provenance_is_attached_deterministically(self):
+        validation = {
+            "schema": 1,
+            "policy": "english-fallback",
+            "coverage": {"translated": 1, "total": 2, "percent": 50.0},
+            "checks": [{"tool": "fixture", "version": "1", "command": "fixture", "status": "passed"}],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            mod = generate_gold_mod(Path(tmp) / "mod", language="fr")
+            attach_gold_validation(mod, validation)
+            first = (mod / "manifest.json").read_bytes()
+            attach_gold_validation(mod, validation)
+            second = (mod / "manifest.json").read_bytes()
+            manifest = json.loads(second)
+        self.assertEqual(first, second)
+        self.assertEqual(manifest["validation"], validation)
 
     def test_registry_expectations_gate_runs_against_real_loader(self):
         luajit = _which_luajit()
         if luajit is None or not ENGINE_ROOT.is_dir():
             self.skipTest("cached Gen1Recomp/LuaJIT unavailable")
         catalogs = {
+            "strings": {"But nothing happened.": "Mais rien ne se passe."},
             "species_names": {"BULBASAUR": "BULBIZARRE"},
             "species_kinds": {"BULBASAUR": "GRAINE"},
             "species_dex_text": {"BULBASAUR": "Une graine."},
@@ -112,6 +175,7 @@ class GoldReleaseGateFlowTests(unittest.TestCase):
             "item_names": {"AMULET_COIN": "PIECE RUNE"},
             "trainer_class_names": {"BEAUTY": "CANON"},
             "landmarks": {"LANDMARK_AZALEA_TOWN": "ECORCIA"},
+            "oak_speech": {"_OakText1": "Bienvenue dans le monde des POKéMON !"},
         }
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -149,6 +213,14 @@ class PackageGoldModTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             mod_dir = generate_gold_mod(root / "build" / "translation-fr-gen2", language="fr")
+            attach_gold_validation(
+                mod_dir,
+                {
+                    "schema": 1, "policy": "english-fallback",
+                    "coverage": {"translated": 1, "total": 1, "percent": 100.0},
+                    "checks": [],
+                },
+            )
             output = package_gold_mod(
                 mod_dir, gen1recomp=ENGINE_ROOT, modkit=MODKIT,
                 build_root=root / "build", destination=root / "dist", language="fr",
@@ -162,9 +234,7 @@ class PackageGoldModTests(unittest.TestCase):
 
 
 class GoldPackageGateTests(unittest.TestCase):
-    """tools/gate_gold_package.lua: both archives installed side by side,
-    each active on its own generation's boot and gated out of the other's.
-    """
+    """The headless loader keeps RBY and Gold scoped to their generations."""
 
     def test_side_by_side_coexistence(self):
         luajit = _which_luajit()
@@ -193,6 +263,14 @@ class TextCatalogFromJoinTests(unittest.TestCase):
         ]
         self.assertEqual(gold_text_catalog_from_join(entries), {"55:0001": "Salut"})
 
+    def test_oak_speech_catalog_uses_only_runtime_intro_labels(self):
+        entries = [
+            GoldJoinEntry("65:5624", "_OakText1", "Hello", "Bonjour", UNIQUE, "gs.a.One"),
+            GoldJoinEntry("65:56d1", "_OakText3", "@", None, NO_MATCH),
+            GoldJoinEntry("55:0001", "Other", "Hi", "Salut", UNIQUE, "gs.a.Other"),
+        ]
+        self.assertEqual(gold_oak_speech_catalog_from_join(entries), {"_OakText1": "Bonjour"})
+
 
 class GenerateGoldModWithTextTests(unittest.TestCase):
     def test_text_catalog_is_written_and_registered(self):
@@ -213,6 +291,14 @@ class GenerateGoldModWithTextTests(unittest.TestCase):
             self.assertFalse((mod_dir / "lang").exists())
             main = (mod_dir / "main.lua").read_text(encoding="utf-8")
             self.assertNotIn("text:override", main)
+
+    def test_regeneration_removes_stale_catalogs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            destination = Path(tmp) / "mod"
+            generate_gold_mod(destination, language="fr", text_catalog={"55:0001": "Bonjour!"})
+            self.assertTrue((destination / "lang" / "dialogue.lua").is_file())
+            generate_gold_mod(destination, language="fr")
+            self.assertFalse((destination / "lang").exists())
 
     def test_generation_is_deterministic(self):
         catalog = {"55:0002": "B", "55:0001": "A", "55:0003": "C"}
@@ -243,6 +329,31 @@ class GenerateGoldModWithTextTests(unittest.TestCase):
             self.assertIn('each("species_names", function(id, value) mod.content.pokemon:patch(id, { name = value }) end)', main)
             self.assertIn('each("move_names", function(id, value) mod.content.moves:patch(id, { name = value }) end)', main)
 
+    def test_engine_strings_are_written_and_registered(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            mod_dir = generate_gold_mod(
+                Path(tmp) / "mod", language="fr",
+                extra_catalogs={"strings": {"Hello!": "Bonjour!"}},
+            )
+            self.assertIn(
+                '["Hello!"] = "Bonjour!"',
+                (mod_dir / "lang" / "strings.lua").read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                'mod.content.strings:override(id, value)',
+                (mod_dir / "main.lua").read_text(encoding="utf-8"),
+            )
+
+    def test_oak_speech_catalog_is_applied_through_the_public_intro_hook(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            mod_dir = generate_gold_mod(
+                Path(tmp) / "mod", language="fr",
+                extra_catalogs={"oak_speech": {"_OakText1": "Bienvenue !"}},
+            )
+            main = (mod_dir / "main.lua").read_text(encoding="utf-8")
+            self.assertIn('mod.hooks:wrap("intro.oak_speech.build"', main)
+            self.assertIn('speech.texts[id] = value', main)
+
     def test_empty_extra_catalogs_are_not_written(self):
         with tempfile.TemporaryDirectory() as tmp:
             mod_dir = generate_gold_mod(
@@ -268,7 +379,7 @@ class BuildGoldDialogueModTests(unittest.TestCase):
             "55:0001\tHello there!\n55:0002\tUnmatched pointer.\n", encoding="utf-8",
         )
         (gold_out / "gold_labels.tsv").write_text("Greeting\t55:0001\n", encoding="utf-8")
-        (gold_out / "gold_maps.tsv").write_text("TEST_MAP\t55\n", encoding="utf-8")
+        (gold_out / "gold_stages.tsv").write_text("text\tok\n", encoding="utf-8")
         (gold_out / "gold_species.tsv").write_text("BULBASAUR\t1\tBULBASAUR\n", encoding="utf-8")
         (gold_out / "gold_moves.tsv").write_text("ABSORB\t71\tABSORB\n", encoding="utf-8")
         (gold_out / "gold_items.tsv").write_text("AMULET_COIN\t91\tAMULET COIN\n", encoding="utf-8")
@@ -292,6 +403,34 @@ class BuildGoldDialogueModTests(unittest.TestCase):
             self.assertIn('["55:0001"] = "Bonjour!"', catalog)
             self.assertNotIn("55:0002", catalog)
             self.assertEqual({e.pointer for e in entries}, {"55:0001", "55:0002"})
+
+    def test_engine_matches_are_shipped_and_reported_separately(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            gold_out, corpus = self._write_fixture(root)
+            engine_coverage = {
+                "engine": {"translated": 1, "total": 3, "percent": 33.33},
+                "engine_gen2": {"translated": 1, "total": 2, "percent": 50.0},
+            }
+            with patch(
+                "pipeline.gold_mod.match_gold_engine_strings",
+                return_value=({"Hello!": "Bonjour!"}, engine_coverage),
+            ) as match:
+                mod_dir, _entries, stats = build_gold_dialogue_mod(
+                    gold_out, corpus, root / "mod", language="fr", engine_source=root / "engine",
+                )
+            match.assert_called_once()
+            self.assertEqual(stats["coverage"]["engine_gen2"]["total"], 2)
+            self.assertEqual(stats["coverage"]["rom"], {
+                "translated": 1, "total": 9, "percent": 11.11,
+            })
+            self.assertEqual(stats["coverage"]["rom_dialogue"]["total"], 2)
+            self.assertEqual(stats["coverage"]["rom_catalogs"]["total"], 7)
+            self.assertEqual(stats["_gate_catalogs"]["strings"], {"Hello!": "Bonjour!"})
+            self.assertIn(
+                '["Hello!"] = "Bonjour!"',
+                (mod_dir / "lang" / "strings.lua").read_text(encoding="utf-8"),
+            )
 
     def test_release_import_rejects_missing_required_catalog(self):
         with tempfile.TemporaryDirectory() as tmp:

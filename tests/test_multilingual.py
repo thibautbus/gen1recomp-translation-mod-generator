@@ -51,7 +51,7 @@ class MultilingualTests(unittest.TestCase):
                 self.skipTest(f"cached {language} worksheet unavailable")
             rows = align(parse_redblue(corpus_root, language), target_lang=language)
             with TemporaryDirectory() as tmp:
-                mod = generate_mod(rows, Path(tmp) / "mod", language=language, modkit_worksheet=worksheet, engine_catalog=worksheet / "strings.lua", engine_overrides=Path("overrides") / language / "shared_engine_overrides.json", strict_engine=True)
+                mod = generate_mod(rows, Path(tmp) / "mod", language=language, modkit_worksheet=worksheet, engine_catalog=worksheet / "strings.lua", engine_overrides=Path("overrides") / language / "rby" / "engine.json", strict_engine=True)
                 strings = (mod / "lang/strings.lua").read_text(encoding="utf-8")
                 for key in ("NAME", "ATTACK", "DEFENSE", "SPEED", "SPECIAL"):
                     self.assertIn(f'  ["{key}"] = ', strings, language)
@@ -71,7 +71,7 @@ class MultilingualTests(unittest.TestCase):
             rows = align(parse_redblue(corpus_root, language), target_lang=language)
             from tempfile import TemporaryDirectory
             with TemporaryDirectory() as tmp:
-                mod = generate_mod(rows, Path(tmp) / "mod", language=language, modkit_worksheet=worksheet, engine_catalog=worksheet / "strings.lua", engine_overrides=Path("overrides") / language / "shared_engine_overrides.json", strict_engine=True)
+                mod = generate_mod(rows, Path(tmp) / "mod", language=language, modkit_worksheet=worksheet, engine_catalog=worksheet / "strings.lua", engine_overrides=Path("overrides") / language / "rby" / "engine.json", strict_engine=True)
                 body = (mod / "lang/type_names.lua").read_text(encoding="utf-8")
                 for type_id in runtime_ids:
                     self.assertIn(f'  ["{type_id}"] = ', body, (language, type_id))
@@ -170,7 +170,7 @@ class MultilingualTests(unittest.TestCase):
 
     def test_es_it_engine_override_files_load_from_overrides_tree(self):
         for language in ("es", "it"):
-            path = Path("overrides") / language / "shared_engine_overrides.json"
+            path = Path("overrides") / language / "rby" / "engine.json"
             self.assertTrue(path.is_file())
             overrides = load_engine_overrides(path)
             self.assertEqual(sum(entry.get("reason") == "editorial-correction" for entry in overrides.values()), 4)
@@ -186,7 +186,7 @@ class MultilingualTests(unittest.TestCase):
             "ja-Hrkt": "%sは\nぜったいに\nはずれない！",
         }
         for language, value in expected.items():
-            overrides = load_engine_overrides(Path("overrides") / language / "shared_engine_overrides.json")
+            overrides = load_engine_overrides(Path("overrides") / language / "rby" / "engine.json")
             self.assertEqual(overrides[key]["override"], value, language)
             self.assertEqual(overrides[key]["reason"], "engine-original", language)
             self.assertIn("AI-generated", overrides[key]["provenance"], language)
@@ -200,7 +200,7 @@ class MultilingualTests(unittest.TestCase):
             "%s's\n%s\ngreatly rose!": "%ss\n%s nimmt stark zu!",
             "%s's\n%s\ngreatly fell!": "%ss\n%s sinkt stark!",
         }
-        overrides = load_engine_overrides(Path("overrides/de/shared_engine_overrides.json"))
+        overrides = load_engine_overrides(Path("overrides/de/rby/engine.json"))
         for key, value in expected.items():
             self.assertEqual(overrides[key]["override"], value)
             self.assertEqual(overrides[key]["reason"], "engine-original")
@@ -816,7 +816,7 @@ class MultilingualTests(unittest.TestCase):
                     language=language,
                     modkit_worksheet=worksheet,
                     engine_catalog=worksheet / "strings.lua",
-                    engine_overrides=Path("overrides") / language / "shared_engine_overrides.json",
+                    engine_overrides=Path("overrides") / language / "rby" / "engine.json",
                     strict_engine=True,
                 )
                 dialogue = (mod / "lang/dialogue.lua").read_text(encoding="utf-8")
@@ -1192,7 +1192,7 @@ class MultilingualTests(unittest.TestCase):
         anchors = load_semantic_anchors()
         for language in ("es", "it"):
             items = align(parse_redblue(root, language), target_lang=language)
-            override_path = Path("overrides") / language / "shared_engine_overrides.json"
+            override_path = Path("overrides") / language / "rby" / "engine.json"
             overrides = load_engine_overrides(override_path)
             self.assertTrue(set(keys) <= set(overrides), language)
             self.assertTrue(all("provenance" in overrides[key] for key in keys), language)

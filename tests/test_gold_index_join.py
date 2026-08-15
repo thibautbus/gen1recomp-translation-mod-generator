@@ -63,6 +63,14 @@ class JoinByIndexTests(unittest.TestCase):
         translations, _ = join_by_index(entries, rows, "gs.names.MoveNames.")
         self.assertEqual(translations["X"], "Un\nDeux")
 
+    def test_control_only_translation_is_not_shipped_or_counted(self):
+        entries = [IndexedEntry("X", 1, "X")]
+        rows = [("gs.names.MoveNames.1", "X", "{sound_item}")]
+        translations, stats = join_by_index(entries, rows, "gs.names.MoveNames.")
+        self.assertEqual(translations, {})
+        self.assertEqual(stats["translated"], 0)
+        self.assertEqual(stats["no_corpus_entry"], 1)
+
 
 class JoinDexEntriesTests(unittest.TestCase):
     def test_joins_kind_by_normalised_species_name(self):
@@ -70,6 +78,16 @@ class JoinDexEntriesTests(unittest.TestCase):
         rows = [("gs.dex_entries.BulbasaurPokedexEntry.Species", "SEED", "GRAINE")]
         translations, stats = join_dex_entries(species, rows, "dex_entries", "Species")
         self.assertEqual(translations, {"BULBASAUR": "GRAINE"})
+        self.assertEqual(stats["translated"], 1)
+
+    def test_prefers_gold_specific_kind_variant_when_the_corpus_splits_versions(self):
+        species = [IndexedEntry("EXEGGUTOR", 103, "EXEGGUTOR")]
+        rows = [
+            ("gs.dex_entries.ExeggutorPokedexEntry.Species^G", "COCONUT", "FRUITPALME"),
+            ("gs.dex_entries.ExeggutorPokedexEntry.Species^S", "COCONUT", "FRUIT PALME"),
+        ]
+        translations, stats = join_dex_entries(species, rows, "dex_entries", "Species")
+        self.assertEqual(translations, {"EXEGGUTOR": "FRUITPALME"})
         self.assertEqual(stats["translated"], 1)
 
     def test_joins_gold_flavor_text_with_no_label_suffix(self):
@@ -106,6 +124,15 @@ class JoinDexEntriesTests(unittest.TestCase):
         self.assertEqual(translations, {})
         self.assertEqual(stats["no_corpus_entry"], 1)
 
+    def test_conflicting_normalised_dex_names_are_rejected(self):
+        species = [IndexedEntry("HO_OH", 250, "HO-OH")]
+        rows = [
+            ("gs.dex_entries.HoOhPokedexEntry.Species", "RAINBOW", "ARC-EN-CIEL"),
+            ("gs.dex_entries.Ho_OhPokedexEntry.Species", "RAINBOW", "PRISME"),
+        ]
+        with self.assertRaisesRegex(ValueError, "conflicting 'dex_entries' translations"):
+            join_dex_entries(species, rows, "dex_entries", "Species")
+
     def test_kind_and_flavor_text_categories_do_not_cross(self):
         species = [IndexedEntry("BULBASAUR", 1, "BULBASAUR")]
         rows = [
@@ -141,6 +168,31 @@ class JoinLandmarksTests(unittest.TestCase):
         translations, stats = join_landmarks(landmarks, [])
         self.assertEqual(translations, {})
         self.assertEqual(stats["no_corpus_entry"], 1)
+
+    def test_joins_reviewed_rom_identifier_aliases(self):
+        landmarks = [
+            IndexedEntry("LANDMARK_UNDERGROUND_PATH", 58, "UNDERGROUND"),
+            IndexedEntry("LANDMARK_SPECIAL", 0, "SPECIAL"),
+        ]
+        rows = [
+            ("gs.landmarks.UndergroundName", "UNDERGROUND", "SOUTERRAIN"),
+            ("gs.landmarks.SpecialMapName", "SPECIAL", "SPECIAL"),
+        ]
+        translations, stats = join_landmarks(landmarks, rows)
+        self.assertEqual(translations, {
+            "LANDMARK_UNDERGROUND_PATH": "SOUTERRAIN",
+            "LANDMARK_SPECIAL": "SPECIAL",
+        })
+        self.assertEqual(stats["translated"], 2)
+
+    def test_conflicting_normalised_landmark_names_are_rejected(self):
+        landmarks = [IndexedEntry("LANDMARK_NEW_BARK_TOWN", 1, "NEW BARK TOWN")]
+        rows = [
+            ("gs.landmarks.NewBarkTownName", "NEW BARK TOWN", "BOURG GEO"),
+            ("gs.landmarks.New_Bark_TownName", "NEW BARK TOWN", "NOUVEAU BOURG"),
+        ]
+        with self.assertRaisesRegex(ValueError, "conflicting landmark translations"):
+            join_landmarks(landmarks, rows)
 
 
 if __name__ == "__main__":

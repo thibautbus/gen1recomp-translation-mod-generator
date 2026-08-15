@@ -60,8 +60,8 @@ def effective_yellow_engine_coverage(engine_rby: dict, yellow_dialogue: dict[str
     return result
 
 
-def yellow_coverage_metrics(stats: dict) -> dict:
-    """Summarize Yellow corpus coverage for dialogue and named catalogs."""
+def yellow_coverage_metrics(stats: dict, shared_rom_details: dict | None = None) -> dict:
+    """Summarize Yellow ROM coverage, including shared runtime extras."""
     dialogue_total = int(stats.get(
         "effective_dialogue_total", stats.get("yellow_labels", 0)
     ))
@@ -82,6 +82,16 @@ def yellow_coverage_metrics(stats: dict) -> dict:
 
     dialogue = metric(dialogue_translated, dialogue_total)
     named_catalogs = metric(catalog_translated, catalog_total)
+    shared_details = {
+        name: details
+        for name, details in (shared_rom_details or {}).items()
+        if name not in ROM_CATALOGS
+    }
+    shared_runtime = metric(
+        sum(int(details.get("translated", 0)) for details in shared_details.values()),
+        sum(int(details.get("total", 0)) for details in shared_details.values()),
+    )
+    shared_runtime["details"] = shared_details
     diff_total = int(stats.get("layer_entries", 0))
     # `stats["unmatched"]` counts both unmatched-versioned-fallback labels
     # (which ARE present in the layer, as the ROM's own English text) and
@@ -91,11 +101,14 @@ def yellow_coverage_metrics(stats: dict) -> dict:
     # layer entries that carry a real translation, so use it directly.
     diff_translated = int(stats.get("matched", 0))
     return {
-        "rom": metric(dialogue_translated + catalog_translated,
-                       dialogue_total + catalog_total),
+        "rom": metric(
+            dialogue_translated + catalog_translated + shared_runtime["translated"],
+            dialogue_total + catalog_total + shared_runtime["total"],
+        ),
         "specific_diff": metric(diff_translated, diff_total),
         "dialogue": dialogue,
         "named_catalogs": named_catalogs,
+        "shared_runtime": shared_runtime,
     }
 
 
@@ -525,16 +538,26 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         if engine_catalog is None and strict_engine:
             engine_catalog = Path(modkit_worksheet) / "strings.lua"
     if engine_catalog:
-        from .engine_scope import engine_dynamic_values, forced_dynamic_keys, load_scope
+        from .engine_scope import (
+            complete_engine_keys, engine_dynamic_values, forced_dynamic_keys,
+            iter_callsites, load_scope, verified_source,
+        )
         scope = load_scope(engine_scope) if engine_scope else load_scope()
         from .join import ENGINE_CATALOG_EXTRA_KEYS
         catalog = read_engine_catalog(engine_catalog)
-        for key in forced_dynamic_keys(scope):
+        for key in sorted(forced_dynamic_keys(scope)):
             catalog.setdefault(key, "")
-        for key in engine_dynamic_values(scope):
+        for key in sorted(engine_dynamic_values(scope)):
             catalog.setdefault(key, "")
-        for key in ENGINE_CATALOG_EXTRA_KEYS:
+        for key in sorted(ENGINE_CATALOG_EXTRA_KEYS):
             catalog.setdefault(key, "")
+        engine_callsites = None
+        source_path = None
+        if engine_source:
+            source_path, _, _ = verified_source(engine_source, scope)
+            engine_callsites = iter_callsites(source_path)
+            for key in sorted(complete_engine_keys(engine_callsites, scope)):
+                catalog.setdefault(key, "")
         overrides = load_engine_overrides(engine_overrides)
         stale_overrides = sorted(set(overrides) - set(catalog))
         if stale_overrides:
@@ -667,7 +690,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
     # Literal handlers are emitted only when every branch has a proven target
     # qid.  The runtime file is deliberately separate so an interactive build
     # can retain Modkit's scaffold main and load this optional contribution.
-    literal_path = Path(literal_handlers) if literal_handlers else Path(__file__).resolve().parents[1] / "config" / "literal_handlers.json"
+    literal_path = Path(literal_handlers) if literal_handlers else Path(__file__).resolve().parents[1] / "config" / "rby" / "literal_handlers.json"
     runtime = destination / "lang" / "literal_handlers.lua"
     recipes = []
     generated_handlers = []
@@ -812,10 +835,10 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         if engine_report is not None:
             report["engine"] = engine_report
             if engine_source:
-                from .engine_scope import classify_catalog, coverage_metadata, iter_callsites, validate_catalog_universe, verified_source
-                source_path, _, _ = verified_source(engine_source, scope)
+                from .engine_scope import classify_catalog, coverage_metadata, validate_catalog_universe
+                assert source_path is not None and engine_callsites is not None
                 validate_catalog_universe(catalog.keys(), source_path, scope)
-                classified = classify_catalog(catalog.keys(), iter_callsites(source_path), scope)
+                classified = classify_catalog(catalog.keys(), engine_callsites, scope)
                 report_scope = _catalog_scope(classified, catalog)
                 eligible = {key for key, info in report_scope.items() if info["eligibility"] == "eligible"}
                 translated_keys = {key for key, value in engine_values.items() if isinstance(value, str) and value}
@@ -839,7 +862,9 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
                 "layer": yellow_stats,
                 "note": "Yellow catalog layers: versioned, translation-variant and Yellow-only values, applied when GameVersion.isYellow()",
             }
-            report["yellow"]["coverage"] = yellow_coverage_metrics(yellow_stats)
+            report["yellow"]["coverage"] = yellow_coverage_metrics(
+                yellow_stats, report["rom"]["details"]
+            )
             if "engine_rby" in report:
                 effective = effective_yellow_engine_coverage(
                     report["engine_rby"], yellow_dialogue

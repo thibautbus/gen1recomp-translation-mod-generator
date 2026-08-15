@@ -157,6 +157,31 @@ class YellowCoverageTests(unittest.TestCase):
         })
         self.assertEqual(metrics["rom"], {"translated": 14, "total": 14, "percent": 100.0})
 
+    def test_yellow_rom_aggregate_includes_shared_runtime_extras(self):
+        metrics = yellow_coverage_metrics(
+            {
+                "effective_dialogue_total": 6,
+                "effective_dialogue_translated": 5,
+                "catalogs": {"item_names": {"matched": 3, "total": 4}},
+                "effective_named_catalog_translated": 3,
+            },
+            {
+                # Base Red/Blue catalogs are replaced by their Yellow
+                # equivalents; only the remaining runtime resources are shared.
+                "dialogue": {"translated": 20, "total": 20},
+                "item_names": {"translated": 8, "total": 8},
+                "type_names": {"translated": 2, "total": 2},
+                "literal_handlers": {"translated": 1, "total": 2},
+            },
+        )
+
+        self.assertEqual(metrics["rom"], {"translated": 11, "total": 14, "percent": 78.57})
+        self.assertEqual(metrics["shared_runtime"]["translated"], 3)
+        self.assertEqual(metrics["shared_runtime"]["total"], 4)
+        self.assertEqual(set(metrics["shared_runtime"]["details"]), {
+            "type_names", "literal_handlers",
+        })
+
     def test_refusing_dialogue_completes_effective_engine_metric(self):
         coverage = effective_yellow_engine_coverage(
             {"translated": 248, "total": 249},
@@ -464,7 +489,7 @@ class YellowCoverageExceptionsTests(unittest.TestCase):
         from pipeline.builder import load_yellow_coverage_exceptions
         from pipeline.project import resource_root
         overrides = load_yellow_coverage_exceptions(
-            resource_root() / "config" / "yellow_coverage_exceptions.json"
+            resource_root() / "config" / "rby" / "yellow_coverage_exceptions.json"
         )
         self.assertEqual(overrides.get("it"), frozenset({"_RoseText"}))
 

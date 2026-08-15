@@ -16,8 +16,10 @@ runtime = ROOT / "packaging" / "runtime" / "luajit"
 datas = []
 binaries = []
 for relative in (
-    "config/pipeline.toml", "config/engine_scope.json", "config/semantic_anchors.json", "config/semantic_anchor_decisions.json",
-    "config/terminology_anchors.json", "config/literal_handlers.json",
+    "config/pipeline.toml", "config/shared/engine_manifest.json", "config/rby/engine_scope.json",
+    "config/rby/terminology_anchors.json", "config/rby/semantic_anchors.json", "config/rby/semantic_anchor_decisions.json",
+    "config/rby/literal_handlers.json", "config/rby/yellow_coverage_exceptions.json",
+    "config/gold/semantic_anchors.json", "config/gold/pointer_decisions.json",
     "config/rom_paths.example.toml",
     "pyproject.toml",
 ):

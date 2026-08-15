@@ -24,8 +24,8 @@ if [ "$TARGET_LANG" = fr ]; then
 else
     LANG_DIR="$ROOT_DIR/.cache/build/$TARGET_LANG"
 fi
-CORPUS_OVERRIDES=${CORPUS_OVERRIDES:-"$ROOT_DIR/overrides/$TARGET_LANG/corpus_overrides.json"}
-ENGINE_OVERRIDES=${ENGINE_OVERRIDES:-"$ROOT_DIR/overrides/$TARGET_LANG/shared_engine_overrides.json"}
+CORPUS_OVERRIDES=${CORPUS_OVERRIDES:-"$ROOT_DIR/overrides/$TARGET_LANG/rby/corpus.json"}
+ENGINE_OVERRIDES=${ENGINE_OVERRIDES:-"$ROOT_DIR/overrides/$TARGET_LANG/rby/engine.json"}
 
 BUILD_DIR=${BUILD_DIR:-"$LANG_DIR"}
 if [ -n "${REPORT_DIR:-}" ]; then :; elif [ "$TARGET_LANG" = fr ]; then REPORT_DIR="$ROOT_DIR/.cache/reports"; else REPORT_DIR="$ROOT_DIR/.cache/reports/$TARGET_LANG"; fi
@@ -69,7 +69,7 @@ printf '%s\n' "Generating mod: $MOD"
 set -- --target-lang "$TARGET_LANG" --modkit-worksheet "$MODKIT_WORKSHEET" --report "$COVERAGE"
 [ -n "$CORPUS_OVERRIDES" ] && set -- "$@" --corpus-overrides "$CORPUS_OVERRIDES"
 [ -n "$ENGINE_OVERRIDES" ] && set -- "$@" --engine-overrides "$ENGINE_OVERRIDES"
-[ -d "$ENGINE_SOURCE" ] && set -- "$@" --engine-source "$ENGINE_SOURCE" --engine-scope "$ROOT_DIR/config/engine_scope.json"
+[ -d "$ENGINE_SOURCE" ] && set -- "$@" --engine-source "$ENGINE_SOURCE" --engine-scope "$ROOT_DIR/config/rby/engine_scope.json"
 [ -n "$MOD_ID" ] && set -- "$@" --mod-id "$MOD_ID"
 [ -n "$TARGET_NAME" ] && set -- "$@" --target-name "$TARGET_NAME"
 python3 "$PIPELINE" generate "$ALIGNED" -o "$MOD" "$@"

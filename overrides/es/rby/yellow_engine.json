@@ -14,7 +14,7 @@
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short HUD label; no dynamic parameter. Sentence case matches the English source (\"New record!\"); \"récord\" accented per standard Spanish spelling (cf. es CLÁSICO/ÁRBOLES elsewhere in shared_engine_overrides.json — the es GB font supports accented uppercase, so accents are not dropped)."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short HUD label; no dynamic parameter. Sentence case matches the English source (\"New record!\"); \"récord\" accented per standard Spanish spelling (cf. es CLÁSICO/ÁRBOLES elsewhere in rby/engine.json — the es GB font supports accented uppercase, so accents are not dropped)."
     },
     "A: done": {
       "override": "A: Terminar",

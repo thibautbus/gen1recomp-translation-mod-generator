@@ -11,7 +11,6 @@ class GameSpec:
     game: str
     generation: int
     corpus_collection: str
-    required_roms: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -35,6 +34,22 @@ class BuildRequest:
     output_dir: Path | None = None
     font_profile: str = "fusion"
 
+    def validate(self) -> None:
+        required = set(self.profile.games)
+        provided = set(self.sources)
+        missing = sorted(required - provided)
+        unexpected = sorted(provided - required)
+        if missing or unexpected:
+            details = []
+            if missing:
+                details.append("missing ROM sources: " + ", ".join(missing))
+            if unexpected:
+                details.append("unexpected ROM sources: " + ", ".join(unexpected))
+            raise ValueError("invalid build request: " + "; ".join(details))
+        generations = {GAME_SPECS[game].generation for game in self.profile.games}
+        if generations != {self.profile.generation}:
+            raise ValueError(f"release profile {self.profile.id!r} mixes game generations")
+
     def source_for(self, game: str) -> Path:
         try:
             return self.sources[game]
@@ -43,10 +58,10 @@ class BuildRequest:
 
 
 GAME_SPECS: Mapping[str, GameSpec] = {
-    "red": GameSpec("red", 1, "RedBlue", ("red",)),
-    "blue": GameSpec("blue", 1, "RedBlue", ("blue",)),
-    "yellow": GameSpec("yellow", 1, "Yellow", ("yellow",)),
-    "gold": GameSpec("gold", 2, "GoldSilver", ("gold",)),
+    "red": GameSpec("red", 1, "RedBlue"),
+    "blue": GameSpec("blue", 1, "RedBlue"),
+    "yellow": GameSpec("yellow", 1, "Yellow"),
+    "gold": GameSpec("gold", 2, "GoldSilver"),
 }
 
 RELEASE_PROFILES: Mapping[str, ReleaseProfile] = {

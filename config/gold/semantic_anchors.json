@@ -1,0 +1,145 @@
+{
+  "schema": "gen1recomp-translation-mods/semantic-anchors",
+  "version": 1,
+  "description": "Gold engine strings whose intended corpus row is known but cannot be selected by generic matching.",
+  "anchors": {
+    "%s\nused %s!": {
+      "parts": [
+        {"printf": 0},
+        {"qid": "gs.common_2.UsedMove1Text", "extraction": {"kind": "full", "preserve_edges": true}},
+        {"printf": 1}
+      ],
+      "separators": ["", ""],
+      "placeholders": {}
+    },
+    "%s DST,\nis that OK?": {
+      "parts": [
+        {"printf": 0},
+        {"qid": "gs.common_3.DSTIsThatOKText", "extraction": {"kind": "full", "preserve_edges": true}}
+      ],
+      "separators": [""],
+      "placeholders": {}
+    },
+    "%s!\nI overslept!": {
+      "parts": [
+        {"printf": 0},
+        {"qid": "gs.common_1.OakTimeOversleptText", "extraction": {"kind": "full"}}
+      ],
+      "separators": [""],
+      "placeholders": {}
+    },
+    "%s!\nIt's so dark!": {
+      "source_aliases": ["%s!\nNo wonder it's so\u000bdark!"],
+      "parts": [
+        {"printf": 0},
+        {"qid": "gs.common_1.OakTimeSoDarkText", "extraction": {"kind": "full"}}
+      ],
+      "separators": [""],
+      "placeholders": {}
+    },
+    "%s!\nYikes! I over-\nslept!": {
+      "source_aliases": ["%s!\nYikes! I over-\u000bslept!"],
+      "parts": [
+        {"printf": 0},
+        {"qid": "gs.common_1.OakTimeYikesText", "extraction": {"kind": "full"}}
+      ],
+      "separators": [""],
+      "placeholders": {}
+    },
+    "%s,\nis that OK?": {
+      "parts": [
+        {"printf": 0},
+        {"qid": "gs.common_3.TimeAskOkayText", "extraction": {"kind": "full", "preserve_edges": true}}
+      ],
+      "separators": [""],
+      "placeholders": {}
+    },
+    "%s, is that right?": {
+      "source_aliases": ["%s, is it?"],
+      "parts": [
+        {"printf": 0},
+        {"qid": "gs.common_1.OakTimeIsItText", "extraction": {"kind": "full", "preserve_edges": true}}
+      ],
+      "separators": [""],
+      "placeholders": {}
+    },
+    "A #MON may be\nable to move this.": {"qid": "gs.common_2.BouldersMayMoveText", "extraction": {"kind": "full"}},
+    "All right. This\n#MON is now\nnamed {STRBUF}.": {"qid": "gs.common_1.NameRaterNamedText", "extraction": {"kind": "full"}},
+    "CANCEL": {"qid": "gs.names.DecorationNames.1", "extraction": {"kind": "full"}},
+    "Can't use that\nhere.": {"qid": "gs.common_1.CantUseItemText", "extraction": {"kind": "full"}},
+    "Congratulations!": {"qid": "gs.diploma.PlaceDiplomaOnScreen.Certification", "extraction": {"kind": "segment", "index": 4, "targets": {"de": {"kind": "segment", "index": 3}}}},
+    "EXIT": {"qid": "gs.decorations.PlayerDecorationMenu.exit", "extraction": {"kind": "full"}},
+    "For {STRBUF}'s\n{STRBUF},": {"qid": "gs.common_1.ForYourMonSendsText", "extraction": {"kind": "full"}},
+    "Give a nickname to\n%s?": {"qid": "gs.common_3.AskGiveNicknameText", "extraction": {"kind": "full"}},
+    "Give a nickname to\nthe {STRBUF} you\nreceived?": {"qid": "gs.common_2.CaughtAskNicknameText", "extraction": {"kind": "full"}},
+    "Hi, how's my old\n{STRBUF} doing?": {"qid": "gs.common_1.NPCTradeAfterText1", "extraction": {"kind": "full"}},
+    "Huh? That's not\n{STRBUF}. What a letdown…": {"qid": "gs.common_1.NPCTradeWrongText1", "extraction": {"kind": "full"}},
+    "I collect #MON.\nDo you have\u000b{STRBUF}?\u000cWant to trade it\nfor my {STRBUF}?": {"qid": "gs.common_1.NPCTradeIntroText1", "extraction": {"kind": "full"}},
+    "It appears to care\nfor {STRBUF}.": {"qid": "gs.common_2.BreedAppearsToCareForText", "extraction": {"kind": "full"}},
+    "It has no interest\nin {STRBUF}.": {"qid": "gs.common_2.BreedNoInterestText", "extraction": {"kind": "full"}},
+    "It shows interest\nin {STRBUF}.": {"qid": "gs.common_2.BreedShowsInterestText", "extraction": {"kind": "full"}},
+    "It's friendly with\n{STRBUF}.": {"qid": "gs.common_2.BreedFriendlyText", "extraction": {"kind": "full"}},
+    "It's {STRBUF}\nthat was left with\nthe DAY-CARE LADY.": {"qid": "gs.common_2.LeftWithDayCareLadyText", "extraction": {"kind": "full"}},
+    "It's {STRBUF}\nthat was left with\nthe DAY-CARE MAN.": {"qid": "gs.common_2.LeftWithDayCareManText", "extraction": {"kind": "full"}},
+    "MOVE": {"qid": "gs.stats_screen.LoadGreenPage.Move", "extraction": {"kind": "full"}},
+    "OK, I'll take care\nof your money.\u000c…": {"qid": "gs.common_1.MomLeavingText2", "extraction": {"kind": "full"}, "source_aliases": ["OK, I'll take care\nof your money.\u000c………………"]},
+    "Oh, make it forget\n{STRBUF}?": {"qid": "gs.common_3.AskDeleteMoveText", "extraction": {"kind": "full"}},
+    "Please remove the\nMAIL.": {"qid": "gs.common_2.PCMonHoldingMailText", "extraction": {"kind": "parts", "parts": [2, 3], "separators": ["\n"], "targets": {"de": {"kind": "parts", "parts": [3, 4], "separators": ["\n"]}, "ja-Hrkt": {"kind": "segment", "index": 2}, "ko": {"kind": "segment", "index": 2}}}},
+    "Take good care of\n{STRBUF}.": {"qid": "gs.common_1.TakeGoodCareOfMonText", "extraction": {"kind": "full"}},
+    "The score was\n%d points!": {"qid": "gs.common_2.ContestJudging_SecondPlaceScoreText", "extraction": {"kind": "full"}},
+    "There is a POKéMON\nholding MAIL.": {"qid": "gs.common_2.PCMonHoldingMailText", "extraction": {"kind": "parts", "parts": [0, 1], "separators": ["\n"], "targets": {"de": {"kind": "parts", "parts": [0, 1, 2], "separators": ["\n", "\n"]}}}},
+    "This Bug-Catching\nContest winner is\u000c%s,\nwho caught a\n%s!": {
+      "qid": "gs.common_2.ContestJudging_FirstPlaceText",
+      "extraction": {"kind": "full"},
+      "source_aliases": ["This Bug-Catching\nContest winner is…\u000c{RAM:wBugContestWinnerName},\nwho caught a\u000b{RAM:wStringBuffer1}!"]
+    },
+    "This certifies": {"qid": "gs.diploma.PlaceDiplomaOnScreen.Certification", "extraction": {"kind": "segment", "index": 0}},
+    "What?\n%s?": {
+      "parts": [
+        {"qid": "gs.common_1.OakTimeWhatHoursText", "extraction": {"kind": "full"}},
+        {"printf": 0},
+        {"qid": "gs.common_1.OakTimeHoursQuestionMarkText", "extraction": {"kind": "full"}}
+      ],
+      "separators": ["\n", ""],
+      "placeholders": {}
+    },
+    "What do you want\nto do?": {"qid": "gs.common_1.MomBankWhatDoYouWantToDoText", "extraction": {"kind": "full"}},
+    "Whoa!\n%d min.?": {
+      "parts": [
+        {"qid": "gs.common_1.OakTimeWhoaMinutesText", "extraction": {"kind": "full"}},
+        {"printf": 0}
+      ],
+      "separators": ["\n"],
+      "placeholders": {}
+    },
+    "Zzz... Hm? Wha...?\nYou woke me up!\u000cWill you check the\nclock for me?": {
+      "qid": "gs.common_1.OakTimeWokeUpText",
+      "extraction": {"kind": "parts", "parts": [2, 3, 4, 5], "separators": ["\n", "\u000c", "\n"], "targets": {"ja-Hrkt": {"kind": "parts", "parts": [2, 3, 4], "separators": ["\n", "\u000b"]}, "ko": {"kind": "parts", "parts": [2, 3, 4], "separators": ["\n", "\u000b"]}}},
+      "source_aliases": ["Zzz… Hm? Wha…?\nYou woke me up!\u000cWill you check the\nclock for me?"]
+    },
+    "completed the": {"qid": "gs.diploma.PlaceDiplomaOnScreen.Certification", "extraction": {"kind": "segment", "index": 2, "targets": {"de": {"kind": "span", "index": 0, "count": 1}}}},
+    "new #DEX.": {"qid": "gs.diploma.PlaceDiplomaOnScreen.Certification", "extraction": {"kind": "segment", "index": 3, "targets": {"de": {"kind": "span", "index": 1, "count": 1}}}},
+    "that you have": {"qid": "gs.diploma.PlaceDiplomaOnScreen.Certification", "extraction": {"kind": "segment", "index": 1}},
+    "Yay! I got myself\n{STRBUF}!\u000bThanks!": {"qid": "gs.common_1.NPCTradeCompleteText1", "extraction": {"kind": "full"}},
+    "{PLAYER} found\n{STRBUF}!": {"qid": "gs.common_2.FoundItemText", "extraction": {"kind": "full"}},
+    "{PLAYER} found\n{STRBUF}.": {"qid": "gs.common_1.PlayerFoundItemText", "extraction": {"kind": "full"}},
+    "{PLAYER} got off\nthe {STRBUF}.": {"qid": "gs.common_2.GotOffBikeText", "extraction": {"kind": "full"}},
+    "{PLAYER} got on the\n{STRBUF}.": {"qid": "gs.common_2.GotOnBikeText", "extraction": {"kind": "full"}},
+    "{PLAYER} put the\n%s in\nthe %s.": {"qid": "gs.common_2.PutItemInPocketText", "extraction": {"kind": "full"}},
+    "{PLAYER} received\n%s.": {"qid": "gs.common_2.ReceivedItemText", "extraction": {"kind": "full"}},
+    "{PLAYER} traded\n{STRBUF} for\u000b{STRBUF}.": {"qid": "gs.common_1.Text_NPCTraded", "extraction": {"kind": "full"}},
+    "%s\nfainted!": {"qid": "gs.battle.BattleText_MonFainted", "extraction": {"kind": "full"}},
+    "{STRBUF} bids\nfarewell to": {"qid": "gs.common_1.BidsFarewellToMonText", "extraction": {"kind": "full"}},
+    "{STRBUF} can\nmove boulders.": {"qid": "gs.common_2.MoveBoulderText", "extraction": {"kind": "full"}},
+    "{STRBUF} did a\nHEADBUTT!": {"qid": "gs.common_2.UseHeadbuttText", "extraction": {"kind": "full"}},
+    "{STRBUF} sends\n{STRBUF}.": {"qid": "gs.common_1.OTSendsText", "extraction": {"kind": "full"}},
+    "{STRBUF} used\nCUT!": {"qid": "gs.common_1.UseCutText", "extraction": {"kind": "full"}},
+    "{STRBUF} used\nDIG!": {"qid": "gs.common_2.UseDigText", "extraction": {"kind": "full"}},
+    "{STRBUF} used\nSTRENGTH!": {"qid": "gs.common_2.UseStrengthText", "extraction": {"kind": "full"}},
+    "{STRBUF} used\nSURF!": {"qid": "gs.common_1.UsedSurfText", "extraction": {"kind": "full"}},
+    "{STRBUF} used\nSWEET SCENT!": {"qid": "gs.common_2.UseSweetScentText", "extraction": {"kind": "full"}},
+    "{STRBUF} used\nWATERFALL!": {"qid": "gs.common_2.UseWaterfallText", "extraction": {"kind": "full"}},
+    "{STRBUF} used\nWHIRLPOOL!": {"qid": "gs.common_2.UseWhirlpoolText", "extraction": {"kind": "full"}},
+    "{STRBUF} was\nsent to {STRBUF}.": {"qid": "gs.common_1.MonWasSentToText", "extraction": {"kind": "full"}}
+  }
+}

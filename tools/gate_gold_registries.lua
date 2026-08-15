@@ -6,7 +6,9 @@
 -- .classes -- verified against src/mods/Schemas.lua's R.trainers comment
 -- and the real merged data below, since a mod author-facing call shape
 -- staying the same (mod.content.trainers:patch("BEAUTY", ...)) does not
--- guarantee the READ side does too.
+-- guarantee the READ side does too.  The same gate also invokes the public
+-- Oak-speech hook, since those ROM-derived strings are consumed by the
+-- speech object rather than by a content registry.
 --
 -- Usage: luajit gate_gold_registries.lua <gen1recomp_root> <mod_dir>
 
@@ -49,8 +51,8 @@ if expectationPath and expectationPath ~= "" then
     os.exit(2)
   end
   local required = {
-    "species_names", "species_kinds", "species_dex_text", "move_names",
-    "item_names", "trainer_class_names", "landmarks",
+    "strings", "species_names", "species_kinds", "species_dex_text", "move_names",
+    "item_names", "trainer_class_names", "landmarks", "oak_speech",
   }
   for _, name in ipairs(required) do
     local value = expectations[name]
@@ -97,6 +99,7 @@ check(mod ~= nil and mod.state == "loaded", "the mod reaches state=loaded")
 local data = result.data
 if expectations then
   local targets = {
+    strings = function(id) return data.strings and { value = data.strings[id] } end,
     species_names = function(id) return data.pokemon and data.pokemon[id] end,
     species_kinds = function(id) return data.pokemon and data.pokemon[id] and data.pokemon[id].dexEntry end,
     species_dex_text = function(id) return data.pokemon and data.pokemon[id] and data.pokemon[id].dexEntry end,
@@ -106,6 +109,7 @@ if expectations then
     landmarks = function(id) return data.gen2Landmarks and data.gen2Landmarks.landmarks and data.gen2Landmarks.landmarks[id] end,
   }
   local fields = {
+    strings = "value",
     species_names = "name", species_kinds = "kind", species_dex_text = "text",
     move_names = "name", item_names = "name", trainer_class_names = "name", landmarks = "name",
   }
@@ -114,7 +118,16 @@ if expectations then
     local field = fields[name]
     check(type(expected) == "table" and type(expected.id) == "string" and type(expected.value) == "string",
       name .. " gate expectation has a valid shape")
-    if target and field and type(expected) == "table" then
+    if name == "oak_speech" and type(expected) == "table" then
+      local Runtime = require("src.mods.Runtime")
+      local speech = { texts = {} }
+      local steps = {}
+      local returned = Runtime.call("intro.oak_speech.build",
+        function(value) return value end, steps, speech)
+      eq(returned, steps, "intro.oak_speech.build preserves the step list")
+      eq(speech.texts[expected.id], expected.value,
+        "oak_speech[" .. expected.id .. "] is selected by the Gold consumer")
+    elseif target and field and type(expected) == "table" then
       local record = target(expected.id)
       eq(record and record[field], expected.value, name .. "[" .. expected.id .. "]." .. field .. " is selected")
     else

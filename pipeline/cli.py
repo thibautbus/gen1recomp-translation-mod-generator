@@ -27,8 +27,26 @@ def main(argv=None) -> int:
     cat = sub.add_parser("catalog"); cat.add_argument("--red", required=True); cat.add_argument("--blue", required=True); cat.add_argument("--yellow"); cat.add_argument("-o", "--output", required=True)
     imp = sub.add_parser("import"); imp.add_argument("version", choices=("red", "blue", "yellow")); imp.add_argument("rom"); imp.add_argument("--gen1recomp", required=True); imp.add_argument("--out", required=True); imp.add_argument("--assets", required=True)
     all_imp = sub.add_parser("import-all"); all_imp.add_argument("--red", required=True); all_imp.add_argument("--blue", required=True); all_imp.add_argument("--yellow"); all_imp.add_argument("--gen1recomp", required=True); all_imp.add_argument("--cache-root", required=True)
-    imp_gold = sub.add_parser("import-gold", help="developer-only: extract Gold's text catalog under LuaJIT, no LOVE"); imp_gold.add_argument("rom"); imp_gold.add_argument("--gen1recomp", required=True); imp_gold.add_argument("--out", required=True)
-    build_gold = sub.add_parser("build-gold", help="developer-only: join tools/gold_extract.lua's output against the corpus and write a loadable Gold mod"); build_gold.add_argument("--gold-out", required=True, help="directory containing gold_text.tsv/gold_labels.tsv/gold_maps.tsv"); build_gold.add_argument("--corpus", required=True, help="GoldSilver corpus directory"); build_gold.add_argument("-o", "--output", required=True); build_gold.add_argument("--target-lang", default="fr"); build_gold.add_argument("--mod-id"); build_gold.add_argument("--font-source"); build_gold.add_argument("--font-profile", choices=("fusion", "pokemon"), default="fusion")
+    imp_gold = sub.add_parser(
+        "import-gold", help="developer-only: extract Gold catalogs under LuaJIT, no LÖVE",
+    )
+    imp_gold.add_argument("rom")
+    imp_gold.add_argument("--gen1recomp", required=True)
+    imp_gold.add_argument("--out", required=True)
+    build_gold = sub.add_parser(
+        "build-gold",
+        help="developer-only: join Gold extractor output and write a loadable mod",
+    )
+    build_gold.add_argument(
+        "--gold-out", required=True, help="directory containing the Gold extractor TSV catalogs",
+    )
+    build_gold.add_argument("--corpus", required=True, help="GoldSilver corpus directory")
+    build_gold.add_argument("-o", "--output", required=True)
+    build_gold.add_argument("--target-lang", default="fr")
+    build_gold.add_argument("--mod-id")
+    build_gold.add_argument("--font-source")
+    build_gold.add_argument("--gen1recomp", help="pinned checkout used to generate engine-string coverage")
+    build_gold.add_argument("--font-profile", choices=("fusion", "pokemon"), default="fusion")
     sub.add_parser("audit-disassemblies", help="developer-only private localized disassembly audit")
     backlog = sub.add_parser("engine-backlog", help="developer-only private unresolved engine-string backlog")
     backlog.add_argument("--language", "--target-lang", dest="language", default=None)
@@ -64,8 +82,10 @@ def main(argv=None) -> int:
         mod_dir, entries, stats = build_gold_dialogue_mod(
             args.gold_out, args.corpus, args.output, mod_id=args.mod_id, language=args.target_lang,
             font_source=args.font_source, font_profile=args.font_profile,
+            engine_source=args.gen1recomp,
         )
-        print(json.dumps({"mod": str(mod_dir), "stats": stats}, ensure_ascii=False, indent=2))
+        public_stats = {key: value for key, value in stats.items() if not key.startswith("_")}
+        print(json.dumps({"mod": str(mod_dir), "stats": public_stats}, ensure_ascii=False, indent=2))
         return 0
     if args.command == "audit-disassemblies":
         run_audit()
@@ -165,7 +185,7 @@ def main(argv=None) -> int:
             if warning:
                 print(f"Warning: {warning}", file=sys.stderr)
             generate_mod(items, output, args.mod_id or f"translation-{target_lang.lower()}", language=target_lang, modkit_worksheet=args.modkit_worksheet, report_path=args.report,
-                         engine_catalog=args.engine_catalog, engine_overrides=args.engine_overrides or f"overrides/{target_lang}/shared_engine_overrides.json",
+                         engine_catalog=args.engine_catalog, engine_overrides=args.engine_overrides or f"overrides/{target_lang}/rby/engine.json",
                          semantic_anchors=args.semantic_anchors,
                          semantic_anchor_decisions=args.semantic_anchor_decisions,
                          engine_source=args.engine_source, engine_scope=args.engine_scope,

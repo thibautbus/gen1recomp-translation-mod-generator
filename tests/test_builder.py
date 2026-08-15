@@ -15,7 +15,7 @@ from pipeline import project
 from pipeline.project import project_version
 from pipeline.rom_paths import load_rom_paths
 from pipeline.gui import available_font_profiles, coverage_lines, font_profile_label, language_code, validate_inputs
-from pipeline.specs import release_profile
+from pipeline.specs import BuildRequest, ReleaseProfile, release_profile
 
 
 class BuilderTests(unittest.TestCase):
@@ -83,7 +83,31 @@ class BuilderTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             report = Path(directory) / "coverage.json"
             report.write_text(json.dumps({"rom": {"translated": 2, "total": 4, "percent": 50}, "engine": {"translated": 1, "total": 2, "percent": 50}, "engine_rby": {"translated": 3, "total": 4, "percent": 75}}), encoding="utf-8")
-            self.assertEqual(coverage_lines(report), ["ROM catalog: 2/4 (50.00%)", "All engine strings: 1/2 (50.00%)", "RBY-related engine strings: 3/4 (75.00%)"])
+            self.assertEqual(coverage_lines(report), ["ROM aggregate: 2/4 (50.00%)", "All engine strings: 1/2 (50.00%)", "RBY-related engine strings: 3/4 (75.00%)"])
+
+            report.write_text(json.dumps({
+                "rom": {"translated": 2, "total": 4, "percent": 50},
+                "yellow": {"coverage": {"rom": {
+                    "translated": 5, "total": 6, "percent": 83.33,
+                }}},
+            }), encoding="utf-8")
+            self.assertIn(
+                "Yellow ROM aggregate: 5/6 (83.33%)",
+                coverage_lines(report),
+            )
+
+            report.write_text(json.dumps({
+                "rom": {"translated": 8, "total": 9, "percent": 88.89},
+                "rom_dialogue": {"translated": 1, "total": 2, "percent": 50},
+                "rom_catalogs": {"translated": 7, "total": 7, "percent": 100},
+                "engine": {"translated": 2, "total": 4, "percent": 50},
+                "engine_gen2": {"translated": 1, "total": 2, "percent": 50},
+            }), encoding="utf-8")
+            self.assertEqual(coverage_lines(report), [
+                "ROM aggregate: 8/9 (88.89%)",
+                "All engine strings: 2/4 (50.00%)",
+                "Gold-related engine strings: 1/2 (50.00%)",
+            ])
 
     def test_gui_validation_requires_output_only(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -124,6 +148,25 @@ class BuilderTests(unittest.TestCase):
     def test_release_collections_are_derived_from_game_specs(self):
         self.assertEqual(release_profile("rby").corpus_collections, ("RedBlue", "Yellow"))
         self.assertEqual(release_profile("gold").corpus_collections, ("GoldSilver",))
+
+    def test_build_request_requires_exact_profile_sources(self):
+        rby = release_profile("rby")
+        with self.assertRaisesRegex(ValueError, "missing ROM sources: yellow"):
+            BuildRequest({"red": Path("red.gb"), "blue": Path("blue.gb")}, rby, "fr").validate()
+        with self.assertRaisesRegex(ValueError, "unexpected ROM sources: gold"):
+            BuildRequest(
+                {
+                    "red": Path("red.gb"), "blue": Path("blue.gb"),
+                    "yellow": Path("yellow.gb"), "gold": Path("gold.gbc"),
+                },
+                rby,
+                "fr",
+            ).validate()
+
+    def test_build_request_rejects_a_profile_generation_mismatch(self):
+        profile = ReleaseProfile("invalid", 2, ("red",))
+        with self.assertRaisesRegex(ValueError, "mixes game generations"):
+            BuildRequest({"red": Path("red.gb")}, profile, "fr").validate()
 
     def test_korean_uses_fusion_and_rejects_pokemon_font(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -431,11 +474,11 @@ class BuilderTests(unittest.TestCase):
     def test_corpus_and_engine_override_defaults_use_language_subdirectories(self):
         self.assertEqual(
             builder._corpus_overrides_path("fr"),
-            builder.ROOT / "overrides" / "fr" / "corpus_overrides.json",
+            builder.ROOT / "overrides" / "fr" / "rby" / "corpus.json",
         )
         self.assertEqual(
             builder._engine_overrides_path("es"),
-            builder.ROOT / "overrides" / "es" / "shared_engine_overrides.json",
+            builder.ROOT / "overrides" / "es" / "rby" / "engine.json",
         )
         self.assertTrue(builder._corpus_overrides_path("fr").is_file())
         self.assertTrue(builder._engine_overrides_path("it").is_file())
@@ -829,7 +872,7 @@ class BuilderTests(unittest.TestCase):
             output = io.StringIO()
             with redirect_stdout(output):
                 builder.print_coverage(report)
-        self.assertIn("ROM catalog: 3/4 (75.00%)", output.getvalue())
+        self.assertIn("ROM aggregate: 3/4 (75.00%)", output.getvalue())
         self.assertIn("All engine strings: 1/2 (50.00%)", output.getvalue())
 
     def test_prerequisite_message_is_actionable(self):

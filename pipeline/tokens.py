@@ -88,6 +88,28 @@ _CORPUS_EXPANSIONS = {
     "<BSP>": " ",
     "<WBR>": " ",
     "<LF>": "\n",
+    # Japanese Gold uses single-byte abbreviations for common words and
+    # particles. These expansions mirror pret/pokecrystal's charmap.asm;
+    # the full-width spaces are part of the original abbreviations.
+    "<NI>": "に　",
+    "<TTE>": "って",
+    "<WO>": "を　",
+    "<TA!>": "た！",
+    "<KOUGEKI>": "こうげき",
+    "<WA>": "は　",
+    "<NO>": "の　",
+    "<ROUTE>": "ばん　どうろ",
+    "<WATASHI>": "わたし",
+    "<KOKO_WA>": "ここは",
+    "<GA>": "が　",
+    # poke-corpus also names two precomposed Japanese glyphs in lowercase.
+    "<zu>": "ず",
+    "<do>": "ど",
+    # Gold text controls that do not draw a glyph. _CONT has the same
+    # layout effect as CONT; SCROLL and DEXEND only control the text box.
+    "<_CONT>": "\v",
+    "<SCROLL>": "",
+    "<DEXEND>": "",
     # <PO>/<KE> are deliberately NOT mapped, matching this table's existing
     # RBY precedent for <PK>/<MN>: verified (corpus has "<PO><KE>@" next to
     # the naming-screen alphabet row, exactly like RBY's "<PK><MN>@") to be
@@ -129,18 +151,18 @@ def corpus_to_engine(text: str) -> str:
 
     `strings`-registry (engine string) content is different:
     pipeline/engine.py:match_engine_catalog also calls this for its
-    automated matches, but a `shared_engine_overrides.json`/
-    `yellow_engine_overrides.json` entry is used VERBATIM
+    automated matches, but an `rby/engine.json` or
+    `rby/yellow_engine.json` entry is used VERBATIM
     (pipeline/engine.py:~1221, `out[source] = value` with no
     corpus_to_engine call) and short-circuits before automated matching
     ever runs. That is how RBY's own preexisting unmapped tokens (<PK>,
     <MN>: 34 of RedBlue-union-Yellow's tokens have no entry here) ship
     today -- e.g. "WITHDRAW <PK><MN>" is a literal engine Strings() source
-    key (overrides/fr/shared_engine_overrides.json), hand-translated to
+    key (overrides/fr/rby/engine.json), hand-translated to
     "RETIRER POKéMON" without ever going through this table.
 
     Consequence for Gold's tokens: a token used only in `strings`-registry
-    content can ship via a hand-authored gold_engine_overrides.json entry
+    content can ship via a hand-authored gold/engine.json entry
     without touching _CORPUS_EXPANSIONS.
     A token used in `text`-registry (pointer) content has no such bypass
     and must be mapped here (or in DYNAMIC_TOKEN_RE).

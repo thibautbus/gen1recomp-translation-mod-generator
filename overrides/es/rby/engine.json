@@ -2,51 +2,66 @@
   "schema": "gen1recomp-translation-mods/engine-overrides",
   "version": 1,
   "entries": {
-    "OG RED": {"override": "OG ROT", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "OG BLUE": {"override": "OG BLAU", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "OG YELLOW": {"override": "OG GELB", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "OG RED": {"override": "OG ROJO", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "OG BLUE": {"override": "OG AZUL", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "OG YELLOW": {"override": "OG AMARILLO", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "SGB": {"override": "SGB", "reason": "engine-contract-gap", "provenance": "Acronym retained; raw PaletteFX.modeLabel value, no compatible PokeCorpus qid."},
-    "ADVANCED": {"override": "FORTGESCHR.", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "ADVANCED": {"override": "AVANZADO", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "OG INV": {"override": "ORIG. INV", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "SGB INV": {"override": "SGB INV", "reason": "engine-contract-gap", "provenance": "Acronym retained; raw PaletteFX.modeLabel value, no compatible PokeCorpus qid."},
-    "CLASSIC": {"override": "KLASSISCH", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "CLASSIC": {"override": "CLÁSICO", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "GBC": {"override": "GBC", "reason": "engine-contract-gap", "provenance": "Acronym retained; raw PaletteFX.modeLabel fallback value, no compatible PokeCorpus qid."},
-    "WINDOWED": {"override": "FENSTER", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "BORDERLESS": {"override": "RANDLOS", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "TREES": {"override": "BÄUME", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "WATER": {"override": "WASSER", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "%s's\n%s\ngreatly rose!": {
-      "override": "%ss\n%s nimmt stark zu!",
-      "reason": "engine-original",
-      "provenance": "German corpus omits the greatly-stage fragment; manual engine-original wording, requires in-game visual validation."
-    },
-    "%s's\n%s\ngreatly fell!": {
-      "override": "%ss\n%s sinkt stark!",
-      "reason": "engine-original",
-      "provenance": "German corpus omits the greatly-stage fragment; manual engine-original wording, requires in-game visual validation."
-    },
+    "WINDOWED": {"override": "VENTANA", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "BORDERLESS": {"override": "SIN BORDES", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "TREES": {"override": "ÁRBOLES", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
+    "WATER": {"override": "AGUA", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "%s's\nhits will never\nmiss!": {
-      "override": "%ss\ntrifft immer!",
+      "override": "¡%s\nsiempre acierta!",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; requires in-game visual validation."
     },
+    "%s's\n%s rose!": {
+      "override": "¡%s\nsu %s subió!",
+      "reason": "editorial-correction",
+      "provenance": "editorial stat-stage wording; raw English stat label retained"
+    },
+    "%s's\n%s\ngreatly rose!": {
+      "override": "¡%s\nsu %s\nsubió mucho!",
+      "reason": "editorial-correction",
+      "provenance": "editorial stat-stage wording; raw English stat label retained"
+    },
+    "%s's\n%s fell!": {
+      "override": "¡%s\nsu %s bajó!",
+      "reason": "editorial-correction",
+      "provenance": "editorial stat-stage wording; raw English stat label retained"
+    },
+    "%s's\n%s\ngreatly fell!": {
+      "override": "¡%s\nsu %s\nbajó mucho!",
+      "reason": "editorial-correction",
+      "provenance": "editorial stat-stage wording; raw English stat label retained"
+    },
     "%s :L%d": {
-      "override": "%s :L%d",
+      "override": "%s :N%d",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     ":L%d No.%03d": {
-      "override": ":L%d Nr.%03d",
+      "override": ":N%d Nº%03d",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
+    "No.": {
+      "override": "Nº",
+      "reason": "engine-original",
+      "provenance": "Corpus-inspired engine-original localization; DexEntryMenu.lua:97 Pokédex-number label; rb.bills_pc.BoxNoPCText and rb.save.BoxNoText use Nº in Spanish; no standalone compatible PokeCorpus qid; requires in-game visual validation."
+    },
     "Empty.": {
-      "override": "Leer.",
+      "override": "Vacía.",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "No good! It's not\neven near water.": {
-      "override": "Schade! Nicht mal\nin Wassernähe.",
+      "override": "¡Qué mal! No estás\nni cerca del agua.",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
@@ -56,7 +71,7 @@
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "PRINT BOX": {
-      "override": "BOX DRUCKEN",
+      "override": "IMPRIMIR CAJA",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
@@ -66,62 +81,62 @@
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "BOX %d (WITHDRAW)": {
-      "override": "BOX %d (MITNEHMEN)",
+      "override": "CAJA %d (SACAR)",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "BOX %d (RELEASE)": {
-      "override": "BOX %d (FREILASSEN)",
+      "override": "CAJA %d (SOLTAR)",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "Data unknown.": {
-      "override": "Daten unbekannt.",
+      "override": "Datos desconocidos.",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "The boulder fell\nthrough the hole!": {
-      "override": "Der Felsen fiel\ndurch das Loch!",
+      "override": "¡La roca cayó\npor el agujero!",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
     "%s lined up!\nScored %d coins!": {
-      "override": "%s passt!\n%d Münzen gewonnen!",
+      "override": "¡%s se alineó!\n¡Ganó %d fichas!",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation; concrete engine contract limitation is missing slot-machine context around the reordered arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
     "%s was\ntransferred to\n%s!": {
-      "override": "%s wurde\nzu %s\nübertragen!",
+      "override": "¡%s fue\ntransferido a\n%s!",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation; concrete engine contract limitation is context-specific transfer arguments with a fragmentary source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
     "%s's\nhurt by poison!": {
-      "override": "%s\nwurde durch Gift verletzt!",
+      "override": "¡%s\nsufre por el veneno!",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary status-effect source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
     "%s's\nhurt by the burn!": {
-      "override": "%s\nwurde durch den Brand verletzt!",
+      "override": "¡%s\nsufre por la quemadura!",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary status-effect source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
     "%s's %s\nrose!": {
-      "override": "%s lässt %s\nsteigen!",
+      "override": "¡%s hizo que %s\nsubiera!",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation; concrete engine contract limitation is reordered stat arguments at shared callsites; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
     "Once released,\n%s is\ngone forever. OK?": {
-      "override": "Einmal freigelassen,\nist %s\nfür immer weg. OK?",
+      "override": "Una vez liberado,\n%s se\nirá para siempre. ¿OK?",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation; concrete engine contract limitation is reordered release-confirmation context around one argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
     "PLAYER %s\nBADGES    %d\nPOKéDEX %3d\nTIME %6d:%02d": {
-      "override": "SPIELER %s\nORDEN      %d\nPOKéDEX %3d\nZEIT %6d:%02d",
+      "override": "JUGAD. %s\nMEDALLAS   %d\nPOKéDEX %3d\nTIEMPO %6d:%02d",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation; concrete engine contract limitation is a technical status fragment with reordered display arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
     "BADGES": {
-      "override": "ORDEN",
+      "override": "MEDALLAS",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary standalone status label; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
@@ -131,12 +146,12 @@
       "provenance": "AI-generated translation retained as a technical height format; concrete engine contract limitation is missing unit context around numeric arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
     "This POKéMON\ncan't be caught!": {
-      "override": "Dieses POKéMON\nkann nicht gefangen werden!",
+      "override": "¡Este POKéMON\nno se puede atrapar!",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary capture-result source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
     "Use on which one?": {
-      "override": "Auf wen anwenden?",
+      "override": "¿Usar con cuál?",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation; concrete engine contract limitation is a missing target-selection argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
@@ -146,92 +161,92 @@
       "provenance": "AI-generated translation retained as a technical weight format; concrete engine contract limitation is a missing unit-context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
     "evolving!": {
-      "override": "entwickelt sich!",
+      "override": "¡evolucionando!",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary evolution source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
     "%sBOX %2d": {
-      "override": "%sBOX %2d",
+      "override": "%sCAJA %2d",
       "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation retained as the technical BOX label; concrete engine contract limitation is reordered box-name and numeric arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+      "provenance": "AI-generated translation; concrete engine contract limitation is reordered box-name and numeric arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
     "%s\nfainted!": {
-      "override": "%s\nwurde besiegt!",
+      "override": "%s\nse debilitó!",
       "reason": "engine-contract-gap",
-      "provenance": "AI-generated neutral translation (de); shared incompatible contexts are rb.text_2.EnemyMonFaintedText, rb.text_2.PlayerMonFaintedText, and rb.text_4.PokemonFaintedText; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+      "provenance": "AI-generated neutral translation (es); shared incompatible contexts are rb.text_2.EnemyMonFaintedText, rb.text_2.PlayerMonFaintedText, and rb.text_4.PokemonFaintedText; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
     },
     "%s found\n%s!": {
-      "override": "%s findet\n%s!",
+      "override": "%s encontró\n%s!",
       "reason": "engine-contract-gap",
-      "provenance": "AI-generated neutral translation (de); shared incompatible contexts are rb.text_1.FoundItemText and rb.text_2.FoundHiddenItemText across item and hidden-item callsites; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+      "provenance": "AI-generated neutral translation (es); shared incompatible contexts are rb.text_1.FoundItemText and rb.text_2.FoundHiddenItemText across item and hidden-item callsites; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
     },
     "%s's HP\nwas restored!": {
-      "override": "Die KP von %s\nwurden aufgefüllt!",
+      "override": "Los PS de %s\nse restauraron!",
       "reason": "engine-contract-gap",
-      "provenance": "AI-generated neutral translation (de); shared incompatible contexts are src/inventory/ItemEffects.lua and src/ui/PartyMenu.lua item-healing callsites with different target presentation; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+      "provenance": "AI-generated neutral translation (es); shared incompatible contexts are src/inventory/ItemEffects.lua and src/ui/PartyMenu.lua item-healing callsites with different target presentation; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
     },
     "It won't have\nany effect.": {
-      "override": "Das wird\nkeinen Effekt haben.",
+      "override": "No surtirá ningún\nefecto.",
       "reason": "engine-contract-gap",
-      "provenance": "AI-generated neutral translation (de); shared incompatible contexts are rb.text_6.VitaminNoEffectText, rb.text_6.ItemUseNoEffectText, src/inventory/ItemEffects.lua, and src/ui/PartyMenu.lua item failures; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+      "provenance": "AI-generated neutral translation (es); shared incompatible contexts are rb.text_6.VitaminNoEffectText, rb.text_6.ItemUseNoEffectText, src/inventory/ItemEffects.lua, and src/ui/PartyMenu.lua item failures; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
     },
     "POKéDEX": {
       "override": "POKéDEX",
       "reason": "engine-contract-gap",
-      "provenance": "AI-generated neutral translation (de); shared incompatible contexts are src/ui/StartMenu.lua, src/ui/PokedexMenu.lua, src/ui/TitleState.lua, and src/ui/HallOfFame.lua labels, with no single upstream qid; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+      "provenance": "AI-generated neutral translation (es); shared incompatible contexts are src/ui/StartMenu.lua, src/ui/PokedexMenu.lua, src/ui/TitleState.lua, and src/ui/HallOfFame.lua labels, with no single upstream qid; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
     },
     "FOE": {
-      "override": "GEGNER",
+      "override": "ENEMIGO",
       "reason": "engine-original",
       "provenance": "Link-battle (Colosseum) opponent-name fallback, engine-authored; user-approved per-language value."
     },
     "BOX %d is full!": {
-      "override": "BOX %d ist voll!",
+      "override": "¡CAJA %d llena!",
       "reason": "engine-original",
       "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
     },
     "No POKéMON!": {
-      "override": "KEIN POKéMON!",
+      "override": "¡NO HAY POKéMON!",
       "reason": "engine-original",
       "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
     },
     "BATTLE BG": {
-      "override": "KAMPF-HINTERGRUND",
+      "override": "FONDO COMBATE",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "BATTLE LAYOUT": {
-      "override": "KAMPF-LAYOUT",
+      "override": "DISEÑO COMBATE",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "BATTLE SIZE": {
-      "override": "KAMPF-GRÖSSE",
+      "override": "TAMAÑO COMBATE",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "COLORS": {
-      "override": "FARBEN",
+      "override": "COLORES",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "FAITHFUL RATIO": {
-      "override": "ORIGINAL-RATIO",
+      "override": "RATIO FIEL",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "GAME SPEED": {
-      "override": "SPIELTEMPO",
+      "override": "VELOCIDAD",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "GBC FX": {
-      "override": "GBC-EFFEKTE",
+      "override": "FX GBC",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "MAX FPS": {
-      "override": "MAX. FPS",
+      "override": "FPS MÁX",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
@@ -241,92 +256,92 @@
       "provenance": "User-validated 2026-08-05: kept as-is (proper noun, no translation)."
     },
     "MUSIC FILTER": {
-      "override": "MUSIK-FILTER",
+      "override": "FILTRO MÚSICA",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "MUSIC VOL": {
-      "override": "MUSIK-LAUTSTÄRKE",
+      "override": "VOL. MÚSICA",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "ON": {
-      "override": "AN",
+      "override": "SÍ",
       "reason": "engine-original",
-      "provenance": "Corrected to poke-corpus rb.main_menu.BattleAnimationOptionText value (AN/AUS); user-validated 2026-08-05."
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "OFF": {
-      "override": "AUS",
+      "override": "NO",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "ORIENTATION": {
-      "override": "AUSRICHTUNG",
+      "override": "ORIENTACIÓN",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "PERFORMANCE": {
-      "override": "LEISTUNG",
+      "override": "RENDIMIENTO",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "RESET DEFAULTS": {
-      "override": "STANDARDWERTE",
+      "override": "RESTABLECER",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "SFX VOL": {
-      "override": "SFX-LAUTSTÄRKE",
+      "override": "VOL. EFECTOS",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "TILT": {
-      "override": "NEIGUNG",
+      "override": "INCLINACIÓN",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "TOUCH PAD": {
-      "override": "TOUCHPAD",
+      "override": "PAD TÁCTIL",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "UI LAYOUT": {
-      "override": "UI-LAYOUT",
+      "override": "DISEÑO INTERFAZ",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "VIDEO MODE": {
-      "override": "VIDEOMODUS",
+      "override": "MODO VÍDEO",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "VOID FILL": {
-      "override": "FÜLLUNG",
+      "override": "RELLENO",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "FAST": {
-      "override": "3",
+      "override": "RÁP.",
       "reason": "engine-original",
       "provenance": "Derived from poke-corpus rb.main_menu.TextSpeedOptionText / BattleStyleOptionText values (per-language ROM convention); user-validated 2026-08-05."
     },
     "MEDIUM": {
-      "override": "2",
+      "override": "MED.",
       "reason": "engine-original",
       "provenance": "Derived from poke-corpus rb.main_menu.TextSpeedOptionText / BattleStyleOptionText values (per-language ROM convention); user-validated 2026-08-05."
     },
     "SLOW": {
-      "override": "1",
+      "override": "LEN.",
       "reason": "engine-original",
       "provenance": "Derived from poke-corpus rb.main_menu.TextSpeedOptionText / BattleStyleOptionText values (per-language ROM convention); user-validated 2026-08-05."
     },
     "SHIFT": {
-      "override": "WECHSEL",
+      "override": "CAMBIAR",
       "reason": "engine-original",
       "provenance": "Derived from poke-corpus rb.main_menu.TextSpeedOptionText / BattleStyleOptionText values (per-language ROM convention); user-validated 2026-08-05."
     },
     "SET": {
-      "override": "FOLGEND",
+      "override": "MANTENER",
       "reason": "engine-original",
       "provenance": "Derived from poke-corpus rb.main_menu.TextSpeedOptionText / BattleStyleOptionText values (per-language ROM convention); user-validated 2026-08-05."
     },
@@ -336,57 +351,57 @@
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "WIDE": {
-      "override": "BREIT",
+      "override": "ANCHO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "FILL": {
-      "override": "VOLL",
+      "override": "LLENO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "FIXED": {
-      "override": "FIX",
+      "override": "FIJO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "BLACK": {
-      "override": "SCHWARZ",
+      "override": "NEGRO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "WHITE": {
-      "override": "WEISS",
+      "override": "BLANCO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "WORLD": {
-      "override": "WELT",
+      "override": "MUNDO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "DYNAMIC": {
-      "override": "DYNAMISCH",
+      "override": "DINÁMICO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "CENTERED": {
-      "override": "ZENTRIERT",
+      "override": "CENTRADO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "low": {
-      "override": "NIEDRIG",
+      "override": "BAJO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "balanced": {
-      "override": "AUSGEGLICHEN",
+      "override": "EQUILIBRADO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "high": {
-      "override": "HOCH",
+      "override": "ALTO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
@@ -401,22 +416,22 @@
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "PORTRAIT": {
-      "override": "HOCHFORMAT",
+      "override": "VERTICAL",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "LANDSCAPE": {
-      "override": "QUERFORMAT",
+      "override": "HORIZONTAL",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "REVERSE LANDSCAPE": {
-      "override": "QUERFORMAT INVERS",
+      "override": "HORIZ. INVERTIDO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "Nothing here.": {
-      "override": "Nichts hier!",
+      "override": "No hay nada",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; aligned with poke-corpus rb.text_1.NothingHereText phrasing per language; empty-list message (ui/ListMenu.lua:214, direct Strings render, no data.text shadow)."
     }

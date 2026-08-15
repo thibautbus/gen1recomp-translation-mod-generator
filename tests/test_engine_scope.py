@@ -5,29 +5,56 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from pipeline.engine_scope import classify_callsites, classify_catalog, forced_dynamic_keys, load_scope, validate_catalog_universe, verified_source
+from pipeline.engine_scope import (
+    MANIFEST_PATH, SCOPE_PATH, classify_callsites, classify_catalog,
+    forced_dynamic_keys, load_manifest, load_scope, validate_catalog_universe,
+    verified_source,
+)
 from pipeline.dependencies import _tree_digest
 
 
 class EngineScopeTests(unittest.TestCase):
-    def _load_mutated(self, mutate):
-        data = load_scope(); mutate(data)
+    def _load_mutated(self, source, loader, mutate):
+        data = json.loads(source.read_text(encoding="utf-8"))
+        mutate(data)
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "mutated.json"
             path.write_text(json.dumps(data), encoding="utf-8")
-            with self.assertRaises(ValueError): load_scope(path)
+            with self.assertRaises(ValueError): loader(path)
+
+    def _load_mutated_manifest(self, mutate):
+        self._load_mutated(MANIFEST_PATH, load_manifest, mutate)
+
+    def _load_mutated_scope(self, mutate):
+        self._load_mutated(SCOPE_PATH, load_scope, mutate)
 
     def test_manifest_rejects_schema_revision_path_and_fields(self):
-        for mutate in [lambda d: d.pop("schema"), lambda d: d.update(schema="wrong"), lambda d: d.update(classifier_version=5), lambda d: d.update(gen1recomp_revision="abc"), lambda d: d.update(gen1recomp_revision="A" * 40), lambda d: d.update(gen1recomp_revision="g" * 40), lambda d: d.update(source_subdir="/tmp"), lambda d: d.update(source_subdir="../src"), lambda d: d.update(source_subdir="other"), lambda d: d.update(extra=1)]:
-            self._load_mutated(mutate)
+        for mutate in [lambda d: d.pop("schema"), lambda d: d.update(schema="wrong"), lambda d: d.update(version=2), lambda d: d.update(gen1recomp_revision="abc"), lambda d: d.update(gen1recomp_revision="A" * 40), lambda d: d.update(gen1recomp_revision="g" * 40), lambda d: d.update(source_subdir="/tmp"), lambda d: d.update(source_subdir="../src"), lambda d: d.update(source_subdir="other"), lambda d: d.update(extra=1)]:
+            self._load_mutated_manifest(mutate)
 
-    def test_manifest_rejects_list_types_duplicates_and_overlaps(self):
+    def test_scope_rejects_schema_version_and_fields(self):
+        for mutate in [lambda d: d.pop("schema"), lambda d: d.update(schema="wrong"), lambda d: d.update(classifier_version=5), lambda d: d.update(extra=1)]:
+            self._load_mutated_scope(mutate)
+
+    def test_scope_rejects_list_types_duplicates_and_overlaps(self):
         for field in ("rby_paths", "rby_ui_modules", "ui_review_modules", "link_modules", "modern_ui_modules", "rby_ui_keys", "link_ui_keys", "modern_ui_keys"):
-            self._load_mutated(lambda d, f=field: d.update({f: "bad"}))
-            self._load_mutated(lambda d, f=field: d[f].append(d[f][0]))
-        self._load_mutated(lambda d: d["rby_ui_modules"].__setitem__(0, "NoSuffix"))
-        self._load_mutated(lambda d: d["rby_ui_modules"].append(d["ui_review_modules"][0]))
-        self._load_mutated(lambda d: d["rby_ui_keys"].append(d["link_ui_keys"][0]))
+            self._load_mutated_scope(lambda d, f=field: d.update({f: "bad"}))
+            self._load_mutated_scope(lambda d, f=field: d[f].append(d[f][0]))
+        self._load_mutated_scope(lambda d: d["rby_ui_modules"].__setitem__(0, "NoSuffix"))
+        self._load_mutated_scope(lambda d: d["rby_ui_modules"].append(d["ui_review_modules"][0]))
+        self._load_mutated_scope(lambda d: d["rby_ui_keys"].append(d["link_ui_keys"][0]))
+
+    def test_manifest_rejects_invalid_dynamic_entries(self):
+        mutations = (
+            lambda d: d.update(forced_dynamic_keys=[]),
+            lambda d: d["forced_dynamic_keys"]["NAME"].update(category="modern"),
+            lambda d: d["forced_dynamic_keys"]["NAME"].update(extra=True),
+            lambda d: d.update(engine_dynamic_values=[]),
+            lambda d: d["engine_dynamic_values"]["FAST"].update(provenance="wrong"),
+            lambda d: d["engine_dynamic_values"].update(NAME=d["forced_dynamic_keys"]["NAME"]),
+        )
+        for mutate in mutations:
+            self._load_mutated_manifest(mutate)
 
     def test_scope_overrides_are_versioned_and_strict(self):
         scope = load_scope()
@@ -55,7 +82,7 @@ class EngineScopeTests(unittest.TestCase):
             lambda d: d["key_scope_overrides"].update({"x": {"category": "bogus", "eligibility": "ineligible", "reason": "dead"}}),
             lambda d: d.update(key_scope_overrides=[]),
         ):
-            self._load_mutated(mutate)
+            self._load_mutated_scope(mutate)
 
     def test_forced_dynamic_keys_are_rby_eligible_with_provenance(self):
         result = classify_catalog([], [], load_scope())

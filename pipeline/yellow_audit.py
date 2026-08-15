@@ -30,14 +30,14 @@ from .yellow import parse_text_catalog, yellow_dialogue_layer
 # Engine-authored Yellow-only strings, shared across languages.  These are
 # Strings lookups (not ROM dialogue labels) so the dialogue layer cannot carry
 # them; the HUD labels are translated manually in
-# overrides/<language>/yellow_engine_overrides.json and the refusing message
+# overrides/<language>/rby/yellow_engine.json and the refusing message
 # is covered through the _RefusingText dialogue label.
 DEFERRED_ENGINE_STRINGS = [
     {"engine_key": "%s is refusing!", "corpus_qid": "y.text_9.RefusingText", "status": "covered-by-dialogue-layer", "note": "romText fallback; _RefusingText label ships in dialogue_yellow.lua"},
-    {"engine_key": "A: done", "corpus_qid": None, "status": "manual-translation", "note": "yellow_engine_overrides.json"},
-    {"engine_key": "HI    %d", "corpus_qid": None, "status": "manual-translation", "note": "yellow_engine_overrides.json"},
-    {"engine_key": "New record!", "corpus_qid": None, "status": "manual-translation", "note": "yellow_engine_overrides.json"},
-    {"engine_key": "SCORE %d", "corpus_qid": None, "status": "manual-translation", "note": "yellow_engine_overrides.json"},
+    {"engine_key": "A: done", "corpus_qid": None, "status": "manual-translation", "note": "rby/yellow_engine.json"},
+    {"engine_key": "HI    %d", "corpus_qid": None, "status": "manual-translation", "note": "rby/yellow_engine.json"},
+    {"engine_key": "New record!", "corpus_qid": None, "status": "manual-translation", "note": "rby/yellow_engine.json"},
+    {"engine_key": "SCORE %d", "corpus_qid": None, "status": "manual-translation", "note": "rby/yellow_engine.json"},
 ]
 
 

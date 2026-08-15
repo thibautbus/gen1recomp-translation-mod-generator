@@ -1,25 +1,4 @@
-"""Join the GoldSilver corpus to Gold's index-keyed catalogs: species,
-moves, items, trainer classes, and species dex entries.
-
-This is where the 2469 corpus entries with a French distinct from their
-English live: they never join by ROM pointer at all. Their join is by
-registry index instead, a different mechanic from pipeline/gold_join.py's
-normalised-English pointer join.
-
-Unlike pipeline/gold_join.py's pointer join, every join here is a plain
-dict lookup by a numeric key (dex number, move/item index) both sides
-already agree on, or -- for dex entries only, where the corpus has no
-numeric key -- a normalised species-name match (verified against the
-real data: pipeline/gold_text.py's normalise() turns both
-"FARFETCH_D" and the qid-derived "FarfetchD" into "farfetchd").
-
-Patch call shapes are the SAME as RBY's shared-path registries --
-verified against src/mods/Schemas.lua's own comment on R.trainers:
-"the registry keeps the Gen 1 call shape -- mod.content.trainers:patch
-("BEAUTY", { baseMoney = 99 }) -- and only the one level of indirection
-to `.classes` is new" (handled internally by gen2BaseAt/gen2Write, not by
-the mod author) -- so nothing here needs a Gen-2-shaped patch table.
-"""
+"""Join GoldSilver corpus rows to Gold's index-keyed registries."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -37,9 +16,7 @@ class IndexedEntry:
 
 
 def parse_indexed_catalog(tsv: str | Path) -> list[IndexedEntry]:
-    """Parse an id\\tindex\\tname TSV (tools/gold_extract.lua's
-    gold_species.tsv/gold_moves.tsv/gold_items.tsv/gold_trainer_classes.tsv).
-    """
+    """Parse an id\\tindex\\tname catalog emitted by the Gold extractor."""
     entries = []
     for line in split_lines(Path(tsv).read_text(encoding="utf-8")):
         if not line:
@@ -57,17 +34,7 @@ def parse_indexed_catalog(tsv: str | Path) -> list[IndexedEntry]:
 def join_by_index(
     entries: list[IndexedEntry], corpus_rows: list[tuple[str, str, str]], qid_prefix: str,
 ) -> tuple[dict[str, str], dict]:
-    """{id: translation} for every entry whose index has a non-empty
-    corpus translation at that qid.
-
-    ``qid_prefix`` (e.g. "gs.names.PokemonNames.") is required, not
-    inferred: many unrelated registries share the same bare numeric
-    suffix (PokemonNames.29, TrainerClassNames.29, DecorationNames.29...
-    are all real, different qids), so building one index without first
-    filtering by qid produces silently wrong matches -- caught while
-    building this join, when TrainerClassNames.29 ("BEAUTY" -> "CANON")
-    was overwritten by a same-numbered row from a different category.
-    """
+    """Join entries by numeric suffix within one exact qid prefix."""
     by_index: dict[int, tuple[str, str]] = {}
     for qid, en, fr in corpus_rows:
         if not qid.startswith(qid_prefix):
@@ -77,11 +44,6 @@ def join_by_index(
             continue
         index = int(suffix)
         if index in by_index and by_index[index] != (en, fr):
-            # Same class of bug as the cross-category collision this
-            # function's own qid_prefix filter was added to catch: within
-            # one category, two different qids sharing an index number
-            # would otherwise silently pick whichever the dict iteration
-            # order happened to visit last.
             raise ValueError(
                 f"duplicate qid index {index} within {qid_prefix!r}: "
                 f"{by_index[index]!r} vs {(en, fr)!r}"
@@ -99,7 +61,11 @@ def join_by_index(
         if not fr.strip():
             stats["no_corpus_entry"] += 1
             continue
-        translations[entry.id] = corpus_to_engine(fr)
+        translation = corpus_to_engine(fr)
+        if not translation:
+            stats["no_corpus_entry"] += 1
+            continue
+        translations[entry.id] = translation
         stats["translated"] += 1
         if normalise(fr) == normalise(en):
             stats["same_as_english"] += 1
@@ -112,12 +78,7 @@ _POKEDEX_ENTRY_SUFFIX = "PokedexEntry"
 def _dex_entries_by_species_name(
     corpus_rows: list[tuple[str, str, str]], category: str, label_suffix: str = "",
 ) -> dict[str, str]:
-    """{normalised species name: translation} for one dex-entry qid
-    category ("dex_entries" for the .Species kind line -- qid
-    "gs.dex_entries.BulbasaurPokedexEntry.Species" -- or "dex_entries_gold"
-    for the Gold-version flavor text -- qid
-    "gs.dex_entries_gold.BulbasaurPokedexEntry", no further suffix).
-    """
+    """Collect one dex-entry category by normalized species name."""
     by_name: dict[str, str] = {}
     for qid, _en, fr in corpus_rows:
         parts = qid.split(".")
@@ -125,13 +86,20 @@ def _dex_entries_by_species_name(
             continue
         label = parts[2]
         if label_suffix:
-            if len(parts) < 4 or parts[3] != label_suffix or not label.endswith(_POKEDEX_ENTRY_SUFFIX):
+            if (len(parts) < 4 or parts[3] not in {label_suffix, label_suffix + "^G"} or
+                    not label.endswith(_POKEDEX_ENTRY_SUFFIX)):
                 continue
         elif len(parts) != 3 or not label.endswith(_POKEDEX_ENTRY_SUFFIX):
             continue
         name = label[: -len(_POKEDEX_ENTRY_SUFFIX)]
-        if fr.strip():
-            by_name[normalise(name)] = fr
+        translation = corpus_to_engine(fr)
+        if translation:
+            key = normalise(name)
+            if key in by_name and by_name[key] != translation:
+                raise ValueError(
+                    f"conflicting {category!r} translations for normalised species {key!r}"
+                )
+            by_name[key] = translation
     return by_name
 
 
@@ -139,11 +107,7 @@ def join_dex_entries(
     species: list[IndexedEntry], corpus_rows: list[tuple[str, str, str]],
     category: str, label_suffix: str = "",
 ) -> tuple[dict[str, str], dict]:
-    """{species id: translation} for a dex-entry qid category, matched by
-    normalised species name rather than by index (the corpus has none
-    here). ``category``/``label_suffix`` select which one -- see
-    _dex_entries_by_species_name.
-    """
+    """Join a dex-entry category by normalized species name."""
     by_name = _dex_entries_by_species_name(corpus_rows, category, label_suffix)
     translations: dict[str, str] = {}
     stats = {"total": len(species), "translated": 0, "no_corpus_entry": 0}
@@ -152,7 +116,7 @@ def join_dex_entries(
         if fr is None:
             stats["no_corpus_entry"] += 1
             continue
-        translations[entry.id] = corpus_to_engine(fr)
+        translations[entry.id] = fr
         stats["translated"] += 1
     return translations, stats
 
@@ -160,34 +124,35 @@ def join_dex_entries(
 def join_landmarks(
     landmarks: list[IndexedEntry], corpus_rows: list[tuple[str, str, str]],
 ) -> tuple[dict[str, str], dict]:
-    """{landmark id: translation}, matched by normalised name rather than
-    index: the corpus's "gs.landmarks.<Name>Name" qids carry no number,
-    only a name derived from the same LANDMARK_* constant (verified:
-    "AzaleaTownName" <-> "LANDMARK_AZALEA_TOWN" both normalise to
-    "azaleatown"). data.gen2Landmarks.landmarks is Schemas.GEN2's routed
-    target for the `landmarks` registry; despite that indirection the
-    registry stays record/patch semantics
-    (mod.content.landmarks:patch("LANDMARK_ROUTE_29", {...}) --
-    Schemas.lua's own R.landmarks example), so nothing here is more
-    exotic than the dex-entries join above.
-    """
+    """Join landmark records by normalized name; corpus qids lack indices."""
     by_name: dict[str, str] = {}
     for qid, _en, fr in corpus_rows:
         parts = qid.split(".")
         if len(parts) != 3 or parts[1] != "landmarks" or not parts[2].endswith("Name"):
             continue
         name = parts[2][: -len("Name")]
-        if fr.strip():
-            by_name[normalise(name)] = fr
+        translation = corpus_to_engine(fr)
+        if translation:
+            key = normalise(name)
+            if key in by_name and by_name[key] != translation:
+                raise ValueError(
+                    f"conflicting landmark translations for normalised name {key!r}"
+                )
+            by_name[key] = translation
 
+    id_aliases = {
+        "SPECIAL": "SPECIAL_MAP",
+        "UNDERGROUND_PATH": "UNDERGROUND",
+    }
     translations: dict[str, str] = {}
     stats = {"total": len(landmarks), "translated": 0, "no_corpus_entry": 0}
     for entry in landmarks:
         id_name = entry.id[len("LANDMARK_"):] if entry.id.startswith("LANDMARK_") else entry.id
-        fr = by_name.get(normalise(id_name))
+        corpus_name = id_aliases.get(id_name, id_name)
+        fr = by_name.get(normalise(corpus_name))
         if fr is None:
             stats["no_corpus_entry"] += 1
             continue
-        translations[entry.id] = corpus_to_engine(fr)
+        translations[entry.id] = fr
         stats["translated"] += 1
     return translations, stats

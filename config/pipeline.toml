@@ -23,10 +23,6 @@ target_lang = "fr"
 "corpus/Yellow/es_msg.txt" = "e66234e25849a6b8ac8d51c934947d545f8f52a84a7a28c5905a801c19768ac0"
 "corpus/Yellow/it_msg.txt" = "86558cb6c5ab39aba56d9b286a98fdee94389ab302694a9a5b264a6d77fcc643"
 "corpus/Yellow/ja-Hrkt_msg.txt" = "542a88559b8695d5635ca107107f18d4becc03561d9827df3f80503ab6166505"
-# GoldSilver is a single corpus collection covering both Gold and Silver
-# (poke-corpus does not split them). All target language files are pinned,
-# not just fr: the corpus collection determines the language domain the
-# CLI/GUI actually offers for a Gold release, including Korean.
 "corpus/GoldSilver/qid_msg.txt" = "07be64a14e52e1697902c2acb1d781d48afcbbe57f31ff6368e76b08f553c043"
 "corpus/GoldSilver/en_msg.txt" = "93def21b6ea05d52c572b2057e3b3a3165e2507189ccffad599372b8bc1fd1c1"
 "corpus/GoldSilver/fr_msg.txt" = "45fa1ada83eef176f61aca3617d64b59739e2f2947a8aad2861703b8e27bd9fa"
@@ -101,6 +97,9 @@ sha1 = "d7037c83e1ae5b39bde3c30787637ba1d4c48ce2"
 [rom.yellow]
 sha1 = "cc7d03262ebfaf2f06772c1a480c7d9d5f4a38e1"
 
+[rom.gold]
+sha1 = "d8b8a3600a465308c9953dfa04f0081c05bdcb94"
+
 [output]
 language_dir = "lang"
-corpus_overrides = "overrides/{target_lang}/corpus_overrides.json"
+corpus_overrides = "overrides/{target_lang}/rby/corpus.json"

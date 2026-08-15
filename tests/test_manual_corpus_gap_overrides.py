@@ -67,11 +67,43 @@ COLLISION_KEYS = (
     "%s's HP\nwas restored!", "It won't have\nany effect.", "POKéDEX",
 )
 
+POKEDEX_NUMBER_LABELS = {
+    "fr": "№",
+    "de": "Nr.",
+    "es": "Nº",
+    "it": "Nº",
+}
+
 
 class ManualCorpusGapOverrideTests(unittest.TestCase):
+    def test_pokedex_number_labels_are_corpus_inspired(self):
+        for language, expected in POKEDEX_NUMBER_LABELS.items():
+            path = Path("overrides") / language / "rby" / "engine.json"
+            row = load_engine_overrides(path)["No."]
+            self.assertEqual(row["override"], expected, language)
+            self.assertEqual(row["reason"], "engine-original", language)
+            self.assertIn("Corpus-inspired", row["provenance"], language)
+            self.assertIn("DexEntryMenu.lua:97", row["provenance"], language)
+            self.assertIn("PokeCorpus qid", row["provenance"], language)
+            self.assertIn("in-game visual validation", row["provenance"], language)
+
+    def test_japanese_quantity_prompt_is_corpus_inspired(self):
+        row = load_engine_overrides(
+            Path("overrides/ja-Hrkt/rby/engine.json")
+        )["How many?"]
+        self.assertEqual(row["override"], "いくつ？")
+        self.assertEqual(row["reason"], "engine-contract-gap")
+        self.assertIn("Corpus-inspired", row["provenance"])
+        self.assertIn("PlayerPC.lua:47", row["provenance"])
+        self.assertIn("DepositHowManyText", row["provenance"])
+        self.assertIn("WithdrawHowManyText", row["provenance"])
+        self.assertIn("TossHowManyText", row["provenance"])
+        self.assertIn("splitting the key upstream", row["provenance"])
+        self.assertIn("in-game validation", row["provenance"])
+
     def test_all_languages_have_exact_manual_corpus_gap_values(self):
         for language, values in EXPECTED.items():
-            path = Path("overrides") / language / "shared_engine_overrides.json"
+            path = Path("overrides") / language / "rby" / "engine.json"
             overrides = load_engine_overrides(path)
             self.assertTrue(set(KEYS) <= set(overrides), language)
             for source, expected in zip(KEYS, values):
@@ -91,7 +123,7 @@ class ManualCorpusGapOverrideTests(unittest.TestCase):
             "requires in-game visual validation",
         )
         for language in EXPECTED:
-            overrides = load_engine_overrides(Path("overrides") / language / "shared_engine_overrides.json")
+            overrides = load_engine_overrides(Path("overrides") / language / "rby" / "engine.json")
             self.assertTrue(set(CONTRACT_GAP_KEYS) <= set(overrides), language)
             for source in CONTRACT_GAP_KEYS:
                 row = overrides[source]
@@ -109,7 +141,7 @@ class ManualCorpusGapOverrideTests(unittest.TestCase):
             "in-game validation of all callsites",
         )
         for language in EXPECTED:
-            overrides = load_engine_overrides(Path("overrides") / language / "shared_engine_overrides.json")
+            overrides = load_engine_overrides(Path("overrides") / language / "rby" / "engine.json")
             for source in COLLISION_KEYS:
                 row = overrides[source]
                 self.assertEqual(row["reason"], "engine-contract-gap", (language, source))

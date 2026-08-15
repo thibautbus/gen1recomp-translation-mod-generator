@@ -40,15 +40,6 @@ from .specs import game_spec, languages_for_collection, release_profile, release
 from .specs import BuildRequest
 
 
-LANGUAGES = (
-    ("fr", "French"),
-    ("de", "German"),
-    ("es", "Spanish"),
-    ("it", "Italian"),
-    ("ja-Hrkt", "Japanese"),
-)
-
-
 def languages_for_generation(generation: int) -> tuple[tuple[str, str], ...]:
     """Return the union of languages published by a release's collections."""
     profile = release_profile_for_generation(generation)
@@ -59,9 +50,9 @@ def languages_for_generation(generation: int) -> tuple[tuple[str, str], ...]:
     return tuple(languages.items())
 
 def load_yellow_coverage_exceptions(path: str | Path) -> dict[str, frozenset[str]]:
-    """Load ``config/yellow_coverage_exceptions.json`` reviewed exceptions.
+    """Load ``config/rby/yellow_coverage_exceptions.json`` reviewed exceptions.
 
-    Mirrors the review discipline of ``config/semantic_anchor_decisions.json``:
+    Mirrors the review discipline of ``config/rby/semantic_anchor_decisions.json``:
     each entry is a human-reviewed exception, not a blind override.  See that
     file's ``description`` for why this stays a separate, smaller schema.
     """
@@ -411,21 +402,21 @@ def _confirm(input_fn: Callable[[str], str]) -> bool:
     return answer.strip().lower() in {"", "y", "yes"}
 
 
-def _language_override_path(language: str, filename: str) -> Path | None:
-    path = resource_root() / "overrides" / language / filename
+def _language_override_path(language: str, game: str, filename: str) -> Path | None:
+    path = resource_root() / "overrides" / language / game / filename
     return path if path.is_file() else None
 
 
 def _corpus_overrides_path(language: str) -> Path | None:
-    return _language_override_path(language, "corpus_overrides.json")
+    return _language_override_path(language, "rby", "corpus.json")
 
 
 def _engine_overrides_path(language: str) -> Path | None:
-    return _language_override_path(language, "shared_engine_overrides.json")
+    return _language_override_path(language, "rby", "engine.json")
 
 
 def _yellow_engine_overrides_path(language: str) -> Path | None:
-    return _language_override_path(language, "yellow_engine_overrides.json")
+    return _language_override_path(language, "rby", "yellow_engine.json")
 
 
 def _merge_engine_overrides(*paths: Path | None, destination_dir: Path | None = None, name: str = "merged_engine_overrides.json") -> Path | None:
@@ -818,7 +809,7 @@ def print_coverage(
     """Print ROM-gated and informational engine match percentages."""
     report = json.loads(path.read_text(encoding="utf-8"))
     lines = ["\nTranslation coverage:"]
-    for key, label in (("rom", "ROM catalog"), ("engine", "All engine strings")):
+    for key, label in (("rom", "ROM aggregate"), ("engine", "All engine strings")):
         section = report.get(key) or {}
         translated = int(section.get("translated", 0))
         total = int(section.get("total", 0))
@@ -831,7 +822,7 @@ def print_coverage(
         lines.append(f"  RBY-related engine strings: unavailable ({report['engine_rby_warning']})")
     yellow = (report.get("yellow") or {}).get("coverage", {}).get("rom") or {}
     if yellow.get("total"):
-        lines.append(f"  Yellow ROM catalogs: {int(yellow.get('translated', 0))}/{int(yellow.get('total', 0))} ({float(yellow.get('percent', 0.0)):.2f}%)")
+        lines.append(f"  Yellow ROM aggregate: {int(yellow.get('translated', 0))}/{int(yellow.get('total', 0))} ({float(yellow.get('percent', 0.0)):.2f}%)")
     for line in lines:
         print(line)
         if log_fn:
@@ -1013,7 +1004,7 @@ def build(
         yellow_dialogue_joined = yellow_joined.get("dialogue", {})
         unmatched_labels = set(yellow_stats.get("unmatched_labels", ()))
         coverage_exceptions = load_yellow_coverage_exceptions(
-            resource_root() / "config" / "yellow_coverage_exceptions.json"
+            resource_root() / "config" / "rby" / "yellow_coverage_exceptions.json"
         )
         composition_covered = coverage_exceptions.get(language, frozenset())
         yellow_stats["effective_dialogue_translated"] = sum(
@@ -1102,11 +1093,11 @@ def build(
             destination_dir=workspace / "tmp",
             name=f"merged_engine_overrides_{language}.json",
         ),
-        semantic_anchors=resource_root() / "config" / "semantic_anchors.json",
-        semantic_anchor_decisions=resource_root() / "config" / "semantic_anchor_decisions.json",
+        semantic_anchors=resource_root() / "config" / "rby" / "semantic_anchors.json",
+        semantic_anchor_decisions=resource_root() / "config" / "rby" / "semantic_anchor_decisions.json",
         strict_engine=True,
         engine_source=gen1recomp / "src",
-        engine_scope=resource_root() / "config" / "engine_scope.json",
+        engine_scope=resource_root() / "config" / "rby" / "engine_scope.json",
         font_source=font_source,
         font_profile=font_profile,
         yellow_dialogue=yellow_dialogue,

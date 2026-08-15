@@ -90,6 +90,7 @@ def build_request(
     status_fn: Callable[[str], None] | None = None,
 ) -> Path:
     """Dispatch a fully resolved request without sentinel ROM arguments."""
+    request.validate()
     if output_dir is None:
         output_dir = request.output_dir
     if request.profile.id == "gold":
@@ -107,6 +108,6 @@ def build_request(
             request.source_for("red"), request.source_for("blue"), request.language,
             language_name, luajit, workspace_root=workspace_root, output_dir=output_dir,
             log_fn=log_fn, status_fn=status_fn, font_profile=request.font_profile,
-            yellow_rom=request.sources.get("yellow"),
+            yellow_rom=request.source_for("yellow"),
         )
     raise ValueError(f"unsupported release profile: {request.profile.id!r}")

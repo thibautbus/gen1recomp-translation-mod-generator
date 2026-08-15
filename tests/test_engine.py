@@ -60,6 +60,26 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(output[source], "%s gagne\n%03d points d'EXP!")
         self.assertEqual(report["details"][source], "semantic")
 
+    def test_direct_printf_prefix_does_not_append_the_english_qid_suffix(self):
+        source = "%s!\nI overslept!"
+        qid = "gs.clock.overslept"
+        rows = [Alignment(
+            qid, "gold", CorpusRecord(qid, "en", "!<LINE>I overslept!"),
+            CorpusRecord(qid, "fr", "!<LINE>Je suis en retard!"), "qid",
+        )]
+        anchor = {
+            "parts": [
+                {"printf": 0},
+                {"qid": qid, "extraction": {"kind": "full"}},
+            ],
+            "separators": [""],
+            "placeholders": {},
+        }
+        output, _ = match_engine_catalog(
+            {source: ""}, rows, semantic_anchors={source: anchor}, target_lang="fr",
+        )
+        self.assertEqual(output[source], "%s!\nJe suis en retard!")
+
     def test_multi_qid_typed_printf_schema_rejects_invalid_type_and_ref(self):
         base = {"parts": [
             {"qid": "a", "extraction": {"kind": "full"}},
@@ -280,6 +300,10 @@ class EngineTests(unittest.TestCase):
             path = Path(tmp) / "strings.lua"
             path.write_text('return { ["A"] = "", }\n', encoding="utf-8")
             self.assertEqual(read_engine_catalog(path), {"A": ""})
+            path.write_text('return { ["A\\011B"] = "", }\n', encoding="utf-8")
+            self.assertEqual(read_engine_catalog(path), {"A\vB": ""})
+            path.write_text('return { ["A\\x42"] = "", }\n', encoding="utf-8")
+            self.assertEqual(read_engine_catalog(path), {"AB": ""})
             path.write_text('return { ["A"] = "B", }\n', encoding="utf-8")
             with self.assertRaises(ValueError):
                 read_engine_catalog(path)
@@ -326,6 +350,24 @@ class EngineTests(unittest.TestCase):
             report["auto_structural"],
             sum(value == "structural" for value in report["details"].values()),
         )
+
+    def test_structural_matching_preserves_mixed_engine_and_printf_placeholders(self):
+        source = "{PLAYER} put the\n%s in\nthe %s."
+        english = (
+            "<PLAYER> put the<LINE>{text_ram wStringBuffer1} in<CONT>"
+            "the {text_ram wStringBuffer3}."
+        )
+        french = (
+            "<PLAYER> range {text_ram wStringBuffer1}<LINE>dans "
+            "{text_ram wStringBuffer3}."
+        )
+        output, report = match_engine_catalog(
+            {source: ""},
+            [Alignment("put", "gold", CorpusRecord("put", "en", english),
+                       CorpusRecord("put", "fr", french), "qid")],
+        )
+        self.assertEqual(output[source], "{PLAYER} range %s\ndans %s.")
+        self.assertEqual(report["auto_structural"], 1)
 
     def test_semantic_printf_anchor_converts_typed_dynamic_tokens(self):
         source = "%s\nlearned\n%d!"

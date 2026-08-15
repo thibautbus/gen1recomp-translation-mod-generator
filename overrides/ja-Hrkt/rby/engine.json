@@ -30,6 +30,11 @@
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
+    "How many?": {
+      "override": "いくつ？",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-inspired neutral localization; PlayerPC.lua:47 shares one key across deposit and withdrawal; rb.text_2.DepositHowManyText, rb.text_2.WithdrawHowManyText, and rb.text_2.TossHowManyText provide the common いくつ phrase; the engine omits the operation-specific verb; could be improved by splitting the key upstream in Gen1Recomp; requires in-game validation of both callsites."
+    },
     "Empty.": {
       "override": "からっぽ。",
       "reason": "engine-original",

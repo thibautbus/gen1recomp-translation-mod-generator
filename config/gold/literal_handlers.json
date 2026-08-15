@@ -1,0 +1,33 @@
+{
+  "schema": "gen1recomp-translation-mods/gold-literal-handlers",
+  "version": 1,
+  "description": "Corpus-backed labels for Gold UI hooks that already exist in gen1recomp.",
+  "entries": {
+    "YES": {"qid": "gs.menu.YesNoMenuHeader.MenuData", "segment": 0},
+    "NO": {"qid": "gs.menu.YesNoMenuHeader.MenuData", "segment": 1},
+    "FIGHT": {"qid": "gs.menu.BattleMenuHeader.Text", "segment": 0},
+    "PACK": {"qid": "gs.menu.BattleMenuHeader.Text", "segment": 2},
+    "RUN": {"qid": "gs.menu.BattleMenuHeader.Text", "segment": 3},
+    "CANCEL": {"qid": "gs.scrolling_menu.ScrollingMenu_UpdateDisplay.CancelString", "segment": 0},
+    "WITHDRAW ITEM": {"qid": "gs.pokecenter_pc.PlayersPCMenuData.WithdrawItem", "segment": 0},
+    "DEPOSIT ITEM": {"qid": "gs.pokecenter_pc.PlayersPCMenuData.DepositItem", "segment": 0},
+    "TOSS ITEM": {"qid": "gs.pokecenter_pc.PlayersPCMenuData.TossItem", "segment": 0},
+    "MAIL BOX": {"qid": "gs.pokecenter_pc.PlayersPCMenuData.MailBox", "segment": 0},
+    "DECORATION": {"qid": "gs.pokecenter_pc.PlayersPCMenuData.Decoration", "segment": 0},
+    "TURN OFF": {"qid": "gs.pokecenter_pc.PlayersPCMenuData.TurnOff", "segment": 0},
+    "LOG OFF": {"qid": "gs.pokecenter_pc.PlayersPCMenuData.LogOff", "segment": 0},
+    "BILL's PC": {"qid": "gs.pokecenter_pc.PokemonCenterPC.String_BillsPC", "segment": 0},
+    "PROF.OAK's PC": {"qid": "gs.pokecenter_pc.PokemonCenterPC.String_OaksPC", "segment": 0},
+    "What do you want\nto do?": {"qid": "gs.common_2.PlayersPCAskWhatDoText", "full": true},
+    "Access whose PC?": {"qid": "gs.common_2.PokecenterPCWhoseText", "full": true},
+    "BILL's PC\naccessed.": {"qid": "gs.common_2.PokecenterBillsPCText", "full": true, "page": 0},
+    "#MON Storage\nSystem opened.": {"qid": "gs.common_2.PokecenterBillsPCText", "full": true, "page": 1},
+    "PROF.OAK's PC\naccessed.": {"qid": "gs.common_2.PokecenterOaksPCText", "full": true, "page": 0},
+    "#DEX Rating\nSystem opened.": {"qid": "gs.common_2.PokecenterOaksPCText", "full": true, "page": 1},
+    "Want to get your\n#DEX rated?": {"qid": "gs.common_2.OakPCText1", "full": true},
+    "The link to PROF.\nOAK's PC closed.": {"qid": "gs.common_2.OakPCText4", "full": true},
+    "Choose a <PK><MN>.": {"qid": "gs.bills_pc.PCString_ChooseaPKMN", "segment": 0},
+    "PARTY <PK><MN>": {"qid": "gs.bills_pc.BillsPC_BoxName.PartyPKMN", "segment": 0},
+    "Choose a BOX.": {"qid": "gs.bills_pc.BillsPC_PlaceChooseABoxString.ChooseABox", "segment": 0}
+  }
+}
