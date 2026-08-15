@@ -2,19 +2,12 @@
   "schema": "gen1recomp-translation-mods/engine-overrides",
   "version": 1,
   "entries": {
-    "SCORE %d": {
-      "override": "SCORE %d",
+    "%s looks\nunhappy about it!": {
+      "override": "%s n'est\npas content!",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "Kept as-is: \"score\" is a standard French word identical to the English source (cf. poke-corpus y.SummerBeachHouse.SummerBeachHousePrinterText3 'le meilleur score', y.text_9.*HiScoreText 'Score de'); engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source for this exact HUD string; short label, %d preserved."
-    },
-    "New record!": {
-      "override": "Nouveau record!",
-      "reason": "yellow-only-engine-text",
-      "game_version": "yellow",
-      "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short HUD label; no dynamic parameter. Sentence case matches the English source (\"New record!\") and the fr GB font's supported lowercase glyphs; not an all-caps engine constant."
+      "provenance": "Corpus-backed from poke-corpus y.text_3.PikachuUnhappyText; the engine key (src/ui/BoxMenu.lua release-Pikachu branch, Yellow-only) renders the released Pikachu name via a %s printf, so the corpus {RAM:wNameBuffer} token is adapted to the printf contract."
     },
     "A: done": {
       "override": "A: Terminer",
@@ -29,6 +22,34 @@
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
       "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short label, %d preserved."
+    },
+    "New record!": {
+      "override": "Nouveau record!",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short HUD label; no dynamic parameter. Sentence case matches the English source (\"New record!\") and the fr GB font's supported lowercase glyphs; not an all-caps engine constant."
+    },
+    "PIKACHU looks\ncontent.": {
+      "override": "PIKACHU a l'air\ncontent.",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "AI-generated translation; engine-authored Yellow Pewter POKéMON CENTER sleeping-Pikachu text (src/world/OverworldController.lua, _LooksContentText fallback); the related corpus row y.text_7.LooksContentText differs in wording, so the shorter engine text is translated directly; no dynamic parameter."
+    },
+    "SCORE %d": {
+      "override": "SCORE %d",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "Kept as-is: \"score\" is a standard French word identical to the English source (cf. poke-corpus y.SummerBeachHouse.SummerBeachHousePrinterText3 'le meilleur score', y.text_9.*HiScoreText 'Score de'); engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source for this exact HUD string; short label, %d preserved."
+    },
+    "There isn't any\nresponse...": {
+      "override": "Pas de réponse...",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "Corpus-backed from poke-corpus y.text_3.SleepingPikachuText1; engine fallback (src/ui/PartyMenu.lua refuseUnavailable, Yellow Pikachu follower); no dynamic parameter."
     }
   }
 }

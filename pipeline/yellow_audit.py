@@ -34,6 +34,9 @@ from .yellow import parse_text_catalog, yellow_dialogue_layer
 # is covered through the _RefusingText dialogue label.
 DEFERRED_ENGINE_STRINGS = [
     {"engine_key": "%s is refusing!", "corpus_qid": "y.text_9.RefusingText", "status": "covered-by-dialogue-layer", "note": "romText fallback; _RefusingText label ships in dialogue_yellow.lua"},
+    {"engine_key": "%s looks\nunhappy about it!", "corpus_qid": "y.text_3.PikachuUnhappyText", "status": "manual-translation", "note": "rby/yellow_engine.json"},
+    {"engine_key": "There isn't any\nresponse...", "corpus_qid": "y.text_3.SleepingPikachuText1", "status": "manual-translation", "note": "rby/yellow_engine.json"},
+    {"engine_key": "PIKACHU looks\ncontent.", "corpus_qid": "y.text_7.LooksContentText", "status": "manual-translation", "note": "rby/yellow_engine.json; related row wording differs from the shorter engine text"},
     {"engine_key": "A: done", "corpus_qid": None, "status": "manual-translation", "note": "rby/yellow_engine.json"},
     {"engine_key": "HI    %d", "corpus_qid": None, "status": "manual-translation", "note": "rby/yellow_engine.json"},
     {"engine_key": "New record!", "corpus_qid": None, "status": "manual-translation", "note": "rby/yellow_engine.json"},

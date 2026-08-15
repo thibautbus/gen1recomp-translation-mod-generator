@@ -189,7 +189,7 @@ class YellowCoverageTests(unittest.TestCase):
         )
         self.assertEqual(coverage["translated"], 249)
         self.assertEqual(coverage["covered_by_dialogue"], 1)
-        self.assertEqual(coverage, {"translated": 249, "total": 249, "percent": 100.0, "covered_by_dialogue": 1})
+        self.assertEqual(coverage, {"translated": 249, "total": 249, "percent": 100.0, "covered_by_dialogue": 1, "covered_by_yellow_engine": 0})
 
     def test_english_refusal_fallback_is_not_counted(self):
         coverage = effective_yellow_engine_coverage(
@@ -198,6 +198,30 @@ class YellowCoverageTests(unittest.TestCase):
         )
         self.assertEqual(coverage["covered_by_dialogue"], 0)
         self.assertEqual(coverage["translated"], 248)
+
+    def test_yellow_only_engine_strings_complete_the_metric(self):
+        coverage = effective_yellow_engine_coverage(
+            {"translated": 248, "total": 251},
+            None,
+            {"%s looks\nunhappy about it!": "%s n'est\npas content!",
+             "PIKACHU looks\ncontent.": "PIKACHU a l'air\ncontent.",
+             "SCORE %d": "SCORE %d"},
+            {"%s looks\nunhappy about it!", "PIKACHU looks\ncontent.", "No! A new BADGE\nis required."},
+        )
+        self.assertEqual(coverage["covered_by_yellow_engine"], 2)
+        self.assertEqual(coverage["translated"], 250)
+        self.assertEqual(coverage, {"translated": 250, "total": 251, "percent": 99.6, "covered_by_dialogue": 0, "covered_by_yellow_engine": 2})
+
+    def test_yellow_engine_strings_outside_eligible_scope_are_not_counted(self):
+        coverage = effective_yellow_engine_coverage(
+            {"translated": 248, "total": 249},
+            {"_RefusingText": "{RAM:wNameBuffer}\nrefuse!"},
+            {"A: done": "A: Terminer"},
+            set(),
+        )
+        self.assertEqual(coverage["covered_by_yellow_engine"], 0)
+        self.assertEqual(coverage["covered_by_dialogue"], 1)
+        self.assertEqual(coverage["translated"], 249)
 
 
 class YellowJoinReportTests(unittest.TestCase):

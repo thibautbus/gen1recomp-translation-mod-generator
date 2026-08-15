@@ -158,11 +158,11 @@ engine's English fallback.
 
 | Target | Red/Blue ROM aggregate | Yellow ROM aggregate | RBY-related engine strings |
 | --- | ---: | ---: | ---: |
-| `fr` | 3281/3281 (100%) | 3405/3405 (100%) | 251/251 (100%) |
-| `de` | 3281/3281 (100%) | 3405/3405 (100%) | 251/251 (100%) |
-| `es` | 3281/3281 (100%) | 3405/3405 (100%) | 251/251 (100%) |
-| `it` | 3281/3281 (100%) | 3405/3405 (100%) | 251/251 (100%) |
-| `ja-Hrkt` | 3281/3281 (100%) | 3405/3405 (100%) | 250/251 (99.60%) |
+| `fr` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
+| `de` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
+| `es` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
+| `it` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
+| `ja-Hrkt` | 3281/3281 (100%) | 3405/3405 (100%) | 255/256 (99.61%) |
 
 The ROM aggregates exclude extracted labels that do not render visible text.
 Reviewed exceptions are recorded in
@@ -178,7 +178,7 @@ Gold is built as a separate generation-2 artifact:
 - `Gold ROM aggregate` combines dialogue, Pokédex entries and the named ROM
   catalogs. Its denominator excludes 14 markup-only records with no visible
   prose.
-- `Gold-related engine strings` covers the 217 engine keys used by at least
+- `Gold-related engine strings` covers the 218 engine keys used by at least
   one production Gen 2 callsite.
 
 The generated report retains the dialogue/catalog breakdown and per-key
@@ -186,37 +186,37 @@ provenance. Future unresolved entries will keep their original English text.
 
 | Target | Gold ROM aggregate | Gold-related engine strings |
 | --- | ---: | ---: |
-| `fr` | 4452/4452 (100%) | 217/217 (100%) |
-| `de` | 4452/4452 (100%) | 217/217 (100%) |
-| `es` | 4452/4452 (100%) | 217/217 (100%) |
-| `it` | 4452/4452 (100%) | 217/217 (100%) |
-| `ja-Hrkt` | 4452/4452 (100%) | 217/217 (100%) |
-| `ko` | 4452/4452 (100%) | 217/217 (100%) |
+| `fr` | 4452/4452 (100%) | 218/218 (100%) |
+| `de` | 4452/4452 (100%) | 218/218 (100%) |
+| `es` | 4452/4452 (100%) | 218/218 (100%) |
+| `it` | 4452/4452 (100%) | 218/218 (100%) |
+| `ja-Hrkt` | 4452/4452 (100%) | 218/218 (100%) |
+| `ko` | 4452/4452 (100%) | 218/218 (100%) |
 
 ### Other engine strings
 
 The remaining engine keys are reported separately below. They are keys used by
 neither RBY nor Gold, so their denominator is the residual scope:
-`892 - (251 + 217 - 8) = 432`. The numerator counts keys translated in at
+`951 - (256 + 218 - 8) = 485`. The numerator counts keys translated in at
 least one of the two artifacts; this is a project-level metric, not a claim
 that every key is present in both games.
 
 | Target | Other engine strings |
 | --- | ---: |
-| `fr` | 112/432 (25.93%) |
-| `de` | 110/432 (25.46%) |
-| `es` | 110/432 (25.46%) |
-| `it` | 112/432 (25.93%) |
-| `ja-Hrkt` | 111/432 (25.69%) |
-| `ko` | 30/432 (6.94%) |
+| `fr` | 111/485 (22.89%) |
+| `de` | 111/485 (22.89%) |
+| `es` | 109/485 (22.47%) |
+| `it` | 111/485 (22.89%) |
+| `ja-Hrkt` | 110/485 (22.68%) |
+| `ko` | 30/485 (6.19%) |
 
-The denominator is calculated as follows: `892` total engine keys, minus the
-`251` RBY-related keys and the `217` Gold-related keys, plus back the `8` keys
+The denominator is calculated as follows: `951` total engine keys, minus the
+`256` RBY-related keys and the `218` Gold-related keys, plus back the `8` keys
 shared by both scopes so they are subtracted only once. The resulting residual
-scope is `432` keys.
+scope is `485` keys.
 
 These values use the pinned ROMs, corpus snapshots and Gen1Recomp revision
-`04490c9b`; regenerate them whenever one of those inputs changes.
+`1598f349`; regenerate them whenever one of those inputs changes.
 
 ## Translation provenance
 

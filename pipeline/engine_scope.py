@@ -166,7 +166,9 @@ def source_root(checkout: str | Path, scope: Mapping[str, Any] | None = None) ->
     subdir = str(scope.get("source_subdir", "src"))
     # Accept either a checkout root or an already-selected src root.
     candidate = root / subdir
-    if candidate.is_dir() and (root / ".git").exists():
+    if candidate.is_dir() and (
+        (root / ".git").exists() or (root / ".archive-marker.json").is_file()
+    ):
         return candidate
     if root.name == subdir and root.is_dir() and ((root.parent / ".git").exists() or (root.parent / ".archive-marker.json").is_file()):
         return root

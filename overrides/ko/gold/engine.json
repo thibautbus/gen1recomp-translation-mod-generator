@@ -2,6 +2,7 @@
   "schema": "gen1recomp-translation-mods/engine-overrides",
   "version": 1,
   "entries": {
+    "%s\nis about to use\u000b%s.\u000cWill %s\nchange POKéMON?": {"override": "%s는(은)\n%s를(을) 꺼내려 하고있다\u000c%s(이)도 포켓몬을\n바꾸겠습니까?", "reason": "engine-contract-gap", "provenance": "Corpus-backed from gs.battle.BattleText_EnemyIsAboutToUseWillPlayerChangeMon; the Korean ROM uses a different RAM token for the sent-out Pokémon, so the equivalent three-printf engine form is supplied explicitly."},
     "%d #MON seen\n%d #MON owned\n\nPROF.OAK's\nRating:": {"override": "본 포켓몬: %d\n잡은 포켓몬: %d\f오박사의\n평가:", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.common_1.OakPCText4; adapted to the engine's printf contract."},
     "%s got %s%d for winning!": {"override": "%s는 상금으로 %s%d원을 손에 넣었다!", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.common_2.WonMoneyText; printf order follows the engine contract."},
     "%s got %s%d for winning! Sent some to MOM!": {"override": "%s는 %s%d원을 받고\n일부를 엄마에게 보냈다!", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.common_1.SentSomeToMomText; printf order follows the engine contract."},

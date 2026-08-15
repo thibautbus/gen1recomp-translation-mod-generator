@@ -34,13 +34,13 @@ target_lang = "fr"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
-# Pinned at v0.1.79: the first tag whose Lua tree carries the Gen 2 (Gold)
-# import path and loading gate this project's Gold support depends on.
+# Pinned at v0.1.91, the upstream release used to validate and package the
+# RBY and Gold translation mods.
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "04490c9b9ad03b814f297793dd7a950dad7c3adf"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/04490c9b9ad03b814f297793dd7a950dad7c3adf"
-archive_sha256 = "b1c069cea13674fde2299c778237a6a82a37808d6bd9d6b28adf1ded1267531f"
-archive_tree_sha256 = "d1d777183e91d72e1075cc285f3eee8f8b405a08d3ac36f53b21c55fa7a42fc6"
+revision = "1598f34954080711c00a105b864b9b9649ef5bc3"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/1598f34954080711c00a105b864b9b9649ef5bc3"
+archive_sha256 = "d753540de92ec338bc4ab7ec9a9ccc1869928d1691148901601faac7ed896fc9"
+archive_tree_sha256 = "af4b462185ee0b8363aae25277e17205a32b4922ac84f6a9382eb6966a5333db"
 
 [fonts.pokemon]
 revision = "81b60805150c75ebfdfcec6d8352c67e491f8a6c"

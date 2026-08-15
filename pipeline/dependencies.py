@@ -77,7 +77,11 @@ def _extract_archive(archive: Path, destination: Path, selective_prefix: str | N
         for entry, name in zip(entries, names):
             unix_mode = (entry.external_attr >> 16) & 0o170000
             if unix_mode == 0o120000:
-                raise DependencyError(f"symbolic links are not extracted: {name}")
+                # Upstream ships a sample-mod symlink (mods/timekeepers_hut
+                # since v0.1.85).  Symlinks cannot be written safely and are
+                # never part of the integrity-checked immutable tree, so skip
+                # the entry instead of failing the whole archive.
+                continue
             if not name or name.endswith("/"):
                 continue
             key = name.casefold()

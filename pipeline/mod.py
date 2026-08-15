@@ -5,7 +5,7 @@ from pathlib import Path
 import os
 import shutil
 import tempfile
-from typing import Iterable
+from typing import Iterable, Mapping
 
 from .model import Alignment
 from .generate import lua_string
@@ -43,12 +43,30 @@ def yellow_isyellow_guard_lines() -> str:
     )
 
 
-def effective_yellow_engine_coverage(engine_rby: dict, yellow_dialogue: dict[str, str] | None) -> dict:
-    """Add corpus-backed Yellow dialogue fallbacks to engine coverage."""
+def effective_yellow_engine_coverage(
+    engine_rby: dict,
+    yellow_dialogue: dict[str, str] | None,
+    yellow_engine_overrides: Mapping[str, str] | None = None,
+    eligible_keys: Iterable[str] | None = None,
+) -> dict:
+    """Add corpus-backed Yellow dialogue fallbacks and Yellow-only engine
+    strings to the RBY engine coverage.
+
+    The Yellow layer ships translated engine strings that the base engine
+    matcher cannot see (Yellow-exclusive text with no Red/Blue corpus row).
+    Keys counted here must be in the RBY eligible scope so the Yellow layer
+    never inflates the metric beyond its own denominator.
+    """
     direct_translated = int(engine_rby.get("translated", 0))
     total = int(engine_rby.get("total", 0))
     refusal = (yellow_dialogue or {}).get("_RefusingText")
-    covered = int(bool(refusal and refusal != "{RAM:wNameBuffer}\nis refusing!"))
+    covered_dialogue = int(bool(refusal and refusal != "{RAM:wNameBuffer}\nis refusing!"))
+    eligible = set(eligible_keys or ())
+    covered_yellow_engine = sum(
+        1 for key, value in (yellow_engine_overrides or {}).items()
+        if value and key in eligible
+    )
+    covered = covered_dialogue + covered_yellow_engine
     effective_translated = min(total, direct_translated + covered)
 
     def metric(translated: int) -> dict:
@@ -56,7 +74,8 @@ def effective_yellow_engine_coverage(engine_rby: dict, yellow_dialogue: dict[str
                 "percent": round(translated * 100 / total, 2) if total else 100.0}
 
     result = metric(effective_translated)
-    result["covered_by_dialogue"] = covered
+    result["covered_by_dialogue"] = covered_dialogue
+    result["covered_by_yellow_engine"] = covered_yellow_engine
     return result
 
 
@@ -867,14 +886,16 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
             )
             if "engine_rby" in report:
                 effective = effective_yellow_engine_coverage(
-                    report["engine_rby"], yellow_dialogue
+                    report["engine_rby"], yellow_dialogue,
+                    yellow_engine_overrides, eligible,
                 )
                 report["engine_rby"].update({
                     key: effective[key] for key in ("translated", "total", "percent")
                 })
                 report["yellow"]["engine_coverage_provenance"] = {
                     "covered_by_dialogue": effective["covered_by_dialogue"],
-                    "note": "Corpus-backed Yellow dialogue fallbacks are included in engine coverage.",
+                    "covered_by_yellow_engine": effective["covered_by_yellow_engine"],
+                    "note": "Corpus-backed Yellow dialogue fallbacks and Yellow-only engine strings are included in engine coverage.",
                 }
         Path(report_path).write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return destination

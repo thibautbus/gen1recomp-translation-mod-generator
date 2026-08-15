@@ -64,6 +64,15 @@
       "placeholders": {}
     },
     "A #MON may be\nable to move this.": {"qid": "gs.common_2.BouldersMayMoveText", "extraction": {"kind": "full"}},
+    "%s\nis about to use\u000b%s.\u000cWill %s\nchange POKéMON?": {
+      "parts": [{"qid": "gs.battle.BattleText_EnemyIsAboutToUseWillPlayerChangeMon", "extraction": {"kind": "full"}}],
+      "separators": [],
+      "placeholders": {
+        "{ENEMY}": {"printf": 0},
+        "{RAM:wEnemyMonNickname}": {"printf": 1},
+        "{PLAYER}": {"printf": 2}
+      }
+    },
     "All right. This\n#MON is now\nnamed {STRBUF}.": {"qid": "gs.common_1.NameRaterNamedText", "extraction": {"kind": "full"}},
     "CANCEL": {"qid": "gs.names.DecorationNames.1", "extraction": {"kind": "full"}},
     "Can't use that\nhere.": {"qid": "gs.common_1.CantUseItemText", "extraction": {"kind": "full"}},
