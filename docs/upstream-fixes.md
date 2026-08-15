@@ -56,9 +56,31 @@ they must not be implemented by reaching into private UI classes.
   can be blank.
 - **Pokegear and clock UI:** expose `Press any button to exit`, weekdays, and
   `O'clock` through the normal text catalog.
-- **Received-item/system rewards:** expose the item/reward name passed to the
-  received-item message. Without that value, messages such as `… received
-  Héricendre!` lose the name and render as `… received .`.
+- **Received-item/system rewards:** confirmed with a real in-game boot (fr):
+  both cases still show the empty name, and both are genuine engine-side
+  name-resolution gaps, not a missing translation -- the surrounding "reçoit"
+  text is correctly translated, only the substituted name is empty.
+  - The Pokégear ("reçoit .", `gs.std_text.ReceivedItemText`, period
+    terminator): this message is built by the `verbosegiveitem` opcode
+    (`script/gen2/Vm.lua`), which sources the name from `self.getItemNameFn`.
+    POKéGEAR does not appear anywhere in the corpus's 256-entry item table
+    (`gs.names.ItemNames.*`) -- it isn't a normal bag item -- and
+    `getItemName()` (`world/gen2/World.lua`) is written to fall back to an
+    `"ITEM<n>"` placeholder for an unknown item, not an empty string, so
+    either a second `getItemName` registration exists elsewhere with a
+    different (buggier) fallback, or this specific grant resolves to a
+    genuinely empty name upstream.
+  - Cyndaquil/Héricendre ("reçoit !", `gs.ElmsLab.ReceivedStarterText`, a
+    different row using `wStringBuffer3`, not `wStringBuffer4`): the
+    `givepoke` opcode (`script/gen2/Vm.lua`) adds the Pokémon to the party
+    but does not itself write any name buffer; whatever separate ROM script
+    instruction is supposed to populate `wStringBuffer3` beforehand
+    (elsewhere in the engine this is a `nameMon`-style special, see
+    `script/gen2/Specials.lua`) is either missing or broken for this
+    specific script.
+  Neither is fixable from this translation mod without reaching into private
+  engine internals; both are candidates for an upstream gen1recomp bug
+  report.
 - **Item descriptions and summary/stat labels:** expose the bag item
   descriptions and the remaining Pokémon summary labels (`Level up`, `EXP
   Points`, `Type`, `Item`, `Move`, `OT`, `Attack`, `Defense`, and related
