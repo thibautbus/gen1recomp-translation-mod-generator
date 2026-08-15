@@ -366,13 +366,17 @@ archive before upload.
   still need in-game smoke tests.
 - Some engine strings remain in English, as shown by the coverage tables.
 - Translated text can exceed fixed UI widths with either font profile.
-- Battle stat arguments can remain English because Gen1Recomp passes raw
-  `ATTACK`/`DEFENSE`/`SPEED`/`SPECIAL` values to localized templates.
+- The `X ATTACK`/`X DEFENSE`/etc. battle-item and the vitamin (`PROTEIN`,
+  `IRON`, `CALCIUM`, `ZINC`, `CARBOS`, `HP UP`) stat-rose messages always
+  show the raised stat's name in English: Gen1Recomp substitutes it with a
+  raw uppercase value (`stat:upper()`), not through the translated engine
+  string catalog. This is different from the SummaryMenu's own stat labels,
+  which are fully translated.
 - RBY type names are replaced at draw time by exact string match, so a nickname
   identical to an English type name is translated too.
 - The desktop launcher uses a separate renderer and is outside the content
   mod's translation hooks.
-- Gold-specific upstream engine gaps are tracked in
+- RBY- and Gold-specific upstream engine gaps are tracked in
   [docs/upstream-fixes.md](docs/upstream-fixes.md).
 
 ## Credits

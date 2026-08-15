@@ -17,9 +17,6 @@ QMUSEUM_YES = "rb.Museum1F.Museum1FScientist1ThankYouText"
 QMUSEUM_NO_MONEY = "rb.Museum1F.Museum1FScientist1DontHaveEnoughMoneyText"
 QMUSEUM_NO = "rb.Museum1F.Museum1FScientist1ComeAgainText"
 QMUSEUM_ALREADY = "rb.Museum1F.Museum1FScientist1TakePlentyOfTimeText"
-QBIKE_WOMAN = "rb.BikeShop.BikeShopMiddleAgedWomanText"
-QBIKE_YOUNG = "rb.BikeShop.BikeShopYoungsterTheseBikesAreExpensiveText"
-QBIKE_COOL = "rb.BikeShop.BikeShopYoungsterCoolBikeText"
 
 
 def row(qid, value):
@@ -159,14 +156,77 @@ class LiteralHandlerTests(unittest.TestCase):
             body = path.read_text(encoding="utf-8")
             self.assertGreater(body.count('TextBox.new(game, "tail"'), 1)
 
-    def test_bike_flavor_handlers_use_corpus_and_track_bicycle_state(self):
-        rows = [row(QBIKE_WOMAN, "Un vélo de ville."), row(QBIKE_YOUNG, "Ces vélos sont chers."), row(QBIKE_COOL, "Ton vélo est super!")]
-        recipes = load_recipes(Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json")
+    def test_say_name_qid_splices_the_translated_item_name_into_the_ram_marker(self):
+        q_received, q_name = "rb.X.ReceivedText", "rb.names.ItemNames.49"
+        recipes = [{
+            "map": "X", "text_constant": "T", "flow": [
+                {"say": {"qid": q_received, "name_qid": q_name}},
+            ],
+        }]
+        rows = [row(q_received, "Obtenu: {RAM:wStringBuffer}!"), row(q_name, "PEPITE")]
         with tempfile.TemporaryDirectory() as directory:
             path, handlers = generate_handlers(rows, recipes, Path(directory) / "handlers.lua")
-            constants = {h.text_constant for h in handlers}
-            self.assertIn("TEXT_BIKESHOP_MIDDLE_AGED_WOMAN", constants)
-            self.assertIn("TEXT_BIKESHOP_YOUNGSTER", constants)
+            self.assertEqual(len(handlers), 1)
+            body = path.read_text(encoding="utf-8")
+            self.assertIn('TextBox.new(game, "Obtenu: PEPITE!"', body)
+            self.assertNotIn("{RAM:", body)
+
+    def test_say_name_qid_fails_closed_when_either_qid_is_unmatched(self):
+        recipes = [{
+            "map": "X", "text_constant": "T", "flow": [
+                {"say": {"qid": "rb.X.ReceivedText", "name_qid": "rb.names.ItemNames.49"}},
+            ],
+        }]
+        rows = [row("rb.X.ReceivedText", "Obtenu: {RAM:wStringBuffer}!")]
+        self.assertEqual(extract_handlers(rows, recipes), [])
+
+    def test_trainer_defeated_condition_and_engage_trainer_mirror_the_vanilla_calls(self):
+        q_rematch = "rb.X.RematchText"
+        recipes = [{
+            "map": "X", "text_constant": "T", "flow": [
+                {"if": {"condition": {"trainer_defeated": True},
+                        "then": [{"say": {"qid": q_rematch}}],
+                        "else": [{"engage_trainer": None}]}},
+            ],
+        }]
+        rows = [row(q_rematch, "Bien joué!")]
+        with tempfile.TemporaryDirectory() as directory:
+            path, handlers = generate_handlers(rows, recipes, Path(directory) / "handlers.lua")
+            self.assertEqual(len(handlers), 1)
+            body = path.read_text(encoding="utf-8")
+            self.assertIn("if ow:trainerDefeated(npc) then", body)
+            self.assertIn('TextBox.new(game, "Bien joué!"', body)
+            self.assertIn("ow:engageTrainer(npc, done)", body)
+
+    def test_inventory_op_and_any_combinator_track_item_state(self):
+        # DSL coverage for `inventory` conditions/mutations and the `any`
+        # combinator, independent of any specific production recipe: as of
+        # gen1recomp's current pinned version the Bike Shop's own flavor
+        # scripts (data/scripts/story2.lua, data/scripts/flavor/bike_shop.lua)
+        # already read game.data.text directly and are correctly translated
+        # by the ordinary dialogue override, so this project no longer
+        # reimplements them -- see docs/upstream-fixes.md.
+        q_young, q_cool = "rb.X.YoungsterText", "rb.X.CoolBikeText"
+        recipes = [{
+            "map": "X", "text_constant": "T", "flow": [
+                {"if": {
+                    "condition": {"any": [
+                        {"flag": "EVENT_GOT_BICYCLE"},
+                        {"inventory": {"item": "BICYCLE", "op": "gt", "amount": 0}},
+                    ]},
+                    "then": [{"say": {"qid": q_cool}}],
+                    "else": [
+                        {"say": {"qid": q_young}},
+                        {"inventory": {"item": "BICYCLE", "op": "set", "amount": 1}},
+                        {"set_flag": {"flag": "EVENT_GOT_BICYCLE"}},
+                    ],
+                }},
+            ],
+        }]
+        rows = [row(q_young, "Ces vélos sont chers."), row(q_cool, "Ton vélo est super!")]
+        with tempfile.TemporaryDirectory() as directory:
+            path, handlers = generate_handlers(rows, recipes, Path(directory) / "handlers.lua")
+            self.assertEqual(len(handlers), 1)
             body = path.read_text(encoding="utf-8")
             self.assertIn('game.save.flags["EVENT_GOT_BICYCLE"]', body)
             self.assertIn('(game.save.inventory["BICYCLE"] or 0) > 0', body)

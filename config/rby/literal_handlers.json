@@ -58,49 +58,6 @@
           }}
         ]
       }
-    },
-    {
-      "id": "bike-shop-clerk",
-      "map": "BIKE_SHOP",
-      "text_constant": "TEXT_BIKESHOP_CLERK",
-      "flow": [
-        {"if": {
-          "condition": {"inventory": {"item": "BICYCLE", "op": "gt", "amount": 0}},
-          "then": [{"say": {"qid": "rb.BikeShop.BikeShopClerkHowDoYouLikeYourBicycleText"}}],
-          "else": [
-            {"if": {
-              "condition": {"inventory": {"item": "BIKE_VOUCHER", "op": "gt", "amount": 0}},
-              "then": [
-                {"say": {"qid": "rb.BikeShop.BikeShopClerkOhThatsAVoucherText"}},
-                {"inventory": {"item": "BIKE_VOUCHER", "op": "remove"}},
-                {"inventory": {"item": "BICYCLE", "op": "set", "amount": 1}},
-                {"set_flag": {"flag": "EVENT_GOT_BICYCLE"}},
-                {"say": {"qid": "rb.BikeShop.BikeShopExchangedVoucherText"}}
-              ],
-              "else": [{"say": {"qid": "rb.BikeShop.BikeShopClerkWelcomeText"}}]
-            }}
-          ]
-        }}
-      ]
-    },
-    {
-      "id": "bike-shop-middle-aged-woman",
-      "map": "BIKE_SHOP",
-      "text_constant": "TEXT_BIKESHOP_MIDDLE_AGED_WOMAN",
-      "flow": [{"say": {"qid": "rb.BikeShop.BikeShopMiddleAgedWomanText"}}]
-    },
-    {
-      "id": "bike-shop-youngster",
-      "map": "BIKE_SHOP",
-      "text_constant": "TEXT_BIKESHOP_YOUNGSTER",
-      "flow": [{"if": {
-        "condition": {"any": [
-          {"flag": "EVENT_GOT_BICYCLE"},
-          {"inventory": {"item": "BICYCLE", "op": "gt", "amount": 0}}
-        ]},
-        "then": [{"say": {"qid": "rb.BikeShop.BikeShopYoungsterCoolBikeText"}}],
-        "else": [{"say": {"qid": "rb.BikeShop.BikeShopYoungsterTheseBikesAreExpensiveText"}}]
-      }}]
     }
   ]
 }

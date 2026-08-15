@@ -1,11 +1,155 @@
-# Gold translation: upstream engine gaps
+# Translation: upstream engine gaps
 
-The Gold mod now uses only the public `gen1recomp` content and hook APIs. The
+Both mods use only the public `gen1recomp` content and hook APIs. The
 following strings are tracked here because translating them correctly requires
 new upstream APIs; they must not be implemented by reaching into private UI
 classes from the translation mod.
 
-## Fixed: rows already reachable through an existing public hook
+## RBY
+
+### Verified working, not a gap
+
+The SummaryMenu's own stat labels (`NAME`, `ATTACK`, `DEFENSE`, `SPEED`,
+`SPECIAL`) are **not** blocked, despite each needing a `forced_dynamic_keys`
+entry in `config/shared/engine_manifest.json` to be reachable at all: the
+callsite (`ui/SummaryMenu.lua:150-157`) reads them from a runtime table
+(`Strings(s[1])`), which a static literal scanner cannot see, so they must be
+force-added to the catalog by key -- but `Strings()` itself is an ordinary
+runtime lookup by string value, indifferent to whether the call site used a
+literal or a variable. `config/rby/semantic_anchors.json` already carries a
+working anchor for all five (`rb.stat_names.VitaminStats.2-5`,
+`rb.start_sub_menus.TrainerInfo_NameMoneyTimeText`), confirmed translated
+(`fr`: `FOR`/`DEF`/`VIT`/`SPE`/`NOM`) in a real build's generated
+`strings.lua`. (A prior version of this README's "Remaining limitations"
+listed these as English-only; that was stale.)
+
+If a future gen1recomp version rewrote this callsite to pass a literal
+(`Strings("ATTACK")` per case instead of `Strings(s[1])`), the scanner would
+discover it on its own and `forced_dynamic_keys` would no longer be needed
+to make the key reachable -- and the anchors themselves would likely become
+redundant too, not just the manual catalog entry. Two things confirm this
+rather than just the scanner gap: `corpus_to_engine("ATTACK@")` already
+strips the trailing `@` down to plain `"ATTACK"`, the same normalization
+ordinary aligned records get before exact/normalized auto-matching runs;
+and although `ATTACK@` appears at two RedBlue qids
+(`rb.stat_names.VitaminStats.2` and `rb.stat_mod_names.StatModTextStrings.0`),
+both carry the identical translation in every shipped language (`fr`: `FOR`
+for both), so the duplicate would not make an automatic match unsafe. The
+anchors would stay harmless to keep either way -- explicit anchors still
+win over auto-matching in the resolution order -- but the manual upkeep
+they represent could be dropped.
+
+### Required upstream capabilities
+
+- **Stat-rise messages:** the `X ATTACK`/`X DEFENSE`/etc. battle items
+  (`inventory/ItemEffects.lua:291`, `Strings("%s's\n%s rose!", b.name,
+  stat:upper())`) and the vitamins -- `PROTEIN`, `IRON`, `CALCIUM`, `ZINC`,
+  `CARBOS`, `HP UP` (`inventory/ItemEffects.lua:489`, `Strings("%s's %s\nrose!",
+  monName(data, target), vitaminStat:upper())`) -- both substitute the raised
+  stat's name as a raw uppercase Lua string (`stat:upper()`), never through
+  `Strings()`, so no override can reach it. It always renders in English
+  (`ATTACK`, `DEFENSE`, `SPECIAL`, `SPEED`, `HP`) regardless of language. The
+  surrounding sentence template itself *is* translated
+  (`overrides/<language>/rby/engine.json`'s `"%s's %s\nrose!"` entry), just
+  not this one substituted word. A source comment at the second callsite
+  notes the officially localized ROM text (`_VitaminStatRoseText`) puts the
+  stat name in a different grammatical position per language (Spanish leads
+  with the stat), which is why the override uses neutral wording rather than
+  the exact localized phrasing.
+- **Status condition abbreviations:** `PSN`/`PAR`/`BRN`/`FRZ`/`SLP` always
+  render in English on the summary and party screens
+  (`ui/SummaryMenu.lua:146`, `Font.draw(mon.status or "OK", 128, 48)`;
+  `ui/PartyMenu.lua:821`, `Font.draw(mon.status, 136, y)`). This is a
+  different, deeper gap than the stat labels above: `mon.status` is never
+  passed through `Strings()` at all here, not even indirectly through a
+  runtime table -- it is the raw internal state code, drawn directly. No
+  override, anchor, or catalog entry can reach it; the callsite itself would
+  need to route through `Strings(mon.status)` (or an equivalent translated
+  lookup) first. The corpus already has the real, correct abbreviation for
+  every language (`rb.status_ailments.PrintStatusAilment.{slp,psn,brn,frz,par}`,
+  e.g. `fr`: `SOM`/`PSN`/`BRU`/`GEL`/`PAR`), confirmed by direct lookup, so
+  only the callsite needs to change, not anything on this project's side.
+- **Branching/stateful flavor-NPC dialogue** (`config/rby/literal_handlers.json`,
+  now 2 handlers: Viridian City's second Youngster and the Museum 1F ticket
+  clerk): each is blocked for a distinct, narrower reason than a prior
+  version of this doc claimed (see the "narrowed" note below) -- reading
+  `game.data.text` directly instead of through `Strings()` is, by itself,
+  *not* a gap (confirmed in the section above), so only NPCs with a second,
+  independent problem still need `map_scripts:register` reimplementation:
+  - **Viridian City's second Youngster**: two of its three lines
+    (`ViridianCityYoungster2OkThenText`,
+    `ViridianCityYoungster2CaterpieAndWeedleDescriptionText`) aren't in
+    `data/generated/text.lua` at all -- a comment at the callsite
+    (`data/scripts/flavor/viridian_city.lua`) says they're "defined without
+    a leading underscore in pokered/text/ViridianCity.asm and aren't
+    present in data/generated/text.lua, so we fall back to the literal
+    strings from pokered" -- gen1recomp's own ROM-text extractor appears to
+    skip labels that don't start with `_`. Only the prompt line has a real,
+    translatable qid; the other two have no override target to reach at
+    all.
+  - **Museum 1F's ticket clerk**: worse than a `Strings()` bypass -- its
+    vanilla implementation (`data/scripts/story2.lua`, the `museumClerk`
+    local function `M.MUSEUM_1F` shares between `talk` and the rope
+    `onStep` trigger) never reads `game.data.text` either; every line
+    (`"It's ¥50 for a\nchild's ticket."`, `"Right, ¥50!\nThank you!"`,
+    `"You don't have\nenough money."`, `"Come again!"`,
+    `"Take your time,\nand enjoy it all!"`) is a bare English string
+    literal baked into the Lua source. No catalog, override, or anchor can
+    reach a literal that was never looked up anywhere -- the callsite
+    itself would need to change.
+
+  **Narrowed from a prior version of this doc:** this section previously
+  claimed the shared root cause was simply "reads `game.data.text`
+  directly, not through `Strings()`", covering 6 handlers (adding the Bike
+  Shop's clerk/middle-aged-woman/youngster and Route 24's Nugget-Bridge
+  recruiter) plus a "no public API to give a Pokémon" blocker on Mt. Moon's
+  Magikarp salesman. That was wrong: `src/core/Strings.lua`'s own header
+  says extracted dialogue (`Data.text`) "already had a home... which a mod
+  reaches through `mod.content.text`" -- a *second*, separate override path
+  from `Strings()`/`mod.content.strings`, and `mod.content.text:override(id,
+  value)` patches `game.data.text[id]` directly. So a script reading
+  `t[label]` is translatable regardless of whether it goes through
+  `Strings()` first. Confirmed directly in a real build's `lang/dialogue.lua`:
+  `_BikeShopClerkHowDoYouLikeYourBicycleText`, `_BikeShopClerkOhThatsAVoucherText`,
+  `_BikeShopExchangedVoucherText`, `_BikeShopMiddleAgedWomanText`,
+  `_BikeShopYoungsterTheseBikesAreExpensiveText`/`CoolBikeText`,
+  `_Route24CooltrainerM1*` (all 7 lines), and
+  `_MtMoonPokecenterMagikarpSalesman*`/`_GotMonText` are all present with
+  correct French text. Their vanilla scripts
+  (`data/scripts/story2.lua`'s `TEXT_BIKESHOP_CLERK`,
+  `data/scripts/flavor/bike_shop.lua`'s `show_text`-command entries --
+  `Commands.show_text` also reads `ctx.game.data.text[textId]`,
+  `src/script/Commands.lua:81` --, `data/scripts/story4.lua`'s
+  `TEXT_ROUTE24_COOLTRAINER_M1` and `M.MT_MOON_POKECENTER`) already
+  implement the same branching, and are *more* complete than this
+  project's former reimplementations: they call
+  `require("src.inventory.Bag").add(...)` for a real bag-capacity check
+  (unrestricted for core engine code -- `SUPPORTED_REQUIRES` only
+  constrains mod code) where the removed Route 24/Bike Shop handlers here
+  could not, and `M.MT_MOON_POKECENTER` already calls
+  `require("src.script.Commands").give_pokemon(...)` directly, so giving a
+  Pokémon was never actually blocked for any NPC gen1recomp itself already
+  implements. The 4 now-redundant handlers (and the "no public API to give
+  a Pokémon" bullet) were removed from `config/rby/literal_handlers.json`
+  and this doc; letting vanilla's talk scripts run is both simpler and more
+  correct than the reimplementations were. The same check was run against
+  every other flavor NPC found reading `game.data.text` directly this way
+  -- Viridian City's `GAMBLER1`/`GIRL`, Pewter City's `SUPER_NERD1`/
+  `SUPER_NERD2`, and the `gift()` helper family in `data/scripts/story5.lua`
+  (8 NPCs: Celadon Diner's Coin Case, Celadon Mart 3F's TM18, Route 12 Gate
+  2F's TM39, Celadon City's TM41, Cinnabar Lab's TM35, Viridian City's
+  TM42, Silph Co 2F's TM36, Route 1's Potion sample) -- all confirmed
+  already correctly translated in a real build's `dialogue.lua`, no config
+  needed. Likewise the Pokédex "kind" classification
+  (`src/ui/DexEntryMenu.lua:93`, `Font.draw(e.kind or "?", ...)`, no
+  `Strings()` call) looked like the same deep gap as the status-ailment
+  abbreviations above, but isn't: `pipeline/mod.py` already has a dedicated
+  `species_kinds` catalog (`mod.content.pokemon:patch(id, {dexEntry =
+  {kind = value}})`) built for exactly this field.
+
+## Gold
+
+### Fixed: rows already reachable through an existing public hook
 
 `PcMenu`'s five storage-menu rows (`Withdraw Pokémon`, `Deposit Pokémon`,
 `Change box`, `Move Pokémon w/o mail`, `See ya!`) and the battle party
@@ -20,7 +164,7 @@ already localized -- `item.desc` just wasn't wired up yet. All now fixed;
 `Party <PK><MN>\nstatus`'s French translation is slightly longer than the
 original two-glyph line and should get an in-game width check.
 
-## Required upstream capabilities
+### Required upstream capabilities
 
 Still genuinely out of reach: these have no public hook at all, only a
 hardcoded local table or a `self:say(...)`/`:drawBottomLines(...)` call, so
