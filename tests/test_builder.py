@@ -501,6 +501,26 @@ class BuilderTests(unittest.TestCase):
         self.assertEqual(calls[1][0], ["git", "fetch", "--depth", "1", "origin", "abc123"])
         self.assertEqual(calls[2][0], ["git", "checkout", "--detach", "abc123"])
 
+    def test_stale_non_git_destination_is_replaced_not_crashed_on(self):
+        # A destination can exist without being a git checkout: a prior run
+        # that used the archive path instead (frozen build, or a switch
+        # between the two), an interrupted clone, or a corrupted directory.
+        # `git clone` refuses a non-empty destination, so this must not
+        # blindly attempt one.
+        calls = []
+
+        def run(command, **kwargs):
+            calls.append(command)
+
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "repo"
+            destination.mkdir(parents=True)
+            (destination / ".archive-marker.json").write_text("{}", encoding="utf-8")
+            (destination / "leftover.txt").write_text("stale archive content", encoding="utf-8")
+            builder.ensure_checkout("url", "revision", destination, runner=run)
+            self.assertEqual(calls[0][:3], ["git", "clone", "--no-checkout"])
+            self.assertFalse((destination / "leftover.txt").exists())
+
     def test_existing_checkout_is_not_cloned_again(self):
         calls = []
         with tempfile.TemporaryDirectory() as directory:

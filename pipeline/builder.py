@@ -284,6 +284,15 @@ def ensure_checkout(
     """Create or refresh a private checkout at an immutable revision."""
     git_dir = destination / ".git"
     if not git_dir.is_dir():
+        # destination can exist without being a git checkout: a prior run
+        # that used the archive path instead (frozen build, or a switch
+        # between the two), an interrupted clone, or a corrupted directory.
+        # `git clone` refuses to run into a non-empty directory, so replace
+        # it rather than crash -- this is disposable cache, never user data.
+        if destination.is_dir():
+            shutil.rmtree(destination)
+        elif destination.exists():
+            destination.unlink()
         destination.parent.mkdir(parents=True, exist_ok=True)
         clone = ["git", "clone", "--no-checkout"]
         if sparse_paths:
