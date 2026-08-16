@@ -136,15 +136,18 @@ def coverage_lines(path: str | Path) -> list[str]:
     """Return the compact coverage text shown after a successful build."""
     report = json.loads(Path(path).read_text(encoding="utf-8"))
     lines: list[str] = []
-    for key, label in (
-        ("rom", "ROM aggregate"),
-        ("engine", "All engine strings"),
-    ):
-        section = report.get(key) or {}
-        lines.append(
-            f"{label}: {int(section.get('translated', 0))}/{int(section.get('total', 0))} "
-            f"({float(section.get('percent', 0.0)):.2f}%)"
-        )
+    # ROM aggregates first (broad Red/Blue, then narrower Yellow), then
+    # engine-authored-text metrics from most to least specific: RBY/Gold's
+    # own filtered scope reads before the unfiltered "All engine strings"
+    # total, since that total is the least actionable number here.
+    section = report.get("rom") or {}
+    lines.append(
+        f"Red Blue ROM aggregate: {int(section.get('translated', 0))}/{int(section.get('total', 0))} "
+        f"({float(section.get('percent', 0.0)):.2f}%)"
+    )
+    yellow = (report.get("yellow") or {}).get("coverage", {}).get("rom") or {}
+    if yellow.get("total"):
+        lines.append(f"Yellow ROM aggregate: {int(yellow.get('translated', 0))}/{int(yellow.get('total', 0))} ({float(yellow.get('percent', 0.0)):.2f}%)")
     section = report.get("engine_rby") or {}
     if section.get("available", True) and section.get("total"):
         lines.append(
@@ -161,9 +164,11 @@ def coverage_lines(path: str | Path) -> list[str]:
             f"{int(section.get('translated', 0))}/{int(section.get('total', 0))} "
             f"({float(section.get('percent', 0.0)):.2f}%)"
         )
-    yellow = (report.get("yellow") or {}).get("coverage", {}).get("rom") or {}
-    if yellow.get("total"):
-        lines.append(f"Yellow ROM aggregate: {int(yellow.get('translated', 0))}/{int(yellow.get('total', 0))} ({float(yellow.get('percent', 0.0)):.2f}%)")
+    section = report.get("engine") or {}
+    lines.append(
+        f"All engine strings: {int(section.get('translated', 0))}/{int(section.get('total', 0))} "
+        f"({float(section.get('percent', 0.0)):.2f}%)"
+    )
     return lines
 
 

@@ -83,7 +83,7 @@ class BuilderTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             report = Path(directory) / "coverage.json"
             report.write_text(json.dumps({"rom": {"translated": 2, "total": 4, "percent": 50}, "engine": {"translated": 1, "total": 2, "percent": 50}, "engine_rby": {"translated": 3, "total": 4, "percent": 75}}), encoding="utf-8")
-            self.assertEqual(coverage_lines(report), ["ROM aggregate: 2/4 (50.00%)", "All engine strings: 1/2 (50.00%)", "RBY-related engine strings: 3/4 (75.00%)"])
+            self.assertEqual(coverage_lines(report), ["Red Blue ROM aggregate: 2/4 (50.00%)", "RBY-related engine strings: 3/4 (75.00%)", "All engine strings: 1/2 (50.00%)"])
 
             report.write_text(json.dumps({
                 "rom": {"translated": 2, "total": 4, "percent": 50},
@@ -96,6 +96,24 @@ class BuilderTests(unittest.TestCase):
                 coverage_lines(report),
             )
 
+            # ROM aggregates first (Red/Blue then Yellow), then engine
+            # metrics from most to least specific: RBY-related before the
+            # unfiltered "All engine strings" total.
+            report.write_text(json.dumps({
+                "rom": {"translated": 3278, "total": 3278, "percent": 100},
+                "engine": {"translated": 352, "total": 951, "percent": 37.01},
+                "engine_rby": {"translated": 256, "total": 256, "percent": 100},
+                "yellow": {"coverage": {"rom": {
+                    "translated": 3402, "total": 3402, "percent": 100,
+                }}},
+            }), encoding="utf-8")
+            self.assertEqual(coverage_lines(report), [
+                "Red Blue ROM aggregate: 3278/3278 (100.00%)",
+                "Yellow ROM aggregate: 3402/3402 (100.00%)",
+                "RBY-related engine strings: 256/256 (100.00%)",
+                "All engine strings: 352/951 (37.01%)",
+            ])
+
             report.write_text(json.dumps({
                 "rom": {"translated": 8, "total": 9, "percent": 88.89},
                 "rom_dialogue": {"translated": 1, "total": 2, "percent": 50},
@@ -104,9 +122,9 @@ class BuilderTests(unittest.TestCase):
                 "engine_gen2": {"translated": 1, "total": 2, "percent": 50},
             }), encoding="utf-8")
             self.assertEqual(coverage_lines(report), [
-                "ROM aggregate: 8/9 (88.89%)",
-                "All engine strings: 2/4 (50.00%)",
+                "Red Blue ROM aggregate: 8/9 (88.89%)",
                 "Gold-related engine strings: 1/2 (50.00%)",
+                "All engine strings: 2/4 (50.00%)",
             ])
 
     def test_gui_validation_requires_output_only(self):
@@ -892,8 +910,48 @@ class BuilderTests(unittest.TestCase):
             output = io.StringIO()
             with redirect_stdout(output):
                 builder.print_coverage(report)
-        self.assertIn("ROM aggregate: 3/4 (75.00%)", output.getvalue())
+        self.assertIn("Red Blue ROM aggregate: 3/4 (75.00%)", output.getvalue())
         self.assertIn("All engine strings: 1/2 (50.00%)", output.getvalue())
+
+    def test_coverage_groups_rom_metrics_before_engine_metrics(self):
+        # ROM aggregates first (Red/Blue then Yellow), then engine metrics
+        # from most to least specific: RBY-related before the unfiltered
+        # "All engine strings" total -- matches pipeline.gui.coverage_lines'
+        # ordering.
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / "coverage.json"
+            report.write_text(json.dumps({
+                "rom": {"translated": 3278, "total": 3278, "percent": 100},
+                "engine": {"translated": 352, "total": 951, "percent": 37.01},
+                "engine_rby": {"translated": 256, "total": 256, "percent": 100},
+                "yellow": {"coverage": {"rom": {
+                    "translated": 3402, "total": 3402, "percent": 100,
+                }}},
+            }), encoding="utf-8")
+            output = io.StringIO()
+            with redirect_stdout(output):
+                builder.print_coverage(report)
+        lines = [line.strip() for line in output.getvalue().splitlines() if line.strip()]
+        self.assertEqual(lines, [
+            "Translation coverage:",
+            "Red Blue ROM aggregate: 3278/3278 (100.00%)",
+            "Yellow ROM aggregate: 3402/3402 (100.00%)",
+            "RBY-related engine strings: 256/256 (100.00%)",
+            "All engine strings: 352/951 (37.01%)",
+        ])
+
+    def test_coverage_shows_gold_related_engine_strings(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / "coverage.json"
+            report.write_text(json.dumps({
+                "rom": {"translated": 8, "total": 9, "percent": 88.89},
+                "engine": {"translated": 2, "total": 4, "percent": 50},
+                "engine_gen2": {"translated": 1, "total": 2, "percent": 50},
+            }), encoding="utf-8")
+            output = io.StringIO()
+            with redirect_stdout(output):
+                builder.print_coverage(report)
+        self.assertIn("Gold-related engine strings: 1/2 (50.00%)", output.getvalue())
 
     def test_prerequisite_message_is_actionable(self):
         with (

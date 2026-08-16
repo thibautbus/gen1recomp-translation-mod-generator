@@ -146,7 +146,7 @@ selected TTF and its applicable license notices.
 The ZIP is universal, but ROM coverage is reported separately for Red/Blue
 and Yellow:
 
-- `ROM aggregate` is the release metric. It combines the six effective ROM
+- `Red Blue ROM aggregate` is the release metric. It combines the six effective ROM
   catalogs with 179 shared runtime entries (types, species kinds, literal
   handlers, demo names and ROM-derived engine templates). Therefore
   `3281 = 3102 + 179` for Red/Blue and `3405 = 3226 + 179` for Yellow.
@@ -156,7 +156,7 @@ and Yellow:
 Engine metrics are informational: unmatched or ambiguous entries keep the
 engine's English fallback.
 
-| Target | Red/Blue ROM aggregate | Yellow ROM aggregate | RBY-related engine strings |
+| Target | Red Blue ROM aggregate | Yellow ROM aggregate | RBY-related engine strings |
 | --- | ---: | ---: | ---: |
 | `fr` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
 | `de` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
