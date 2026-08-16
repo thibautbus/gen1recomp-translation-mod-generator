@@ -185,6 +185,13 @@ class TranslationBuilderApp:
         self._events = queue.SimpleQueue()
         self._configure_style()
         self._build_widgets()
+        # _build_widgets() lands on generation 1 (Red, Blue and Yellow), the
+        # tallest ROM-row layout; lock that in as the floor so switching to
+        # Gold's single ROM row hides rows without the window itself
+        # shrinking around them -- the static 720x620 guess above was
+        # smaller than this layout actually needs.
+        self.root.update_idletasks()
+        self.root.minsize(self.root.winfo_width(), self.root.winfo_height())
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         self.root.after(50, self._poll_events)
 
@@ -223,7 +230,8 @@ class TranslationBuilderApp:
         frame = ttk.Frame(self.root, padding=18)
         frame.pack(fill="both", expand=True)
 
-        ttk.Label(frame, text="Which games do you want to translate?", style="Hint.TLabel").grid(row=0, column=0, columnspan=3, sticky="w", pady=(8, 2))
+        self.games_hint_var = tk.StringVar(value="Which games do you want to translate?")
+        ttk.Label(frame, textvariable=self.games_hint_var, style="Hint.TLabel").grid(row=0, column=0, columnspan=3, sticky="w", pady=(8, 2))
         ttk.Label(frame, text="Games").grid(row=1, column=0, sticky="w", pady=(0, 6))
         self.generation_box = ttk.Combobox(
             frame, textvariable=self.generation_var,
@@ -299,6 +307,13 @@ class TranslationBuilderApp:
     def _sync_generation(self):
         generation = generation_code(self.generation_var.get())
         active = set(ROMS_BY_GENERATION[generation])
+        if generation == 1:
+            self.games_hint_var.set(
+                "Which games do you want to translate? Red, Blue and Yellow "
+                "share one translation: select all three ROMs below, not just one."
+            )
+        else:
+            self.games_hint_var.set("Which games do you want to translate?")
         for game, widgets in self.rom_widgets.items():
             for widget in widgets:
                 if game in active:
