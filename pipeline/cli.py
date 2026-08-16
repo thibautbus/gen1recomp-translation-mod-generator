@@ -9,7 +9,7 @@ from .align import align, apply_corpus_overrides
 from .corpus import load_corpus, parse_redblue, canonical_language
 from .generate import generate_lua
 from .validate import release_gate, validate
-from .roms import catalog_roms, import_rom, import_all
+from .roms import catalog_roms, import_rom, import_all, import_gold_rom
 from .mod import font_profile_warning, generate_mod
 from .disassembly_audit import run_audit
 from .engine_backlog import MATRIX_LANGUAGES, run_backlog, run_backlog_matrix
@@ -21,12 +21,32 @@ def main(argv=None) -> int:
     parse = sub.add_parser("parse"); parse.add_argument("corpus"); parse.add_argument("-o", "--output", required=True); parse.add_argument("--target-lang", default="fr")
     corpus_overrides_option = ("--corpus-overrides",)
     al = sub.add_parser("align"); al.add_argument("records"); al.add_argument("-o", "--output", required=True); al.add_argument("--target-lang", default="fr"); al.add_argument(*corpus_overrides_option, dest="corpus_overrides")
-    gen = sub.add_parser("generate"); gen.add_argument("aligned"); gen.add_argument("-o", "--output", required=True); gen.add_argument("--mod-id", default=None); gen.add_argument("--target-name", default=None); gen.add_argument("--target-lang", default=None); gen.add_argument(*corpus_overrides_option, dest="corpus_overrides"); gen.add_argument("--modkit-worksheet"); gen.add_argument("--engine-catalog"); gen.add_argument("--engine-overrides", default=None); gen.add_argument("--engine-source"); gen.add_argument("--engine-scope"); gen.add_argument("--font-source"); gen.add_argument("--font-profile", choices=("fusion", "pokemon"), default="fusion"); gen.add_argument("--semantic-anchors"); gen.add_argument("--semantic-anchor-decisions"); gen.add_argument("--report")
+    gen = sub.add_parser("generate"); gen.add_argument("aligned"); gen.add_argument("-o", "--output", required=True); gen.add_argument("--mod-id", default=None); gen.add_argument("--target-name", default=None); gen.add_argument("--target-lang", default=None); gen.add_argument(*corpus_overrides_option, dest="corpus_overrides"); gen.add_argument("--modkit-worksheet"); gen.add_argument("--engine-catalog"); gen.add_argument("--engine-overrides", default=None); gen.add_argument("--engine-source"); gen.add_argument("--engine-scope"); gen.add_argument("--engine-manifest"); gen.add_argument("--font-source"); gen.add_argument("--font-profile", choices=("fusion", "pokemon"), default="fusion"); gen.add_argument("--semantic-anchors"); gen.add_argument("--semantic-anchor-decisions"); gen.add_argument("--report")
     refresh = sub.add_parser("refresh"); refresh.add_argument("aligned"); refresh.add_argument("--mod", required=True); refresh.add_argument(*corpus_overrides_option, dest="corpus_overrides")
-    val = sub.add_parser("validate"); val.add_argument("aligned"); val.add_argument("--release", action="store_true"); val.add_argument("--version", choices=("red", "blue")); val.add_argument("--report"); val.add_argument("--charmap", help="JSON glyph->byte map required for release"); val.add_argument("--coverage", help="modkit join coverage JSON required for release")
+    val = sub.add_parser("validate"); val.add_argument("aligned"); val.add_argument("--release", action="store_true"); val.add_argument("--version", choices=("red", "blue", "gold")); val.add_argument("--report"); val.add_argument("--charmap", help="JSON glyph->byte map required for release"); val.add_argument("--coverage", help="modkit join coverage JSON required for release")
     cat = sub.add_parser("catalog"); cat.add_argument("--red", required=True); cat.add_argument("--blue", required=True); cat.add_argument("--yellow"); cat.add_argument("-o", "--output", required=True)
     imp = sub.add_parser("import"); imp.add_argument("version", choices=("red", "blue", "yellow")); imp.add_argument("rom"); imp.add_argument("--gen1recomp", required=True); imp.add_argument("--out", required=True); imp.add_argument("--assets", required=True)
     all_imp = sub.add_parser("import-all"); all_imp.add_argument("--red", required=True); all_imp.add_argument("--blue", required=True); all_imp.add_argument("--yellow"); all_imp.add_argument("--gen1recomp", required=True); all_imp.add_argument("--cache-root", required=True)
+    imp_gold = sub.add_parser(
+        "import-gold", help="developer-only: extract Gold catalogs under LuaJIT, no LÖVE",
+    )
+    imp_gold.add_argument("rom")
+    imp_gold.add_argument("--gen1recomp", required=True)
+    imp_gold.add_argument("--out", required=True)
+    build_gold = sub.add_parser(
+        "build-gold",
+        help="developer-only: join Gold extractor output and write a loadable mod",
+    )
+    build_gold.add_argument(
+        "--gold-out", required=True, help="directory containing the Gold extractor TSV catalogs",
+    )
+    build_gold.add_argument("--corpus", required=True, help="GoldSilver corpus directory")
+    build_gold.add_argument("-o", "--output", required=True)
+    build_gold.add_argument("--target-lang", default="fr")
+    build_gold.add_argument("--mod-id")
+    build_gold.add_argument("--font-source")
+    build_gold.add_argument("--gen1recomp", help="pinned checkout used to generate engine-string coverage")
+    build_gold.add_argument("--font-profile", choices=("fusion", "pokemon"), default="fusion")
     sub.add_parser("audit-disassemblies", help="developer-only private localized disassembly audit")
     backlog = sub.add_parser("engine-backlog", help="developer-only private unresolved engine-string backlog")
     backlog.add_argument("--language", "--target-lang", dest="language", default=None)
@@ -55,6 +75,18 @@ def main(argv=None) -> int:
         if args.yellow:
             roms["yellow"] = args.yellow
         import_all(roms, args.gen1recomp, args.cache_root); return 0
+    if args.command == "import-gold":
+        import_gold_rom(args.rom, args.gen1recomp, args.out); return 0
+    if args.command == "build-gold":
+        from .gold_mod import build_gold_dialogue_mod
+        mod_dir, entries, stats = build_gold_dialogue_mod(
+            args.gold_out, args.corpus, args.output, mod_id=args.mod_id, language=args.target_lang,
+            font_source=args.font_source, font_profile=args.font_profile,
+            engine_source=args.gen1recomp,
+        )
+        public_stats = {key: value for key, value in stats.items() if not key.startswith("_")}
+        print(json.dumps({"mod": str(mod_dir), "stats": public_stats}, ensure_ascii=False, indent=2))
+        return 0
     if args.command == "audit-disassemblies":
         run_audit()
         return 0
@@ -153,10 +185,11 @@ def main(argv=None) -> int:
             if warning:
                 print(f"Warning: {warning}", file=sys.stderr)
             generate_mod(items, output, args.mod_id or f"translation-{target_lang.lower()}", language=target_lang, modkit_worksheet=args.modkit_worksheet, report_path=args.report,
-                         engine_catalog=args.engine_catalog, engine_overrides=args.engine_overrides or f"overrides/{target_lang}/shared_engine_overrides.json",
+                         engine_catalog=args.engine_catalog, engine_overrides=args.engine_overrides or f"overrides/{target_lang}/rby/engine.json",
                          semantic_anchors=args.semantic_anchors,
                          semantic_anchor_decisions=args.semantic_anchor_decisions,
                          engine_source=args.engine_source, engine_scope=args.engine_scope,
+                         engine_manifest=args.engine_manifest,
                          font_source=args.font_source,
                          font_profile=args.font_profile,
                          target_name=args.target_name,

@@ -157,6 +157,31 @@ class YellowCoverageTests(unittest.TestCase):
         })
         self.assertEqual(metrics["rom"], {"translated": 14, "total": 14, "percent": 100.0})
 
+    def test_yellow_rom_aggregate_includes_shared_runtime_extras(self):
+        metrics = yellow_coverage_metrics(
+            {
+                "effective_dialogue_total": 6,
+                "effective_dialogue_translated": 5,
+                "catalogs": {"item_names": {"matched": 3, "total": 4}},
+                "effective_named_catalog_translated": 3,
+            },
+            {
+                # Base Red/Blue catalogs are replaced by their Yellow
+                # equivalents; only the remaining runtime resources are shared.
+                "dialogue": {"translated": 20, "total": 20},
+                "item_names": {"translated": 8, "total": 8},
+                "type_names": {"translated": 2, "total": 2},
+                "literal_handlers": {"translated": 1, "total": 2},
+            },
+        )
+
+        self.assertEqual(metrics["rom"], {"translated": 11, "total": 14, "percent": 78.57})
+        self.assertEqual(metrics["shared_runtime"]["translated"], 3)
+        self.assertEqual(metrics["shared_runtime"]["total"], 4)
+        self.assertEqual(set(metrics["shared_runtime"]["details"]), {
+            "type_names", "literal_handlers",
+        })
+
     def test_refusing_dialogue_completes_effective_engine_metric(self):
         coverage = effective_yellow_engine_coverage(
             {"translated": 248, "total": 249},
@@ -164,7 +189,7 @@ class YellowCoverageTests(unittest.TestCase):
         )
         self.assertEqual(coverage["translated"], 249)
         self.assertEqual(coverage["covered_by_dialogue"], 1)
-        self.assertEqual(coverage, {"translated": 249, "total": 249, "percent": 100.0, "covered_by_dialogue": 1})
+        self.assertEqual(coverage, {"translated": 249, "total": 249, "percent": 100.0, "covered_by_dialogue": 1, "covered_by_yellow_engine": 0})
 
     def test_english_refusal_fallback_is_not_counted(self):
         coverage = effective_yellow_engine_coverage(
@@ -173,6 +198,30 @@ class YellowCoverageTests(unittest.TestCase):
         )
         self.assertEqual(coverage["covered_by_dialogue"], 0)
         self.assertEqual(coverage["translated"], 248)
+
+    def test_yellow_only_engine_strings_complete_the_metric(self):
+        coverage = effective_yellow_engine_coverage(
+            {"translated": 248, "total": 251},
+            None,
+            {"%s looks\nunhappy about it!": "%s n'est\npas content!",
+             "PIKACHU looks\ncontent.": "PIKACHU a l'air\ncontent.",
+             "SCORE %d": "SCORE %d"},
+            {"%s looks\nunhappy about it!", "PIKACHU looks\ncontent.", "No! A new BADGE\nis required."},
+        )
+        self.assertEqual(coverage["covered_by_yellow_engine"], 2)
+        self.assertEqual(coverage["translated"], 250)
+        self.assertEqual(coverage, {"translated": 250, "total": 251, "percent": 99.6, "covered_by_dialogue": 0, "covered_by_yellow_engine": 2})
+
+    def test_yellow_engine_strings_outside_eligible_scope_are_not_counted(self):
+        coverage = effective_yellow_engine_coverage(
+            {"translated": 248, "total": 249},
+            {"_RefusingText": "{RAM:wNameBuffer}\nrefuse!"},
+            {"A: done": "A: Terminer"},
+            set(),
+        )
+        self.assertEqual(coverage["covered_by_yellow_engine"], 0)
+        self.assertEqual(coverage["covered_by_dialogue"], 1)
+        self.assertEqual(coverage["translated"], 249)
 
 
 class YellowJoinReportTests(unittest.TestCase):
@@ -464,7 +513,7 @@ class YellowCoverageExceptionsTests(unittest.TestCase):
         from pipeline.builder import load_yellow_coverage_exceptions
         from pipeline.project import resource_root
         overrides = load_yellow_coverage_exceptions(
-            resource_root() / "config" / "yellow_coverage_exceptions.json"
+            resource_root() / "config" / "rby" / "yellow_coverage_exceptions.json"
         )
         self.assertEqual(overrides.get("it"), frozenset({"_RoseText"}))
 

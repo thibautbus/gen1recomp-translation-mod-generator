@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-import ast
 import json
 from pathlib import Path
 import re
@@ -58,6 +57,56 @@ class SemanticAnchorCatalog(dict):
         self.decision_provenance = dict(decision_provenance or {})
 
 
+def _decode_lua_string(token: str) -> str | None:
+    """Decode Lua strings without treating decimal escapes as Python octal."""
+    if len(token) < 2 or token[0] not in {"'", '"'} or token[-1] != token[0]:
+        return None
+    body = token[1:-1]
+    values: list[str] = []
+    escapes = {
+        "a": "\a", "b": "\b", "f": "\f", "n": "\n",
+        "r": "\r", "t": "\t", "v": "\v",
+    }
+    index = 0
+    while index < len(body):
+        char = body[index]
+        if char != "\\":
+            values.append(char)
+            index += 1
+            continue
+        if index + 1 >= len(body):
+            return None
+        index += 1
+        escaped = body[index]
+        if escaped in escapes:
+            values.append(escapes[escaped])
+        elif escaped in {"\\", "'", '"'}:
+            values.append(escaped)
+        elif escaped == "z":
+            index += 1
+            while index < len(body) and body[index].isspace():
+                index += 1
+            continue
+        elif escaped == "x":
+            digits = body[index + 1:index + 3]
+            if len(digits) != 2 or not re.fullmatch(r"[0-9A-Fa-f]{2}", digits):
+                return None
+            values.append(chr(int(digits, 16)))
+            index += 2
+        elif escaped.isdigit():
+            match = re.match(r"[0-9]{1,3}", body[index:])
+            assert match is not None
+            codepoint = int(match.group(0), 10)
+            if codepoint > 255:
+                return None
+            values.append(chr(codepoint))
+            index += len(match.group(0)) - 1
+        else:
+            return None
+        index += 1
+    return "".join(values)
+
+
 
 
 def read_engine_catalog(path: str | Path) -> dict[str, str]:
@@ -106,7 +155,10 @@ def read_engine_catalog(path: str | Path) -> dict[str, str]:
         if residue:
             raise ValueError("invalid strings.lua trailing content")
         for match in matches:
-            source, decoded = ast.literal_eval(match.group(1)), ast.literal_eval(match.group(2))
+            source = _decode_lua_string(match.group(1))
+            decoded = _decode_lua_string(match.group(2))
+            if source is None or decoded is None:
+                raise ValueError("invalid Lua escape in strings.lua")
             if decoded != "":
                 raise ValueError("engine catalogue must be a generated empty scaffold")
             if source in result:
@@ -122,12 +174,10 @@ def read_engine_catalog(path: str | Path) -> dict[str, str]:
         if not match:
             raise ValueError(f"invalid strings.lua directive at line {line_no}")
         key, value = match.groups()
-        try:
-            # Lua's common escapes are sufficient for modkit output.
-            source = ast.literal_eval(key)
-            decoded = ast.literal_eval(value)
-        except (UnicodeDecodeError, ValueError, SyntaxError) as exc:
-            raise ValueError(f"invalid Lua escape at line {line_no}") from exc
+        source = _decode_lua_string(key)
+        decoded = _decode_lua_string(value)
+        if source is None or decoded is None:
+            raise ValueError(f"invalid Lua escape at line {line_no}")
         if decoded != "":
             raise ValueError(f"engine catalogue must be a generated empty scaffold (line {line_no})")
         if source in result:
@@ -187,14 +237,14 @@ def _printf_marker_type(directive: str) -> str:
 
 def _dynamic_marker_type(token: str) -> str | None:
     """Map a corpus runtime token to a conservative structural type."""
-    if token.startswith("{NUM:"):
+    if token == "{NUM}" or token.startswith("{NUM:"):
         return "number"
-    if token == "{RAM}" or token.startswith("{RAM:"):
+    if token == "{RAM}" or token.startswith("{RAM:") or token == "{STRBUF}":
         return "string"
     # These are runtime substitutions containing textual names/labels.  Keep
     # them in one class: their concrete identity is not stable across games or
     # languages, whereas their ordering and string nature are stable.
-    if token in {"{PLAYER}", "{RIVAL}", "{TARGET}", "{USER}", "{ID}"}:
+    if token in {"{PLAYER}", "{RIVAL}", "{TARGET}", "{USER}", "{ID}", "{ENEMY}"}:
         return "string"
     return None
 
@@ -269,11 +319,25 @@ def _structural_translation(source: str, translation: str | None) -> str | None:
     """
     if translation in (None, ""):
         return None
-    source_directives = [
-        token for kind, token in _placeholder_tokens(source)
-        if kind == "printf" and token != "%%"
-    ]
-    source_types = tuple(_printf_marker_type(token) for token in source_directives)
+    source_markers: list[tuple[str, str]] = []
+    index = 0
+    while index < len(source):
+        dynamic = DYNAMIC_TOKEN_RE.match(source, index)
+        marker_type = _dynamic_marker_type(dynamic.group(0)) if dynamic else None
+        if dynamic and marker_type:
+            source_markers.append((dynamic.group(0), marker_type))
+            index = dynamic.end()
+            continue
+        if source[index:index + 2] == "%%":
+            index += 2
+            continue
+        printf = _PRINTF.match(source, index)
+        if printf:
+            source_markers.append((printf.group(0), _printf_marker_type(printf.group(0))))
+            index = printf.end()
+            continue
+        index += 1
+    source_types = tuple(marker_type for _, marker_type in source_markers)
     converted = corpus_to_engine(translation)
     target_tokens = _placeholder_tokens(converted)
     target_dynamic = [token_type for kind, token_type in target_tokens if kind == "dynamic"]
@@ -292,7 +356,7 @@ def _structural_translation(source: str, translation: str | None) -> str | None:
         while index < len(converted):
             dynamic = DYNAMIC_TOKEN_RE.match(converted, index)
             if dynamic and _dynamic_marker_type(dynamic.group(0)):
-                pieces.append(source_directives[dynamic_index])
+                pieces.append(source_markers[dynamic_index][0])
                 dynamic_index += 1
                 index = dynamic.end()
                 continue
@@ -357,7 +421,7 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
     implicit_default = path is None
     inherited_provenance = getattr(path, "decision_provenance", {}) if isinstance(path, Mapping) else {}
     if path is None:
-        path = Path(__file__).resolve().parents[1] / "config" / "semantic_anchors.json"
+        path = Path(__file__).resolve().parents[1] / "config" / "rby" / "semantic_anchors.json"
     if isinstance(path, Mapping):
         data = dict(path)
     else:
@@ -588,7 +652,7 @@ def load_semantic_anchors(path: str | Path | Mapping | None = None) -> dict[str,
     # The matching pipeline itself loads both files explicitly so conflicts
     # are validated before they can affect a build.
     if implicit_default:
-        decisions_path = Path(__file__).resolve().parents[1] / "config" / "semantic_anchor_decisions.json"
+        decisions_path = Path(__file__).resolve().parents[1] / "config" / "rby" / "semantic_anchor_decisions.json"
         if decisions_path.is_file():
             decisions = load_semantic_anchor_decisions(decisions_path)
             overlap = set(result).intersection(decisions)
@@ -616,7 +680,7 @@ def load_semantic_anchor_decisions(path: str | Path | Mapping | None = None) -> 
     extraction grammar.  Returned rows contain ``anchor`` and metadata.
     """
     if path is None:
-        path = Path(__file__).resolve().parents[1] / "config" / "semantic_anchor_decisions.json"
+        path = Path(__file__).resolve().parents[1] / "config" / "rby" / "semantic_anchor_decisions.json"
     if isinstance(path, Mapping):
         data = dict(path)
     else:
@@ -906,9 +970,9 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
         target_lang = next((r.language for r in rows if isinstance(r, CorpusRecord) and r.language != "en"), "fr")
     raw_target = [candidate for candidate in rows if isinstance(candidate, CorpusRecord) and candidate.language == target_lang]
     if semantic_anchors is None:
-        deterministic_path = Path(__file__).resolve().parents[1] / "config" / "semantic_anchors.json"
+        deterministic_path = Path(__file__).resolve().parents[1] / "config" / "rby" / "semantic_anchors.json"
         deterministic = load_semantic_anchors(deterministic_path)
-        decisions_path = semantic_anchor_decisions if semantic_anchor_decisions is not None else Path(__file__).resolve().parents[1] / "config" / "semantic_anchor_decisions.json"
+        decisions_path = semantic_anchor_decisions if semantic_anchor_decisions is not None else Path(__file__).resolve().parents[1] / "config" / "rby" / "semantic_anchor_decisions.json"
         decisions = load_semantic_anchor_decisions(decisions_path)
     else:
         deterministic = load_semantic_anchors(semantic_anchors)
@@ -1131,17 +1195,20 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
         # A direct printf part leaves the key's literal edge text outside the
         # qid fragments. Preserve those official edges (notably the terminal
         # ``!`` in ``%s vs %s!``) in both reconstructed values.
-        if any("printf" in part for part in parts):
+        visible_parts = [part for part in parts if part.get("include", True)]
+        if any("printf" in part for part in visible_parts):
             first = next((match.start() for match in _PRINTF.finditer(source)), None)
             last = None
             for match in _PRINTF.finditer(source):
                 last = match.end()
             prefix = source[:first] if first is not None else ""
             suffix = source[last:] if last is not None else ""
-            if prefix and not source_value.startswith(prefix):
+            if (visible_parts and "printf" in visible_parts[0] and prefix and
+                    not source_value.startswith(prefix)):
                 source_value = prefix + source_value
                 target_value = prefix + target_value
-            if suffix and not source_value.endswith(suffix):
+            if (visible_parts and "printf" in visible_parts[-1] and suffix and
+                    not source_value.endswith(suffix)):
                 source_value += suffix
                 target_value += suffix
         aliases = {str(alias) for alias in anchor.get("source_aliases", []) if isinstance(alias, str)}
@@ -1307,7 +1374,10 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
                 report["unmatched"].append(source)
                 report["details"][source] = "structural_incompatible"
                 continue
-        values = {corpus_to_engine(v) for _, v in candidates if v not in (None, "")}
+        values = {
+            converted for _, value in candidates if value not in (None, "")
+            for converted in (corpus_to_engine(value),) if converted
+        }
         # A semantic anchor is an explicit qid proof and may disambiguate
         # duplicate literal labels (e.g. MONEY appears in several screens).
         if len(values) == 1:

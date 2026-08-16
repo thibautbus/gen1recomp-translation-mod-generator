@@ -23,24 +23,37 @@ from .mod import (
     validate_font_profile,
     yellow_isyellow_guard_lines,
 )
-from .project import ROOT, is_frozen, project_config, project_version, resource_root, work_root
-from .dependencies import DependencyError, fetch_archive, fetch_files
-from .roms import import_rom, verify_rom
-from .rom_paths import configured_path, load_rom_paths
-
-
-LANGUAGES = (
-    ("fr", "French"),
-    ("de", "German"),
-    ("es", "Spanish"),
-    ("it", "Italian"),
-    ("ja-Hrkt", "Japanese"),
+from .project import (
+    ROOT,
+    is_frozen,
+    project_config,
+    project_version,
+    resource_root,
+    work_root,
+    which_luajit as _which_luajit,
+    luajit_install_hint as _luajit_install_hint,
 )
+from .dependencies import DependencyError, fetch_archive, fetch_files
+from .roms import import_rom, verify_gold_rom, verify_rom
+from .subprocess_run import run_streamed
+from .rom_paths import configured_path, load_rom_paths
+from .specs import game_spec, languages_for_collection, release_profile, release_profile_for_generation
+from .specs import BuildRequest
+
+
+def languages_for_generation(generation: int) -> tuple[tuple[str, str], ...]:
+    """Return the union of languages published by a release's collections."""
+    profile = release_profile_for_generation(generation)
+    languages: dict[str, str] = {}
+    for game in profile.games:
+        for code, name in languages_for_collection(game_spec(game).corpus_collection):
+            languages.setdefault(code, name)
+    return tuple(languages.items())
 
 def load_yellow_coverage_exceptions(path: str | Path) -> dict[str, frozenset[str]]:
-    """Load ``config/yellow_coverage_exceptions.json`` reviewed exceptions.
+    """Load ``config/rby/yellow_coverage_exceptions.json`` reviewed exceptions.
 
-    Mirrors the review discipline of ``config/semantic_anchor_decisions.json``:
+    Mirrors the review discipline of ``config/rby/semantic_anchor_decisions.json``:
     each entry is a human-reviewed exception, not a blind override.  See that
     file's ``description`` for why this stays a separate, smaller schema.
     """
@@ -68,45 +81,6 @@ STATUS_LABELS_BLOCK = '  counts.statuses = each("status_labels", function(id, va
 
 class BuildError(RuntimeError):
     """An expected failure that can be presented directly to the user."""
-
-
-def _which_luajit() -> str | None:
-    configured = os.environ.get("MODKIT_LUAJIT")
-    if configured:
-        path = Path(configured).expanduser()
-        return str(path.resolve()) if path.is_file() else None
-    if is_frozen():
-        root = resource_root()
-        if platform.system() == "Windows":
-            candidates = (root / "luajit" / "luajit.exe", root / "luajit" / "bin" / "luajit.exe", root / "luajit.exe")
-        else:
-            candidates = (root / "luajit" / "luajit", root / "luajit" / "bin" / "luajit", root / "luajit")
-        for candidate in candidates:
-            runtime_dir = candidate.parent
-            runtime_ok = (runtime_dir / "lua51.dll").is_file() if platform.system() == "Windows" else True
-            if candidate.is_file() and runtime_ok and (runtime_dir / "jit").is_dir():
-                return str(candidate)
-    return shutil.which("luajit") or shutil.which("luajit.exe")
-
-
-def _luajit_install_hint() -> str:
-    if is_frozen():
-        return "the bundled LuaJIT runtime is missing or damaged; re-download the standalone EXE"
-    system = platform.system()
-    if system == "Darwin" and shutil.which("brew"):
-        return "run: brew install luajit"
-    if system == "Linux":
-        for manager, command in (
-            ("apt-get", "sudo apt install luajit"),
-            ("dnf", "sudo dnf install luajit"),
-            ("pacman", "sudo pacman -S luajit"),
-        ):
-            if shutil.which(manager):
-                return f"run: {command}"
-    return (
-        "install the native executable from https://luajit.org/download.html, "
-        "then put it on PATH or set MODKIT_LUAJIT to its full path"
-    )
 
 
 def _pillow_install_hint() -> str:
@@ -158,31 +132,11 @@ def _run(
     env: dict[str, str] | None = None,
     log_fn: Callable[[str], None] | None = None,
 ) -> None:
-    printable = " ".join(command)
-    line = f"\n> {printable}"
-    print(line)
-    if log_fn:
-        log_fn(line)
-    try:
-        if log_fn is None:
-            subprocess.run(command, cwd=cwd, env=env, check=True)
-        else:
-            process = subprocess.Popen(
-                command, cwd=cwd, env=env, text=True, errors="replace",
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            )
-            assert process.stdout is not None
-            for output_line in process.stdout:
-                output_line = output_line.rstrip("\r\n")
-                print(output_line)
-                log_fn(output_line)
-            returncode = process.wait()
-            if returncode:
-                raise subprocess.CalledProcessError(returncode, command)
-    except subprocess.CalledProcessError as error:
-        raise BuildError(
-            f"Command failed with exit code {error.returncode}: {printable}"
-        ) from error
+    # The GUI surfaces a raised BuildError in a single error dialog; the
+    # full transcript only lives in its separate, easy-to-miss "Show log"
+    # panel, so a bare exit code left a bug report with nothing else to go
+    # on -- run_streamed includes the command's own tail in the message too.
+    run_streamed(command, cwd=cwd, env=env, log_fn=log_fn, error_cls=BuildError)
 
 
 def _modkit_command(modkit: Path, *args: str) -> list[str]:
@@ -235,7 +189,7 @@ def _ensure_dependency(config: dict, destination: Path, *, selective_prefix: str
 
 def _font_source(workspace: Path, config: dict, font_profile: str = "fusion", language: str = "fr") -> Path:
     """Download only the selected pinned font dependency."""
-    profile = validate_font_profile("fr", font_profile)
+    profile = validate_font_profile(language, font_profile)
     fonts = config.get("fonts", {})
     selected = fonts.get(profile, {})
     if not selected:
@@ -267,9 +221,37 @@ def _font_source(workspace: Path, config: dict, font_profile: str = "fusion", la
                 japanese_source / "fusion-pixel-8px-proportional-ja.ttf",
                 source / "fusion-pixel-8px-proportional-ja.ttf",
             )
+        elif canonical_language(language) == "ko":
+            # Korean is part of the pinned Fusion archive, unlike Japanese
+            # which is fetched from its companion archive.
+            korean_font = source / "fusion-pixel-10px-proportional-ko.ttf"
+            if not korean_font.is_file():
+                raise BuildError("Pinned Fusion Pixel dependency has no Korean font variant.")
         return source
     except (DependencyError, KeyError, TypeError, ValueError, OSError) as error:
         raise BuildError(f"Unable to download pinned font dependency: {error}") from error
+
+
+def prepare_dependencies(
+    workspace: Path,
+    config: dict,
+    *,
+    corpus_collection: str | tuple[str, ...],
+    font_profile: str,
+    language: str,
+) -> tuple[Path, Path, Path]:
+    """Prepare the common engine/corpus/font inputs for any release profile."""
+    dependency_root = workspace / "dependencies"
+    gen1recomp = dependency_root / "gen1recomp"
+    corpus = dependency_root / "poke-corpus"
+    _ensure_dependency(config["gen1recomp"], gen1recomp)
+    # A profile declares its collection; callers cannot accidentally fetch a
+    # second generation's corpus just because the other flow did so first.
+    collections = (corpus_collection,) if isinstance(corpus_collection, str) else corpus_collection
+    prefixes = [f"corpus/{collection}" for collection in collections]
+    _ensure_dependency(config["corpus"], corpus, selective_prefix=prefixes)
+    font_source = _font_source(workspace, config, font_profile, language)
+    return gen1recomp, corpus, font_source
 
 
 def ensure_checkout(
@@ -283,6 +265,15 @@ def ensure_checkout(
     """Create or refresh a private checkout at an immutable revision."""
     git_dir = destination / ".git"
     if not git_dir.is_dir():
+        # destination can exist without being a git checkout: a prior run
+        # that used the archive path instead (frozen build, or a switch
+        # between the two), an interrupted clone, or a corrupted directory.
+        # `git clone` refuses to run into a non-empty directory, so replace
+        # it rather than crash -- this is disposable cache, never user data.
+        if destination.is_dir():
+            shutil.rmtree(destination)
+        elif destination.exists():
+            destination.unlink()
         destination.parent.mkdir(parents=True, exist_ok=True)
         clone = ["git", "clone", "--no-checkout"]
         if sparse_paths:
@@ -339,22 +330,44 @@ def _prompt_configured_path(
         return _prompt_path(prompt, input_fn)
 
 
-def _prompt_language(input_fn: Callable[[str], str]) -> tuple[str, str]:
+def _prompt_generation(input_fn: Callable[[str], str]) -> int:
+    """Ask which games to translate; the answer decides which other prompts
+    follow (ROM count, later the language list). Named by game, since
+    "generation" is engine vocabulary the user does not need.
+    """
+    print("\nWhich games do you want to translate?")
+    print("  1 - Red, Blue and Yellow   (generation 1)")
+    print("  2 - Gold                   (generation 2)")
+    raw = input_fn("Games number [1]: ").strip()
+    if raw in {"", "1"}:
+        return 1
+    if raw == "2":
+        return 2
+    raise BuildError(f"Invalid games selection: {raw!r}")
+
+
+def _prompt_language(
+    input_fn: Callable[[str], str], collection: str | None = "RedBlue", generation: int | None = None,
+) -> tuple[str, str]:
+    languages = languages_for_generation(generation) if generation is not None else languages_for_collection(collection or "RedBlue")
     print("\nPlease specify the output language:")
-    for index, (code, name) in enumerate(LANGUAGES, 1):
+    for index, (code, name) in enumerate(languages, 1):
         print(f"  {index} - {name} ({code})")
     raw = input_fn("Language number: ").strip()
     try:
-        return LANGUAGES[int(raw) - 1]
+        return languages[int(raw) - 1]
     except (ValueError, IndexError):
         raise BuildError(f"Invalid language selection: {raw!r}") from None
 
 
 def _prompt_font_profile(language: str, input_fn: Callable[[str], str]) -> str:
-    """Choose a font profile after language selection; Japanese is Fusion-only."""
+    """Choose a font profile after language selection."""
     language = canonical_language(language)
     if language == "ja-Hrkt":
         print("\nJapanese uses Fusion Pixel by TakWolf, proportional 8px.")
+        return "fusion"
+    if language == "ko":
+        print("\nKorean uses Fusion Pixel's Hangul variant; Pokemon Font is unavailable.")
         return "fusion"
     print("\nPlease select a font profile:")
     print("  1 - Fusion Pixel by TakWolf, proportional 10px (recommended)")
@@ -379,21 +392,21 @@ def _confirm(input_fn: Callable[[str], str]) -> bool:
     return answer.strip().lower() in {"", "y", "yes"}
 
 
-def _language_override_path(language: str, filename: str) -> Path | None:
-    path = resource_root() / "overrides" / language / filename
+def _language_override_path(language: str, game: str, filename: str) -> Path | None:
+    path = resource_root() / "overrides" / language / game / filename
     return path if path.is_file() else None
 
 
 def _corpus_overrides_path(language: str) -> Path | None:
-    return _language_override_path(language, "corpus_overrides.json")
+    return _language_override_path(language, "rby", "corpus.json")
 
 
 def _engine_overrides_path(language: str) -> Path | None:
-    return _language_override_path(language, "shared_engine_overrides.json")
+    return _language_override_path(language, "rby", "engine.json")
 
 
 def _yellow_engine_overrides_path(language: str) -> Path | None:
-    return _language_override_path(language, "yellow_engine_overrides.json")
+    return _language_override_path(language, "rby", "yellow_engine.json")
 
 
 def _merge_engine_overrides(*paths: Path | None, destination_dir: Path | None = None, name: str = "merged_engine_overrides.json") -> Path | None:
@@ -786,20 +799,25 @@ def print_coverage(
     """Print ROM-gated and informational engine match percentages."""
     report = json.loads(path.read_text(encoding="utf-8"))
     lines = ["\nTranslation coverage:"]
-    for key, label in (("rom", "ROM catalog"), ("engine", "All engine strings")):
-        section = report.get(key) or {}
-        translated = int(section.get("translated", 0))
-        total = int(section.get("total", 0))
-        percent = float(section.get("percent", 0.0))
-        lines.append(f"  {label}: {translated}/{total} ({percent:.2f}%)")
+    # ROM aggregates first (broad Red/Blue, then narrower Yellow), then
+    # engine-authored-text metrics from most to least specific: RBY/Gold's
+    # own filtered scope reads before the unfiltered "All engine strings"
+    # total, since that total is the least actionable number here.
+    section = report.get("rom") or {}
+    lines.append(f"  Red Blue ROM aggregate: {int(section.get('translated', 0))}/{int(section.get('total', 0))} ({float(section.get('percent', 0.0)):.2f}%)")
+    yellow = (report.get("yellow") or {}).get("coverage", {}).get("rom") or {}
+    if yellow.get("total"):
+        lines.append(f"  Yellow ROM aggregate: {int(yellow.get('translated', 0))}/{int(yellow.get('total', 0))} ({float(yellow.get('percent', 0.0)):.2f}%)")
     section = report.get("engine_rby") or {}
     if section.get("available", True) and section.get("total"):
         lines.append(f"  RBY-related engine strings: {int(section.get('translated', 0))}/{int(section.get('total', 0))} ({float(section.get('percent', 0.0)):.2f}%)")
     elif report.get("engine_rby_warning"):
         lines.append(f"  RBY-related engine strings: unavailable ({report['engine_rby_warning']})")
-    yellow = (report.get("yellow") or {}).get("coverage", {}).get("rom") or {}
-    if yellow.get("total"):
-        lines.append(f"  Yellow ROM catalogs: {int(yellow.get('translated', 0))}/{int(yellow.get('total', 0))} ({float(yellow.get('percent', 0.0)):.2f}%)")
+    section = report.get("engine_gen2") or {}
+    if section.get("total"):
+        lines.append(f"  Gold-related engine strings: {int(section.get('translated', 0))}/{int(section.get('total', 0))} ({float(section.get('percent', 0.0)):.2f}%)")
+    section = report.get("engine") or {}
+    lines.append(f"  All engine strings: {int(section.get('translated', 0))}/{int(section.get('total', 0))} ({float(section.get('percent', 0.0)):.2f}%)")
     for line in lines:
         print(line)
         if log_fn:
@@ -835,29 +853,25 @@ def build(
             log_fn(message)
 
     language = canonical_language(language)
+    profile = release_profile("rby")
+    if not profile.corpus_collections:
+        raise BuildError("RBY release profile has no supported corpus collection")
     font_profile = validate_font_profile(language, font_profile)
-    workspace = Path(workspace_root) if workspace_root is not None else work_root() / ".cache"
-    destination = Path(output_dir) if output_dir is not None else (
-        work_root() if is_frozen() else work_root() / "dist"
-    )
-    workspace = workspace.resolve()
-    destination = destination.resolve()
     status("Validating ROMs")
     verify_rom(red_rom, "red")
     verify_rom(blue_rom, "blue")
     if yellow_rom is not None:
         verify_rom(yellow_rom, "yellow")
 
-    dependency_root = workspace / "dependencies"
-    gen1recomp = dependency_root / "gen1recomp"
-    corpus = dependency_root / "poke-corpus"
-    config = project_config()
-    engine_source = config["gen1recomp"]
-    corpus_source = config["corpus"]
+    from .orchestration import package_release, prepare_build_context
+    context = prepare_build_context(
+        workspace_root, output_dir, profile=profile, language=language,
+        font_profile=font_profile,
+    )
+    workspace = context.workspace
+    destination = context.destination
     status("Preparing dependencies")
-    _ensure_dependency(engine_source, gen1recomp)
-    _ensure_dependency(corpus_source, corpus, selective_prefix=["corpus/RedBlue", "corpus/Yellow"])
-    font_source = _font_source(workspace, config, font_profile, language)
+    gen1recomp, corpus, font_source = context.gen1recomp, context.corpus, context.font_source
 
     log("\nExtracting private ROM data...")
     status("Extracting private ROM data")
@@ -985,7 +999,7 @@ def build(
         yellow_dialogue_joined = yellow_joined.get("dialogue", {})
         unmatched_labels = set(yellow_stats.get("unmatched_labels", ()))
         coverage_exceptions = load_yellow_coverage_exceptions(
-            resource_root() / "config" / "yellow_coverage_exceptions.json"
+            resource_root() / "config" / "rby" / "yellow_coverage_exceptions.json"
         )
         composition_covered = coverage_exceptions.get(language, frozenset())
         yellow_stats["effective_dialogue_translated"] = sum(
@@ -1066,7 +1080,7 @@ def build(
         mod,
         mod_id=f"translation-{language.lower()}",
         language=language,
-        target_name=f"{language_name} translation",
+        target_name=f"{language_name} translation for Red, Blue and Yellow",
         modkit_worksheet=worksheet,
         report_path=coverage,
         engine_overrides=_merge_engine_overrides(
@@ -1074,11 +1088,11 @@ def build(
             destination_dir=workspace / "tmp",
             name=f"merged_engine_overrides_{language}.json",
         ),
-        semantic_anchors=resource_root() / "config" / "semantic_anchors.json",
-        semantic_anchor_decisions=resource_root() / "config" / "semantic_anchor_decisions.json",
+        semantic_anchors=resource_root() / "config" / "rby" / "semantic_anchors.json",
+        semantic_anchor_decisions=resource_root() / "config" / "rby" / "semantic_anchor_decisions.json",
         strict_engine=True,
         engine_source=gen1recomp / "src",
-        engine_scope=resource_root() / "config" / "engine_scope.json",
+        engine_scope=resource_root() / "config" / "rby" / "engine_scope.json",
         font_source=font_source,
         font_profile=font_profile,
         yellow_dialogue=yellow_dialogue,
@@ -1092,73 +1106,100 @@ def build(
     version = project_version()
     destination.mkdir(parents=True, exist_ok=True)
     output = destination / f"translation-{language.lower()}-{version}.zip"
-    candidate = build_root / f"translation-{language.lower()}-{version}.candidate.zip"
-    candidate.unlink(missing_ok=True)
     status("Packaging translation mod")
-    _run(_modkit_command(modkit, "--repo", str(gen1recomp),
-            "pack", str(mod), "-o", str(candidate), "--base", "imported"),
-        cwd=gen1recomp,
-        env=env,
-        log_fn=log_fn,
+    published = package_release(
+        mod, gen1recomp, modkit, build_root, destination,
+        output.name, base="imported", env=env, log_fn=log_fn,
     )
-    published = publish_archive(candidate, output)
     status("Build complete")
     print_coverage(coverage, log_fn=log_fn)
     return published
 
 
-def main(input_fn: Callable[[str], str] = input, font_profile: str | None = None) -> int:
+def main(
+    input_fn: Callable[[str], str] = input,
+    font_profile: str | None = None,
+    generation: int | None = None,
+) -> int:
     print("Gen1Recomp translation mod builder\n")
     try:
         luajit = check_prerequisites()
         rom_paths = load_rom_paths(resource_root() / "config" / "rom_paths.toml")
-        red_prompt = (
-            "Please specify the location of your Pokemon Red ROM "
-            "(full path, e.g. C:\\Games\\PokemonRed.gb): "
-        )
-        blue_prompt = (
-            "Please specify the location of your Pokemon Blue ROM "
-            "(full path, e.g. C:\\Games\\PokemonBlue.gb): "
-        )
-        red = _prompt_configured_path(
-            red_prompt, configured_path(rom_paths, "rom", "red"), input_fn
-        )
-        blue = _prompt_configured_path(
-            blue_prompt, configured_path(rom_paths, "rom", "blue"), input_fn
-        )
-        yellow_prompt = (
-            "Please specify the location of your Pokemon Yellow ROM "
-            "(full path, e.g. C:\\Games\\PokemonYellow.gb): "
-        )
-        yellow = _prompt_configured_path(
-            yellow_prompt, configured_path(rom_paths, "rom", "yellow"), input_fn
-        )
-        language, language_name = _prompt_language(input_fn)
-        selected_profile = font_profile or _prompt_font_profile(language, input_fn)
-        selected_profile = validate_font_profile(language, selected_profile)
-        if font_profile:
-            warning = font_profile_warning(selected_profile)
-            if warning:
-                print(f"Warning: {warning}")
-        verify_rom(red, "red")
-        verify_rom(blue, "blue")
-        verify_rom(yellow, "yellow")
-        if not _confirm(input_fn):
-            if is_frozen():
-                print("\nBuild cancelled. No dependency downloads were performed.")
-            else:
-                print("\nBuild cancelled. No repositories were cloned.")
-            return 0
-        output = build(
-            red,
-            blue,
-            language,
-            language_name,
-            luajit,
-            font_profile=selected_profile,
-            yellow_rom=yellow,
-        )
-    except (BuildError, ValueError, OSError) as error:
+        if generation is None:
+            generation = _prompt_generation(input_fn)
+        elif generation not in (1, 2):
+            raise BuildError(f"Invalid games selection: {generation!r}")
+        if generation == 1:
+            red_prompt = (
+                "Please specify the location of your Pokemon Red ROM "
+                "(full path, e.g. C:\\Games\\PokemonRed.gb): "
+            )
+            blue_prompt = (
+                "Please specify the location of your Pokemon Blue ROM "
+                "(full path, e.g. C:\\Games\\PokemonBlue.gb): "
+            )
+            red = _prompt_configured_path(
+                red_prompt, configured_path(rom_paths, "rom", "red"), input_fn
+            )
+            blue = _prompt_configured_path(
+                blue_prompt, configured_path(rom_paths, "rom", "blue"), input_fn
+            )
+            yellow_prompt = (
+                "Please specify the location of your Pokemon Yellow ROM "
+                "(full path, e.g. C:\\Games\\PokemonYellow.gb): "
+            )
+            yellow = _prompt_configured_path(
+                yellow_prompt, configured_path(rom_paths, "rom", "yellow"), input_fn
+            )
+            language, language_name = _prompt_language(input_fn, generation=generation)
+            selected_profile = font_profile or _prompt_font_profile(language, input_fn)
+            selected_profile = validate_font_profile(language, selected_profile)
+            if font_profile:
+                warning = font_profile_warning(selected_profile)
+                if warning:
+                    print(f"Warning: {warning}")
+            verify_rom(red, "red")
+            verify_rom(blue, "blue")
+            verify_rom(yellow, "yellow")
+            if not _confirm(input_fn):
+                if is_frozen():
+                    print("\nBuild cancelled. No dependency downloads were performed.")
+                else:
+                    print("\nBuild cancelled. No repositories were cloned.")
+                return 0
+            from .orchestration import build_request
+            output = build_request(
+                BuildRequest({"red": red, "blue": blue, "yellow": yellow}, release_profile("rby"), language, None, selected_profile),
+                language_name=language_name, luajit=luajit,
+            )
+        else:
+            gold_prompt = (
+                "Please specify the location of your Pokemon Gold ROM "
+                "(full path, e.g. C:\\Games\\PokemonGold.gbc): "
+            )
+            gold = _prompt_configured_path(
+                gold_prompt, configured_path(rom_paths, "rom", "gold"), input_fn
+            )
+            language, language_name = _prompt_language(input_fn, generation=generation)
+            selected_profile = font_profile or _prompt_font_profile(language, input_fn)
+            selected_profile = validate_font_profile(language, selected_profile)
+            if font_profile:
+                warning = font_profile_warning(selected_profile)
+                if warning:
+                    print(f"Warning: {warning}")
+            verify_gold_rom(gold)
+            if not _confirm(input_fn):
+                if is_frozen():
+                    print("\nBuild cancelled. No dependency downloads were performed.")
+                else:
+                    print("\nBuild cancelled. No repositories were cloned.")
+                return 0
+            from .orchestration import build_request
+            output = build_request(
+                BuildRequest({"gold": gold}, release_profile("gold"), language, None, selected_profile),
+                language_name=language_name, luajit=luajit,
+            )
+    except (RuntimeError, ValueError, OSError) as error:
         print(f"\nError: {error}", file=sys.stderr)
         return 1
     print(f"\nFile generated at {output}")

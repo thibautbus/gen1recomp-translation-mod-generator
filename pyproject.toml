@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gen1recomp-translation-mods"
-version = "0.6.0"
+version = "0.7.0"
 description = "Reproducible multilingual translation mod generator for Gen1Recomp"
 requires-python = ">=3.11"
 

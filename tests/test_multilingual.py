@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from pipeline.align import align
-from pipeline.corpus import parse_redblue, canonical_language
+from pipeline.corpus import parse_redblue, parse_yellow, canonical_language
 from pipeline.engine import check_printf_directives, load_engine_overrides, load_semantic_anchors, match_engine_catalog, _extract_anchor, printf_directives, read_engine_catalog
 from pipeline.generate import lua_string
 from pipeline.model import Alignment, CorpusRecord
@@ -51,7 +51,7 @@ class MultilingualTests(unittest.TestCase):
                 self.skipTest(f"cached {language} worksheet unavailable")
             rows = align(parse_redblue(corpus_root, language), target_lang=language)
             with TemporaryDirectory() as tmp:
-                mod = generate_mod(rows, Path(tmp) / "mod", language=language, modkit_worksheet=worksheet, engine_catalog=worksheet / "strings.lua", engine_overrides=Path("overrides") / language / "shared_engine_overrides.json", strict_engine=True)
+                mod = generate_mod(rows, Path(tmp) / "mod", language=language, modkit_worksheet=worksheet, engine_catalog=worksheet / "strings.lua", engine_overrides=Path("overrides") / language / "rby" / "engine.json", strict_engine=True)
                 strings = (mod / "lang/strings.lua").read_text(encoding="utf-8")
                 for key in ("NAME", "ATTACK", "DEFENSE", "SPEED", "SPECIAL"):
                     self.assertIn(f'  ["{key}"] = ', strings, language)
@@ -71,7 +71,7 @@ class MultilingualTests(unittest.TestCase):
             rows = align(parse_redblue(corpus_root, language), target_lang=language)
             from tempfile import TemporaryDirectory
             with TemporaryDirectory() as tmp:
-                mod = generate_mod(rows, Path(tmp) / "mod", language=language, modkit_worksheet=worksheet, engine_catalog=worksheet / "strings.lua", engine_overrides=Path("overrides") / language / "shared_engine_overrides.json", strict_engine=True)
+                mod = generate_mod(rows, Path(tmp) / "mod", language=language, modkit_worksheet=worksheet, engine_catalog=worksheet / "strings.lua", engine_overrides=Path("overrides") / language / "rby" / "engine.json", strict_engine=True)
                 body = (mod / "lang/type_names.lua").read_text(encoding="utf-8")
                 for type_id in runtime_ids:
                     self.assertIn(f'  ["{type_id}"] = ', body, (language, type_id))
@@ -170,7 +170,7 @@ class MultilingualTests(unittest.TestCase):
 
     def test_es_it_engine_override_files_load_from_overrides_tree(self):
         for language in ("es", "it"):
-            path = Path("overrides") / language / "shared_engine_overrides.json"
+            path = Path("overrides") / language / "rby" / "engine.json"
             self.assertTrue(path.is_file())
             overrides = load_engine_overrides(path)
             self.assertEqual(sum(entry.get("reason") == "editorial-correction" for entry in overrides.values()), 4)
@@ -186,7 +186,7 @@ class MultilingualTests(unittest.TestCase):
             "ja-Hrkt": "%sは\nぜったいに\nはずれない！",
         }
         for language, value in expected.items():
-            overrides = load_engine_overrides(Path("overrides") / language / "shared_engine_overrides.json")
+            overrides = load_engine_overrides(Path("overrides") / language / "rby" / "engine.json")
             self.assertEqual(overrides[key]["override"], value, language)
             self.assertEqual(overrides[key]["reason"], "engine-original", language)
             self.assertIn("AI-generated", overrides[key]["provenance"], language)
@@ -200,7 +200,7 @@ class MultilingualTests(unittest.TestCase):
             "%s's\n%s\ngreatly rose!": "%ss\n%s nimmt stark zu!",
             "%s's\n%s\ngreatly fell!": "%ss\n%s sinkt stark!",
         }
-        overrides = load_engine_overrides(Path("overrides/de/shared_engine_overrides.json"))
+        overrides = load_engine_overrides(Path("overrides/de/rby/engine.json"))
         for key, value in expected.items():
             self.assertEqual(overrides[key]["override"], value)
             self.assertEqual(overrides[key]["reason"], "engine-original")
@@ -337,6 +337,27 @@ class MultilingualTests(unittest.TestCase):
                 self.assertEqual(output[key], value, (language, key))
                 self.assertEqual(report["details"][key], "semantic", (language, key))
                 self.assertEqual(report["provenance"][key]["qid"], qids[key], (language, key))
+
+    def test_yellow_engine_print_box_override_matches_the_real_corpus_segment(self):
+        # PRINT BOX is Yellow-exclusive: y.bills_pc.BillsPCMenuText inserts a
+        # sixth <NEXT>-separated menu item ("PRINT BOX") that RedBlue's
+        # five-item rb.bills_pc.BillsPCMenuText does not have. The base RBY
+        # engine-matching pass in generate_mod() only ever sees RedBlue-
+        # aligned records (see builder.build()), so a semantic anchor
+        # pointing at a Yellow-only qid can never resolve there -- this key
+        # must instead be a manual overrides/<language>/rby/yellow_engine.json
+        # entry (like its Yellow-only siblings), not a semantic_anchors.json
+        # entry. This test only confirms that override text still matches
+        # the real, current corpus segment.
+        root = Path(".cache/dependencies/poke-corpus/corpus/Yellow")
+        if not (root / "qid_msg.txt").is_file():
+            self.skipTest("canonical local poke-corpus checkout is unavailable")
+        for language in ("fr", "de", "es", "it", "ja-Hrkt"):
+            records = parse_yellow(root, language)
+            row = next(r for r in records if r.qid == "y.bills_pc.BillsPCMenuText" and r.language == language)
+            segment = _extract_anchor(row.text, {"kind": "segment", "index": 4})
+            override = load_engine_overrides(Path("overrides") / language / "rby" / "yellow_engine.json")["PRINT BOX"]
+            self.assertEqual(override["override"], segment, language)
 
     def test_rby_safe_anchor_batch_fails_closed_on_duplicate_or_missing_qid(self):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
@@ -816,7 +837,7 @@ class MultilingualTests(unittest.TestCase):
                     language=language,
                     modkit_worksheet=worksheet,
                     engine_catalog=worksheet / "strings.lua",
-                    engine_overrides=Path("overrides") / language / "shared_engine_overrides.json",
+                    engine_overrides=Path("overrides") / language / "rby" / "engine.json",
                     strict_engine=True,
                 )
                 dialogue = (mod / "lang/dialogue.lua").read_text(encoding="utf-8")
@@ -1192,7 +1213,7 @@ class MultilingualTests(unittest.TestCase):
         anchors = load_semantic_anchors()
         for language in ("es", "it"):
             items = align(parse_redblue(root, language), target_lang=language)
-            override_path = Path("overrides") / language / "shared_engine_overrides.json"
+            override_path = Path("overrides") / language / "rby" / "engine.json"
             overrides = load_engine_overrides(override_path)
             self.assertTrue(set(keys) <= set(overrides), language)
             self.assertTrue(all("provenance" in overrides[key] for key in keys), language)
@@ -1437,15 +1458,15 @@ class MultilingualTests(unittest.TestCase):
             manifest = json.loads((mod / "manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["id"], mod_id)
             self.assertEqual(manifest["name"], target_name)
-            self.assertEqual(manifest["description"], f"{target_name} for Pokémon Red, Blue and Yellow, based mostly on PokeCorpus. Some engine-specific text remains untranslated.")
+            self.assertEqual(manifest["description"], f"{target_name}, based mostly on PokeCorpus.")
             default_mod = generate_mod([row], Path(tmp) / "default")
             default_manifest = json.loads((default_mod / "manifest.json").read_text(encoding="utf-8"))
             described_mod = generate_mod(
                 [row], Path(tmp) / "described", target_description="Use the supplied description."
             )
             described_manifest = json.loads((described_mod / "manifest.json").read_text(encoding="utf-8"))
-        self.assertEqual(default_manifest["name"], "fr translation")
-        self.assertEqual(default_manifest["description"], "fr translation for Pokémon Red, Blue and Yellow, based mostly on PokeCorpus. Some engine-specific text remains untranslated.")
+        self.assertEqual(default_manifest["name"], "fr translation for Red, Blue and Yellow")
+        self.assertEqual(default_manifest["description"], "fr translation for Red, Blue and Yellow, based mostly on PokeCorpus.")
         self.assertEqual(described_manifest["description"], "Use the supplied description.")
 
     def test_manifest_fallbacks_are_language_neutral_with_uniform_priority(self):
@@ -1458,8 +1479,8 @@ class MultilingualTests(unittest.TestCase):
                 manifests[language] = json.loads((mod / "manifest.json").read_text(encoding="utf-8"))
 
         for language, code in expected_codes.items():
-            self.assertEqual(manifests[language]["name"], f"{code} translation")
-            self.assertEqual(manifests[language]["description"], f"{code} translation for Pokémon Red, Blue and Yellow, based mostly on PokeCorpus. Some engine-specific text remains untranslated.")
+            self.assertEqual(manifests[language]["name"], f"{code} translation for Red, Blue and Yellow")
+            self.assertEqual(manifests[language]["description"], f"{code} translation for Red, Blue and Yellow, based mostly on PokeCorpus.")
             self.assertEqual(manifests[language]["priority"], 100)
 
 

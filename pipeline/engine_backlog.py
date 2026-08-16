@@ -8,7 +8,6 @@ are ignored reports below ``.cache/audit/engine-backlog``.
 from __future__ import annotations
 
 from collections import defaultdict
-import ast
 from difflib import SequenceMatcher
 import json
 from pathlib import Path
@@ -18,6 +17,7 @@ from typing import Any, Iterable, Mapping
 
 from .corpus import canonical_language, parse_redblue
 from .engine import (
+    _decode_lua_string,
     _normal as _normal_form,
     _placeholder_tokens,
     _printf_marker_type,
@@ -107,43 +107,6 @@ def _strip_lua_comments(text: str) -> str:
     return "".join(result)
 
 
-def _decode_lua_string(token: str) -> str | None:
-    if len(token) < 2 or token[0] not in {"'", '"'} or token[-1] != token[0]:
-        return None
-    body = token[1:-1]
-    values: list[str] = []
-    escapes = {"n": "\n", "r": "\r", "t": "\t", "v": "\v", "f": "\f", "b": "\b", "a": "\a"}
-    index = 0
-    while index < len(body):
-        char = body[index]
-        if char != "\\" or index + 1 >= len(body):
-            values.append(char)
-            index += 1
-            continue
-        index += 1
-        escaped = body[index]
-        if escaped in escapes:
-            values.append(escapes[escaped])
-        elif escaped in {"\\", "'", '"'}:
-            values.append(escaped)
-        elif escaped == "z":
-            index += 1
-            while index < len(body) and body[index].isspace():
-                index += 1
-            continue
-        elif escaped.isdigit():
-            match = re.match(r"[0-9]{1,3}", body[index:])
-            assert match is not None
-            values.append(chr(int(match.group(0), 10)))
-            index += len(match.group(0)) - 1
-        else:
-            # Lua leaves unknown escapes useful for source-like strings; keep
-            # the escaped character rather than dropping a literal callsite.
-            values.append(escaped)
-        index += 1
-    return "".join(values)
-
-
 def _read_quoted(text: str, start: int) -> tuple[str, int] | None:
     if start >= len(text) or text[start] not in {"'", '"'}:
         return None
@@ -178,6 +141,47 @@ def _read_lua_literal(text: str, start: int) -> tuple[str, int] | None:
     return text[start:body_end + len(closing)], body_end + len(closing)
 
 
+def _decode_lua_literal(token: str) -> str | None:
+    if token.startswith("["):
+        opening = re.match(r"(\[=*)\[", token)
+        closing = "]" + opening.group(1)[1:] + "]" if opening else None
+        value = token[len(opening.group(0)):-len(closing)] if opening and token.endswith(closing) else None
+        if value is not None:
+            value = value[2:] if value.startswith("\r\n") else value[1:] if value.startswith(("\n", "\r")) else value
+        return value
+    return _decode_lua_string(token)
+
+
+def _read_concatenated_lua_literal(raw: str, cleaned: str, start: int) -> tuple[str, int] | None:
+    """Read a first argument made only of Lua literals joined with ``..``."""
+    token = _read_lua_literal(raw, start)
+    if token is None:
+        return None
+    quoted, end = token
+    value = _decode_lua_literal(quoted)
+    if value is None:
+        return None
+    parts = [value]
+    while True:
+        index = end
+        while index < len(cleaned) and cleaned[index].isspace():
+            index += 1
+        if cleaned[index:index + 2] != "..":
+            break
+        index += 2
+        while index < len(cleaned) and cleaned[index].isspace():
+            index += 1
+        token = _read_lua_literal(raw, index)
+        if token is None:
+            return None
+        quoted, end = token
+        value = _decode_lua_literal(quoted)
+        if value is None:
+            return None
+        parts.append(value)
+    return "".join(parts), end
+
+
 def iter_literal_strings_callsites(checkout: str | Path) -> list[dict[str, Any]]:
     """Collect every literal ``Strings(...)``/``Strings.source(...)`` use.
 
@@ -201,22 +205,10 @@ def iter_literal_strings_callsites(checkout: str | Path) -> list[dict[str, Any]]
             index = match.end()
             while index < len(cleaned) and cleaned[index].isspace():
                 index += 1
-            token = _read_lua_literal(raw, index)
+            token = _read_concatenated_lua_literal(raw, cleaned, index)
             if token is None:
                 continue
-            quoted, end = token
-            if quoted.startswith("["):
-                opening = re.match(r"(\[=*)\[", quoted)
-                closing = "]" + opening.group(1)[1:] + "]" if opening else None
-                source = quoted[len(opening.group(0)):-len(closing)] if opening and quoted.endswith(closing) else None
-                # Lua long strings discard one initial LF (or CRLF) after the
-                # opener; mirror that semantics for catalog-key matching.
-                if source is not None:
-                    source = source[2:] if source.startswith("\r\n") else source[1:] if source.startswith(("\n", "\r")) else source
-            else:
-                source = _decode_lua_string(quoted)
-            if source is None:
-                continue
+            source, end = token
             line = cleaned.count("\n", 0, match.start()) + 1
             end_line = cleaned.count("\n", 0, end) + 1
             context = " ".join(item.strip() for item in lines[line - 1:end_line] if item.strip())
@@ -346,12 +338,12 @@ def _decode_catalog_values(path: Path) -> dict[str, str]:
         match = pattern.match(line)
         if not match:
             continue
-        try:
-            key, value = ast.literal_eval(match.group(1)), ast.literal_eval(match.group(2))
-        except (SyntaxError, ValueError):
+        key = _decode_lua_string(match.group(1))
+        value = _decode_lua_string(match.group(2))
+        if key is None or value is None:
             continue
         if value:
-            result[str(key)] = str(value)
+            result[key] = value
     return result
 
 
@@ -515,9 +507,9 @@ def analyze_engine_backlog(
     for key, info in classified.items():
         callsites[key].extend({k: v for k, v in row.items() if k not in {"source", "category"}} for row in info["callsites"])
     candidates = _corpus_candidates(corpus_root, language, keys)
-    decisions_path = root / "config" / "semantic_anchor_decisions.json"
+    decisions_path = root / "config" / "rby" / "semantic_anchor_decisions.json"
     anchors, _ = merge_semantic_anchors(
-        load_semantic_anchors(root / "config" / "semantic_anchors.json"),
+        load_semantic_anchors(root / "config" / "rby" / "semantic_anchors.json"),
         load_semantic_anchor_decisions(decisions_path) if decisions_path.is_file() else {},
     )
     entries: list[dict[str, Any]] = []

@@ -60,6 +60,26 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(output[source], "%s gagne\n%03d points d'EXP!")
         self.assertEqual(report["details"][source], "semantic")
 
+    def test_direct_printf_prefix_does_not_append_the_english_qid_suffix(self):
+        source = "%s!\nI overslept!"
+        qid = "gs.clock.overslept"
+        rows = [Alignment(
+            qid, "gold", CorpusRecord(qid, "en", "!<LINE>I overslept!"),
+            CorpusRecord(qid, "fr", "!<LINE>Je suis en retard!"), "qid",
+        )]
+        anchor = {
+            "parts": [
+                {"printf": 0},
+                {"qid": qid, "extraction": {"kind": "full"}},
+            ],
+            "separators": [""],
+            "placeholders": {},
+        }
+        output, _ = match_engine_catalog(
+            {source: ""}, rows, semantic_anchors={source: anchor}, target_lang="fr",
+        )
+        self.assertEqual(output[source], "%s!\nJe suis en retard!")
+
     def test_multi_qid_typed_printf_schema_rejects_invalid_type_and_ref(self):
         base = {"parts": [
             {"qid": "a", "extraction": {"kind": "full"}},
@@ -237,6 +257,31 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(printf_directives("%% %s %.1f"), ["%%", "%s", "%.1f"])
         self.assertEqual(check_printf_directives("%% %s", "%% %s"), [])
 
+    def test_override_ships_unmapped_tokens_verbatim_without_corpus_to_engine(self):
+        # This is how RBY's own preexisting unmapped tokens (<PK>, <MN>:
+        # absent from pipeline/tokens.py's _CORPUS_EXPANSIONS) ship today --
+        # an engine override is used verbatim, bypassing corpus_to_engine
+        # entirely, so an override author can hand-translate a raw token
+        # without pipeline support for it. Automated (non-override) matches
+        # have no such escape hatch: they always go through corpus_to_engine.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "engine.json"
+            path.write_text(json.dumps({
+                "schema": "gen1recomp-translation-mods/engine-overrides", "version": 1,
+                "entries": {"WITHDRAW <PK><MN>": {"override": "RETIRER <PK><MN>"}},
+            }), encoding="utf-8")
+            overrides = load_engine_overrides(path)
+        output, report = match_engine_catalog(
+            {"WITHDRAW <PK><MN>": ""}, [row("WITHDRAW <PK><MN>", "RETIRER POKéMON")], overrides,
+        )
+        # The override's raw <PK><MN> is untouched -- proof it never passed
+        # through corpus_to_engine, which would leave it exactly as-is
+        # anyway (it is unmapped) but for a different, non-bypass reason:
+        # an automated match, without the override, keeps the corpus
+        # translation instead, also unconverted since <PK>/<MN> are unmapped.
+        self.assertEqual(output["WITHDRAW <PK><MN>"], "RETIRER <PK><MN>")
+        self.assertEqual(report["override"], 1)
+
     def test_printf_parser_matches_luajit_formats_without_false_percent_hits(self):
         self.assertEqual(
             printf_directives("100% ready: %q %r"), [],
@@ -255,6 +300,10 @@ class EngineTests(unittest.TestCase):
             path = Path(tmp) / "strings.lua"
             path.write_text('return { ["A"] = "", }\n', encoding="utf-8")
             self.assertEqual(read_engine_catalog(path), {"A": ""})
+            path.write_text('return { ["A\\011B"] = "", }\n', encoding="utf-8")
+            self.assertEqual(read_engine_catalog(path), {"A\vB": ""})
+            path.write_text('return { ["A\\x42"] = "", }\n', encoding="utf-8")
+            self.assertEqual(read_engine_catalog(path), {"AB": ""})
             path.write_text('return { ["A"] = "B", }\n', encoding="utf-8")
             with self.assertRaises(ValueError):
                 read_engine_catalog(path)
@@ -301,6 +350,24 @@ class EngineTests(unittest.TestCase):
             report["auto_structural"],
             sum(value == "structural" for value in report["details"].values()),
         )
+
+    def test_structural_matching_preserves_mixed_engine_and_printf_placeholders(self):
+        source = "{PLAYER} put the\n%s in\nthe %s."
+        english = (
+            "<PLAYER> put the<LINE>{text_ram wStringBuffer1} in<CONT>"
+            "the {text_ram wStringBuffer3}."
+        )
+        french = (
+            "<PLAYER> range {text_ram wStringBuffer1}<LINE>dans "
+            "{text_ram wStringBuffer3}."
+        )
+        output, report = match_engine_catalog(
+            {source: ""},
+            [Alignment("put", "gold", CorpusRecord("put", "en", english),
+                       CorpusRecord("put", "fr", french), "qid")],
+        )
+        self.assertEqual(output[source], "{PLAYER} range %s\ndans %s.")
+        self.assertEqual(report["auto_structural"], 1)
 
     def test_semantic_printf_anchor_converts_typed_dynamic_tokens(self):
         source = "%s\nlearned\n%d!"

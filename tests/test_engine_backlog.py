@@ -71,6 +71,17 @@ class EngineBacklogTests(unittest.TestCase):
         finally:
             tmp.cleanup()
 
+    def test_literal_callsites_join_a_concatenated_first_argument(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "src").mkdir()
+            (root / "src" / "joined.lua").write_text(
+                'local value = Strings.source("Hello " ..\n  "world!")\n',
+                encoding="utf-8",
+            )
+            calls = iter_literal_strings_callsites(root)
+            self.assertEqual([call["source"] for call in calls], ["Hello world!"])
+
 
     def test_romtext_fallback_callsites_only_collect_rendered(self):
         tmp = tempfile.TemporaryDirectory()

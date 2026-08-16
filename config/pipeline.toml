@@ -5,7 +5,7 @@ source = "https://github.com/abcboy101/poke-corpus.git"
 revision = "aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
 # Standalone mode downloads only these exact files from the pinned commit.
 archive_base_url = "https://raw.githubusercontent.com/abcboy101/poke-corpus/aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
-format = "corpus/{RedBlue,Yellow}/{qid,en,<target_lang>}_msg.txt (UTF-8 parallel lines)"
+format = "corpus/{RedBlue,Yellow,GoldSilver}/{qid,en,<target_lang>}_msg.txt (UTF-8 parallel lines)"
 target_lang = "fr"
 
 [corpus.archive_files]
@@ -23,14 +23,24 @@ target_lang = "fr"
 "corpus/Yellow/es_msg.txt" = "e66234e25849a6b8ac8d51c934947d545f8f52a84a7a28c5905a801c19768ac0"
 "corpus/Yellow/it_msg.txt" = "86558cb6c5ab39aba56d9b286a98fdee94389ab302694a9a5b264a6d77fcc643"
 "corpus/Yellow/ja-Hrkt_msg.txt" = "542a88559b8695d5635ca107107f18d4becc03561d9827df3f80503ab6166505"
+"corpus/GoldSilver/qid_msg.txt" = "07be64a14e52e1697902c2acb1d781d48afcbbe57f31ff6368e76b08f553c043"
+"corpus/GoldSilver/en_msg.txt" = "93def21b6ea05d52c572b2057e3b3a3165e2507189ccffad599372b8bc1fd1c1"
+"corpus/GoldSilver/fr_msg.txt" = "45fa1ada83eef176f61aca3617d64b59739e2f2947a8aad2861703b8e27bd9fa"
+"corpus/GoldSilver/de_msg.txt" = "9a21f682bdfbbee82cbf8ff5c8da89a09b03084eafda9cb535ecffa9c2443e91"
+"corpus/GoldSilver/es_msg.txt" = "3b56be75152720fa4f009ffba09223654e1bd9b1d1fc5beb9baefef2d113d4ee"
+"corpus/GoldSilver/it_msg.txt" = "05ea5658d209a598b963099750d6f5f395de7dea447f535669f6c1f96496bcd4"
+"corpus/GoldSilver/ja-Hrkt_msg.txt" = "7fd5a33ff3b83d63c354271c67b6557a476aed8b3875bf2aaf012cacf55b9612"
+"corpus/GoldSilver/ko_msg.txt" = "05c2d2d1cbabfd3de04106c82580fe3fa090e83d0f09a39df5dd359f195d0f1d"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
+# Pinned at v0.1.91, the upstream release used to validate and package the
+# RBY and Gold translation mods.
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "60cf07fb0a1ffce0ec6d5d0d2f78a921a6d0b7da"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/60cf07fb0a1ffce0ec6d5d0d2f78a921a6d0b7da"
-archive_sha256 = "95dafa9db3e3bb10eb8381d6b409e116b537c0b3d38349f443f425da211e0e5f"
-archive_tree_sha256 = "00208112e5f226ac5af2097cb5de336a579cb7277e35a2c377ecd633bc287ad2"
+revision = "1598f34954080711c00a105b864b9b9649ef5bc3"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/1598f34954080711c00a105b864b9b9649ef5bc3"
+archive_sha256 = "d753540de92ec338bc4ab7ec9a9ccc1869928d1691148901601faac7ed896fc9"
+archive_tree_sha256 = "af4b462185ee0b8363aae25277e17205a32b4922ac84f6a9382eb6966a5333db"
 
 [fonts.pokemon]
 revision = "81b60805150c75ebfdfcec6d8352c67e491f8a6c"
@@ -87,6 +97,9 @@ sha1 = "d7037c83e1ae5b39bde3c30787637ba1d4c48ce2"
 [rom.yellow]
 sha1 = "cc7d03262ebfaf2f06772c1a480c7d9d5f4a38e1"
 
+[rom.gold]
+sha1 = "d8b8a3600a465308c9953dfa04f0081c05bdcb94"
+
 [output]
 language_dir = "lang"
-corpus_overrides = "overrides/{target_lang}/corpus_overrides.json"
+corpus_overrides = "overrides/{target_lang}/rby/corpus.json"

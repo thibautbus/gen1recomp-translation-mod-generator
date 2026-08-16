@@ -19,6 +19,16 @@ jobs:
       - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38
         with: {python-version: "${{ matrix.python-version }}"}
       - name: Install test dependencies
-        run: python -m pip install pytest Pillow
+        run: |
+          python -m pip install pytest Pillow certifi
+          sudo apt-get update
+          sudo apt-get install --yes luajit
+      - name: Fetch pinned Gen1Recomp test fixture
+        run: |
+          mkdir -p .cache/dependencies/gen1recomp
+          git -C .cache/dependencies/gen1recomp init
+          git -C .cache/dependencies/gen1recomp remote add origin https://github.com/bryanthaboi/gen1recomp.git
+          git -C .cache/dependencies/gen1recomp fetch --depth 1 origin 04490c9b9ad03b814f297793dd7a950dad7c3adf
+          git -C .cache/dependencies/gen1recomp checkout --detach FETCH_HEAD
       - name: Run pytest
         run: python -m pytest

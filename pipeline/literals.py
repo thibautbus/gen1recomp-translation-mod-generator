@@ -8,6 +8,7 @@ are looked up by immutable corpus qids.
 from __future__ import annotations
 
 import json
+import re
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
@@ -120,6 +121,10 @@ def _flow_qids(value: object) -> list[str]:
             if len(value) != 1:
                 raise ValueError("money condition has unexpected fields")
             return
+        if value.get("trainer_defeated") is True:
+            if len(value) != 1:
+                raise ValueError("trainer_defeated condition has unexpected fields")
+            return
         raise ValueError("unsupported literal handler condition")
 
     for node in value:
@@ -127,9 +132,16 @@ def _flow_qids(value: object) -> list[str]:
             raise ValueError("literal handler flow nodes must have one operation")
         op, payload = next(iter(node.items()))
         if op == "say":
-            if not isinstance(payload, Mapping) or set(payload) != {"qid"} or not isinstance(payload.get("qid"), str) or not payload["qid"]:
+            if (
+                not isinstance(payload, Mapping)
+                or not set(payload).issubset({"qid", "name_qid"})
+                or not isinstance(payload.get("qid"), str) or not payload["qid"]
+                or ("name_qid" in payload and (not isinstance(payload["name_qid"], str) or not payload["name_qid"]))
+            ):
                 raise ValueError("say operation requires a qid")
             result.append(payload["qid"])
+            if "name_qid" in payload:
+                result.append(payload["name_qid"])
         elif op in ("choice", "if"):
             if not isinstance(payload, Mapping):
                 raise ValueError(f"{op} operation requires an object")
@@ -157,6 +169,9 @@ def _flow_qids(value: object) -> list[str]:
         elif op == "done":
             if payload is not None:
                 raise ValueError("done operation takes null")
+        elif op == "engage_trainer":
+            if payload is not None:
+                raise ValueError("engage_trainer operation takes null")
         else:
             raise ValueError(f"unsupported literal handler operation: {op}")
     return result
@@ -177,7 +192,18 @@ def _resolve_flow(value: object, candidates: Mapping[str, set[str]]) -> tuple[tu
         for node in nodes:
             op, payload = next(iter(node.items()))  # type: ignore[union-attr]
             if op == "say":
-                output.append({"say": resolved[payload["qid"]]})  # type: ignore[index]
+                text = resolved[payload["qid"]]  # type: ignore[index]
+                if "name_qid" in payload:  # type: ignore[operator]
+                    # {RAM:...} is this project's own marker for the ROM's
+                    # {text_ram ...} dynamic buffer; the flow DSL has no
+                    # runtime substitution, but the substituted value is a
+                    # fixed, known constant for a given handler (e.g. this
+                    # scene always names the same item), so splice the
+                    # already-resolved, already-translated name in at
+                    # generation time instead.
+                    name = resolved[payload["name_qid"]]  # type: ignore[index]
+                    text = re.sub(r"\{RAM:[^}]+\}", lambda _match: name, text, count=1)
+                output.append({"say": text})
             elif op in ("choice", "if"):
                 copy = dict(payload)  # type: ignore[arg-type]
                 if op == "choice":
@@ -338,6 +364,8 @@ def _condition(value: object) -> str:
     money = value.get("money_gte")
     if isinstance(money, int):
         return f"(game.save.money or 0) >= {money}"
+    if value.get("trainer_defeated") is True:
+        return "ow:trainerDefeated(npc)"
     raise ValueError("unsupported literal handler condition")
 
 
@@ -391,6 +419,13 @@ def _render_flow(nodes: tuple[Mapping[str, Any], ...], indent: int, done_expr: s
             return [f"{pad}ow:scriptMove(ow.player, {lua_string(payload['direction'])}, {payload.get('steps', 1)}, {callback})"]
         if op == "done":
             return [invoke(continuation, pad)]
+        if op == "engage_trainer":
+            # Terminal, like "done": the battle system calls `done` itself
+            # once the battle ends, so nothing here may also invoke the
+            # continuation -- any node after this one in the same branch
+            # would be unreachable, matching ow:engageTrainer's own callers
+            # in the vanilla scripts, which never do anything past it either.
+            return [f"{pad}ow:engageTrainer(npc, done)"]
         raise ValueError(f"unsupported literal handler operation: {op}")
 
     return seq(nodes, indent, done_expr)

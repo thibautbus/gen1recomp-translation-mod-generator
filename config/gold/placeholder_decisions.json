@@ -1,0 +1,107 @@
+{
+  "schema": "gen1recomp-translation-mods/gold-placeholder-decisions",
+  "version": 1,
+  "entries": {
+    "de": {
+      "65:6092": {
+        "qid": "gs.common_2.MartBoughtText",
+        "errors": [
+          "unexpected placeholder {NUM} x1"
+        ],
+        "reason": "The official German text also prints the purchased quantity."
+      }
+    },
+    "es": {
+      "5a:4ddd": {
+        "qid": "gs.WillsRoom.WillScript_WillBeforeText",
+        "errors": [
+          "missing placeholder {PLAYER} x1"
+        ],
+        "reason": "The official Spanish introduction does not address the player by name."
+      }
+    },
+    "it": {
+      "65:5c6c": {
+        "qid": "gs.common_2.MartFinalPriceText",
+        "errors": [
+          "missing placeholder {NUM} x1"
+        ],
+        "reason": "The official Italian total omits the item quantity."
+      }
+    },
+    "ja-Hrkt": {
+      "41:4ce2": {
+        "qid": "gs.mom.MomYouveSavedText",
+        "errors": [
+          "unexpected placeholder {PLAYER} x1"
+        ],
+        "reason": "The official Japanese text addresses the player by name."
+      },
+      "59:5c37": {
+        "qid": "gs.OaksLab.OakYesKantoBadgesText",
+        "errors": [
+          "unexpected placeholder {PLAYER} x1"
+        ],
+        "reason": "The official Japanese text addresses the player twice."
+      },
+      "59:5d54": {
+        "qid": "gs.OaksLab.OaksAssistant2Text",
+        "errors": [
+          "unexpected placeholder {PLAYER} x1"
+        ],
+        "reason": "The official Japanese text addresses the player by name."
+      },
+      "5a:4ddd": {
+        "qid": "gs.WillsRoom.WillScript_WillBeforeText",
+        "errors": [
+          "missing placeholder {PLAYER} x1"
+        ],
+        "reason": "The official Japanese introduction does not address the player by name."
+      },
+      "5a:4ef0": {
+        "qid": "gs.WillsRoom.WillScript_WillDefeatText",
+        "errors": [
+          "missing placeholder {PLAYER} x1"
+        ],
+        "reason": "The official Japanese defeat text does not address the player by name."
+      }
+    },
+    "ko": {
+      "41:4ce2": {
+        "qid": "gs.mom.MomYouveSavedText",
+        "errors": [
+          "unexpected placeholder {PLAYER} x1"
+        ],
+        "reason": "The official Korean text addresses the player by name."
+      },
+      "59:5c37": {
+        "qid": "gs.OaksLab.OakYesKantoBadgesText",
+        "errors": [
+          "unexpected placeholder {PLAYER} x1"
+        ],
+        "reason": "The official Korean text addresses the player twice."
+      },
+      "59:5d54": {
+        "qid": "gs.OaksLab.OaksAssistant2Text",
+        "errors": [
+          "unexpected placeholder {PLAYER} x1"
+        ],
+        "reason": "The official Korean text addresses the player by name."
+      },
+      "5a:4ddd": {
+        "qid": "gs.WillsRoom.WillScript_WillBeforeText",
+        "errors": [
+          "missing placeholder {PLAYER} x1"
+        ],
+        "reason": "The official Korean introduction does not address the player by name."
+      },
+      "5a:4ef0": {
+        "qid": "gs.WillsRoom.WillScript_WillDefeatText",
+        "errors": [
+          "missing placeholder {PLAYER} x1"
+        ],
+        "reason": "The official Korean defeat text does not address the player by name."
+      }
+    }
+  }
+}

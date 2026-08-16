@@ -1,0 +1,9 @@
+{
+  "id": "translation-fr",
+  "name": "French translation",
+  "version": "1.0.0",
+  "entry": "main.lua",
+  "api": 2,
+  "profile": "content",
+  "description": "French translation for Pokemon Red, Blue and Yellow."
+}

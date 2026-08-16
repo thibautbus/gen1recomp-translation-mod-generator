@@ -24,8 +24,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class SemanticAnchorDecisionTests(unittest.TestCase):
     def test_checked_in_assets_load_and_merge_without_overlap(self):
-        deterministic = load_semantic_anchors(ROOT / "config/semantic_anchors.json")
-        decisions = load_semantic_anchor_decisions(ROOT / "config/semantic_anchor_decisions.json")
+        deterministic = load_semantic_anchors(ROOT / "config/rby/semantic_anchors.json")
+        decisions = load_semantic_anchor_decisions(ROOT / "config/rby/semantic_anchor_decisions.json")
         self.assertTrue(set(deterministic).isdisjoint(decisions))
         merged, provenance = merge_semantic_anchors(deterministic, decisions)
         self.assertEqual(set(merged), set(deterministic) | set(decisions))
@@ -54,7 +54,7 @@ class SemanticAnchorDecisionTests(unittest.TestCase):
             "ja-Hrkt": ["{text_start}<PLAYER>は@", "モンスターボール@", "{text_ram wStringBuffer}{text_start}を　つかった！<DONE>", "おぼえられる@", "いまのボックス@", "おぼえられない@", "{text_ram wBattleMonNick}{text_start}！<DONE>", "やめる@", "{text_start}<USER>は<LINE>しろい　きりに　つつまれた！<PROMPT>", "#を　つれていく<NEXT>#を　あずける<NEXT>#を　にがす<NEXT>ボックスを　かえる<NEXT>さようなら@", "{text_start}どうぐが　いっぱいです<LINE>もう　もてません！<PROMPT>", "{text_start}#を　もちきれません！<PARA>ボックスも　いっぱいで<LINE>てんそうできません！<PARA>#センターなどで<LINE>ボックスを　かえてきて　ください<DONE>"],
         }
         anchors, _ = merge_semantic_anchors(
-            load_semantic_anchors(ROOT / "config/semantic_anchors.json"),
+            load_semantic_anchors(ROOT / "config/rby/semantic_anchors.json"),
             load_semantic_anchor_decisions(),
         )
         keys = ("%s used\nPOKé BALL!", "ABLE", "BOX No.%d", "NOT ABLE", "%s!", "CANCEL", "%s's\nprotected against\nstat changes!", "DEPOSIT <PK><MN>", "RELEASE <PK><MN>", "WITHDRAW <PK><MN>", "You can't carry\nany more items!", "But every BOX\nis full!")
@@ -178,8 +178,8 @@ class SemanticAnchorDecisionTests(unittest.TestCase):
         root = Path("../poke-corpus/corpus/RedBlue")
         if not (root / "qid_msg.txt").is_file():
             self.skipTest("canonical local poke-corpus checkout is unavailable")
-        deterministic = load_semantic_anchors(ROOT / "config/semantic_anchors.json")
-        decisions = load_semantic_anchor_decisions(ROOT / "config/semantic_anchor_decisions.json")
+        deterministic = load_semantic_anchors(ROOT / "config/rby/semantic_anchors.json")
+        decisions = load_semantic_anchor_decisions(ROOT / "config/rby/semantic_anchor_decisions.json")
         anchors, _ = merge_semantic_anchors(deterministic, decisions)
         expected = {"fr": "Diplôme", "de": "Diplom", "es": "Diploma", "it": "Diploma", "ja-Hrkt": "しょうじょう"}
         for language, value in expected.items():
@@ -230,8 +230,8 @@ class SemanticAnchorDecisionTests(unittest.TestCase):
             "ja-Hrkt": ("{RAM:wEnemyMonNick}が　\nあらわれた！", "ゆうれい", "ゆうれいが　\nあらわれた！"),
         }
         anchors, _ = merge_semantic_anchors(
-            load_semantic_anchors(ROOT / "config/semantic_anchors.json"),
-            load_semantic_anchor_decisions(ROOT / "config/semantic_anchor_decisions.json"),
+            load_semantic_anchors(ROOT / "config/rby/semantic_anchors.json"),
+            load_semantic_anchor_decisions(ROOT / "config/rby/semantic_anchor_decisions.json"),
         )
         for language, (sentence, ghost, expected) in translations.items():
             rows = [
@@ -426,22 +426,25 @@ class SemanticAnchorDecisionTests(unittest.TestCase):
         import build_translation
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / "config").mkdir()
+            (root / "config" / "rby").mkdir(parents=True)
+            (root / "config" / "shared").mkdir()
             shutil.copy(ROOT / "config" / "pipeline.toml", root / "config" / "pipeline.toml")
-            shutil.copy(ROOT / "config" / "semantic_anchors.json", root / "config" / "semantic_anchors.json")
+            shutil.copy(ROOT / "config" / "rby" / "semantic_anchors.json", root / "config" / "rby" / "semantic_anchors.json")
+            shutil.copy(ROOT / "config" / "rby" / "engine_scope.json", root / "config" / "rby" / "engine_scope.json")
+            shutil.copy(ROOT / "config" / "shared" / "engine_manifest.json", root / "config" / "shared" / "engine_manifest.json")
             shutil.copy(ROOT / "pyproject.toml", root / "pyproject.toml")
             with patch("pipeline.builder.resource_root", return_value=root), patch("pipeline.builder.work_root", return_value=root / "work"):
                 error = StringIO()
                 with redirect_stderr(error):
                     self.assertEqual(build_translation._self_check(), 1)
                 self.assertIn("semantic anchor decisions file missing", error.getvalue())
-                decisions = root / "config" / "semantic_anchor_decisions.json"
+                decisions = root / "config" / "rby" / "semantic_anchor_decisions.json"
                 decisions.write_text("{}", encoding="utf-8")
                 error = StringIO()
                 with redirect_stderr(error):
                     self.assertEqual(build_translation._self_check(), 1)
                 self.assertIn("wrapped schema", error.getvalue())
-                shutil.copy(ROOT / "config" / "semantic_anchor_decisions.json", decisions)
+                shutil.copy(ROOT / "config" / "rby" / "semantic_anchor_decisions.json", decisions)
                 with patch("build_translation.importlib.util.find_spec", return_value=object()), redirect_stdout(StringIO()):
                     self.assertEqual(build_translation._self_check(), 0)
 

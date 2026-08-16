@@ -24,6 +24,7 @@ from pipeline.join import (
     read_worksheets,
     romtext_fallback_catalog,
     sendout_strings_catalog,
+    species_kinds_catalog,
     type_names_catalog,
 )
 from pipeline.tokens import check_placeholders, encode
@@ -32,10 +33,22 @@ from pipeline.worksheet import dump, load
 
 
 class PipelineTests(unittest.TestCase):
+    def test_species_kind_prefers_canonical_row_over_empty_scoped_placeholder(self):
+        rows = align([
+            CorpusRecord("rb.dex_entries.PorygonDexEntry^RG.Species", "en", "[NULL]"),
+            CorpusRecord("rb.dex_entries.PorygonDexEntry^RG.Species", "fr", "[NULL]"),
+            CorpusRecord("rb.dex_entries.PorygonDexEntry.Species", "en", "VIRTUAL@"),
+            CorpusRecord("rb.dex_entries.PorygonDexEntry.Species", "fr", "VIRTUEL@"),
+        ])
+        values, report = species_kinds_catalog(rows, "fr", ["PORYGON"])
+        self.assertEqual(values, {"PORYGON": "VIRTUEL"})
+        self.assertEqual(report["translated"], 1)
+        self.assertEqual(report["unmatched"], [])
+
     def test_corpus_override_skeletons_have_explicit_schema_and_are_empty(self):
         for language in ("fr", "de", "es", "it", "ja-Hrkt"):
             with self.subTest(language=language):
-                body = json.loads((Path("overrides") / language / "corpus_overrides.json").read_text(encoding="utf-8"))
+                body = json.loads((Path("overrides") / language / "rby" / "corpus.json").read_text(encoding="utf-8"))
                 self.assertEqual(body, {"schema": CORPUS_OVERRIDES_SCHEMA, "version": 1, "entries": {}})
 
     def test_corpus_overrides_are_qid_scoped_and_empty_file_is_noop(self):
@@ -77,8 +90,8 @@ class PipelineTests(unittest.TestCase):
         self.assertTrue(any(f["rule"] == "coverage-engine-unmatched" for f in report["findings"]))
     def test_cli_generate_defaults_engine_overrides_to_language_tree(self):
         for language, expected in (
-            ("fr", "overrides/fr/shared_engine_overrides.json"),
-            ("es", "overrides/es/shared_engine_overrides.json"),
+            ("fr", "overrides/fr/rby/engine.json"),
+            ("es", "overrides/es/rby/engine.json"),
         ):
             with tempfile.TemporaryDirectory() as tmp:
                 aligned = Path(tmp) / "aligned.json"

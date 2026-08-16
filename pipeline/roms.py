@@ -5,17 +5,21 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from types import MappingProxyType
 from typing import Any, Callable
 
-from .project import is_frozen, project_config
+from .project import is_frozen, project_config, resource_root, which_luajit
+from .subprocess_run import run_streamed
 
 
 # Product support is intentionally limited to the canonical US games; this
 # allowlist is independent of whatever sections a config may contain.
 SUPPORTED_VERSIONS = frozenset(("red", "blue", "yellow"))
+CONFIGURED_VERSIONS = SUPPORTED_VERSIONS | {"gold"}
 _SHA1 = re.compile(r"[0-9a-f]{40}\Z")
 _MANIFESTS = {
     "red": "rom_manifest.json",
@@ -36,8 +40,11 @@ def _canonical_hashes(root: str | Path | None = None) -> dict[str, str]:
         raise ValueError("invalid ROM configuration: missing [rom] section")
 
     keys = set(rom_config)
+    # Gold is validated if present but, unlike RBY, not required: a
+    # deployment that never touches Gold can keep a pared-down
+    # pipeline.toml without [rom.gold].
     missing = sorted(SUPPORTED_VERSIONS - keys)
-    unsupported = sorted(keys - SUPPORTED_VERSIONS)
+    unsupported = sorted(keys - CONFIGURED_VERSIONS)
     if missing or unsupported:
         details = []
         if missing:
@@ -47,7 +54,7 @@ def _canonical_hashes(root: str | Path | None = None) -> dict[str, str]:
         raise ValueError("invalid ROM configuration: " + "; ".join(details))
 
     hashes: dict[str, str] = {}
-    for version in sorted(SUPPORTED_VERSIONS):
+    for version in sorted(CONFIGURED_VERSIONS & keys):
         section = rom_config[version]
         if not isinstance(section, dict):
             raise ValueError(f"invalid [rom.{version}] configuration: expected a table")
@@ -130,29 +137,82 @@ def import_rom(version: str, rom: str | Path, gen1recomp: str | Path, out: str |
     command.extend(["--rom", str(rom), "--manifest", str(manifest), "--out", str(out), "--assets", str(assets), "--clean"])
     for dataset in only or []:
         command.extend(["--only", dataset])
-    if log_fn is None:
-        subprocess.run(command, cwd=root / "tools", check=True)
-        return
-    # Mirror pipeline.builder._run(): stream combined stdout/stderr live
-    # instead of letting the child inherit the parent's own streams, which
-    # are invalid in the frozen GUI's console-less window and would
-    # otherwise leave a failure here as an opaque exit code with no output.
-    printable = " ".join(command)
-    line = f"\n> {printable}"
-    print(line)
-    log_fn(line)
-    process = subprocess.Popen(
-        command, cwd=root / "tools", text=True, errors="replace",
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-    )
-    assert process.stdout is not None
-    for output_line in process.stdout:
-        output_line = output_line.rstrip("\r\n")
-        print(output_line)
-        log_fn(output_line)
-    returncode = process.wait()
-    if returncode:
-        raise subprocess.CalledProcessError(returncode, command)
+    run_streamed(command, cwd=root / "tools", log_fn=log_fn)
+
+
+# Gold shares the canonical fingerprint registry with RBY, while remaining
+# outside SUPPORTED_VERSIONS because it has a different extractor contract.
+# Unlike RBY, [rom.gold] is optional in pipeline.toml, so this is None
+# rather than a KeyError at import time when a deployment omits it;
+# verify_gold_rom() raises a clear error instead when Gold is actually used.
+GOLD_SHA1 = CANONICAL.get("gold")
+
+# Complete output contract of tools/gold_extract.lua.  Keeping the list next
+# to the importer lets it validate a fresh extraction before publishing it;
+# downstream builders import the same constant rather than maintaining a
+# second, potentially divergent list.
+GOLD_REQUIRED_TSV = (
+    "gold_text.tsv", "gold_labels.tsv", "gold_stages.tsv", "gold_species.tsv",
+    "gold_moves.tsv", "gold_items.tsv",
+    "gold_trainer_classes.tsv", "gold_landmarks.tsv",
+)
+
+
+def verify_gold_rom(path: str | Path) -> dict[str, Any]:
+    if GOLD_SHA1 is None:
+        raise ValueError(
+            "missing [rom.gold] configuration: Gold ROM verification requires "
+            "a [rom.gold] section in config/pipeline.toml"
+        )
+    path = Path(path)
+    actual = sha1(path)
+    if actual != GOLD_SHA1:
+        raise ValueError(f"gold ROM SHA-1 mismatch: {actual} (expected {GOLD_SHA1})")
+    return {"version": "gold", "path": str(path.resolve()), "sha1": actual, "size": path.stat().st_size}
+
+
+def import_gold_rom(rom: str | Path, gen1recomp: str | Path, out: str | Path, log_fn: Callable[[str], None] | None = None) -> None:
+    """Extract and atomically publish Gold's required TSV catalogs."""
+    verify_gold_rom(rom)
+    root = Path(gen1recomp).resolve()
+    rom = Path(rom).resolve()
+    out = Path(out).resolve()
+    out.parent.mkdir(parents=True, exist_ok=True)
+    luajit = which_luajit()
+    if luajit is None:
+        raise RuntimeError("LuaJIT is required to import a Gold ROM; see MODKIT_LUAJIT")
+    script = resource_root() / "tools" / "gold_extract.lua"
+    temporary = Path(tempfile.mkdtemp(prefix=f".{out.name}-", dir=out.parent))
+    command = [luajit, str(script), str(root), str(rom), str(temporary)]
+    try:
+        run_streamed(command, log_fn=log_fn)
+
+        missing = [
+            name for name in GOLD_REQUIRED_TSV
+            if not (temporary / name).is_file()
+            or not (temporary / name).read_text(encoding="utf-8").strip()
+        ]
+        if missing:
+            raise RuntimeError(
+                "Gold extraction completed without required non-empty outputs: "
+                + ", ".join(missing)
+            )
+
+        backup = temporary.with_name(f"{temporary.name}.old")
+        had_output = out.exists()
+        if had_output:
+            out.replace(backup)
+        try:
+            temporary.replace(out)
+        except Exception:
+            if had_output and backup.exists() and not out.exists():
+                backup.replace(out)
+            raise
+        if backup.exists():
+            shutil.rmtree(backup)
+    finally:
+        if temporary.exists():
+            shutil.rmtree(temporary, ignore_errors=True)
 
 
 def import_all(roms: dict[str, str | Path], gen1recomp: str | Path, cache_root: str | Path) -> dict[str, dict[str, Any]]:

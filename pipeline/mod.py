@@ -5,7 +5,7 @@ from pathlib import Path
 import os
 import shutil
 import tempfile
-from typing import Iterable
+from typing import Iterable, Mapping
 
 from .model import Alignment
 from .generate import lua_string
@@ -43,12 +43,30 @@ def yellow_isyellow_guard_lines() -> str:
     )
 
 
-def effective_yellow_engine_coverage(engine_rby: dict, yellow_dialogue: dict[str, str] | None) -> dict:
-    """Add corpus-backed Yellow dialogue fallbacks to engine coverage."""
+def effective_yellow_engine_coverage(
+    engine_rby: dict,
+    yellow_dialogue: dict[str, str] | None,
+    yellow_engine_overrides: Mapping[str, str] | None = None,
+    eligible_keys: Iterable[str] | None = None,
+) -> dict:
+    """Add corpus-backed Yellow dialogue fallbacks and Yellow-only engine
+    strings to the RBY engine coverage.
+
+    The Yellow layer ships translated engine strings that the base engine
+    matcher cannot see (Yellow-exclusive text with no Red/Blue corpus row).
+    Keys counted here must be in the RBY eligible scope so the Yellow layer
+    never inflates the metric beyond its own denominator.
+    """
     direct_translated = int(engine_rby.get("translated", 0))
     total = int(engine_rby.get("total", 0))
     refusal = (yellow_dialogue or {}).get("_RefusingText")
-    covered = int(bool(refusal and refusal != "{RAM:wNameBuffer}\nis refusing!"))
+    covered_dialogue = int(bool(refusal and refusal != "{RAM:wNameBuffer}\nis refusing!"))
+    eligible = set(eligible_keys or ())
+    covered_yellow_engine = sum(
+        1 for key, value in (yellow_engine_overrides or {}).items()
+        if value and key in eligible
+    )
+    covered = covered_dialogue + covered_yellow_engine
     effective_translated = min(total, direct_translated + covered)
 
     def metric(translated: int) -> dict:
@@ -56,12 +74,13 @@ def effective_yellow_engine_coverage(engine_rby: dict, yellow_dialogue: dict[str
                 "percent": round(translated * 100 / total, 2) if total else 100.0}
 
     result = metric(effective_translated)
-    result["covered_by_dialogue"] = covered
+    result["covered_by_dialogue"] = covered_dialogue
+    result["covered_by_yellow_engine"] = covered_yellow_engine
     return result
 
 
-def yellow_coverage_metrics(stats: dict) -> dict:
-    """Summarize Yellow corpus coverage for dialogue and named catalogs."""
+def yellow_coverage_metrics(stats: dict, shared_rom_details: dict | None = None) -> dict:
+    """Summarize Yellow ROM coverage, including shared runtime extras."""
     dialogue_total = int(stats.get(
         "effective_dialogue_total", stats.get("yellow_labels", 0)
     ))
@@ -82,6 +101,16 @@ def yellow_coverage_metrics(stats: dict) -> dict:
 
     dialogue = metric(dialogue_translated, dialogue_total)
     named_catalogs = metric(catalog_translated, catalog_total)
+    shared_details = {
+        name: details
+        for name, details in (shared_rom_details or {}).items()
+        if name not in ROM_CATALOGS
+    }
+    shared_runtime = metric(
+        sum(int(details.get("translated", 0)) for details in shared_details.values()),
+        sum(int(details.get("total", 0)) for details in shared_details.values()),
+    )
+    shared_runtime["details"] = shared_details
     diff_total = int(stats.get("layer_entries", 0))
     # `stats["unmatched"]` counts both unmatched-versioned-fallback labels
     # (which ARE present in the layer, as the ROM's own English text) and
@@ -91,11 +120,14 @@ def yellow_coverage_metrics(stats: dict) -> dict:
     # layer entries that carry a real translation, so use it directly.
     diff_translated = int(stats.get("matched", 0))
     return {
-        "rom": metric(dialogue_translated + catalog_translated,
-                       dialogue_total + catalog_total),
+        "rom": metric(
+            dialogue_translated + catalog_translated + shared_runtime["translated"],
+            dialogue_total + catalog_total + shared_runtime["total"],
+        ),
         "specific_diff": metric(diff_translated, diff_total),
         "dialogue": dialogue,
         "named_catalogs": named_catalogs,
+        "shared_runtime": shared_runtime,
     }
 
 
@@ -105,6 +137,7 @@ FONT_PROFILES = {
         "files": {
             "latin": ("fusion-pixel-10px-proportional-latin.ttf", 10),
             "ja": ("fusion-pixel-8px-proportional-ja.ttf", 8),
+            "ko": ("fusion-pixel-10px-proportional-ko.ttf", 10),
         },
         "licenses": (
             Path("OFL.txt"),
@@ -115,22 +148,32 @@ FONT_PROFILES = {
     },
     "pokemon": {
         "warning": "Pokemon Font is 8px; some translated text may overflow.",
-        "files": {"latin": ("pokemon-font.ttf", 8), "ja": None},
+        "files": {"latin": ("pokemon-font.ttf", 8), "ja": None, "ko": None},
         "licenses": (Path("LICENSES/pokemon-font/LICENSE.md"),),
     },
 }
 
 
 def _font_variant(language: str) -> str:
-    return "ja" if canonical_language(language) == "ja-Hrkt" else "latin"
+    language = canonical_language(language)
+    if language == "ja-Hrkt":
+        return "ja"
+    if language == "ko":
+        return "ko"
+    return "latin"
 
 
 def validate_font_profile(language: str, font_profile: str = "fusion") -> str:
     profile = str(font_profile or "fusion").strip().lower()
     if profile not in FONT_PROFILES:
         raise ValueError(f"Unsupported font profile: {font_profile!r}")
-    if _font_variant(language) == "ja" and FONT_PROFILES[profile]["files"]["ja"] is None:
-        raise ValueError("Pokemon Font is only available for French, German, Spanish, and Italian.")
+    variant = _font_variant(language)
+    if FONT_PROFILES[profile]["files"].get(variant) is None:
+        raise ValueError(
+            f"Font profile {profile!r} has no {canonical_language(language)} glyph variant; "
+            "use Fusion Pixel for this language; Pokemon Font is only available "
+            "for French, German, Spanish, and Italian."
+        )
     return profile
 
 
@@ -475,7 +518,7 @@ end
 '''
 
 
-def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: str = "translation-fr", language: str = "fr", modkit_worksheet: str | Path | None = None, report_path: str | Path | None = None, engine_catalog: str | Path | None = None, engine_overrides: str | Path | None = None, strict_engine: bool = False, semantic_anchors: str | Path | None = None, semantic_anchor_decisions: str | Path | None = None, target_name: str | None = None, literal_handlers: str | Path | None = None, target_description: str | None = None, engine_source: str | Path | None = None, engine_scope: str | Path | None = None, font_source: str | Path | None = None, font_profile: str = "fusion", yellow_dialogue: dict[str, str] | None = None, yellow_stats: dict | None = None, yellow_catalogs: dict[str, dict[str, str]] | None = None, yellow_engine_overrides: dict[str, str] | None = None, precomputed_join: tuple[dict, dict] | None = None) -> Path:
+def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: str = "translation-fr", language: str = "fr", modkit_worksheet: str | Path | None = None, report_path: str | Path | None = None, engine_catalog: str | Path | None = None, engine_overrides: str | Path | None = None, strict_engine: bool = False, semantic_anchors: str | Path | None = None, semantic_anchor_decisions: str | Path | None = None, target_name: str | None = None, literal_handlers: str | Path | None = None, target_description: str | None = None, engine_source: str | Path | None = None, engine_scope: str | Path | None = None, engine_manifest: str | Path | None = None, font_source: str | Path | None = None, font_profile: str = "fusion", yellow_dialogue: dict[str, str] | None = None, yellow_stats: dict | None = None, yellow_catalogs: dict[str, dict[str, str]] | None = None, yellow_engine_overrides: dict[str, str] | None = None, precomputed_join: tuple[dict, dict] | None = None) -> Path:
     """Generate a mod; ``strict_engine`` requires scaffold/catalog presence only.
 
     It does not require complete engine translations: unresolved entries remain
@@ -514,16 +557,31 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         if engine_catalog is None and strict_engine:
             engine_catalog = Path(modkit_worksheet) / "strings.lua"
     if engine_catalog:
-        from .engine_scope import engine_dynamic_values, forced_dynamic_keys, load_scope
-        scope = load_scope(engine_scope) if engine_scope else load_scope()
+        from .engine_scope import (
+            complete_engine_keys, engine_dynamic_values, forced_dynamic_keys,
+            iter_callsites, load_scope, verified_source,
+        )
+        scope_kwargs = {}
+        if engine_scope:
+            scope_kwargs["path"] = engine_scope
+        if engine_manifest:
+            scope_kwargs["manifest_path"] = engine_manifest
+        scope = load_scope(**scope_kwargs)
         from .join import ENGINE_CATALOG_EXTRA_KEYS
         catalog = read_engine_catalog(engine_catalog)
-        for key in forced_dynamic_keys(scope):
+        for key in sorted(forced_dynamic_keys(scope)):
             catalog.setdefault(key, "")
-        for key in engine_dynamic_values(scope):
+        for key in sorted(engine_dynamic_values(scope)):
             catalog.setdefault(key, "")
-        for key in ENGINE_CATALOG_EXTRA_KEYS:
+        for key in sorted(ENGINE_CATALOG_EXTRA_KEYS):
             catalog.setdefault(key, "")
+        engine_callsites = None
+        source_path = None
+        if engine_source:
+            source_path, _, _ = verified_source(engine_source, scope)
+            engine_callsites = iter_callsites(source_path)
+            for key in sorted(complete_engine_keys(engine_callsites, scope)):
+                catalog.setdefault(key, "")
         overrides = load_engine_overrides(engine_overrides)
         stale_overrides = sorted(set(overrides) - set(catalog))
         if stale_overrides:
@@ -656,7 +714,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
     # Literal handlers are emitted only when every branch has a proven target
     # qid.  The runtime file is deliberately separate so an interactive build
     # can retain Modkit's scaffold main and load this optional contribution.
-    literal_path = Path(literal_handlers) if literal_handlers else Path(__file__).resolve().parents[1] / "config" / "literal_handlers.json"
+    literal_path = Path(literal_handlers) if literal_handlers else Path(__file__).resolve().parents[1] / "config" / "rby" / "literal_handlers.json"
     runtime = destination / "lang" / "literal_handlers.lua"
     recipes = []
     generated_handlers = []
@@ -696,12 +754,9 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         lines.extend(f"{row.qid}\t{row.english.text}" for row in sorted(grouped, key=lambda item: item.qid))
         (worksheet_root / f"{name}.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
     import json
-    display_name = target_name or f"{language} translation"
-    description = target_description or (
-        f"{display_name} for Pokémon Red, Blue and Yellow, based mostly on PokeCorpus. "
-        "Some engine-specific text remains untranslated."
-    )
-    manifest_body = {"id": mod_id, "name": display_name, "version": project_version(), "api": 2, "entry": "main.lua", "profile": "content", "game_version": ">=0.0.0-dev <1.0.0", "category": "GAMEPLAY", "priority": TRANSLATION_MOD_PRIORITY, "dependencies": [], "optional_dependencies": [], "conflicts": [], "description": description}
+    display_name = target_name or f"{language} translation for Red, Blue and Yellow"
+    description = target_description or f"{display_name}, based mostly on PokeCorpus."
+    manifest_body = {"id": mod_id, "name": display_name, "version": project_version(), "api": 2, "entry": "main.lua", "profile": "content", "game_version": ">=0.0.0-dev <1.0.0", "category": "LANGUAGE", "priority": TRANSLATION_MOD_PRIORITY, "dependencies": [], "optional_dependencies": [], "conflicts": [], "description": description}
     manifest = json.dumps(manifest_body, ensure_ascii=False, indent=2) + "\n"
     (destination / "manifest.json").write_text(manifest, encoding="utf-8")
     if report_path and join_report is not None:
@@ -801,10 +856,10 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         if engine_report is not None:
             report["engine"] = engine_report
             if engine_source:
-                from .engine_scope import classify_catalog, coverage_metadata, iter_callsites, validate_catalog_universe, verified_source
-                source_path, _, _ = verified_source(engine_source, scope)
+                from .engine_scope import classify_catalog, coverage_metadata, validate_catalog_universe
+                assert source_path is not None and engine_callsites is not None
                 validate_catalog_universe(catalog.keys(), source_path, scope)
-                classified = classify_catalog(catalog.keys(), iter_callsites(source_path), scope)
+                classified = classify_catalog(catalog.keys(), engine_callsites, scope)
                 report_scope = _catalog_scope(classified, catalog)
                 eligible = {key for key, info in report_scope.items() if info["eligibility"] == "eligible"}
                 translated_keys = {key for key, value in engine_values.items() if isinstance(value, str) and value}
@@ -828,17 +883,21 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
                 "layer": yellow_stats,
                 "note": "Yellow catalog layers: versioned, translation-variant and Yellow-only values, applied when GameVersion.isYellow()",
             }
-            report["yellow"]["coverage"] = yellow_coverage_metrics(yellow_stats)
+            report["yellow"]["coverage"] = yellow_coverage_metrics(
+                yellow_stats, report["rom"]["details"]
+            )
             if "engine_rby" in report:
                 effective = effective_yellow_engine_coverage(
-                    report["engine_rby"], yellow_dialogue
+                    report["engine_rby"], yellow_dialogue,
+                    yellow_engine_overrides, eligible,
                 )
                 report["engine_rby"].update({
                     key: effective[key] for key in ("translated", "total", "percent")
                 })
                 report["yellow"]["engine_coverage_provenance"] = {
                     "covered_by_dialogue": effective["covered_by_dialogue"],
-                    "note": "Corpus-backed Yellow dialogue fallbacks are included in engine coverage.",
+                    "covered_by_yellow_engine": effective["covered_by_yellow_engine"],
+                    "note": "Corpus-backed Yellow dialogue fallbacks and Yellow-only engine strings are included in engine coverage.",
                 }
         Path(report_path).write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return destination

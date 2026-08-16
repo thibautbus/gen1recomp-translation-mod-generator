@@ -1,4 +1,4 @@
-"""Pinned archive dependency downloads used by the frozen Windows build."""
+"""Pinned archive dependency downloads used by the frozen CLI/GUI builds."""
 from __future__ import annotations
 
 import hashlib
@@ -6,9 +6,47 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import shutil
+import ssl
 import tempfile
 import urllib.request
 import zipfile
+
+
+def _default_ssl_context() -> ssl.SSLContext:
+    """Prefer the OS's own (actively maintained) CA store; certifi is a
+    fallback, not the primary source.
+
+    A PyInstaller-frozen Linux build bundles the OpenSSL shared library from
+    its build machine (Ubuntu in CI); that library's compiled-in default
+    certificate search path does not necessarily exist on every distro the
+    binary later runs on (confirmed: works from a source checkout on the
+    same machine, fails from the frozen release, `CERTIFICATE_VERIFY_FAILED
+    ... unable to get local issuer certificate`) -- the default context then
+    loads zero trust anchors. certifi's bundled CA file, shipped inside the
+    frozen executable, makes that case self-contained instead of guessing at
+    an OS path.
+
+    certifi is deliberately only a fallback, not tried first: its version is
+    pinned at packaging time (packaging/requirements-windows.txt) with no
+    update automation, so its bundle *will* go stale, while a working OS
+    store (update-ca-certificates/update-ca-trust, whichever the distro
+    uses) stays current on its own. Preferring it whenever it actually
+    loads certs means the pin's age only matters for the narrow case this
+    exists for -- a frozen build whose OS-path lookup finds nothing at
+    all -- not for every request.
+    """
+    context = ssl.create_default_context()
+    if context.cert_store_stats()["x509"] > 0:
+        return context
+    try:
+        import certifi
+    except ImportError:
+        return context
+    return ssl.create_default_context(cafile=certifi.where())
+
+
+def _default_opener(url: str):
+    return urllib.request.urlopen(url, context=_default_ssl_context())
 
 
 class DependencyError(RuntimeError):
@@ -77,7 +115,11 @@ def _extract_archive(archive: Path, destination: Path, selective_prefix: str | N
         for entry, name in zip(entries, names):
             unix_mode = (entry.external_attr >> 16) & 0o170000
             if unix_mode == 0o120000:
-                raise DependencyError(f"symbolic links are not extracted: {name}")
+                # Upstream ships a sample-mod symlink (mods/timekeepers_hut
+                # since v0.1.85).  Symlinks cannot be written safely and are
+                # never part of the integrity-checked immutable tree, so skip
+                # the entry instead of failing the whole archive.
+                continue
             if not name or name.endswith("/"):
                 continue
             key = name.casefold()
@@ -115,7 +157,7 @@ def fetch_archive(
 ) -> Path:
     """Download, verify and atomically publish a pinned archive checkout."""
     injected = opener is not None
-    opener = opener or urllib.request.urlopen
+    opener = opener or _default_opener
     if not injected and not url.lower().startswith("https://"):
         raise DependencyError("dependency URL must use HTTPS")
     if not sha256 or len(sha256) != 64 or any(c not in "0123456789abcdef" for c in sha256.lower()):
@@ -197,7 +239,7 @@ def fetch_files(
 ) -> Path:
     """Fetch a small pinned file manifest and publish it atomically."""
     injected = opener is not None
-    opener = opener or urllib.request.urlopen
+    opener = opener or _default_opener
     if not injected and not base_url.lower().startswith("https://"):
         raise DependencyError("dependency URL must use HTTPS")
     if not manifest:

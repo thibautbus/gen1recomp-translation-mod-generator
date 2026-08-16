@@ -3,12 +3,15 @@
 [![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
 
 This repository reproducibly generates multilingual `Gen1Recomp` translation
-mods. It turns the parallel Red/Blue and Yellow data in `poke-corpus` into ROM
-catalogs and engine string overrides without storing a ROM or ROM extract
-here. Each generated ZIP is a single **universal mod** for Pokémon Red, Blue
-and Yellow: the shared texts are translated once, and the versioned dialogue
-layer (Yellow-only and reworded labels) is applied at runtime only when the
-game is Yellow (`GameVersion.isYellow()`).
+mods without storing a ROM or ROM extract. It currently produces two separate
+artifacts per language:
+
+- a universal Pokémon Red, Blue and Yellow mod, with a runtime-selected Yellow
+  layer;
+- a Pokémon Gold mod for Gen1Recomp's generation-2 runtime.
+
+The artifacts have distinct mod IDs and filenames, so they can be installed
+side by side.
 
 > **AI-assisted development disclosure:** The repository and pipeline were
 > developed with AI assistance. Changes are checked through automated tests,
@@ -20,20 +23,17 @@ game is Yellow (`GameVersion.isYellow()`).
 
 Download the GUI executable for your platform from the
 [latest release](https://github.com/thibautbus/gen1recomp-translation-mod-generator/releases/latest),
-then select:
+then select the target games and the corresponding ROM dumps:
 
 ![Gen1Recomp translation mod generator GUI](docs/gui.png)
 
-1. your own canonical US Pokémon Red, Blue and Yellow ROM dumps;
-2. the target language;
-3. the output directory.
+1. Red, Blue and Yellow, or Gold;
+2. your own canonical US ROM dumps for the selected games;
+3. the target language and output directory.
 
-The GUI runs the same verified matching and packaging pipeline as the CLI and
-writes the ready-to-import ZIP into the selected directory. The standalone
-application bundles its Python runtime, Pillow (used by Gen1Recomp's US-ROM
-asset importer), and LuaJIT, so those
-prerequisites do not need to be installed separately. Network access is still
-required to download the pinned Gen1Recomp and PokeCorpus inputs.
+The GUI writes a ready-to-import ZIP into the selected directory. It bundles
+Python, Pillow and LuaJIT; network access is still required to download the
+pinned Gen1Recomp and PokeCorpus inputs.
 
 ### Build from source with the CLI
 
@@ -50,37 +50,19 @@ From the repository root:
 python build_translation.py
 ```
 
-Latin builds default to Fusion Pixel by TakWolf at 10px; advanced users can select the optional
-8px Pokemon Font clone by Superpencil profile with `python build_translation.py --font-profile pokemon`.
+Latin builds default to Fusion Pixel. Use
+`python build_translation.py --font-profile pokemon` to select the optional
+Pokemon Font profile. Substitute `python3`, `py -3`, or a virtual-environment
+interpreter when appropriate.
 
-Use `python3 build_translation.py` or `py -3 build_translation.py` when needed.
-With a virtual environment, use its interpreter explicitly, for example
-`./venv/bin/python build_translation.py` or
-`venv\Scripts\python.exe build_translation.py` on Windows.
+The builder asks for the target games, canonical US ROM dumps and language. It
+verifies the ROM fingerprints, asks before downloading pinned dependencies,
+then extracts, translates, validates and packages the selected release in a
+private ignored workspace.
 
-The assistant asks for full paths to canonical US Pokémon Red, Blue and Yellow
-ROM dumps, then a target language. It verifies US SHA-1 fingerprints and asks
-before cloning pinned repositories. After validation, it:
-
-1. clones the pinned Gen1Recomp revision and the required
-   `poke-corpus/corpus/RedBlue` and `corpus/Yellow` subtrees under `.cache/`;
-2. extracts the three ROMs into private ignored directories (Yellow into its
-   own `yellow/` cache) and creates the complete Modkit worksheet;
-3. matches ROM and engine catalogs against the selected corpus language;
-4. builds versioned Yellow catalog layers: every label is classified
-   shared-safe (identical English and target translation), translation-variant,
-   versioned-required (reworded in Yellow), or Yellow-only; the differing
-   catalog values are emitted into `lang/*_yellow.lua` and applied by
-   `main.lua` only when `GameVersion.isYellow()`;
-5. downloads the pinned dependency for the selected font profile into the
-   private workspace cache, then bundles only that TTF and its license
-   notices (keeping macro and tile glyphs on the engine's tile pages) and applies the
-   selected language's optional corpus overrides;
-6. runs strict validation and ROM-content lint while packing, scans a private
-   candidate archive, and atomically publishes it to `dist/`.
-
-The final file is `dist/translation-<lang>-<version>.zip` (for example
-`dist/translation-fr-0.6.0.zip`); the command prints its absolute path.
+The final file is `dist/translation-<lang>-<version>.zip` for RBY or
+`dist/translation-<lang>-gen2-<version>.zip` for Gold; the command prints its
+absolute path.
 
 ### Optional local path configuration
 
@@ -92,282 +74,149 @@ ignored `config/rom_paths.toml` and edit it:
 red = "/absolute/path/to/PokemonRed.gb"
 blue = "/absolute/path/to/PokemonBlue.gb"
 yellow = "/absolute/path/to/PokemonYellow.gb"
-
+gold = "/absolute/path/to/PokemonGold.gbc"
 ```
 
-All three entries are required for the universal build. `~` expands and relative paths resolve relative to this file;
-absolute paths are recommended. On Windows use forward slashes or TOML
-literal single-quoted paths such as `red = 'C:\Games\PokemonRed.gb'` (a
-double-quoted string must double each backslash). A configured path is still
-validated for existence and SHA-1; choosing No
-returns to the normal prompt. The ROM file remains private and Git-ignored.
+The three RBY entries are required for the universal build; `gold` is required
+only for Gold. Relative paths resolve from this file and `~` expands, although
+absolute paths are recommended. On Windows, use forward slashes or TOML
+single-quoted paths such as `red = 'C:\Games\PokemonRed.gb'`. Configured files
+are still checked for existence and SHA-1; declining one returns to the normal
+prompt.
 
 ## Universal Yellow support
 
-One ZIP per language works on Pokémon Red, Blue and Yellow US. The build
-extracts the three ROMs (each into its own private cache directory) and
-produces a single version-aware mod:
+One ZIP per language works on Pokémon Red, Blue and Yellow US. Red/Blue data
+lives in the common catalogs; entries whose source or translation differs in
+Yellow are emitted into `lang/*_yellow.lua` and applied only when
+`GameVersion.isYellow()`.
 
-- **Common catalogs** (`lang/dialogue.lua`, `strings.lua`, species/moves/items/
-  trainers, …) carry the Red/Blue data. Versioned Yellow catalog layers are
-  emitted for dialogue and other catalog entries whose Yellow translation or
-  English source differs.
-- **Yellow layers** (`lang/*_yellow.lua`) are applied only when
-  `GameVersion.isYellow()`. Labels with identical English are skipped only
-  when their localized translation is also identical; language-specific
-  variants are retained. A versioned label with no Yellow corpus match keeps
-  the Yellow ROM's English text, while a Yellow-only unmatched label remains
-  untouched in the ROM.
-- **Runtime selection**: `main.lua` requires `src.core.GameVersion` and applies
-  the Yellow layer after the common/Red-Blue dialogue only when
-  `GameVersion.isYellow()`.
-- **Independent audit**: `.cache/audit/yellow/<language>.json` records the
-  Yellow matrix (shared-safe / translation-variant / versioned-required /
-  yellow-only / matched / unmatched) and the deferred Yellow-only engine strings (Surfing Pikachu
-  minigame HUD: `SCORE %d`, `New record!`, `A: done`, `HI    %d` — no
-  PokeCorpus source; the refusing message is covered through the `_RefusingText`
-  dialogue label). Yellow coverage is reported as one aggregate in the table;
-  the dialogue/catalog breakdown and Yellow-specific diff remain available in
-  the generated JSON.
-  Shared labels are counted through the common Red/Blue catalogs, not
-  duplicated. The current pinned corpus produces 487, 646, 640, 486 and 485
-  differing Yellow dialogue layer entries for French, German, Spanish, Italian
-  and Japanese, respectively.
-  The remaining direct item-name corpus gaps reuse the translated common
-  Red/Blue catalog in the effective metric.
+Shared translations are not duplicated. Missing matches keep the appropriate
+ROM English text. The generated coverage report and
+`.cache/audit/yellow/<language>.json` retain the full shared/versioned/Yellow-only
+breakdown. Yellow-specific manual translations live in
+`overrides/<language>/rby/yellow_engine.json`.
 
-Config: `config/pipeline.toml` pins the Yellow ROM SHA-1 and the
-SHA-256-pinned `corpus/Yellow` files; `config/rom_paths.toml` accepts a
-`yellow` path. Per-version manual translations go to
-`overrides/<language>/yellow_engine_overrides.json` (merged after the shared
-`shared_engine_overrides.json`).
+## Pokémon Gold support
+
+Gold is published separately as `translation-<lang>-gen2`. It covers dialogue,
+Pokédex entries, named ROM catalogs and engine strings matched from production
+Gen 2 callsites. Missing or ambiguous matches remain in English.
+
+Before packaging, headless generation-2 gates verify that the translated
+values reach the Gold registries. These checks do not replace an in-game smoke
+test before release.
 
 ## Legal inputs and privacy
-Use dumps from your own original US Red
-(`ea9bcae617fdf159b045185467ae58b2e4a48b9a`) and Blue
-(`d7037c83e1ae5b39bde3c30787637ba1d4c48ce2`) and Yellow
-(`cc7d03262ebfaf2f06772c1a480c7d9d5f4a38e1`) cartridges. These canonical
-files are local and configurable; the pipeline never downloads, provides, or
-redistributes ROMs, patches, or copyrighted text extracts. Import verifies
-all three SHA-1 values before reading.
 
-`config/pipeline.toml` records
-the canonical hashes and pinned Gen1Recomp/`poke-corpus` revisions;
-The builder asks permission before cloning revisions into private ignored
-`.cache/` paths. Imported data, worksheets, catalogs, reports, and complete
-extracted fonts remain there and are never committed or packaged.
-`config/rom_paths.toml` is ignored; never commit it or replace the tracked
-example with personal paths. A publication may contain the generated mod,
-English documentation only after a no-ROM-content inspection. Do not claim ROM redistribution or provide download
-instructions.
+Use dumps from your own original US cartridges:
+
+| Game | Expected SHA-1 |
+| --- | --- |
+| Red | `ea9bcae617fdf159b045185467ae58b2e4a48b9a` |
+| Blue | `d7037c83e1ae5b39bde3c30787637ba1d4c48ce2` |
+| Yellow | `cc7d03262ebfaf2f06772c1a480c7d9d5f4a38e1` |
+| Gold | `d8b8a3600a465308c9953dfa04f0081c05bdcb94` |
+
+The pipeline verifies these fingerprints and never downloads, provides or
+redistributes ROMs, patches or copyrighted text extracts. Generated data,
+worksheets and reports remain under ignored `.cache/` paths and are not
+packaged. Keep ROMs and the ignored `config/rom_paths.toml` private.
 
 ## Languages and fonts
 
-The RedBlue corpus currently provides `fr`, `de`, `es`, `it`, and `ja-Hrkt`.
-English is the source language and runtime fallback: an empty generated value
-leaves the original English string visible. The builder always requires an
-explicit target-language selection.
+English is the source language and runtime fallback. Supported targets and
+font profiles are:
 
-Latin languages (`fr`, `de`, `es`, `it`) default to the pinned Fusion Pixel by TakWolf
-proportional Latin TTF at `size = 10`; the optional Pokemon Font clone by Superpencil profile also
-uses `size = 8` for a compact, game-like layout, but some translated text may
-overflow. Japanese (`ja-Hrkt`) is
-fixed to the pinned Fusion Pixel by TakWolf 8px proportional Japanese TTF. Macros and border/chrome glyphs remain
-tile-rendered by the engine. Each mod includes only its selected TTF and
-applicable license notices under `fonts/`; source files remain in the private
-workspace cache. ROM-derived worksheets contain six catalogs
-(`dialogue`, `species_names`, `move_names`, `item_names`, `trainer_names`,
-`status_labels`) plus the empty 604-key `strings.lua` scaffold; none are
-committed or packaged. Two engine edges are covered by one dedicated hook:
-Yellow's Pallet-intro catch demo and the old-man tutorial both route the
-hard-coded English thrower names `PROF.OAK` and `OLD MAN` into
-`BattleState.makeOldManDemo` (shown in the translated
-`%s used POKé BALL!` template). Both literals are joined qid-driven into a
-`demo_names` catalog (`rb.core.DisplayBattleMenu.oldManName` and
-`rb.name_pointers.TrainerNamePointers.ProfOakName`) — e.g. `OLD MAN` →
-`VIEILLARD`/`GREIS`/`ANCIANO`/`VECCHIETTO`/`おじいさん`, `PROF.OAK` →
-`PROF.CHEN`/`PROF.EICH`/`PROF. OAK`/`PROF. OAK`/`オーキド`. The engine's
-`BattleState.demoName` stays the canonical English literal — Yellow's
-Pallet intro keys its sprite selection off `demoName == "PROF.OAK"` — so
-the generated `main.lua` swaps in the localized name only at the render
-site, wrapping `BattleState.oldManThrow`'s `%s used POKé BALL!` message
-(and reverting right after; the translated trainer record
-`data.trainers["OPP_PROF_OAK"].name` remains a last-resort fallback).
-The Pallet-intro thrower sprite is deliberately left to the engine: with
-`demoName` kept canonical, the engine itself selects Prof. Oak's back pic
-for that demo, exactly as in vanilla (a `player.sprite` override would
-clobber it with the front trainer pic).
+| Target languages | Releases | Default font | Optional font |
+| --- | --- | --- | --- |
+| `fr`, `de`, `es`, `it` | RBY and Gold | Fusion Pixel Latin, 10px | Pokemon Font, 8px |
+| `ja-Hrkt` | RBY and Gold | Fusion Pixel Japanese, 8px | — |
+| `ko` | Gold only | Fusion Pixel Hangul, 10px | — |
 
-The trainer send-out message (BattleState's TrainerSentOutText) is joined
-qid-driven from the single corpus row `rb.text_2.TrainerAboutToUseText`
-into the `strings` engine catalog. The engine templates are
-English-structured, so the derivation follows each language's ROM
-structure: faithful for fr/es/it (`PIERRE\nva appeler...`, `¡%s\nva a
-utilizar a`), adapted for de (the nick's verb phrase moves into the
-`%s!` message and the player name is injected into the change prompt,
-whose ROM form has no placeholder) and ja (`%sは\u3000` / `%sを...` / `%sも
-\u3000POKéMONを...`). Engines since commit #565 merged the first two parts into
-one template (`%s is\nabout to use\v%s!`, two placeholders); with the engine
-pinned to v0.1.75 (commit `60cf07fb`) that merged key is the worksheet's
-own entry; the pre-#565 split forms were dropped with the pin.
-The Pokédex footer (`SEEN %3d  OWN %3d`) is similarly joined qid-driven from
-the two corpus label rows `rb.pokedex.PokedexSeenText` and
-`rb.pokedex.PokedexOwnText` (`VUS %3d  PRIS %3d`).
-Type display names are engine content — the runtime
-`type_chart` registry, not a modkit worksheet — so a seventh `type_names.lua`
-catalog is joined qid-driven from `rb.names.TypeNames.*`: exactly the 15
-types the engine registers. The registry keeps the English names and the mod
-localizes them at draw time instead: every engine site renders a type name as
-a standalone `Font.draw` string, which the generated `main.lua` substitutes
-(e.g. `FIRE` → `FEU`) before drawing. This keeps `TypeChart.displayName`
-returning the English name, so third-party mods that key colors or UI off it
-(Kanto Companion's type-color chips) keep working unmodified in every
-language. The substitution is exact-string: any drawn text equal to an
-English type name is localized (a nickname like `FIRE` renders as `FEU`), a
-deliberate side effect of the draw-time approach. The corpus `Bird` row is
-recorded as excluded: Gen 1's unused type id 6 is never registered by the
-engine. Western ZIPs include only the compact glyph sheet and its Lua
-registration files.
-
-The same generated hook translates an explicit allowlist of raw values in the
-in-game Options menu (`COLORS`, video mode, void fill, music filter and game
-speed). Gen1Recomp's label helpers return these values without calling
-`Strings()`, so they use documented manual overrides. Numeric values and
-acronyms remain unchanged. The desktop launcher uses a separate Kit renderer
-and is intentionally outside this hook. The v0.1.75 Options menu also exposes
-`VIBRATION`; its `LIGHT`/`MEDIUM`/`HEAVY` labels are tracked as dynamic engine
-values alongside the existing option labels.
+The optional Pokemon Font is more compact, but translated text can still
+overflow fixed-width interfaces.
+Macros and interface chrome remain tile-rendered. Each mod packages only the
+selected TTF and its applicable license notices.
 
 ## Translation coverage
 
-`ROM aggregate` is the release gate: six ROM-derived catalogs plus the
-corpus-derived runtime extras in the next column (type names, literal handlers,
-demo names `OLD MAN`/`PROF.OAK`, the two trainer send-out keys, the
-Pokédex footer `SEEN %3d  OWN %3d`, the two romText fallback keys
-(`%s\nused %s!`, `The enemy's weak!\nGet'm! %s!`) and the enemy qualifier
-`Enemy %s`). Engine
-columns are informational; English fallback keeps untranslated entries
-playable. Reports are generated from cached ROM imports and corpus
-snapshots, so revisions can change these values.
+### Red, Blue and Yellow
 
-The generated ZIP is universal: it contains a shared Red/Blue catalog layer
-and a Yellow-only layer selected at runtime by `GameVersion.isYellow()`. A
-dialogue shared by the games is counted once; a dialogue that differs in
-Yellow is counted as an additional Yellow-specific entry. Therefore a future
-universal ROM metric must use the union of the Red/Blue catalog and the
-Yellow-specific diff, rather than adding the full Yellow catalog and counting
-shared dialogues twice.
+The ZIP is universal, but ROM coverage is reported separately for Red/Blue
+and Yellow:
 
-> The `Corpus-derived runtime extras` column is the sum `15 + 5 + 2 + 2 + 1 + 2 + 1 = 28`
-> (romText fallbacks + the enemy qualifier), so `3130 = 3102 + 28` reads
-> directly off the table. Engine-string counts also
-> move between revisions because the engine re-channels texts. The v0.1.75
-> denominator (640, scope classifier v4) contains the union of the 606-key
-> Modkit scaffold and 31 option-value keys
-> (`FAST`/`MEDIUM`/`SLOW`, `low`/`balanced`/`high`/`auto`, `AUTO`/
-> `PORTRAIT`/`LANDSCAPE`/`REVERSE LANDSCAPE`, plus haptic `LIGHT`/`HEAVY`)
-> that the literal callsite
-> scanner cannot see (dynamic `Strings` lookups through label functions) —
-> declared in `engine_scope.json` `engine_dynamic_values` so their manual
-> overrides ship. `OFF` already exists in the scaffold; one additional forced
-> dynamic key (`NAME`) and the three
-> rendered romText fallbacks omitted by the scaffold. The `All engine strings`
-> numerator counts translations
-> that reach the screen: the strings catalog PLUS the 13 keys marked
-> `engine_empty` in `key_scope_overrides` whose text the dialogue owns
-> (`data.text` renders localized — e.g. `Welcome to our POKéMON CENTER!`,
-> `Keep it up!`, `No SURFing here!`), reported as `covered_by_rom` in the
-> per-key breakdown. `fallback_english` counts unmatched keys; ambiguous keys
-> are reported separately, and both keep the runtime's English text. Six
-> corpus-qid keys are merged after matching (the two trainer
-> send-out, Pokédex footer `SEEN %3d  OWN %3d`, the two romText fallbacks and
-> `Enemy %s`). Their shipped values are synced back into the report so its
-> count stays accurate; existing semantic or override provenance is retained.
+- `Red Blue ROM aggregate` is the release metric. It combines the six effective ROM
+  catalogs with 179 shared runtime entries (types, species kinds, literal
+  handlers, demo names and ROM-derived engine templates). Therefore
+  `3281 = 3102 + 179` for Red/Blue and `3405 = 3226 + 179` for Yellow.
+- `RBY-related engine strings` covers engine keys used by original RBY
+  gameplay and interfaces.
 
-| Target | Red/Blue ROM aggregate | Yellow ROM catalogs | RBY-related engine strings | All engine strings |
-| --- | ---: | ---: | ---: | ---: |
-| `fr` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 338/640 (52.81%) |
-| `de` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 338/640 (52.81%) |
-| `es` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 337/640 (52.66%) |
-| `it` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 339/640 (52.97%) |
-| `ja-Hrkt` | 3130/3130 (100%) | 3226/3226 (100%) | 249/249 (100%) | 338/640 (52.81%) |
+Engine metrics are informational: unmatched or ambiguous entries keep the
+engine's English fallback.
 
-The corpus-derived runtime extras are fully translated (28/28): fifteen type names,
-five literal handlers (15/15 unique corpus qids), two demo names, the
-three engine templates (send-out + Pokédex footer), the two romText
-fallback keys (the battle move-use `X used Y!` and the rival `The enemy's
-weak!` messages, rendered via Strings because their pokered labels carry
-fewer slots than the calls pass), and the enemy qualifier `Enemy %s` (words
-from `rb.text.EnemyText`). Engine coverage separately includes manual
-engine-original translations such as `FOE`, the four gameplay templates with
-no compatible PokeCorpus source, and the Options/launcher labels.
+| Target | Red Blue ROM aggregate | Yellow ROM aggregate | RBY-related engine strings |
+| --- | ---: | ---: | ---: |
+| `fr` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
+| `de` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
+| `es` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
+| `it` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
+| `ja-Hrkt` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
 
-Yellow ROM coverage excludes empty extracted labels that do not render text.
-Italian's `RoseText` dialogue label is counted as covered by a verified,
-harmless exception, not a composed sentence: reading
-`src/battle/MoveEffects.lua`'s `changeStage` (the sole code path for every
-battle stat-stage message, moves and items alike) confirms the recompiled
-engine never reads `RoseText` or its sibling ROM fragments
-(`MonsStatsRoseText`, `GreatlyRoseText`, `GreatlyFellText`) at runtime — they
-are leftover text-bank entries from the original cartridge, where the stock
-engine printed several short text IDs back to back to build one line. The
-actual on-screen message comes from four fixed `Strings()` engine literals
-(`%s's\n%s rose!` and its greatly-rose/fell variants), translated
-independently in `overrides/it/shared_engine_overrides.json`. `RoseText`'s own
-translation status therefore has no effect on what the player sees.
-Other language-specific empty fragments, such as Italian `DexRatingText` and
-the omitted preposition in `IntoText`, must not be treated as missing
-standalone sentences without checking the corresponding screen. The exception
-is a reviewed, sourced decision recorded in
-[`config/yellow_coverage_exceptions.json`](config/yellow_coverage_exceptions.json),
-not a blind single-key override.
+The ROM aggregates exclude extracted labels that do not render visible text.
+Reviewed exceptions are recorded in
+[`yellow_coverage_exceptions.json`](config/rby/yellow_coverage_exceptions.json).
+Full per-key scope, matching strategy and fallback provenance remain available in
+the generated coverage report and
+[`engine_scope.json`](config/rby/engine_scope.json).
 
-`RBY-related engine strings` counts 249 keys from Gen1Recomp v0.1.75's
-640-key engine universe whose
-production callsites reproduce original Red/Blue gameplay or interfaces; `All
-engine strings` covers the complete catalog, including modern surfaces. The
-versioned [`engine_scope.json`](config/engine_scope.json) classifier (revision
-`60cf07fb0a1ffce0ec6d5d0d2f78a921a6d0b7da`) scans production `src` callsites:
-249 keys form the eligible denominator, seven require review, and 384 modern,
-network/link, import, core, diagnostic, defensive, fallback-only, or
-ROM/generated-path keys are ineligible. Coverage comes from
-isolated clean rebuilds using pinned snapshots; if the engine source is
-unavailable, the report omits RBY coverage and warns instead of guessing. Each
-`x/y` value is translated entries out of eligible entries, followed by a
-percentage; fallback entries are not counted as translated.
-Versioned per-key scope overrides preserve the original callsites in private
-audits while excluding proven modern, diagnostic, unreachable-vanilla, or
-ROM/generated-path fallbacks from the RBY denominator.
-An original-RBY callsite qualifies unless the same key also has a link callsite;
-modern mod-manager/desktop surfaces, network/tournament flows, imports, and
-shared link+RBY keys are therefore not silently counted as RBY coverage.
-`_OakSpeechText2A` is intentionally excluded from the engine denominator: its
-localized text is supplied by the ROM/Data.text dialogue catalog, while the
-engine symbol remains empty to avoid OakSpeech's double lookup. The 249
-eligible Red/Blue engine keys (the `Strings(...)` callsites plus the rendered
-romText fallbacks `%s\nused %s!`, `The enemy's weak!\nGet'm! %s!` and the
-Yellow-only `%s\nis refusing!`) include one key rendered through the Yellow
-ROM-backed `_RefusingText` dialogue label. Its corpus-backed translation is included in
-the single RBY-related engine metric, giving 249/249 (100%) for the universal
-Yellow build. The report retains the provenance under
-`yellow.engine_coverage_provenance`.
+### Gold
 
-Fallback-only labels shown exclusively when generated assets or vanilla
-reward metadata are missing remain in English and outside RBY coverage. This
-includes the text substitutes for the intro sprites, title logo and slot
-machine frame, plus the generic gym-reward templates. Translating them would
-inflate coverage without changing a normal build.
+Gold is built as a separate generation-2 artifact:
 
-`forced_dynamic_keys` in `engine_scope.json` records the five SummaryMenu
-labels (`NAME`, `ATTACK`, `DEFENSE`, `SPEED`, `SPECIAL`) selected from a runtime
-table that the literal scanner cannot see. They are unioned into the engine
-catalog as `forced_dynamic` RBY-eligible entries, with callsite, qid, and the
-upstream engine-contract limitation retained in coverage provenance. The 13
-ROM-owned literals marked `covered-by-rom` stay empty in `strings.lua`; their
-localized values come from `Data.text`/the dialogue catalog. Generation also
-rejects only the three fragile `Commands.show_text` literals when a translated
-value is itself a dialogue/Data.text key, because that upstream API performs a
-second lookup before formatting.
+- `Gold ROM aggregate` combines dialogue, Pokédex entries and the named ROM
+  catalogs. Its denominator excludes 14 markup-only records with no visible
+  prose.
+- `Gold-related engine strings` covers the 218 engine keys used by at least
+  one production Gen 2 callsite.
+
+The generated report retains the dialogue/catalog breakdown and per-key
+provenance. Future unresolved entries will keep their original English text.
+
+| Target | Gold ROM aggregate | Gold-related engine strings |
+| --- | ---: | ---: |
+| `fr` | 4452/4452 (100%) | 218/218 (100%) |
+| `de` | 4452/4452 (100%) | 218/218 (100%) |
+| `es` | 4452/4452 (100%) | 218/218 (100%) |
+| `it` | 4452/4452 (100%) | 218/218 (100%) |
+| `ja-Hrkt` | 4452/4452 (100%) | 218/218 (100%) |
+| `ko` | 4452/4452 (100%) | 218/218 (100%) |
+
+### Other engine strings
+
+The remaining engine keys are reported separately below. They are keys used by
+neither RBY nor Gold, so their denominator is the residual scope:
+`951 - (256 + 218 - 8) = 485`. The numerator counts keys translated in at
+least one of the two artifacts; this is a project-level metric, not a claim
+that every key is present in both games.
+
+| Target | Other engine strings |
+| --- | ---: |
+| `fr` | 111/485 (22.89%) |
+| `de` | 111/485 (22.89%) |
+| `es` | 109/485 (22.47%) |
+| `it` | 111/485 (22.89%) |
+| `ja-Hrkt` | 110/485 (22.68%) |
+| `ko` | 31/485 (6.39%) |
+
+The denominator is calculated as follows: `951` total engine keys, minus the
+`256` RBY-related keys and the `218` Gold-related keys, plus back the `8` keys
+shared by both scopes so they are subtracted only once. The resulting residual
+scope is `485` keys.
+
+These values use the pinned ROMs, corpus snapshots and Gen1Recomp revision
+`1598f349`; regenerate them whenever one of those inputs changes.
 
 ## Translation provenance
 
@@ -376,37 +225,21 @@ Every translated engine string remains traceable:
 | Origin | Meaning | Recorded in |
 | --- | --- | --- |
 | Automatic match | Exact, normalized, or structural match proved by the generator. | Generation report |
-| Deterministic anchor | Reliable PokeCorpus qid, composition, or extraction rule. | `config/semantic_anchors.json` |
-| Human-reviewed anchor | Contextual or language-specific extraction reviewed by a maintainer; text still comes from PokeCorpus. | `config/semantic_anchor_decisions.json` |
-| Manual corpus correction | A maintainer corrects one selected-language corpus translation without changing the upstream corpus. Entries are indexed by qid. | `overrides/<language>/corpus_overrides.json` |
-| Manual translation — engine contract gap | PokeCorpus has the text, but Gen1Recomp merges contexts or hides required parameters. | `overrides/<language>/shared_engine_overrides.json`, `reason: "engine-contract-gap"` |
-| Manual translation — engine original | Engine-specific text with no Red/Blue source. | `overrides/<language>/shared_engine_overrides.json`, `reason: "engine-original"` |
-| Editorial correction | Deliberately preferred engine formulation. | `overrides/<language>/shared_engine_overrides.json`, `reason: "editorial-correction"` |
-| Manual translation — Yellow-only engine text | Engine-authored, Yellow-exclusive text (Surfing Pikachu minigame HUD) with no PokeCorpus source; applied only when `GameVersion.isYellow()`. | `overrides/<language>/yellow_engine_overrides.json`, `reason: "yellow-only-engine-text"` |
+| Deterministic anchor | Reliable PokeCorpus qid, composition, or extraction rule. | `config/{rby,gold}/semantic_anchors.json` |
+| Human-reviewed RBY anchor | Contextual or language-specific extraction reviewed by a maintainer; text still comes from PokeCorpus. | `config/rby/semantic_anchor_decisions.json` |
+| Human-reviewed Gold pointer | Ambiguous ROM pointer resolved to a reviewed PokeCorpus qid. | `config/gold/pointer_decisions.json` |
+| Reviewed placeholder exception | Official localized wording legitimately adds or omits a runtime value such as the player name or an item quantity. This records no translated text and does not disable the audit; each exception is scoped to a language, ROM pointer, corpus QID, and exact audit message. | `config/gold/placeholder_decisions.json` |
+| Manual corpus correction | A maintainer corrects one selected-language corpus translation without changing the upstream corpus. Entries are indexed by qid. | `overrides/<language>/rby/corpus.json` |
+| Manual translation — engine contract gap | PokeCorpus has the text, but Gen1Recomp merges contexts or hides required parameters. | `overrides/<language>/{rby,gold}/engine.json`, `reason: "engine-contract-gap"` |
+| Manual translation — engine original | Engine-specific text with no compatible ROM source. | `overrides/<language>/{rby,gold}/engine.json`, `reason: "engine-original"` |
+| Editorial correction | Deliberately preferred engine formulation. | `overrides/<language>/rby/engine.json`, `reason: "editorial-correction"` |
+| Manual translation — Yellow-only engine text | Engine-authored, Yellow-exclusive text (Surfing Pikachu minigame HUD) with no PokeCorpus source; applied only when `GameVersion.isYellow()`. | `overrides/<language>/rby/yellow_engine.json`, `reason: "yellow-only-engine-text"` |
 | Known limitation | Active anchor/override knowingly imperfect in a context or language; a status, not an origin. | Anchor metadata or override provenance |
 | English fallback | No sufficiently reliable translation; runtime keeps English. | Generation report |
 
-This taxonomy is exhaustive, but the affected strings evolve with engine and
-corpus revisions. Generated coverage reports are the authoritative inventory
-of unmatched and ambiguous strings for a given build.
-
-Each language currently contains 32 AI-generated `engine-contract-gap`
-overrides, including 13 raw in-game option values that Gen1Recomp does not
-route through `Strings()`. The larger `engine-original` group includes eleven legacy manual
-entries that were normalized during the provenance migration. Their per-entry provenance records the limitation,
-the upstream improvement path where applicable, and the need for in-game
-visual validation. Technical labels and formats are retained where changing
-them would break the engine contract.
-
-Battle stat-stage messages have a known upstream limitation: Gen1Recomp passes
-the raw English `stat:upper()` value into otherwise localized templates, so a
-message may still contain `ATTACK`, `DEFENSE`, `SPEED`, or `SPECIAL`. Localizing
-the Summary menu labels does not change those battle arguments; a fully faithful
-fix requires Gen1Recomp to pass localized stat names at those callsites.
-
-Manual overrides include a concrete provenance explanation. Do not add one just
-to raise coverage: a shared key or missing runtime argument can make a value
-wrong elsewhere. Keep English unless the limitation is explicitly accepted.
+Generated coverage reports are the authoritative inventory of unmatched and
+ambiguous strings. Every manual override must explain its source and accepted
+limitations; otherwise the English fallback is preferred.
 
 ## Windows/Linux standalone executables
 
@@ -416,21 +249,9 @@ Windows x64 and Linux x86_64:
 - `gen1recomp-translation-mod-generator-<version>-<cli|gui>-windows-x64.exe`
 - `gen1recomp-translation-mod-generator-<version>-<cli|gui>-linux-x86_64.tar.gz`
 
-Linux builds target Ubuntu 22.04 (glibc) and
-newer compatible systems; other architectures and libc implementations are
-not supported. No executable is published until a release workflow run
-occurs. Both platform builds compile official LuaJIT at a pinned commit, bundle
-checked-in configuration, and validate the CLI and GUI before
-uploading the four versioned artifacts.
-
-The CLI keeps the terminal prompts documented above. The GUI provides file
-pickers for both US ROMs, the target language, and the output directory. It runs the same matching and packaging
-pipeline in the background, with a build status and collapsible log. Closing
-the GUI is blocked while a build is active to avoid interrupting private
-extraction or dependency downloads.
-
-Windows users download the preferred versioned EXE. Linux users extract the
-matching CLI or GUI tarball and run its binary, for example:
+Windows users can run the downloaded EXE directly. Linux builds target Ubuntu
+22.04 (glibc) and compatible newer systems; extract the selected archive and
+run its binary:
 
 ```sh
 tar -xzf gen1recomp-translation-mod-generator-<version>-gui-linux-x86_64.tar.gz
@@ -438,107 +259,59 @@ chmod +x gen1recomp-translation-mod-generator-<version>-gui-linux-x86_64
 ./gen1recomp-translation-mod-generator-<version>-gui-linux-x86_64
 ```
 
-Each standalone executable needs network access for
-the pinned Gen1Recomp archive and seven pinned PokeCorpus files; it never
-bundles/uploads ROMs. The CLI keeps downloads and intermediate data in
-`.cache/` under the current working directory and writes the final ZIP there.
-The GUI stores them in `.cache/` under the selected output directory and writes
-the ZIP directly into that directory. Archive URLs, revisions, and SHA-256 pins
-are checked; traversal, symlink, duplicate, and corrupt entries are rejected,
-and a marker permits reuse of a verified cache. Keep `config/rom_paths.toml`
-and ROM files out of the bundled application directory.
-
-Maintainers rebuild locally with:
-
-```powershell
-./packaging/build_windows_executable.ps1
-```
-
-```sh
-./packaging/build_linux_executable.sh
-```
-
-Tag pushes (`v<version>`) build all four artifacts and publish one release after
-validating the tag against `pyproject.toml`; `workflow_dispatch` performs the
-builds without publishing a release.
-
-This does not alter the manual flow: unfrozen `python build_translation.py`
-still checks Python, Git, LuaJIT, and Pillow, clones pinned repositories into
-the repository `.cache/`, and writes under `dist/`. The `.zip` extension is
-intentional because Gen1Recomp's importer accepts Modkit's deterministic ZIP.
-The builder prints ROM, RBY-engine, and all-engine match percentages immediately
-before the final path. `dist/` is ignored, so
-publishing is explicit.
-Manual engine translations and corpus corrections live in separate versioned
-files and are applied automatically. Each language has a checked-in
-`overrides/<language>/corpus_overrides.json` skeleton as an extension point;
-its `entries` object is keyed by corpus qid and is empty until a real
-correction is needed. `shared_engine_overrides.json` remains reserved for engine
-contract gaps, engine-original strings, and their explicit provenance.
-Corpus sources and private generated catalogs are never rewritten.
+Standalone builds verify their pinned downloads and never bundle or upload
+ROMs. The CLI stores its cache in the current directory; the GUI uses the
+selected output directory. Keep ROMs and `config/rom_paths.toml` outside the
+application bundle.
 
 ## Maintainer reference
 
 ### Data flow and matching
 
 ```text
-parse corpus -> align by qid -> join the ROM worksheet catalogs -> fill engine strings
+resolve release -> verify ROMs -> prepare pinned inputs -> extract and match
+-> generate -> validate -> inspect and publish archive
 ```
 
-`strict_engine` remains available: it requires engine catalog/scaffold files,
-not complete translation. Resolution is deterministic:
+Text resolution is deterministic:
 
 ```text
 explicit override > semantic anchor > exact > normalized
 > structural placeholder match > empty entry (runtime English fallback)
 ```
 
-`config/semantic_anchors.json` contains deterministic qids/rules only;
-`config/semantic_anchor_decisions.json` records reviewed choices, rationale,
-trace status, and selected qids. Decision rows explicitly mark unavailable
-language evidence rather than claiming verification. The engine validates both
-files, rejects key overlap, and reports decision provenance separately.
-Private manual candidates stay in the ignored review cache and are never
-executable configuration. `config/terminology_anchors.json` is corpus-only;
-it proves terminology rather than hard-coding a language.
-It covers prefixes/digit style for 50 TM and
-5 HM displays (FR `CT`/`CS`, DE `TM`/`VM`, ES `MT`/`MO`, IT `MT`/`MN`, and
-Japanese full-width examples `わざマシン`/`ひでんマシン`, `３４`). Missing or
-ambiguous anchors stay manual. `config/literal_handlers.json` describes qid
-extraction gaps; the selected corpus supplies branch text, and incomplete or
-ambiguous recipes leave the English handler active.
+Game-specific configuration lives under `config/rby/` and `config/gold/`;
+language overrides follow the same split under `overrides/<language>/`.
+
+| Configuration | Purpose |
+| --- | --- |
+| `config/rby/engine_scope.json` | RBY coverage classification for engine strings. |
+| `config/rby/terminology_anchors.json` | Evidence for corpus terminology used by RBY. |
+| `config/rby/literal_handlers.json` | Documented RBY extraction gaps. |
+| `config/shared/engine_manifest.json` | Pinned engine revision and complete string universe shared by the releases. |
+
+The semantic anchors and reviewed decisions are described in the
+`Translation provenance` section above.
+Gold identifies its production strings directly from Gen 2 source subtrees.
+Missing or ambiguous evidence always falls back to English. Private review
+candidates never become executable configuration automatically.
+`strict_engine` requires the engine catalog and scaffold to be present, not
+fully translated.
 
 ### Module map
 
-| Module | Responsibility |
-| --- | --- |
-| `pipeline/cli.py` | Defines `parse`, `align`, `generate`, `validate`, and ROM import commands. |
-| `pipeline/builder.py` | Interactive, end-to-end builder: ROM import, corpus matching, the Yellow layer, packaging, and the CLI prompt flow (`build_translation.py`'s entry point). |
-| `pipeline/gui.py` | Tkinter front end that drives `pipeline.builder` in a background thread with a status/log view. |
-| `pipeline/project.py` | Resource/work root resolution (frozen vs. source checkout), pinned `pyproject.toml`/`config/pipeline.toml` metadata. |
-| `pipeline/corpus.py` | Reads RedBlue and Yellow parallel corpus files, canonicalizes languages, validates cardinality, and produces records. |
-| `pipeline/model.py` | Shared `CorpusRecord` and `Alignment` structures. |
-| `pipeline/align.py` | Pairs by qid, applies `corpus_overrides`, and writes aligned data. |
-| `pipeline/worksheet.py` | Loads and writes versioned `corpus_overrides` documents. |
-| `pipeline/join.py` | Joins aligned records to exact worksheet keys, TM/HM terminology, and qid-driven type names (`type_names` catalog). |
-| `pipeline/engine.py` | Matches the versioned engine-string universe using overrides, anchors, text, and placeholders. |
-| `pipeline/engine_scope.py` / `config/engine_scope.json` | Versioned RBY classifier over production `src` callsites. |
-| `pipeline/literals.py` | Generates qid-driven handlers for Lua literals. |
-| `pipeline/tokens.py` | Converts corpus control tokens and validates placeholders. |
-| `pipeline/mod.py` | Writes Modkit Lua catalogs, manifest, worksheets, and coverage report. |
-| `pipeline/yellow.py` | Builds the versioned Yellow dialogue layer (shared-safe / translation-variant / versioned-required / yellow-only classification). |
-| `pipeline/yellow_audit.py` | Writes the independent `.cache/audit/yellow/<language>.json` Yellow matrix. |
-| `pipeline/validate.py` | Checks placeholders, glyphs, versions, ROM gate, and engine diagnostics. |
-| `pipeline/rom_paths.py` | Loads and validates the optional private `config/rom_paths.toml` (red/blue/yellow paths). |
-| `pipeline/roms.py` | Verifies hashes and imports private Red/Blue/Yellow ROM caches. |
-| `pipeline/dependencies.py` | Downloads and SHA-256-verifies the pinned Gen1Recomp/PokeCorpus/font archives used by the frozen standalone build. |
-| `pipeline/disassembly_audit.py` | Parses private localized disassembly snapshots into audit reports. |
-| `pipeline/engine_backlog.py` | Read-only analyzer for unresolved engine keys, scope, placeholders, fallbacks, and qid candidates. |
+| Area | Modules | Responsibility |
+| --- | --- | --- |
+| Entry points and policy | `cli.py`, `builder.py`, `gui.py`, `orchestration.py`, `specs.py` | Resolve release requests and dispatch the command, interactive and GUI flows. |
+| Inputs and workspace | `project.py`, `dependencies.py`, `rom_paths.py`, `roms.py` | Resolve paths, verify private ROMs and prepare pinned dependencies. |
+| Corpus model | `corpus.py`, `model.py`, `align.py`, `worksheet.py`, `tokens.py` | Parse parallel corpora, align qids and preserve control-token contracts. |
+| RBY generation | `join.py`, `generate.py`, `literals.py`, `yellow.py`, `yellow_audit.py`, `mod.py` | Join Red/Blue catalogs, build the Yellow layer and emit the universal mod. |
+| Gold generation | `gold_text.py`, `gold_join.py`, `gold_index_join.py`, `gold_engine.py`, `gold_mod.py` | Join GoldSilver to pointer/index catalogs, engine strings and the Gen 2 artifact. |
+| Engine strings | `engine.py`, `engine_scope.py` | Match the versioned engine catalog and classify production callsites. |
+| Validation and audits | `validate.py`, `disassembly_audit.py`, `engine_backlog.py` | Enforce release gates and produce private diagnostic reports. |
 
-`pipeline/generate.py` and `pipeline/worksheet.py` provide serialization
-helpers. `build_translation.py` is the normal entry point;
-`scripts/build-mod.sh` remains for maintainers with a private worksheet. Both
-keep intermediates under `.cache/`.
+`build_translation.py` is the normal entry point. Intermediate and audit files
+stay under `.cache/`.
 
 ### Audit commands
 
@@ -548,11 +321,8 @@ Disassembly audit:
 python scripts/pipeline.py audit-disassemblies
 ```
 
-It fetches pinned audit repositories into `.cache/audit/disassemblies/` and
-writes private match/divergence/callsite reports under `.cache/audit/reports/`.
-Never publish them: they can contain copyrighted text and local paths. The
-Italian snapshot is excluded when detected as German. This command is separate
-from `build_translation.py` and does not require existing coverage reports.
+This writes private comparison reports under `.cache/audit/`. Never publish
+them: they can contain copyrighted text and local paths.
 
 Engine backlog:
 
@@ -560,11 +330,9 @@ Engine backlog:
 python scripts/pipeline.py engine-backlog --language fr
 ```
 
-This records callsites, RBY eligibility, placeholders, fallback reasons, and
-qid candidates in `.cache/audit/engine-backlog/<language>.{json,md}`. Fuzzy
-suggestions are advisory, and anchors, overrides, and catalogs are untouched.
-A matching cached coverage/catalog snapshot is required. Classification reuses
-the versioned production scanner, so it cannot invent a second RBY scope.
+This records unresolved keys, callsites, fallback reasons and qid candidates
+without modifying anchors, overrides or catalogs. It requires a matching
+cached coverage/catalog snapshot.
 
 For all languages (default `fr,de,es,it,ja-Hrkt`):
 
@@ -572,22 +340,51 @@ For all languages (default `fr,de,es,it,ja-Hrkt`):
 python scripts/pipeline.py engine-backlog-matrix
 ```
 
-It writes `.cache/audit/engine-backlog/matrix.{json,md}` with candidates,
-callsites, key commonality, and conservative triage. Use `--coverage-dir`,
-`--engine-catalog-dir`, `--coverage LANG=PATH`, or
-`--engine-catalog LANG=PATH` to select explicit private snapshots.
+This produces the cross-language backlog matrix under
+`.cache/audit/engine-backlog/`.
+
+### Release builds
+
+Build standalone artifacts locally with:
+
+```powershell
+./packaging/build_windows_executable.ps1
+```
+
+```sh
+./packaging/build_linux_executable.sh
+```
+
+Tag pushes matching `v<version>` validate the version and publish all four
+CLI/GUI artifacts. `workflow_dispatch` builds them without publishing. The
+workflow compiles pinned LuaJIT, validates both front ends and inspects each
+archive before upload.
 
 ### Remaining limitations
 
-UI-width constraints, in-game testing, and incomplete engine coverage remain
-relevant; Latin and Japanese builds use the dedicated font profiles above.
+- Automated gates validate data loading and packaging, not rendering; releases
+  still need in-game smoke tests.
+- Some engine strings remain in English, as shown by the coverage tables.
+- Translated text can exceed fixed UI widths with either font profile.
+- The `X ATTACK`/`X DEFENSE`/etc. battle-item and the vitamin (`PROTEIN`,
+  `IRON`, `CALCIUM`, `ZINC`, `CARBOS`, `HP UP`) stat-rose messages always
+  show the raised stat's name in English: Gen1Recomp substitutes it with a
+  raw uppercase value (`stat:upper()`), not through the translated engine
+  string catalog. This is different from the SummaryMenu's own stat labels,
+  which are fully translated.
+- RBY type names are replaced at draw time by exact string match, so a nickname
+  identical to an English type name is translated too.
+- The desktop launcher uses a separate renderer and is outside the content
+  mod's translation hooks.
+- RBY- and Gold-specific upstream engine gaps are tracked in
+  [docs/upstream-fixes.md](docs/upstream-fixes.md).
 
 ## Credits
 
-- [Gen1Recomp](https://github.com/bryanthaboi/gen1recomp) by [bryanthaboi](https://github.com/bryanthaboi), the target game recompilation.
+- [Gen1Recomp](https://github.com/bryanthaboi/gen1recomp) by [bryanthaboi](https://github.com/bryanthaboi), the native Lua / LÖVE2D recreation.
 - [PokéCorpus](https://github.com/abcboy101/poke-corpus) by [abcboy101](https://github.com/abcboy101), the multilingual translation corpus.
 - [pokemon-font](https://github.com/cooljeanius/pokemon-font) v1.8.2, the Pokemon Font clone by Superpencil, sourced from the fork maintained by [cooljeanius](https://github.com/cooljeanius), available as the optional Latin profile.
-- [Fusion Pixel Font](https://github.com/TakWolf/fusion-pixel-font) by [TakWolf](https://github.com/TakWolf), used by the recommended Latin profile and the Japanese profile.
+- [Fusion Pixel Font](https://github.com/TakWolf/fusion-pixel-font) by [TakWolf](https://github.com/TakWolf), used by the recommended Latin profile, the Japanese profile, and the Korean profile (Gold only).
 
 ## Contributors ✨
 

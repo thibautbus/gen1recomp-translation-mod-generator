@@ -11,9 +11,11 @@ from contextlib import redirect_stdout
 import zipfile
 
 from pipeline import builder
+from pipeline import project
 from pipeline.project import project_version
 from pipeline.rom_paths import load_rom_paths
-from pipeline.gui import coverage_lines, font_profile_label, language_code, validate_inputs
+from pipeline.gui import available_font_profiles, coverage_lines, font_profile_label, language_code, validate_inputs
+from pipeline.specs import BuildRequest, ReleaseProfile, release_profile
 
 
 class BuilderTests(unittest.TestCase):
@@ -29,6 +31,47 @@ class BuilderTests(unittest.TestCase):
         with patch("pipeline.builder.subprocess.Popen", return_value=Process()):
             builder._run(["tool"], log_fn=messages.append)
         self.assertEqual(messages, ["\n> tool", "first", "second"])
+
+    def test_run_failure_includes_captured_output_in_the_gui_error(self):
+        # A bare "exit code 1" with no other detail is exactly what a real
+        # GUI bug report showed: the GUI's error dialog only ever saw this
+        # message, never the separate "Show log" panel's transcript.
+        class Process:
+            stdout = iter(("modkit: validate --strict\n", "MK006 WARN: ...\n"))
+
+            @staticmethod
+            def wait():
+                return 1
+
+        with patch("pipeline.builder.subprocess.Popen", return_value=Process()):
+            with self.assertRaises(builder.BuildError) as caught:
+                builder._run(["tool"], log_fn=lambda _: None)
+        message = str(caught.exception)
+        self.assertIn("Command failed with exit code 1: tool", message)
+        self.assertIn("modkit: validate --strict", message)
+        self.assertIn("MK006 WARN: ...", message)
+
+    def test_run_failure_truncates_a_long_transcript_to_its_tail(self):
+        class Process:
+            stdout = iter(f"line {i}\n" for i in range(60))
+
+            @staticmethod
+            def wait():
+                return 1
+
+        with patch("pipeline.builder.subprocess.Popen", return_value=Process()):
+            with self.assertRaises(builder.BuildError) as caught:
+                builder._run(["tool"], log_fn=lambda _: None)
+        message = str(caught.exception)
+        self.assertNotIn("line 0\n", message)
+        self.assertIn("line 59", message)
+        self.assertIn("20 earlier line(s) omitted", message)
+
+    def test_run_cli_path_omits_captured_output_since_it_inherits_the_console(self):
+        with patch("pipeline.builder.subprocess.run", side_effect=builder.subprocess.CalledProcessError(1, ["tool"])):
+            with self.assertRaises(builder.BuildError) as caught:
+                builder._run(["tool"])
+        self.assertEqual(str(caught.exception), "Command failed with exit code 1: tool")
 
     def test_font_dependencies_use_private_cache_and_checked_in_pins(self):
         config = builder.project_config()
@@ -75,10 +118,55 @@ class BuilderTests(unittest.TestCase):
     def test_gui_language_and_coverage_helpers(self):
         self.assertEqual(language_code("French (fr)"), "fr")
         self.assertEqual(language_code("ja-Hrkt"), "ja-Hrkt")
+        self.assertEqual(builder.languages_for_generation(1)[-1][0], "ja-Hrkt")
+        self.assertEqual(builder.languages_for_generation(2)[-1][0], "ko")
+        self.assertEqual(language_code("Korean (ko)", 2), "ko")
         with tempfile.TemporaryDirectory() as directory:
             report = Path(directory) / "coverage.json"
             report.write_text(json.dumps({"rom": {"translated": 2, "total": 4, "percent": 50}, "engine": {"translated": 1, "total": 2, "percent": 50}, "engine_rby": {"translated": 3, "total": 4, "percent": 75}}), encoding="utf-8")
-            self.assertEqual(coverage_lines(report), ["ROM catalog: 2/4 (50.00%)", "All engine strings: 1/2 (50.00%)", "RBY-related engine strings: 3/4 (75.00%)"])
+            self.assertEqual(coverage_lines(report), ["Red Blue ROM aggregate: 2/4 (50.00%)", "RBY-related engine strings: 3/4 (75.00%)", "All engine strings: 1/2 (50.00%)"])
+
+            report.write_text(json.dumps({
+                "rom": {"translated": 2, "total": 4, "percent": 50},
+                "yellow": {"coverage": {"rom": {
+                    "translated": 5, "total": 6, "percent": 83.33,
+                }}},
+            }), encoding="utf-8")
+            self.assertIn(
+                "Yellow ROM aggregate: 5/6 (83.33%)",
+                coverage_lines(report),
+            )
+
+            # ROM aggregates first (Red/Blue then Yellow), then engine
+            # metrics from most to least specific: RBY-related before the
+            # unfiltered "All engine strings" total.
+            report.write_text(json.dumps({
+                "rom": {"translated": 3278, "total": 3278, "percent": 100},
+                "engine": {"translated": 352, "total": 951, "percent": 37.01},
+                "engine_rby": {"translated": 256, "total": 256, "percent": 100},
+                "yellow": {"coverage": {"rom": {
+                    "translated": 3402, "total": 3402, "percent": 100,
+                }}},
+            }), encoding="utf-8")
+            self.assertEqual(coverage_lines(report), [
+                "Red Blue ROM aggregate: 3278/3278 (100.00%)",
+                "Yellow ROM aggregate: 3402/3402 (100.00%)",
+                "RBY-related engine strings: 256/256 (100.00%)",
+                "All engine strings: 352/951 (37.01%)",
+            ])
+
+            report.write_text(json.dumps({
+                "rom": {"translated": 8, "total": 9, "percent": 88.89},
+                "rom_dialogue": {"translated": 1, "total": 2, "percent": 50},
+                "rom_catalogs": {"translated": 7, "total": 7, "percent": 100},
+                "engine": {"translated": 2, "total": 4, "percent": 50},
+                "engine_gen2": {"translated": 1, "total": 2, "percent": 50},
+            }), encoding="utf-8")
+            self.assertEqual(coverage_lines(report), [
+                "Red Blue ROM aggregate: 8/9 (88.89%)",
+                "Gold-related engine strings: 1/2 (50.00%)",
+                "All engine strings: 2/4 (50.00%)",
+            ])
 
     def test_gui_validation_requires_output_only(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -87,13 +175,14 @@ class BuilderTests(unittest.TestCase):
             red.write_bytes(b"red")
             blue.write_bytes(b"blue")
             yellow.write_bytes(b"yellow")
+            rom_paths = {"red": red, "blue": blue, "yellow": yellow}
             with patch.object(builder, "verify_rom"), self.assertRaisesRegex(builder.BuildError, "output directory"):
-                validate_inputs(red, blue, yellow, "fr", "")
+                validate_inputs(1, rom_paths, "fr", "")
             with patch.object(builder, "verify_rom"):
-                inputs = validate_inputs(red, blue, yellow, "fr", root / "out")
+                inputs = validate_inputs(1, rom_paths, "fr", root / "out")
             self.assertEqual(inputs.language, "fr")
             self.assertEqual(inputs.font_profile, "fusion")
-            self.assertEqual(inputs.yellow_rom, yellow.resolve())
+            self.assertEqual(inputs.rom_paths["yellow"], yellow.resolve())
 
     def test_gui_font_profile_is_fixed_for_japanese(self):
         self.assertIn("recommended", font_profile_label("fusion"))
@@ -107,7 +196,47 @@ class BuilderTests(unittest.TestCase):
             blue.write_bytes(b"blue")
             yellow.write_bytes(b"yellow")
             with patch.object(builder, "verify_rom"), self.assertRaisesRegex(ValueError, "only available"):
-                validate_inputs(red, blue, yellow, "ja-Hrkt", root / "out", "pokemon")
+                validate_inputs(1, {"red": red, "blue": blue, "yellow": yellow}, "ja-Hrkt", root / "out", "pokemon")
+
+    def test_cli_and_gui_lock_korean_to_fusion_font(self):
+        self.assertEqual(builder._prompt_font_profile("ko", lambda _: self.fail("Pokemon must not be offered")), "fusion")
+        self.assertEqual(available_font_profiles("ko"), ("fusion",))
+        self.assertEqual(available_font_profiles("ja-Hrkt"), ("fusion",))
+        self.assertEqual(available_font_profiles("fr"), ("fusion", "pokemon"))
+
+    def test_release_collections_are_derived_from_game_specs(self):
+        self.assertEqual(release_profile("rby").corpus_collections, ("RedBlue", "Yellow"))
+        self.assertEqual(release_profile("gold").corpus_collections, ("GoldSilver",))
+
+    def test_build_request_requires_exact_profile_sources(self):
+        rby = release_profile("rby")
+        with self.assertRaisesRegex(ValueError, "missing ROM sources: yellow"):
+            BuildRequest({"red": Path("red.gb"), "blue": Path("blue.gb")}, rby, "fr").validate()
+        with self.assertRaisesRegex(ValueError, "unexpected ROM sources: gold"):
+            BuildRequest(
+                {
+                    "red": Path("red.gb"), "blue": Path("blue.gb"),
+                    "yellow": Path("yellow.gb"), "gold": Path("gold.gbc"),
+                },
+                rby,
+                "fr",
+            ).validate()
+
+    def test_build_request_rejects_a_profile_generation_mismatch(self):
+        profile = ReleaseProfile("invalid", 2, ("red",))
+        with self.assertRaisesRegex(ValueError, "mixes game generations"):
+            BuildRequest({"red": Path("red.gb")}, profile, "fr").validate()
+
+    def test_korean_uses_fusion_and_rejects_pokemon_font(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            gold = root / "gold.gbc"
+            gold.write_bytes(b"gold")
+            with patch.object(builder, "verify_gold_rom"):
+                inputs = validate_inputs(2, {"gold": gold}, "ko", root / "out", "fusion")
+                self.assertEqual(inputs.language, "ko")
+                with self.assertRaisesRegex(ValueError, "Pokemon Font"):
+                    validate_inputs(2, {"gold": gold}, "ko", root / "out", "pokemon")
     def test_absent_rom_path_config_is_empty(self):
         with tempfile.TemporaryDirectory() as directory:
             paths = load_rom_paths(Path(directory) / "rom_paths.toml")
@@ -248,7 +377,7 @@ class BuilderTests(unittest.TestCase):
                 patch.object(builder, "_confirm", return_value=True),
                 patch.object(builder, "build", return_value=root / "out.zip") as build,
             ):
-                self.assertEqual(builder.main(input_fn), 0)
+                self.assertEqual(builder.main(input_fn, generation=1), 0)
             load.assert_called_once_with(builder.ROOT / "config" / "rom_paths.toml")
             self.assertEqual([call.args for call in configured_lookup.call_args_list],
                              [(configured, "rom", "red"), (configured, "rom", "blue"), (configured, "rom", "yellow")])
@@ -276,7 +405,7 @@ class BuilderTests(unittest.TestCase):
                 patch.object(builder, "_confirm", return_value=True),
                 patch.object(builder, "build", return_value=root / "out.zip"),
             ):
-                self.assertEqual(builder.main(lambda prompt: next(answers)), 0)
+                self.assertEqual(builder.main(lambda prompt: next(answers), generation=1), 0)
             self.assertEqual(configured["rom"].keys(), {"red", "blue", "yellow"})
 
     def test_main_explicit_pokemon_profile_warns(self):
@@ -295,9 +424,91 @@ class BuilderTests(unittest.TestCase):
                     patch.object(builder, "verify_rom"), \
                     patch.object(builder, "_confirm", return_value=True), \
                     patch.object(builder, "build", return_value=root / "out.zip") as build:
-                    self.assertEqual(builder.main(lambda _: next(answers), font_profile="pokemon"), 0)
+                    self.assertEqual(builder.main(lambda _: next(answers), font_profile="pokemon", generation=1), 0)
             self.assertIn("some translated text may overflow", output.getvalue())
             self.assertEqual(build.call_args.kwargs["font_profile"], "pokemon")
+
+    def test_main_prompts_which_games_before_anything_else(self):
+        # Gen 1 gate: with no generation injected, the flow leads with the
+        # games question, and everything after an answer of "1" (or the
+        # default) reproduces the pre-existing Gen 1 prompt sequence
+        # unchanged.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            red, blue, yellow = (root / name for name in ("red.gb", "blue.gb", "yellow.gb"))
+            for rom in (red, blue, yellow):
+                rom.write_bytes(b"rom")
+            configured = {"rom": {"red": red, "blue": blue, "yellow": yellow}}
+            prompts = []
+            answers = iter(("", "", "", "", "2", ""))
+
+            def input_fn(prompt):
+                prompts.append(prompt)
+                return next(answers)
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                with (
+                    patch.object(builder, "check_prerequisites", return_value="luajit"),
+                    patch.object(builder, "load_rom_paths", return_value=configured),
+                    patch.object(builder, "verify_rom"),
+                    patch.object(builder, "_confirm", return_value=True),
+                    patch.object(builder, "build", return_value=root / "out.zip") as build,
+                ):
+                    self.assertEqual(builder.main(input_fn), 0)
+            self.assertIn("Which games do you want to translate?", output.getvalue())
+            self.assertEqual(prompts[0], "Games number [1]: ")
+            self.assertEqual(build.call_args.kwargs["yellow_rom"], yellow.resolve())
+
+    def test_main_gold_prompts_single_rom_and_builds_gold(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            gold = root / "gold.gbc"
+            gold.write_bytes(b"rom")
+            configured = {"rom": {"gold": gold}}
+            prompts = []
+            # "" accepts the configured Gold path; "5" selects Japanese, which
+            # skips the font-profile prompt (Fusion-only), so no third answer
+            # is needed.
+            answers = iter(("", "5"))
+
+            def input_fn(prompt):
+                prompts.append(prompt)
+                return next(answers)
+
+            with (
+                patch.object(builder, "check_prerequisites", return_value="luajit"),
+                patch.object(builder, "load_rom_paths", return_value=configured),
+                patch.object(builder, "verify_gold_rom") as verify,
+                patch.object(builder, "_confirm", return_value=True),
+                patch("pipeline.gold_mod.build_gold", return_value=root / "out.zip") as build_gold,
+            ):
+                self.assertEqual(builder.main(input_fn, generation=2), 0)
+            verify.assert_called_once_with(gold.resolve())
+            self.assertFalse(any("Red" in prompt or "Blue" in prompt or "Yellow" in prompt for prompt in prompts))
+            self.assertEqual(build_gold.call_args.args[0], gold.resolve())
+            self.assertEqual(build_gold.call_args.args[1], "ja-Hrkt")
+            self.assertEqual(build_gold.call_args.args[2], "Japanese")
+            self.assertEqual(build_gold.call_args.kwargs["font_profile"], "fusion")
+
+    def test_invalid_injected_generation_fails_cleanly(self):
+        with (
+            patch.object(builder, "check_prerequisites", return_value="luajit"),
+            patch.object(builder, "load_rom_paths", return_value={"rom": {}}),
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            self.assertEqual(builder.main(lambda _: "", generation=9), 1)
+        self.assertIn("Invalid games selection", stderr.getvalue())
+
+    def test_generation_menu(self):
+        with patch("builtins.print"):
+            self.assertEqual(builder._prompt_generation(lambda _: ""), 1)
+            self.assertEqual(builder._prompt_generation(lambda _: "1"), 1)
+            self.assertEqual(builder._prompt_generation(lambda _: "2"), 2)
+
+    def test_invalid_generation_menu(self):
+        with patch("builtins.print"), self.assertRaises(builder.BuildError):
+            builder._prompt_generation(lambda _: "9")
 
     def test_project_version_comes_from_pyproject(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -322,11 +533,11 @@ class BuilderTests(unittest.TestCase):
     def test_corpus_and_engine_override_defaults_use_language_subdirectories(self):
         self.assertEqual(
             builder._corpus_overrides_path("fr"),
-            builder.ROOT / "overrides" / "fr" / "corpus_overrides.json",
+            builder.ROOT / "overrides" / "fr" / "rby" / "corpus.json",
         )
         self.assertEqual(
             builder._engine_overrides_path("es"),
-            builder.ROOT / "overrides" / "es" / "shared_engine_overrides.json",
+            builder.ROOT / "overrides" / "es" / "rby" / "engine.json",
         )
         self.assertTrue(builder._corpus_overrides_path("fr").is_file())
         self.assertTrue(builder._engine_overrides_path("it").is_file())
@@ -348,6 +559,26 @@ class BuilderTests(unittest.TestCase):
         self.assertEqual(calls[0][0][:3], ["git", "clone", "--no-checkout"])
         self.assertEqual(calls[1][0], ["git", "fetch", "--depth", "1", "origin", "abc123"])
         self.assertEqual(calls[2][0], ["git", "checkout", "--detach", "abc123"])
+
+    def test_stale_non_git_destination_is_replaced_not_crashed_on(self):
+        # A destination can exist without being a git checkout: a prior run
+        # that used the archive path instead (frozen build, or a switch
+        # between the two), an interrupted clone, or a corrupted directory.
+        # `git clone` refuses a non-empty destination, so this must not
+        # blindly attempt one.
+        calls = []
+
+        def run(command, **kwargs):
+            calls.append(command)
+
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "repo"
+            destination.mkdir(parents=True)
+            (destination / ".archive-marker.json").write_text("{}", encoding="utf-8")
+            (destination / "leftover.txt").write_text("stale archive content", encoding="utf-8")
+            builder.ensure_checkout("url", "revision", destination, runner=run)
+            self.assertEqual(calls[0][:3], ["git", "clone", "--no-checkout"])
+            self.assertFalse((destination / "leftover.txt").exists())
 
     def test_existing_checkout_is_not_cloned_again(self):
         calls = []
@@ -720,8 +951,48 @@ class BuilderTests(unittest.TestCase):
             output = io.StringIO()
             with redirect_stdout(output):
                 builder.print_coverage(report)
-        self.assertIn("ROM catalog: 3/4 (75.00%)", output.getvalue())
+        self.assertIn("Red Blue ROM aggregate: 3/4 (75.00%)", output.getvalue())
         self.assertIn("All engine strings: 1/2 (50.00%)", output.getvalue())
+
+    def test_coverage_groups_rom_metrics_before_engine_metrics(self):
+        # ROM aggregates first (Red/Blue then Yellow), then engine metrics
+        # from most to least specific: RBY-related before the unfiltered
+        # "All engine strings" total -- matches pipeline.gui.coverage_lines'
+        # ordering.
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / "coverage.json"
+            report.write_text(json.dumps({
+                "rom": {"translated": 3278, "total": 3278, "percent": 100},
+                "engine": {"translated": 352, "total": 951, "percent": 37.01},
+                "engine_rby": {"translated": 256, "total": 256, "percent": 100},
+                "yellow": {"coverage": {"rom": {
+                    "translated": 3402, "total": 3402, "percent": 100,
+                }}},
+            }), encoding="utf-8")
+            output = io.StringIO()
+            with redirect_stdout(output):
+                builder.print_coverage(report)
+        lines = [line.strip() for line in output.getvalue().splitlines() if line.strip()]
+        self.assertEqual(lines, [
+            "Translation coverage:",
+            "Red Blue ROM aggregate: 3278/3278 (100.00%)",
+            "Yellow ROM aggregate: 3402/3402 (100.00%)",
+            "RBY-related engine strings: 256/256 (100.00%)",
+            "All engine strings: 352/951 (37.01%)",
+        ])
+
+    def test_coverage_shows_gold_related_engine_strings(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / "coverage.json"
+            report.write_text(json.dumps({
+                "rom": {"translated": 8, "total": 9, "percent": 88.89},
+                "engine": {"translated": 2, "total": 4, "percent": 50},
+                "engine_gen2": {"translated": 1, "total": 2, "percent": 50},
+            }), encoding="utf-8")
+            output = io.StringIO()
+            with redirect_stdout(output):
+                builder.print_coverage(report)
+        self.assertIn("Gold-related engine strings: 1/2 (50.00%)", output.getvalue())
 
     def test_prerequisite_message_is_actionable(self):
         with (
@@ -755,8 +1026,8 @@ class BuilderTests(unittest.TestCase):
             (linux / "jit").mkdir(parents=True)
             (linux / "luajit").write_bytes(b"ELF")
             with (
-                patch.object(builder, "is_frozen", return_value=True),
-                patch.object(builder, "resource_root", return_value=root),
+                patch.object(project, "is_frozen", return_value=True),
+                patch.object(project, "resource_root", return_value=root),
                 patch.object(builder.platform, "system", return_value="Linux"),
             ):
                 self.assertTrue(os.path.samefile(builder._which_luajit(), linux / "luajit"))
@@ -765,8 +1036,8 @@ class BuilderTests(unittest.TestCase):
             (windows / "luajit.exe").write_bytes(b"MZ")
             (windows / "lua51.dll").write_bytes(b"DLL")
             with (
-                patch.object(builder, "is_frozen", return_value=True),
-                patch.object(builder, "resource_root", return_value=root),
+                patch.object(project, "is_frozen", return_value=True),
+                patch.object(project, "resource_root", return_value=root),
                 patch.object(builder.platform, "system", return_value="Windows"),
             ):
                 self.assertTrue(os.path.samefile(builder._which_luajit(), windows / "luajit.exe"))

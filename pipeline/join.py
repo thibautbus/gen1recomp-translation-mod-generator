@@ -17,7 +17,7 @@ CATALOGS = ("dialogue", "strings", "species_names", "move_names", "item_names", 
 # translated strings.  This keeps machine displays auditable when adding a
 # language: the selected corpus row is the only source of the localized prefix
 # and quantity style.
-_DEFAULT_TERMINOLOGY_ANCHORS = Path(__file__).resolve().parents[1] / "config" / "terminology_anchors.json"
+_DEFAULT_TERMINOLOGY_ANCHORS = Path(__file__).resolve().parents[1] / "config" / "rby" / "terminology_anchors.json"
 
 
 def _load_terminology_anchors(path: str | Path | None = None) -> dict:
@@ -432,7 +432,12 @@ def species_kinds_catalog(items: list[Alignment], target_lang: str = "fr",
             }
             continue
         report["qids"][runtime_id] = qid
-        candidates = _same_value(by_tail[tail])
+        # Prefer the canonical unscoped row when PokeCorpus also carries a
+        # version-scoped placeholder such as Porygon's empty ``^RG`` row.
+        # Treating both as equal candidates made the real translated row look
+        # ambiguous and left the runtime kind in English.
+        unscoped = [item for item in by_tail[tail] if "^" not in item.qid]
+        candidates = _same_value(unscoped or by_tail[tail])
         if len(candidates) == 1 and candidates[0].translation is not None:
             output[runtime_id] = corpus_to_engine(str(candidates[0].translation))
             report["translated"] += 1
