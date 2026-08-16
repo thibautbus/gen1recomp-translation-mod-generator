@@ -15,7 +15,7 @@ from pipeline.gold_mod import (
     gold_text_catalog_from_join, generate_gold_mod, package_gold_mod,
     run_gold_release_gates,
 )
-from pipeline.gold_mod import _gold_ui_labels, _write_gate_expectations
+from pipeline.gold_mod import _gold_ui_labels, _write_dialogue_gate_expectation, _write_gate_expectations
 from pipeline.project import project_version
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -521,6 +521,14 @@ class GoldDialogueGateTests(unittest.TestCase):
     """
 
     def test_translation_is_selected_and_unresolved_pointer_falls_back(self):
+        # The expected translation ("こんにちは！") is deliberately non-ASCII:
+        # a real Windows GUI report showed this exact check failing with
+        # mojibake for Japanese/Korean Gold translations (German passed),
+        # because it used to be handed to luajit as a plain command-line
+        # argument -- Windows narrows a child process's argv to the active
+        # ANSI codepage before the C runtime ever sees it. Going through the
+        # same JSON expectation file gate_gold_registries.lua already uses
+        # sidesteps that: the string only ever travels as UTF-8 file bytes.
         luajit = _which_luajit()
         if luajit is None:
             self.skipTest("luajit is unavailable")
@@ -529,13 +537,16 @@ class GoldDialogueGateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             mod_dir = generate_gold_mod(
                 Path(tmp) / "translation-fr-gen2", language="fr",
-                text_catalog={"55:0001": "Bonjour!"},
+                text_catalog={"55:0001": "こんにちは！"},
             )
-            result = subprocess.run(
-                [luajit, str(DIALOGUE_GATE_SCRIPT), str(ENGINE_ROOT), str(mod_dir),
-                 "55:0001", "Bonjour!", "55:9999"],
-                capture_output=True, text=True,
-            )
+            expectation_path = _write_dialogue_gate_expectation(mod_dir, "55:0001", "こんにちは！", "55:9999")
+            try:
+                result = subprocess.run(
+                    [luajit, str(DIALOGUE_GATE_SCRIPT), str(ENGINE_ROOT), str(mod_dir), str(expectation_path)],
+                    capture_output=True, text=True,
+                )
+            finally:
+                expectation_path.unlink(missing_ok=True)
         self.assertEqual(
             result.returncode, 0,
             f"gate_gold_dialogue.lua failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}",

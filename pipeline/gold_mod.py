@@ -339,6 +339,36 @@ def _write_gate_expectations(mod_dir: Path, catalogs: dict[str, dict[str, str]])
     return path
 
 
+def _write_dialogue_gate_expectation(
+    mod_dir: Path, resolved_pointer: str, expected_translation: str, unresolved_pointer: str,
+) -> Path:
+    """Write a tiny, private expectation file consumed by the dialogue gate.
+
+    Not passed as plain command-line arguments: Windows narrows a child
+    process's argv to the console's active ANSI codepage before the C
+    runtime's main() ever sees it (the same mechanism as the modkit-pack
+    non-ASCII *path* bug documented in docs/upstream-fixes.md, here hitting
+    translated *text* instead). A real report confirmed it -- German passed
+    (representable in a Western codepage), Japanese and Korean did not,
+    failing "gen2Text[...] is the expected translation" with mojibake in
+    place of the real string. A file read as raw UTF-8 bytes is not subject
+    to that narrowing at all.
+    """
+    path = mod_dir.parent / f".{mod_dir.name}.dialogue-gate.json"
+    path.write_text(
+        json.dumps(
+            {
+                "resolved_pointer": resolved_pointer,
+                "expected_translation": expected_translation,
+                "unresolved_pointer": unresolved_pointer,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
 def run_gold_release_gates(
     mod_dir: str | Path,
     entries: list[GoldJoinEntry],
@@ -381,8 +411,14 @@ def run_gold_release_gates(
         raise BuildError("Gold dialogue gate requires at least one translated pointer")
     unresolved = next((e for e in entries if e.translation is None), None)
     unresolved_pointer = unresolved.pointer if unresolved else "__gold_unresolved_gate_pointer__"
-    _run([luajit, str(tools / "gate_gold_dialogue.lua"), str(gen1recomp), str(mod_dir),
-          translated.pointer, translated.translation, unresolved_pointer], log_fn=log_fn)
+    dialogue_expectation_path = _write_dialogue_gate_expectation(
+        mod_dir, translated.pointer, translated.translation, unresolved_pointer,
+    )
+    try:
+        _run([luajit, str(tools / "gate_gold_dialogue.lua"), str(gen1recomp), str(mod_dir),
+              str(dialogue_expectation_path)], log_fn=log_fn)
+    finally:
+        dialogue_expectation_path.unlink(missing_ok=True)
     expectation_path = _write_gate_expectations(mod_dir, catalogs or {})
     try:
         _run([luajit, str(tools / "gate_gold_registries.lua"), str(gen1recomp), str(mod_dir), str(expectation_path)], log_fn=log_fn)
@@ -424,7 +460,7 @@ def run_gold_release_gates(
             {
                 "tool": "tools/gate_gold_dialogue.lua",
                 "version": engine_revision,
-                "command": "luajit tools/gate_gold_dialogue.lua <gen1recomp> <mod> <resolved> <expected> <fallback>",
+                "command": "luajit tools/gate_gold_dialogue.lua <gen1recomp> <mod> <expectation_json_path>",
                 "status": "passed",
             },
             {

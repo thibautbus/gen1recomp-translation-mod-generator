@@ -4,12 +4,20 @@
 -- rather than showing up as an empty string or some placeholder.
 --
 -- Usage: luajit gate_gold_dialogue.lua <gen1recomp_root> <mod_dir>
---          <resolved_pointer> <expected_translation> <unresolved_pointer>
+--          <expectation_json_path>
+--
+-- The expected translation is read from a JSON file rather than a plain
+-- argument: Windows narrows a child process's argv to the console's active
+-- ANSI codepage before the C runtime's main() ever sees it, mangling any
+-- translated text outside that codepage (confirmed: German round-tripped,
+-- Japanese and Korean did not). A file read as raw UTF-8 bytes sidesteps
+-- that narrowing entirely -- see tools/gate_gold_registries.lua's own
+-- expectation-file argument for the same reason.
 
-local engineRoot, modDir, resolvedPointer, expectedTranslation, unresolvedPointer = ...
-if not (engineRoot and modDir and resolvedPointer and expectedTranslation and unresolvedPointer) then
+local engineRoot, modDir, expectationPath = ...
+if not (engineRoot and modDir and expectationPath) then
   io.stderr:write("usage: luajit gate_gold_dialogue.lua <gen1recomp_root> <mod_dir> "
-    .. "<resolved_pointer> <expected_translation> <unresolved_pointer>\n")
+    .. "<expectation_json_path>\n")
   os.exit(2)
 end
 
@@ -20,6 +28,30 @@ if not ok then
   io.stderr:write("unable to load tests.modkit from " .. engineRoot .. ": " .. tostring(T) .. "\n")
   os.exit(2)
 end
+
+local jsonOk, Json = pcall(require, "src.link.Json")
+if not jsonOk then
+  io.stderr:write("unable to load JSON decoder for dialogue expectations\n")
+  os.exit(2)
+end
+local file = io.open(expectationPath, "rb")
+if not file then
+  io.stderr:write("dialogue expectation file is missing: " .. expectationPath .. "\n")
+  os.exit(2)
+end
+local body = file:read("*a")
+file:close()
+local expectation = Json.decode(body)
+if type(expectation) ~= "table"
+    or type(expectation.resolved_pointer) ~= "string" or expectation.resolved_pointer == ""
+    or type(expectation.expected_translation) ~= "string" or expectation.expected_translation == ""
+    or type(expectation.unresolved_pointer) ~= "string" or expectation.unresolved_pointer == "" then
+  io.stderr:write("dialogue expectation file is missing required fields\n")
+  os.exit(2)
+end
+local resolvedPointer = expectation.resolved_pointer
+local expectedTranslation = expectation.expected_translation
+local unresolvedPointer = expectation.unresolved_pointer
 
 local failures = 0
 local function check(condition, message)
