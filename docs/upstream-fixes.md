@@ -1,9 +1,19 @@
 # Translation: upstream engine gaps
 
-Both mods use only the public `gen1recomp` content and hook APIs. The
-following strings are tracked here because translating them correctly requires
-new upstream APIs; they must not be implemented by reaching into private UI
-classes from the translation mod.
+Both mods use only the public `gen1recomp` content and hook APIs. Two kinds
+of gap are tracked here, and each game's section separates them:
+
+- **Required upstream capabilities**: strings that render in English with no
+  override reaching them at all -- no hook, no catalog entry can fix these
+  from the translation mod; they must not be implemented by reaching into
+  private UI classes.
+- **Translated via a compromise (`engine-contract-gap`)**: strings that
+  already render translated today, but through a compromise (an
+  AI-generated stand-in, a reordered-argument adaptation, or one override
+  serving several incompatible original contexts) instead of the real
+  official localized phrasing, because the engine's callsite doesn't map
+  cleanly onto it. These are not broken, but the goal is to retire this
+  category over time as gen1recomp's contract at each callsite is fixed.
 
 ## RBY
 
@@ -39,6 +49,95 @@ anchors would stay harmless to keep either way -- explicit anchors still
 win over auto-matching in the resolution order -- but the manual upkeep
 they represent could be dropped.
 
+### Translated via a compromise, not blocked (`engine-contract-gap`)
+
+Everything in "Required upstream capabilities" below renders in **English**
+with no override reaching it at all. This section is different: every entry
+here already shows **translated** text in-game today, through
+`overrides/<language>/rby/engine.json`. They are tracked here anyway because
+the override is a compromise, not the real localized phrasing -- the
+pipeline tags each one `"reason": "engine-contract-gap"` and records why in
+its `provenance` field. The goal is to retire this whole section over time:
+each row names the concrete engine change that would let the corpus's real,
+official localized text replace the compromise. Until then the compromise
+stays live and correct-enough, not broken.
+
+Two distinct shapes of compromise, both summarized below (fr shown; every
+shipped language carries its own compromise the same way, see each
+`overrides/<language>/rby/engine.json`):
+
+**Engine-authored settings/launcher labels** (31 entries,
+`config/shared/engine_manifest.json`'s `engine_dynamic_values`, each with a
+real callsite, `eligibility: "ineligible"`): these are modern
+launcher/options UI, not ROM text, so there is no PokeCorpus qid to match
+against at all -- the override is either an AI-generated translation
+(flagged `requires in-game visual validation` in its provenance) or the
+acronym/label kept as-is where translating it would lose meaning (`SGB`,
+`GBC`, `SGB INV`).
+
+| Source | fr override | Callsite |
+|---|---|---|
+| `OG RED` | `OG ROUGE` | `ui/OptionsMenu.lua:276`, `import/LauncherSettings.lua:118` (`PaletteFX.modeLabel`) |
+| `OG BLUE` | `OG BLEU` | same as above |
+| `OG YELLOW` | `OG JAUNE` | same as above |
+| `SGB` | `SGB` (kept) | same as above |
+| `ADVANCED` | `AVANCE` | same as above |
+| `OG INV` | `ORIG. INV` | same as above |
+| `SGB INV` | `SGB INV` (kept) | same as above |
+| `CLASSIC` | `CLASSIQUE` | same as above |
+| `GBC` | `GBC` (kept) | same as above |
+| `WINDOWED` | `FENETRE` | `ui/OptionsMenu.lua:346`, `import/LauncherSettings.lua:169` (`VideoMode.modeLabel`) |
+| `BORDERLESS` | `SANS BORD` | same as above |
+| `TREES` | `ARBRES` | `ui/OptionsMenu.lua:330`, `import/LauncherSettings.lua:154` (`TileRenderer.voidFillLabel`) |
+| `WATER` | `EAU` | same as above |
+| `OFF` | (per-context) | `ui/OptionsMenu.lua:251`, `import/LauncherSettings.lua:99` (`FILTERS`/`FaithfulRes`) |
+| `1X` / `2X` / `3X` | (per-context) | `ui/OptionsMenu.lua:251`, `import/LauncherSettings.lua:60` (`FILTERS`/`FaithfulRes`) |
+| `NORMAL` | (per-context) | `ui/OptionsMenu.lua:398`, `import/LauncherSettings.lua:218` (`GameSpeed.levelLabel`) |
+| `AUTO` / `LANDSCAPE` / `PORTRAIT` / `REVERSE LANDSCAPE` | (per-context) | `ui/OptionsMenu.lua:357` (`Orientation.modeLabel`) |
+| `FAST` / `MEDIUM` / `SLOW` | (per-context) | `ui/OptionsMenu.lua:126` (`SPEEDS` table) |
+| `HEAVY` / `LIGHT` | (per-context) | `ui/OptionsMenu.lua:447`, `import/LauncherSettings.lua:250` (`TouchControls.hapticLabel`) |
+| `auto` / `balanced` / `high` / `low` | (per-context) | `ui/OptionsMenu.lua:264` (`Performance.label`) |
+
+**Corpus translations adapted to the engine's argument order or a
+fragmentary source** (13 entries): the real localized ROM phrasing exists in
+the corpus, but the engine's `Strings()` callsite either reorders the
+`printf` arguments differently than the ROM script did, or only passes a
+fragment of the original sentence (a technical field like `HT`/`WT`, a
+standalone word like `evolving!`), so a literal per-fragment translation
+loses grammatical context a single upstream template change could restore.
+
+| Source | fr override | What's missing |
+|---|---|---|
+| `%s's %s\nrose!` | `%s voit son %s\naugmenter !` | Reordered stat arguments at shared callsites |
+| `%s lined up!\nScored %d coins!` | `%s est aligné !\nA gagné %d jetons !` | Slot-machine context around the reordered arguments |
+| `%s was\ntransferred to\n%s!` | `%s a été\ntransféré vers\n%s !` | Context-specific transfer arguments, fragmentary source |
+| `%s's\nhurt by poison!` | `%s\nest blessé par le poison !` | Fragmentary status-effect source |
+| `%s's\nhurt by the burn!` | `%s\nest blessé par la brûlure !` | Fragmentary status-effect source |
+| `%sBOX %2d` | `%sBOITE %2d` | Reordered box-name and numeric arguments |
+| `BADGES` | `BADGES` (kept) | Fragmentary standalone source |
+| `HT %d′%02d″` | `HT %d′%02d″` (kept) | Missing unit context around numeric arguments |
+| `WT %.1flb` | `WT %.1flb` (kept) | Missing unit-context argument |
+| `Once released,\n%s is\ngone forever. OK?` | `Une fois libéré,\n%s sera\nperdu à jamais. OK ?` | Reordered release-confirmation context around one argument |
+| `PLAYER %s\nBADGES %d\nPOKéDEX %3d\nTIME %6d:%02d` | `JOUEUR %s\nBADGES %d\nPOKéDEX %3d\nTEMPS %6d:%02d` | Technical status fragment, reordered display arguments |
+| `This POKéMON\ncan't be caught!` | `Ce POKéMON\nne peut pas être attrapé !` | Fragmentary capture-result source |
+| `Use on which one?` | `Utiliser sur lequel ?` | Missing target-selection argument |
+| `evolving!` | `évolue !` | Fragmentary evolution source |
+
+**Corpus translations shared across multiple, incompatible original
+contexts** (5 entries): the engine collapses several different ROM strings
+into one `Strings()` source key, so one override has to serve every context
+even though the original ROM script used different phrasing for each --
+only a callsite split upstream (one key per context) would let each one
+carry its real, distinct localized text.
+
+| Source | fr override | Original contexts collapsed together |
+|---|---|---|
+| `%s\nfainted!` | `%s\nest K.O. !` | `rb.text_2.EnemyMonFaintedText`, `rb.text_2.PlayerMonFaintedText`, `rb.text_4.PokemonFaintedText` |
+| `%s found\n%s!` | `%s trouve\n%s !` | `rb.text_1.FoundItemText`, `rb.text_2.FoundHiddenItemText` |
+| `%s's HP\nwas restored!` | `Les PV de %s\nont été restaurés !` | `ItemEffects.lua` and `PartyMenu.lua` item-healing callsites, different target presentation |
+| `It won't have\nany effect.` | `Cela n'aura\naucun effet.` | `rb.text_6.VitaminNoEffectText`, `rb.text_6.ItemUseNoEffectText`, `ItemEffects.lua`, `PartyMenu.lua` item failures |
+| `POKéDEX` | `POKéDEX` (kept) | `StartMenu.lua`, `PokedexMenu.lua`, `TitleState.lua`, `HallOfFame.lua` labels, no single upstream qid |
+
 ### Required upstream capabilities
 
 - **Stat-rise messages:** the `X ATTACK`/`X DEFENSE`/etc. battle items
@@ -72,7 +171,7 @@ they represent could be dropped.
 - **Branching/stateful flavor-NPC dialogue** (`config/rby/literal_handlers.json`,
   now 2 handlers: Viridian City's second Youngster and the Museum 1F ticket
   clerk): each is blocked for a distinct, narrower reason than a prior
-  version of this doc claimed (see the "narrowed" note below) -- reading
+  version of this doc claimed (see the correction note below) -- reading
   `game.data.text` directly instead of through `Strings()` is, by itself,
   *not* a gap (confirmed in the section above), so only NPCs with a second,
   independent problem still need `map_scripts:register` reimplementation:
@@ -98,54 +197,34 @@ they represent could be dropped.
     reach a literal that was never looked up anywhere -- the callsite
     itself would need to change.
 
-  **Narrowed from a prior version of this doc:** this section previously
-  claimed the shared root cause was simply "reads `game.data.text`
-  directly, not through `Strings()`", covering 6 handlers (adding the Bike
-  Shop's clerk/middle-aged-woman/youngster and Route 24's Nugget-Bridge
-  recruiter) plus a "no public API to give a Pokémon" blocker on Mt. Moon's
-  Magikarp salesman. That was wrong: `src/core/Strings.lua`'s own header
-  says extracted dialogue (`Data.text`) "already had a home... which a mod
-  reaches through `mod.content.text`" -- a *second*, separate override path
-  from `Strings()`/`mod.content.strings`, and `mod.content.text:override(id,
-  value)` patches `game.data.text[id]` directly. So a script reading
-  `t[label]` is translatable regardless of whether it goes through
-  `Strings()` first. Confirmed directly in a real build's `lang/dialogue.lua`:
-  `_BikeShopClerkHowDoYouLikeYourBicycleText`, `_BikeShopClerkOhThatsAVoucherText`,
-  `_BikeShopExchangedVoucherText`, `_BikeShopMiddleAgedWomanText`,
-  `_BikeShopYoungsterTheseBikesAreExpensiveText`/`CoolBikeText`,
-  `_Route24CooltrainerM1*` (all 7 lines), and
-  `_MtMoonPokecenterMagikarpSalesman*`/`_GotMonText` are all present with
-  correct French text. Their vanilla scripts
-  (`data/scripts/story2.lua`'s `TEXT_BIKESHOP_CLERK`,
-  `data/scripts/flavor/bike_shop.lua`'s `show_text`-command entries --
-  `Commands.show_text` also reads `ctx.game.data.text[textId]`,
-  `src/script/Commands.lua:81` --, `data/scripts/story4.lua`'s
-  `TEXT_ROUTE24_COOLTRAINER_M1` and `M.MT_MOON_POKECENTER`) already
-  implement the same branching, and are *more* complete than this
-  project's former reimplementations: they call
-  `require("src.inventory.Bag").add(...)` for a real bag-capacity check
-  (unrestricted for core engine code -- `SUPPORTED_REQUIRES` only
-  constrains mod code) where the removed Route 24/Bike Shop handlers here
-  could not, and `M.MT_MOON_POKECENTER` already calls
-  `require("src.script.Commands").give_pokemon(...)` directly, so giving a
-  Pokémon was never actually blocked for any NPC gen1recomp itself already
-  implements. The 4 now-redundant handlers (and the "no public API to give
-  a Pokémon" bullet) were removed from `config/rby/literal_handlers.json`
-  and this doc; letting vanilla's talk scripts run is both simpler and more
-  correct than the reimplementations were. The same check was run against
-  every other flavor NPC found reading `game.data.text` directly this way
-  -- Viridian City's `GAMBLER1`/`GIRL`, Pewter City's `SUPER_NERD1`/
-  `SUPER_NERD2`, and the `gift()` helper family in `data/scripts/story5.lua`
-  (8 NPCs: Celadon Diner's Coin Case, Celadon Mart 3F's TM18, Route 12 Gate
-  2F's TM39, Celadon City's TM41, Cinnabar Lab's TM35, Viridian City's
-  TM42, Silph Co 2F's TM36, Route 1's Potion sample) -- all confirmed
-  already correctly translated in a real build's `dialogue.lua`, no config
-  needed. Likewise the Pokédex "kind" classification
-  (`src/ui/DexEntryMenu.lua:93`, `Font.draw(e.kind or "?", ...)`, no
-  `Strings()` call) looked like the same deep gap as the status-ailment
-  abbreviations above, but isn't: `pipeline/mod.py` already has a dedicated
-  `species_kinds` catalog (`mod.content.pokemon:patch(id, {dexEntry =
-  {kind = value}})`) built for exactly this field.
+  **Corrected from a prior version of this doc:** this bullet used to claim
+  the shared root cause was simply "reads `game.data.text` directly, not
+  through `Strings()`," covering 6 handlers and a "no public API to give a
+  Pokémon" blocker on Mt. Moon's Magikarp salesman. That does not hold:
+  `src/core/Strings.lua`'s own header explains extracted dialogue
+  (`Data.text`) has its own override path, `mod.content.text:override(id,
+  value)`, independent of `Strings()`/`mod.content.strings` -- so a script
+  reading `t[label]` is translatable regardless of whether it goes through
+  `Strings()` first. Confirmed directly against a real build's
+  `lang/dialogue.lua`: the Bike Shop's three NPCs and Route 24's
+  Nugget-Bridge recruiter were already reading `game.data.text` correctly,
+  with translations already present, via gen1recomp's own vanilla scripts
+  (`data/scripts/story2.lua`, `story4.lua`,
+  `data/scripts/flavor/bike_shop.lua`) -- which are also *more* complete
+  than this project's former reimplementations (real bag-capacity checks
+  via a `require` unrestricted for core engine code). Those 4 redundant
+  handlers were removed from `config/rby/literal_handlers.json`; letting
+  vanilla run is simpler and more correct. The same real-build check was
+  repeated for every other flavor NPC reading `game.data.text` this way --
+  Viridian City's `GAMBLER1`/`GIRL`, Pewter City's `SUPER_NERD1`/
+  `SUPER_NERD2`, the 8-NPC `gift()` family in `data/scripts/story5.lua`,
+  and Mt. Moon's Magikarp salesman (which also already calls
+  `give_pokemon` natively, so "no public API to give a Pokémon" was never
+  actually a blocker here) -- all confirmed already correctly translated,
+  no config needed. The Pokédex "kind" classification
+  (`src/ui/DexEntryMenu.lua:93`) looked like the same deep gap as the
+  status-ailment abbreviations above, but isn't: `pipeline/mod.py` already
+  has a dedicated `species_kinds` catalog for it.
 
 ## Gold
 
@@ -163,6 +242,35 @@ more) runs through `ui.start_menu.items`, whose `item.label` field this mod
 already localized -- `item.desc` just wasn't wired up yet. All now fixed;
 `Party <PK><MN>\nstatus`'s French translation is slightly longer than the
 original two-glyph line and should get an in-game width check.
+
+### Translated via a compromise, not blocked (`engine-contract-gap`)
+
+Same pattern as RBY above -- these 20 entries (`overrides/<language>/gold/engine.json`,
+common across fr/de/es/it/ja-Hrkt/ko) already show translated text in-game,
+adapted to the engine's split or reordered contract rather than the exact
+official phrasing:
+
+| Source | fr override | What's missing |
+|---|---|---|
+| `%d #MON seen\n%d #MON owned\n\nPROF.OAK's\nRating:` | `%d POKéMON vus\n%d POKéMON pris\fÉvaluation du\nPROF. CHEN :` | Adapted to the engine's two-`printf` contract |
+| `%s got %s%d for winning!` | `%s remporte %s%d !` | Currency/printf order follows the engine contract |
+| `%s got %s%d for winning! Sent some to MOM!` | `%s remporte %s%d ! Une partie est\nenvoyée à MAMAN !` | Currency/printf order follows the engine contract |
+| `A▶PRINT` / `B▶CANCEL` / `L▶BEFORE` / `R▶NEXT` | `A▶IMPRIMER` / `B▶ANNULER` / `L▶RETOUR` / `R▶SUITE` | Physical button glyph retained |
+| `Fly to %s?` | `Voler vers %s ?` | Adapted to the engine's printf contract |
+| `LEFT SIDE` / `RIGHT SIDE` | `À GAUCHE` / `À DROITE` | Decoration-menu labels, engine contract |
+| `START>CANCEL` | `START>ANNULER` | Physical button retained |
+| `Registered the` + `that item.` | `Objet enregistré :` + `d'enregistrer.` | One ROM sentence (`CantRegisterItemText`/`RegisteredItemText`) split across two engine fragments |
+| `You can't register` | `Impossible` | Split-contract half of `CantRegisterItemText` |
+| `You have no more\nPOKéMON that can\x0bfight!` | `Plus de POKéMON\napte au combat !` | Adapted from `gs.common_2.NoUsableMonText` |
+| `{PLAYER} used the` | `{PLAYER} utilise :` | Item-on-next-fragment order |
+| `OT/` | `DO/` | Compact engine label, slash retained |
+
+Two more are per-language only, each documented individually in the relevant
+`overrides/<language>/gold/engine.json`: German and Korean also override
+`"%s\nis about to use...\nWill %s\nchange POKéMON?"` (the German ROM omits
+the player-name printf the engine expects), and Japanese and Korean also
+override `"Congratulations!"` (the Japanese diploma folds that idea into the
+preceding line instead of a standalone sentence).
 
 ### Required upstream capabilities
 
@@ -235,3 +343,50 @@ matches for these screens. They can be activated when the corresponding public
 upstream hooks exist; they are deliberately not a private-class monkey patch.
 This keeps the release manifest permission-free and makes the remaining work
 visible to the engine project.
+
+## Engine bug surfaced by TTF mode (not a translation gap)
+
+Reported by a user (fr, Fusion Pixel profile): the in-game **Mod Manager**
+screen (`src/mods/ManagerState.lua`, reachable while playing, both RBY and
+Gold) shows **no text at all, everything white**. This is not caused by
+anything in this mod's content or config -- it is a real gen1recomp bug in
+`ManagerState.lua` itself, and it would hit *any* mod that activates TTF text
+mode (`mod.content.font:register("ttf", ...)`), translated or not. Not
+fixable from a mod: there is no hook into `ManagerState`'s own draw code,
+only a candidate upstream bug report.
+
+**Root cause, confirmed by reading the source directly.**
+`ManagerState:draw()` (`src/mods/ManagerState.lua:1282-1286`):
+
+```lua
+love.graphics.setColor(0, 0, 0, 1)               -- black
+love.graphics.rectangle("fill", 0, 0, 160, 144)  -- full-screen background
+love.graphics.setColor(1, 1, 1, 1)               -- white
+Font.drawBox(0, 0, 20, 18)                       -- restores the CALLER's color: white
+Font.draw(self.banner or Strings("MOD MANAGER"), 16, 8)  -- drawn while color is still white
+```
+
+Nothing resets the color back to black before this or any subsequent
+`Font.draw`/`drawCode` call in `draw()`, `drawList()`, `drawRows()`,
+`drawDetail()`, `drawPermissions()`, `drawErrors()`, `drawApply()`, or
+`drawOverlay()` (same missing reset after its own `Font.drawBox` at line
+1257) -- essentially the whole screen except the unrelated `"options"`
+sub-screen, which does reset color correctly (line 1276-1278).
+
+This is invisible in the vanilla, tile-font build: `Font.drawBox`'s own
+comment (`src/render/Font.lua`, right above its definition) explains why --
+"the tile pages are black glyphs on transparent, so they come out black
+whatever the color is," so a leaked white color was harmless as long as
+every glyph was a tile. `Font.drawCode`'s TTF branch instead calls
+`love.graphics.print(...)`, which *does* draw in the current color, so once
+a mod's TTF font is active, any label after a color leak comes out white.
+This exact failure mode already happened once and was fixed -- but only
+locally, inside `Font.drawBox` itself, which now restores the color the
+*caller* had before it filled the interior. That fix cannot help here: the
+caller (`ManagerState.lua`) is the one setting white and never restoring it,
+so `Font.drawBox` faithfully preserves the caller's own mistake instead of
+masking it. Every other screen that calls `Font.drawBox` (checked directly:
+`TitleState.lua`, `StartMenu.lua`, `HallOfFame.lua`, `BoxMenu.lua`,
+`PartyMenu.lua`) does `love.graphics.setColor(0, 0, 0, 1)` right after
+`Font.drawBox` and before printing text -- `ManagerState.lua` is the one
+screen missing that reset.
