@@ -1,5 +1,6 @@
 import json
 import subprocess
+import sys
 import tempfile
 import unittest
 import zipfile
@@ -92,8 +93,15 @@ class GoldReleaseGateFlowTests(unittest.TestCase):
             mod = generate_gold_mod(root / "mod", language="fr", text_catalog={"55:0001": "Bonjour!"})
             entries = [GoldJoinEntry("55:0001", None, "Hello", "Bonjour!", UNIQUE, "gs.a.One")]
             with patch("pipeline.gold_mod._run") as run:
+                # _run is mocked, so luajit is never actually invoked; only
+                # run_gold_release_gates' own "does this path exist" check
+                # needs a real file. sys.executable is guaranteed to exist
+                # everywhere the suite runs, unlike a hardcoded system
+                # luajit path -- CI's build-then-test job builds LuaJIT from
+                # source *after* running the suite, so a hardcoded
+                # /usr/bin/luajit is not there yet at test time.
                 report = run_gold_release_gates(
-                    mod, entries, engine, "/usr/bin/luajit",
+                    mod, entries, engine, sys.executable,
                     catalogs={name: {"ID": "X"} for name in (
                         "strings", "species_names", "species_kinds", "species_dex_text", "move_names",
                         "item_names", "trainer_class_names", "landmarks", "oak_speech",
@@ -133,8 +141,10 @@ class GoldReleaseGateFlowTests(unittest.TestCase):
                 "item_names", "trainer_class_names", "landmarks", "oak_speech",
             )}
             with patch("pipeline.gold_mod._run"):
+                # See the same-shaped call above: _run is mocked, so this
+                # only needs to be a real file, not a real luajit.
                 report = run_gold_release_gates(
-                    mod, entries, engine, "/usr/bin/luajit", catalogs=catalogs, coverage=coverage,
+                    mod, entries, engine, sys.executable, catalogs=catalogs, coverage=coverage,
                 )
         manifest_coverage = report["validation"]["coverage"]
         self.assertEqual(manifest_coverage["translated"], 8)
