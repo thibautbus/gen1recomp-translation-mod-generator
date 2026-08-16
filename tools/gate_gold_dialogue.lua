@@ -31,9 +31,12 @@ local function check(condition, message)
   end
 end
 
--- root = "" so the absolute modDir aliasFs hands to FsIo resolves as-is
--- (see tools/gate_gen2.lua's loadFixture for why).
-local result = T.sdk.loadMod(modDir, { generation = 2, root = "" })
+-- root = modDir's parent, path = its own name (see tools/gate_gen2.lua's
+-- loadFixture for why an absolute path can't be handed to root="" -- it
+-- breaks on Windows).
+local modParent, modName = modDir:match("^(.*)[/\\]([^/\\]*)$")
+if not modParent then modParent, modName = ".", modDir end
+local result = T.sdk.loadMod(modName, { generation = 2, root = modParent })
 
 check(#result.errors == 0, "the dialogue mod loads with no errors")
 local mod = next(result.mods) and select(2, next(result.mods))

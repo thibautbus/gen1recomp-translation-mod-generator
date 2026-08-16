@@ -32,6 +32,47 @@ class BuilderTests(unittest.TestCase):
             builder._run(["tool"], log_fn=messages.append)
         self.assertEqual(messages, ["\n> tool", "first", "second"])
 
+    def test_run_failure_includes_captured_output_in_the_gui_error(self):
+        # A bare "exit code 1" with no other detail is exactly what a real
+        # GUI bug report showed: the GUI's error dialog only ever saw this
+        # message, never the separate "Show log" panel's transcript.
+        class Process:
+            stdout = iter(("modkit: validate --strict\n", "MK006 WARN: ...\n"))
+
+            @staticmethod
+            def wait():
+                return 1
+
+        with patch("pipeline.builder.subprocess.Popen", return_value=Process()):
+            with self.assertRaises(builder.BuildError) as caught:
+                builder._run(["tool"], log_fn=lambda _: None)
+        message = str(caught.exception)
+        self.assertIn("Command failed with exit code 1: tool", message)
+        self.assertIn("modkit: validate --strict", message)
+        self.assertIn("MK006 WARN: ...", message)
+
+    def test_run_failure_truncates_a_long_transcript_to_its_tail(self):
+        class Process:
+            stdout = iter(f"line {i}\n" for i in range(60))
+
+            @staticmethod
+            def wait():
+                return 1
+
+        with patch("pipeline.builder.subprocess.Popen", return_value=Process()):
+            with self.assertRaises(builder.BuildError) as caught:
+                builder._run(["tool"], log_fn=lambda _: None)
+        message = str(caught.exception)
+        self.assertNotIn("line 0\n", message)
+        self.assertIn("line 59", message)
+        self.assertIn("20 earlier line(s) omitted", message)
+
+    def test_run_cli_path_omits_captured_output_since_it_inherits_the_console(self):
+        with patch("pipeline.builder.subprocess.run", side_effect=builder.subprocess.CalledProcessError(1, ["tool"])):
+            with self.assertRaises(builder.BuildError) as caught:
+                builder._run(["tool"])
+        self.assertEqual(str(caught.exception), "Command failed with exit code 1: tool")
+
     def test_font_dependencies_use_private_cache_and_checked_in_pins(self):
         config = builder.project_config()
         with tempfile.TemporaryDirectory() as directory, patch(

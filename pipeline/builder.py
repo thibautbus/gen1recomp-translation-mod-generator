@@ -35,6 +35,7 @@ from .project import (
 )
 from .dependencies import DependencyError, fetch_archive, fetch_files
 from .roms import import_rom, verify_gold_rom, verify_rom
+from .subprocess_run import run_streamed
 from .rom_paths import configured_path, load_rom_paths
 from .specs import game_spec, languages_for_collection, release_profile, release_profile_for_generation
 from .specs import BuildRequest
@@ -131,31 +132,11 @@ def _run(
     env: dict[str, str] | None = None,
     log_fn: Callable[[str], None] | None = None,
 ) -> None:
-    printable = " ".join(command)
-    line = f"\n> {printable}"
-    print(line)
-    if log_fn:
-        log_fn(line)
-    try:
-        if log_fn is None:
-            subprocess.run(command, cwd=cwd, env=env, check=True)
-        else:
-            process = subprocess.Popen(
-                command, cwd=cwd, env=env, text=True, errors="replace",
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            )
-            assert process.stdout is not None
-            for output_line in process.stdout:
-                output_line = output_line.rstrip("\r\n")
-                print(output_line)
-                log_fn(output_line)
-            returncode = process.wait()
-            if returncode:
-                raise subprocess.CalledProcessError(returncode, command)
-    except subprocess.CalledProcessError as error:
-        raise BuildError(
-            f"Command failed with exit code {error.returncode}: {printable}"
-        ) from error
+    # The GUI surfaces a raised BuildError in a single error dialog; the
+    # full transcript only lives in its separate, easy-to-miss "Show log"
+    # panel, so a bare exit code left a bug report with nothing else to go
+    # on -- run_streamed includes the command's own tail in the message too.
+    run_streamed(command, cwd=cwd, env=env, log_fn=log_fn, error_cls=BuildError)
 
 
 def _modkit_command(modkit: Path, *args: str) -> list[str]:

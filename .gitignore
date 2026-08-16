@@ -12,6 +12,7 @@
 /mod/
 /reports/
 /dist/
+/build/
 /.cache/
 
 # Derived extractions produced by gen1recomp.

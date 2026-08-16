@@ -9,7 +9,7 @@ import threading
 from typing import Callable
 
 from . import builder
-from .project import project_version
+from .project import project_version, work_root
 from .orchestration import build_request
 from .specs import BuildRequest, release_profile_for_generation
 
@@ -251,7 +251,7 @@ class TranslationBuilderApp:
         # a flat form, not a wizard).
         rom_fields = (
             ("red", 2, "Required to extract shared and Pokémon Red-specific game text and data.", "Pokemon Red ROM (US)"),
-            ("gold", 2, "Required to extract Pokémon Gold game text and data.", "Pokemon Gold ROM (US/Europe)"),
+            ("gold", 2, "Required to extract Pokémon Gold game text and data.", "Pokemon Gold ROM (US)"),
             ("blue", 4, "Required to extract Pokémon Blue-specific game text and data.", "Pokemon Blue ROM (US)"),
             ("yellow", 6, "Required to extract Pokémon Yellow-specific game text and data.", "Pokemon Yellow ROM (US)"),
         )
@@ -268,7 +268,7 @@ class TranslationBuilderApp:
             self.rom_widgets[game] = (hint, name, entry, browse)
             self._controls.extend(((entry, "normal"), (browse, "normal")))
 
-        ttk.Label(frame, text="The generated translation mod ZIP and temporary .cache workspace will be placed here.", style="Hint.TLabel").grid(row=12, column=0, columnspan=3, sticky="w", pady=(8, 2))
+        ttk.Label(frame, text="The generated translation mod ZIP will be placed here.", style="Hint.TLabel").grid(row=12, column=0, columnspan=3, sticky="w", pady=(8, 2))
         ttk.Label(frame, text="Output directory").grid(row=13, column=0, sticky="w", pady=(0, 6))
         output_entry = ttk.Entry(frame, textvariable=self.output_var)
         output_entry.grid(row=13, column=1, sticky="ew", padx=8)
@@ -428,14 +428,25 @@ class TranslationBuilderApp:
                 release_profile_for_generation(inputs.generation),
                 inputs.language, inputs.output_dir, inputs.font_profile,
             )
+            # The workspace (gen1recomp/poke-corpus checkouts, LuaJIT-driven
+            # mod validation) stays anchored near the executable rather than
+            # inside the user's chosen output directory: LuaJIT's io.open
+            # takes narrow (ANSI-codepage) paths on Windows, so a non-ASCII
+            # output folder name -- reported as "Build failed", exit code 1,
+            # from a real folder with an accent in it -- silently broke
+            # every file the loader driver tried to open. Anchoring here
+            # also means the (multi-hundred-MB) dependency downloads are
+            # reused across builds no matter what output folder is picked,
+            # instead of being tied to one and re-fetched if it changes.
+            workspace = work_root() / ".cache"
             output = build_request(
                 request, language_name=language_name, luajit=luajit,
-                workspace_root=inputs.output_dir / ".cache", output_dir=inputs.output_dir,
+                workspace_root=workspace, output_dir=inputs.output_dir,
                 log_fn=lambda message: self._append_log(message),
                 status_fn=lambda message: self._post(lambda: self.status_var.set(message)),
             )
             build_cache = "interactive" if inputs.generation == 1 else "interactive-gold"
-            coverage = inputs.output_dir / ".cache" / build_cache / inputs.language / "coverage.json"
+            coverage = workspace / build_cache / inputs.language / "coverage.json"
             self._post(lambda: self._complete(output, coverage))
         except (RuntimeError, ValueError, OSError) as error:
             message = str(error)

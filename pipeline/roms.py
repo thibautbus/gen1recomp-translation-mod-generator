@@ -13,6 +13,7 @@ from types import MappingProxyType
 from typing import Any, Callable
 
 from .project import is_frozen, project_config, resource_root, which_luajit
+from .subprocess_run import run_streamed
 
 
 # Product support is intentionally limited to the canonical US games; this
@@ -136,29 +137,7 @@ def import_rom(version: str, rom: str | Path, gen1recomp: str | Path, out: str |
     command.extend(["--rom", str(rom), "--manifest", str(manifest), "--out", str(out), "--assets", str(assets), "--clean"])
     for dataset in only or []:
         command.extend(["--only", dataset])
-    if log_fn is None:
-        subprocess.run(command, cwd=root / "tools", check=True)
-        return
-    # Mirror pipeline.builder._run(): stream combined stdout/stderr live
-    # instead of letting the child inherit the parent's own streams, which
-    # are invalid in the frozen GUI's console-less window and would
-    # otherwise leave a failure here as an opaque exit code with no output.
-    printable = " ".join(command)
-    line = f"\n> {printable}"
-    print(line)
-    log_fn(line)
-    process = subprocess.Popen(
-        command, cwd=root / "tools", text=True, errors="replace",
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-    )
-    assert process.stdout is not None
-    for output_line in process.stdout:
-        output_line = output_line.rstrip("\r\n")
-        print(output_line)
-        log_fn(output_line)
-    returncode = process.wait()
-    if returncode:
-        raise subprocess.CalledProcessError(returncode, command)
+    run_streamed(command, cwd=root / "tools", log_fn=log_fn)
 
 
 # Gold shares the canonical fingerprint registry with RBY, while remaining
@@ -206,27 +185,7 @@ def import_gold_rom(rom: str | Path, gen1recomp: str | Path, out: str | Path, lo
     temporary = Path(tempfile.mkdtemp(prefix=f".{out.name}-", dir=out.parent))
     command = [luajit, str(script), str(root), str(rom), str(temporary)]
     try:
-        if log_fn is None:
-            subprocess.run(command, check=True)
-        else:
-            # Mirror pipeline.builder._run() / import_rom(): stream combined
-            # stdout/stderr live for the console-less frozen GUI.
-            printable = " ".join(command)
-            line = f"\n> {printable}"
-            print(line)
-            log_fn(line)
-            process = subprocess.Popen(
-                command, text=True, errors="replace",
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            )
-            assert process.stdout is not None
-            for output_line in process.stdout:
-                output_line = output_line.rstrip("\r\n")
-                print(output_line)
-                log_fn(output_line)
-            returncode = process.wait()
-            if returncode:
-                raise subprocess.CalledProcessError(returncode, command)
+        run_streamed(command, log_fn=log_fn)
 
         missing = [
             name for name in GOLD_REQUIRED_TSV

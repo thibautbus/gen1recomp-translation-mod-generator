@@ -30,10 +30,44 @@ local function check(condition, message)
   end
 end
 
+-- rbyDir and goldDir are two unrelated absolute directories (no shared
+-- parent in general), so the root=parent/path=name split that
+-- tools/gate_gen2.lua and tools/gate_gold_dialogue.lua use for a single
+-- absolute directory does not apply here: no single root can relativize
+-- both at once. Build a tiny two-alias filesystem instead, one FsIo
+-- instance per directory rooted at that directory itself, so every path
+-- handed to io.open is a normal root .. "/" .. relative-fragment join and
+-- never runs into the Windows drive-letter breakage root="" has (see
+-- gate_gen2.lua's loadFixture).
+local FsIo = require("tests.fs_io")
+
+local function dualFs(rby, gold)
+  local roots = { rby = FsIo.new(rby), gold = FsIo.new(gold) }
+  local function split(path)
+    local name, rest = path:match("^mods/([^/]+)(.*)$")
+    return roots[name], rest
+  end
+  local fs = { root = "." }
+  function fs.read(path) local r, rest = split(path) return r and r.read(rest) end
+  function fs.write(path, body) local r, rest = split(path) return r and r.write(rest, body) end
+  function fs.load(path) local r, rest = split(path) return r and r.load(rest) end
+  function fs.getInfo(path)
+    if path == "mods" then return { type = "directory" } end
+    local r, rest = split(path)
+    return r and r.getInfo(rest) or nil
+  end
+  function fs.getDirectoryItems(path)
+    if path == "mods" then return { "gold", "rby" } end
+    local r, rest = split(path)
+    return r and r.getDirectoryItems(rest) or {}
+  end
+  return fs
+end
+
 local function loadBoth(generation)
-  -- root = "" so the absolute rbyDir/goldDir paths aliasFs hands to FsIo
-  -- resolve as-is (see tools/gate_gen2.lua's loadFixture for why).
-  return T.sdk.loadMods({ rbyDir, goldDir }, { generation = generation, root = "" })
+  return T.sdk.loadMods({ "mods/rby", "mods/gold" }, {
+    generation = generation, fs = dualFs(rbyDir, goldDir),
+  })
 end
 
 -- Generation 1: the RBY mod (no `games` field, covering all of Gen 1 by

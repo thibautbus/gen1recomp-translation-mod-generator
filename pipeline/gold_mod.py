@@ -348,6 +348,7 @@ def run_gold_release_gates(
     catalogs: dict[str, dict[str, str]] | None = None,
     coverage: dict | None = None,
     placeholder_decisions: dict[str, GoldPlaceholderDecision] | None = None,
+    log_fn: Callable[[str], None] | None = None,
 ) -> dict:
     """Run every technical Gold gate before publishing the candidate.
 
@@ -374,17 +375,17 @@ def run_gold_release_gates(
     mod_dir = Path(mod_dir).resolve()
     # First prove the generation=2 harness itself, then prove this generated
     # mod's dialogue and index registries with values from its own catalogs.
-    _run([luajit, str(tools / "gate_gen2.lua"), str(gen1recomp), str(fixtures)])
+    _run([luajit, str(tools / "gate_gen2.lua"), str(gen1recomp), str(fixtures)], log_fn=log_fn)
     translated = next((e for e in entries if e.translation), None)
     if translated is None:
         raise BuildError("Gold dialogue gate requires at least one translated pointer")
     unresolved = next((e for e in entries if e.translation is None), None)
     unresolved_pointer = unresolved.pointer if unresolved else "__gold_unresolved_gate_pointer__"
     _run([luajit, str(tools / "gate_gold_dialogue.lua"), str(gen1recomp), str(mod_dir),
-          translated.pointer, translated.translation, unresolved_pointer])
+          translated.pointer, translated.translation, unresolved_pointer], log_fn=log_fn)
     expectation_path = _write_gate_expectations(mod_dir, catalogs or {})
     try:
-        _run([luajit, str(tools / "gate_gold_registries.lua"), str(gen1recomp), str(mod_dir), str(expectation_path)])
+        _run([luajit, str(tools / "gate_gold_registries.lua"), str(gen1recomp), str(mod_dir), str(expectation_path)], log_fn=log_fn)
     finally:
         expectation_path.unlink(missing_ok=True)
     engine_revision = str(project_config()["gen1recomp"]["revision"])
@@ -643,6 +644,7 @@ def build_gold(
         catalogs=stats.get("_gate_catalogs", {}),
         coverage=stats["coverage"],
         placeholder_decisions=stats.get("_placeholder_decisions", {}),
+        log_fn=log_fn,
     )
     attach_gold_validation(mod_dir, gate_report["validation"])
     coverage_path = build_root / "coverage.json"

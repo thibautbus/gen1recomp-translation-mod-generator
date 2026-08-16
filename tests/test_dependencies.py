@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import runpy
+import ssl
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -13,7 +14,7 @@ import zipfile
 import tomllib
 from unittest.mock import patch
 
-from pipeline.dependencies import DependencyError, _tree_digest, fetch_archive, fetch_files
+from pipeline.dependencies import DependencyError, _default_ssl_context, _tree_digest, fetch_archive, fetch_files
 
 
 class _Response:
@@ -66,6 +67,54 @@ class DependencyTests(unittest.TestCase):
 
             with patch("pipeline.dependencies.sorted", windows_sorted, create=True):
                 self.assertEqual(_tree_digest(root), expected.hexdigest())
+
+    def test_default_ssl_context_prefers_a_working_os_store(self):
+        # certifi's bundle is pinned at packaging time with no update
+        # automation (packaging/requirements-windows.txt), so it *will* go
+        # stale; a working OS store (update-ca-certificates/update-ca-trust)
+        # stays current on its own. Only fall back to certifi when the OS
+        # lookup finds nothing, not on every call.
+        working = SimpleNamespace(cert_store_stats=lambda: {"x509": 5})
+        with patch("pipeline.dependencies.ssl.create_default_context", return_value=working) as create_context:
+            context = _default_ssl_context()
+        create_context.assert_called_once_with()
+        self.assertIs(context, working)
+
+    def test_default_ssl_context_falls_back_to_certifi_when_os_store_is_empty(self):
+        # A PyInstaller-frozen Linux build bundles the build machine's
+        # OpenSSL, whose compiled-in default CA path does not necessarily
+        # exist on the user's distro (CERTIFICATE_VERIFY_FAILED reported on
+        # CachyOS from the released binary, not from a source checkout) --
+        # the default context then loads zero trust anchors.
+        try:
+            import certifi
+        except ImportError:
+            self.skipTest("certifi is not installed in this environment")
+
+        empty = SimpleNamespace(cert_store_stats=lambda: {"x509": 0})
+        real_create_context = ssl.create_default_context
+
+        def fake_create_context(*args, **kwargs):
+            return empty if not kwargs else real_create_context(*args, **kwargs)
+
+        with patch("pipeline.dependencies.ssl.create_default_context", side_effect=fake_create_context) as create_context:
+            context = _default_ssl_context()
+        create_context.assert_called_with(cafile=certifi.where())
+        self.assertIsNot(context, empty)
+
+    def test_default_ssl_context_falls_back_to_empty_os_context_without_certifi(self):
+        empty = SimpleNamespace(cert_store_stats=lambda: {"x509": 0})
+        real_import = builtins.__import__
+
+        def no_certifi(name, *args, **kwargs):
+            if name == "certifi":
+                raise ImportError("no module named certifi")
+            return real_import(name, *args, **kwargs)
+
+        with patch("pipeline.dependencies.ssl.create_default_context", return_value=empty), \
+             patch("builtins.__import__", side_effect=no_certifi):
+            context = _default_ssl_context()
+        self.assertIs(context, empty)
 
     def test_windows_packaging_pins_full_luajit_clone(self):
         script = (Path(__file__).parents[1] / "packaging/build_windows_executable.ps1").read_text()
@@ -225,6 +274,59 @@ class DependencyTests(unittest.TestCase):
                     and self._paths_equivalent(source, runtime / "jit" / "vm.lua")
                     for source, destination in captured["datas"]
                 )
+            )
+
+    def test_spec_bundles_the_tools_lua_scripts_and_gate_fixtures(self):
+        # A real Windows GUI report: a frozen Gold build failed with
+        # "cannot open ... tools\gold_extract.lua: No such file or
+        # directory" -- resource_root()/"tools"/... (pipeline/roms.py,
+        # pipeline/gold_mod.py) resolves to PyInstaller's extraction dir at
+        # runtime, but nothing in the spec's datas ever bundled tools/ at
+        # all.
+        spec = Path(__file__).parents[1] / "packaging/translation_builder.spec"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "packaging").mkdir()
+            (root / "build_translation.py").write_text("# test fixture\n")
+            tools = root / "tools"
+            (tools / "gen2_gate_fixtures" / "broken_gold").mkdir(parents=True)
+            (tools / "gold_extract.lua").write_text("-- fixture\n")
+            (tools / "gate_gen2.lua").write_text("-- fixture\n")
+            (tools / "gen2_gate_fixtures" / "broken_gold" / "main.lua").write_text("-- fixture\n")
+            (tools / "__pycache__").mkdir()
+            (tools / "__pycache__" / "stale.pyc").write_bytes(b"stale bytecode")
+            captured = {}
+
+            def fake_analysis(*args, **kwargs):
+                captured["datas"] = kwargs["datas"]
+                return SimpleNamespace(pure=[], scripts=[], binaries=[], datas=[])
+
+            runpy.run_path(
+                str(spec),
+                init_globals={
+                    "SPECPATH": str(root / "packaging"),
+                    "Analysis": fake_analysis,
+                    "PYZ": lambda pure: SimpleNamespace(pure=pure),
+                    "EXE": lambda *args, **kwargs: SimpleNamespace(),
+                },
+            )
+            found = {
+                (tools / "gold_extract.lua"): "tools",
+                (tools / "gate_gen2.lua"): "tools",
+                (tools / "gen2_gate_fixtures" / "broken_gold" / "main.lua"): str(Path("tools") / "gen2_gate_fixtures" / "broken_gold"),
+            }
+            for expected_source, expected_destination in found.items():
+                self.assertTrue(
+                    any(
+                        Path(destination).as_posix() == Path(expected_destination).as_posix()
+                        and self._paths_equivalent(source, expected_source)
+                        for source, destination in captured["datas"]
+                    ),
+                    f"{expected_source} missing from datas",
+                )
+            self.assertFalse(
+                any("__pycache__" in Path(source).parts for source, _ in captured["datas"]),
+                "stale __pycache__ bytecode should not be bundled",
             )
 
     def test_spec_selects_gui_entrypoint_without_console(self):

@@ -390,3 +390,63 @@ masking it. Every other screen that calls `Font.drawBox` (checked directly:
 `PartyMenu.lua`) does `love.graphics.setColor(0, 0, 0, 1)` right after
 `Font.drawBox` and before printing text -- `ManagerState.lua` is the one
 screen missing that reset.
+
+## Build tooling bug: `modkit pack` fails on a non-ASCII Windows path
+
+Two independent Windows users reported the GUI's build failing with only
+"Command failed with exit code 1" and a `modkit.py ... pack ...` command
+line -- no other detail (the GUI not showing the command's own captured
+output was a separate, real gap, since fixed). One report's path was
+`D:\Jeux\Fan Made Pokémon\Gen1 Recomp\...`; the other reproduced it
+directly by picking `Downloads\ééé` as the output directory. Both point at
+the same thing: an accented character anywhere in the working tree
+`modkit.py pack` runs from.
+
+**Root cause, traced through `tools/modkit.py` (gen1recomp, vendored --
+not this project's own code):** `cmd_pack` calls `run_loader(repo, mod_dir,
+...)` to validate the mod by actually booting it under LuaJIT headlessly.
+`run_loader` builds a map of every mod file to its absolute filesystem path
+(`files[f"{mount}/{rel}"] = os.path.join(mod_dir, rel)`), embeds that map as
+Lua string literals into a generated driver script
+(`entries = "".join("  [%s] = %s,\n" % (lua_quote(k), lua_quote(v)) ...)`),
+writes it as a UTF-8 text file (`tempfile.NamedTemporaryFile("w", ...,
+encoding="utf-8")`), and runs it with
+`subprocess.run([LUAJIT, driver_path], cwd=repo, ...)`. The driver then
+`io.open`s those paths to actually load the mod's files.
+
+LuaJIT (like standard Lua) has no concept of source-file text encoding for
+string literals: the bytes between the quotes in the driver script --
+UTF-8 bytes, since Python wrote the file as UTF-8 -- become the runtime
+string's bytes verbatim. On Windows, `io.open` reaches the C runtime's
+narrow `fopen()`, which interprets those bytes against the **active ANSI
+codepage**, not UTF-8. UTF-8's two-byte encoding of "é" (`0xC3 0xA9`)
+decoded as a Windows-1252-family codepage does not round-trip back to "é"
+-- the resulting filename does not exist on disk, `io.open` fails, the Lua
+driver errors out, LuaJIT exits non-zero, and `run_loader` reports it as
+`Finding("MK100", "error", "loader driver crashed: ...")`, which `cmd_pack`
+treats as fatal (exit code 1) -- matching both reports exactly.
+
+Not fixable from this project: the failure is inside gen1recomp's own
+`tools/modkit.py` driving LuaJIT, not in anything this mod's pipeline
+generates or controls. Two realistic upstream fixes, neither requiring a
+LuaJIT rebuild:
+
+- Convert `mod_dir`'s absolute path to its Windows short (8.3) name (always
+  pure ASCII) via `ctypes.windll.kernel32.GetShortPathNameW` before
+  embedding it in the driver script. Requires 8.3 name generation to be
+  enabled for the volume, which is the Windows default but can be turned
+  off.
+- Copy the mod tree into an ASCII-safe temporary directory before invoking
+  LuaJIT for this check, sidestepping the encoding mismatch entirely
+  regardless of where the real mod directory lives.
+
+This project's own workaround is narrower and does not depend on an
+upstream fix: the GUI no longer roots its working directory (where
+gen1recomp is cloned and the mod is actually built and packed) inside the
+user's chosen *output* directory, since that is the more commonly
+non-ASCII one (a deep, descriptively-named project folder picked via a
+file browser, as in both reports) -- it now stays anchored near the
+executable, matching what the CLI already did by default. That does not
+fully close the gap (the executable's own launch location, or a
+non-ASCII Windows username, can still trigger this), which is why it is
+recorded here rather than closed.

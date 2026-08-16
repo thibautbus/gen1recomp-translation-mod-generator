@@ -213,10 +213,10 @@ class RomConfigTests(unittest.TestCase):
                 patch("pipeline.roms.verify_rom"),
                 patch("pipeline.roms.is_frozen", return_value=False),
                 patch("pipeline.roms.subprocess.Popen", return_value=Process()),
-                self.assertRaises(subprocess.CalledProcessError) as caught,
+                self.assertRaises(RuntimeError) as caught,
             ):
                 import_rom("red", rom, root, out, assets, log_fn=lambda message: None)
-            self.assertEqual(caught.exception.returncode, 120)
+            self.assertIn("exit code 120", str(caught.exception))
 
 
 class GoldImportTests(unittest.TestCase):
@@ -342,9 +342,14 @@ class GoldImportTests(unittest.TestCase):
                     "pipeline.roms.subprocess.run",
                     side_effect=subprocess.CalledProcessError(1, ["luajit"]),
                 ),
-                self.assertRaises(subprocess.CalledProcessError),
+                # log_fn=None (the CLI path) now goes through the same
+                # run_streamed() as the GUI's log_fn path (pipeline.roms and
+                # pipeline.builder share it), so this raises the same clean
+                # RuntimeError rather than a raw CalledProcessError.
+                self.assertRaises(RuntimeError) as caught,
             ):
                 import_gold_rom(root / "gold.gbc", root / "engine", out)
+            self.assertIn("exit code 1", str(caught.exception))
             self.assertEqual((out / "keep.txt").read_text(encoding="utf-8"), "old cache")
 
     def test_import_gold_rom_raises_on_nonzero_exit_with_log_fn(self):
@@ -362,10 +367,34 @@ class GoldImportTests(unittest.TestCase):
                 patch("pipeline.roms.which_luajit", return_value="/usr/bin/luajit"),
                 patch("pipeline.roms.resource_root", return_value=root),
                 patch("pipeline.roms.subprocess.Popen", return_value=Process()),
-                self.assertRaises(subprocess.CalledProcessError) as caught,
+                self.assertRaises(RuntimeError) as caught,
             ):
                 import_gold_rom(root / "gold.gbc", root / "engine", root / "out", log_fn=lambda message: None)
-            self.assertEqual(caught.exception.returncode, 1)
+            self.assertIn("exit code 1", str(caught.exception))
+
+    def test_import_gold_rom_error_includes_the_extractor_own_output(self):
+        # A real GUI report showed only "Command [...] returned non-zero
+        # exit status 1" -- the gold_extract.lua failure itself, streamed to
+        # the log panel while the command ran, was lost from the error the
+        # user actually saw.
+        class Process:
+            stdout = iter(("lua: gold_extract.lua:42: bad ROM bank\n",))
+
+            @staticmethod
+            def wait():
+                return 1
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with (
+                patch("pipeline.roms.verify_gold_rom"),
+                patch("pipeline.roms.which_luajit", return_value="/usr/bin/luajit"),
+                patch("pipeline.roms.resource_root", return_value=root),
+                patch("pipeline.roms.subprocess.Popen", return_value=Process()),
+                self.assertRaises(RuntimeError) as caught,
+            ):
+                import_gold_rom(root / "gold.gbc", root / "engine", root / "out", log_fn=lambda message: None)
+            self.assertIn("bad ROM bank", str(caught.exception))
 
 
 if __name__ == "__main__":

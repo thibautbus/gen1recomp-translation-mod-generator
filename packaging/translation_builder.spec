@@ -29,6 +29,16 @@ for relative in (
 for source in (ROOT / "overrides").rglob("*"):
     if source.is_file() and source.name != "rom_paths.toml":
         datas.append((str(source), str(source.parent.relative_to(ROOT))))
+# gold_extract.lua and the gate_*.lua scripts are read from resource_root()
+# at runtime (pipeline/roms.py, pipeline/gold_mod.py); missing from datas
+# meant a frozen Gold build failed with "cannot open ... gold_extract.lua:
+# No such file or directory" past the first ROM extraction step. Bundle the
+# whole tools/ tree (including gen2_gate_fixtures/, the release gate's
+# fixture mods) rather than naming each script, so a future addition here
+# does not silently repeat the same gap.
+for source in (ROOT / "tools").rglob("*"):
+    if source.is_file() and "__pycache__" not in source.parts:
+        datas.append((str(source), str(source.parent.relative_to(ROOT))))
 if runtime.is_dir():
     for source in runtime.rglob("*"):
         if source.is_file():
@@ -45,7 +55,7 @@ a = Analysis(
     pathex=[str(ROOT)],
     binaries=binaries,
     datas=datas,
-    hiddenimports=["PIL", "PIL.Image", "PIL.ImageFile", "PIL.PngImagePlugin"],
+    hiddenimports=["PIL", "PIL.Image", "PIL.ImageFile", "PIL.PngImagePlugin", "certifi"],
     hookspath=[], hooksconfig={}, runtime_hooks=[], excludes=[], noarchive=False,
 )
 pyz = PYZ(a.pure)

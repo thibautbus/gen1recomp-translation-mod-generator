@@ -41,10 +41,16 @@ local function check(condition, message)
 end
 
 local function loadFixture(name, generation)
-  -- root = "" so the absolute fixturesRoot path aliasFs hands to FsIo
-  -- resolves as-is (FsIo.abs joins as base .. "/" .. path; a non-empty
-  -- default root of "." would make an absolute alias relative to cwd).
-  return T.sdk.loadMod(fixturesRoot .. "/" .. name, { generation = generation, root = "" })
+  -- root = fixturesRoot, path = name (relative): FsIo.abs joins as
+  -- base .. "/" .. path, so an absolute root plus a bare relative name
+  -- resolves correctly on both POSIX and Windows. The previous approach
+  -- (root = "", path = the absolute fixturesRoot .. "/" .. name) built
+  -- base .. "/" .. absolutePath, which on Windows prepends a stray "/"
+  -- before the drive letter (e.g. "/C:\Users\...\gen2_gate_fixtures\..."),
+  -- an invalid path io.open silently fails to open -- a real frozen
+  -- Windows GUI build reported every fixture check failing with
+  -- "broken_gold is discovered" itself already false.
+  return T.sdk.loadMod(name, { generation = generation, root = fixturesRoot })
 end
 
 -- 1. Under generation 1, games=["gold"] does not cover this generation:

@@ -92,6 +92,7 @@ class GoldReleaseGateFlowTests(unittest.TestCase):
             (engine / "tools").mkdir(parents=True)
             mod = generate_gold_mod(root / "mod", language="fr", text_catalog={"55:0001": "Bonjour!"})
             entries = [GoldJoinEntry("55:0001", None, "Hello", "Bonjour!", UNIQUE, "gs.a.One")]
+            log_fn = lambda message: None
             with patch("pipeline.gold_mod._run") as run:
                 # _run is mocked, so luajit is never actually invoked; only
                 # run_gold_release_gates' own "does this path exist" check
@@ -106,6 +107,7 @@ class GoldReleaseGateFlowTests(unittest.TestCase):
                         "strings", "species_names", "species_kinds", "species_dex_text", "move_names",
                         "item_names", "trainer_class_names", "landmarks", "oak_speech",
                     )},
+                    log_fn=log_fn,
                 )
             self.assertIn("coverage", report)
             self.assertEqual(report["validation"]["policy"], "english-fallback")
@@ -114,6 +116,13 @@ class GoldReleaseGateFlowTests(unittest.TestCase):
             self.assertTrue(all(check["status"] == "passed" for check in report["validation"]["checks"]))
             commands = [Path(call.args[0][1]).name for call in run.call_args_list]
             self.assertEqual(commands, ["gate_gen2.lua", "gate_gold_dialogue.lua", "gate_gold_registries.lua"])
+            # A real Windows GUI report: the three gate scripts' own output
+            # never reached the "Build failed" dialog at all (an empty
+            # detail, just an exit code) -- run_gold_release_gates never
+            # forwarded log_fn to _run(), so a console-less frozen GUI had
+            # nowhere for that output to go. Every gate call must thread it
+            # through.
+            self.assertTrue(all(call.kwargs.get("log_fn") is log_fn for call in run.call_args_list))
 
     def test_manifest_keeps_only_compact_engine_coverage(self):
         with tempfile.TemporaryDirectory() as tmp:
