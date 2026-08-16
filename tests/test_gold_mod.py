@@ -283,7 +283,7 @@ class GenerateGoldModWithTextTests(unittest.TestCase):
             main = (mod_dir / "main.lua").read_text(encoding="utf-8")
             self.assertIn('mod.content.text:override(id, value)', main)
             manifest = json.loads((mod_dir / "manifest.json").read_text(encoding="utf-8"))
-            self.assertIn("Some engine-specific text remains untranslated", manifest["description"])
+            self.assertEqual(manifest["description"], "fr translation for Gold, based mostly on PokeCorpus.")
 
     def test_without_a_catalog_stays_the_step_9_skeleton(self):
         with tempfile.TemporaryDirectory() as tmp:

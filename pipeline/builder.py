@@ -1094,7 +1094,7 @@ def build(
         mod,
         mod_id=f"translation-{language.lower()}",
         language=language,
-        target_name=f"{language_name} translation",
+        target_name=f"{language_name} translation for Red, Blue and Yellow",
         modkit_worksheet=worksheet,
         report_path=coverage,
         engine_overrides=_merge_engine_overrides(

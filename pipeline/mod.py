@@ -754,12 +754,9 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         lines.extend(f"{row.qid}\t{row.english.text}" for row in sorted(grouped, key=lambda item: item.qid))
         (worksheet_root / f"{name}.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
     import json
-    display_name = target_name or f"{language} translation"
-    description = target_description or (
-        f"{display_name} for Pokémon Red, Blue and Yellow, based mostly on PokeCorpus. "
-        "Some engine-specific text remains untranslated."
-    )
-    manifest_body = {"id": mod_id, "name": display_name, "version": project_version(), "api": 2, "entry": "main.lua", "profile": "content", "game_version": ">=0.0.0-dev <1.0.0", "category": "GAMEPLAY", "priority": TRANSLATION_MOD_PRIORITY, "dependencies": [], "optional_dependencies": [], "conflicts": [], "description": description}
+    display_name = target_name or f"{language} translation for Red, Blue and Yellow"
+    description = target_description or f"{display_name}, based mostly on PokeCorpus."
+    manifest_body = {"id": mod_id, "name": display_name, "version": project_version(), "api": 2, "entry": "main.lua", "profile": "content", "game_version": ">=0.0.0-dev <1.0.0", "category": "LANGUAGE", "priority": TRANSLATION_MOD_PRIORITY, "dependencies": [], "optional_dependencies": [], "conflicts": [], "description": description}
     manifest = json.dumps(manifest_body, ensure_ascii=False, indent=2) + "\n"
     (destination / "manifest.json").write_text(manifest, encoding="utf-8")
     if report_path and join_report is not None:
