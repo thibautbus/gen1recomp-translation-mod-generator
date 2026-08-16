@@ -103,7 +103,16 @@ def _gold_ui_labels(corpus_rows: list[tuple[str, str, str]]) -> dict[str, str]:
         else:
             parts = target.split("@")
             if index < len(parts) and parts[index].strip():
-                result[source] = parts[index].strip()
+                value = parts[index].strip()
+                # Segment mode ships the raw corpus markup verbatim (these
+                # labels are tile-width-critical, e.g. "WITHDRAW <PK><MN>"
+                # must stay two glyphs, not expand to "POKéMON"). Some
+                # corpus rows spell the same glyph pair "<PKMN>" instead of
+                # "<PK><MN>" (observed in es/it's MOVE W/O MAIL row); that
+                # single-tag spelling has no matching Font.split() macro and
+                # would render as literal garbage, so normalize it here.
+                value = value.replace("<PKMN>", "<PK><MN>")
+                result[source] = value
     return result
 
 GOLD_OAK_SPEECH_CATALOG = "oak_speech"
@@ -127,6 +136,20 @@ _UI_LABEL_REGISTRATION = '''  local uiLabels = catalog("ui_labels")
       if type(item) == "table" and type(item.label) == "string" then
         local value = uiLabels[item.label]
         if value then item.label = value end
+      end
+      -- Two-line row descriptions (e.g. the START menu's highlighted-entry
+      -- box) are keyed by their two lines joined with "\\n", matching the
+      -- catalog entry's source key; only replace both lines together so a
+      -- one-line-only or missing translation never desyncs the pair.
+      if type(item) == "table" and type(item.desc) == "table"
+          and type(item.desc[1]) == "string" and type(item.desc[2]) == "string" then
+        local value = uiLabels[item.desc[1] .. "\\n" .. item.desc[2]]
+        if value then
+          local line1, line2 = value:match("^(.-)\\n(.*)$")
+          if line1 and line2 then
+            item.desc[1], item.desc[2] = line1, line2
+          end
+        end
       end
     end
     return items

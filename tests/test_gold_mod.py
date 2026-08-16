@@ -14,7 +14,7 @@ from pipeline.gold_mod import (
     gold_text_catalog_from_join, generate_gold_mod, package_gold_mod,
     run_gold_release_gates,
 )
-from pipeline.gold_mod import _write_gate_expectations
+from pipeline.gold_mod import _gold_ui_labels, _write_gate_expectations
 from pipeline.project import project_version
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -559,6 +559,59 @@ class GoldRegistriesGateTests(unittest.TestCase):
             f"gate_gold_registries.lua failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}",
         )
         self.assertIn("all gold registries gate checks passed", result.stdout)
+
+
+class GoldUiLabelsTests(unittest.TestCase):
+    """PcMenu/StartMenu/PartyMenu rows reach the player through public
+    gen1recomp list hooks (ui.pc.items, ui.start_menu.items,
+    ui.party.submenu) this mod already wraps; _gold_ui_labels() is what
+    feeds their translations into that catalog.
+    """
+
+    def test_pc_storage_menu_rows_use_the_real_five_at_sign_row(self):
+        corpus_rows = [
+            ("gs.bills_pc_top.BillsPC.strings",
+             "WITHDRAW <PK><MN>@DEPOSIT <PK><MN>@CHANGE BOX@MOVE <PK><MN> W/O MAIL@SEE YA!@",
+             "RETIRER <PK><MN>@STOCKER <PK><MN>@CHANGER BOITE@DEP.<PK><MN> SNS LETTRE@SALUT!@"),
+        ]
+        labels = _gold_ui_labels(corpus_rows)
+        self.assertEqual(labels["WITHDRAW <PK><MN>"], "RETIRER <PK><MN>")
+        self.assertEqual(labels["DEPOSIT <PK><MN>"], "STOCKER <PK><MN>")
+        self.assertEqual(labels["CHANGE BOX"], "CHANGER BOITE")
+        self.assertEqual(labels["MOVE <PK><MN> W/O MAIL"], "DEP.<PK><MN> SNS LETTRE")
+        self.assertEqual(labels["SEE YA!"], "SALUT!")
+
+    def test_single_tag_pkmn_markup_is_normalized_to_the_two_glyph_form(self):
+        # Segment mode ships raw corpus markup verbatim (these labels are
+        # tile-width-critical), but some corpus rows spell the same glyph
+        # pair "<PKMN>" instead of "<PK><MN>" (observed in es/it's MOVE W/O
+        # MAIL row); "<PKMN>" has no Font.split() macro and would render as
+        # literal garbage if shipped as-is.
+        corpus_rows = [
+            ("gs.bills_pc_top.BillsPC.strings",
+             "WITHDRAW <PK><MN>@DEPOSIT <PK><MN>@CHANGE BOX@MOVE <PK><MN> W/O MAIL@SEE YA!@",
+             "SACAR <PK><MN>@DEJAR <PK><MN>@CAMBIA CAJA@MOVER <PKMN> SIN CAR@¡NOS VEMOS!@"),
+        ]
+        labels = _gold_ui_labels(corpus_rows)
+        self.assertEqual(labels["MOVE <PK><MN> W/O MAIL"], "MOVER <PK><MN> SIN CAR")
+        self.assertNotIn("<PKMN>", labels["MOVE <PK><MN> W/O MAIL"])
+
+    def test_battle_party_submenu_switch_and_stats_rows(self):
+        corpus_rows = [
+            ("gs.mon_submenu.BattleMonMenu.MenuData", "SWITCH@STATS@CANCEL@", "CHANGER@STATS@RETOUR@"),
+        ]
+        labels = _gold_ui_labels(corpus_rows)
+        self.assertEqual(labels["SWITCH"], "CHANGER")
+        self.assertEqual(labels["STATS"], "STATS")
+
+    def test_start_menu_two_line_descriptions_are_keyed_by_both_lines(self):
+        corpus_rows = [
+            ("gs.start_menu.StartMenu.PokedexDesc", "#MON<NEXT>database@", "Index<NEXT>#MON@"),
+            ("gs.start_menu.StartMenu.PackDesc", "Contains<NEXT>items@", "Contient<NEXT>objets@"),
+        ]
+        labels = _gold_ui_labels(corpus_rows)
+        self.assertEqual(labels["POKéMON\ndatabase"], "Index\nPOKéMON")
+        self.assertEqual(labels["Contains\nitems"], "Contient\nobjets")
 
 
 if __name__ == "__main__":

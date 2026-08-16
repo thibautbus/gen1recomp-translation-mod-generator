@@ -5,16 +5,47 @@ following strings are tracked here because translating them correctly requires
 new upstream APIs; they must not be implemented by reaching into private UI
 classes from the translation mod.
 
+## Fixed: rows already reachable through an existing public hook
+
+`PcMenu`'s five storage-menu rows (`Withdraw Pokémon`, `Deposit Pokémon`,
+`Change box`, `Move Pokémon w/o mail`, `See ya!`) and the battle party
+submenu's `Switch`/`Stats` rows are *not* private-class reads: both already
+run through public list hooks (`ui.pc.items`, `ui.party.submenu`) that this
+mod already wraps for other rows (`Cancel`, item-PC actions, decoration,
+mail box). They were simply missing from `config/gold/literal_handlers.json`.
+Likewise the START menu's two-line highlighted-entry description
+(`Pokémon database`, `Party Pokémon status`, `Contains items`, and five
+more) runs through `ui.start_menu.items`, whose `item.label` field this mod
+already localized -- `item.desc` just wasn't wired up yet. All now fixed;
+`Party <PK><MN>\nstatus`'s French translation is slightly longer than the
+original two-glyph line and should get an in-game width check.
+
 ## Required upstream capabilities
 
-- **PC and storage menus:** expose the labels and prompts built directly by
-  `CenterPcMenu`, `PcMenu`, `ItemPcMenu`, and `BoxMenu` (including the player
-  name's PC, `What?`, `Withdraw Pokémon`, `Deposit Pokémon`, `Change box`,
-  `Move Pokémon w/o mail`, `See ya!`, `Choose a Pokémon`, `Box 1`, `Cancel`,
-  `Party Pokémon`, and `Which box?`). The public item-menu hook only covers
-  actions already passed through the hook; it cannot see these internal rows.
+Still genuinely out of reach: these have no public hook at all, only a
+hardcoded local table or a `self:say(...)`/`:drawBottomLines(...)` call, so
+they must not be implemented by reaching into private UI classes.
+
+- **PC and storage dialogue:** `CenterPcMenu:buildEntries()` -- the
+  "which PC" list (`BILL's PC`, `PROF.OAK's PC`, the player name's own
+  `<name>'s PC`, `HALL OF FAME`, and this menu's own `TURN OFF` row) -- is
+  built and stored to `self.entries` directly with no `Runtime.call` at all,
+  unlike `PcMenu`/`ItemPcMenu`'s row lists (so `ItemPcMenu`'s own
+  `TURN OFF`/`LOG OFF` rows, reached through `ui.pc.items`, *are* already
+  translated; only `CenterPcMenu`'s copy of `TURN OFF` is not). The same
+  file's free-form prompts (`What?`, `Access whose PC?`,
+  `<name>'s PC accessed.`, `Want to get your Pokédex rated?`, the
+  link-closed message, and its `YES`/`NO` confirmation box) are drawn with
+  direct `self:say(...)`/`Chrome.print(...)` calls, also with no hook.
+  `BoxMenu`'s `Choose a Pokémon`/`Cancel`/`Party Pokémon`/`Which box?` rows
+  are the same: drawn directly, no hook. Box names (`BOX1`, `BOX2`, …) are a
+  different case again -- not a menu string at all, but save data written
+  once by `SetDefaultBoxNames` when a new save is created
+  (`core/gen2/Boxes.lua`'s `save.boxNames`), so they would need a save-init
+  hook, not a menu-list one.
 - **Battle messages and action menu:** provide a public string/event registry
-  for `Wild Pokémon appeared!`, `Go Pokémon!`, `Fight`, `Pack`, `Run`,
+  for `Wild Pokémon appeared!`, `Go Pokémon!`, the `Fight`/`Pack`/`Run`
+  action menu (a hardcoded local table in `BattleState.lua`, no hook),
   `Pokémon's defense rose`, `Pokémon learned …`, `Got away safely`, `Pokémon's
   attack missed`, `… wants to battle`, `… sent out …`, `A critical hit`, and
   `You have no more Pokémon`.

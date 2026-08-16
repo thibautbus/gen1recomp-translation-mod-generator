@@ -28,6 +28,20 @@
     "The link to PROF.\nOAK's PC closed.": {"qid": "gs.common_2.OakPCText4", "full": true},
     "Choose a <PK><MN>.": {"qid": "gs.bills_pc.PCString_ChooseaPKMN", "segment": 0},
     "PARTY <PK><MN>": {"qid": "gs.bills_pc.BillsPC_BoxName.PartyPKMN", "segment": 0},
-    "Choose a BOX.": {"qid": "gs.bills_pc.BillsPC_PlaceChooseABoxString.ChooseABox", "segment": 0}
+    "Choose a BOX.": {"qid": "gs.bills_pc.BillsPC_PlaceChooseABoxString.ChooseABox", "segment": 0},
+    "WITHDRAW <PK><MN>": {"qid": "gs.bills_pc_top.BillsPC.strings", "segment": 0},
+    "DEPOSIT <PK><MN>": {"qid": "gs.bills_pc_top.BillsPC.strings", "segment": 1},
+    "CHANGE BOX": {"qid": "gs.bills_pc_top.BillsPC.strings", "segment": 2},
+    "MOVE <PK><MN> W/O MAIL": {"qid": "gs.bills_pc_top.BillsPC.strings", "segment": 3},
+    "SEE YA!": {"qid": "gs.bills_pc_top.BillsPC.strings", "segment": 4},
+    "SWITCH": {"qid": "gs.mon_submenu.BattleMonMenu.MenuData", "segment": 0},
+    "STATS": {"qid": "gs.mon_submenu.BattleMonMenu.MenuData", "segment": 1},
+    "POKéMON\ndatabase": {"qid": "gs.start_menu.StartMenu.PokedexDesc", "full": true},
+    "Party <PK><MN>\nstatus": {"qid": "gs.start_menu.StartMenu.PartyDesc", "full": true},
+    "Contains\nitems": {"qid": "gs.start_menu.StartMenu.PackDesc", "full": true},
+    "Trainer's\nkey device": {"qid": "gs.start_menu.StartMenu.PokegearDesc", "full": true},
+    "Your own\nstatus": {"qid": "gs.start_menu.StartMenu.StatusDesc", "full": true},
+    "Save your\nprogress": {"qid": "gs.start_menu.StartMenu.SaveDesc", "full": true},
+    "Change\nsettings": {"qid": "gs.start_menu.StartMenu.OptionDesc", "full": true}
   }
 }
