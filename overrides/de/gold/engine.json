@@ -4,9 +4,11 @@
   "entries": {
     "%s\nis about to use\u000b%s.\u000cWill %s\nchange POKéMON?": {"override": "%s\nsetzt %s ein.\u000cMöchtest du, %s,\ndas POKéMON wechseln?", "reason": "engine-contract-gap", "provenance": "Corpus-backed from gs.battle.BattleText_EnemyIsAboutToUseWillPlayerChangeMon; the German ROM text omits the player-name printf, so the engine contract is preserved by addressing the player explicitly."},
     "%d #MON seen\n%d #MON owned\n\nPROF.OAK's\nRating:": {"override": "Ges.: %d POKéMON\nBes.: %d POKéMON\fPROF. EICHs\nBewertung:", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.common_1.OakPCText4; adapted to the engine's printf contract."},
+    "%d min.": {"override": "%d min.", "reason": "engine-contract-gap", "provenance": "Corpus-confirmed from gs.timeset.String_min (identical to the English source, \"min.\"); no German-specific text to adapt."},
     "%s got %s%d for winning!": {"override": "%s erhält %s%d!", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.common_2.WonMoneyText; printf order follows the engine contract."},
     "%s got %s%d for winning! Sent some to MOM!": {"override": "%s erhält %s%d und schickt\neinen Teil nach Hause.", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.common_1.SentSomeToMomText; printf order follows the engine contract."},
     "%s is missing.\nRe-import the Gold ROM.": {"override": "%s fehlt.\nGold-ROM neu importieren.", "reason": "engine-original", "provenance": "AI-generated translation of a Gen1Recomp diagnostic with no ROM equivalent."},
+    "%s o'clock": {"override": "%s UHR", "reason": "engine-contract-gap", "provenance": "Corpus-backed from gs.timeset.String_oclock (\"UHR\")."},
     "/": {"override": "/", "reason": "engine-original", "provenance": "Invariant interface symbol."},
     "<LV>": {"override": "<LV>", "reason": "engine-original", "provenance": "Invariant level token used by the engine renderer."},
     "A▶PRINT": {"override": "A▶DRUCKEN", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.unown_dex.PrintUnown; physical button retained."},

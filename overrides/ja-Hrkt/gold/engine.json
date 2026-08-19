@@ -3,9 +3,11 @@
   "version": 1,
   "entries": {
     "%d #MON seen\n%d #MON owned\n\nPROF.OAK's\nRating:": {"override": "みつけたかず %d\nつかまえたかず %d\fオーキドはかせの\nひょうか:", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.common_1.OakPCText4; adapted to the engine's printf contract."},
+    "%d min.": {"override": "%dふん", "reason": "engine-contract-gap", "provenance": "Corpus-backed from gs.timeset.String_min (\"ふん\"); no space, matching this file's existing Japanese counter/particle convention."},
     "%s got %s%d for winning!": {"override": "%sは しょうきん %s%d円を てにいれた!", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.common_2.WonMoneyText; printf order follows the engine contract."},
     "%s got %s%d for winning! Sent some to MOM!": {"override": "%sは %s%d円を てにいれ\nいくらか ママに おくった!", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.common_1.SentSomeToMomText; printf order follows the engine contract."},
     "%s is missing.\nRe-import the Gold ROM.": {"override": "%sが ありません。\nGold ROMを よみこみなおしてください。", "reason": "engine-original", "provenance": "AI-generated translation of a Gen1Recomp diagnostic with no ROM equivalent."},
+    "%s o'clock": {"override": "%sじ", "reason": "engine-contract-gap", "provenance": "Corpus-backed from gs.timeset.String_oclock (\"じ\"); no space, matching this file's existing Japanese counter/particle convention."},
     "/": {"override": "/", "reason": "engine-original", "provenance": "Invariant interface symbol."},
     "<LV>": {"override": "<LV>", "reason": "engine-original", "provenance": "Invariant level token used by the engine renderer."},
     "A▶PRINT": {"override": "A▶プリント", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.unown_dex.PrintUnown; physical button retained."},
