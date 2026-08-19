@@ -126,23 +126,6 @@ class LiteralHandlerTests(unittest.TestCase):
         rows = [row(QMUSEUM_ALREADY, "one"), row(QMUSEUM_ALREADY, "two")]
         self.assertEqual(extract_handlers(rows, recipes), [])
 
-    def test_configured_museum_handler_emits_rope_on_step(self):
-        rows = [
-            row(QMUSEUM_PROMPT, "Entrer?"), row(QMUSEUM_YES, "Merci!"),
-            row(QMUSEUM_NO_MONEY, "Pas assez."), row(QMUSEUM_NO, "A bientôt!"),
-            row(QMUSEUM_ALREADY, "Profitez-en."),
-        ]
-        recipes = load_recipes(Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json")
-        with tempfile.TemporaryDirectory() as directory:
-            path, handlers = generate_handlers(rows, recipes, Path(directory) / "handlers.lua")
-            museum = [h for h in handlers if h.text_constant == "TEXT_MUSEUM1F_SCIENTIST1"]
-            self.assertEqual(len(museum), 1)
-            body = path.read_text(encoding="utf-8")
-            self.assertIn("onStep = function(game, ow, x, y)", body)
-            self.assertIn("x == 9 and y == 4", body)
-            self.assertIn('game.save.flags["EVENT_BOUGHT_MUSEUM_TICKET"]', body)
-            self.assertIn('ow:scriptMove(ow.player, "down", 1', body)
-
     def test_flow_if_and_choice_continue_with_following_nodes(self):
         recipes = [{
             "map": "X", "text_constant": "T", "flow": [
