@@ -70,7 +70,7 @@ class EngineScopeTests(unittest.TestCase):
         for key_set in ("rby_ui_keys", "link_ui_keys", "modern_ui_keys"):
             self.assertNotIn("_OakSpeechText2A", scope[key_set])
         self.assertNotIn("But every BOX\nis full!", scope["key_scope_overrides"])
-        for key in ("Crammed full of\nPOKéMON books!", "POKéDEX comp-\nletion is:\f{NUM:hDexRatingNumMonsSeen} POKéMON seen\n{NUM:hDexRatingNumMonsOwned} POKéMON owned\fPROF.OAK's\nRating:", "{RIVAL}: Yeah! Am\nI great or what?", "Welcome to our\nPOKéMON CENTER!", "Your POKéMON are\nfighting fit!", "No SURFing here!", "Nothing to CUT!", "Keep it up!", "POKéDEX Rating{COLON}", "_OakSpeechText2A", "{RAM}\nPOKéMON GYM\nLEADER: {RAM}", "I like shorts!\nThey're comfy and\neasy to wear!", "%s is\ntaken out.\x0bGot %s."):
+        for key in ("Crammed full of\nPOKéMON books!", "POKéDEX comp-\nletion is:\f{NUM:hDexRatingNumMonsSeen} POKéMON seen\n{NUM:hDexRatingNumMonsOwned} POKéMON owned\fPROF.OAK's\nRating:", "{RIVAL}: Yeah! Am\nI great or what?", "Welcome to our\nPOKéMON CENTER!", "Your POKéMON are\nfighting fit!", "No SURFing here!", "Nothing to CUT!", "Keep it up!", "POKéDEX Rating{COLON}", "_OakSpeechText2A", "{RAM}\nPOKéMON GYM\nLEADER: {RAM}", "I like shorts!\nThey're comfy and\neasy to wear!", "%s is\ntaken out.\x0bGot %s.", "%s's\nhurt by poison!", "%s's\nhurt by the burn!"):
             self.assertEqual(scope["key_scope_overrides"][key]["reason"], "covered-by-rom")
             self.assertTrue(scope["key_scope_overrides"][key]["engine_empty"])
         self.assertIn("Printed %s's\ndata!\fSaved as\n%s\vin the save\nfolder.", scope["key_scope_overrides"])

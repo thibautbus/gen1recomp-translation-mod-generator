@@ -105,16 +105,6 @@
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation; concrete engine contract limitation is context-specific transfer arguments with a fragmentary source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
-    "%s's\nhurt by poison!": {
-      "override": "%s\nè ferito dal veleno!",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary status-effect source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
-    },
-    "%s's\nhurt by the burn!": {
-      "override": "%s\nè ferito dalla bruciatura!",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary status-effect source; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
-    },
     "%s's %s\nrose!": {
       "override": "%s fa\nsalire %s!",
       "reason": "engine-contract-gap",

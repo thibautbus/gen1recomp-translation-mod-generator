@@ -52,7 +52,7 @@ EXPECTED = {
 
 CONTRACT_GAP_KEYS = (
     "%s lined up!\nScored %d coins!", "%s was\ntransferred to\n%s!",
-    "%s's\nhurt by poison!", "%s's\nhurt by the burn!", "%s's %s\nrose!",
+    "%s's %s\nrose!",
     "Once released,\n%s is\ngone forever. OK?",
     "PLAYER %s\nBADGES    %d\nPOKéDEX %3d\nTIME %6d:%02d", "BADGES",
     "HT %d′%02d″", "This POKéMON\ncan't be caught!", "Use on which one?", "WT %.1flb",
