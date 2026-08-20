@@ -2,14 +2,5 @@
   "schema": "gen1recomp-translation-mods/literal-handlers",
   "version": 2,
   "description": "QID recipes for extracted-text gaps; branch text comes only from the selected corpus language.",
-  "handlers": [
-    {
-      "id": "viridian-city-youngster2",
-      "map": "VIRIDIAN_CITY",
-      "text_constant": "TEXT_VIRIDIANCITY_YOUNGSTER2",
-      "prompt": {"qid": "rb.ViridianCity.ViridianCityYoungster2YouWantToKnowAboutText"},
-      "yes": {"qid": "rb.ViridianCity.ViridianCityYoungster2CaterpieAndWeedleDescriptionText"},
-      "no": {"qid": "rb.ViridianCity.ViridianCityYoungster2OkThenText"}
-    }
-  ]
+  "handlers": []
 }
