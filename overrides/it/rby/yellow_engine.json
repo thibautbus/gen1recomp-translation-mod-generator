@@ -9,6 +9,27 @@
       "warning": "Requires in-game visual validation",
       "provenance": "Corpus-backed from poke-corpus y.text_3.PikachuUnhappyText; the engine key (src/ui/BoxMenu.lua release-Pikachu branch, Yellow-only) renders the released Pikachu name via a %s printf, so the corpus {RAM:wNameBuffer} token is adapted to the printf contract."
     },
+    "HALL OF FAME No": {
+      "override": "SALA D'ONORE Nº   ",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "Corpus-backed from poke-corpus y.league_pc.HallOfFameNoText; src/ui/LeaguePC.lua draws this label and the team-index number as two separate Font.draw calls at fixed columns (label at column 1, number at column 16), so the corpus row's own padding is kept verbatim rather than re-measured for gen1recomp's fixed layout."
+    },
+    "HP Left": {
+      "override": "PS rest.",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua, replacing the pre-v0.2.19 HUD this project used to override); no PokeCorpus source -- confirmed against pokeyellow/engine/minigame/surfing_pikachu.asm that the original ROM renders this HUD as fixed graphic tiles, not encoded text, so there is no ROM string to align to even in principle; short HUD label."
+    },
+    "Hi-Score!!": {
+      "override": "Nuovo record!!",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua, replacing the pre-v0.2.19 HUD this project used to override); no PokeCorpus source -- confirmed against pokeyellow/engine/minigame/surfing_pikachu.asm that the original ROM renders this HUD as fixed graphic tiles, not encoded text, so there is no ROM string to align to even in principle; short HUD label."
+    },
     "PIKACHU looks\ncontent.": {
       "override": "PIKACHU è\ncontento.",
       "reason": "yellow-only-engine-text",
@@ -23,12 +44,33 @@
       "warning": "Requires in-game visual validation",
       "provenance": "Corpus-backed from poke-corpus y.bills_pc.BillsPCMenuText (Yellow-only sixth <NEXT>-separated menu item; RedBlue's rb.bills_pc.BillsPCMenuText has only five); official Italian shortens the button to the single word \"STAMPA\"."
     },
+    "Pts": {
+      "override": "Pt",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua, replacing the pre-v0.2.19 HUD this project used to override); no PokeCorpus source -- confirmed against pokeyellow/engine/minigame/surfing_pikachu.asm that the original ROM renders this HUD as fixed graphic tiles, not encoded text, so there is no ROM string to align to even in principle; short HUD label."
+    },
+    "Radness": {
+      "override": "Stile",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua, replacing the pre-v0.2.19 HUD this project used to override); no PokeCorpus source -- confirmed against pokeyellow/engine/minigame/surfing_pikachu.asm that the original ROM renders this HUD as fixed graphic tiles, not encoded text, so there is no ROM string to align to even in principle; short HUD label."
+    },
     "There isn't any\nresponse...": {
       "override": "Nessuna risposta!",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
       "provenance": "Corpus-backed from poke-corpus y.text_3.SleepingPikachuText1; engine fallback (src/ui/PartyMenu.lua refuseUnavailable, Yellow Pikachu follower); no dynamic parameter."
+    },
+    "Total": {
+      "override": "Totale",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua, replacing the pre-v0.2.19 HUD this project used to override); no PokeCorpus source -- confirmed against pokeyellow/engine/minigame/surfing_pikachu.asm that the original ROM renders this HUD as fixed graphic tiles, not encoded text, so there is no ROM string to align to even in principle; short HUD label."
     }
   }
 }
