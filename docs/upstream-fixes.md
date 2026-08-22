@@ -340,7 +340,7 @@ fixed the last three wasn't tracked down -- v0.1.91..v0.2.19 spans close to
 200 merged upstream PRs and this project's local checkout of gen1recomp is
 shallow, so bisecting each one individually wasn't attempted.
 
-### Not yet investigated: Surfing Pikachu/Hall of Fame HUD text rewritten upstream
+### Fixed: Surfing Pikachu/Hall of Fame HUD text rewritten upstream
 
 Bumping this project's pin from v0.1.91 to v0.2.19 (`gen1recomp_revision`
 in `config/pipeline.toml`/`config/shared/engine_manifest.json`) pulled in
@@ -352,18 +352,7 @@ gen1recomp PR #1581 (`feat/pikachu-surf-and-gold-gamecorner`), which
 `yellow-only-engine-text`, "no PokeCorpus source"). The rewrite replaced
 those four with new text -- `Hi-Score!!`, `Pts`, `Radness`, `Total`,
 `HP Left` -- and also touched `src/ui/LeaguePC.lua`'s Hall of Fame screen,
-adding `HALL OF FAME No`. The four old, now-orphaned overrides were removed
-(see below); no replacement overrides have been added yet for the new
-strings. Running `pipeline.engine_scope.classify_callsites` against the
-real v0.2.19 source confirms all six fall into the same `review`
-eligibility bucket as the pre-existing `Nothing here.`/`STATS` entries this
-project already leaves untranslated pending a manual scope decision -- but
-unlike every other row in this document, they have not yet had the
-live-build/corpus-alignment treatment (checking for a real PokeCorpus qid,
-since the old HUD text notably had none; confirming what a real French
-build actually shows; deciding `rby_ui_modules` vs. `key_scope_overrides`
-classification). Recorded here so that investigation isn't lost, not
-because it's been done.
+adding `HALL OF FAME No`.
 
 **Real build failure caught by this rewrite, now fixed:** a real Yellow mod
 build against the bumped pin failed with `Error: Yellow engine override
@@ -374,6 +363,36 @@ validates `overrides/<language>/rby/yellow_engine.json` against a real
 old HUD strings were removed from all five languages' `yellow_engine.json`
 files once confirmed dead by the same `complete_engine_keys` check used for
 the RBY overrides cleanup above.
+
+**The six new strings, now investigated and covered:** checked each one
+against a real Yellow corpus checkout (`poke-corpus/corpus/Yellow`) rather
+than assuming AI-generated compromise was the only option:
+
+- `HALL OF FAME No` (`src/ui/LeaguePC.lua`) turned out to be **corpus-backed
+  after all** -- `y.league_pc.HallOfFameNoText` is a real ROM string
+  (`en_msg.txt:650`), with real official translations in every shipped
+  language. The engine draws this label and the team-index number as two
+  separate `Font.draw` calls at fixed columns (label at column 1, number at
+  column 16), so each language's corpus padding was kept verbatim rather
+  than re-measured for gen1recomp's layout -- flagged for in-game visual
+  validation like every padded corpus string in this doc, since a per-language
+  ROM's own padding was tuned for its own original column position, not
+  necessarily gen1recomp's fixed one.
+- The other five (`Hi-Score!!`, `Pts`, `Radness`, `Total`, `HP Left`) are
+  genuinely engine-authored, confirmed against the real
+  `pokeyellow/engine/minigame/surfing_pikachu.asm` disassembly: the
+  original ROM's surfing minigame HUD (`wSurfingMinigameRadnessScore` and
+  friends are real WRAM variables, so the concept is authentic Yellow, not
+  invented by gen1recomp) renders this HUD as fixed graphic tiles, not
+  encoded text -- there is no ROM string pointer to align to even in
+  principle, the same conclusion the old, now-removed HUD strings had
+  independently reached. AI-generated translations were added for all five
+  shipped languages, matching the compact-HUD-label register already used
+  throughout this file (e.g. `SCORE %d` kept as-is, `New record!` ->
+  `Nouveau record!`), sized to the ~8-tile-wide label column
+  `src/ui/SurfingMinigame.lua` actually draws into. All flagged "requires
+  in-game visual validation", the same as every other AI-generated entry in
+  this project.
 
 **Same audit, applied to semantic anchors too -- now completed.** The same
 PR's `_ItemUseBallText00` merge (see "Fixed upstream" above) also orphaned
