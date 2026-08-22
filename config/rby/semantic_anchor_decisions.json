@@ -1233,75 +1233,6 @@
       "trace_status": "reviewed",
       "languages_verified": true
     },
-    "It dodged the\nthrown BALL!": {
-      "anchor": {
-        "qid": "rb.text_6.ItemUseBallText00",
-        "extraction": {
-          "kind": "parts",
-          "parts": [
-            0,
-            1
-          ],
-          "separators": [
-            "\n"
-          ],
-          "targets": {
-            "fr": {
-              "kind": "segment",
-              "index": 0
-            },
-            "de": {
-              "kind": "parts",
-              "parts": [
-                0,
-                1
-              ],
-              "separators": [
-                "\n"
-              ]
-            },
-            "es": {
-              "kind": "parts",
-              "parts": [
-                0,
-                1
-              ],
-              "separators": [
-                "\n"
-              ]
-            },
-            "it": {
-              "kind": "parts",
-              "parts": [
-                0,
-                1
-              ],
-              "separators": [
-                "\n"
-              ]
-            },
-            "ja-Hrkt": {
-              "kind": "segment",
-              "index": 0
-            }
-          }
-        }
-      },
-      "decision_type": "target_extraction",
-      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. The rb.text_6.ItemUseBallText00 span isolates the exact failed-capture sentence from the item-use message and follows each translation’s line reflow.",
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_6.ItemUseBallText00"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
-    },
     "It contained\n%s!": {
       "anchor": {
         "qid": "rb.text_6.TeachMachineMoveText",
@@ -2256,106 +2187,6 @@
       "trace_status": "reviewed",
       "languages_verified": true
     },
-    "Congratulations!\nYour %s\nevolved into\n%s!": {
-      "anchor": {
-        "source_aliases": [
-          "%s evolved\ninto %s!"
-        ],
-        "parts": [
-          {
-            "qid": "rb.text_3.EvolvedText",
-            "extraction": {
-              "kind": "full"
-            }
-          },
-          {
-            "qid": "rb.text_3.IntoText",
-            "extraction": {
-              "kind": "full",
-              "preserve_edges": true
-            }
-          }
-        ],
-        "join": "",
-        "placeholders": {
-          "{RAM:wStringBuffer}": "%s",
-          "{RAM:wNameBuffer}": "%s"
-        }
-      },
-      "decision_type": "composition",
-      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for EvolutionState's completion message. EvolvedText and IntoText form the complete original localized result and preserve old-species/new-species placeholder order; the source alias replaces Gen1Recomp's expanded English-only wording.",
-      "callsites": [
-        "src/ui/EvolutionState.lua:110"
-      ],
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_3.EvolvedText",
-        "rb.text_3.IntoText"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
-    },
-    "What?\n%s is\nevolving!\fCongratulations!\nYour %s\nevolved into\n%s!": {
-      "anchor": {
-        "source_aliases": [
-          "What? %s\nis evolving!\f%s evolved\ninto %s!"
-        ],
-        "parts": [
-          {
-            "qid": "rb.text_3.IsEvolvingText",
-            "extraction": {
-              "kind": "full"
-            }
-          },
-          {
-            "qid": "rb.text_3.EvolvedText",
-            "extraction": {
-              "kind": "full"
-            }
-          },
-          {
-            "qid": "rb.text_3.IntoText",
-            "extraction": {
-              "kind": "full",
-              "preserve_edges": true
-            }
-          }
-        ],
-        "separators": [
-          "\f",
-          ""
-        ],
-        "placeholders": {
-          "{RAM:wStringBuffer}": "%s",
-          "{RAM:wNameBuffer}": "%s"
-        }
-      },
-      "decision_type": "composition",
-      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for Evolution.evolve. IsEvolvingText followed by EvolvedText and IntoText reconstructs the original two-page evolution flow; the repeated old-species placeholder and final new-species placeholder remain in runtime order.",
-      "callsites": [
-        "src/pokemon/Evolution.lua:164"
-      ],
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_3.IsEvolvingText",
-        "rb.text_3.EvolvedText",
-        "rb.text_3.IntoText"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
-    },
     "PA: You're out of\nSAFARI BALLs!\nGame over!": {
       "anchor": {
         "source_aliases": [
@@ -2663,12 +2494,9 @@
       "trace_status": "reviewed",
       "languages_verified": true
     },
-    "<Diploma>": {
+    "Diploma": {
       "anchor": {
         "qid": "rb.diploma.DiplomaText",
-        "source_aliases": [
-          "Diploma"
-        ],
         "extraction": {
           "kind": "full",
           "wrapper": {
@@ -2678,9 +2506,9 @@
         }
       },
       "decision_type": "target_extraction",
-      "rationale": "Reviewed Diploma.lua:32 against rb.diploma.DiplomaText in all five target catalogues. The qid is wrapped by the exact control escape \\x70 on both sides; strip only that verified pair before matching the engine marker.",
+      "rationale": "Reviewed Diploma.lua against rb.diploma.DiplomaText in all five target catalogues. The qid is wrapped by the exact control escape \\x70 on both sides; strip only that verified pair before matching the engine marker. Re-keyed from the stale \"<Diploma>\" -- gen1recomp v0.2.19 dropped the angle brackets from the engine literal itself (Strings(\"<Diploma>\") became Strings(\"Diploma\")), which had silently orphaned this decision (confirmed via a real French corpus row: matched \"Diplôme\" under the old key, fell back to unmatched English under the new one).",
       "callsites": [
-        "src/ui/Diploma.lua:32"
+        "src/ui/Diploma.lua:113"
       ],
       "languages": [
         "fr",
