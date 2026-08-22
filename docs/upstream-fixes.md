@@ -76,6 +76,42 @@ force-includes all eight into the Yellow manifest, and a real built
 them. (A prior version of this doc listed this as still open; that was
 stale.)
 
+**Reading `game.data.text` directly, not through `Strings()`, is not a
+gap.** A prior version of this doc claimed the opposite for a set of
+flavor NPCs, covering 6 `literal_handlers.json` handlers and a "no public
+API to give a Pokémon" blocker on Mt. Moon's Magikarp salesman. That did
+not hold: `src/core/Strings.lua`'s own header explains extracted dialogue
+(`Data.text`) has its own override path, `mod.content.text:override(id,
+value)`, independent of `Strings()`/`mod.content.strings` -- so a script
+reading `t[label]` is translatable regardless of whether it goes through
+`Strings()` first. Confirmed directly against a real build's
+`lang/dialogue.lua`: the Bike Shop's three NPCs and Route 24's
+Nugget-Bridge recruiter were already reading `game.data.text` correctly,
+with translations already present, via gen1recomp's own vanilla scripts
+(`data/scripts/story2.lua`, `story4.lua`,
+`data/scripts/flavor/bike_shop.lua`) -- which are also *more* complete
+than this project's former reimplementations (real bag-capacity checks
+via a `require` unrestricted for core engine code). Those 4 redundant
+handlers were removed from `config/rby/literal_handlers.json`; letting
+vanilla run is simpler and more correct. The same real-build check was
+repeated for every other flavor NPC reading `game.data.text` this way --
+Viridian City's `GAMBLER1`/`GIRL`, Pewter City's `SUPER_NERD1`/
+`SUPER_NERD2`, the 8-NPC `gift()` family in `data/scripts/story5.lua`,
+and Mt. Moon's Magikarp salesman (which also already calls
+`give_pokemon` natively, so "no public API to give a Pokémon" was never
+actually a blocker here) -- all confirmed already correctly translated,
+no config needed. The Pokédex "kind" classification
+(`src/ui/DexEntryMenu.lua:93`) looked like the same deep gap as the
+status-ailment abbreviations above, but isn't: `pipeline/mod.py` already
+has a dedicated `species_kinds` catalog for it. Viridian City's second
+Youngster was the one genuine exception -- two of its three lines had no
+reachable label at all until `fix/text-extractor-underscore-requirement`
+(see "Fixed upstream" below), so it briefly needed its own
+`map_scripts:register` reimplementation. That handler has since been
+removed too: `config/rby/literal_handlers.json` now has 0 handlers, and
+this project's pin includes the fix as of v0.2.19, so a normal pinned
+build shows this NPC's real French text without any workaround.
+
 ### Fixed upstream (engine changes, not just this project's config)
 
 - **Stat-rise messages:** the X-item/vitamin `"rose!"` messages
@@ -91,9 +127,9 @@ stale.)
   has been removed -- vanilla handles all five lines correctly on its own.
 - **Status condition abbreviations:** `PSN`/`PAR`/`BRN`/`FRZ`/`SLP` always rendered in English on the summary and party screens (`ui/SummaryMenu.lua:148`, `ui/PartyMenu.lua:824`), never passed through anything translatable. Fixed on gen1recomp `fix/status-abbreviation-translation` (merged, PR #1527). Not through `Strings()`, though: a status abbreviation is translated through the separate `statuses` content registry (`mod.content.statuses:patch(id, { label = value })`), the same one `BattleState.lua`'s in-combat status HUD already reads. This project's existing `status_labels` catalog was already patching it correctly before the merge -- it was just aimed at a callsite that ignored it, so nothing needed to change on this project's side once the fix landed. The same PR also fixed a second, independent bug: `Status.RECORDS`' five vanilla entries duplicated `hudLabel = label` for no reason, and the lookup reads `hudLabel` before `label` -- so even after the callsite fix, this project's `{ label = value }`-only patch was silently shadowed by the untouched vanilla `hudLabel` on every status. Confirmed live before the fix: SLP/BRN/FRZ stayed English, PSN/PAR only looked fine because French keeps the same three letters there. Both fixes shipped together; nothing to patch differently on this project's side.
 
-### In progress: more battle/overworld/menu messages routed through the real ROM text
+### Fixed upstream: more battle/overworld/menu messages now routed through the real ROM text
 
-gen1recomp `fix/route-more-messages-through-romtext` (merged upstream as PR #1559, included in gen1recomp release v0.2.12, but not yet in this project's pinned `gen1recomp_revision`). 21 real ROM labels that only ever had a `Strings()` call with an adapted/approximate source now call `romText()`/`self:romText()` with their real extracted ROM label instead, so they show the corpus's official localized phrasing rather than the AI-adapted compromise. `tests/engine/` gained 7 new regression tests, one per message family, each driving the real interactive flow (or faking `Game`/`TextBox` via `debug.setupvalue` where there's no state to drive directly) and asserting the routed text. Manually verified in-game (French mod, Windows build) for 9 of 11 distinct scenarios, comparing `dev` against the branch side by side -- the slot machine's 3-symbol match and a link battle were left uncovered live (both awkward to trigger on demand), relying instead on the automated/static checks. This live pass caught one real bug the automated tests missed (see `_ItemUseBallText00` below), now fixed on the same branch. Now that this PR has merged upstream, several rows in the compromise table below are ready to retire once this project's pin is bumped to a `gen1recomp_revision` containing it:
+gen1recomp `fix/route-more-messages-through-romtext` (merged upstream as PR #1559, included in gen1recomp release v0.2.12; this project's pin now includes it as of v0.2.19). 21 real ROM labels that only ever had a `Strings()` call with an adapted/approximate source now call `romText()`/`self:romText()` with their real extracted ROM label instead, so they show the corpus's official localized phrasing rather than the AI-adapted compromise. `tests/engine/` gained 7 new regression tests, one per message family, each driving the real interactive flow (or faking `Game`/`TextBox` via `debug.setupvalue` where there's no state to drive directly) and asserting the routed text. Manually verified in-game (French mod, Windows build) for 9 of 11 distinct scenarios, comparing `dev` against the branch side by side -- the slot machine's 3-symbol match and a link battle were left uncovered live (both awkward to trigger on demand), relying instead on the automated/static checks. This live pass caught one real bug the automated tests missed (see `_ItemUseBallText00` below), now fixed on the same branch. The rows below name what each fixed call site retires from the compromise table below -- **not yet re-audited against the bumped pin**: several are explicitly partial (a row shared with another, untouched call site only loses one of its collapsed contexts), so the compromise table itself is left untouched here rather than edited without the same live-build verification the rest of this doc relies on:
 
 - `_PlayerBlackedOutText2` (`BattleState:enter()`): merges the two-line
   black-out message into one `\f`-paged call (previously two separate
@@ -175,9 +211,9 @@ Two things this same sweep confirmed should **not** change:
   swap, so they stay as compromise entries until a template-level upstream
   fix is worth doing.
 
-### In progress: pokered dialogue labels missing from data/generated/text.lua
+### Fixed upstream: pokered dialogue labels were missing from data/generated/text.lua
 
-gen1recomp `fix/text-extractor-underscore-requirement` (merged upstream as PR #1598, included in gen1recomp release v0.2.12, but not yet in this project's pinned `gen1recomp_revision` -- see the "Required upstream capabilities" bullet below for what that still blocks). Started from the same "extractor requires a leading underscore" theory as a prior version of this doc, but tracing it against a real `pret/pokered` checkout turned up a more precise picture -- there are two independent, differently-behaved label scanners in gen1recomp:
+gen1recomp `fix/text-extractor-underscore-requirement` (merged upstream as PR #1598, included in gen1recomp release v0.2.12; this project's pin now includes it as of v0.2.19 -- see the "Required upstream capabilities" bullet below for what still isn't covered by this fix alone). Started from the same "extractor requires a leading underscore" theory as a prior version of this doc, but tracing it against a real `pret/pokered` checkout turned up a more precise picture -- there are two independent, differently-behaved label scanners in gen1recomp:
 
 - `tools/extract/text.py`'s `parse_text_file()` does require `_`, and that's a real bug in isolation -- but nothing in the codebase calls this function (no importer, no `__main__` entry point). It looks like dead code from an earlier version of the pipeline.
 - The function that actually produces the shipped label list is `text_metadata()` in `tools/make_rom_manifest.py`, feeding `manifest["text"]["labels"]`, which `build_rom_data.py`'s `extract_text()` decodes straight from a ROM. `text_metadata()` already uses the permissive regex (no `_` requirement) since gen1recomp commit `0f581e2f`.
@@ -194,7 +230,7 @@ So the real blocker is that the *committed* `tools/rom_manifest.json` is stale r
 - `data/scripts/flavor/viridian_city.lua` (both of the second Youngster's caterpillar-description lines).
 - `data/scripts/story5.lua` (the SilphCo2F worker's and Viridian fisher's pre-gift lines -- these already read `t[label]` via the generic `gift()` helper, so only their stale comments needed correcting, plus a real English fallback added where the worker's was missing).
 
-Verified end-to-end ahead of the merge: built the branch's manifest for real against a ROM (see the branch's own commit message for the full byte-for-byte verification), then built this project's mod against that branch (bypassing the `config/pipeline.toml`/`engine_scope.py` pins programmatically, no committed config touched for that check) and confirmed a real French Windows build reads `ViridianCityYoungster2OkThenText`/`CaterpieAndWeedleDescriptionText` from `lang/dialogue.lua` instead of the `literal_handlers.json` override -- side by side against the still-pinned v0.1.91 build, only the fixed branch showed French, the pinned build still showed the hardcoded English literal, exactly as expected. `config/rby/literal_handlers.json`'s `viridian-city-youngster2` handler has already been removed on that strength, ahead of the gen1recomp PR being opened and ahead of this project's pin being bumped -- a deliberate call, not an oversight. The PR has since merged upstream (v0.2.12), so the only remaining step is bumping `config/pipeline.toml`/`config/shared/engine_manifest.json`'s pin to a revision containing it: until then, a normal build (the pinned pipeline, not this branch) shows this one Youngster in English rather than through the retired compromise. Silph Co. 9F's nurse needs more than the manifest regeneration alone -- see "Required upstream capabilities" below.
+Verified end-to-end ahead of the merge: built the branch's manifest for real against a ROM (see the branch's own commit message for the full byte-for-byte verification), then built this project's mod against that branch (bypassing the `config/pipeline.toml`/`engine_scope.py` pins programmatically, no committed config touched for that check) and confirmed a real French Windows build reads `ViridianCityYoungster2OkThenText`/`CaterpieAndWeedleDescriptionText` from `lang/dialogue.lua` instead of the `literal_handlers.json` override -- side by side against the still-pinned v0.1.91 build, only the fixed branch showed French, the pinned build still showed the hardcoded English literal, exactly as expected. `config/rby/literal_handlers.json`'s `viridian-city-youngster2` handler was removed on that strength, ahead of both the gen1recomp PR being opened and this project's pin catching up -- a deliberate call, not an oversight (see "Verified working, not a gap" above). The PR merged upstream in v0.2.12, and this project's pin was bumped to v0.2.19 (which contains it): a normal pinned build now shows this Youngster's real French text too, with no regression window left open. Silph Co. 9F's nurse needs more than the manifest regeneration alone -- see "Required upstream capabilities" below.
 
 ### Translated via a compromise, not blocked (`engine-contract-gap`)
 
@@ -283,6 +319,27 @@ carry its real, distinct localized text.
 | `It won't have\nany effect.` | `Cela n'aura\naucun effet.` | `rb.text_6.VitaminNoEffectText`, `rb.text_6.ItemUseNoEffectText`, `ItemEffects.lua`, `PartyMenu.lua` item failures |
 | `POKéDEX` | `POKéDEX` (kept) | `StartMenu.lua`, `PokedexMenu.lua`, `TitleState.lua`, `HallOfFame.lua` labels, no single upstream qid |
 
+### Not yet investigated: new UI added since the last pin bump
+
+Bumping this project's pin from v0.1.91 to v0.2.19 (`gen1recomp_revision`
+in `config/pipeline.toml`/`config/shared/engine_manifest.json`) pulled in
+gen1recomp PR #1581 (`feat/pikachu-surf-and-gold-gamecorner`), a genuinely
+new feature with its own untranslated `Strings()` literals -- not a
+regression, just surface this project has never had a chance to cover
+before. Running `pipeline.engine_scope.classify_callsites` against the
+real v0.2.19 source (rather than the fixture source the test suite uses)
+turned up six brand new source keys with no classification yet: `Hi-Score!!`,
+`Pts`, `Radness`, `Total`, `HP Left` (`src/ui/SurfingMinigame.lua`, Yellow's
+Pikachu-surfing minigame) and `HALL OF FAME No` (`src/ui/LeaguePC.lua`).
+None of the six broke anything -- they fall into the same `review`
+eligibility bucket as the pre-existing `Nothing here.`/`STATS` entries, which
+this project already leaves untranslated pending a manual scope decision --
+but unlike every other row in this document, they have not yet had the
+live-build/corpus-alignment treatment (checking for a real PokeCorpus qid,
+confirming what a real French build actually shows, deciding
+`rby_ui_modules` vs. `key_scope_overrides` classification). Recorded here so
+that investigation isn't lost, not because it's been done.
+
 ### Required upstream capabilities
 
 Still genuinely out of reach: no hook, no catalog entry can fix these
@@ -304,9 +361,10 @@ from the translation mod without gen1recomp itself changing.
   until that script itself is rewritten. Two ways to close it, neither
   done yet: an upstream gen1recomp rewrite of that script (needs live
   testing this project can't do), or a `config/rby/literal_handlers.json`
-  entry the same way as the (about-to-be-obsolete) Youngster2 handler
-  below -- blocked on extending `pipeline/literals.py`'s flow DSL with
-  `heal_party`/`fade`/`wait` operations, which it doesn't support yet
+  entry the same way as the now-obsolete Youngster2 handler used to (see
+  "Verified working, not a gap" above) -- blocked on extending
+  `pipeline/literals.py`'s flow DSL with `heal_party`/`fade`/`wait`
+  operations, which it doesn't support yet
   (only `say`/`choice`/`if`/`set_flag`/`inventory`/`money`/
   `script_move`/`done`/`engage_trainer`). Those three primitives already
   exist as ordinary script commands in gen1recomp
@@ -317,52 +375,6 @@ from the translation mod without gen1recomp itself changing.
   the text and dropped `heal_party`/`fade` would be a real gameplay
   regression (the nurse would stop healing the party), not just an
   incomplete translation.
-- **Branching/stateful flavor-NPC dialogue**
-  (`config/rby/literal_handlers.json`, 0 handlers as of this project's
-  current config -- the last one, Museum 1F's ticket clerk, was removed
-  once its fix merged upstream; Viridian City's second Youngster's
-  handler has since been removed too, ahead of this project's own pin
-  catching up, see the extractor gap "In progress" section above for
-  why): Viridian City's second Youngster needed a `map_scripts:register`
-  reimplementation because two of its three lines had no reachable
-  label at all (see the extractor gap above) -- reading `game.data.text`
-  directly instead of through `Strings()` is, by itself, *not* a gap
-  (confirmed in the section above), so no other NPC needs this
-  treatment. Kept under "Required upstream capabilities" until this
-  project's pin is bumped to a `gen1recomp_revision` containing
-  `fix/text-extractor-underscore-requirement` (merged upstream as
-  PR #1598, included in gen1recomp release v0.2.12) -- until then, a
-  normal pinned build has genuinely lost the workaround that used to
-  cover this gap, not just an implementation detail.
-
-  **Corrected from a prior version of this doc:** this bullet used to claim
-  the shared root cause was simply "reads `game.data.text` directly, not
-  through `Strings()`," covering 6 handlers and a "no public API to give a
-  Pokémon" blocker on Mt. Moon's Magikarp salesman. That does not hold:
-  `src/core/Strings.lua`'s own header explains extracted dialogue
-  (`Data.text`) has its own override path, `mod.content.text:override(id,
-  value)`, independent of `Strings()`/`mod.content.strings` -- so a script
-  reading `t[label]` is translatable regardless of whether it goes through
-  `Strings()` first. Confirmed directly against a real build's
-  `lang/dialogue.lua`: the Bike Shop's three NPCs and Route 24's
-  Nugget-Bridge recruiter were already reading `game.data.text` correctly,
-  with translations already present, via gen1recomp's own vanilla scripts
-  (`data/scripts/story2.lua`, `story4.lua`,
-  `data/scripts/flavor/bike_shop.lua`) -- which are also *more* complete
-  than this project's former reimplementations (real bag-capacity checks
-  via a `require` unrestricted for core engine code). Those 4 redundant
-  handlers were removed from `config/rby/literal_handlers.json`; letting
-  vanilla run is simpler and more correct. The same real-build check was
-  repeated for every other flavor NPC reading `game.data.text` this way --
-  Viridian City's `GAMBLER1`/`GIRL`, Pewter City's `SUPER_NERD1`/
-  `SUPER_NERD2`, the 8-NPC `gift()` family in `data/scripts/story5.lua`,
-  and Mt. Moon's Magikarp salesman (which also already calls
-  `give_pokemon` natively, so "no public API to give a Pokémon" was never
-  actually a blocker here) -- all confirmed already correctly translated,
-  no config needed. The Pokédex "kind" classification
-  (`src/ui/DexEntryMenu.lua:93`) looked like the same deep gap as the
-  status-ailment abbreviations above, but isn't: `pipeline/mod.py` already
-  has a dedicated `species_kinds` catalog for it.
 
 ## Gold
 
