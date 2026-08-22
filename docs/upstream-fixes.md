@@ -76,6 +76,17 @@ force-includes all eight into the Yellow manifest, and a real built
 them. (A prior version of this doc listed this as still open; that was
 stale.)
 
+Poison/burn's two `Strings.source()` literals (`_HurtByPoisonText`/
+`_HurtByBurnText`'s defensive fallback in `damageOverTime()`) were
+reclassified from `engine-contract-gap` (a translated-but-compromise
+override) to `covered-by-rom` in `config/rby/engine_scope.json`'s
+`key_scope_overrides`: the fallback only ever renders if those ROM labels
+are missing from `data.text`, which they aren't in any real RB or Yellow
+build, so the AI-translated override was dead code with nothing upstream
+to wait on. Same shape as 15 other `covered-by-rom` keys already
+classified this way (`_OakSpeechText2A`, `"Welcome to our\nPOKéMON
+CENTER!"`, etc.) -- not written up individually here.
+
 **Reading `game.data.text` directly, not through `Strings()`, is not a
 gap.** A prior version of this doc claimed the opposite for a set of
 flavor NPCs, covering 6 `literal_handlers.json` handlers and a "no public
@@ -422,53 +433,67 @@ buckets:
   this bump at all, and unrelated to it. Investigated individually rather
   than left as a vague "future pass" note, since this project's own
   convention is to verify against real source, not assume:
-  - **11 are `romText()` fallback literals**, confirmed one by one against
-    the real v0.1.91 source (e.g. `_GameCornerCoinCaseText`'s
+  - **10 are `romText()` fallback literals**, confirmed one by one against
+    the real v0.1.91 source: `_GameCornerCoinCaseText`'s
     `"A COIN CASE is\nrequired!"`, `_MimicLearnedMoveText`'s
     `"%s\nlearned\n%s!"`, `_WokeUpText`'s `"%s\nwoke up!"`,
     `_FluteWokeUpText`'s `"All sleeping\nPOKéMON woke up!"`,
     `_ConfusedNoMoreText`'s `"%s\nsnapped out of\nconfusion!"`,
-    `_PPIncreasedText`'s `"%s's PP\nincreased!"`, and
-    `_TryingToLearnText`'s two span-extracted halves). None of these were
-    ever going to reach `pipeline.engine_scope.iter_callsites` in the first
-    place: `iter_romtext_fallback_callsites` only reports a fixed, audited
+    `_PPIncreasedText`'s `"%s's PP\nincreased!"`, `_TryingToLearnText`'s
+    two span-extracted halves, and two combined composites built from
+    *separate* `romText()` calls concatenated at runtime rather than one
+    static literal a scanner could ever find: `"1, 2 and... Poof!..."`
+    (`_OneTwoAndText`/`_PoofText`/`_ForgotAndText`/`_LearnedMove1Text` in
+    `MoveLearnMenu.lua`) and `"What?\n%s is\nevolving!\f..."` (described
+    under "genuinely alive" below, alongside the sibling anchor it shares
+    its fix with -- it belongs in this bucket by its own history, just
+    narrated there for continuity). None of these ten were ever going to
+    reach `pipeline.engine_scope.iter_callsites` in the first place:
+    `iter_romtext_fallback_callsites` only reports a fixed, audited
     allowlist of 3 fallback strings (see its own docstring), on the theory
     that every other `romText()` fallback resolves its real ROM label and
     is covered by the dialogue catalog instead -- confirmed true for all
-    11, so the anchors were genuinely dead weight, safely retired. The
-    combined `"1, 2 and... Poof!..."` composite is a variant of the same
-    story one level up: it's built from four *separate* `romText()` calls
-    concatenated at runtime (`_OneTwoAndText`, `_PoofText`,
-    `_ForgotAndText`, `_LearnedMove1Text` in `MoveLearnMenu.lua`), so the
-    combined literal the anchor was keyed on could never exist as a single
-    static string for a scanner to find, in any version.
-  - **1 was a different, older bug -- now actually fixed:
-    `"SEEN %d  OWNED %d"`** (Pokédex footer). Unlike the other 11, this
-    was *not* a `romText()` fallback -- `ui/PokedexMenu.lua` still calls
-    `Strings("SEEN %3d  OWN %3d", seen, owned)` today, a real, live
-    callsite that was going untranslated. The anchor's key was stale (the
-    field used to be a wider `"SEEN 100  OWNED 100"` before an old
-    width/label refactor, per the file's own comment) -- the same shape
-    of bug as `<Diploma>` above, just older (already broken in v0.1.91,
-    unrelated to this pin bump). A plain key rename wasn't enough, though:
-    tracing why turned up that the anchor's qid itself was wrong.
-    `ui/PokedexMenu.lua`'s "OWN" label was never part of
-    `rb.text_2.DexSeenOwnedText` at all -- pokered has two separate
-    standalone corpus strings, `rb.pokedex.PokedexSeenText` ("SEEN") and
-    `rb.pokedex.PokedexOwnText` ("OWN"), confirmed directly against
-    `poke-corpus/corpus/RedBlue`. Rebuilt as a "parts" anchor (the same
-    mechanism the existing `"BOX No.%d"` anchor already proves out)
-    combining both corpus labels with the engine's own `%3d` printf
-    directives via `{"printf": N}` parts, so the exact source format is
-    preserved rather than derived from the corpus's own number tokens.
-    Verified end-to-end against the real corpus (not hand-built test
-    rows) for all five languages: fr `VUS %3d  PRIS %3d`, de
-    `GES %3d  BES %3d`, es `VIST %3d  TIEN %3d`, it `VIST %3d  PRES %3d`;
-    ja-Hrkt's real corpus labels are much longer phrases
-    (`みつけたかず`/`つかまえたかず`, "number found"/"number caught") than
-    English's terse "SEEN"/"OWN", so that one carries the same
-    in-game-visual-width risk as every other AI-uncertain layout in this
-    doc, not a translation-correctness question.
+    10, so the anchors were genuinely dead weight, safely retired.
+  - **1 (`"%s!"`, a `rb.text_2.PlayerMon1Text` "full" extraction) is
+    different again: not a `romText()` fallback at all, just never matched
+    by any real `Strings()` literal in RBY source, old or new.** The same
+    qid/extraction is still live via three unchanged, unrelated composite
+    anchors (`"Go! %s!"`, `"Do it! %s!"`, `"Get'm! %s!"`), so removing the
+    standalone `"%s!"` anchor doesn't touch anything those three depend
+    on -- confirmed with a dedicated test exercising one of them directly,
+    since the real-corpus test that used to incidentally cover this same
+    extraction shape only ever asserted on the now-removed key.
+  - **1 (`"SEEN %d  OWNED %d"`, Pokédex footer) turned out to be dead in a
+    third, different way: not superseded by `romText()`, but already
+    covered by an entirely separate, pre-existing mechanism.** First pass
+    at this treated it like `<Diploma>` -- traced the stale anchor's wrong
+    qid (`ui/PokedexMenu.lua`'s real callsite is
+    `Strings("SEEN %3d  OWN %3d", seen, owned)`; the anchor pointed at
+    `rb.text_2.DexSeenOwnedText`, but pokered actually has two standalone
+    corpus strings for this, `rb.pokedex.PokedexSeenText`/`PokedexOwnText`)
+    and rebuilt it as a "parts" anchor combining both real labels with the
+    engine's own `%3d` printf directives, verified end-to-end against the
+    real corpus for all five languages. An independent review then found
+    that fix was solving an already-solved problem:
+    `pipeline/join.py`'s `pokedex_footer_catalog` -- pre-existing,
+    already tested in `tests/test_pipeline.py`, using the exact same two
+    qids -- runs unconditionally in `pipeline/mod.py` and overwrites
+    `engine_values["SEEN %3d  OWN %3d"]` via a plain `dict.update()` call
+    *after* the semantic-anchor matcher runs, regardless of whether the
+    anchor resolved, failed, or didn't exist at all. Confirmed directly:
+    calling `pokedex_footer_catalog` alone, with no anchor in the picture,
+    already produces the identical correct values for all five languages
+    (fr `VUS %3d  PRIS %3d`, de `GES %3d  BES %3d`, es `VIST %3d  TIEN
+    %3d`, it `VIST %3d  PRES %3d`, ja-Hrkt's longer
+    `みつけたかず`/`つかまえたかず` labels). So the original stale
+    `"SEEN %d  OWNED %d"` anchor was never actually blocking a real
+    translation the way `<Diploma>` was -- it was just dead weight, the
+    same as the other 11. The parts-based replacement anchor added real
+    verification value (confirming `pokedex_footer_catalog`'s qids are
+    correct) but zero runtime effect, so it was removed rather than kept:
+    a duplicate, unused code path is its own maintenance liability (a
+    future printf-width change on this field would need updating in two
+    places instead of one, and only one of them is actually load-bearing).
 - **3 were genuinely alive in v0.1.91 and went dead in v0.2.19.** All three
   turned out to be superseded by a real upstream improvement, not broken by
   one -- but one of them was hiding an actual bug:
