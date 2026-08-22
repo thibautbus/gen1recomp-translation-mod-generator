@@ -573,7 +573,10 @@ original two-glyph line and should get an in-game width check.
   the compromise table below), but the real corpus text is still directly
   available at `corpus/GoldSilver/{lang}_msg.txt` lines 904-905 (parallel
   to `qid_msg.txt`'s `gs.timeset.String_oclock`/`String_min`) -- no longer
-  a `Strings()` gap either way.
+  a `Strings()` gap either way. Not a complete fix for these three screens,
+  though: each one also draws a separate `"AM"`/`"PM"` marker that this PR
+  didn't touch and still isn't wrapped in `Strings()` at all -- see
+  "Required upstream capabilities" below.
 
 ### Translated via a compromise, not blocked (`engine-contract-gap`)
 
@@ -684,6 +687,17 @@ a matter of wiring a few missed callsites.
   can be blank.
 - **Pokegear "Press any button to exit":** still needs a public hook -- this
   one line is not covered by the fix below.
+- **Clock "AM"/"PM" marker:** found by an independent review of this doc,
+  confirmed directly against the source -- `src/ui/gen2/MainMenu.lua:173`,
+  `src/ui/gen2/Pokegear.lua:1884`, and `src/ui/gen2/Pokegear.lua:2221` all
+  build the digital time display with a raw
+  `hour < 12 and "AM" or "PM"` Lua literal, never passed through `Strings()`
+  at all. This is on the *same three screens* the "Fixed upstream" Clock UI
+  entry above covers (the main menu clock box and both of the Pokegear
+  clock card's displays) -- that fix's weekday name, `PrintHour` daytime
+  word (`MORN`/`DAY`/`NITE`), and `o'clock`/`min.` suffixes are real and
+  translated, but this separate AM/PM marker on the exact same lines was
+  never touched by it and stays in English on every non-English build.
 - **Received-item/system rewards:** confirmed with a real in-game boot (fr):
   both cases still show the empty name, and both are genuine engine-side
   name-resolution gaps, not a missing translation -- the surrounding "reçoit"
