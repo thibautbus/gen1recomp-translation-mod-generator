@@ -282,30 +282,25 @@ acronym/label kept as-is where translating it would lose meaning (`SGB`,
 | `auto` / `balanced` / `high` / `low` | (per-context) | `ui/OptionsMenu.lua:264` (`Performance.label`) |
 
 **Corpus translations adapted to the engine's argument order or a
-fragmentary source** (12 entries): the real localized ROM phrasing exists in
+fragmentary source** (7 entries): the real localized ROM phrasing exists in
 the corpus, but the engine's `Strings()` callsite either reorders the
 `printf` arguments differently than the ROM script did, or only passes a
 fragment of the original sentence (a technical field like `HT`/`WT`, a
-standalone word like `evolving!`), so a literal per-fragment translation
+standalone label like `BADGES`), so a literal per-fragment translation
 loses grammatical context a single upstream template change could restore.
 
 | Source | fr override | What's missing |
 |---|---|---|
 | `%s's %s\nrose!` | `%s voit son %s\naugmenter !` | Reordered stat arguments at shared callsites |
-| `%s lined up!\nScored %d coins!` | `%s est aligné !\nA gagné %d jetons !` | Slot-machine context around the reordered arguments |
-| `%s was\ntransferred to\n%s!` | `%s a été\ntransféré vers\n%s !` | Context-specific transfer arguments, fragmentary source |
 | `%sBOX %2d` | `%sBOITE %2d` | Reordered box-name and numeric arguments |
 | `BADGES` | `BADGES` (kept) | Fragmentary standalone source |
 | `HT %d′%02d″` | `HT %d′%02d″` (kept) | Missing unit context around numeric arguments |
 | `WT %.1flb` | `WT %.1flb` (kept) | Missing unit-context argument |
 | `Once released,\n%s is\ngone forever. OK?` | `Une fois libéré,\n%s sera\nperdu à jamais. OK ?` | Reordered release-confirmation context around one argument |
-| `PLAYER %s\nBADGES %d\nPOKéDEX %3d\nTIME %6d:%02d` | `JOUEUR %s\nBADGES %d\nPOKéDEX %3d\nTEMPS %6d:%02d` | Technical status fragment, reordered display arguments |
-| `This POKéMON\ncan't be caught!` | `Ce POKéMON\nne peut pas être attrapé !` | Fragmentary capture-result source |
 | `Use on which one?` | `Utiliser sur lequel ?` | Missing target-selection argument |
-| `evolving!` | `évolue !` | Fragmentary evolution source |
 
 **Corpus translations shared across multiple, incompatible original
-contexts** (5 entries): the engine collapses several different ROM strings
+contexts** (2 entries): the engine collapses several different ROM strings
 into one `Strings()` source key, so one override has to serve every context
 even though the original ROM script used different phrasing for each --
 only a callsite split upstream (one key per context) would let each one
@@ -314,10 +309,36 @@ carry its real, distinct localized text.
 | Source | fr override | Original contexts collapsed together |
 |---|---|---|
 | `%s\nfainted!` | `%s\nest K.O. !` | `rb.text_2.EnemyMonFaintedText`, `rb.text_2.PlayerMonFaintedText`, `rb.text_4.PokemonFaintedText` |
-| `%s found\n%s!` | `%s trouve\n%s !` | `rb.text_1.FoundItemText`, `rb.text_2.FoundHiddenItemText` |
-| `%s's HP\nwas restored!` | `Les PV de %s\nont été restaurés !` | `ItemEffects.lua` and `PartyMenu.lua` item-healing callsites, different target presentation |
-| `It won't have\nany effect.` | `Cela n'aura\naucun effet.` | `rb.text_6.VitaminNoEffectText`, `rb.text_6.ItemUseNoEffectText`, `ItemEffects.lua`, `PartyMenu.lua` item failures |
 | `POKéDEX` | `POKéDEX` (kept) | `StartMenu.lua`, `PokedexMenu.lua`, `TitleState.lua`, `HallOfFame.lua` labels, no single upstream qid |
+
+**Retired by the v0.2.19 pin bump** (8 entries removed from every language's
+`overrides/<language>/rby/engine.json`): `%s lined up!\nScored %d coins!`,
+`%s was\ntransferred to\n%s!`, `This POKéMON\ncan't be caught!`,
+`PLAYER %s\nBADGES %d\nPOKéDEX %3d\nTIME %6d:%02d`, `evolving!`,
+`%s found\n%s!`, `%s's HP\nwas restored!`, and `It won't have\nany effect.`.
+The first five are named explicitly in "Fixed upstream" above
+(`fix/route-more-messages-through-romtext`, PR #1559); the last three are
+not -- discovered instead by running
+`pipeline.engine_scope.complete_engine_keys` (the same check
+`pipeline/mod.py`'s real build uses to reject a stale override key) against
+a real v0.2.19 checkout and diffing it against every override file's key
+set. All eight came back with zero matching callsites anywhere in the
+engine, meaning they would have made the next real build fail outright
+with `engine overrides contain N unknown key(s)` had they been left in
+place. That check is only about whether the exact source string still
+exists as *some* callsite anywhere in the whole engine -- RBY or not,
+`romText()`-routed or not -- which is also why `%s\nfainted!` and
+`Once released,...` survive above despite RBY no longer needing either
+override: the former still has a genuine `Strings()` call in Gen2's own
+`world/gen2/World.lua` (unrelated to this project's RBY mod, but enough
+to keep the key valid), and the latter is still a live `Strings()` call
+inside `ui/BoxMenu.lua`'s `t._OnceReleasedText or Strings(...)` fallback
+idiom -- written by hand rather than through the `romText()` helper, so
+the scanner still counts it as a translatable `Strings()` source even
+though `t._OnceReleasedText` already wins whenever it resolves. Whichever exact commit
+fixed the last three wasn't tracked down -- v0.1.91..v0.2.19 spans close to
+200 merged upstream PRs and this project's local checkout of gen1recomp is
+shallow, so bisecting each one individually wasn't attempted.
 
 ### Not yet investigated: new UI added since the last pin bump
 
