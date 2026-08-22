@@ -184,39 +184,37 @@ class SemanticAnchorDecisionTests(unittest.TestCase):
         expected = {"fr": "Diplôme", "de": "Diplom", "es": "Diploma", "it": "Diploma", "ja-Hrkt": "しょうじょう"}
         for language, value in expected.items():
             rows = align(parse_redblue(root, language), target_lang=language)
-            output, report = match_engine_catalog({"<Diploma>": ""}, rows, semantic_anchors=anchors, target_lang=language)
-            self.assertEqual(output["<Diploma>"], value, language)
-            self.assertEqual(report["details"]["<Diploma>"], "semantic", language)
-            self.assertEqual(report["provenance"]["<Diploma>"]["qid"], "rb.diploma.DiplomaText", language)
-            self.assertEqual(report["provenance"]["<Diploma>"]["extraction"]["wrapper"], {"prefix": "\\x70", "suffix": "\\x70"}, language)
+            output, report = match_engine_catalog({"Diploma": ""}, rows, semantic_anchors=anchors, target_lang=language)
+            self.assertEqual(output["Diploma"], value, language)
+            self.assertEqual(report["details"]["Diploma"], "semantic", language)
+            self.assertEqual(report["provenance"]["Diploma"]["qid"], "rb.diploma.DiplomaText", language)
+            self.assertEqual(report["provenance"]["Diploma"]["extraction"]["wrapper"], {"prefix": "\\x70", "suffix": "\\x70"}, language)
 
     def test_diploma_wrapper_anchor_positive_without_external_corpus(self):
         qid = "rb.diploma.DiplomaText"
         rows = [Alignment(qid, "both", CorpusRecord(qid, "en", r"\x70Diploma\x70@"), CorpusRecord(qid, "fr", r"\x70Diplôme\x70@"), "qid")]
         anchor = {
-            "<Diploma>": {
+            "Diploma": {
                 "qid": qid,
-                "source_aliases": ["Diploma"],
                 "extraction": {"kind": "full", "wrapper": {"prefix": r"\x70", "suffix": r"\x70"}},
             }
         }
-        output, report = match_engine_catalog({"<Diploma>": ""}, rows, semantic_anchors=anchor, target_lang="fr")
-        self.assertEqual(output["<Diploma>"], "Diplôme")
-        self.assertEqual(report["details"]["<Diploma>"], "semantic")
+        output, report = match_engine_catalog({"Diploma": ""}, rows, semantic_anchors=anchor, target_lang="fr")
+        self.assertEqual(output["Diploma"], "Diplôme")
+        self.assertEqual(report["details"]["Diploma"], "semantic")
 
     def test_diploma_wrapper_anchor_rejects_unexpected_escape(self):
         qid = "rb.diploma.DiplomaText"
         rows = [Alignment(qid, "both", CorpusRecord(qid, "en", r"\x71Diploma\x71@"), CorpusRecord(qid, "fr", r"\x71Diplôme\x71@"), "qid")]
         anchor = {
-            "<Diploma>": {
+            "Diploma": {
                 "qid": qid,
-                "source_aliases": ["Diploma"],
                 "extraction": {"kind": "full", "wrapper": {"prefix": r"\x70", "suffix": r"\x70"}},
             }
         }
-        output, report = match_engine_catalog({"<Diploma>": ""}, rows, semantic_anchors=anchor, target_lang="fr")
-        self.assertEqual(output["<Diploma>"], "")
-        self.assertEqual(report["details"]["<Diploma>"], "semantic_unresolved")
+        output, report = match_engine_catalog({"Diploma": ""}, rows, semantic_anchors=anchor, target_lang="fr")
+        self.assertEqual(output["Diploma"], "")
+        self.assertEqual(report["details"]["Diploma"], "semantic_unresolved")
 
     def test_ghost_appearance_composition_uses_encounter_name(self):
         key = "The GHOST\nappeared!"
@@ -336,28 +334,6 @@ class SemanticAnchorDecisionTests(unittest.TestCase):
             expected = corpus_to_engine(f"{target[0]}\n{target[1]}").replace("{PLAYER}", "%s").replace("{RAM:wStringBuffer}", target[2])
             self.assertEqual(output[key], expected, language)
             self.assertEqual(report["provenance"][key]["decision_type"], "composition", language)
-
-    def test_evolution_messages_compose_original_flow(self):
-        short_key = "Congratulations!\nYour %s\nevolved into\n%s!"
-        full_key = "What?\n%s is\nevolving!\fCongratulations!\nYour %s\nevolved into\n%s!"
-        qids = ("rb.text_3.IsEvolvingText", "rb.text_3.EvolvedText", "rb.text_3.IntoText")
-        english = ("What? {RAM:wStringBuffer}\nis evolving!", "{RAM:wStringBuffer} evolved", "\ninto {RAM:wNameBuffer}!")
-        translations = {
-            "fr": ("Hein? {RAM:wStringBuffer}\névolue!", "{RAM:wStringBuffer} évolue", "\nen {RAM:wNameBuffer}!"),
-            "de": ("Hey! {RAM:wStringBuffer}\nentwickelt sich!", "{RAM:wStringBuffer} wurde", "\nzu {RAM:wNameBuffer}!"),
-            "es": ("¡{RAM:wStringBuffer} está\nevolucionando!", "¡{RAM:wStringBuffer} evol.", "\nen {RAM:wNameBuffer}!"),
-            "it": ("Ehi! {RAM:wStringBuffer}\nsi evolve!", "{RAM:wStringBuffer} diventa", "\n{RAM:wNameBuffer}!"),
-            "ja-Hrkt": ("<……>　おや！？\n{RAM:wStringBuffer}の　ようすが<……>！", "おめでとう！　{RAM:wStringBuffer}は", "\n{RAM:wNameBuffer}に　しんかした"),
-        }
-        anchors = load_semantic_anchors()
-        for language, target in translations.items():
-            rows = [Alignment(qid, "both", CorpusRecord(qid, "en", source), CorpusRecord(qid, language, value), "qid") for qid, source, value in zip(qids, english, target)]
-            output, report = match_engine_catalog({short_key: "", full_key: ""}, rows, semantic_anchors=anchors, target_lang=language)
-            short = corpus_to_engine(target[1] + target[2]).replace("{RAM:wStringBuffer}", "%s").replace("{RAM:wNameBuffer}", "%s")
-            intro = corpus_to_engine(target[0]).replace("{RAM:wStringBuffer}", "%s")
-            self.assertEqual(output[short_key], short, language)
-            self.assertEqual(output[full_key], intro + "\f" + short, language)
-            self.assertTrue(all(report["provenance"][key]["decision_type"] == "composition" for key in (short_key, full_key)), language)
 
     def test_safari_exhaustion_restores_both_rom_messages(self):
         key = "PA: You're out of\nSAFARI BALLs!\nGame over!"

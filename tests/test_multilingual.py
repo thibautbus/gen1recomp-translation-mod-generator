@@ -994,6 +994,7 @@ class MultilingualTests(unittest.TestCase):
             "%s is out of\nuseable POKéMON!": {"battle/BattleState.lua"},
             "%s blacked\nout!": {"battle/BattleState.lua", "world/OverworldController.lua"},
             "It contained\n%s!": {"ui/BagMenu.lua"},
+            "Diploma": {"ui/Diploma.lua"},
             "BATTLE ANIMATION": {"ui/OptionsMenu.lua", "import/LauncherSettings.lua"},
             "When you change a\nPOKéMON BOX, data\nwill be saved. OK?": {"ui/BoxMenu.lua"},
         }
