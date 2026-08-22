@@ -419,15 +419,51 @@ rather than the new one alone, separated them into two very different
 buckets:
 
 - **12 were already unreachable in v0.1.91 too** -- not a regression from
-  this bump at all, and unrelated to it. Most are `romText()` fallback
-  literals (e.g. `_GameCornerCoinCaseText`'s `"A COIN CASE is\nrequired!"`)
-  that were never going to reach `pipeline.engine_scope.iter_callsites` in
-  the first place: `iter_romtext_fallback_callsites` only reports a fixed,
-  audited allowlist of 3 fallback strings (see its own docstring), on the
-  theory that every other `romText()` fallback resolves its real ROM label
-  and is covered by the dialogue catalog instead. These 12 are pre-existing
-  config debt, left untouched here -- a legitimate target for a future,
-  separate pass, but out of scope for this pin bump.
+  this bump at all, and unrelated to it. Investigated individually rather
+  than left as a vague "future pass" note, since this project's own
+  convention is to verify against real source, not assume:
+  - **11 are `romText()` fallback literals**, confirmed one by one against
+    the real v0.1.91 source (e.g. `_GameCornerCoinCaseText`'s
+    `"A COIN CASE is\nrequired!"`, `_MimicLearnedMoveText`'s
+    `"%s\nlearned\n%s!"`, `_WokeUpText`'s `"%s\nwoke up!"`,
+    `_FluteWokeUpText`'s `"All sleeping\nPOKéMON woke up!"`,
+    `_ConfusedNoMoreText`'s `"%s\nsnapped out of\nconfusion!"`,
+    `_PPIncreasedText`'s `"%s's PP\nincreased!"`, and
+    `_TryingToLearnText`'s two span-extracted halves). None of these were
+    ever going to reach `pipeline.engine_scope.iter_callsites` in the first
+    place: `iter_romtext_fallback_callsites` only reports a fixed, audited
+    allowlist of 3 fallback strings (see its own docstring), on the theory
+    that every other `romText()` fallback resolves its real ROM label and
+    is covered by the dialogue catalog instead -- confirmed true for all
+    11, so the anchors were genuinely dead weight, safely retired. The
+    combined `"1, 2 and... Poof!..."` composite is a variant of the same
+    story one level up: it's built from four *separate* `romText()` calls
+    concatenated at runtime (`_OneTwoAndText`, `_PoofText`,
+    `_ForgotAndText`, `_LearnedMove1Text` in `MoveLearnMenu.lua`), so the
+    combined literal the anchor was keyed on could never exist as a single
+    static string for a scanner to find, in any version.
+  - **1 is a different, older bug that's still live and worth calling out
+    on its own: `"SEEN %d  OWNED %d"`** (`rb.text_2.DexSeenOwnedText`,
+    Pokédex footer). Unlike the other 11, this is *not* a `romText()`
+    fallback -- `ui/PokedexMenu.lua` still calls
+    `Strings("SEEN %3d  OWN %3d", seen, owned)` today, a real, live,
+    currently-untranslated callsite. The anchor's key is simply stale: the
+    file's own comment explains the field used to be the wider
+    `"SEEN 100  OWNED 100"` before a width/label refactor changed it to
+    `%3d`/`OWN`, and the anchor was never updated to match -- exactly the
+    same shape of bug as `<Diploma>` above, just older (already broken in
+    v0.1.91, so unrelated to this pin bump) and harder to fix outright:
+    `_extract_dex_counter`'s corpus-side extraction produces bare `{NUM:...}`
+    tokens with no width, so simply renaming the key to
+    `"SEEN %3d  OWN %3d"` would trade an unreachable anchor for one that
+    reaches the catalog but fails `check_printf_directives` (`%3d` in the
+    engine key, plain `%d` out of the extractor) -- a real fix needs the
+    dex-counter extraction path taught about the `%3d` width, verified
+    against a live build, not a one-line rename. Restored to its original
+    (still broken) state rather than deleted, since deleting it would
+    discard the only translation mechanism this Pokédex footer has ever
+    had, and that would be a real regression in intent even though it
+    changes nothing observable today.
 - **3 were genuinely alive in v0.1.91 and went dead in v0.2.19.** All three
   turned out to be superseded by a real upstream improvement, not broken by
   one -- but one of them was hiding an actual bug:
