@@ -25,6 +25,22 @@ def row(qid, value):
     return Alignment(qid, "red", source, target, "qid")
 
 
+# Legacy prompt/yes/no recipe shape, used to be the real
+# viridian-city-youngster2 entry in config/rby/literal_handlers.json until it
+# was removed (vanilla now handles that NPC on its own -- see
+# docs/upstream-fixes.md). Kept here as a fixture so these tests exercise the
+# legacy shape independent of whatever the production config currently
+# contains.
+LEGACY_RECIPE = [{
+    "id": "viridian-city-youngster2",
+    "map": "VIRIDIAN_CITY",
+    "text_constant": "TEXT_VIRIDIANCITY_YOUNGSTER2",
+    "prompt": {"qid": QPROMPT},
+    "yes": {"qid": QYES},
+    "no": {"qid": QNO},
+}]
+
+
 class LiteralHandlerTests(unittest.TestCase):
     def test_qid_provenance_and_marker_conversion(self):
         handlers = extract_handlers(
@@ -33,7 +49,7 @@ class LiteralHandlerTests(unittest.TestCase):
                 row(QYES, "CATERPIE <LINE> poison, but <CONT>WEEDLE does.<PAGE>Watch"),
                 row(QNO, "Oh, OK then!"),
             ],
-            load_recipes(Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json"),
+            LEGACY_RECIPE,
         )
         self.assertEqual(len(handlers), 1)
         self.assertEqual(handlers[0].prompt_qid, QPROMPT)
@@ -45,9 +61,7 @@ class LiteralHandlerTests(unittest.TestCase):
     def test_missing_branch_does_not_generate_false_handler(self):
         handlers = extract_handlers(
             [row(QPROMPT, "Prompt"), row(QYES, "YES")],
-            load_recipes(
-                Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json"
-            ),
+            LEGACY_RECIPE,
         )
         self.assertEqual(handlers, [])
 
@@ -59,9 +73,7 @@ class LiteralHandlerTests(unittest.TestCase):
                 row(QNO, "no"),
                 row(QPROMPT, "prompt"),
             ],
-            load_recipes(
-                Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json"
-            ),
+            LEGACY_RECIPE,
         )
         self.assertEqual(handlers, [])
 
@@ -79,7 +91,7 @@ class LiteralHandlerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path, handlers = generate_handlers(
                 [row(QPROMPT, "Question?"), row(QYES, "Oui"), row(QNO, "Non")],
-                load_recipes(Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json"),
+                LEGACY_RECIPE,
                 Path(directory) / "lang" / "literal_handlers.lua",
             )
             body = path.read_text(encoding="utf-8")
