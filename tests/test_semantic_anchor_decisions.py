@@ -57,14 +57,13 @@ class SemanticAnchorDecisionTests(unittest.TestCase):
             load_semantic_anchors(ROOT / "config/rby/semantic_anchors.json"),
             load_semantic_anchor_decisions(),
         )
-        keys = ("%s used\nPOKé BALL!", "ABLE", "BOX No.%d", "NOT ABLE", "%s!", "CANCEL", "%s's\nprotected against\nstat changes!", "DEPOSIT <PK><MN>", "RELEASE <PK><MN>", "WITHDRAW <PK><MN>", "You can't carry\nany more items!", "But every BOX\nis full!")
+        keys = ("%s used\nPOKé BALL!", "ABLE", "BOX No.%d", "NOT ABLE", "CANCEL", "%s's\nprotected against\nstat changes!", "DEPOSIT <PK><MN>", "RELEASE <PK><MN>", "WITHDRAW <PK><MN>", "You can't carry\nany more items!", "But every BOX\nis full!")
         for language, values in translations.items():
             rows = [Alignment(qids[name][0], "both", CorpusRecord(qids[name][0], "en", qids[name][1]), CorpusRecord(qids[name][0], language, value), "qid") for name, value in zip(qids, values)]
             output, report = match_engine_catalog({key: "" for key in keys}, rows, semantic_anchors=anchors, target_lang=language)
             item_use = corpus_to_engine(values[0] + "\n" + values[2]).replace("{PLAYER}", "%s").replace("{RAM:wStringBuffer}", corpus_to_engine(values[1]).strip())
             self.assertEqual(output["%s used\nPOKé BALL!"], item_use, language)
             self.assertEqual(output["BOX No.%d"], corpus_to_engine(values[4]).strip() + "%d", language)
-            self.assertEqual(output["%s!"], corpus_to_engine(values[6]).replace("{RAM:wBattleMonNick}", "%s"), language)
             self.assertEqual(output["DEPOSIT <PK><MN>"], corpus_to_engine(values[9]).split("\n")[1], language)
             self.assertEqual(output["RELEASE <PK><MN>"], corpus_to_engine(values[9]).split("\n")[2], language)
             self.assertEqual(output["WITHDRAW <PK><MN>"], corpus_to_engine(values[9]).split("\n")[0], language)
@@ -239,29 +238,6 @@ class SemanticAnchorDecisionTests(unittest.TestCase):
             output, report = match_engine_catalog({key: ""}, rows, semantic_anchors=anchors, target_lang=language)
             self.assertEqual(output[key], expected, language)
             self.assertEqual(report["provenance"][key]["decision_type"], "composition", language)
-
-    def test_move_learning_message_is_split_by_language(self):
-        qid = "rb.text_4.TryingToLearnText"
-        keys = (
-            "%s is\ntrying to learn\v%s!\fBut, %s\ncan't learn more\vthan 4 moves!\f",
-            "Delete an older\nmove to make room\vfor %s?",
-        )
-        english = "{RAM:wLearnMoveMonName} is\ntrying to learn\v{RAM:wStringBuffer}!\fBut, {RAM:wLearnMoveMonName}\ncan't learn more\vthan 4 moves!\fDelete an older\nmove to make room\vfor {RAM:wStringBuffer}?"
-        translations = {
-            "fr": "{RAM:wLearnMoveMonName} essaie\nd'apprendre\v{RAM:wStringBuffer}!\fMais {RAM:wLearnMoveMonName}\nne peut plus rien\vapprendre!\fOublier une\nattaque pour\vapprendre\v{RAM:wStringBuffer}?",
-            "de": "{RAM:wLearnMoveMonName}\nversucht,\v{RAM:wStringBuffer} zu\verlernen!\fAber {RAM:wLearnMoveMonName}\nkann nicht mehr\vals vier Attacken\verlernen!\fSoll eine andere\nAttacke zugunsten\vvon {RAM:wStringBuffer}\vvergessen werden?",
-            "es": "¡{RAM:wLearnMoveMonName}\nintenta aprender\v{RAM:wStringBuffer}!\f¡Pero {RAM:wLearnMoveMonName}\nno puede aprender\vmás de 4 ataques!\f¿Borrar un ataque\nanterior para\vhacer sitio a\v{RAM:wStringBuffer}?",
-            "it": "{RAM:wLearnMoveMonName}\ncerca di imparare\v{RAM:wStringBuffer}!\fMa {RAM:wLearnMoveMonName} non\npuò imparare più\vdi 4 mosse!\fEliminare una\nvecchia mossa\vper far spazio a\v{RAM:wStringBuffer}?",
-            "ja-Hrkt": "{RAM:wLearnMoveMonName}は　あたらしく\n{RAM:wStringBuffer}を　おぼえたい……！\fしかし　{RAM:wLearnMoveMonName}は　わざを　４つ\nおぼえるので　せいいっぱいだ！\f{RAM:wStringBuffer}の　かわりに\nほかの　わざを　わすれさせますか？",
-        }
-        anchors = load_semantic_anchors()
-        for language, translation in translations.items():
-            rows = [Alignment(qid, "both", CorpusRecord(qid, "en", english), CorpusRecord(qid, language, translation), "qid")]
-            output, report = match_engine_catalog({key: "" for key in keys}, rows, semantic_anchors=anchors, target_lang=language)
-            expected = corpus_to_engine(translation).replace("{RAM:wLearnMoveMonName}", "%s").replace("{RAM:wStringBuffer}", "%s")
-            self.assertTrue(output[keys[0]].endswith("\f"), language)
-            self.assertEqual(output[keys[0]] + output[keys[1]], expected, language)
-            self.assertTrue(all(report["provenance"][key]["decision_type"] == "target_extraction" for key in keys), language)
 
     def test_trade_cancellation_restores_complete_rom_message(self):
         key = "The trade was\ncancelled."

@@ -1397,11 +1397,6 @@ class MultilingualTests(unittest.TestCase):
         self.assertEqual(output[key], "Tous les POKéMON\nendormis se\x0bréveillent.")
         self.assertEqual(report["details"][key], "semantic")
 
-    def test_sleeping_message_uses_flute_wakeup_qid(self):
-        anchors = load_semantic_anchors()
-        sleep = anchors["All sleeping\nPOKéMON woke up!"]
-        self.assertEqual(sleep["qid"], "rb.text_6.FluteWokeUpText")
-
     def test_semantic_anchor_rejects_unlisted_corpus_spelling(self):
         row = Alignment(
             "rb.text_6.FluteWokeUpText", "both",

@@ -171,29 +171,8 @@
         "index": 1
       }
     },
-    "A COIN CASE is\nrequired!": {
-      "qid": "rb.text_2.GameCornerCoinCaseText",
-      "extraction": {
-        "kind": "full",
-        "index": 0
-      }
-    },
-    "%s\nlearned\n%s!": {
-      "qid": "rb.text_3.MimicLearnedMoveText",
-      "extraction": {
-        "kind": "full",
-        "index": 0
-      }
-    },
     "%s learned\n%s!": {
       "qid": "rb.text_4.LearnedMove1Text",
-      "extraction": {
-        "kind": "full",
-        "index": 0
-      }
-    },
-    "%s\nwoke up!": {
-      "qid": "rb.text_2.WokeUpText",
       "extraction": {
         "kind": "full",
         "index": 0
@@ -444,20 +423,6 @@
       "qid": "rb.party_menu.RedrawPartyMenu_.notAbleToLearnMoveText",
       "extraction": {
         "kind": "full"
-      }
-    },
-    "%s!": {
-      "parts": [
-        {
-          "qid": "rb.text_2.PlayerMon1Text",
-          "extraction": {
-            "kind": "full"
-          }
-        }
-      ],
-      "join": "",
-      "placeholders": {
-        "{RAM:wBattleMonNick}": "%s"
       }
     },
     "CANCEL": {

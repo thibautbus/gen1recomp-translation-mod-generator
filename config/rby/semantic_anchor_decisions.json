@@ -334,32 +334,6 @@
       "trace_status": "reviewed",
       "languages_verified": true
     },
-    "All sleeping\nPOKéMON woke up!": {
-      "anchor": {
-        "qid": "rb.text_6.FluteWokeUpText",
-        "source_aliases": [
-          "All sleeping\nPOKéMON woke up."
-        ],
-        "extraction": {
-          "kind": "full",
-          "index": 0
-        }
-      },
-      "decision_type": "source_alias",
-      "rationale": "Reviewed source alias: rb.text_6.FluteWokeUpText is the flute wake-all message. Its corpus text ends with a period while the engine key uses an exclamation mark; the alias records that punctuation-equivalent source without conflating the generic “%s woke up!” battle line.",
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_6.FluteWokeUpText"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
-    },
     "There's a slew of\nPOKéMON stuff!": {
       "anchor": {
         "qid": "rb.text_2.PokemonStuffText",
@@ -545,71 +519,6 @@
       ],
       "trace_status": "known-limitation",
       "languages_verified": false
-    },
-    "1, 2 and... Poof!\f%s forgot\n%s!\fAnd...\f%s learned\n%s!": {
-      "anchor": {
-        "parts": [
-          {
-            "qid": "rb.text_4.OneTwoAndText",
-            "extraction": {
-              "kind": "full",
-              "index": 0,
-              "preserve_edges": true
-            }
-          },
-          {
-            "qid": "rb.text_4.PoofText",
-            "extraction": {
-              "kind": "full",
-              "index": 0,
-              "preserve_edges": true
-            }
-          },
-          {
-            "qid": "rb.text_4.ForgotAndText",
-            "extraction": {
-              "kind": "full",
-              "index": 0,
-              "preserve_edges": true
-            }
-          },
-          {
-            "qid": "rb.text_4.LearnedMove1Text",
-            "extraction": {
-              "kind": "full",
-              "index": 0,
-              "preserve_edges": true
-            }
-          }
-        ],
-        "separators": [
-          "",
-          "",
-          "\f"
-        ],
-        "placeholders": {
-          "{RAM:wLearnMoveMonName}": "%s",
-          "{RAM:wNameBuffer}": "%s",
-          "{RAM:wStringBuffer}": "%s"
-        }
-      },
-      "decision_type": "composition",
-      "rationale": "Reviewed composition of rb.text_4.OneTwoAndText, PoofText, ForgotAndText, and LearnedMove1Text in qid order. Empty joins retain source edges and a form-feed separator preserves the four-part callsite sequence; the three named placeholders map to the runtime Pokémon and move arguments.",
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_4.OneTwoAndText",
-        "rb.text_4.PoofText",
-        "rb.text_4.ForgotAndText",
-        "rb.text_4.LearnedMove1Text"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
     },
     "%s\nmade a whirlwind!": {
       "anchor": {
@@ -828,32 +737,6 @@
       ],
       "qids": [
         "rb.text_2.SavingEnergyText"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
-    },
-    "%s\nsnapped out of\nconfusion!": {
-      "anchor": {
-        "qid": "rb.text_2.ConfusedNoMoreText",
-        "source_aliases": [
-          "{USER}'s\nconfused no more!"
-        ],
-        "extraction": {
-          "kind": "full",
-          "index": 0
-        }
-      },
-      "decision_type": "source_alias",
-      "rationale": "Reviewed source alias: rb.text_2.ConfusedNoMoreText is the battle status-recovery sentence and supplies the same %s battler placeholder; unrelated wake-up text is rejected.",
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_2.ConfusedNoMoreText"
       ],
       "trace_status": "reviewed",
       "languages_verified": true
@@ -1708,31 +1591,6 @@
       "trace_status": "reviewed",
       "languages_verified": true
     },
-    "%s's PP\nincreased!": {
-      "anchor": {
-        "qid": "rb.text_6.PPIncreasedText",
-        "source_aliases": [
-          "{RAM:wStringBuffer}'s PP\nincreased."
-        ],
-        "extraction": {
-          "kind": "full"
-        }
-      },
-      "decision_type": "source_alias",
-      "rationale": "Reviewed source alias: rb.text_6.PPIncreasedText is the battle PP-increase sentence with the runtime Pokémon-name placeholder; its context disambiguates it from other stat-change messages.",
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_6.PPIncreasedText"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
-    },
     "You can't carry\nany more items.": {
       "anchor": {
         "qid": "rb.text_2.CantCarryMoreText",
@@ -1932,115 +1790,6 @@
       "qids": [
         "rb.text_2.EnemyAppearedText",
         "rb.core.InitWildBattle.isGhost"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
-    },
-    "%s is\ntrying to learn\u000b%s!\fBut, %s\ncan't learn more\u000bthan 4 moves!\f": {
-      "anchor": {
-        "qid": "rb.text_4.TryingToLearnText",
-        "extraction": {
-          "kind": "span",
-          "index": 0,
-          "count": 14,
-          "suffix": "\f",
-          "targets": {
-            "fr": {
-              "kind": "span",
-              "index": 0,
-              "count": 11
-            },
-            "de": {
-              "kind": "span",
-              "index": 0,
-              "count": 14
-            },
-            "es": {
-              "kind": "span",
-              "index": 0,
-              "count": 13
-            },
-            "it": {
-              "kind": "span",
-              "index": 0,
-              "count": 14
-            },
-            "ja-Hrkt": {
-              "kind": "span",
-              "index": 0,
-              "count": 10
-            }
-          }
-        }
-      },
-      "decision_type": "target_extraction",
-      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for MoveLearnMenu.enter. Gen1Recomp splits rb.text_4.TryingToLearnText into two engine keys; this extraction selects the first two semantic paragraphs and preserves their Pokémon, move, Pokémon placeholder order.",
-      "callsites": [
-        "src/ui/MoveLearnMenu.lua:47"
-      ],
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_4.TryingToLearnText"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
-    },
-    "Delete an older\nmove to make room\u000bfor %s?": {
-      "anchor": {
-        "qid": "rb.text_4.TryingToLearnText",
-        "extraction": {
-          "kind": "span",
-          "index": 14,
-          "count": 9,
-          "targets": {
-            "fr": {
-              "kind": "span",
-              "index": 11,
-              "count": 6
-            },
-            "de": {
-              "kind": "span",
-              "index": 14,
-              "count": 9
-            },
-            "es": {
-              "kind": "span",
-              "index": 13,
-              "count": 9
-            },
-            "it": {
-              "kind": "span",
-              "index": 14,
-              "count": 9
-            },
-            "ja-Hrkt": {
-              "kind": "span",
-              "index": 10,
-              "count": 5
-            }
-          }
-        }
-      },
-      "decision_type": "target_extraction",
-      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for MoveLearnMenu.enter. Gen1Recomp splits rb.text_4.TryingToLearnText into two engine keys; this extraction selects the final forget-an-old-move question and its move placeholder.",
-      "callsites": [
-        "src/ui/MoveLearnMenu.lua:49"
-      ],
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_4.TryingToLearnText"
       ],
       "trace_status": "reviewed",
       "languages_verified": true
