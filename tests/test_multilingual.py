@@ -472,32 +472,6 @@ class MultilingualTests(unittest.TestCase):
         self.assertEqual(report["details"][source], "semantic_unresolved")
         self.assertEqual(report["fallback_english"], 1)
 
-    def test_real_corpus_dex_seen_owned_anchor_all_languages(self):
-        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
-        if not (root / "qid_msg.txt").is_file():
-            self.skipTest("canonical local poke-corpus checkout is unavailable")
-        source = "SEEN %3d  OWN %3d"
-        expected = {
-            "fr": "VUS %3d  PRIS %3d",
-            "de": "GES %3d  BES %3d",
-            "es": "VIST %3d  TIEN %3d",
-            "it": "VIST %3d  PRES %3d",
-            "ja-Hrkt": "みつけたかず %3d  つかまえたかず %3d",
-        }
-        anchors = load_semantic_anchors()
-        self.assertEqual(anchors[source]["parts"][0]["qid"], "rb.pokedex.PokedexSeenText")
-        self.assertEqual(anchors[source]["parts"][2]["qid"], "rb.pokedex.PokedexOwnText")
-        for language, value in expected.items():
-            items = align(parse_redblue(root, language), target_lang=language)
-            output, report = match_engine_catalog({source: ""}, items,
-                semantic_anchors=anchors, target_lang=language)
-            self.assertEqual(output[source], value, language)
-            self.assertEqual(report["details"][source], "semantic", language)
-            self.assertEqual(report["provenance"][source]["qids"],
-                              ["rb.pokedex.PokedexSeenText", "rb.pokedex.PokedexOwnText"], language)
-            self.assertEqual(printf_directives(output[source]), ["%3d", "%3d"], language)
-            self.assertEqual(check_printf_directives(source, output[source]), [], language)
-
     def test_dex_seen_owned_anchor_fails_closed_on_bad_selector_or_qid(self):
         source = "SEEN %d  OWNED %d"
         with self.assertRaises(ValueError):

@@ -204,34 +204,6 @@
         ]
       }
     },
-    "SEEN %3d  OWN %3d": {
-      "parts": [
-        {
-          "qid": "rb.pokedex.PokedexSeenText",
-          "extraction": {
-            "kind": "full"
-          }
-        },
-        {
-          "printf": 0
-        },
-        {
-          "qid": "rb.pokedex.PokedexOwnText",
-          "extraction": {
-            "kind": "full"
-          }
-        },
-        {
-          "printf": 1
-        }
-      ],
-      "separators": [
-        " ",
-        "  ",
-        " "
-      ],
-      "placeholders": {}
-    },
     "%s grew\nto level %d!": {
       "qid": "rb.text_2.GrewLevelText",
       "extraction": {
