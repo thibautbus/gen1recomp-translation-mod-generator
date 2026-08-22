@@ -387,10 +387,19 @@ than assuming AI-generated compromise was the only option:
   encoded text -- there is no ROM string pointer to align to even in
   principle, the same conclusion the old, now-removed HUD strings had
   independently reached. AI-generated translations were added for all five
-  shipped languages, matching the compact-HUD-label register already used
-  throughout this file (e.g. `SCORE %d` kept as-is, `New record!` ->
-  `Nouveau record!`), sized to the ~8-tile-wide label column
-  `src/ui/SurfingMinigame.lua` actually draws into. All flagged "requires
+  shipped languages, sized to the ~8-tile-wide label column
+  `src/ui/SurfingMinigame.lua` actually draws into, and grounded in two real
+  sources rather than invented from scratch: this project's own prior
+  (now-removed) translation of the very same minigame's old HUD, which
+  already established the register for this content per language ("new
+  record" phrasing -- `Neuer Rekord!`/`¡Nuevo récord!`/`Nuovo record!`/
+  `しんきろく！` -- and `PUNKTE`/`PUNTOS`/`PUNTI` for points); and the real
+  RedBlue corpus's `HP UP` item name, which gives the official per-language
+  Gen 1 HP abbreviation directly (`KP-PLUS`/`PV PLUS`/`MÁS PS`/`PS-SU`).
+  That check also caught German `Radness` drifting into the anglicism
+  `Style` where this project's own German conventions elsewhere in this
+  same file (`SPIELTEMPO`, `LEISTUNG`, `MUSIK-FILTER`) consistently
+  translate rather than borrow -- fixed to `Stil`. All flagged "requires
   in-game visual validation", the same as every other AI-generated entry in
   this project.
 
