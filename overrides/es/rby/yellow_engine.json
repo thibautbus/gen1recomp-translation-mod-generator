@@ -21,14 +21,14 @@
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua, replacing the pre-v0.2.19 HUD this project used to override); no PokeCorpus source -- confirmed against pokeyellow/engine/minigame/surfing_pikachu.asm that the original ROM renders this HUD as fixed graphic tiles, not encoded text, so there is no ROM string to align to even in principle. Register and terminology cross-checked against this project's own prior (now-removed) translation of the same minigame's old HUD for consistency (e.g. the Punkte/Rekord family for German, Nuovo record!! for Italian), and HP abbreviations verified against the real RedBlue corpus item name \"HP UP\" (poke-corpus/corpus/RedBlue: en_msg.txt \"HP UP\" -> de \"KP-PLUS\", fr \"PV PLUS\", es \"MÁS PS\", it \"PS-SU\"); short HUD label."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD label (src/ui/SurfingMinigame.lua), no PokeCorpus source; abbreviation cross-checked against the real RedBlue corpus's \"HP UP\" item name per language -- see docs/upstream-fixes.md for the full investigation."
     },
     "Hi-Score!!": {
       "override": "¡Nuevo récord!!",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua, replacing the pre-v0.2.19 HUD this project used to override); no PokeCorpus source -- confirmed against pokeyellow/engine/minigame/surfing_pikachu.asm that the original ROM renders this HUD as fixed graphic tiles, not encoded text, so there is no ROM string to align to even in principle. Register and terminology cross-checked against this project's own prior (now-removed) translation of the same minigame's old HUD for consistency (e.g. the Punkte/Rekord family for German, Nuovo record!! for Italian), and HP abbreviations verified against the real RedBlue corpus item name \"HP UP\" (poke-corpus/corpus/RedBlue: en_msg.txt \"HP UP\" -> de \"KP-PLUS\", fr \"PV PLUS\", es \"MÁS PS\", it \"PS-SU\"); short HUD label."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua), no PokeCorpus source -- worded to match this project's prior \"new record\" phrasing for the same HUD; see docs/upstream-fixes.md for the full investigation."
     },
     "PIKACHU looks\ncontent.": {
       "override": "PIKACHU parece\ncontento.",
@@ -49,14 +49,14 @@
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua, replacing the pre-v0.2.19 HUD this project used to override); no PokeCorpus source -- confirmed against pokeyellow/engine/minigame/surfing_pikachu.asm that the original ROM renders this HUD as fixed graphic tiles, not encoded text, so there is no ROM string to align to even in principle. Register and terminology cross-checked against this project's own prior (now-removed) translation of the same minigame's old HUD for consistency (e.g. the Punkte/Rekord family for German, Nuovo record!! for Italian), and HP abbreviations verified against the real RedBlue corpus item name \"HP UP\" (poke-corpus/corpus/RedBlue: en_msg.txt \"HP UP\" -> de \"KP-PLUS\", fr \"PV PLUS\", es \"MÁS PS\", it \"PS-SU\"); short HUD label."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD unit suffix (src/ui/SurfingMinigame.lua), no PokeCorpus source -- see docs/upstream-fixes.md for the full investigation."
     },
     "Radness": {
       "override": "Estilo",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua, replacing the pre-v0.2.19 HUD this project used to override); no PokeCorpus source -- confirmed against pokeyellow/engine/minigame/surfing_pikachu.asm that the original ROM renders this HUD as fixed graphic tiles, not encoded text, so there is no ROM string to align to even in principle. Register and terminology cross-checked against this project's own prior (now-removed) translation of the same minigame's old HUD for consistency (e.g. the Punkte/Rekord family for German, Nuovo record!! for Italian), and HP abbreviations verified against the real RedBlue corpus item name \"HP UP\" (poke-corpus/corpus/RedBlue: en_msg.txt \"HP UP\" -> de \"KP-PLUS\", fr \"PV PLUS\", es \"MÁS PS\", it \"PS-SU\"); short HUD label."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD label (src/ui/SurfingMinigame.lua), no PokeCorpus source -- see docs/upstream-fixes.md for the full investigation."
     },
     "There isn't any\nresponse...": {
       "override": "No hay\nrespuesta...",
@@ -70,7 +70,7 @@
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua, replacing the pre-v0.2.19 HUD this project used to override); no PokeCorpus source -- confirmed against pokeyellow/engine/minigame/surfing_pikachu.asm that the original ROM renders this HUD as fixed graphic tiles, not encoded text, so there is no ROM string to align to even in principle. Register and terminology cross-checked against this project's own prior (now-removed) translation of the same minigame's old HUD for consistency (e.g. the Punkte/Rekord family for German, Nuovo record!! for Italian), and HP abbreviations verified against the real RedBlue corpus item name \"HP UP\" (poke-corpus/corpus/RedBlue: en_msg.txt \"HP UP\" -> de \"KP-PLUS\", fr \"PV PLUS\", es \"MÁS PS\", it \"PS-SU\"); short HUD label."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD label (src/ui/SurfingMinigame.lua), no PokeCorpus source -- see docs/upstream-fixes.md for the full investigation."
     }
   }
 }
