@@ -442,28 +442,33 @@ buckets:
     `_ForgotAndText`, `_LearnedMove1Text` in `MoveLearnMenu.lua`), so the
     combined literal the anchor was keyed on could never exist as a single
     static string for a scanner to find, in any version.
-  - **1 is a different, older bug that's still live and worth calling out
-    on its own: `"SEEN %d  OWNED %d"`** (`rb.text_2.DexSeenOwnedText`,
-    Pokédex footer). Unlike the other 11, this is *not* a `romText()`
-    fallback -- `ui/PokedexMenu.lua` still calls
-    `Strings("SEEN %3d  OWN %3d", seen, owned)` today, a real, live,
-    currently-untranslated callsite. The anchor's key is simply stale: the
-    file's own comment explains the field used to be the wider
-    `"SEEN 100  OWNED 100"` before a width/label refactor changed it to
-    `%3d`/`OWN`, and the anchor was never updated to match -- exactly the
-    same shape of bug as `<Diploma>` above, just older (already broken in
-    v0.1.91, so unrelated to this pin bump) and harder to fix outright:
-    `_extract_dex_counter`'s corpus-side extraction produces bare `{NUM:...}`
-    tokens with no width, so simply renaming the key to
-    `"SEEN %3d  OWN %3d"` would trade an unreachable anchor for one that
-    reaches the catalog but fails `check_printf_directives` (`%3d` in the
-    engine key, plain `%d` out of the extractor) -- a real fix needs the
-    dex-counter extraction path taught about the `%3d` width, verified
-    against a live build, not a one-line rename. Restored to its original
-    (still broken) state rather than deleted, since deleting it would
-    discard the only translation mechanism this Pokédex footer has ever
-    had, and that would be a real regression in intent even though it
-    changes nothing observable today.
+  - **1 was a different, older bug -- now actually fixed:
+    `"SEEN %d  OWNED %d"`** (Pokédex footer). Unlike the other 11, this
+    was *not* a `romText()` fallback -- `ui/PokedexMenu.lua` still calls
+    `Strings("SEEN %3d  OWN %3d", seen, owned)` today, a real, live
+    callsite that was going untranslated. The anchor's key was stale (the
+    field used to be a wider `"SEEN 100  OWNED 100"` before an old
+    width/label refactor, per the file's own comment) -- the same shape
+    of bug as `<Diploma>` above, just older (already broken in v0.1.91,
+    unrelated to this pin bump). A plain key rename wasn't enough, though:
+    tracing why turned up that the anchor's qid itself was wrong.
+    `ui/PokedexMenu.lua`'s "OWN" label was never part of
+    `rb.text_2.DexSeenOwnedText` at all -- pokered has two separate
+    standalone corpus strings, `rb.pokedex.PokedexSeenText` ("SEEN") and
+    `rb.pokedex.PokedexOwnText` ("OWN"), confirmed directly against
+    `poke-corpus/corpus/RedBlue`. Rebuilt as a "parts" anchor (the same
+    mechanism the existing `"BOX No.%d"` anchor already proves out)
+    combining both corpus labels with the engine's own `%3d` printf
+    directives via `{"printf": N}` parts, so the exact source format is
+    preserved rather than derived from the corpus's own number tokens.
+    Verified end-to-end against the real corpus (not hand-built test
+    rows) for all five languages: fr `VUS %3d  PRIS %3d`, de
+    `GES %3d  BES %3d`, es `VIST %3d  TIEN %3d`, it `VIST %3d  PRES %3d`;
+    ja-Hrkt's real corpus labels are much longer phrases
+    (`みつけたかず`/`つかまえたかず`, "number found"/"number caught") than
+    English's terse "SEEN"/"OWN", so that one carries the same
+    in-game-visual-width risk as every other AI-uncertain layout in this
+    doc, not a translation-correctness question.
 - **3 were genuinely alive in v0.1.91 and went dead in v0.2.19.** All three
   turned out to be superseded by a real upstream improvement, not broken by
   one -- but one of them was hiding an actual bug:
