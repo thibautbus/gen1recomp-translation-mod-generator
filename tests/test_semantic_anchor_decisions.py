@@ -72,6 +72,36 @@ class SemanticAnchorDecisionTests(unittest.TestCase):
             self.assertEqual(output["But every BOX\nis full!"], corpus_to_engine(values[11]).strip(), language)
             self.assertTrue(all(report["provenance"][key]["method"] == "semantic" for key in keys), language)
 
+    def test_player_mon1_text_part_resolves_the_three_live_battle_menu_anchors(self):
+        # PlayerMon1Text's "full" extraction is a shared part of "Go! %s!",
+        # "Do it! %s!" and "Get'm! %s!" -- none of those three anchors were
+        # touched by this project's config changes, but the standalone "%s!"
+        # anchor that used to be the only real-corpus exercise of this exact
+        # part (same qid, same extraction) was retired as unreachable. Cover
+        # one of the three live anchors directly instead, with the shared
+        # PlayerMon1Text data reused across all three key/prefix qid pairs.
+        anchors = load_semantic_anchors()
+        player_mon_qid = "rb.text_2.PlayerMon1Text"
+        cases = (
+            ("Go! %s!", "rb.text_2.GoText", "Go! "),
+            ("Do it! %s!", "rb.text_2.DoItText", "Do it! "),
+            ("Get'm! %s!", "rb.text_2.GetmText", "Get'm! "),
+        )
+        for key, prefix_qid, prefix_en in cases:
+            self.assertIn(key, anchors, key)
+            rows = [
+                Alignment(prefix_qid, "both",
+                          CorpusRecord(prefix_qid, "en", f"{prefix_en}@"),
+                          CorpusRecord(prefix_qid, "fr", f"{prefix_en}@"), "qid"),
+                Alignment(player_mon_qid, "both",
+                          CorpusRecord(player_mon_qid, "en", "{text_ram wBattleMonNick}{text_start}!<DONE>"),
+                          CorpusRecord(player_mon_qid, "fr", "{text_ram wBattleMonNick}{text_start}!<DONE>"), "qid"),
+            ]
+            output, report = match_engine_catalog({key: ""}, rows, semantic_anchors=anchors, target_lang="fr")
+            self.assertEqual(output[key], key, key)
+            self.assertEqual(report["details"][key], "semantic", key)
+            self.assertEqual(report["provenance"][key]["qids"], [prefix_qid, player_mon_qid], key)
+
     def test_printf_parts_reconstruct_label_and_connector_keys_multilingually(self):
         anchors = load_semantic_anchors()
         labels = {
