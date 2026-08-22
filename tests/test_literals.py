@@ -129,6 +129,54 @@ class LiteralHandlerTests(unittest.TestCase):
             self.assertIn("game.save.money = (game.save.money or 0) + (-50)", body)
             self.assertIn('game.save.flags["EVENT_BOUGHT_MUSEUM_TICKET"] = true', body)
 
+    def test_on_step_renders_coordinate_condition_and_its_own_flow(self):
+        q_rope = "rb.X.RopeCutText"
+        recipes = [{
+            "map": "MUSEUM_1F", "text_constant": "TEXT_MUSEUM1F_SCIENTIST1",
+            "flow": [{"say": {"qid": QMUSEUM_ALREADY}}],
+            "on_step": {
+                "when": {"coords": [[5, 6], [5, 7]], "not_flag": "EVENT_CUT_ROPE"},
+                "flow": [
+                    {"say": {"qid": q_rope}},
+                    {"set_flag": {"flag": "EVENT_CUT_ROPE"}},
+                ],
+            },
+        }]
+        rows = [row(QMUSEUM_ALREADY, "Deja venu."), row(q_rope, "La corde est coupee.")]
+        with tempfile.TemporaryDirectory() as directory:
+            path, handlers = generate_handlers(rows, recipes, Path(directory) / "handlers.lua")
+            self.assertEqual(len(handlers), 1)
+            body = path.read_text(encoding="utf-8")
+            self.assertIn("onStep = function(game, ow, x, y)", body)
+            self.assertIn(
+                "((x == 5 and y == 6) or (x == 5 and y == 7)) and "
+                'not game.save.flags["EVENT_CUT_ROPE"]',
+                body,
+            )
+            self.assertIn('TextBox.new(game, "La corde est coupee."', body)
+            self.assertIn('game.save.flags["EVENT_CUT_ROPE"] = true', body)
+            self.assertIn("return true", body)
+            self.assertIn("return false", body)
+
+    def test_on_step_bad_condition_shape_fails_closed_on_load(self):
+        base = {
+            "map": "X", "text_constant": "T", "flow": [{"say": {"qid": QMUSEUM_ALREADY}}],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            for bad_when in (
+                {"coords": [], "not_flag": "F"},
+                {"coords": [[1, 2]]},
+                {"coords": [[1, 2]], "not_flag": "F", "extra": 1},
+            ):
+                path = Path(directory) / "invalid.json"
+                path.write_text(json.dumps({
+                    "schema": "gen1recomp-translation-mods/literal-handlers",
+                    "version": 2,
+                    "handlers": [{**base, "on_step": {"when": bad_when, "flow": []}}],
+                }), encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    load_recipes(path)
+
     def test_flow_missing_or_ambiguous_qid_fails_closed(self):
         recipes = [{
             "map": "MUSEUM_1F", "text_constant": "TEXT_MUSEUM1F_SCIENTIST1",
