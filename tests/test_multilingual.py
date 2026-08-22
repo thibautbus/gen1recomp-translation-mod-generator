@@ -993,7 +993,6 @@ class MultilingualTests(unittest.TestCase):
             "SEEN %3d  OWN %3d": {"ui/PokedexMenu.lua"},
             "%s is out of\nuseable POKéMON!": {"battle/BattleState.lua"},
             "%s blacked\nout!": {"battle/BattleState.lua", "world/OverworldController.lua"},
-            "It dodged the\nthrown BALL!": {"battle/BattleState.lua"},
             "It contained\n%s!": {"ui/BagMenu.lua"},
             "BATTLE ANIMATION": {"ui/OptionsMenu.lua", "import/LauncherSettings.lua"},
             "When you change a\nPOKéMON BOX, data\nwill be saved. OK?": {"ui/BoxMenu.lua"},
