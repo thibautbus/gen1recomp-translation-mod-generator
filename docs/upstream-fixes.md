@@ -340,26 +340,61 @@ fixed the last three wasn't tracked down -- v0.1.91..v0.2.19 spans close to
 200 merged upstream PRs and this project's local checkout of gen1recomp is
 shallow, so bisecting each one individually wasn't attempted.
 
-### Not yet investigated: new UI added since the last pin bump
+### Not yet investigated: Surfing Pikachu/Hall of Fame HUD text rewritten upstream
 
 Bumping this project's pin from v0.1.91 to v0.2.19 (`gen1recomp_revision`
 in `config/pipeline.toml`/`config/shared/engine_manifest.json`) pulled in
-gen1recomp PR #1581 (`feat/pikachu-surf-and-gold-gamecorner`), a genuinely
-new feature with its own untranslated `Strings()` literals -- not a
-regression, just surface this project has never had a chance to cover
-before. Running `pipeline.engine_scope.classify_callsites` against the
-real v0.2.19 source (rather than the fixture source the test suite uses)
-turned up six brand new source keys with no classification yet: `Hi-Score!!`,
-`Pts`, `Radness`, `Total`, `HP Left` (`src/ui/SurfingMinigame.lua`, Yellow's
-Pikachu-surfing minigame) and `HALL OF FAME No` (`src/ui/LeaguePC.lua`).
-None of the six broke anything -- they fall into the same `review`
-eligibility bucket as the pre-existing `Nothing here.`/`STATS` entries, which
-this project already leaves untranslated pending a manual scope decision --
-but unlike every other row in this document, they have not yet had the
+gen1recomp PR #1581 (`feat/pikachu-surf-and-gold-gamecorner`), which
+**rewrote** the existing Surfing Pikachu minigame's HUD in
+`src/ui/SurfingMinigame.lua` -- not a new file: this project already had
+`overrides/<language>/rby/yellow_engine.json` entries for its old HUD text
+(`A: done`, `HI    %d`, `New record!`, `SCORE %d`, tagged
+`yellow-only-engine-text`, "no PokeCorpus source"). The rewrite replaced
+those four with new text -- `Hi-Score!!`, `Pts`, `Radness`, `Total`,
+`HP Left` -- and also touched `src/ui/LeaguePC.lua`'s Hall of Fame screen,
+adding `HALL OF FAME No`. The four old, now-orphaned overrides were removed
+(see below); no replacement overrides have been added yet for the new
+strings. Running `pipeline.engine_scope.classify_callsites` against the
+real v0.2.19 source confirms all six fall into the same `review`
+eligibility bucket as the pre-existing `Nothing here.`/`STATS` entries this
+project already leaves untranslated pending a manual scope decision -- but
+unlike every other row in this document, they have not yet had the
 live-build/corpus-alignment treatment (checking for a real PokeCorpus qid,
-confirming what a real French build actually shows, deciding
-`rby_ui_modules` vs. `key_scope_overrides` classification). Recorded here so
-that investigation isn't lost, not because it's been done.
+since the old HUD text notably had none; confirming what a real French
+build actually shows; deciding `rby_ui_modules` vs. `key_scope_overrides`
+classification). Recorded here so that investigation isn't lost, not
+because it's been done.
+
+**Real build failure caught by this rewrite, now fixed:** a real Yellow mod
+build against the bumped pin failed with `Error: Yellow engine override
+contains unknown key: 'A: done'` (`pipeline/builder.py`'s Yellow layer
+validates `overrides/<language>/rby/yellow_engine.json` against a real
+`strings.lua` worksheet dumped from the built game, the same kind of check
+`pipeline/mod.py`'s RBY layer does with `complete_engine_keys`). All four
+old HUD strings were removed from all five languages' `yellow_engine.json`
+files once confirmed dead by the same `complete_engine_keys` check used for
+the RBY overrides cleanup above.
+
+**Same audit, applied to semantic anchors too:** the same PR's
+`_ItemUseBallText00` merge (see "Fixed upstream" above) also orphaned
+`config/rby/semantic_anchors.json`/`semantic_anchor_decisions.json`'s
+`"It dodged the\nthrown BALL!"` entry, caught by
+`tests/test_multilingual.py`'s `test_rby_anchor_callsites_are_unique_and_contextually_eligible`
+once `.cache/dependencies/gen1recomp` refreshed to the new pin (that test's
+now-stale expectation was removed). Semantic anchors have no equivalent of
+`pipeline/mod.py`'s `stale_overrides` build-time check, so an orphaned one
+doesn't crash a build -- it just silently stops matching anything. Running
+the same "is this key still a real callsite" audit across the *entire*
+anchor/decision config (not just this one test's narrow probe list) found
+**15 anchor keys** (10 of them also in `semantic_anchor_decisions.json`) in
+the same orphaned state, most plausibly other multi-line messages some
+other PR in the same huge version range also routed through `romText()`.
+Left uninvestigated here rather than bulk-edited: unlike the engine.json
+overrides, there's no hard validation check confirming a correct edit, and
+several of these anchors extract per-language target spans from specific
+qids, which is exactly the kind of decision this project's own convention
+insists on re-verifying against a real build before touching, not assuming
+from a key-existence check alone.
 
 ### Required upstream capabilities
 
