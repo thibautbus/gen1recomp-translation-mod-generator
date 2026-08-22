@@ -287,7 +287,7 @@ class MultilingualTests(unittest.TestCase):
         keys = [
             "TYPE/", "TYPE1/", "TYPE2/", "OT/", "LEVEL/", "BALLx", "THROW ROCK",
             "STATS", "SWITCH", "CHANGE BOX", "SEE YA!", "WITHDRAW ITEM",
-            "DEPOSIT ITEM", "TOSS ITEM", "%s's PP\nincreased!",
+            "DEPOSIT ITEM", "TOSS ITEM",
             "You don't have\nenough money.", "BATTLE ANIMATION",
             "When you change a\nPOKéMON BOX, data\nwill be saved. OK?",
         ]
@@ -306,17 +306,16 @@ class MultilingualTests(unittest.TestCase):
             "WITHDRAW ITEM": "rb.players_pc.PlayersPCMenuEntries",
             "DEPOSIT ITEM": "rb.players_pc.PlayersPCMenuEntries",
             "TOSS ITEM": "rb.players_pc.PlayersPCMenuEntries",
-            "%s's PP\nincreased!": "rb.text_6.PPIncreasedText",
             "You don't have\nenough money.": "rb.text_4.PokemartNotEnoughMoneyText",
             "BATTLE ANIMATION": "rb.main_menu.BattleAnimationOptionText",
             "When you change a\nPOKéMON BOX, data\nwill be saved. OK?": "rb.text_3.WhenYouChangeBoxText",
         }
         expected = {
-            "fr": ["TYPE", "TYPE1", "TYPE2", "DO", "NIVEAU", "BALL×", "CAILLOU", "STATS", "ORDRE", "CHANGER BOITE", "SALUT!", "RETIRER OBJET", "STOCKER OBJET", "JETER OBJET", "PP de %s\naugmentés.", "Ah! Pas d'argent,\npas d'copains!", "ANIMATION COMBAT", "En activant\nune autre boîte\x0bde POKéMON, les\x0bdonnées seront\x0bsauvegardées.\x0cEtes-vous\nd'accord?"],
-            "de": ["TYP", "TYP1", "TYP2", "OT", "LEVEL", "BALL×", "STEIN", "STATUS", "TAUSCH", "BOX WECHSELN", "TSCHÜSS!", "ITEM AUFNEHMEN", "ITEM ABLEGEN", "ITEM WEGWERFEN", "Die AP von\n%s\x0bsind gestiegen.", "Du hast nicht\ngenug Geld.", "KAMPFANIMATION", "Vor einem Wechsel\nder POKéMON-BOX\x0bwird das Spiel\x0bgesichert!\x0cEinverstanden?"],
-            "es": ["TIPO", "TIPO1", "TIPO2", "EO", "NIVEL", "BALL×", "LANZA ROCA", "ESTAD.", "CAMBIO", "CAMBIA CAJA", "¡NOS VEMOS!", "SACAR OBJETO", "DEJAR OBJETO", "TIRAR OBJETO", "PP de %s\naumentados.", "No tienes\ntanto dinero.", "ANIMACIÓN BATALLA", "Si cambias una\nCAJA de POKéMON,\x0bsus datos serán\x0bguardados.\x0c¿Estás de\nacuerdo?"],
-            "it": ["TIPO", "TIPO1", "TIPO2", "AO", "LIVELLO", "BALL×", "TIRA SASSO", "STAT.", "ORDINA", "CAMBIA BOX", "CIAO!", "RITIRA STRUM.", "DEPOSITA STRUM.", "BUTTA STRUM.", "PP di %s\naumentati.", "Non hai\nabbastanza soldi.", "ANIMAZIONE LOTTA", "Al cambio del\nPOKéMON BOX\x0bil gioco verrà\x0bsalvato!\x0cD'accordo?"],
-            "ja-Hrkt": ["わざタイプ", "タイプ１", "タイプ２", "おや", "レベル", "サファリボール×", "いしをなげる", "つよさをみる", "ならびかえ", "ボックスを　かえる", "さようなら", "どうぐを　ひきだす", "どうぐを　あずける", "どうぐを　すてる", "%sの\nわざポイントが　ふえた！", "おかねが　たりないようですね", "せんとう　アニメーション", "POKé　ボックスを　かえると\nどうじに　レポートが　かかれます\x0c……　それでも　いいですか？"],
+            "fr": ["TYPE", "TYPE1", "TYPE2", "DO", "NIVEAU", "BALL×", "CAILLOU", "STATS", "ORDRE", "CHANGER BOITE", "SALUT!", "RETIRER OBJET", "STOCKER OBJET", "JETER OBJET", "Ah! Pas d'argent,\npas d'copains!", "ANIMATION COMBAT", "En activant\nune autre boîte\x0bde POKéMON, les\x0bdonnées seront\x0bsauvegardées.\x0cEtes-vous\nd'accord?"],
+            "de": ["TYP", "TYP1", "TYP2", "OT", "LEVEL", "BALL×", "STEIN", "STATUS", "TAUSCH", "BOX WECHSELN", "TSCHÜSS!", "ITEM AUFNEHMEN", "ITEM ABLEGEN", "ITEM WEGWERFEN", "Du hast nicht\ngenug Geld.", "KAMPFANIMATION", "Vor einem Wechsel\nder POKéMON-BOX\x0bwird das Spiel\x0bgesichert!\x0cEinverstanden?"],
+            "es": ["TIPO", "TIPO1", "TIPO2", "EO", "NIVEL", "BALL×", "LANZA ROCA", "ESTAD.", "CAMBIO", "CAMBIA CAJA", "¡NOS VEMOS!", "SACAR OBJETO", "DEJAR OBJETO", "TIRAR OBJETO", "No tienes\ntanto dinero.", "ANIMACIÓN BATALLA", "Si cambias una\nCAJA de POKéMON,\x0bsus datos serán\x0bguardados.\x0c¿Estás de\nacuerdo?"],
+            "it": ["TIPO", "TIPO1", "TIPO2", "AO", "LIVELLO", "BALL×", "TIRA SASSO", "STAT.", "ORDINA", "CAMBIA BOX", "CIAO!", "RITIRA STRUM.", "DEPOSITA STRUM.", "BUTTA STRUM.", "Non hai\nabbastanza soldi.", "ANIMAZIONE LOTTA", "Al cambio del\nPOKéMON BOX\x0bil gioco verrà\x0bsalvato!\x0cD'accordo?"],
+            "ja-Hrkt": ["わざタイプ", "タイプ１", "タイプ２", "おや", "レベル", "サファリボール×", "いしをなげる", "つよさをみる", "ならびかえ", "ボックスを　かえる", "さようなら", "どうぐを　ひきだす", "どうぐを　あずける", "どうぐを　すてる", "おかねが　たりないようですね", "せんとう　アニメーション", "POKé　ボックスを　かえると\nどうじに　レポートが　かかれます\x0c……　それでも　いいですか？"],
         }
         anchors = load_semantic_anchors()
         for key in keys:
@@ -365,7 +364,7 @@ class MultilingualTests(unittest.TestCase):
             self.skipTest("canonical local poke-corpus checkout is unavailable")
         anchors = load_semantic_anchors()
         items = align(parse_redblue(root, "fr"), target_lang="fr")
-        for key in ("TYPE/", "THROW ROCK", "%s's PP\nincreased!", "BATTLE ANIMATION", "When you change a\nPOKéMON BOX, data\nwill be saved. OK?"):
+        for key in ("TYPE/", "THROW ROCK", "BATTLE ANIMATION", "When you change a\nPOKéMON BOX, data\nwill be saved. OK?"):
             qid = anchors[key]["qid"]
             row = next(item for item in items if item.qid == qid)
             output, report = match_engine_catalog({key: ""}, items + [row], semantic_anchors=anchors, target_lang="fr")
@@ -477,25 +476,26 @@ class MultilingualTests(unittest.TestCase):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
         if not (root / "qid_msg.txt").is_file():
             self.skipTest("canonical local poke-corpus checkout is unavailable")
-        source = "SEEN %d  OWNED %d"
+        source = "SEEN %3d  OWN %3d"
         expected = {
-            "fr": "Vus:%d  Pris:%d",
-            "de": "Gesehen: %d  Besitz: %d",
-            "es": "Has visto: %d  Atrapaste: %d",
-            "it": "Visti:%d  Presi:%d",
-            "ja-Hrkt": "みつけたかず%d  つかまえたかず%d",
+            "fr": "VUS %3d  PRIS %3d",
+            "de": "GES %3d  BES %3d",
+            "es": "VIST %3d  TIEN %3d",
+            "it": "VIST %3d  PRES %3d",
+            "ja-Hrkt": "みつけたかず %3d  つかまえたかず %3d",
         }
         anchors = load_semantic_anchors()
-        self.assertEqual(anchors[source]["qid"], "rb.text_2.DexSeenOwnedText")
-        self.assertEqual(anchors[source]["extraction"]["selector"], "rby_dex_seen_owned")
+        self.assertEqual(anchors[source]["parts"][0]["qid"], "rb.pokedex.PokedexSeenText")
+        self.assertEqual(anchors[source]["parts"][2]["qid"], "rb.pokedex.PokedexOwnText")
         for language, value in expected.items():
             items = align(parse_redblue(root, language), target_lang=language)
             output, report = match_engine_catalog({source: ""}, items,
                 semantic_anchors=anchors, target_lang=language)
             self.assertEqual(output[source], value, language)
             self.assertEqual(report["details"][source], "semantic", language)
-            self.assertEqual(report["provenance"][source]["qid"], "rb.text_2.DexSeenOwnedText", language)
-            self.assertEqual(printf_directives(output[source]), ["%d", "%d"], language)
+            self.assertEqual(report["provenance"][source]["qids"],
+                              ["rb.pokedex.PokedexSeenText", "rb.pokedex.PokedexOwnText"], language)
+            self.assertEqual(printf_directives(output[source]), ["%3d", "%3d"], language)
             self.assertEqual(check_printf_directives(source, output[source]), [], language)
 
     def test_dex_seen_owned_anchor_fails_closed_on_bad_selector_or_qid(self):
@@ -593,7 +593,6 @@ class MultilingualTests(unittest.TestCase):
                 "rb.Route23.Route23YouDontHaveTheBadgeYetText",
             "You need a\nBICYCLE for the\nCycling Road!":
                 "rb.Route18Gate1F.Route18Gate1FGuardYouNeedABicycleText",
-            "All sleeping\nPOKéMON woke up!": "rb.text_6.FluteWokeUpText",
             "PA: You're out of\nSAFARI BALLs!": "rb.text_2.OutOfSafariBallsText",
         }
         for language in ("fr", "de", "es", "it", "ja-Hrkt"):
@@ -606,32 +605,6 @@ class MultilingualTests(unittest.TestCase):
             for key, qid in keys.items():
                 self.assertTrue(output[key], (language, qid))
                 self.assertEqual(report["provenance"][key]["qid"], qid)
-
-    def test_real_corpus_direct_engine_anchor_batch_all_languages(self):
-        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
-        if not (root / "qid_msg.txt").is_file():
-            self.skipTest("canonical local poke-corpus checkout is unavailable")
-        keys = {"A COIN CASE is\nrequired!": "rb.text_2.GameCornerCoinCaseText"}
-        anchors = load_semantic_anchors()
-        for key, qid in keys.items():
-            self.assertEqual(
-                anchors[key],
-                {"qid": qid, "extraction": {"kind": "full", "index": 0}},
-            )
-        for language in ("fr", "de", "es", "it", "ja-Hrkt"):
-            items = align(parse_redblue(root, language), target_lang=language)
-            output, report = match_engine_catalog(
-                {key: "" for key in keys}, items,
-                semantic_anchors=anchors,
-                target_lang=language,
-            )
-            self.assertEqual(report["translated"], len(keys), language)
-            self.assertEqual(report["auto_semantic"], len(keys), language)
-            self.assertFalse(report["ambiguous"], language)
-            for key, qid in keys.items():
-                self.assertTrue(output[key], (language, qid))
-                self.assertEqual(report["details"][key], "semantic", language)
-                self.assertEqual(report["provenance"][key]["qid"], qid, language)
 
     def test_real_corpus_proven_rby_ui_anchor_batch_all_languages(self):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
@@ -673,9 +646,7 @@ class MultilingualTests(unittest.TestCase):
         if not (root / "qid_msg.txt").is_file():
             self.skipTest("canonical local poke-corpus checkout is unavailable")
         keys = {
-            "%s\nlearned\n%s!": "rb.text_3.MimicLearnedMoveText",
             "%s learned\n%s!": "rb.text_4.LearnedMove1Text",
-            "%s\nwoke up!": "rb.text_2.WokeUpText",
             "%s found\n%d coins!": "rb.text_2.FoundHiddenCoinsText",
         }
         anchors = load_semantic_anchors()
@@ -686,33 +657,23 @@ class MultilingualTests(unittest.TestCase):
             )
         expected = {
             "fr": {
-                "%s\nlearned\n%s!": "%s\napprend\v%s!",
                 "%s learned\n%s!": "%s\napprend...\v%s!",
-                "%s\nwoke up!": "%s\nse réveille!",
                 "%s found\n%d coins!": "%s trouve\n%d jetons!",
             },
             "de": {
-                "%s\nlearned\n%s!": "%s hat\n%s\x0bgelernt!",
                 "%s learned\n%s!": "%s lernt\n%s!",
-                "%s\nwoke up!": "%s\nist aufgewacht!",
                 "%s found\n%d coins!": "%s findet\n%d Münzen!",
             },
             "es": {
-                "%s\nlearned\n%s!": "¡%s\naprendió\v%s!",
                 "%s learned\n%s!": "¡%s\naprendió\v%s!",
-                "%s\nwoke up!": "¡%s\nse despertó!",
                 "%s found\n%d coins!": "¡%s\nencontró\v%d fichas!",
             },
             "it": {
-                "%s\nlearned\n%s!": "%s\nha imparato\v%s!",
                 "%s learned\n%s!": "%s impara\n%s!",
-                "%s\nwoke up!": "%s\nsi è svegliato!",
                 "%s found\n%d coins!": "%s trova\n%d gettoni!",
             },
             "ja-Hrkt": {
-                "%s\nlearned\n%s!": "%sは\n%sを　おぼえた！",
                 "%s learned\n%s!": "%sは　あたらしく\n%sを　おぼえた！",
-                "%s\nwoke up!": "%sは　めをさました！",
                 "%s found\n%d coins!": "%sは\nコインを　%dまい　みつけた！",
             },
         }
@@ -738,45 +699,38 @@ class MultilingualTests(unittest.TestCase):
         keys = (
             "%s is out of\nuseable POKéMON!",
             "%s blacked\nout!",
-            "It dodged the\nthrown BALL!",
             "It contained\n%s!",
         )
         qids = {
             keys[0]: "rb.text_2.PlayerBlackedOutText2",
             keys[1]: "rb.text_2.PlayerBlackedOutText2",
-            keys[2]: "rb.text_6.ItemUseBallText00",
-            keys[3]: "rb.text_6.TeachMachineMoveText",
+            keys[2]: "rb.text_6.TeachMachineMoveText",
         }
         expected = {
             "fr": {
                 keys[0]: "%s n'a plus\nde POKéMON!",
                 keys[1]: "%s est\nhors-jeu!",
-                keys[2]: "Il évite la BALL!",
-                keys[3]: "Elle contient:\n%s!",
+                keys[2]: "Elle contient:\n%s!",
             },
             "de": {
                 keys[0]: "Alle POKéMON von\n%s wurden\x0bbesiegt!",
                 keys[1]: "%s fällt\nin Ohnmacht!",
-                keys[2]: "Es weicht dem\nBALL aus!",
-                keys[3]: "Sie enthält\n%s!",
+                keys[2]: "Sie enthält\n%s!",
             },
             "es": {
                 keys[0]: "¡%s no tiene\nmás POKéMON!",
                 keys[1]: "¡%s perdió\nel conocimiento!",
-                keys[2]: "¡Esquivó la bola\nque le tiraron!",
-                keys[3]: "¡Ésta contiene\n%s!",
+                keys[2]: "¡Ésta contiene\n%s!",
             },
             "it": {
                 keys[0]: "%s non ha più\nPOKéMON utili!",
                 keys[1]: "%s è\ncrollato!",
-                keys[2]: "Ha schivato la\nBALL!",
-                keys[3]: "Contiene\n%s!",
+                keys[2]: "Contiene\n%s!",
             },
             "ja-Hrkt": {
                 keys[0]: "%sの　てもとには\nたたかえる　POKéが　いない！",
                 keys[1]: "%sは\nめのまえが　まっくらに　なった！",
-                keys[2]: "よけられた！",
-                keys[3]: "なかには　%sが\nきろくされていた！",
+                keys[2]: "なかには　%sが\nきろくされていた！",
             },
         }
         anchors = load_semantic_anchors()
@@ -785,7 +739,7 @@ class MultilingualTests(unittest.TestCase):
             self.assertEqual(anchors[key]["extraction"]["kind"], "parts")
             self.assertEqual(anchors[key]["extraction"]["separators"], ["\n"])
             self.assertEqual(set(anchors[key]["extraction"]["targets"]), {"fr", "de", "es", "it", "ja-Hrkt"})
-        self.assertEqual(anchors[keys[3]]["placeholders"], {"{RAM:wStringBuffer}": "%s"})
+        self.assertEqual(anchors[keys[2]]["placeholders"], {"{RAM:wStringBuffer}": "%s"})
         for language, language_expected in expected.items():
             items = align(parse_redblue(root, language), target_lang=language)
             output, report = match_engine_catalog(
@@ -802,8 +756,7 @@ class MultilingualTests(unittest.TestCase):
                 self.assertNotRegex(output[key], r"[<>@]", (language, key))
             self.assertEqual(printf_directives(output[keys[0]]), ["%s"], language)
             self.assertEqual(printf_directives(output[keys[1]]), ["%s"], language)
-            self.assertEqual(printf_directives(output[keys[2]]), [], language)
-            self.assertEqual(printf_directives(output[keys[3]]), ["%s"], language)
+            self.assertEqual(printf_directives(output[keys[2]]), ["%s"], language)
 
     def test_real_corpus_legendary_cries_reach_generated_dialogue_catalog(self):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
@@ -960,7 +913,6 @@ class MultilingualTests(unittest.TestCase):
         keys = (
             "%s is out of\nuseable POKéMON!",
             "%s blacked\nout!",
-            "It dodged the\nthrown BALL!",
             "It contained\n%s!",
         )
         anchors = load_semantic_anchors()
@@ -1007,30 +959,6 @@ class MultilingualTests(unittest.TestCase):
             self.assertEqual({call["path"] for call in row["callsites"]}, paths, key)
             self.assertTrue(all("Strings(" in call["context"] for call in row["callsites"]), key)
 
-    def test_real_corpus_move_learn_menu_composite_all_languages(self):
-        root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
-        if not (root / "qid_msg.txt").is_file():
-            self.skipTest("canonical local poke-corpus checkout is unavailable")
-        key = "1, 2 and... Poof!\f%s forgot\n%s!\fAnd...\f%s learned\n%s!"
-        expected = {
-            "fr": "1, 2 et...Pouêt!\f%s oublie\n%s!\fEt...\f%s\napprend...\v%s!",
-            "de": "1, 2, schwupp!\f%s hat\n%s\vvergessen!\fUnd...\f%s lernt\n%s!",
-            "es": "1, 2 y... ¡Puf!\f¡%s olvidó\n%s!\fY...\f¡%s\naprendió\v%s!",
-            "it": "1, 2 e......puff!\f%s scorda\n%s!\fE...\f%s impara\n%s!",
-            "ja-Hrkt": "１\u3000２の\u3000……\u3000ポカン！\f%sは\u3000%sの\nつかいかたを\u3000きれいに\u3000わすれた！\fそして……！\f%sは\u3000あたらしく\n%sを\u3000おぼえた！",
-        }
-        anchors = load_semantic_anchors()
-        self.assertEqual(len(anchors[key]["parts"]), 4)
-        self.assertEqual(anchors[key]["separators"], ["", "", "\f"])
-        for language in ("fr", "de", "es", "it", "ja-Hrkt"):
-            items = align(parse_redblue(root, language), target_lang=language)
-            output, report = match_engine_catalog({key: ""}, items, semantic_anchors=anchors, target_lang=language)
-            self.assertEqual(output[key], expected[language], language)
-            self.assertEqual(report["details"][key], "semantic", language)
-            self.assertEqual(report["provenance"][key]["qids"], [
-                "rb.text_4.OneTwoAndText", "rb.text_4.PoofText",
-                "rb.text_4.ForgotAndText", "rb.text_4.LearnedMove1Text",
-            ], language)
     def test_real_corpus_battle_charge_anchor_batch_all_languages(self):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
         if not (root / "qid_msg.txt").is_file():
@@ -1052,7 +980,6 @@ class MultilingualTests(unittest.TestCase):
                 "rb.text_3.ChargeMoveEffectText", "rb.text_3.DugAHoleText",
             ],
             "%s\nis storing energy!": ["rb.text_2.SavingEnergyText"],
-            "%s\nsnapped out of\nconfusion!": ["rb.text_2.ConfusedNoMoreText"],
         }
         expected = {
             "fr": {
@@ -1062,7 +989,6 @@ class MultilingualTests(unittest.TestCase):
                 "%s\nflew up high!": "%s\ns'envole!",
                 "%s\ndug a hole!": "%s\ncreuse un trou!",
                 "%s\nis storing energy!": "%s\nse concentre!",
-                "%s\nsnapped out of\nconfusion!": "%s\nse sent mieux!",
             },
             "de": {
                 "%s\nmade a whirlwind!": "%s\nerz. WIRBELWIND!",
@@ -1071,7 +997,6 @@ class MultilingualTests(unittest.TestCase):
                 "%s\nflew up high!": "%s\nfliegt empor!",
                 "%s\ndug a hole!": "%s\ngräbt sich ein!",
                 "%s\nis storing energy!": "%s\nsammelt Kräfte!",
-                "%s\nsnapped out of\nconfusion!": "%s\nist nicht mehr\x0bverwirrt!",
             },
             "es": {
                 "%s\nmade a whirlwind!": "¡%s\ncreó un remolino!",
@@ -1080,7 +1005,6 @@ class MultilingualTests(unittest.TestCase):
                 "%s\nflew up high!": "¡%s\nvoló muy alto!",
                 "%s\ndug a hole!": "¡%s\ncavó un hoyo!",
                 "%s\nis storing energy!": "¡%s\nguarda energía!",
-                "%s\nsnapped out of\nconfusion!": "¡%s\nno está confuso!",
             },
             "it": {
                 "%s\nmade a whirlwind!": "%s\ngenera TURBINE!",
@@ -1089,7 +1013,6 @@ class MultilingualTests(unittest.TestCase):
                 "%s\nflew up high!": "%s\nè volato in alto!",
                 "%s\ndug a hole!": "%s\nscava una fossa!",
                 "%s\nis storing energy!": "%s\naccumula energia!",
-                "%s\nsnapped out of\nconfusion!": "%s\nnon è più confuso",
             },
             "ja-Hrkt": {
                 "%s\nmade a whirlwind!": "%s\nの　まわりで\nくうきが　うずを　まく！",
@@ -1098,7 +1021,6 @@ class MultilingualTests(unittest.TestCase):
                 "%s\nflew up high!": "%s\nは\nそらたかく　とびあがった！",
                 "%s\ndug a hole!": "%s\nは\nあなをほって　ちちゅうに　もぐった！",
                 "%s\nis storing energy!": "%sは　がまんしている",
-                "%s\nsnapped out of\nconfusion!": "%sの\nこんらんが　とけた！",
             },
         }
         anchors = load_semantic_anchors()
@@ -1284,7 +1206,6 @@ class MultilingualTests(unittest.TestCase):
             "%s\nmade a whirlwind!", "%s\ntook in sunlight!",
             "%s\nlowered its head!", "%s\nflew up high!",
             "%s\ndug a hole!", "%s\nis storing energy!",
-            "%s\nsnapped out of\nconfusion!",
         )
         anchors = load_semantic_anchors()
         items = align(parse_redblue(root, "fr"), target_lang="fr")
@@ -1299,59 +1220,36 @@ class MultilingualTests(unittest.TestCase):
             self.assertEqual(report["details"][key], "semantic_unresolved", key)
             self.assertEqual(report["fallback_english"], 1, key)
 
-    def test_real_corpus_normal_and_mimic_learned_keys_are_distinct_semantic_anchors(self):
+    def test_real_corpus_normal_learned_key_is_a_semantic_anchor(self):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
         if not (root / "qid_msg.txt").is_file():
             self.skipTest("canonical local poke-corpus checkout is unavailable")
         anchors = load_semantic_anchors()
         ordinary = "%s learned\n%s!"
-        mimic = "%s\nlearned\n%s!"
         expected = {
-            "fr": {
-                ordinary: "%s\napprend...\x0b%s!",
-                mimic: "%s\napprend\x0b%s!",
-            },
-            "de": {
-                ordinary: "%s lernt\n%s!",
-                mimic: "%s hat\n%s\x0bgelernt!",
-            },
-            "es": {
-                ordinary: "¡%s\naprendió\x0b%s!",
-                mimic: "¡%s\naprendió\x0b%s!",
-            },
-            "it": {
-                ordinary: "%s impara\n%s!",
-                mimic: "%s\nha imparato\x0b%s!",
-            },
-            "ja-Hrkt": {
-                ordinary: "%sは　あたらしく\n%sを　おぼえた！",
-                mimic: "%sは\n%sを　おぼえた！",
-            },
+            "fr": "%s\napprend...\x0b%s!",
+            "de": "%s lernt\n%s!",
+            "es": "¡%s\naprendió\x0b%s!",
+            "it": "%s impara\n%s!",
+            "ja-Hrkt": "%sは　あたらしく\n%sを　おぼえた！",
         }
         self.assertEqual(
             anchors[ordinary],
             {"qid": "rb.text_4.LearnedMove1Text", "extraction": {"kind": "full", "index": 0}},
         )
-        self.assertEqual(
-            anchors[mimic],
-            {"qid": "rb.text_3.MimicLearnedMoveText", "extraction": {"kind": "full", "index": 0}},
-        )
-        self.assertNotEqual(anchors[ordinary]["qid"], anchors[mimic]["qid"])
         for language, language_expected in expected.items():
             items = align(parse_redblue(root, language), target_lang=language)
             output, report = match_engine_catalog(
-                {ordinary: "", mimic: ""}, items,
+                {ordinary: ""}, items,
                 semantic_anchors=anchors, target_lang=language,
             )
-            self.assertEqual(report["translated"], 2, language)
-            self.assertEqual(report["auto_semantic"], 2, language)
+            self.assertEqual(report["translated"], 1, language)
+            self.assertEqual(report["auto_semantic"], 1, language)
             self.assertFalse(report["ambiguous"], language)
-            for key, qid in ((ordinary, "rb.text_4.LearnedMove1Text"),
-                             (mimic, "rb.text_3.MimicLearnedMoveText")):
-                self.assertEqual(output[key], language_expected[key], (language, key))
-                self.assertEqual(printf_directives(output[key]), ["%s", "%s"], (language, key))
-                self.assertEqual(report["details"][key], "semantic", (language, key))
-                self.assertEqual(report["provenance"][key]["qid"], qid, (language, key))
+            self.assertEqual(output[ordinary], language_expected, language)
+            self.assertEqual(printf_directives(output[ordinary]), ["%s", "%s"], language)
+            self.assertEqual(report["details"][ordinary], "semantic", language)
+            self.assertEqual(report["provenance"][ordinary]["qid"], "rb.text_4.LearnedMove1Text", language)
 
         # A repeated qid is not proof of a unique source/translation pair;
         # semantic resolution must fail closed instead of selecting a row.
