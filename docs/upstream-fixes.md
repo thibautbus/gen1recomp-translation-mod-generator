@@ -723,6 +723,27 @@ a matter of wiring a few missed callsites.
   word (`MORN`/`DAY`/`NITE`), and `o'clock`/`min.` suffixes are real and
   translated, but this separate AM/PM marker on the exact same lines was
   never touched by it and stays in English on every non-English build.
+- **Gold in-game Options menu (new, from gen1recomp#1642):**
+  `src/ui/gen2/OptionsMenu.lua` has zero `Strings()` calls anywhere in the
+  file -- confirmed directly against a real v0.2.19 checkout. Every row
+  label (`TEXT SPEED`, `BATTLE SCENE`, `BATTLE STYLE`, `SOUND`, `PRINT`,
+  `MENU ACCOUNT`, `FRAME`, `CONTROLS`, `MUSIC VOL`, `SFX VOL`, `MUSIC
+  FILTER`, `GAME SPEED`, `ZOOM`, `VOID FILL`, `TILT`, `COLOR`, `GBC FX`,
+  `VIDEO MODE`, `SCREEN POS`, `TOUCH PAD`, `TOUCH LAYOUT`, `VIBRATION`, and
+  each row's own value strings like `FAST`/`MID`/`SLOW`, `ON`/`OFF`,
+  `SHIFT`/`SET`, `MONO`/`STEREO`) is a plain Lua table field, drawn with
+  `Chrome.print(row.label, 2, labelY)` -- no hook to reach any of it from a
+  mod. This is the screen behind the issue's "the options... phrase" report;
+  the generated mod has nothing to translate here because there is nothing
+  to hook.
+- **Gold naming/keyboard screen (new, from gen1recomp#1642):**
+  `src/ui/gen2/NamingScreen.lua` also has zero `Strings()` calls. The
+  prompts (`YOUR NAME?`, `RIVAL'S NAME?`, `MOTHER'S NAME?`, `BOX NAME?`,
+  `NICKNAME?`) and the on-screen keyboard's own control labels (`UPPER`/
+  `lower`/`DEL`/`END`/`CASE`) are all raw literals, drawn directly
+  (`Chrome.printThrough("NICKNAME?", 5, 4, pal)` and similar) with no
+  public hook. Matches the issue's "the writing custom game is empty"
+  report (the character/nickname naming screen).
 - **Received-item/system rewards:** confirmed with a real in-game boot (fr):
   both cases still show the empty name, and both are genuine engine-side
   name-resolution gaps, not a missing translation -- the surrounding "reçoit"
