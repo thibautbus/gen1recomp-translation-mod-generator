@@ -723,52 +723,60 @@ a matter of wiring a few missed callsites.
   word (`MORN`/`DAY`/`NITE`), and `o'clock`/`min.` suffixes are real and
   translated, but this separate AM/PM marker on the exact same lines was
   never touched by it and stays in English on every non-English build.
-- **Gold in-game Options menu (new, from gen1recomp#1642):**
-  `src/ui/gen2/OptionsMenu.lua` has zero `Strings()` calls anywhere in the
-  file -- confirmed directly against a real v0.2.19 checkout. Every row
-  label (`TEXT SPEED`, `BATTLE SCENE`, `BATTLE STYLE`, `SOUND`, `PRINT`,
-  `MENU ACCOUNT`, `FRAME`, `CONTROLS`, `MUSIC VOL`, `SFX VOL`, `MUSIC
-  FILTER`, `GAME SPEED`, `ZOOM`, `VOID FILL`, `TILT`, `COLOR`, `GBC FX`,
-  `VIDEO MODE`, `SCREEN POS`, `TOUCH PAD`, `TOUCH LAYOUT`, `VIBRATION`, and
-  each row's own value strings like `FAST`/`MID`/`SLOW`, `ON`/`OFF`,
-  `SHIFT`/`SET`, `MONO`/`STEREO`) is a plain Lua table field, drawn with
-  `Chrome.print(row.label, 2, labelY)` -- no hook to reach any of it from a
-  mod. This is the screen behind the issue's "the options... phrase" report;
-  the generated mod has nothing to translate here because there is nothing
-  to hook.
-- **Gold naming/keyboard screen (new, from gen1recomp#1642):**
-  `src/ui/gen2/NamingScreen.lua` also has zero `Strings()` calls. The
-  prompts (`YOUR NAME?`, `RIVAL'S NAME?`, `MOTHER'S NAME?`, `BOX NAME?`,
-  `NICKNAME?`) and the on-screen keyboard's own control labels (`UPPER`/
-  `lower`/`DEL`/`END`/`CASE`) are all raw literals, drawn directly
-  (`Chrome.printThrough("NICKNAME?", 5, 4, pal)` and similar) with no
-  public hook. Matches the issue's "the writing custom game is empty"
-  report (the character/nickname naming screen).
-- **Received-item/system rewards:** confirmed with a real in-game boot (fr):
-  both cases still show the empty name, and both are genuine engine-side
-  name-resolution gaps, not a missing translation -- the surrounding "reçoit"
-  text is correctly translated, only the substituted name is empty.
-  - The Pokégear ("reçoit .", `gs.std_text.ReceivedItemText`, period
-    terminator): this message is built by the `verbosegiveitem` opcode
-    (`script/gen2/Vm.lua`), which sources the name from `self.getItemNameFn`.
-    POKéGEAR does not appear anywhere in the corpus's 256-entry item table
-    (`gs.names.ItemNames.*`) -- it isn't a normal bag item -- and
-    `getItemName()` (`world/gen2/World.lua`) is written to fall back to an
-    `"ITEM<n>"` placeholder for an unknown item, not an empty string, so
-    either a second `getItemName` registration exists elsewhere with a
-    different (buggier) fallback, or this specific grant resolves to a
-    genuinely empty name upstream.
-  - Cyndaquil/Héricendre ("reçoit !", `gs.ElmsLab.ReceivedStarterText`, a
-    different row using `wStringBuffer3`, not `wStringBuffer4`): the
-    `givepoke` opcode (`script/gen2/Vm.lua`) adds the Pokémon to the party
-    but does not itself write any name buffer; whatever separate ROM script
-    instruction is supposed to populate `wStringBuffer3` beforehand
-    (elsewhere in the engine this is a `nameMon`-style special, see
-    `script/gen2/Specials.lua`) is either missing or broken for this
-    specific script.
-  Neither is fixable from this translation mod without reaching into private
-  engine internals; both are candidates for an upstream gen1recomp bug
-  report.
+- **Gold in-game Options menu (from gen1recomp#1642, fixed upstream, not yet
+  merged):** `src/ui/gen2/OptionsMenu.lua` had zero `Strings()` calls
+  anywhere in the file -- confirmed directly against a real v0.2.19
+  checkout. Every row label (`TEXT SPEED`, `BATTLE SCENE`, `BATTLE STYLE`,
+  `SOUND`, `PRINT`, `MENU ACCOUNT`, `FRAME`, `CONTROLS`, `MUSIC VOL`, `SFX
+  VOL`, `MUSIC FILTER`, `GAME SPEED`, `ZOOM`, `VOID FILL`, `TILT`, `COLOR`,
+  `GBC FX`, `VIDEO MODE`, `SCREEN POS`, `TOUCH PAD`, `TOUCH LAYOUT`,
+  `VIBRATION`, and each row's own value strings like `FAST`/`MID`/`SLOW`,
+  `ON`/`OFF`, `SHIFT`/`SET`, `MONO`/`STEREO`) was a plain Lua table field,
+  drawn with `Chrome.print(row.label, 2, labelY)` -- no hook for a mod to
+  reach any of it. This was the screen behind the issue's "the options...
+  phrase" report. Fixed upstream on gen1recomp branch
+  `fix/translate-gold-options-menu` (labels and cart-original values wrapped
+  in `Strings()`/`Strings.source()`, mirroring the Gen 1 OPTION screen's own
+  pattern); not yet merged to `main` as of this writing, so any build made
+  from `main` still shows this screen in English.
+- **Gold naming/keyboard screen (from gen1recomp#1642, fixed upstream, not
+  yet merged):** `src/ui/gen2/NamingScreen.lua` also had zero `Strings()`
+  calls. The prompts (`YOUR NAME?`, `RIVAL'S NAME?`, `MOTHER'S NAME?`, `BOX
+  NAME?`, `NICKNAME?`), the on-screen keyboard's own letters, and the
+  `lower`/`UPPER`/`DEL`/`END` bottom row were all raw literals, drawn
+  directly (`Chrome.printThrough("NICKNAME?", 5, 4, pal)` and similar) with
+  no public hook. Matches the issue's "the writing custom game is empty"
+  report (the character/nickname naming screen). Fixed upstream on
+  gen1recomp branch `fix/translate-gold-naming-screen`, mirroring the Gen 1
+  naming screen's own `Strings(cell)`-per-keyboard-cell pattern; not yet
+  merged to `main`.
+
+  A second, more severe bug turned up investigating this same report: with
+  a translation mod's TTF font active, this screen's on-screen keyboard
+  rendered *no text at all* (only a dashed placeholder line), independently
+  of the `Strings()` gap above -- see "Engine bugs surfaced by TTF mode"
+  below, which covers the real root cause and its fix.
+- **Received-item/system rewards (from gen1recomp#1642, fixed upstream, not
+  yet merged):** confirmed with a real in-game boot (fr): both the Pokégear
+  grant ("reçoit .", `gs.std_text.ReceivedItemText`) and the Cyndaquil/
+  Héricendre starter grant ("reçoit !", `gs.ElmsLab.ReceivedStarterText`)
+  showed an empty substituted name, with the surrounding sentence correctly
+  translated. Root cause, confirmed by reading `src/world/gen2/World.lua`
+  directly: `getMonName`/`getItemName` tested the extracted `def.name` with
+  a bare Lua truth test (`if def.name then return def.name end`) -- an empty
+  string is truthy in Lua, so a row whose ROM-extracted name decoded to
+  nothing (a dummy `ItemNames`/`PokemonNames` slot, its terminator sitting
+  right at the read address) won against the `id`/`"ITEM<n>"` placeholder
+  the function's own fallback exists for, and printed as a blank name
+  instead. Checked against the real `pret/pokegold` disassembly for the
+  starter grant specifically (`maps/ElmsLab.asm`): the script does call
+  `getmonname STRING_BUFFER_3, CYNDAQUIL` immediately before
+  `writetext ReceivedStarterText`, and this port's VM dispatch for that
+  exact sequence is already covered by a passing test
+  (`tests/gen2_vm_test.lua`) -- so the mechanism itself is sound, and the
+  blank name is the same truthiness bug, not a missing script instruction.
+  Fixed upstream on gen1recomp branch `fix/gold-empty-item-mon-name-fallback`
+  (both functions now require `def.name ~= ""`); not yet merged to `main`.
 - **Item descriptions and summary/stat labels:** expose the bag item
   descriptions and the remaining Pokémon summary labels (`Level up`, `EXP
   Points`, `Type`, `Item`, `Move`, `OT`, `Attack`, `Defense`, and related
@@ -780,11 +788,12 @@ upstream hooks exist; they are deliberately not a private-class monkey patch.
 This keeps the release manifest permission-free and makes the remaining work
 visible to the engine project.
 
-## Engine bugs surfaced by TTF mode (not translation gaps) -- fixed upstream
+## Engine bugs surfaced by TTF mode (not translation gaps)
 
-Two unrelated gen1recomp bugs, both only visible once a mod activates TTF
+Three unrelated gen1recomp bugs, all only visible once a mod activates TTF
 text mode (`mod.content.font:register("ttf", ...)`), translated or not --
-neither fixable from a mod, since neither had a hook into the broken code.
+none fixable from a mod, since none had a hook into the broken code. Two are
+merged upstream already; the third has a fix ready but not yet merged.
 
 - **ManagerState white-on-white:** reported by a user (fr, Fusion Pixel
   profile): the in-game Mod Manager screen (`src/mods/ManagerState.lua`)
@@ -795,8 +804,9 @@ neither fixable from a mod, since neither had a hook into the broken code.
   reset to black afterward, unlike every other screen that calls
   `Font.drawBox` (`TitleState.lua`, `StartMenu.lua`, `HallOfFame.lua`,
   `BoxMenu.lua`, `PartyMenu.lua`). Fixed on gen1recomp
-  `fix/manager-state-draw-color` (merged, PR #1426): both call sites now
-  reset to black right after `Font.drawBox`, matching every other screen.
+  `fix/manager-state-draw-color` (merged, PR #1426, `b20b1370`): both call
+  sites now reset to black right after `Font.drawBox`, matching every other
+  screen.
 - **Fragmented glyphs on Android:** a mod's custom TTF font rendered
   correctly on Windows but came out fragmented (strokes dropped, doubled,
   or interrupted) on Android, while ROM tile glyphs stayed sharp. Root
@@ -809,6 +819,29 @@ neither fixable from a mod, since neither had a hook into the broken code.
   existing ROM-tile fallback on load failure is unchanged. Verified with a
   translation mod on an Android emulator: glyphs render cleanly after the
   fix.
+- **Naming screen, Diploma and Pokegear text going blank:** reported and
+  reproduced against a real Gold build running this project's fr mod: with
+  the TTF font active, the naming/keyboard screen's on-screen keyboard
+  rendered no text at all (only a dashed placeholder line where the letters
+  should be); without the mod (vanilla, tile font), the same screen
+  rendered correctly. Traced to `Chrome.printThrough`
+  (`src/ui/gen2/Chrome.lua`), the shared routine every non-white-background
+  Gold screen (naming screen, Diploma, Pokegear, Credits) draws its text
+  through: it runs every glyph through a shader that recovers a shade from
+  the RED CHANNEL of an already-rasterized 2bpp tile pixel
+  (`src/render/GbcPalette.lua`'s `SHADER_SOURCE`), which assumes the
+  texture underneath is one of the four flat GB shades. A TTF glyph is not:
+  LÖVE's font rasterizer stores glyph coverage as alpha over a plain white
+  texture and lets the current tint carry the ink colour, so that same
+  red-channel read always comes back 1.0 -- shade 0 -- painting every TTF
+  character the exact colour of the paper rect `printThrough` had just
+  drawn behind it: invisible. Gen 1 has no such shader, which is why the
+  same mod draws fine there. Fixed upstream on gen1recomp branch
+  `fix/gold-ttf-printthrough-invisible-text` (a TTF glyph skips the shader
+  entirely and is tinted with the palette's own ink colour directly,
+  switched per glyph so a string that mixes tile-based ligatures like
+  `<PK>`/`<MN>` with TTF-drawn letters still gets both right); not yet
+  merged to `main`.
 
 ## Build tooling bugs in `tools/modkit.py` on Windows (not translation gaps)
 
