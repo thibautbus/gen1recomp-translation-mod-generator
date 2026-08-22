@@ -375,26 +375,65 @@ old HUD strings were removed from all five languages' `yellow_engine.json`
 files once confirmed dead by the same `complete_engine_keys` check used for
 the RBY overrides cleanup above.
 
-**Same audit, applied to semantic anchors too:** the same PR's
-`_ItemUseBallText00` merge (see "Fixed upstream" above) also orphaned
-`config/rby/semantic_anchors.json`/`semantic_anchor_decisions.json`'s
-`"It dodged the\nthrown BALL!"` entry, caught by
-`tests/test_multilingual.py`'s `test_rby_anchor_callsites_are_unique_and_contextually_eligible`
-once `.cache/dependencies/gen1recomp` refreshed to the new pin (that test's
-now-stale expectation was removed). Semantic anchors have no equivalent of
-`pipeline/mod.py`'s `stale_overrides` build-time check, so an orphaned one
-doesn't crash a build -- it just silently stops matching anything. Running
-the same "is this key still a real callsite" audit across the *entire*
-anchor/decision config (not just this one test's narrow probe list) found
-**15 anchor keys** (10 of them also in `semantic_anchor_decisions.json`) in
-the same orphaned state, most plausibly other multi-line messages some
-other PR in the same huge version range also routed through `romText()`.
-Left uninvestigated here rather than bulk-edited: unlike the engine.json
-overrides, there's no hard validation check confirming a correct edit, and
-several of these anchors extract per-language target spans from specific
-qids, which is exactly the kind of decision this project's own convention
-insists on re-verifying against a real build before touching, not assuming
-from a key-existence check alone.
+**Same audit, applied to semantic anchors too -- now completed.** The same
+PR's `_ItemUseBallText00` merge (see "Fixed upstream" above) also orphaned
+`config/rby/semantic_anchor_decisions.json`'s `"It dodged the\nthrown BALL!"`
+entry, caught by `tests/test_multilingual.py`'s
+`test_rby_anchor_callsites_are_unique_and_contextually_eligible` once
+`.cache/dependencies/gen1recomp` refreshed to the new pin. Semantic anchors
+have no equivalent of `pipeline/mod.py`'s `stale_overrides` build-time
+check, so an orphaned one doesn't crash a build -- it just silently stops
+matching anything. Running the same "is this key still a real callsite"
+audit across the entire anchor/decision config (not just this one test's
+narrow probe list) initially found 15 anchor keys in that state; checking
+each one against *both* the old (v0.1.91) and new (v0.2.19) checkouts,
+rather than the new one alone, separated them into two very different
+buckets:
+
+- **12 were already unreachable in v0.1.91 too** -- not a regression from
+  this bump at all, and unrelated to it. Most are `romText()` fallback
+  literals (e.g. `_GameCornerCoinCaseText`'s `"A COIN CASE is\nrequired!"`)
+  that were never going to reach `pipeline.engine_scope.iter_callsites` in
+  the first place: `iter_romtext_fallback_callsites` only reports a fixed,
+  audited allowlist of 3 fallback strings (see its own docstring), on the
+  theory that every other `romText()` fallback resolves its real ROM label
+  and is covered by the dialogue catalog instead. These 12 are pre-existing
+  config debt, left untouched here -- a legitimate target for a future,
+  separate pass, but out of scope for this pin bump.
+- **3 were genuinely alive in v0.1.91 and went dead in v0.2.19.** All three
+  turned out to be superseded by a real upstream improvement, not broken by
+  one -- but one of them was hiding an actual bug:
+  - `"It dodged the\nthrown BALL!"` (`rb.text_6.ItemUseBallText00`): merged
+    into a combined `romText()` call by PR #1559 (see "Fixed upstream"
+    above). The real ROM label now supplies the translation directly, so
+    the anchor decision was retired (removed from
+    `semantic_anchor_decisions.json`), not repaired.
+  - `"Congratulations!\nYour %s\nevolved into\n%s!"` and the related
+    `"What?\n%s is\nevolving!\fCongratulations!..."` composite (the latter
+    was actually already dead pre-bump, but shares the same fix and was
+    retired alongside it): `src/pokemon/Evolution.lua` and
+    `src/ui/EvolutionState.lua` now call
+    `romText(game.data, "_IsEvolvingText", ...)` and
+    `romText(game.data, "_EvolvedText", ...)` directly, so both anchor
+    decisions -- and the test exercising their composition logic
+    (`test_evolution_messages_compose_original_flow`) -- were retired.
+  - `"<Diploma>"` (`rb.diploma.DiplomaText`): **this one was a real,
+    user-visible regression, not a beneficial retirement.** The engine
+    literal itself changed, unrelated to any `romText()` migration:
+    `src/ui/Diploma.lua`'s call went from `Strings("<Diploma>")` (v0.1.91,
+    line 32) to `Strings("Diploma")` (v0.2.19, line 113) -- the angle
+    brackets were simply dropped from the source string. No other matching
+    mechanism (auto-exact, structural, or the corpus's own
+    `\x70`-wrapped text) can bridge that gap on its own, so a real build
+    against the bumped pin would have silently shown English "Diploma"
+    instead of "Diplôme" (confirmed directly: replaying the same corpus
+    row through `match_engine_catalog` returns `"Diplôme"`/`semantic` under
+    the old key and empty/`unmatched` under the new one). Fixed by
+    re-keying the decision from `"<Diploma>"` to `"Diploma"` and correcting
+    its stale `Diploma.lua:32` callsite citation to `:113`; the now-redundant
+    `source_aliases: ["Diploma"]` (identical to the corrected key) was
+    dropped. `test_rby_anchor_callsites_are_unique_and_contextually_eligible`
+    now also asserts `"Diploma"` stays a real, eligible RBY callsite.
 
 ### Required upstream capabilities
 
