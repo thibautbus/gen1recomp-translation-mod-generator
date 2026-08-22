@@ -10,11 +10,11 @@
       "provenance": "Corpus-backed from poke-corpus y.text_3.PikachuUnhappyText; the engine key (src/ui/BoxMenu.lua release-Pikachu branch, Yellow-only) renders the released Pikachu name via a %s printf, so the corpus {RAM:wNameBuffer} token is adapted to the printf contract."
     },
     "HALL OF FAME No": {
-      "override": "HALL DE FAMA Nº   ",
+      "override": "HALL DE FAMA Nº",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "Corpus-backed from poke-corpus y.league_pc.HallOfFameNoText; src/ui/LeaguePC.lua draws this label and the team-index number as two separate Font.draw calls at fixed columns (label at column 1, number at column 16), so the corpus row's own padding is kept verbatim rather than re-measured for gen1recomp's fixed layout."
+      "provenance": "Corpus-backed from poke-corpus y.league_pc.HallOfFameNoText; src/ui/LeaguePC.lua draws this label and the team-index number as two separate Font.draw calls at fixed columns (label at column 1, number at column 16), so the corpus row's own padding is kept verbatim rather than re-measured for gen1recomp's fixed layout. Trailing corpus padding trimmed: the raw row is padded to a wider field than gen1recomp's 15-tile label column actually has room for before the fixed-column team-index number (src/ui/LeaguePC.lua:107-108), unlike German's exact-fit row; trimming only removes trailing blanks, the visible label text is unchanged."
     },
     "HP Left": {
       "override": "PS rest.",

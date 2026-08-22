@@ -10,11 +10,11 @@
       "provenance": "Corpus-backed from poke-corpus y.text_3.PikachuUnhappyText; the engine key (src/ui/BoxMenu.lua release-Pikachu branch, Yellow-only) renders the released Pikachu name via a %s printf, so the corpus {RAM:wNameBuffer} token is adapted to the printf contract."
     },
     "HALL OF FAME No": {
-      "override": "だい　　　かい　でんどういり",
+      "override": "でんどういり No.",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "Corpus-backed from poke-corpus y.league_pc.HallOfFameNoText; src/ui/LeaguePC.lua draws this label and the team-index number as two separate Font.draw calls at fixed columns (label at column 1, number at column 16), so the corpus row's own padding is kept verbatim rather than re-measured for gen1recomp's fixed layout."
+      "provenance": "Corpus-backed from poke-corpus y.league_pc.HallOfFameNoText, but not used verbatim: the real corpus text (\"だい　　　かい　でんどういり\", \"the Nth Hall of Fame entry\") puts the counter number in the middle of the phrase (right after だい), which src/ui/LeaguePC.lua's fixed two-column layout (label at column 1, team-index number at column 16, Font.draw(Strings(...), 1*8, 15*8) then Font.draw((\"%3d\"):format(...), 16*8, 15*8)) cannot accommodate -- the number can only ever render after the label text, never inside it. Compromise: label the screen \"でんどういり No.\" (Hall of Fame No.), using the Latin \"No.\" already common in Japanese game UI, so the number at column 16 reads naturally after it instead of contradicting the corpus's own word order. Not the real ROM phrasing; a real fix needs gen1recomp to draw this label+number as one combined, language-aware string instead of two fixed-column Font.draw calls."
     },
     "HP Left": {
       "override": "のこりHP",
