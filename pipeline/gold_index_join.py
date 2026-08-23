@@ -66,7 +66,7 @@ def join_by_index(
         if not fr.strip():
             stats["no_corpus_entry"] += 1
             continue
-        translation = corpus_to_engine(fr)
+        translation = corpus_to_engine(fr, bare_dynamic_tokens=True)
         if not translation:
             stats["no_corpus_entry"] += 1
             continue
@@ -97,7 +97,7 @@ def _dex_entries_by_species_name(
         elif len(parts) != 3 or not label.endswith(_POKEDEX_ENTRY_SUFFIX):
             continue
         name = label[: -len(_POKEDEX_ENTRY_SUFFIX)]
-        translation = corpus_to_engine(fr)
+        translation = corpus_to_engine(fr, bare_dynamic_tokens=True)
         if translation:
             key = normalise(name)
             if key in by_name and by_name[key] != translation:
@@ -136,7 +136,7 @@ def join_landmarks(
         if len(parts) != 3 or parts[1] != "landmarks" or not parts[2].endswith("Name"):
             continue
         name = parts[2][: -len("Name")]
-        translation = corpus_to_engine(fr)
+        translation = corpus_to_engine(fr, bare_dynamic_tokens=True)
         if translation:
             key = normalise(name)
             if key in by_name and by_name[key] != translation:

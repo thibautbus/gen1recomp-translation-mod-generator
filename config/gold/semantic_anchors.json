@@ -69,7 +69,7 @@
       "separators": [],
       "placeholders": {
         "{ENEMY}": {"printf": 0},
-        "{RAM:wEnemyMonNickname}": {"printf": 1},
+        "{STRBUF}": {"printf": 1},
         "{PLAYER}": {"printf": 2}
       }
     },
@@ -100,7 +100,7 @@
     "This Bug-Catching\nContest winner is\u000c%s,\nwho caught a\n%s!": {
       "qid": "gs.common_2.ContestJudging_FirstPlaceText",
       "extraction": {"kind": "full"},
-      "source_aliases": ["This Bug-Catching\nContest winner is…\u000c{RAM:wBugContestWinnerName},\nwho caught a\u000b{RAM:wStringBuffer1}!"]
+      "source_aliases": ["This Bug-Catching\nContest winner is…\u000c{STRBUF},\nwho caught a\u000b{STRBUF}!"]
     },
     "This certifies": {"qid": "gs.diploma.PlaceDiplomaOnScreen.Certification", "extraction": {"kind": "segment", "index": 0}},
     "What?\n%s?": {

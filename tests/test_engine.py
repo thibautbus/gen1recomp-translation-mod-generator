@@ -39,6 +39,151 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(report["details"]["%s got off\nthe BICYCLE."], "semantic")
         self.assertEqual(report["provenance"]["%s got off\nthe BICYCLE."]["qids"], ["off1", "off2", "bike"])
 
+    def test_gold_semantic_anchor_bares_a_named_ram_buffer(self):
+        # Real bug, confirmed against a real Gold build: pointer 40:4d90's
+        # "{PLAYER} received\n{STRBUF}." sibling key "{PLAYER} found\n{STRBUF}!"
+        # (qid gs.common_2.FoundItemText) shipped as
+        # "{PLAYER} trouve\n{RAM:wStringBuffer3}!" in the generated French
+        # mod's strings.lua -- a token TextBox.lua's RAM handler does not
+        # recognise, so the found item's name silently rendered as nothing.
+        # match_gold_engine_strings tags every corpus row `game="gold"`
+        # (pipeline/gold_engine.py:_corpus_records); this drives
+        # match_engine_catalog the same way, with the real corpus source
+        # (poke-corpus/corpus/GoldSilver/{en,fr}_msg.txt line 4727) and the
+        # real anchor (config/gold/semantic_anchors.json).
+        source = "{PLAYER} found\n{STRBUF}!"
+        qid = "gs.common_2.FoundItemText"
+        rows = [
+            CorpusRecord(qid, "en", "{text_start}<PLAYER> found<LINE>@{text_ram wStringBuffer3}{text_start}!<DONE>", "gold"),
+            CorpusRecord(qid, "fr", "{text_start}<PLAYER> trouve<LINE>@{text_ram wStringBuffer3}{text_start}!<DONE>", "gold"),
+        ]
+        anchor = {"qid": qid, "extraction": {"kind": "full"}}
+        output, report = match_engine_catalog(
+            {source: ""}, rows, semantic_anchors={source: anchor}, target_lang="fr",
+        )
+        self.assertEqual(output[source], "{PLAYER} trouve\n{STRBUF}!")
+        self.assertEqual(report["details"][source], "semantic")
+
+    def test_real_gold_semantic_anchor_config_matches_the_bare_form(self):
+        # Real regression caught by an independent review of the fix above:
+        # config/gold/semantic_anchors.json's ONE composite (multi-placeholder)
+        # Gold anchor, gs.battle.BattleText_EnemyIsAboutToUseWillPlayerChangeMon,
+        # declared its RAM placeholder as the OLD named engine form
+        # ("{RAM:wEnemyMonNickname}") -- what corpus_to_engine used to produce
+        # from the corpus's "{text_ram wEnemyMonNickname}" before this fix.
+        # With bare_dynamic_tokens now baring the corpus side to "{STRBUF}",
+        # the declared placeholder no longer matched what the source actually
+        # produced, and resolve_parts failed the whole anchor closed
+        # (declared_dynamic != source_dynamic) -- reproduced directly against
+        # the checked-in config before it was corrected alongside this test.
+        # Loads the REAL file, not a hand-built fixture, so a future edit that
+        # reintroduces a named placeholder for Gold fails this test too.
+        source = "%s\nis about to use\x0b%s.\x0cWill %s\nchange POKéMON?"
+        qid = "gs.battle.BattleText_EnemyIsAboutToUseWillPlayerChangeMon"
+        rows = [
+            CorpusRecord(qid, "en",
+                "{text_start}<ENEMY><LINE>is about to use<CONT>@{text_ram wEnemyMonNickname}"
+                "{text_start}.<PARA>Will <PLAYER><LINE>change #MON?<DONE>", "gold"),
+            CorpusRecord(qid, "fr",
+                "{text_start}<ENEMY><LINE>va utiliser<CONT>@{text_ram wEnemyMonNickname}"
+                "{text_start}.<PARA><PLAYER> va-t-il<LINE>changer de PKMN?<DONE>", "gold"),
+        ]
+        anchors_path = Path(__file__).resolve().parents[1] / "config" / "gold" / "semantic_anchors.json"
+        output, report = match_engine_catalog(
+            {source: ""}, rows, semantic_anchors=anchors_path, target_lang="fr",
+        )
+        self.assertEqual(output[source], "%s\nva utiliser\x0b%s.\x0c%s va-t-il\nchanger de PKMN?")
+        self.assertEqual(report["details"][source], "semantic")
+
+    def test_real_gold_source_alias_matches_the_bare_form(self):
+        # Real regression caught by a THIRD independent review: this repo's
+        # only other Gold semantic-anchor entry naming a RAM buffer,
+        # gs.common_2.ContestJudging_FirstPlaceText's source_aliases, had the
+        # exact same stale-named-token bug as the anchor above, just missed
+        # in the first pass because it lives in a "source_aliases" list
+        # rather than a "placeholders" dict. Reproduced directly: with the
+        # alias still reading "{RAM:wBugContestWinnerName}"/"{RAM:wStringBuffer1}",
+        # this exact setup returned "" (method "semantic_unresolved");
+        # corrected to the bare "{STRBUF}" form.
+        qid = "gs.common_2.ContestJudging_FirstPlaceText"
+        rows = [
+            CorpusRecord(qid, "en",
+                "{text_start}This Bug-Catching<LINE>Contest winner is@{text_pause}{text_start}"
+                "…<PARA>@{text_ram wBugContestWinnerName}{text_start},<LINE>who caught a<CONT>"
+                "@{text_ram wStringBuffer1}{text_start}!@@", "gold"),
+            CorpusRecord(qid, "fr",
+                "{text_start}Le gagnant du<LINE>concours des<CONT>insectes est@{text_pause}"
+                "{text_start}...<PARA>@{text_ram wBugContestWinnerName}{text_start},<LINE>"
+                "qui a capturé un<CONT>@{text_ram wStringBuffer1}{text_start}!@@", "gold"),
+        ]
+        source = "This Bug-Catching\nContest winner is\x0c%s,\nwho caught a\n%s!"
+        anchors_path = Path(__file__).resolve().parents[1] / "config" / "gold" / "semantic_anchors.json"
+        output, report = match_engine_catalog(
+            {source: ""}, rows, semantic_anchors=anchors_path, target_lang="fr",
+        )
+        self.assertEqual(
+            output[source],
+            "Le gagnant du\nconcours des\x0binsectes est...\x0c%s,\nqui a capturé un\x0b%s!",
+        )
+        self.assertEqual(report["details"][source], "semantic")
+
+    def test_gold_config_never_names_a_ram_or_num_buffer(self):
+        # General guard, added after TWO separate stale-named-token
+        # regressions in this same config file were each only caught by a
+        # dedicated end-to-end test (one in a "placeholders" dict, one in a
+        # "source_aliases" list): Gold's own extracted source text is always
+        # bare (RomExtractorGen2.lua:decodeGen2Text never names the buffer --
+        # see corpus_to_engine's bare_dynamic_tokens docstring), so ANY
+        # string anywhere in config/gold/*.json naming one
+        # ("{RAM:...}"/"{NUM:...}") can never match again and silently drops
+        # that entry -- regardless of which JSON key or file holds it. Walks
+        # every file's whole structure rather than special-casing today's
+        # known field names, so a new field (or a new gold/*.json file)
+        # introduced later is covered too.
+        import json
+        import re
+
+        gold_config_dir = Path(__file__).resolve().parents[1] / "config" / "gold"
+        named_token = re.compile(r"\{(?:RAM|NUM):")
+
+        def walk(value, where):
+            if isinstance(value, str):
+                self.assertNotRegex(value, named_token, f"stale named token at {where}: {value!r}")
+            elif isinstance(value, dict):
+                for key, sub in value.items():
+                    walk(key, f"{where}[key]")
+                    walk(sub, f"{where}[{key!r}]")
+            elif isinstance(value, list):
+                for index, sub in enumerate(value):
+                    walk(sub, f"{where}[{index}]")
+
+        json_paths = sorted(gold_config_dir.glob("*.json"))
+        self.assertTrue(json_paths, f"no config JSON found under {gold_config_dir}")
+        for path in json_paths:
+            walk(json.loads(path.read_text(encoding="utf-8")), path.name)
+
+    def test_rby_semantic_anchor_still_names_its_ram_buffer(self):
+        # Regression: the Gold opt-in above must not change RBY's own
+        # named-buffer behavior (game left at Alignment's default/"both").
+        source = "%s gained\nthe %s!"
+        qid_a, qid_b = "rb.a", "rb.b"
+        rows = [
+            Alignment(qid_a, "both", CorpusRecord(qid_a, "en", "{text_ram wNameBuffer}{text_start} gained@"),
+                      CorpusRecord(qid_a, "fr", "{text_ram wNameBuffer}{text_start} gagne@"), "qid"),
+            Alignment(qid_b, "both", CorpusRecord(qid_b, "en", "the {text_ram wStringBuffer}{text_start}!<DONE>"),
+                      CorpusRecord(qid_b, "fr", "le {text_ram wStringBuffer}{text_start}!<DONE>"), "qid"),
+        ]
+        anchor = {"parts": [
+            {"qid": qid_a, "extraction": {"kind": "full", "preserve_edges": True}},
+            {"qid": qid_b, "extraction": {"kind": "full", "preserve_edges": True}},
+        ], "separators": ["\n"], "placeholders": {
+            "{RAM:wNameBuffer}": {"printf": 0},
+            "{RAM:wStringBuffer}": {"printf": 1},
+        }}
+        output, _ = match_engine_catalog({source: ""}, rows,
+            semantic_anchors={source: anchor}, target_lang="fr")
+        self.assertEqual(output[source], "%s gagne\nle %s!")
+
     def test_multi_qid_parts_typed_printf_mapping_restores_numeric_format(self):
         source = "%s gained\n%03d EXP. Points!"
         qid_a, qid_b = "rb.test.Gained", "rb.test.ExpPoints"

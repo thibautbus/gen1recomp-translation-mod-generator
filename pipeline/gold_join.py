@@ -111,12 +111,21 @@ def load_gold_placeholder_decisions(
 
 
 def _token_aware_key(value: str) -> tuple[tuple[str, str], ...]:
-    """Normalize prose while preserving every command token exactly.
+    """Normalize prose while preserving every command token's SHIPPED spelling.
 
     ``gold_text.normalise`` intentionally erases braces and punctuation for
     the English lookup.  That is unsafe for ambiguity resolution: two corpus
     rows can have the same prose but different sound/RAM commands.  This key
     only folds prose segments and keeps token spelling/ordering visible.
+
+    Each token is put through ``corpus_to_engine(..., bare_dynamic_tokens=True)``
+    -- the same conversion the candidate's translation itself gets before
+    shipping (this module is Gold-only) -- rather than compared by raw corpus
+    spelling.  Without it, two rows differing only in which numbered
+    ``{text_ram wStringBufferN}`` they name looked like a genuine content
+    difference and fell to UNRESOLVED, even though gen1recomp's Gold decoder
+    never names the buffer either way (RomExtractorGen2.lua:decodeGen2Text),
+    so both rows produce the byte-identical bare ``{STRBUF}`` once shipped.
     """
     parts: list[tuple[str, str]] = []
     position = 0
@@ -124,7 +133,7 @@ def _token_aware_key(value: str) -> tuple[tuple[str, str], ...]:
         prose = normalise(value[position:match.start()])
         if prose:
             parts.append(("text", prose))
-        parts.append(("token", match.group(0)))
+        parts.append(("token", corpus_to_engine(match.group(0), bare_dynamic_tokens=True)))
         position = match.end()
     prose = normalise(value[position:])
     if prose:
@@ -178,7 +187,7 @@ def join_gold_pointers(
 
     by_english: dict[str, list[tuple[str, str]]] = defaultdict(list)
     for qid, en, fr in corpus_rows:
-        if fr.strip() and corpus_to_engine(fr):
+        if fr.strip() and corpus_to_engine(fr, bare_dynamic_tokens=True):
             by_english[normalise(en)].append((qid, fr))
 
     entries: list[GoldJoinEntry] = []
@@ -193,7 +202,7 @@ def join_gold_pointers(
         norm = normalise(english)
 
         if pointer in overrides:
-            translation = corpus_to_engine(overrides[pointer])
+            translation = corpus_to_engine(overrides[pointer], bare_dynamic_tokens=True)
             if not overrides[pointer].strip() or not translation:
                 raise ValueError(f"empty Gold pointer override for {pointer!r}")
             entries.append(GoldJoinEntry(pointer, label, english, translation, OVERRIDE))
@@ -210,7 +219,7 @@ def join_gold_pointers(
                 raise ValueError(
                     f"Gold pointer decision source mismatch for {pointer!r}: {qid!r}"
                 )
-            translation = corpus_to_engine(target)
+            translation = corpus_to_engine(target, bare_dynamic_tokens=True)
             if not target.strip() or not translation:
                 raise ValueError(f"empty Gold pointer decision target for {pointer!r}: {qid!r}")
             entries.append(GoldJoinEntry(pointer, label, english, translation, REVIEWED_QID, qid))
@@ -230,14 +239,14 @@ def join_gold_pointers(
 
         if len(candidates) == 1:
             qid, fr = candidates[0]
-            entries.append(GoldJoinEntry(pointer, label, english, corpus_to_engine(fr), UNIQUE, qid))
+            entries.append(GoldJoinEntry(pointer, label, english, corpus_to_engine(fr, bare_dynamic_tokens=True), UNIQUE, qid))
             stats["unique"] += 1
             continue
 
         distinct_french = {_token_aware_key(fr) for _, fr in candidates}
         if len(distinct_french) == 1:
             qid, fr = candidates[0]
-            entries.append(GoldJoinEntry(pointer, label, english, corpus_to_engine(fr), HARMLESS_AMBIGUOUS,
+            entries.append(GoldJoinEntry(pointer, label, english, corpus_to_engine(fr, bare_dynamic_tokens=True), HARMLESS_AMBIGUOUS,
                                           qid, tuple(sorted(c for c, _ in candidates))))
             stats["harmless_ambiguous"] += 1
             continue

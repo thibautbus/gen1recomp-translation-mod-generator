@@ -139,7 +139,7 @@ def convert_tokens(text: str, mapping: Mapping[str, str] | None = None) -> str:
     return TOKEN_RE.sub(lambda m: mapping.get(m.group(0), m.group(0)), text)
 
 
-def corpus_to_engine(text: str) -> str:
+def corpus_to_engine(text: str, *, bare_dynamic_tokens: bool = False) -> str:
     """Convert poke-corpus' pret syntax to Gen1Recomp's extracted text form.
 
     A token missing from _CORPUS_EXPANSIONS passes through unconverted --
@@ -166,9 +166,35 @@ def corpus_to_engine(text: str) -> str:
     without touching _CORPUS_EXPANSIONS.
     A token used in `text`-registry (pointer) content has no such bypass
     and must be mapped here (or in DYNAMIC_TOKEN_RE).
+
+    `bare_dynamic_tokens`: RBY's own extracted text.lua names the RAM
+    variable/decimal source in its token ("{RAM:wBattleMonNick}",
+    "{NUM:wDayCareTotalCost, 2, ...}"), and the engine-side renderer
+    understands those names -- so RBY callers (the default) keep
+    `{text_ram X}`/`{text_decimal X}` as named `{RAM:X}`/`{NUM:X}`. Gold's
+    RomExtractorGen2.lua:decodeGen2Text never names the buffer -- TX_RAM/
+    TX_STRINGBUFFER and TX_DECIMAL always decode to bare "{STRBUF}"/"{NUM}"
+    (the call site fills the value at runtime; the byte stream itself never
+    carries which of the cart's several wStringBufferN/wNameBuffer RAM
+    slots is meant), and TextBox.lua's RAM token handler only recognises
+    the bare "wStringBuffer"/"wNameBuffer" spellings -- not a numbered
+    "wStringBuffer2"/"wStringBuffer4" etc. Gold callers (gold_join.py,
+    gold_index_join.py, gold_mod.py) must pass True so a corpus row that
+    names its buffer (poke-corpus mirrors pret's own asm, which does name
+    it) collapses to the bare form the engine actually renders, instead of
+    shipping an unrecognised named token that silently prints nothing
+    (confirmed against a real Gold build: the Pokegear/starter "receives"
+    text -- gs.std_text.ReceivedItemText / gs.ElmsLab.ReceivedStarterText --
+    rendered with the item/mon name missing, while the engine's own
+    extracted English for the same pointer is the bare
+    "{PLAYER} received\n{STRBUF}.").
     """
-    text = re.sub(r"\{text_ram\s+([^}]+)\}", r"{RAM:\1}", text)
-    text = re.sub(r"\{text_(?:decimal|bcd)\s+([^}]+)\}", r"{NUM:\1}", text)
+    if bare_dynamic_tokens:
+        text = re.sub(r"\{text_ram\s+[^}]+\}", "{STRBUF}", text)
+        text = re.sub(r"\{text_(?:decimal|bcd)\s+[^}]+\}", "{NUM}", text)
+    else:
+        text = re.sub(r"\{text_ram\s+([^}]+)\}", r"{RAM:\1}", text)
+        text = re.sub(r"\{text_(?:decimal|bcd)\s+([^}]+)\}", r"{NUM:\1}", text)
     text = text.replace("{text_start}", "")
     # Longest tokens first prevents partial expansion.
     for token in sorted(_CORPUS_EXPANSIONS, key=len, reverse=True):
