@@ -34,6 +34,26 @@
     "№.": {"override": "N°", "reason": "engine-contract-gap", "provenance": "French Pokédex number abbreviation."},
     "OT/": {"override": "DO/", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.stats_screen.OTString; slash retained for the compact engine label."},
     "♀": {"override": "♀", "reason": "engine-original", "provenance": "Invariant gender symbol."},
-    "♂": {"override": "♂", "reason": "engine-original", "provenance": "Invariant gender symbol."}
+    "♂": {"override": "♂", "reason": "engine-original", "provenance": "Invariant gender symbol."},
+    "TEXT SPEED": {"override": "VIT. TEXTE", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.StringOptions (real Gold ROM OPTION-screen text)."},
+    "BATTLE SCENE": {"override": "ANIMATION COMBAT", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.StringOptions (real Gold ROM OPTION-screen text)."},
+    "BATTLE STYLE": {"override": "STYLE COMBAT", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.StringOptions (real Gold ROM OPTION-screen text)."},
+    "SOUND": {"override": "SON", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.StringOptions (real Gold ROM OPTION-screen text)."},
+    "PRINT": {"override": "IMPRIMER", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.StringOptions (real Gold ROM OPTION-screen text)."},
+    "MENU ACCOUNT": {"override": "COMPTE MENU", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.StringOptions (real Gold ROM OPTION-screen text)."},
+    "FRAME": {"override": "FENETRE", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.StringOptions (real Gold ROM OPTION-screen text)."},
+    "CANCEL": {"override": "RETOUR", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.StringOptions (real Gold ROM OPTION-screen text)."},
+    "FAST": {"override": "3", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_TextSpeed.Fast (real Gold ROM OPTION-screen text)."},
+    "MID ": {"override": "2", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_TextSpeed.Mid (real Gold ROM OPTION-screen text)."},
+    "SLOW": {"override": "1", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_TextSpeed.Slow (real Gold ROM OPTION-screen text)."},
+    "ON ": {"override": "OUI", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_BattleScene.On (real Gold ROM OPTION-screen text)."},
+    "OFF": {"override": "NON", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_BattleScene.Off (real Gold ROM OPTION-screen text)."},
+    "SHIFT": {"override": "CHOIX ", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_BattleStyle.Shift (real Gold ROM OPTION-screen text)."},
+    "SET  ": {"override": "DEFINI", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_BattleStyle.Set (real Gold ROM OPTION-screen text)."},
+    "LIGHTEST": {"override": "CLAIR+ ", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_Print.Lightest (real Gold ROM OPTION-screen text)."},
+    "LIGHTER ": {"override": "CLAIR  ", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_Print.Lighter (real Gold ROM OPTION-screen text)."},
+    "NORMAL  ": {"override": "NORMAL ", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_Print.Normal (real Gold ROM OPTION-screen text)."},
+    "DARKER  ": {"override": "SOMBRE ", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_Print.Darker (real Gold ROM OPTION-screen text)."},
+    "DARKEST ": {"override": "SOMBRE+", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_Print.Darkest (real Gold ROM OPTION-screen text)."}
   }
 }
