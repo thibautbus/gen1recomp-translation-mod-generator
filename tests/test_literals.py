@@ -25,6 +25,22 @@ def row(qid, value):
     return Alignment(qid, "red", source, target, "qid")
 
 
+# Legacy prompt/yes/no recipe shape, used to be the real
+# viridian-city-youngster2 entry in config/rby/literal_handlers.json until it
+# was removed (vanilla now handles that NPC on its own -- see
+# docs/upstream-fixes.md). Kept here as a fixture so these tests exercise the
+# legacy shape independent of whatever the production config currently
+# contains.
+LEGACY_RECIPE = [{
+    "id": "viridian-city-youngster2",
+    "map": "VIRIDIAN_CITY",
+    "text_constant": "TEXT_VIRIDIANCITY_YOUNGSTER2",
+    "prompt": {"qid": QPROMPT},
+    "yes": {"qid": QYES},
+    "no": {"qid": QNO},
+}]
+
+
 class LiteralHandlerTests(unittest.TestCase):
     def test_qid_provenance_and_marker_conversion(self):
         handlers = extract_handlers(
@@ -33,7 +49,7 @@ class LiteralHandlerTests(unittest.TestCase):
                 row(QYES, "CATERPIE <LINE> poison, but <CONT>WEEDLE does.<PAGE>Watch"),
                 row(QNO, "Oh, OK then!"),
             ],
-            load_recipes(Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json"),
+            LEGACY_RECIPE,
         )
         self.assertEqual(len(handlers), 1)
         self.assertEqual(handlers[0].prompt_qid, QPROMPT)
@@ -45,9 +61,7 @@ class LiteralHandlerTests(unittest.TestCase):
     def test_missing_branch_does_not_generate_false_handler(self):
         handlers = extract_handlers(
             [row(QPROMPT, "Prompt"), row(QYES, "YES")],
-            load_recipes(
-                Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json"
-            ),
+            LEGACY_RECIPE,
         )
         self.assertEqual(handlers, [])
 
@@ -59,9 +73,7 @@ class LiteralHandlerTests(unittest.TestCase):
                 row(QNO, "no"),
                 row(QPROMPT, "prompt"),
             ],
-            load_recipes(
-                Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json"
-            ),
+            LEGACY_RECIPE,
         )
         self.assertEqual(handlers, [])
 
@@ -79,7 +91,7 @@ class LiteralHandlerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path, handlers = generate_handlers(
                 [row(QPROMPT, "Question?"), row(QYES, "Oui"), row(QNO, "Non")],
-                load_recipes(Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json"),
+                LEGACY_RECIPE,
                 Path(directory) / "lang" / "literal_handlers.lua",
             )
             body = path.read_text(encoding="utf-8")
@@ -117,6 +129,54 @@ class LiteralHandlerTests(unittest.TestCase):
             self.assertIn("game.save.money = (game.save.money or 0) + (-50)", body)
             self.assertIn('game.save.flags["EVENT_BOUGHT_MUSEUM_TICKET"] = true', body)
 
+    def test_on_step_renders_coordinate_condition_and_its_own_flow(self):
+        q_rope = "rb.X.RopeCutText"
+        recipes = [{
+            "map": "MUSEUM_1F", "text_constant": "TEXT_MUSEUM1F_SCIENTIST1",
+            "flow": [{"say": {"qid": QMUSEUM_ALREADY}}],
+            "on_step": {
+                "when": {"coords": [[5, 6], [5, 7]], "not_flag": "EVENT_CUT_ROPE"},
+                "flow": [
+                    {"say": {"qid": q_rope}},
+                    {"set_flag": {"flag": "EVENT_CUT_ROPE"}},
+                ],
+            },
+        }]
+        rows = [row(QMUSEUM_ALREADY, "Deja venu."), row(q_rope, "La corde est coupee.")]
+        with tempfile.TemporaryDirectory() as directory:
+            path, handlers = generate_handlers(rows, recipes, Path(directory) / "handlers.lua")
+            self.assertEqual(len(handlers), 1)
+            body = path.read_text(encoding="utf-8")
+            self.assertIn("onStep = function(game, ow, x, y)", body)
+            self.assertIn(
+                "((x == 5 and y == 6) or (x == 5 and y == 7)) and "
+                'not game.save.flags["EVENT_CUT_ROPE"]',
+                body,
+            )
+            self.assertIn('TextBox.new(game, "La corde est coupee."', body)
+            self.assertIn('game.save.flags["EVENT_CUT_ROPE"] = true', body)
+            self.assertIn("return true", body)
+            self.assertIn("return false", body)
+
+    def test_on_step_bad_condition_shape_fails_closed_on_load(self):
+        base = {
+            "map": "X", "text_constant": "T", "flow": [{"say": {"qid": QMUSEUM_ALREADY}}],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            for bad_when in (
+                {"coords": [], "not_flag": "F"},
+                {"coords": [[1, 2]]},
+                {"coords": [[1, 2]], "not_flag": "F", "extra": 1},
+            ):
+                path = Path(directory) / "invalid.json"
+                path.write_text(json.dumps({
+                    "schema": "gen1recomp-translation-mods/literal-handlers",
+                    "version": 2,
+                    "handlers": [{**base, "on_step": {"when": bad_when, "flow": []}}],
+                }), encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    load_recipes(path)
+
     def test_flow_missing_or_ambiguous_qid_fails_closed(self):
         recipes = [{
             "map": "MUSEUM_1F", "text_constant": "TEXT_MUSEUM1F_SCIENTIST1",
@@ -125,23 +185,6 @@ class LiteralHandlerTests(unittest.TestCase):
         self.assertEqual(extract_handlers([], recipes), [])
         rows = [row(QMUSEUM_ALREADY, "one"), row(QMUSEUM_ALREADY, "two")]
         self.assertEqual(extract_handlers(rows, recipes), [])
-
-    def test_configured_museum_handler_emits_rope_on_step(self):
-        rows = [
-            row(QMUSEUM_PROMPT, "Entrer?"), row(QMUSEUM_YES, "Merci!"),
-            row(QMUSEUM_NO_MONEY, "Pas assez."), row(QMUSEUM_NO, "A bientôt!"),
-            row(QMUSEUM_ALREADY, "Profitez-en."),
-        ]
-        recipes = load_recipes(Path(__file__).parents[1] / "config" / "rby" / "literal_handlers.json")
-        with tempfile.TemporaryDirectory() as directory:
-            path, handlers = generate_handlers(rows, recipes, Path(directory) / "handlers.lua")
-            museum = [h for h in handlers if h.text_constant == "TEXT_MUSEUM1F_SCIENTIST1"]
-            self.assertEqual(len(museum), 1)
-            body = path.read_text(encoding="utf-8")
-            self.assertIn("onStep = function(game, ow, x, y)", body)
-            self.assertIn("x == 9 and y == 4", body)
-            self.assertIn('game.save.flags["EVENT_BOUGHT_MUSEUM_TICKET"]', body)
-            self.assertIn('ow:scriptMove(ow.player, "down", 1', body)
 
     def test_flow_if_and_choice_continue_with_following_nodes(self):
         recipes = [{

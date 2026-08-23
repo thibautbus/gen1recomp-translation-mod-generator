@@ -9,26 +9,26 @@
       "warning": "Requires in-game visual validation",
       "provenance": "Corpus-backed from poke-corpus y.text_3.PikachuUnhappyText; the engine key (src/ui/BoxMenu.lua release-Pikachu branch, Yellow-only) renders the released Pikachu name via a %s printf, so the corpus {RAM:wNameBuffer} token is adapted to the printf contract."
     },
-    "A: done": {
-      "override": "A:おわる",
+    "HALL OF FAME No": {
+      "override": "でんどういり No.",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short HUD label; no dynamic parameter."
+      "provenance": "Corpus-backed from poke-corpus y.league_pc.HallOfFameNoText, but not used verbatim: the real corpus text (\"だい　　　かい　でんどういり\", \"the Nth Hall of Fame entry\") puts the counter number in the middle of the phrase (right after だい), which src/ui/LeaguePC.lua's fixed two-column layout (label at column 1, team-index number at column 16, Font.draw(Strings(...), 1*8, 15*8) then Font.draw((\"%3d\"):format(...), 16*8, 15*8)) cannot accommodate -- the number can only ever render after the label text, never inside it. Compromise: label the screen \"でんどういり No.\" (Hall of Fame No.), using the Latin \"No.\" already common in Japanese game UI, so the number at column 16 reads naturally after it instead of contradicting the corpus's own word order. Not the real ROM phrasing; a real fix needs gen1recomp to draw this label+number as one combined, language-aware string instead of two fixed-column Font.draw calls."
     },
-    "HI    %d": {
-      "override": "ベスト    %d",
+    "HP Left": {
+      "override": "のこりHP",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short label, %d preserved."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD label (src/ui/SurfingMinigame.lua), no PokeCorpus source; abbreviation cross-checked against the real RedBlue corpus's \"HP UP\" item name per language -- see docs/upstream-fixes.md for the full investigation."
     },
-    "New record!": {
-      "override": "しんきろく！",
+    "Hi-Score!!": {
+      "override": "しんきろく！！",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short HUD label; no dynamic parameter."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua), no PokeCorpus source -- worded to match this project's prior \"new record\" phrasing for the same HUD; see docs/upstream-fixes.md for the full investigation."
     },
     "PIKACHU looks\ncontent.": {
       "override": "ピカチュウは　ごきげんそう。",
@@ -44,12 +44,19 @@
       "warning": "Requires in-game visual validation",
       "provenance": "Corpus-backed from poke-corpus y.bills_pc.BillsPCMenuText (Yellow-only sixth <NEXT>-separated menu item; RedBlue's rb.bills_pc.BillsPCMenuText has only five)."
     },
-    "SCORE %d": {
-      "override": "スコア %d",
+    "Pts": {
+      "override": "点",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short label, %d preserved."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD unit suffix (src/ui/SurfingMinigame.lua), no PokeCorpus source -- see docs/upstream-fixes.md for the full investigation."
+    },
+    "Radness": {
+      "override": "スタイル",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD label (src/ui/SurfingMinigame.lua), no PokeCorpus source -- see docs/upstream-fixes.md for the full investigation."
     },
     "There isn't any\nresponse...": {
       "override": "あれ？　いない…",
@@ -57,6 +64,13 @@
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
       "provenance": "Corpus-backed from poke-corpus y.text_3.SleepingPikachuText1; engine fallback (src/ui/PartyMenu.lua refuseUnavailable, Yellow Pikachu follower); no dynamic parameter."
+    },
+    "Total": {
+      "override": "合計",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD label (src/ui/SurfingMinigame.lua), no PokeCorpus source -- see docs/upstream-fixes.md for the full investigation."
     }
   }
 }

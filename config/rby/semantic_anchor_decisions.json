@@ -334,32 +334,6 @@
       "trace_status": "reviewed",
       "languages_verified": true
     },
-    "All sleeping\nPOKéMON woke up!": {
-      "anchor": {
-        "qid": "rb.text_6.FluteWokeUpText",
-        "source_aliases": [
-          "All sleeping\nPOKéMON woke up."
-        ],
-        "extraction": {
-          "kind": "full",
-          "index": 0
-        }
-      },
-      "decision_type": "source_alias",
-      "rationale": "Reviewed source alias: rb.text_6.FluteWokeUpText is the flute wake-all message. Its corpus text ends with a period while the engine key uses an exclamation mark; the alias records that punctuation-equivalent source without conflating the generic “%s woke up!” battle line.",
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_6.FluteWokeUpText"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
-    },
     "There's a slew of\nPOKéMON stuff!": {
       "anchor": {
         "qid": "rb.text_2.PokemonStuffText",
@@ -545,71 +519,6 @@
       ],
       "trace_status": "known-limitation",
       "languages_verified": false
-    },
-    "1, 2 and... Poof!\f%s forgot\n%s!\fAnd...\f%s learned\n%s!": {
-      "anchor": {
-        "parts": [
-          {
-            "qid": "rb.text_4.OneTwoAndText",
-            "extraction": {
-              "kind": "full",
-              "index": 0,
-              "preserve_edges": true
-            }
-          },
-          {
-            "qid": "rb.text_4.PoofText",
-            "extraction": {
-              "kind": "full",
-              "index": 0,
-              "preserve_edges": true
-            }
-          },
-          {
-            "qid": "rb.text_4.ForgotAndText",
-            "extraction": {
-              "kind": "full",
-              "index": 0,
-              "preserve_edges": true
-            }
-          },
-          {
-            "qid": "rb.text_4.LearnedMove1Text",
-            "extraction": {
-              "kind": "full",
-              "index": 0,
-              "preserve_edges": true
-            }
-          }
-        ],
-        "separators": [
-          "",
-          "",
-          "\f"
-        ],
-        "placeholders": {
-          "{RAM:wLearnMoveMonName}": "%s",
-          "{RAM:wNameBuffer}": "%s",
-          "{RAM:wStringBuffer}": "%s"
-        }
-      },
-      "decision_type": "composition",
-      "rationale": "Reviewed composition of rb.text_4.OneTwoAndText, PoofText, ForgotAndText, and LearnedMove1Text in qid order. Empty joins retain source edges and a form-feed separator preserves the four-part callsite sequence; the three named placeholders map to the runtime Pokémon and move arguments.",
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_4.OneTwoAndText",
-        "rb.text_4.PoofText",
-        "rb.text_4.ForgotAndText",
-        "rb.text_4.LearnedMove1Text"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
     },
     "%s\nmade a whirlwind!": {
       "anchor": {
@@ -828,32 +737,6 @@
       ],
       "qids": [
         "rb.text_2.SavingEnergyText"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
-    },
-    "%s\nsnapped out of\nconfusion!": {
-      "anchor": {
-        "qid": "rb.text_2.ConfusedNoMoreText",
-        "source_aliases": [
-          "{USER}'s\nconfused no more!"
-        ],
-        "extraction": {
-          "kind": "full",
-          "index": 0
-        }
-      },
-      "decision_type": "source_alias",
-      "rationale": "Reviewed source alias: rb.text_2.ConfusedNoMoreText is the battle status-recovery sentence and supplies the same %s battler placeholder; unrelated wake-up text is rejected.",
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_2.ConfusedNoMoreText"
       ],
       "trace_status": "reviewed",
       "languages_verified": true
@@ -1229,75 +1112,6 @@
       ],
       "qids": [
         "rb.text_2.PlayerBlackedOutText2"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
-    },
-    "It dodged the\nthrown BALL!": {
-      "anchor": {
-        "qid": "rb.text_6.ItemUseBallText00",
-        "extraction": {
-          "kind": "parts",
-          "parts": [
-            0,
-            1
-          ],
-          "separators": [
-            "\n"
-          ],
-          "targets": {
-            "fr": {
-              "kind": "segment",
-              "index": 0
-            },
-            "de": {
-              "kind": "parts",
-              "parts": [
-                0,
-                1
-              ],
-              "separators": [
-                "\n"
-              ]
-            },
-            "es": {
-              "kind": "parts",
-              "parts": [
-                0,
-                1
-              ],
-              "separators": [
-                "\n"
-              ]
-            },
-            "it": {
-              "kind": "parts",
-              "parts": [
-                0,
-                1
-              ],
-              "separators": [
-                "\n"
-              ]
-            },
-            "ja-Hrkt": {
-              "kind": "segment",
-              "index": 0
-            }
-          }
-        }
-      },
-      "decision_type": "target_extraction",
-      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. The rb.text_6.ItemUseBallText00 span isolates the exact failed-capture sentence from the item-use message and follows each translation’s line reflow.",
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_6.ItemUseBallText00"
       ],
       "trace_status": "reviewed",
       "languages_verified": true
@@ -1777,31 +1591,6 @@
       "trace_status": "reviewed",
       "languages_verified": true
     },
-    "%s's PP\nincreased!": {
-      "anchor": {
-        "qid": "rb.text_6.PPIncreasedText",
-        "source_aliases": [
-          "{RAM:wStringBuffer}'s PP\nincreased."
-        ],
-        "extraction": {
-          "kind": "full"
-        }
-      },
-      "decision_type": "source_alias",
-      "rationale": "Reviewed source alias: rb.text_6.PPIncreasedText is the battle PP-increase sentence with the runtime Pokémon-name placeholder; its context disambiguates it from other stat-change messages.",
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_6.PPIncreasedText"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
-    },
     "You can't carry\nany more items.": {
       "anchor": {
         "qid": "rb.text_2.CantCarryMoreText",
@@ -2005,115 +1794,6 @@
       "trace_status": "reviewed",
       "languages_verified": true
     },
-    "%s is\ntrying to learn\u000b%s!\fBut, %s\ncan't learn more\u000bthan 4 moves!\f": {
-      "anchor": {
-        "qid": "rb.text_4.TryingToLearnText",
-        "extraction": {
-          "kind": "span",
-          "index": 0,
-          "count": 14,
-          "suffix": "\f",
-          "targets": {
-            "fr": {
-              "kind": "span",
-              "index": 0,
-              "count": 11
-            },
-            "de": {
-              "kind": "span",
-              "index": 0,
-              "count": 14
-            },
-            "es": {
-              "kind": "span",
-              "index": 0,
-              "count": 13
-            },
-            "it": {
-              "kind": "span",
-              "index": 0,
-              "count": 14
-            },
-            "ja-Hrkt": {
-              "kind": "span",
-              "index": 0,
-              "count": 10
-            }
-          }
-        }
-      },
-      "decision_type": "target_extraction",
-      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for MoveLearnMenu.enter. Gen1Recomp splits rb.text_4.TryingToLearnText into two engine keys; this extraction selects the first two semantic paragraphs and preserves their Pokémon, move, Pokémon placeholder order.",
-      "callsites": [
-        "src/ui/MoveLearnMenu.lua:47"
-      ],
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_4.TryingToLearnText"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
-    },
-    "Delete an older\nmove to make room\u000bfor %s?": {
-      "anchor": {
-        "qid": "rb.text_4.TryingToLearnText",
-        "extraction": {
-          "kind": "span",
-          "index": 14,
-          "count": 9,
-          "targets": {
-            "fr": {
-              "kind": "span",
-              "index": 11,
-              "count": 6
-            },
-            "de": {
-              "kind": "span",
-              "index": 14,
-              "count": 9
-            },
-            "es": {
-              "kind": "span",
-              "index": 13,
-              "count": 9
-            },
-            "it": {
-              "kind": "span",
-              "index": 14,
-              "count": 9
-            },
-            "ja-Hrkt": {
-              "kind": "span",
-              "index": 10,
-              "count": 5
-            }
-          }
-        }
-      },
-      "decision_type": "target_extraction",
-      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for MoveLearnMenu.enter. Gen1Recomp splits rb.text_4.TryingToLearnText into two engine keys; this extraction selects the final forget-an-old-move question and its move placeholder.",
-      "callsites": [
-        "src/ui/MoveLearnMenu.lua:49"
-      ],
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_4.TryingToLearnText"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
-    },
     "The trade was\ncancelled.": {
       "anchor": {
         "qid": "rb.cable_club.TradeCanceled",
@@ -2252,106 +1932,6 @@
         "rb.text_7.GotOnBicycleText1",
         "rb.text_7.GotOnBicycleText2",
         "rb.names.ItemNames.6"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
-    },
-    "Congratulations!\nYour %s\nevolved into\n%s!": {
-      "anchor": {
-        "source_aliases": [
-          "%s evolved\ninto %s!"
-        ],
-        "parts": [
-          {
-            "qid": "rb.text_3.EvolvedText",
-            "extraction": {
-              "kind": "full"
-            }
-          },
-          {
-            "qid": "rb.text_3.IntoText",
-            "extraction": {
-              "kind": "full",
-              "preserve_edges": true
-            }
-          }
-        ],
-        "join": "",
-        "placeholders": {
-          "{RAM:wStringBuffer}": "%s",
-          "{RAM:wNameBuffer}": "%s"
-        }
-      },
-      "decision_type": "composition",
-      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for EvolutionState's completion message. EvolvedText and IntoText form the complete original localized result and preserve old-species/new-species placeholder order; the source alias replaces Gen1Recomp's expanded English-only wording.",
-      "callsites": [
-        "src/ui/EvolutionState.lua:110"
-      ],
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_3.EvolvedText",
-        "rb.text_3.IntoText"
-      ],
-      "trace_status": "reviewed",
-      "languages_verified": true
-    },
-    "What?\n%s is\nevolving!\fCongratulations!\nYour %s\nevolved into\n%s!": {
-      "anchor": {
-        "source_aliases": [
-          "What? %s\nis evolving!\f%s evolved\ninto %s!"
-        ],
-        "parts": [
-          {
-            "qid": "rb.text_3.IsEvolvingText",
-            "extraction": {
-              "kind": "full"
-            }
-          },
-          {
-            "qid": "rb.text_3.EvolvedText",
-            "extraction": {
-              "kind": "full"
-            }
-          },
-          {
-            "qid": "rb.text_3.IntoText",
-            "extraction": {
-              "kind": "full",
-              "preserve_edges": true
-            }
-          }
-        ],
-        "separators": [
-          "\f",
-          ""
-        ],
-        "placeholders": {
-          "{RAM:wStringBuffer}": "%s",
-          "{RAM:wNameBuffer}": "%s"
-        }
-      },
-      "decision_type": "composition",
-      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt for Evolution.evolve. IsEvolvingText followed by EvolvedText and IntoText reconstructs the original two-page evolution flow; the repeated old-species placeholder and final new-species placeholder remain in runtime order.",
-      "callsites": [
-        "src/pokemon/Evolution.lua:164"
-      ],
-      "languages": [
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja-Hrkt"
-      ],
-      "qids": [
-        "rb.text_3.IsEvolvingText",
-        "rb.text_3.EvolvedText",
-        "rb.text_3.IntoText"
       ],
       "trace_status": "reviewed",
       "languages_verified": true
@@ -2663,12 +2243,9 @@
       "trace_status": "reviewed",
       "languages_verified": true
     },
-    "<Diploma>": {
+    "Diploma": {
       "anchor": {
         "qid": "rb.diploma.DiplomaText",
-        "source_aliases": [
-          "Diploma"
-        ],
         "extraction": {
           "kind": "full",
           "wrapper": {
@@ -2678,9 +2255,9 @@
         }
       },
       "decision_type": "target_extraction",
-      "rationale": "Reviewed Diploma.lua:32 against rb.diploma.DiplomaText in all five target catalogues. The qid is wrapped by the exact control escape \\x70 on both sides; strip only that verified pair before matching the engine marker.",
+      "rationale": "Reviewed Diploma.lua against rb.diploma.DiplomaText in all five target catalogues. The qid is wrapped by the exact control escape \\x70 on both sides; strip only that verified pair before matching the engine marker. Re-keyed from the stale \"<Diploma>\" -- gen1recomp v0.2.19 dropped the angle brackets from the engine literal itself (Strings(\"<Diploma>\") became Strings(\"Diploma\")), which had silently orphaned this decision (confirmed via a real French corpus row: matched \"Diplôme\" under the old key, fell back to unmatched English under the new one).",
       "callsites": [
-        "src/ui/Diploma.lua:32"
+        "src/ui/Diploma.lua:113"
       ],
       "languages": [
         "fr",

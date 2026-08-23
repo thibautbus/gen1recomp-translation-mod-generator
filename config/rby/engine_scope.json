@@ -232,6 +232,18 @@
       "reason": "covered-by-rom",
       "engine_empty": true
     },
+    "%s's\nhurt by poison!": {
+      "category": "rby",
+      "eligibility": "ineligible",
+      "reason": "covered-by-rom",
+      "engine_empty": true
+    },
+    "%s's\nhurt by the burn!": {
+      "category": "rby",
+      "eligibility": "ineligible",
+      "reason": "covered-by-rom",
+      "engine_empty": true
+    },
     "Creatures inc.": {
       "category": "rby",
       "eligibility": "ineligible",

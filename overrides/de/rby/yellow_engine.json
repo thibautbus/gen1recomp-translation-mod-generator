@@ -9,26 +9,26 @@
       "warning": "Requires in-game visual validation",
       "provenance": "Corpus-backed from poke-corpus y.text_3.PikachuUnhappyText; the engine key (src/ui/BoxMenu.lua release-Pikachu branch, Yellow-only) renders the released Pikachu name via a %s printf, so the corpus {RAM:wNameBuffer} token is adapted to the printf contract."
     },
-    "A: done": {
-      "override": "A: Fertig",
+    "HALL OF FAME No": {
+      "override": "RUHMESHALLE Nr.",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short HUD label; no dynamic parameter. Case matches the English source (\"A: done\", lowercase word); not an all-caps engine constant."
+      "provenance": "Corpus-backed from poke-corpus y.league_pc.HallOfFameNoText; src/ui/LeaguePC.lua draws this label and the team-index number as two separate Font.draw calls at fixed columns (label at column 1, number at column 16), so the corpus row's own padding is kept verbatim rather than re-measured for gen1recomp's fixed layout."
     },
-    "HI    %d": {
-      "override": "REKORD    %d",
+    "HP Left": {
+      "override": "KP übrig",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short label, %d preserved."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD label (src/ui/SurfingMinigame.lua), no PokeCorpus source; abbreviation cross-checked against the real RedBlue corpus's \"HP UP\" item name per language -- see docs/upstream-fixes.md for the full investigation."
     },
-    "New record!": {
-      "override": "Neuer Rekord!",
+    "Hi-Score!!": {
+      "override": "Neuer Rekord!!",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short HUD label; no dynamic parameter. Sentence case matches the English source (\"New record!\"); \"Rekord\" capitalized as a German noun, not as an all-caps engine constant."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua), no PokeCorpus source -- worded to match this project's prior \"new record\" phrasing for the same HUD; see docs/upstream-fixes.md for the full investigation."
     },
     "PIKACHU looks\ncontent.": {
       "override": "PIKACHU sieht\nzufrieden aus.",
@@ -44,12 +44,19 @@
       "warning": "Requires in-game visual validation",
       "provenance": "Corpus-backed from poke-corpus y.bills_pc.BillsPCMenuText (Yellow-only sixth <NEXT>-separated menu item; RedBlue's rb.bills_pc.BillsPCMenuText has only five); official German shortens the button to the single word \"DRUCKEN\"."
     },
-    "SCORE %d": {
-      "override": "PUNKTE %d",
+    "Pts": {
+      "override": "Pkt",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD text (src/ui/SurfingMinigame.lua); no PokeCorpus source; short label, %d preserved."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD unit suffix (src/ui/SurfingMinigame.lua), no PokeCorpus source -- see docs/upstream-fixes.md for the full investigation."
+    },
+    "Radness": {
+      "override": "Stil",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD label (src/ui/SurfingMinigame.lua), no PokeCorpus source -- see docs/upstream-fixes.md for the full investigation."
     },
     "There isn't any\nresponse...": {
       "override": "Es gibt keine\nAntwort...",
@@ -57,6 +64,13 @@
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
       "provenance": "Corpus-backed from poke-corpus y.text_3.SleepingPikachuText1; engine fallback (src/ui/PartyMenu.lua refuseUnavailable, Yellow Pikachu follower); no dynamic parameter."
+    },
+    "Total": {
+      "override": "Gesamt",
+      "reason": "yellow-only-engine-text",
+      "game_version": "yellow",
+      "warning": "Requires in-game visual validation",
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD label (src/ui/SurfingMinigame.lua), no PokeCorpus source -- see docs/upstream-fixes.md for the full investigation."
     }
   }
 }
