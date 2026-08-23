@@ -25,10 +25,11 @@ jobs:
           sudo apt-get install --yes luajit
       - name: Fetch pinned Gen1Recomp test fixture
         run: |
+          revision=$(python -c "import tomllib; print(tomllib.load(open('config/pipeline.toml', 'rb'))['gen1recomp']['revision'])")
           mkdir -p .cache/dependencies/gen1recomp
           git -C .cache/dependencies/gen1recomp init
           git -C .cache/dependencies/gen1recomp remote add origin https://github.com/bryanthaboi/gen1recomp.git
-          git -C .cache/dependencies/gen1recomp fetch --depth 1 origin 04490c9b9ad03b814f297793dd7a950dad7c3adf
+          git -C .cache/dependencies/gen1recomp fetch --depth 1 origin "$revision"
           git -C .cache/dependencies/gen1recomp checkout --detach FETCH_HEAD
       - name: Run pytest
         run: python -m pytest
