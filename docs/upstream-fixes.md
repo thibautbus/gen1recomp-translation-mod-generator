@@ -629,6 +629,7 @@ official phrasing:
 | `HP` | `PV` | `ui/gen2/PhotoStudio.lua:164`, fragmentary standalone source |
 | `№.` | `N°` | `ui/gen2/PhotoStudio.lua:157`, fragmentary standalone source (`HallOfFame.lua`/`SummaryMenu.lua` print the same glyph directly, outside `Strings()`) |
 | `{STRBUF}.` | `{STRBUF}.` (kept) | `ui/gen2/TradeAnim.lua:187`, runtime name fragment, punctuation-only and language-invariant |
+| `There is already a\nsave file. Is it` | `Il y a déjà une\nsauvegarde. La` | Missing the real ROM's third `<CONT>` page -- see below |
 
 Two more are per-language only, each documented individually in the relevant
 `overrides/<language>/gold/engine.json`: German and Korean also override
@@ -636,6 +637,47 @@ Two more are per-language only, each documented individually in the relevant
 the player-name printf the engine expects), and Japanese and Korean also
 override `"Congratulations!"` (the Japanese diploma folds that idea into the
 preceding line instead of a standalone sentence).
+
+**SAVE overwrite prompt (`AlreadyASaveFileText`), missing its third `<CONT>`
+page -- a uniform gap, not a per-language one:** `src/ui/gen2/SaveMenu.lua`'s
+own English source for this prompt (`OVERWRITE_PROMPT`/
+`OVERWRITE_PROMPT_SOURCE`) is itself a two-line truncation of the real
+three-line cart text (`gs.common_2.AlreadyASaveFileText`, poke-corpus
+`GoldSilver`): `"There is already a<LINE>save file. Is it<CONT>OK to
+overwrite?<DONE>"`. On the real cart, `<CONT>` advances to a second textbox
+page (a button press) before the YES/NO choice appears; this port's
+`SpeechTextbox` (18x4, `Chrome.textbox(0, 12, 18, 4)`) has no paging at all
+-- `drawPanel()` prints exactly two fixed lines and shows the YES/NO box
+alongside them immediately, so there is no way to display a third page even
+in principle. This is not a translation gap in the usual sense: **English
+itself is missing the same "OK to overwrite?" clause**, ending on the same
+kind of dangling "Is it" its own truncation leaves. Every shipped
+language's override here is the same mechanical quote of its own cart's
+first two lines, sharing that flaw to varying degrees depending on where
+each language's own sentence happens to break -- German's and Spanish's
+first two lines happen to already read as a complete standalone sentence
+(`"Es gibt bereits<LINE>einen Spielstand."`, `"Ya existe un<LINE>archivo
+guardado."`), while French's and Italian's don't (`"Il y a déjà
+une<LINE>sauvegarde. La"` dangles on a bare object pronoun with its verb
+"remplacer" stranded on the dropped third page; `"C'è già un
+gioco<LINE>salvato in"` cuts mid-preposition) -- confirmed against a real
+fr/it build screenshot. A composed, non-corpus paraphrase for French/
+Italian was tried and set aside rather than shipped
+(translation-mods branch `fix/gold-save-overwrite-prompt-truncation`): it
+isn't the corpus's own official phrasing, and singling out two languages
+for a bespoke rewrite when the underlying defect is the engine's own
+English source would just trade one inconsistency for another. All four
+languages keep the same plain corpus-truncation compromise as English for
+now, warts included, until the real fix below lands.
+
+A real upstream fix would need `SaveMenu.lua`'s "overwrite" phase to gain
+actual paging -- an intermediate state that shows the text and waits for an
+A-press before the YES/NO box appears, mirroring the cart's
+`AskOverwriteSaveFile` flow -- not just a `Strings()` wrap around the
+existing two fixed lines. That is a real interaction-flow change (an extra
+button press, for every language including English), materially bigger and
+riskier than `fix/translate-gold-title-and-save-menus`'s Strings()-wrapping
+scope, so it was deliberately left out of that branch. Not attempted yet.
 
 ### Required upstream capabilities
 
