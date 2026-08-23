@@ -64,6 +64,20 @@
     "lower": {"override": "min", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.name_input_chars.NameInputLower/NameInputUpper (real Gold ROM naming-screen keyboard's own case-switch/delete/end labels)."},
     "UPPER": {"override": "MAJ", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.name_input_chars.NameInputLower/NameInputUpper (real Gold ROM naming-screen keyboard's own case-switch/delete/end labels)."},
     "DEL": {"override": "EFF", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.name_input_chars.NameInputLower/NameInputUpper (real Gold ROM naming-screen keyboard's own case-switch/delete/end labels)."},
-    "END": {"override": "FIN", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.name_input_chars.NameInputLower/NameInputUpper (real Gold ROM naming-screen keyboard's own case-switch/delete/end labels)."}
+    "END": {"override": "FIN", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.name_input_chars.NameInputLower/NameInputUpper (real Gold ROM naming-screen keyboard's own case-switch/delete/end labels)."},
+    "CONTINUE": {"override": "CONTINUER", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.main_menu.MainMenu.Strings (real Gold ROM title-menu text)."},
+    "NEW GAME": {"override": "NOUVEAU JEU", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.main_menu.MainMenu.Strings (real Gold ROM title-menu text)."},
+    "OPTION": {"override": "OPTIONS", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.main_menu.MainMenu.Strings (real Gold ROM title-menu text)."},
+    "EXIT GAME": {"override": "QUITTER", "reason": "engine-contract-gap", "provenance": "Not on the cart (a real console is turned off, not exited from a menu); this port's own added row, translated to match the title menu's other entries."},
+    "PLAYER %s": {"override": "JOUEUR %s", "reason": "engine-contract-gap", "provenance": "Label corpus-confirmed from gs.intro_menu.Continue_LoadMenuHeader.MenuData_Dex (\"JOUEUR\"), adapted with an inline %s for the player name this port draws in the same call rather than a separate one."},
+    "TIME": {"override": "DUREE JEU", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.intro_menu.Continue_LoadMenuHeader.MenuData_Dex (real Gold ROM CONTINUE-panel text)."},
+    "YES": {"override": "OUI", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.menu.YesNoMenuHeader.MenuData (real Gold ROM text)."},
+    "NO": {"override": "NON", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.menu.YesNoMenuHeader.MenuData (real Gold ROM text)."},
+    "NO SAVE FILE": {"override": "PAS DE SAUVEGARDE", "reason": "engine-contract-gap", "provenance": "Not on the cart (a save-menu concept this port adds); translated to match the title menu's other labels."},
+    "Would you like to\nsave the game?": {"override": "Voulez-vous sauve-\ngarder la partie?", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.common_2.WouldYouLikeToSaveTheGameText (real Gold ROM SAVE-screen text)."},
+    "There is already a\nsave file. Is it": {"override": "Il y a déjà une\nsauvegarde. La", "reason": "engine-contract-gap", "provenance": "First two lines of gs.common_2.AlreadyASaveFileText's real Gold ROM text (\"Il y a déjà une / sauvegarde. La / remplacer?\"); this port's own English source is itself already a two-line truncation of the cart's three-line message, so the translation is truncated the same way."},
+    "SAVING… DON'T TURN\nOFF THE POWER.": {"override": "SAUVEGARDE...\nNE PAS ETEINDRE.", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.common_2.SavingDontTurnOffThePowerText (real Gold ROM text)."},
+    "%s saved\nthe game.": {"override": "%s sauve\nla partie.", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.common_2.SavedTheGameText (real Gold ROM text; <PLAYER> re-expressed as %s to match this port's own format-string call)."},
+    "Could not save.": {"override": "Sauvegarde impossible.", "reason": "engine-contract-gap", "provenance": "Not on the cart (a write-failure case this port added); translated to match the SAVE screen's other messages."}
   }
 }
