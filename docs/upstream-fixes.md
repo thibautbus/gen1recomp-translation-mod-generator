@@ -582,6 +582,45 @@ already localized -- `item.desc` just wasn't wired up yet. All now fixed;
 `Party <PK><MN>\nstatus`'s French translation is slightly longer than the
 original two-glyph line and should get an in-game width check.
 
+### Not yet done: PcMenu's own CHANGE BOX save flow (no new capability needed)
+
+Unlike most gaps in this section, this one isn't blocked on anything --
+`Strings()` already works fine elsewhere in `src/ui/gen2/PcMenu.lua`
+(`self:notice({ Strings(MON_HOLDING_MAIL[1]), Strings(MON_HOLDING_MAIL[2]) })`,
+its one existing call site), it just hasn't been wired up for this one flow
+yet. (The five storage-menu row labels just above are already translated
+too, but through a different mechanism entirely -- a translation-mods-side
+hook into the public `ui.pc.items` list, not an engine-side `Strings()`
+call; see "Fixed: rows already reachable..." above. `entry.label` itself
+still reaches `Chrome.print` as a raw, unwrapped string,
+`Chrome.print(entry.label, 2, ty)`.)
+
+`PcMenu.lua`'s `savePrompt()` (`CHANGE BOX`'s own save confirmation --
+switching which box is the active one, not moving Pokémon between boxes;
+that's the separate `MOVE POKéMON W/O MAIL` entry) stays entirely in
+English today, confirmed against a real fr build: not just the
+overwrite/saving lines it shares with `SaveMenu.lua`
+(`OVERWRITE_PROMPT`/`SAVING_PROMPT`, deliberately kept as plain
+untranslated tables -- see `fix/translate-gold-title-and-save-menus`'s
+commit message on the gen1recomp side), but also its own done messages
+(`{ name .. " saved", "the game." }`/`"Could not save."`, built by
+concatenation rather than SaveMenu.lua's `"%s saved\nthe game."`
+format string) and its own `"YES"`/`"NO"` choice, none of which go
+through `Strings()` at all.
+
+A real fix would export `SaveMenu.lua`'s `OVERWRITE_PROMPT_SOURCE`/
+`SAVING_PROMPT_SOURCE` constants and its `twoLines()` helper (currently
+file-local, not on the `SaveMenu` module table) and have
+`PcMenu:savePrompt()` call through `Strings()` the same way
+`SaveMenu:prompt()` does, plus wrap its own done/YES-NO messages the same
+way `SaveMenu.lua`'s were. Deliberately left out of
+`fix/translate-gold-title-and-save-menus`: that branch's own scope was
+already widened once by a review finding a `PcMenu.lua` regression (an
+earlier version broke this exact screen by changing `OVERWRITE_PROMPT`'s
+type), so extending translation to a second screen was left for a
+follow-up rather than risking a second regression in the same PR. Not
+attempted yet.
+
 ### Fixed upstream (engine changes, not just this project's config)
 
 - **Clock UI (weekdays, `o'clock`, `MORN`/`DAY`/`NITE`):** `DAYS`
