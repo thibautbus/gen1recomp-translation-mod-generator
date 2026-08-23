@@ -95,6 +95,73 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(output[source], "%s\nva utiliser\x0b%s.\x0c%s va-t-il\nchanger de PKMN?")
         self.assertEqual(report["details"][source], "semantic")
 
+    def test_real_gold_source_alias_matches_the_bare_form(self):
+        # Real regression caught by a THIRD independent review: this repo's
+        # only other Gold semantic-anchor entry naming a RAM buffer,
+        # gs.common_2.ContestJudging_FirstPlaceText's source_aliases, had the
+        # exact same stale-named-token bug as the anchor above, just missed
+        # in the first pass because it lives in a "source_aliases" list
+        # rather than a "placeholders" dict. Reproduced directly: with the
+        # alias still reading "{RAM:wBugContestWinnerName}"/"{RAM:wStringBuffer1}",
+        # this exact setup returned "" (method "semantic_unresolved");
+        # corrected to the bare "{STRBUF}" form.
+        qid = "gs.common_2.ContestJudging_FirstPlaceText"
+        rows = [
+            CorpusRecord(qid, "en",
+                "{text_start}This Bug-Catching<LINE>Contest winner is@{text_pause}{text_start}"
+                "…<PARA>@{text_ram wBugContestWinnerName}{text_start},<LINE>who caught a<CONT>"
+                "@{text_ram wStringBuffer1}{text_start}!@@", "gold"),
+            CorpusRecord(qid, "fr",
+                "{text_start}Le gagnant du<LINE>concours des<CONT>insectes est@{text_pause}"
+                "{text_start}...<PARA>@{text_ram wBugContestWinnerName}{text_start},<LINE>"
+                "qui a capturé un<CONT>@{text_ram wStringBuffer1}{text_start}!@@", "gold"),
+        ]
+        source = "This Bug-Catching\nContest winner is\x0c%s,\nwho caught a\n%s!"
+        anchors_path = Path(__file__).resolve().parents[1] / "config" / "gold" / "semantic_anchors.json"
+        output, report = match_engine_catalog(
+            {source: ""}, rows, semantic_anchors=anchors_path, target_lang="fr",
+        )
+        self.assertEqual(
+            output[source],
+            "Le gagnant du\nconcours des\x0binsectes est...\x0c%s,\nqui a capturé un\x0b%s!",
+        )
+        self.assertEqual(report["details"][source], "semantic")
+
+    def test_gold_config_never_names_a_ram_or_num_buffer(self):
+        # General guard, added after TWO separate stale-named-token
+        # regressions in this same config file were each only caught by a
+        # dedicated end-to-end test (one in a "placeholders" dict, one in a
+        # "source_aliases" list): Gold's own extracted source text is always
+        # bare (RomExtractorGen2.lua:decodeGen2Text never names the buffer --
+        # see corpus_to_engine's bare_dynamic_tokens docstring), so ANY
+        # string anywhere in config/gold/*.json naming one
+        # ("{RAM:...}"/"{NUM:...}") can never match again and silently drops
+        # that entry -- regardless of which JSON key or file holds it. Walks
+        # every file's whole structure rather than special-casing today's
+        # known field names, so a new field (or a new gold/*.json file)
+        # introduced later is covered too.
+        import json
+        import re
+
+        gold_config_dir = Path(__file__).resolve().parents[1] / "config" / "gold"
+        named_token = re.compile(r"\{(?:RAM|NUM):")
+
+        def walk(value, where):
+            if isinstance(value, str):
+                self.assertNotRegex(value, named_token, f"stale named token at {where}: {value!r}")
+            elif isinstance(value, dict):
+                for key, sub in value.items():
+                    walk(key, f"{where}[key]")
+                    walk(sub, f"{where}[{key!r}]")
+            elif isinstance(value, list):
+                for index, sub in enumerate(value):
+                    walk(sub, f"{where}[{index}]")
+
+        json_paths = sorted(gold_config_dir.glob("*.json"))
+        self.assertTrue(json_paths, f"no config JSON found under {gold_config_dir}")
+        for path in json_paths:
+            walk(json.loads(path.read_text(encoding="utf-8")), path.name)
+
     def test_rby_semantic_anchor_still_names_its_ram_buffer(self):
         # Regression: the Gold opt-in above must not change RBY's own
         # named-buffer behavior (game left at Alignment's default/"both").
