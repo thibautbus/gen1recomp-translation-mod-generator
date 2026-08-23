@@ -987,10 +987,10 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
     # {text_ram X}/{text_decimal X} the same way, or a matched translation
     # ships a numbered token gen1recomp's TextBox.lua RAM handler does not
     # recognise (confirmed live in .cache/interactive-gold/*/lang/strings.lua
-    # before this fix: entries like "{RAM:wStringBuffer3}"). RBY rows carry
-    # no `game` attribute of their own on Alignment, and CorpusRecord's own
-    # default is "red", so this is False (today's behavior) unless a Gold
-    # caller is actually present.
+    # before this fix: entries like "{RAM:wStringBuffer3}"). Alignment.game
+    # is a required field, but RBY's own callers never set it to "gold" (and
+    # CorpusRecord's own default is "red"), so this is False (today's
+    # behavior) unless a Gold caller is actually present.
     bare = any(getattr(row, "game", None) == "gold" for row in rows)
     if bare and not all(getattr(row, "game", None) == "gold" for row in rows):
         # One flag applies to the whole call (every helper below closes over
