@@ -160,6 +160,23 @@ class JoinGoldPointersTests(unittest.TestCase):
         entries, _ = join_gold_pointers(records, rows)
         self.assertEqual(entries[0].translation, "Bonjour\n!")
 
+    def test_candidates_differing_only_by_ram_buffer_number_are_harmless(self):
+        # Regression: _token_aware_key used to compare candidates by their
+        # RAW corpus token spelling, so two rows differing only in which
+        # numbered {text_ram wStringBufferN} they name looked like a genuine
+        # content difference and fell to UNRESOLVED -- even though Gold's
+        # engine never names the buffer either way, so both ship the
+        # byte-identical bare {STRBUF}.
+        records = [GoldTextRecord("55:0001", "Hello there!")]
+        rows = [
+            ("gs.a.One", "Hello there!", "Bonjour {text_ram wStringBuffer1}!"),
+            ("gs.b.Two", "Hello there!", "Bonjour {text_ram wStringBuffer2}!"),
+        ]
+        entries, stats = join_gold_pointers(records, rows)
+        self.assertEqual(entries[0].provenance, HARMLESS_AMBIGUOUS)
+        self.assertEqual(entries[0].translation, "Bonjour {STRBUF}!")
+        self.assertEqual(stats["harmless_ambiguous"], 1)
+
     def test_a_corpus_translation_naming_its_ram_buffer_bares_the_token(self):
         # Real bug, confirmed against a real Gold build: pointer 40:4d90
         # (gs.std_text.ReceivedItemText) shipped as

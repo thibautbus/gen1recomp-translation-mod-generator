@@ -39,6 +39,53 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(report["details"]["%s got off\nthe BICYCLE."], "semantic")
         self.assertEqual(report["provenance"]["%s got off\nthe BICYCLE."]["qids"], ["off1", "off2", "bike"])
 
+    def test_gold_semantic_anchor_bares_a_named_ram_buffer(self):
+        # Real bug, confirmed against a real Gold build: pointer 40:4d90's
+        # "{PLAYER} received\n{STRBUF}." sibling key "{PLAYER} found\n{STRBUF}!"
+        # (qid gs.common_2.FoundItemText) shipped as
+        # "{PLAYER} trouve\n{RAM:wStringBuffer3}!" in the generated French
+        # mod's strings.lua -- a token TextBox.lua's RAM handler does not
+        # recognise, so the found item's name silently rendered as nothing.
+        # match_gold_engine_strings tags every corpus row `game="gold"`
+        # (pipeline/gold_engine.py:_corpus_records); this drives
+        # match_engine_catalog the same way, with the real corpus source
+        # (poke-corpus/corpus/GoldSilver/{en,fr}_msg.txt line 4727) and the
+        # real anchor (config/gold/semantic_anchors.json).
+        source = "{PLAYER} found\n{STRBUF}!"
+        qid = "gs.common_2.FoundItemText"
+        rows = [
+            CorpusRecord(qid, "en", "{text_start}<PLAYER> found<LINE>@{text_ram wStringBuffer3}{text_start}!<DONE>", "gold"),
+            CorpusRecord(qid, "fr", "{text_start}<PLAYER> trouve<LINE>@{text_ram wStringBuffer3}{text_start}!<DONE>", "gold"),
+        ]
+        anchor = {"qid": qid, "extraction": {"kind": "full"}}
+        output, report = match_engine_catalog(
+            {source: ""}, rows, semantic_anchors={source: anchor}, target_lang="fr",
+        )
+        self.assertEqual(output[source], "{PLAYER} trouve\n{STRBUF}!")
+        self.assertEqual(report["details"][source], "semantic")
+
+    def test_rby_semantic_anchor_still_names_its_ram_buffer(self):
+        # Regression: the Gold opt-in above must not change RBY's own
+        # named-buffer behavior (game left at Alignment's default/"both").
+        source = "%s gained\nthe %s!"
+        qid_a, qid_b = "rb.a", "rb.b"
+        rows = [
+            Alignment(qid_a, "both", CorpusRecord(qid_a, "en", "{text_ram wNameBuffer}{text_start} gained@"),
+                      CorpusRecord(qid_a, "fr", "{text_ram wNameBuffer}{text_start} gagne@"), "qid"),
+            Alignment(qid_b, "both", CorpusRecord(qid_b, "en", "the {text_ram wStringBuffer}{text_start}!<DONE>"),
+                      CorpusRecord(qid_b, "fr", "le {text_ram wStringBuffer}{text_start}!<DONE>"), "qid"),
+        ]
+        anchor = {"parts": [
+            {"qid": qid_a, "extraction": {"kind": "full", "preserve_edges": True}},
+            {"qid": qid_b, "extraction": {"kind": "full", "preserve_edges": True}},
+        ], "separators": ["\n"], "placeholders": {
+            "{RAM:wNameBuffer}": {"printf": 0},
+            "{RAM:wStringBuffer}": {"printf": 1},
+        }}
+        output, _ = match_engine_catalog({source: ""}, rows,
+            semantic_anchors={source: anchor}, target_lang="fr")
+        self.assertEqual(output[source], "%s gagne\nle %s!")
+
     def test_multi_qid_parts_typed_printf_mapping_restores_numeric_format(self):
         source = "%s gained\n%03d EXP. Points!"
         qid_a, qid_b = "rb.test.Gained", "rb.test.ExpPoints"

@@ -202,8 +202,9 @@ def require_worksheets(root: str | Path) -> dict[str, list]:
     return worksheets
 
 
-def _normal(value: str) -> str:
-    return re.sub(r"\s+", " ", corpus_to_engine(value).strip()).casefold()
+def _normal(value: str, *, bare_dynamic_tokens: bool = False) -> str:
+    return re.sub(r"\s+", " ",
+                  corpus_to_engine(value, bare_dynamic_tokens=bare_dynamic_tokens).strip()).casefold()
 
 
 # Gen1Recomp ultimately calls LuaJIT's ``string.format``.  Its scanner accepts
@@ -257,9 +258,9 @@ def _dynamic_identity(token: str) -> str:
     return token
 
 
-def _placeholder_tokens(text: str) -> list[tuple[str, str]]:
+def _placeholder_tokens(text: str, *, bare_dynamic_tokens: bool = False) -> list[tuple[str, str]]:
     """Extract ordered structural placeholders from corpus or engine text."""
-    converted = corpus_to_engine(text)
+    converted = corpus_to_engine(text, bare_dynamic_tokens=bare_dynamic_tokens)
     result: list[tuple[str, str]] = []
     index = 0
     while index < len(converted):
@@ -283,9 +284,9 @@ def _placeholder_tokens(text: str) -> list[tuple[str, str]]:
     return result
 
 
-def _structural_form(text: str) -> str:
+def _structural_form(text: str, *, bare_dynamic_tokens: bool = False) -> str:
     """Canonical text shape with typed, ordered placeholders as markers."""
-    converted = corpus_to_engine(text)
+    converted = corpus_to_engine(text, bare_dynamic_tokens=bare_dynamic_tokens)
     pieces: list[str] = []
     index = 0
     while index < len(converted):
@@ -307,10 +308,11 @@ def _structural_form(text: str) -> str:
             continue
         pieces.append(converted[index])
         index += 1
-    return _normal("".join(pieces))
+    return _normal("".join(pieces), bare_dynamic_tokens=bare_dynamic_tokens)
 
 
-def _structural_translation(source: str, translation: str | None) -> str | None:
+def _structural_translation(source: str, translation: str | None, *,
+                             bare_dynamic_tokens: bool = False) -> str | None:
     """Convert a structurally compatible corpus translation to engine text.
 
     A translation is accepted only when its dynamic marker sequence has the
@@ -338,8 +340,8 @@ def _structural_translation(source: str, translation: str | None) -> str | None:
             continue
         index += 1
     source_types = tuple(marker_type for _, marker_type in source_markers)
-    converted = corpus_to_engine(translation)
-    target_tokens = _placeholder_tokens(converted)
+    converted = corpus_to_engine(translation, bare_dynamic_tokens=bare_dynamic_tokens)
+    target_tokens = _placeholder_tokens(converted, bare_dynamic_tokens=bare_dynamic_tokens)
     target_dynamic = [token_type for kind, token_type in target_tokens if kind == "dynamic"]
     target_printf = printf_directives(converted)
     # Corpus translations normally contain dynamic tokens, not printf syntax.
@@ -780,7 +782,8 @@ def merge_semantic_anchors(
     return merged, provenance
 
 
-def _extract_dex_counter(text: str, extraction: Mapping, language: str | None = None) -> str | None:
+def _extract_dex_counter(text: str, extraction: Mapping, language: str | None = None, *,
+                          bare_dynamic_tokens: bool = False) -> str | None:
     """Extract the audited RBY Pokédex footer from its corpus message.
 
     ``DexSeenOwnedText`` contains a ROM-only heading (``#DEX``), a line break,
@@ -793,7 +796,7 @@ def _extract_dex_counter(text: str, extraction: Mapping, language: str | None = 
     """
     if extraction.get("selector") != _DEX_COUNTER_SELECTOR:
         return None
-    converted = corpus_to_engine(text)
+    converted = corpus_to_engine(text, bare_dynamic_tokens=bare_dynamic_tokens)
     dynamic = list(DYNAMIC_TOKEN_RE.finditer(converted))
     if len(dynamic) != 2 or any(not match.group(0).startswith("{NUM:") for match in dynamic):
         return None
@@ -864,7 +867,8 @@ def _extract_dex_counter(text: str, extraction: Mapping, language: str | None = 
     return pair_one + "  " + pair_two
 
 
-def _extract_anchor(text: str, extraction: Mapping, language: str | None = None) -> str | None:
+def _extract_anchor(text: str, extraction: Mapping, language: str | None = None, *,
+                     bare_dynamic_tokens: bool = False) -> str | None:
     """Extract a qid-provenanced segment/span while retaining controls.
 
     ``segment`` is a control-delimited unit; ``span`` is a contiguous range
@@ -897,17 +901,20 @@ def _extract_anchor(text: str, extraction: Mapping, language: str | None = None)
     if isinstance(index, bool) or not isinstance(index, int) or index < 0:
         return None
     if kind == "dex_counter":
-        return _extract_dex_counter(text, extraction, language)
+        return _extract_dex_counter(text, extraction, language, bare_dynamic_tokens=bare_dynamic_tokens)
     if kind in {"segment", "token", "span", "parts"}:
         # RedBlue composite labels contain control bytes such as <NEXT> and
         # trailing @ markers. Controls are boundaries; punctuation in labels
         # (for example French ``ARG.``) remains part of the segment.
-        converted = corpus_to_engine(text)
+        converted = corpus_to_engine(text, bare_dynamic_tokens=bare_dynamic_tokens)
         converted = re.sub(r"<PK><MN>", " PKMN ", converted)
         converted = re.sub(r"<[^>]*>", " ", converted)
         # Preserve runtime placeholders as visible tokens; unknown braces are
-        # controls/metadata and are not part of semantic labels.
-        converted = re.sub(r"\{(?!PLAYER\}|RIVAL\}|TARGET\}|USER\}|ID\}|RAM(?:[:][^}]+)?\}|NUM:[^}]+\})[^}]*\}", " ", converted)
+        # controls/metadata and are not part of semantic labels. STRBUF is
+        # Gold's own bare dynamic marker (RomExtractorGen2.lua:decodeGen2Text
+        # never names the buffer -- see corpus_to_engine's bare_dynamic_tokens
+        # docstring), so it needs the same preservation RAM/NUM already get.
+        converted = re.sub(r"\{(?!PLAYER\}|RIVAL\}|TARGET\}|USER\}|ID\}|RAM(?:[:][^}]+)?\}|NUM(?::[^}]+)?\}|STRBUF\})[^}]*\}", " ", converted)
         converted = converted.replace("@", " ").replace("/", " ")
         # ``segment`` follows pret's control boundaries (line/paragraph/page
         # breaks), while ``token`` and ``span`` intentionally use whitespace
@@ -917,7 +924,8 @@ def _extract_anchor(text: str, extraction: Mapping, language: str | None = None)
             separators = extraction.get("separators")
             if not isinstance(parts, list) or not parts or not isinstance(separators, list) or len(separators) != len(parts) - 1:
                 return None
-            values = [_extract_anchor(text, {"kind": "segment", "index": part}, language) for part in parts]
+            values = [_extract_anchor(text, {"kind": "segment", "index": part}, language,
+                                       bare_dynamic_tokens=bare_dynamic_tokens) for part in parts]
             if any(value is None for value in values):
                 return None
             return "".join(value + (separators[index] if index < len(separators) else "")
@@ -935,7 +943,7 @@ def _extract_anchor(text: str, extraction: Mapping, language: str | None = None)
             return None
         return converted[matches[index].start():matches[index + count - 1].end()] + extraction.get("suffix", "")
     elif kind == "full":
-        converted = corpus_to_engine(text)
+        converted = corpus_to_engine(text, bare_dynamic_tokens=bare_dynamic_tokens)
         converted = re.sub(r"<[^>]*>", " ", converted).replace("@", "").replace("/", "")
         wrapper = extraction.get("wrapper")
         if wrapper is not None:
@@ -961,6 +969,17 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
     else:
         entries = [x if isinstance(x, EngineEntry) else EngineEntry(str(x)) for x in catalog]
     rows = list(records)
+    # Gold's RomExtractorGen2.lua:decodeGen2Text never names its RAM/decimal
+    # buffer (see corpus_to_engine's bare_dynamic_tokens docstring); every
+    # corpus_to_engine call below must bare a Gold row's named
+    # {text_ram X}/{text_decimal X} the same way, or a matched translation
+    # ships a numbered token gen1recomp's TextBox.lua RAM handler does not
+    # recognise (confirmed live in .cache/interactive-gold/*/lang/strings.lua
+    # before this fix: entries like "{RAM:wStringBuffer3}"). RBY rows carry
+    # no `game` attribute of their own on Alignment, and CorpusRecord's own
+    # default is "red", so this is False (today's behavior) unless a Gold
+    # caller is actually present.
+    bare = any(getattr(row, "game", None) == "gold" for row in rows)
     candidates_exact: dict[str, list[tuple[str, str | None]]] = defaultdict(list)
     candidates_norm: dict[str, list[tuple[str, str | None]]] = defaultdict(list)
     candidates_structural: dict[str, list[tuple[str, str | None]]] = defaultdict(list)
@@ -990,9 +1009,9 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
             anchor_rows[target.qid].append((raw_english[target.qid].text, target.value))
 
     def add_candidate(source: str, translation: str | None) -> None:
-        candidates_exact[corpus_to_engine(source)].append((source, translation))
-        candidates_norm[_normal(source)].append((source, translation))
-        candidates_structural[_structural_form(source)].append((source, translation))
+        candidates_exact[corpus_to_engine(source, bare_dynamic_tokens=bare)].append((source, translation))
+        candidates_norm[_normal(source, bare_dynamic_tokens=bare)].append((source, translation))
+        candidates_structural[_structural_form(source, bare_dynamic_tokens=bare)].append((source, translation))
 
     for row in rows:
         if isinstance(row, Alignment):
@@ -1070,11 +1089,11 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
             if pair is None:
                 return None, set()
             extraction = part["extraction"]
-            source_piece = _extract_anchor(pair[0], extraction, "en")
-            target_piece = _extract_anchor(pair[1], extraction, target_lang)
+            source_piece = _extract_anchor(pair[0], extraction, "en", bare_dynamic_tokens=bare)
+            target_piece = _extract_anchor(pair[1], extraction, target_lang, bare_dynamic_tokens=bare)
             if source_piece is None or target_piece is None:
                 return None, set()
-            if any(kind == "printf" for kind, _ in _placeholder_tokens(target_piece)):
+            if any(kind == "printf" for kind, _ in _placeholder_tokens(target_piece, bare_dynamic_tokens=bare)):
                 return None, set()
             source_pieces.append(source_piece)
             target_pieces.append(target_piece)
@@ -1112,17 +1131,18 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
         # instead of silently producing a misleading match.  Localizations
         # must preserve token identity, multiplicity, and order: printf
         # arguments are positional in LuaJIT's string.format.
-        source_converted = corpus_to_engine(source_joined)
-        target_converted = corpus_to_engine(target_joined)
+        source_converted = corpus_to_engine(source_joined, bare_dynamic_tokens=bare)
+        target_converted = corpus_to_engine(target_joined, bare_dynamic_tokens=bare)
         source_dynamic_raw = DYNAMIC_TOKEN_RE.findall(source_converted)
         source_dynamic = [_dynamic_identity(token) for token in source_dynamic_raw]
-        declared_dynamic = set(_dynamic_identity(corpus_to_engine(token)) for token in placeholders)
+        declared_dynamic = set(_dynamic_identity(corpus_to_engine(token, bare_dynamic_tokens=bare))
+                                for token in placeholders)
         if set(source_dynamic) != declared_dynamic:
             return None, set()
         target_dynamic = [_dynamic_identity(token) for token in DYNAMIC_TOKEN_RE.findall(target_converted)]
         if target_dynamic != source_dynamic:
             return None, set()
-        target_tokens = _placeholder_tokens(target_converted)
+        target_tokens = _placeholder_tokens(target_converted, bare_dynamic_tokens=bare)
         # A target containing both corpus dynamics and explicit printf tokens
         # is ambiguous (the latter could be prose or a substituted argument).
         if (any(kind == "printf" for kind, _ in target_tokens) and
@@ -1140,7 +1160,7 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
                 # Config keys may use a legacy spelling that converts to the
                 # same engine token; normalize before looking up the ref.
                 ref = next((candidate for candidate, candidate_ref in placeholders.items()
-                            if _dynamic_identity(corpus_to_engine(candidate)) == token), None)
+                            if _dynamic_identity(corpus_to_engine(candidate, bare_dynamic_tokens=bare)) == token), None)
                 if ref is None:
                     return None, set()
                 ref = placeholders[ref]
@@ -1171,7 +1191,7 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
             return None, set()
 
         def replace(text: str, values: list[str]) -> str:
-            converted = corpus_to_engine(text)
+            converted = corpus_to_engine(text, bare_dynamic_tokens=bare)
             out: list[str] = []
             cursor = 0
             occurrence = 0
@@ -1217,7 +1237,7 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
         errors = check_printf_directives(source, target_value)
         if errors:
             return None, set()
-        return corpus_to_engine(target_value), None
+        return corpus_to_engine(target_value, bare_dynamic_tokens=bare), None
 
     def resolve_anchor(source: str, anchor: Mapping):
         if "parts" in anchor:
@@ -1231,29 +1251,31 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
         if len(qid_rows) != 1:
             return None, set()
         for source_text, target_text in qid_rows:
-            source_piece = _extract_anchor(source_text, extraction, "en")
+            source_piece = _extract_anchor(source_text, extraction, "en", bare_dynamic_tokens=bare)
             target_piece = target_text
             if source_piece is None or target_piece in (None, ""):
                 semantic_error = True; continue
-            target_piece = _extract_anchor(target_piece, extraction, target_lang)
+            target_piece = _extract_anchor(target_piece, extraction, target_lang, bare_dynamic_tokens=bare)
             aliases = {str(alias) for alias in anchor.get("source_aliases", []) if isinstance(alias, str)}
-            alias_norms = {_normal(alias) for alias in aliases}
+            alias_norms = {_normal(alias, bare_dynamic_tokens=bare) for alias in aliases}
             source_matches = (
-                _normal(source_piece) == _normal(source)
-                or _structural_form(source_piece) == _structural_form(source)
+                _normal(source_piece, bare_dynamic_tokens=bare) == _normal(source, bare_dynamic_tokens=bare)
+                or _structural_form(source_piece, bare_dynamic_tokens=bare) == _structural_form(source, bare_dynamic_tokens=bare)
                 # A source alias may describe the punctuation/control-token
                 # spelling present in the corpus row.  This is useful for
                 # stable engine messages whose generated key differs only in
                 # terminal punctuation (for example ``woke up.`` vs
                 # ``woke up!``); aliases remain explicit and qid-scoped.
-                or _normal(source_piece) in alias_norms
-                or _normal(source) in alias_norms
+                or _normal(source_piece, bare_dynamic_tokens=bare) in alias_norms
+                or _normal(source, bare_dynamic_tokens=bare) in alias_norms
             )
             if target_piece is None or not source_matches:
                 semantic_error = True; continue
             if extraction.get("kind") == "dex_counter":
-                source_dynamic = [_dynamic_identity(token) for token in DYNAMIC_TOKEN_RE.findall(corpus_to_engine(source_piece))]
-                target_dynamic = [_dynamic_identity(token) for token in DYNAMIC_TOKEN_RE.findall(corpus_to_engine(target_piece))]
+                source_dynamic = [_dynamic_identity(token) for token in
+                                   DYNAMIC_TOKEN_RE.findall(corpus_to_engine(source_piece, bare_dynamic_tokens=bare))]
+                target_dynamic = [_dynamic_identity(token) for token in
+                                   DYNAMIC_TOKEN_RE.findall(corpus_to_engine(target_piece, bare_dynamic_tokens=bare))]
                 if source_dynamic != target_dynamic:
                     semantic_error = True; continue
             # Engine catalogue keys use printf directives while corpus rows
@@ -1268,14 +1290,16 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
             source_printf = [directive for directive in printf_directives(source)
                              if directive != "%%"]
             if source_printf:
-                structural_value = _structural_translation(source, target_piece)
+                structural_value = _structural_translation(source, target_piece, bare_dynamic_tokens=bare)
                 if structural_value is None:
                     semantic_error = True; continue
                 semantic_values.add(structural_value)
                 continue
-            if check_printf_directives(source, target_piece) or _placeholder_tokens(source) != _placeholder_tokens(target_piece):
+            if (check_printf_directives(source, target_piece) or
+                    _placeholder_tokens(source, bare_dynamic_tokens=bare) !=
+                    _placeholder_tokens(target_piece, bare_dynamic_tokens=bare)):
                 semantic_error = True; continue
-            semantic_values.add(corpus_to_engine(target_piece))
+            semantic_values.add(corpus_to_engine(target_piece, bare_dynamic_tokens=bare))
         if semantic_values and not semantic_error and len(semantic_values) == 1:
             return next(iter(semantic_values)), None
         if semantic_error and len(semantic_values) <= 1:
@@ -1334,20 +1358,21 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
                 report["decision_provenance"][source] = dict(provenance)
             report["provenance"][source] = provenance
             continue
-        candidates = candidates_exact.get(corpus_to_engine(source), [])
+        candidates = candidates_exact.get(corpus_to_engine(source, bare_dynamic_tokens=bare), [])
         method = "exact"
         if not candidates:
-            candidates = candidates_norm.get(_normal(source), [])
+            candidates = candidates_norm.get(_normal(source, bare_dynamic_tokens=bare), [])
             method = "normalized"
         if not candidates:
-            structural_candidates = candidates_structural.get(_structural_form(source), [])
+            structural_candidates = candidates_structural.get(
+                _structural_form(source, bare_dynamic_tokens=bare), [])
             if structural_candidates:
                 structural_values: set[str] = set()
                 incompatible = False
                 for _, candidate in structural_candidates:
                     if candidate in (None, ""):
                         continue
-                    value = _structural_translation(source, candidate)
+                    value = _structural_translation(source, candidate, bare_dynamic_tokens=bare)
                     if value is None:
                         incompatible = True
                     else:
@@ -1376,7 +1401,7 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
                 continue
         values = {
             converted for _, value in candidates if value not in (None, "")
-            for converted in (corpus_to_engine(value),) if converted
+            for converted in (corpus_to_engine(value, bare_dynamic_tokens=bare),) if converted
         }
         # A semantic anchor is an explicit qid proof and may disambiguate
         # duplicate literal labels (e.g. MONEY appears in several screens).

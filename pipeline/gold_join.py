@@ -111,12 +111,21 @@ def load_gold_placeholder_decisions(
 
 
 def _token_aware_key(value: str) -> tuple[tuple[str, str], ...]:
-    """Normalize prose while preserving every command token exactly.
+    """Normalize prose while preserving every command token's SHIPPED spelling.
 
     ``gold_text.normalise`` intentionally erases braces and punctuation for
     the English lookup.  That is unsafe for ambiguity resolution: two corpus
     rows can have the same prose but different sound/RAM commands.  This key
     only folds prose segments and keeps token spelling/ordering visible.
+
+    Each token is put through ``corpus_to_engine(..., bare_dynamic_tokens=True)``
+    -- the same conversion the candidate's translation itself gets before
+    shipping (this module is Gold-only) -- rather than compared by raw corpus
+    spelling.  Without it, two rows differing only in which numbered
+    ``{text_ram wStringBufferN}`` they name looked like a genuine content
+    difference and fell to UNRESOLVED, even though gen1recomp's Gold decoder
+    never names the buffer either way (RomExtractorGen2.lua:decodeGen2Text),
+    so both rows produce the byte-identical bare ``{STRBUF}`` once shipped.
     """
     parts: list[tuple[str, str]] = []
     position = 0
@@ -124,7 +133,7 @@ def _token_aware_key(value: str) -> tuple[tuple[str, str], ...]:
         prose = normalise(value[position:match.start()])
         if prose:
             parts.append(("text", prose))
-        parts.append(("token", match.group(0)))
+        parts.append(("token", corpus_to_engine(match.group(0), bare_dynamic_tokens=True)))
         position = match.end()
     prose = normalise(value[position:])
     if prose:
