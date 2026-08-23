@@ -738,7 +738,30 @@ a matter of wiring a few missed callsites.
   `fix/translate-gold-options-menu` (labels and cart-original values wrapped
   in `Strings()`/`Strings.source()`, mirroring the Gen 1 OPTION screen's own
   pattern); not yet merged to `main` as of this writing, so any build made
-  from `main` still shows this screen in English.
+  from `main` still shows this screen in English. This project's own
+  `overrides/{fr,de,es,it}/gold/engine.json` now carry real corpus values for
+  every one of these labels and value ladders (branch
+  `feat/gold-options-menu-corpus-translations`) -- checked directly against
+  poke-corpus (`gs.options_menu.StringOptions` and its `Options_*` rows) and
+  they match the ROM's English source character-for-character, padding
+  included, so this is official localized phrasing, not a compromise. Inert
+  until the pin includes the fix above (ja-Hrkt/ko not covered yet: their
+  corpus rows use `<NEXT>` instead of `<LF>` and need a closer look before
+  trusting an extracted value).
+
+  **Future architectural note:** every one of these labels and value ladders
+  is verbatim cart text, which argues for routing this screen through real
+  ROM extraction (a `game.data.text`-equivalent table gen1recomp's own
+  extractor would fill from *whatever* ROM is imported) rather than
+  `Strings()` plus a hand-maintained override per language -- the same shift
+  already made for RBY content that used to need this project's manual
+  overrides. Done that way, a player who imports their own localized Gold
+  cartridge would see this screen in their own language even with no
+  translation mod installed at all, and this project's override table above
+  would become unnecessary. That is a gen1recomp-side change (extending
+  `RomExtractorGen2.lua` plus rewriting `OptionsMenu.lua` to read from it),
+  materially bigger than the `Strings()`-wrapping fix already on
+  `fix/translate-gold-options-menu`; deferred for now.
 - **Gold naming/keyboard screen (from gen1recomp#1642, fixed upstream, not
   yet merged):** `src/ui/gen2/NamingScreen.lua` also had zero `Strings()`
   calls. The prompts (`YOUR NAME?`, `RIVAL'S NAME?`, `MOTHER'S NAME?`, `BOX
