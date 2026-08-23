@@ -55,6 +55,16 @@
     "LIGHTER ": {"override": "CHIARA  ", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_Print.Lighter (real Gold ROM OPTION-screen text)."},
     "NORMAL  ": {"override": "NORMALE ", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_Print.Normal (real Gold ROM OPTION-screen text)."},
     "DARKER  ": {"override": "SCURA   ", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_Print.Darker (real Gold ROM OPTION-screen text)."},
-    "DARKEST ": {"override": "SCURISS.", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_Print.Darkest (real Gold ROM OPTION-screen text)."}
+    "DARKEST ": {"override": "SCURISS.", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_Print.Darkest (real Gold ROM OPTION-screen text)."},
+    "YOUR NAME?": {"override": "NOME TUO?", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.naming_screen.NamingScreenJumptable.PlayerNameString (real Gold ROM naming-screen text)."},
+    "RIVAL'S NAME?": {"override": "NOME RIVALE?", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.naming_screen.NamingScreenJumptable.RivalNameString (real Gold ROM naming-screen text)."},
+    "MOTHER'S NAME?": {"override": "NOME MAMMA?", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.naming_screen.NamingScreenJumptable.MomNameString (real Gold ROM naming-screen text)."},
+    "BOX NAME?": {"override": "NOME BOX?", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.naming_screen.NamingScreenJumptable.BoxNameString (real Gold ROM naming-screen text)."},
+    "NICKNAME?": {"override": "NOME?", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.naming_screen.NamingScreenJumptable.NicknameStrings (real Gold ROM naming-screen text)."},
+    "%s'S": {"override": "%s", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.naming_screen.NamingScreenJumptable.NicknameStrings (real Gold ROM naming-screen text)."},
+    "lower": {"override": "minus", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.name_input_chars.NameInputLower/NameInputUpper (real Gold ROM naming-screen keyboard's own case-switch/delete/end labels)."},
+    "UPPER": {"override": "MAIUS", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.name_input_chars.NameInputLower/NameInputUpper (real Gold ROM naming-screen keyboard's own case-switch/delete/end labels)."},
+    "DEL": {"override": "CANC", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.name_input_chars.NameInputLower/NameInputUpper (real Gold ROM naming-screen keyboard's own case-switch/delete/end labels)."},
+    "END": {"override": "FINE", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.name_input_chars.NameInputLower/NameInputUpper (real Gold ROM naming-screen keyboard's own case-switch/delete/end labels)."}
   }
 }
