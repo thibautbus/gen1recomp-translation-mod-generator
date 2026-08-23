@@ -69,7 +69,7 @@
       "separators": [],
       "placeholders": {
         "{ENEMY}": {"printf": 0},
-        "{RAM:wEnemyMonNickname}": {"printf": 1},
+        "{STRBUF}": {"printf": 1},
         "{PLAYER}": {"printf": 2}
       }
     },

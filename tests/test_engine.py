@@ -64,6 +64,37 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(output[source], "{PLAYER} trouve\n{STRBUF}!")
         self.assertEqual(report["details"][source], "semantic")
 
+    def test_real_gold_semantic_anchor_config_matches_the_bare_form(self):
+        # Real regression caught by an independent review of the fix above:
+        # config/gold/semantic_anchors.json's ONE composite (multi-placeholder)
+        # Gold anchor, gs.battle.BattleText_EnemyIsAboutToUseWillPlayerChangeMon,
+        # declared its RAM placeholder as the OLD named engine form
+        # ("{RAM:wEnemyMonNickname}") -- what corpus_to_engine used to produce
+        # from the corpus's "{text_ram wEnemyMonNickname}" before this fix.
+        # With bare_dynamic_tokens now baring the corpus side to "{STRBUF}",
+        # the declared placeholder no longer matched what the source actually
+        # produced, and resolve_parts failed the whole anchor closed
+        # (declared_dynamic != source_dynamic) -- reproduced directly against
+        # the checked-in config before it was corrected alongside this test.
+        # Loads the REAL file, not a hand-built fixture, so a future edit that
+        # reintroduces a named placeholder for Gold fails this test too.
+        source = "%s\nis about to use\x0b%s.\x0cWill %s\nchange POKéMON?"
+        qid = "gs.battle.BattleText_EnemyIsAboutToUseWillPlayerChangeMon"
+        rows = [
+            CorpusRecord(qid, "en",
+                "{text_start}<ENEMY><LINE>is about to use<CONT>@{text_ram wEnemyMonNickname}"
+                "{text_start}.<PARA>Will <PLAYER><LINE>change #MON?<DONE>", "gold"),
+            CorpusRecord(qid, "fr",
+                "{text_start}<ENEMY><LINE>va utiliser<CONT>@{text_ram wEnemyMonNickname}"
+                "{text_start}.<PARA><PLAYER> va-t-il<LINE>changer de PKMN?<DONE>", "gold"),
+        ]
+        anchors_path = Path(__file__).resolve().parents[1] / "config" / "gold" / "semantic_anchors.json"
+        output, report = match_engine_catalog(
+            {source: ""}, rows, semantic_anchors=anchors_path, target_lang="fr",
+        )
+        self.assertEqual(output[source], "%s\nva utiliser\x0b%s.\x0c%s va-t-il\nchanger de PKMN?")
+        self.assertEqual(report["details"][source], "semantic")
+
     def test_rby_semantic_anchor_still_names_its_ram_buffer(self):
         # Regression: the Gold opt-in above must not change RBY's own
         # named-buffer behavior (game left at Alignment's default/"both").

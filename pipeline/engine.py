@@ -798,7 +798,15 @@ def _extract_dex_counter(text: str, extraction: Mapping, language: str | None = 
         return None
     converted = corpus_to_engine(text, bare_dynamic_tokens=bare_dynamic_tokens)
     dynamic = list(DYNAMIC_TOKEN_RE.finditer(converted))
-    if len(dynamic) != 2 or any(not match.group(0).startswith("{NUM:") for match in dynamic):
+    # _DEX_COUNTER_SELECTOR currently gates this selector to RBY, whose own
+    # extracted text always names its NUM source ("{NUM:..."), but a Gold
+    # caller passing bare_dynamic_tokens=True would produce the bare "{NUM}"
+    # this selector was never given -- accept both spellings rather than
+    # assuming the named one.
+    if len(dynamic) != 2 or any(
+        match.group(0) != "{NUM}" and not match.group(0).startswith("{NUM:")
+        for match in dynamic
+    ):
         return None
     first, second = dynamic
     between = converted[first.end():second.start()]
@@ -914,7 +922,11 @@ def _extract_anchor(text: str, extraction: Mapping, language: str | None = None,
         # Gold's own bare dynamic marker (RomExtractorGen2.lua:decodeGen2Text
         # never names the buffer -- see corpus_to_engine's bare_dynamic_tokens
         # docstring), so it needs the same preservation RAM/NUM already get.
-        converted = re.sub(r"\{(?!PLAYER\}|RIVAL\}|TARGET\}|USER\}|ID\}|RAM(?:[:][^}]+)?\}|NUM(?::[^}]+)?\}|STRBUF\})[^}]*\}", " ", converted)
+        # ENEMY joins the same DYNAMIC_TOKEN_RE family as PLAYER/RIVAL/etc and
+        # was missing here too (tokens.py:DYNAMIC_TOKEN_RE).
+        converted = re.sub(
+            r"\{(?!PLAYER\}|RIVAL\}|TARGET\}|USER\}|ENEMY\}|ID\}|RAM(?:[:][^}]+)?\}|NUM(?::[^}]+)?\}|STRBUF\})[^}]*\}",
+            " ", converted)
         converted = converted.replace("@", " ").replace("/", " ")
         # ``segment`` follows pret's control boundaries (line/paragraph/page
         # breaks), while ``token`` and ``span`` intentionally use whitespace
@@ -980,6 +992,16 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
     # default is "red", so this is False (today's behavior) unless a Gold
     # caller is actually present.
     bare = any(getattr(row, "game", None) == "gold" for row in rows)
+    if bare and not all(getattr(row, "game", None) == "gold" for row in rows):
+        # One flag applies to the whole call (every helper below closes over
+        # it), so a caller mixing Gold rows with anything else would corrupt
+        # RAM/NUM matching for whichever game is in the minority. Every real
+        # caller today is single-game (pipeline/gold_engine.py tags every row
+        # "gold"; RBY's own callers never do) -- fail loud instead of
+        # silently doing the wrong thing for a future caller that mixes them.
+        raise ValueError(
+            "match_engine_catalog: mixing Gold ('game' == \"gold\") rows with "
+            "other-game rows in one call is not supported")
     candidates_exact: dict[str, list[tuple[str, str | None]]] = defaultdict(list)
     candidates_norm: dict[str, list[tuple[str, str | None]]] = defaultdict(list)
     candidates_structural: dict[str, list[tuple[str, str | None]]] = defaultdict(list)
