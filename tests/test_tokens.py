@@ -98,5 +98,61 @@ class GoldBareDynamicTokenTests(unittest.TestCase):
         ])
 
 
+class GoldBareDynamicTokensOptInTests(unittest.TestCase):
+    """Real bug, confirmed against a real Gold build: the Pokegear and
+    Cyndaquil/Hericendre starter "receives" text (pointers 40:4d90 /
+    60:46c8, qids gs.std_text.ReceivedItemText / gs.ElmsLab.ReceivedStarterText)
+    rendered with the item/mon name missing in the generated French mod.
+
+    corpus_to_engine's default {text_ram X} -> {RAM:X} conversion is correct
+    for RBY (whose own extracted text.lua names its buffer) but wrong for
+    Gold: RomExtractorGen2.lua:decodeGen2Text never names the buffer (TX_RAM
+    always decodes to bare "{STRBUF}" -- confirmed in
+    .cache/gold/extracted/gold_text.tsv, pointer 40:4d90:
+    "{PLAYER} received\n{STRBUF}."), and src/render/TextBox.lua's RAM token
+    handler only recognises the bare "wStringBuffer"/"wNameBuffer" spellings,
+    not a numbered "wStringBuffer2/3/4". A named token silently renders as
+    nothing (Tokens.expand's contract: an unmatched RAM arg returns nil,
+    which the caller turns into "").
+    """
+
+    def test_default_still_names_the_buffer_for_rby(self):
+        self.assertEqual(
+            corpus_to_engine("{text_ram wBattleMonNick} fainted!"),
+            "{RAM:wBattleMonNick} fainted!",
+        )
+
+    def test_gold_opt_in_bares_a_numbered_string_buffer(self):
+        self.assertEqual(
+            corpus_to_engine("{PLAYER} reçoit\n{text_ram wStringBuffer4}.",
+                              bare_dynamic_tokens=True),
+            "{PLAYER} reçoit\n{STRBUF}.",
+        )
+
+    def test_gold_opt_in_bares_the_starter_pointers_own_buffer(self):
+        self.assertEqual(
+            corpus_to_engine("{PLAYER} reçoit\n{text_ram wStringBuffer3}!",
+                              bare_dynamic_tokens=True),
+            "{PLAYER} reçoit\n{STRBUF}!",
+        )
+
+    def test_gold_opt_in_bares_a_named_decimal_too(self):
+        # Same root cause, same engine-side proof (decodeGen2Text's TX_DECIMAL
+        # also always decodes to bare "{NUM}") -- fixed alongside RAM so a
+        # Gold pointer that names its decimal source does not ship the same
+        # class of silently-dropped token.
+        self.assertEqual(
+            corpus_to_engine("Cost: {text_decimal hMoneyTemp, 2, 6}",
+                              bare_dynamic_tokens=True),
+            "Cost: {NUM}",
+        )
+
+    def test_gold_opt_in_leaves_an_already_bare_token_alone(self):
+        self.assertEqual(
+            corpus_to_engine("{PLAYER} received\n{STRBUF}.", bare_dynamic_tokens=True),
+            "{PLAYER} received\n{STRBUF}.",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

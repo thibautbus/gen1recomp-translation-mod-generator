@@ -160,6 +160,28 @@ class JoinGoldPointersTests(unittest.TestCase):
         entries, _ = join_gold_pointers(records, rows)
         self.assertEqual(entries[0].translation, "Bonjour\n!")
 
+    def test_a_corpus_translation_naming_its_ram_buffer_bares_the_token(self):
+        # Real bug, confirmed against a real Gold build: pointer 40:4d90
+        # (gs.std_text.ReceivedItemText) shipped as
+        # "{PLAYER} reçoit\n{RAM:wStringBuffer4}." -- a token
+        # src/render/TextBox.lua's RAM handler does not recognise (it only
+        # matches the bare "wStringBuffer"/"wNameBuffer" spellings), so the
+        # item name silently rendered as nothing. The engine's own extracted
+        # English for the same pointer is bare
+        # ("{PLAYER} received\n{STRBUF}." -- .cache/gold/extracted/gold_text.tsv
+        # line 59), which is what the French translation must collapse to.
+        records = [GoldTextRecord("40:4d90", "{PLAYER} received\n{STRBUF}.")]
+        rows = [(
+            "gs.std_text.ReceivedItemText",
+            "{PLAYER} received\n{text_ram wStringBuffer4}.",
+            "{PLAYER} reçoit\n{text_ram wStringBuffer4}.",
+        )]
+        entries, stats = join_gold_pointers(records, rows, qid_decisions={
+            "40:4d90": "gs.std_text.ReceivedItemText",
+        })
+        self.assertEqual(entries[0].translation, "{PLAYER} reçoit\n{STRBUF}.")
+        self.assertEqual(stats["reviewed_qid"], 1)
+
 
 class AuditJoinTests(unittest.TestCase):
     def test_flags_duplicate_pointers(self):

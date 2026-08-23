@@ -95,7 +95,7 @@ def _gold_ui_labels(corpus_rows: list[tuple[str, str, str]]) -> dict[str, str]:
     for source, (qid, index, page) in _load_gold_ui_handlers().items():
         target = rows.get(qid, "")
         if index < 0:
-            value = corpus_to_engine(target)
+            value = corpus_to_engine(target, bare_dynamic_tokens=True)
             if page is not None:
                 value = value.split("\f")[page] if page < len(value.split("\f")) else ""
             if value:

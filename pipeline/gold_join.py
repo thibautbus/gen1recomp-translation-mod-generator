@@ -178,7 +178,7 @@ def join_gold_pointers(
 
     by_english: dict[str, list[tuple[str, str]]] = defaultdict(list)
     for qid, en, fr in corpus_rows:
-        if fr.strip() and corpus_to_engine(fr):
+        if fr.strip() and corpus_to_engine(fr, bare_dynamic_tokens=True):
             by_english[normalise(en)].append((qid, fr))
 
     entries: list[GoldJoinEntry] = []
@@ -193,7 +193,7 @@ def join_gold_pointers(
         norm = normalise(english)
 
         if pointer in overrides:
-            translation = corpus_to_engine(overrides[pointer])
+            translation = corpus_to_engine(overrides[pointer], bare_dynamic_tokens=True)
             if not overrides[pointer].strip() or not translation:
                 raise ValueError(f"empty Gold pointer override for {pointer!r}")
             entries.append(GoldJoinEntry(pointer, label, english, translation, OVERRIDE))
@@ -210,7 +210,7 @@ def join_gold_pointers(
                 raise ValueError(
                     f"Gold pointer decision source mismatch for {pointer!r}: {qid!r}"
                 )
-            translation = corpus_to_engine(target)
+            translation = corpus_to_engine(target, bare_dynamic_tokens=True)
             if not target.strip() or not translation:
                 raise ValueError(f"empty Gold pointer decision target for {pointer!r}: {qid!r}")
             entries.append(GoldJoinEntry(pointer, label, english, translation, REVIEWED_QID, qid))
@@ -230,14 +230,14 @@ def join_gold_pointers(
 
         if len(candidates) == 1:
             qid, fr = candidates[0]
-            entries.append(GoldJoinEntry(pointer, label, english, corpus_to_engine(fr), UNIQUE, qid))
+            entries.append(GoldJoinEntry(pointer, label, english, corpus_to_engine(fr, bare_dynamic_tokens=True), UNIQUE, qid))
             stats["unique"] += 1
             continue
 
         distinct_french = {_token_aware_key(fr) for _, fr in candidates}
         if len(distinct_french) == 1:
             qid, fr = candidates[0]
-            entries.append(GoldJoinEntry(pointer, label, english, corpus_to_engine(fr), HARMLESS_AMBIGUOUS,
+            entries.append(GoldJoinEntry(pointer, label, english, corpus_to_engine(fr, bare_dynamic_tokens=True), HARMLESS_AMBIGUOUS,
                                           qid, tuple(sorted(c for c, _ in candidates))))
             stats["harmless_ambiguous"] += 1
             continue
