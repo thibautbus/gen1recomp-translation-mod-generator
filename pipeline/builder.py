@@ -34,7 +34,7 @@ from .project import (
     luajit_install_hint as _luajit_install_hint,
 )
 from .dependencies import DependencyError, fetch_archive, fetch_files
-from .roms import import_rom, verify_gold_rom, verify_rom
+from .roms import import_rom, verify_gs_rom, verify_rom
 from .subprocess_run import run_streamed
 from .rom_paths import configured_path, load_rom_paths
 from .specs import game_spec, languages_for_collection, release_profile, release_profile_for_generation
@@ -337,7 +337,7 @@ def _prompt_generation(input_fn: Callable[[str], str]) -> int:
     """
     print("\nWhich games do you want to translate?")
     print("  1 - Red, Blue and Yellow   (generation 1)")
-    print("  2 - Gold                   (generation 2)")
+    print("  2 - Gold and Silver        (generation 2)")
     raw = input_fn("Games number [1]: ").strip()
     if raw in {"", "1"}:
         return 1
@@ -815,7 +815,7 @@ def print_coverage(
         lines.append(f"  RBY-related engine strings: unavailable ({report['engine_rby_warning']})")
     section = report.get("engine_gen2") or {}
     if section.get("total"):
-        lines.append(f"  Gold-related engine strings: {int(section.get('translated', 0))}/{int(section.get('total', 0))} ({float(section.get('percent', 0.0)):.2f}%)")
+        lines.append(f"  Gold and Silver-related engine strings: {int(section.get('translated', 0))}/{int(section.get('total', 0))} ({float(section.get('percent', 0.0)):.2f}%)")
     section = report.get("engine") or {}
     lines.append(f"  All engine strings: {int(section.get('translated', 0))}/{int(section.get('total', 0))} ({float(section.get('percent', 0.0)):.2f}%)")
     for line in lines:
@@ -1173,12 +1173,12 @@ def main(
                 language_name=language_name, luajit=luajit,
             )
         else:
-            gold_prompt = (
-                "Please specify the location of your Pokemon Gold ROM "
+            gs_prompt = (
+                "Please specify the location of your Pokemon Gold or Silver ROM "
                 "(full path, e.g. C:\\Games\\PokemonGold.gbc): "
             )
-            gold = _prompt_configured_path(
-                gold_prompt, configured_path(rom_paths, "rom", "gold"), input_fn
+            gs_rom = _prompt_configured_path(
+                gs_prompt, configured_path(rom_paths, "rom", "gold"), input_fn
             )
             language, language_name = _prompt_language(input_fn, generation=generation)
             selected_profile = font_profile or _prompt_font_profile(language, input_fn)
@@ -1187,7 +1187,7 @@ def main(
                 warning = font_profile_warning(selected_profile)
                 if warning:
                     print(f"Warning: {warning}")
-            verify_gold_rom(gold)
+            verify_gs_rom(gs_rom)
             if not _confirm(input_fn):
                 if is_frozen():
                     print("\nBuild cancelled. No dependency downloads were performed.")
@@ -1196,7 +1196,7 @@ def main(
                 return 0
             from .orchestration import build_request
             output = build_request(
-                BuildRequest({"gold": gold}, release_profile("gold"), language, None, selected_profile),
+                BuildRequest({"gs": gs_rom}, release_profile("gs"), language, None, selected_profile),
                 language_name=language_name, luajit=luajit,
             )
     except (RuntimeError, ValueError, OSError) as error:

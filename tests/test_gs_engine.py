@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from pipeline.gold_engine import engine_string_keys, match_gold_engine_strings
+from pipeline.gs_engine import engine_string_keys, match_gs_engine_strings
 from pipeline.engine_scope import is_gen2_path, load_manifest
 
 
@@ -45,15 +45,15 @@ class GoldEngineCatalogTests(unittest.TestCase):
         manifest = {**load_manifest(), "forced_dynamic_keys": {}, "engine_dynamic_values": {}}
         with (
             tempfile.TemporaryDirectory() as tmp,
-            patch("pipeline.gold_engine.load_manifest", return_value=manifest),
+            patch("pipeline.gs_engine.load_manifest", return_value=manifest),
             patch(
-                "pipeline.gold_engine.verified_source",
+                "pipeline.gs_engine.verified_source",
                 return_value=(Path(tmp) / "src", Path(tmp), "0" * 40),
             ),
-            patch("pipeline.gold_engine.iter_callsites", return_value=CALLSITES),
-            patch("pipeline.gold_engine.load_engine_overrides", return_value={}),
+            patch("pipeline.gs_engine.iter_callsites", return_value=CALLSITES),
+            patch("pipeline.gs_engine.load_engine_overrides", return_value={}),
         ):
-            values, coverage = match_gold_engine_strings(rows, tmp, "fr")
+            values, coverage = match_gs_engine_strings(rows, tmp, "fr")
         self.assertEqual(values, {"Hello!": "Bonjour!"})
         self.assertEqual(coverage["engine"]["translated"], 1)
         self.assertEqual(coverage["engine"]["total"], 3)
@@ -65,16 +65,16 @@ class GoldEngineCatalogTests(unittest.TestCase):
         manifest = {**load_manifest(), "forced_dynamic_keys": {}, "engine_dynamic_values": {}}
         with (
             tempfile.TemporaryDirectory() as tmp,
-            patch("pipeline.gold_engine.load_manifest", return_value=manifest),
+            patch("pipeline.gs_engine.load_manifest", return_value=manifest),
             patch(
-                "pipeline.gold_engine.verified_source",
+                "pipeline.gs_engine.verified_source",
                 return_value=(Path(tmp) / "src", Path(tmp), "0" * 40),
             ),
-            patch("pipeline.gold_engine.iter_callsites", return_value=CALLSITES),
-            patch("pipeline.gold_engine.load_engine_overrides", return_value={"Stale": {"override": "X"}}),
+            patch("pipeline.gs_engine.iter_callsites", return_value=CALLSITES),
+            patch("pipeline.gs_engine.load_engine_overrides", return_value={"Stale": {"override": "X"}}),
         ):
             with self.assertRaisesRegex(ValueError, "unknown key"):
-                match_gold_engine_strings([], tmp, "fr")
+                match_gs_engine_strings([], tmp, "fr")
 
 
 if __name__ == "__main__":

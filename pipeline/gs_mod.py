@@ -9,16 +9,16 @@ from typing import Callable
 
 from .builder import BuildError, _run
 from .corpus import canonical_language
-from .roms import GOLD_REQUIRED_TSV, import_gold_rom, verify_gold_rom
+from .roms import GS_REQUIRED_TSV, import_gs_rom, verify_gs_rom
 from .generate import lua_string
-from .gold_engine import match_gold_engine_strings
-from .gold_index_join import join_by_index, join_dex_entries, join_landmarks, parse_indexed_catalog
-from .gold_join import (
-    GoldJoinEntry, GoldPlaceholderDecision, audit_join, gold_coverage_report,
-    join_gold_pointers, load_gold_placeholder_decisions,
-    load_gold_pointer_decisions, read_corpus_rows,
+from .gs_engine import match_gs_engine_strings
+from .gs_index_join import join_by_index, join_dex_entries, join_landmarks, parse_indexed_catalog
+from .gs_join import (
+    GsJoinEntry, GsPlaceholderDecision, audit_join, gs_coverage_report,
+    join_gs_pointers, load_gs_placeholder_decisions,
+    load_gs_pointer_decisions, load_gold_silver_pointer_aliases, read_corpus_rows,
 )
-from .gold_text import parse_gold_text_catalog
+from .gs_text import parse_gs_text_catalog
 from .tokens import corpus_to_engine
 from .mod import TRANSLATION_MOD_PRIORITY, install_font_assets, ttf_registration, validate_font_profile
 from .project import is_frozen, project_config, project_version, resource_root
@@ -49,7 +49,7 @@ _CATALOG_HELPER = '''  local function catalog(name)
 # Catalog names avoid modkit's generated-module names.  In particular,
 # "dialogue" prevents Gold's pointer catalog from being treated as a full
 # dump of the engine's generated "text" module.
-GOLD_CATALOG_HOOKS = {
+GS_CATALOG_HOOKS = {
     "dialogue": "mod.content.text:override(id, value)",
     "strings": "mod.content.strings:override(id, value)",
     "species_names": "mod.content.pokemon:patch(id, { name = value })",
@@ -60,18 +60,18 @@ GOLD_CATALOG_HOOKS = {
     "trainer_class_names": "mod.content.trainers:patch(id, { name = value })",
     "landmarks": "mod.content.landmarks:patch(id, { name = value })",
 }
-GOLD_CATALOG_HOOKS["ui_labels"] = None
+GS_CATALOG_HOOKS["ui_labels"] = None
 
 # A small part of Gold's menu text is supplied as labels to existing mod
 # hooks rather than through the engine Strings registry.  Keep the reviewed
-# QID/segment recipes in config/gold/literal_handlers.json; the runtime hook
+# QID/segment recipes in config/gs/literal_handlers.json; the runtime hook
 # below only changes labels already exposed by gen1recomp's public hooks.
-_GOLD_UI_HANDLER_PATH = Path(__file__).resolve().parents[1] / "config" / "gold" / "literal_handlers.json"
+_GS_UI_HANDLER_PATH = Path(__file__).resolve().parents[1] / "config" / "gs" / "literal_handlers.json"
 
 
-def _load_gold_ui_handlers() -> dict[str, tuple[str, int, int | None]]:
-    data = json.loads(_GOLD_UI_HANDLER_PATH.read_text(encoding="utf-8"))
-    if data.get("schema") != "gen1recomp-translation-mods/gold-literal-handlers" or data.get("version") != 1:
+def _load_gs_ui_handlers() -> dict[str, tuple[str, int, int | None]]:
+    data = json.loads(_GS_UI_HANDLER_PATH.read_text(encoding="utf-8"))
+    if data.get("schema") != "gen1recomp-translation-mods/gs-literal-handlers" or data.get("version") != 1:
         raise ValueError("unsupported Gold literal handler schema")
     result: dict[str, tuple[str, int, int | None]] = {}
     for source, row in data.get("entries", {}).items():
@@ -88,11 +88,11 @@ def _load_gold_ui_handlers() -> dict[str, tuple[str, int, int | None]]:
     return result
 
 
-def _gold_ui_labels(corpus_rows: list[tuple[str, str, str]]) -> dict[str, str]:
+def _gs_ui_labels(corpus_rows: list[tuple[str, str, str]]) -> dict[str, str]:
     """Return corpus-backed labels used by already exposed Gold menu hooks."""
     rows = {qid: target for qid, _english, target in corpus_rows}
     result: dict[str, str] = {}
-    for source, (qid, index, page) in _load_gold_ui_handlers().items():
+    for source, (qid, index, page) in _load_gs_ui_handlers().items():
         target = rows.get(qid, "")
         if index < 0:
             value = corpus_to_engine(target, bare_dynamic_tokens=True)
@@ -115,8 +115,8 @@ def _gold_ui_labels(corpus_rows: list[tuple[str, str, str]]) -> dict[str, str]:
                 result[source] = value
     return result
 
-GOLD_OAK_SPEECH_CATALOG = "oak_speech"
-GOLD_OAK_SPEECH_KEYS = frozenset({
+GS_OAK_SPEECH_CATALOG = "oak_speech"
+GS_OAK_SPEECH_KEYS = frozenset({
     "_OakText1", "_OakText2", "_OakText4", "_OakText5", "_OakText6", "_OakText7",
 })
 
@@ -175,26 +175,26 @@ _MODKIT_GENERATED_MODULES = frozenset({
     "type_chart", "trainers", "encounters", "field", "battle_anims",
     "audio", "palettes", "icons",
 })
-assert not (set(GOLD_CATALOG_HOOKS) & _MODKIT_GENERATED_MODULES), (
-    "a GOLD_CATALOG_HOOKS name collides with modkit's GENERATED_MODULES "
+assert not (set(GS_CATALOG_HOOKS) & _MODKIT_GENERATED_MODULES), (
+    "a GS_CATALOG_HOOKS name collides with modkit's GENERATED_MODULES "
     "and will make `modkit pack` fail under --strict; rename the catalog"
 )
 
-GOLD_REQUIRED_REGISTRIES = (
+GS_REQUIRED_REGISTRIES = (
     "strings", "species_names", "species_kinds", "species_dex_text", "move_names",
-    "item_names", "trainer_class_names", "landmarks", GOLD_OAK_SPEECH_CATALOG,
+    "item_names", "trainer_class_names", "landmarks", GS_OAK_SPEECH_CATALOG,
 )
 
-def gold_mod_id(language: str) -> str:
+def gs_mod_id(language: str) -> str:
     """Return the generation-scoped Gold mod identifier."""
     return f"translation-{canonical_language(language).lower()}-gen2"
 
 
-def gold_archive_name(language: str, version: str) -> str:
+def gs_archive_name(language: str, version: str) -> str:
     return f"translation-{canonical_language(language).lower()}-gen2-{version}.zip"
 
 
-def generate_gold_mod(
+def generate_gs_mod(
     destination: str | Path,
     mod_id: str | None = None,
     language: str = "fr",
@@ -209,11 +209,11 @@ def generate_gold_mod(
     language = canonical_language(language)
     destination = Path(destination)
     destination.mkdir(parents=True, exist_ok=True)
-    mod_id = mod_id or gold_mod_id(language)
+    mod_id = mod_id or gs_mod_id(language)
 
     catalogs = {"dialogue": text_catalog or {}, **(extra_catalogs or {})}
     catalogs = {name: values for name, values in catalogs.items() if values}
-    unknown = set(catalogs) - set(GOLD_CATALOG_HOOKS) - {GOLD_OAK_SPEECH_CATALOG}
+    unknown = set(catalogs) - set(GS_CATALOG_HOOKS) - {GS_OAK_SPEECH_CATALOG}
     if unknown:
         raise ValueError(f"no registry hook for catalog(s): {sorted(unknown)}")
 
@@ -229,12 +229,12 @@ def generate_gold_mod(
             lines.append("}")
             (lang_dir / f"{name}.lua").write_text("\n".join(lines) + "\n", encoding="utf-8")
         catalog_registration = _CATALOG_HELPER + "".join(
-            f'  each("{name}", function(id, value) {GOLD_CATALOG_HOOKS[name]} end)\n'
-            for name in catalogs if name in GOLD_CATALOG_HOOKS and GOLD_CATALOG_HOOKS[name]
+            f'  each("{name}", function(id, value) {GS_CATALOG_HOOKS[name]} end)\n'
+            for name in catalogs if name in GS_CATALOG_HOOKS and GS_CATALOG_HOOKS[name]
         )
         if "ui_labels" in catalogs:
             catalog_registration += _UI_LABEL_REGISTRATION
-        if GOLD_OAK_SPEECH_CATALOG in catalogs:
+        if GS_OAK_SPEECH_CATALOG in catalogs:
             catalog_registration += _OAK_SPEECH_REGISTRATION
     main_body = (
         MAIN.replace("__TTF_REGISTRATION__", ttf_registration(language, font_source, font_profile))
@@ -243,14 +243,25 @@ def generate_gold_mod(
     (destination / "main.lua").write_text(main_body, encoding="utf-8")
     install_font_assets(destination, language, font_source, font_profile)
 
-    display_name = target_name or f"{language} translation for Gold"
+    display_name = target_name or f"{language} translation for Gold and Silver"
     description = target_description or (
         f"{display_name}, based mostly on PokeCorpus."
         + ("" if catalogs else " Text is not wired up yet; this is a loadable skeleton.")
     )
+    # "silver" alongside "gold": this mod is still built and extracted from a
+    # Gold ROM only, but Gold and Silver share the same pokegold source tree
+    # and near-identical dialogue text-table addresses (gen1recomp's own
+    # tools/make_silver_manifest.py derives Silver's manifest from Gold's,
+    # touching only sprite/Pokédex/graphics symbols), and a mod override that
+    # doesn't find a matching key in a Silver import's own extracted text
+    # just silently no-ops rather than showing wrong text (src/mods/
+    # Registry.lua's override folds onto the base table by exact id match) --
+    # so declaring "silver" here lets the same mod apply to a real Silver
+    # save via src/mods/ModTargets.lua's specApplies() with no separate
+    # Silver-specific build.
     manifest_body = {
         "id": mod_id, "name": display_name, "version": project_version(), "api": 2,
-        "entry": "main.lua", "profile": "content", "games": ["gold"],
+        "entry": "main.lua", "profile": "content", "games": ["gold", "silver"],
         "game_version": ">=0.0.0-dev <1.0.0", "category": "LANGUAGE",
         "priority": TRANSLATION_MOD_PRIORITY, "dependencies": [], "optional_dependencies": [],
         "conflicts": [], "permissions": [], "description": description,
@@ -261,7 +272,7 @@ def generate_gold_mod(
     return destination
 
 
-def package_gold_mod(
+def package_gs_mod(
     mod_dir: str | Path,
     gen1recomp: str | Path,
     modkit: str | Path,
@@ -275,7 +286,7 @@ def package_gold_mod(
     from .orchestration import package_release
 
     language = canonical_language(language)
-    archive_name = gold_archive_name(language, project_version())
+    archive_name = gs_archive_name(language, project_version())
     env = None
     if luajit is not None:
         env = dict(os.environ)
@@ -295,37 +306,51 @@ def package_gold_mod(
     )
 
 
-def gold_text_catalog_from_join(entries: list[GoldJoinEntry]) -> dict[str, str]:
-    """{pointer: translation} for entries the join actually resolved."""
-    return {entry.pointer: entry.translation for entry in entries if entry.translation}
+def gs_text_catalog_from_join(entries: list[GsJoinEntry]) -> dict[str, str]:
+    """{pointer: translation} for entries the join actually resolved.
+
+    Also aliases the handful of pointers config/gs/silver_pointer_aliases.json
+    knows shift address between Gold and Silver for verbatim-identical text
+    (see load_gold_silver_pointer_aliases's docstring): each Gold pointer's
+    own resolved translation, whatever it ended up being, is reused under
+    its Silver pointer too -- this mod already declares itself compatible
+    with a Silver save (see the "games" field in generate_gs_mod below),
+    and without this a Silver player would silently miss these 8 lines even
+    though the exact same English text is translated for Gold.
+    """
+    catalog = {entry.pointer: entry.translation for entry in entries if entry.translation}
+    for gold_pointer, silver_pointer in load_gold_silver_pointer_aliases().items():
+        if gold_pointer in catalog:
+            catalog[silver_pointer] = catalog[gold_pointer]
+    return catalog
 
 
-def gold_oak_speech_catalog_from_join(entries: list[GoldJoinEntry]) -> dict[str, str]:
+def gs_oak_speech_catalog_from_join(entries: list[GsJoinEntry]) -> dict[str, str]:
     """Return translated intro labels consumed by Gold's Oak speech hook."""
     return {
         entry.label: entry.translation
         for entry in entries
-        if entry.label in GOLD_OAK_SPEECH_KEYS and entry.translation
+        if entry.label in GS_OAK_SPEECH_KEYS and entry.translation
     }
 
 
 def _write_gate_expectations(mod_dir: Path, catalogs: dict[str, dict[str, str]]) -> Path:
     """Write a tiny, private expectation file consumed by the registry gate."""
     optional = {"ui_labels"}
-    if not set(catalogs) - optional >= set(GOLD_REQUIRED_REGISTRIES):
-        missing = sorted(set(GOLD_REQUIRED_REGISTRIES) - set(catalogs))
+    if not set(catalogs) - optional >= set(GS_REQUIRED_REGISTRIES):
+        missing = sorted(set(GS_REQUIRED_REGISTRIES) - set(catalogs))
         raise BuildError(
             "Gold registry gate expectations are incomplete"
             + (f"; missing: {', '.join(missing)}" if missing else "")
         )
-    extra = sorted(set(catalogs) - set(GOLD_REQUIRED_REGISTRIES) - optional)
+    extra = sorted(set(catalogs) - set(GS_REQUIRED_REGISTRIES) - optional)
     if extra:
         raise BuildError(
             "Gold registry gate expectations are incomplete"
             + f"; unexpected: {', '.join(extra)}"
         )
     expected: dict[str, dict[str, str]] = {}
-    for name in GOLD_REQUIRED_REGISTRIES:
+    for name in GS_REQUIRED_REGISTRIES:
         values = catalogs[name]
         if not isinstance(values, dict) or not values:
             raise BuildError(f"Gold registry gate expectation is empty: {name}")
@@ -369,15 +394,15 @@ def _write_dialogue_gate_expectation(
     return path
 
 
-def run_gold_release_gates(
+def run_gs_release_gates(
     mod_dir: str | Path,
-    entries: list[GoldJoinEntry],
+    entries: list[GsJoinEntry],
     gen1recomp: str | Path,
     luajit: str,
     *,
     catalogs: dict[str, dict[str, str]] | None = None,
     coverage: dict | None = None,
-    placeholder_decisions: dict[str, GoldPlaceholderDecision] | None = None,
+    placeholder_decisions: dict[str, GsPlaceholderDecision] | None = None,
     log_fn: Callable[[str], None] | None = None,
 ) -> dict:
     """Run every technical Gold gate before publishing the candidate.
@@ -393,11 +418,11 @@ def run_gold_release_gates(
     if problems:
         raise BuildError("Gold join audit failed:\n" + "\n".join(problems))
     gen1recomp = Path(gen1recomp).resolve()
-    coverage = coverage or gold_coverage_report(entries)
+    coverage = coverage or gs_coverage_report(entries)
 
     tools = resource_root() / "tools"
     fixtures = tools / "gen2_gate_fixtures"
-    for script in ("gate_gen2.lua", "gate_gold_dialogue.lua", "gate_gold_registries.lua"):
+    for script in ("gate_gen2.lua", "gate_gs_dialogue.lua", "gate_gs_registries.lua"):
         if not (tools / script).is_file():
             raise BuildError(f"Gold release gate script is missing: {tools / script}")
     if not Path(luajit).is_file() and shutil.which(luajit) is None:
@@ -410,18 +435,18 @@ def run_gold_release_gates(
     if translated is None:
         raise BuildError("Gold dialogue gate requires at least one translated pointer")
     unresolved = next((e for e in entries if e.translation is None), None)
-    unresolved_pointer = unresolved.pointer if unresolved else "__gold_unresolved_gate_pointer__"
+    unresolved_pointer = unresolved.pointer if unresolved else "__gs_unresolved_gate_pointer__"
     dialogue_expectation_path = _write_dialogue_gate_expectation(
         mod_dir, translated.pointer, translated.translation, unresolved_pointer,
     )
     try:
-        _run([luajit, str(tools / "gate_gold_dialogue.lua"), str(gen1recomp), str(mod_dir),
+        _run([luajit, str(tools / "gate_gs_dialogue.lua"), str(gen1recomp), str(mod_dir),
               str(dialogue_expectation_path)], log_fn=log_fn)
     finally:
         dialogue_expectation_path.unlink(missing_ok=True)
     expectation_path = _write_gate_expectations(mod_dir, catalogs or {})
     try:
-        _run([luajit, str(tools / "gate_gold_registries.lua"), str(gen1recomp), str(mod_dir), str(expectation_path)], log_fn=log_fn)
+        _run([luajit, str(tools / "gate_gs_registries.lua"), str(gen1recomp), str(mod_dir), str(expectation_path)], log_fn=log_fn)
     finally:
         expectation_path.unlink(missing_ok=True)
     engine_revision = str(project_config()["gen1recomp"]["revision"])
@@ -446,7 +471,7 @@ def run_gold_release_gates(
         },
         "checks": [
             {
-                "tool": "pipeline.gold_join.audit_join",
+                "tool": "pipeline.gs_join.audit_join",
                 "version": project_version(),
                 "command": "internal Gold join audit",
                 "status": "passed",
@@ -458,15 +483,15 @@ def run_gold_release_gates(
                 "status": "passed",
             },
             {
-                "tool": "tools/gate_gold_dialogue.lua",
+                "tool": "tools/gate_gs_dialogue.lua",
                 "version": engine_revision,
-                "command": "luajit tools/gate_gold_dialogue.lua <gen1recomp> <mod> <expectation_json_path>",
+                "command": "luajit tools/gate_gs_dialogue.lua <gen1recomp> <mod> <expectation_json_path>",
                 "status": "passed",
             },
             {
-                "tool": "tools/gate_gold_registries.lua",
+                "tool": "tools/gate_gs_registries.lua",
                 "version": engine_revision,
-                "command": "luajit tools/gate_gold_registries.lua <gen1recomp> <mod> <expectations>",
+                "command": "luajit tools/gate_gs_registries.lua <gen1recomp> <mod> <expectations>",
                 "status": "passed",
             },
         ],
@@ -474,7 +499,7 @@ def run_gold_release_gates(
     return {"coverage": coverage, "validation": validation}
 
 
-def attach_gold_validation(mod_dir: str | Path, validation: dict) -> None:
+def attach_gs_validation(mod_dir: str | Path, validation: dict) -> None:
     """Attach deterministic, ROM-free validation provenance to the manifest."""
     manifest_path = Path(mod_dir) / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -494,7 +519,7 @@ _INDEX_CATALOG_QID_PREFIXES = {
 }
 
 
-def build_gold_dialogue_mod(
+def build_gs_dialogue_mod(
     gold_out_dir: str | Path,
     corpus_dir: str | Path,
     destination: str | Path,
@@ -506,12 +531,12 @@ def build_gold_dialogue_mod(
     font_profile: str = "fusion",
     overrides: dict[str, str] | None = None,
     engine_source: str | Path | None = None,
-) -> tuple[Path, list[GoldJoinEntry], dict]:
+) -> tuple[Path, list[GsJoinEntry], dict]:
     """Join extracted Gold catalogs to the corpus and generate the mod."""
     gold_out_dir = Path(gold_out_dir)
     language = canonical_language(language)
     missing_or_empty = []
-    for filename in GOLD_REQUIRED_TSV:
+    for filename in GS_REQUIRED_TSV:
         path = gold_out_dir / filename
         if not path.is_file() or not any(line.strip() for line in path.read_text(encoding="utf-8").splitlines()):
             missing_or_empty.append(filename)
@@ -520,30 +545,30 @@ def build_gold_dialogue_mod(
             "Gold release extraction is incomplete; required non-empty TSVs missing: "
             + ", ".join(missing_or_empty)
         )
-    records = parse_gold_text_catalog(
-        gold_out_dir / "gold_text.tsv", gold_out_dir / "gold_labels.tsv",
+    records = parse_gs_text_catalog(
+        gold_out_dir / "gs_text.tsv", gold_out_dir / "gs_labels.tsv",
     )
     corpus_rows = read_corpus_rows(corpus_dir, target_lang=language)
-    entries, stats = join_gold_pointers(
+    entries, stats = join_gs_pointers(
         records, corpus_rows, overrides=overrides,
-        qid_decisions=load_gold_pointer_decisions(),
+        qid_decisions=load_gs_pointer_decisions(),
     )
 
     extra_catalogs: dict[str, dict[str, str]] = {}
-    oak_speech = gold_oak_speech_catalog_from_join(entries)
+    oak_speech = gs_oak_speech_catalog_from_join(entries)
     if oak_speech:
-        missing_oak = sorted(GOLD_OAK_SPEECH_KEYS - set(oak_speech))
+        missing_oak = sorted(GS_OAK_SPEECH_KEYS - set(oak_speech))
         if missing_oak:
             raise ValueError("Gold Oak speech catalog is incomplete: " + ", ".join(missing_oak))
-        extra_catalogs[GOLD_OAK_SPEECH_CATALOG] = oak_speech
+        extra_catalogs[GS_OAK_SPEECH_CATALOG] = oak_speech
     index_stats: dict[str, dict] = {}
-    species_path = gold_out_dir / "gold_species.tsv"
+    species_path = gold_out_dir / "gs_species.tsv"
     species = parse_indexed_catalog(species_path)
     if not species:
-        raise ValueError("gold_species.tsv contains no valid indexed entries")
+        raise ValueError("gs_species.tsv contains no valid indexed entries")
     for catalog_name, tsv_name in (
-        ("species_names", "gold_species.tsv"), ("move_names", "gold_moves.tsv"),
-        ("item_names", "gold_items.tsv"), ("trainer_class_names", "gold_trainer_classes.tsv"),
+        ("species_names", "gs_species.tsv"), ("move_names", "gs_moves.tsv"),
+        ("item_names", "gs_items.tsv"), ("trainer_class_names", "gs_trainer_classes.tsv"),
     ):
         tsv_path = gold_out_dir / tsv_name
         catalog_entries = species if catalog_name == "species_names" else parse_indexed_catalog(tsv_path)
@@ -560,22 +585,22 @@ def build_gold_dialogue_mod(
     text_translations, text_stats = join_dex_entries(species, corpus_rows, "dex_entries_gold")
     extra_catalogs["species_dex_text"] = text_translations
     index_stats["species_dex_text"] = text_stats
-    landmarks_path = gold_out_dir / "gold_landmarks.tsv"
+    landmarks_path = gold_out_dir / "gs_landmarks.tsv"
     landmarks = parse_indexed_catalog(landmarks_path)
     if not landmarks:
-        raise ValueError("gold_landmarks.tsv contains no valid indexed entries")
+        raise ValueError("gs_landmarks.tsv contains no valid indexed entries")
     landmark_translations, landmark_stats = join_landmarks(landmarks, corpus_rows)
     extra_catalogs["landmarks"] = landmark_translations
     index_stats["landmarks"] = landmark_stats
     if engine_source is not None:
-        engine_values, engine_coverage = match_gold_engine_strings(
+        engine_values, engine_coverage = match_gs_engine_strings(
             corpus_rows, engine_source, language,
         )
         extra_catalogs["strings"] = engine_values
         stats.update(engine_coverage)
-    extra_catalogs["ui_labels"] = _gold_ui_labels(corpus_rows)
+    extra_catalogs["ui_labels"] = _gs_ui_labels(corpus_rows)
     stats["index_catalogs"] = index_stats
-    pointer_coverage = gold_coverage_report(entries)
+    pointer_coverage = gs_coverage_report(entries)
     registry_translated = sum(int(item["translated"]) for item in index_stats.values())
     registry_total = sum(int(item["total"]) for item in index_stats.values())
     registry_coverage = {
@@ -601,18 +626,18 @@ def build_gold_dialogue_mod(
     # Kept in-memory for the pre-publication registry gate; callers that
     # serialize stats can omit this private payload.
     stats["_gate_catalogs"] = extra_catalogs
-    stats["_placeholder_decisions"] = load_gold_placeholder_decisions(language)
+    stats["_placeholder_decisions"] = load_gs_placeholder_decisions(language)
 
-    mod_dir = generate_gold_mod(
+    mod_dir = generate_gs_mod(
         destination, mod_id=mod_id, language=language, target_name=target_name,
         target_description=target_description, font_source=font_source, font_profile=font_profile,
-        text_catalog=gold_text_catalog_from_join(entries),
+        text_catalog=gs_text_catalog_from_join(entries),
         extra_catalogs=extra_catalogs,
     )
     return mod_dir, entries, stats
 
 
-def build_gold(
+def build_gs(
     gold_rom: str | Path,
     language: str,
     language_name: str,
@@ -634,13 +659,13 @@ def build_gold(
             log_fn(message)
 
     language = canonical_language(language)
-    profile = release_profile("gold")
-    spec = game_spec("gold")
+    profile = release_profile("gs")
+    spec = game_spec("gs")
     if spec.corpus_collection not in profile.corpus_collections:
         raise BuildError("Gold release profile and game spec disagree on corpus collection")
     font_profile = validate_font_profile(language, font_profile)
     status("Validating ROM")
-    verify_gold_rom(gold_rom)
+    verify_gs_rom(gold_rom)
 
     from .orchestration import prepare_build_context
     context = prepare_build_context(
@@ -657,16 +682,16 @@ def build_gold(
     log("\nExtracting private Gold ROM data...")
     status("Extracting private Gold ROM data")
     gold_out = workspace / "gold" / "extracted"
-    import_gold_rom(gold_rom, gen1recomp, gold_out, log_fn=log_fn)
+    import_gs_rom(gold_rom, gen1recomp, gold_out, log_fn=log_fn)
 
-    build_root = workspace / "interactive-gold" / language
-    mod_id = gold_mod_id(language)
+    build_root = workspace / "interactive-gs" / language
+    mod_id = gs_mod_id(language)
     mod_dir = build_root / mod_id
     log("\nJoining corpus and generating the mod...")
     status("Joining corpus and generating the mod")
-    mod_dir, entries, stats = build_gold_dialogue_mod(
+    mod_dir, entries, stats = build_gs_dialogue_mod(
         gold_out, corpus_gold_silver, mod_dir, mod_id=mod_id, language=language,
-        target_name=f"{language_name} translation for Gold", font_source=font_source, font_profile=font_profile,
+        target_name=f"{language_name} translation for Gold and Silver", font_source=font_source, font_profile=font_profile,
         engine_source=gen1recomp,
     )
     log(
@@ -675,22 +700,22 @@ def build_gold(
     )
 
     status("Running Gold release gates")
-    gate_report = run_gold_release_gates(
+    gate_report = run_gs_release_gates(
         mod_dir, entries, gen1recomp, luajit,
         catalogs=stats.get("_gate_catalogs", {}),
         coverage=stats["coverage"],
         placeholder_decisions=stats.get("_placeholder_decisions", {}),
         log_fn=log_fn,
     )
-    attach_gold_validation(mod_dir, gate_report["validation"])
+    attach_gs_validation(mod_dir, gate_report["validation"])
     coverage_path = build_root / "coverage.json"
     coverage_path.write_text(
         json.dumps(gate_report["coverage"], ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
     for key, label in (
-        ("rom", "Gold ROM aggregate"),
-        ("engine_gen2", "Gold-related engine strings"),
+        ("rom", "Gold and Silver ROM aggregate"),
+        ("engine_gen2", "Gold and Silver-related engine strings"),
         ("engine", "All engine strings"),
     ):
         section = gate_report["coverage"].get(key) or {}
@@ -702,7 +727,7 @@ def build_gold(
     destination.mkdir(parents=True, exist_ok=True)
     modkit = gen1recomp / "tools" / "modkit.py"
     status("Packaging translation mod")
-    published = package_gold_mod(
+    published = package_gs_mod(
         mod_dir, gen1recomp, modkit, build_root, destination, language=language, luajit=luajit, log_fn=log_fn,
     )
     status("Build complete")

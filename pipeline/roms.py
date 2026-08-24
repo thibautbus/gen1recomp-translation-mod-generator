@@ -19,7 +19,7 @@ from .subprocess_run import run_streamed
 # Product support is intentionally limited to the canonical US games; this
 # allowlist is independent of whatever sections a config may contain.
 SUPPORTED_VERSIONS = frozenset(("red", "blue", "yellow"))
-CONFIGURED_VERSIONS = SUPPORTED_VERSIONS | {"gold"}
+CONFIGURED_VERSIONS = SUPPORTED_VERSIONS | {"gold", "silver"}
 _SHA1 = re.compile(r"[0-9a-f]{40}\Z")
 _MANIFESTS = {
     "red": "rom_manifest.json",
@@ -40,9 +40,9 @@ def _canonical_hashes(root: str | Path | None = None) -> dict[str, str]:
         raise ValueError("invalid ROM configuration: missing [rom] section")
 
     keys = set(rom_config)
-    # Gold is validated if present but, unlike RBY, not required: a
-    # deployment that never touches Gold can keep a pared-down
-    # pipeline.toml without [rom.gold].
+    # Gold/Silver are validated if present but, unlike RBY, not required: a
+    # deployment that never touches them can keep a pared-down
+    # pipeline.toml without [rom.gold]/[rom.silver].
     missing = sorted(SUPPORTED_VERSIONS - keys)
     unsupported = sorted(keys - CONFIGURED_VERSIONS)
     if missing or unsupported:
@@ -140,61 +140,79 @@ def import_rom(version: str, rom: str | Path, gen1recomp: str | Path, out: str |
     run_streamed(command, cwd=root / "tools", log_fn=log_fn)
 
 
-# Gold shares the canonical fingerprint registry with RBY, while remaining
-# outside SUPPORTED_VERSIONS because it has a different extractor contract.
-# Unlike RBY, [rom.gold] is optional in pipeline.toml, so this is None
-# rather than a KeyError at import time when a deployment omits it;
-# verify_gold_rom() raises a clear error instead when Gold is actually used.
+# Gold and Silver share the canonical fingerprint registry with RBY, while
+# remaining outside SUPPORTED_VERSIONS because they share a different
+# extractor contract (tools/gs_extract.lua). Unlike RBY, [rom.gold]/
+# [rom.silver] are optional in pipeline.toml, so these are None rather than
+# a KeyError at import time when a deployment omits them; verify_gs_rom()
+# raises a clear error instead when neither is configured.
 GOLD_SHA1 = CANONICAL.get("gold")
+SILVER_SHA1 = CANONICAL.get("silver")
 
-# Complete output contract of tools/gold_extract.lua.  Keeping the list next
+# Complete output contract of tools/gs_extract.lua.  Keeping the list next
 # to the importer lets it validate a fresh extraction before publishing it;
 # downstream builders import the same constant rather than maintaining a
 # second, potentially divergent list.
-GOLD_REQUIRED_TSV = (
-    "gold_text.tsv", "gold_labels.tsv", "gold_stages.tsv", "gold_species.tsv",
-    "gold_moves.tsv", "gold_items.tsv",
-    "gold_trainer_classes.tsv", "gold_landmarks.tsv",
+GS_REQUIRED_TSV = (
+    "gs_text.tsv", "gs_labels.tsv", "gs_stages.tsv", "gs_species.tsv",
+    "gs_moves.tsv", "gs_items.tsv",
+    "gs_trainer_classes.tsv", "gs_landmarks.tsv",
 )
 
 
-def verify_gold_rom(path: str | Path) -> dict[str, Any]:
-    if GOLD_SHA1 is None:
+def verify_gs_rom(path: str | Path) -> dict[str, Any]:
+    """Accept either a real Gold or a real Silver ROM; report which one."""
+    if GOLD_SHA1 is None and SILVER_SHA1 is None:
         raise ValueError(
-            "missing [rom.gold] configuration: Gold ROM verification requires "
-            "a [rom.gold] section in config/pipeline.toml"
+            "missing [rom.gold]/[rom.silver] configuration: Gold/Silver ROM "
+            "verification requires at least one of those sections in "
+            "config/pipeline.toml"
         )
     path = Path(path)
     actual = sha1(path)
-    if actual != GOLD_SHA1:
-        raise ValueError(f"gold ROM SHA-1 mismatch: {actual} (expected {GOLD_SHA1})")
-    return {"version": "gold", "path": str(path.resolve()), "sha1": actual, "size": path.stat().st_size}
+    if actual == GOLD_SHA1:
+        version = "gold"
+    elif actual == SILVER_SHA1:
+        version = "silver"
+    else:
+        expected = ", ".join(filter(None, (GOLD_SHA1, SILVER_SHA1)))
+        raise ValueError(f"Gold/Silver ROM SHA-1 mismatch: {actual} (expected one of: {expected})")
+    return {"version": version, "path": str(path.resolve()), "sha1": actual, "size": path.stat().st_size}
 
 
-def import_gold_rom(rom: str | Path, gen1recomp: str | Path, out: str | Path, log_fn: Callable[[str], None] | None = None) -> None:
-    """Extract and atomically publish Gold's required TSV catalogs."""
-    verify_gold_rom(rom)
+def import_gs_rom(rom: str | Path, gen1recomp: str | Path, out: str | Path, log_fn: Callable[[str], None] | None = None) -> None:
+    """Extract and atomically publish the Gold/Silver required TSV catalogs.
+
+    Accepts either edition's ROM. verify_gs_rom() (above) is the one place
+    that computes the ROM's SHA-1 and decides which edition it is -- passed
+    through to tools/gs_extract.lua as an extra argument so it reads the
+    ROM through the matching rom_manifest_{gold,silver}.json, mirroring
+    gen1recomp's own GameVersion.forSha1 selection at runtime. (The Lua side
+    doesn't recompute the SHA-1 itself: love.data.hash isn't available under
+    the headless tests/love_stub.lua this script runs under.)
+    """
+    info = verify_gs_rom(rom)
     root = Path(gen1recomp).resolve()
     rom = Path(rom).resolve()
     out = Path(out).resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
     luajit = which_luajit()
     if luajit is None:
-        raise RuntimeError("LuaJIT is required to import a Gold ROM; see MODKIT_LUAJIT")
-    script = resource_root() / "tools" / "gold_extract.lua"
+        raise RuntimeError("LuaJIT is required to import a Gold/Silver ROM; see MODKIT_LUAJIT")
+    script = resource_root() / "tools" / "gs_extract.lua"
     temporary = Path(tempfile.mkdtemp(prefix=f".{out.name}-", dir=out.parent))
-    command = [luajit, str(script), str(root), str(rom), str(temporary)]
+    command = [luajit, str(script), str(root), str(rom), str(temporary), info["version"]]
     try:
         run_streamed(command, log_fn=log_fn)
 
         missing = [
-            name for name in GOLD_REQUIRED_TSV
+            name for name in GS_REQUIRED_TSV
             if not (temporary / name).is_file()
             or not (temporary / name).read_text(encoding="utf-8").strip()
         ]
         if missing:
             raise RuntimeError(
-                "Gold extraction completed without required non-empty outputs: "
+                "Gold/Silver extraction completed without required non-empty outputs: "
                 + ", ".join(missing)
             )
 

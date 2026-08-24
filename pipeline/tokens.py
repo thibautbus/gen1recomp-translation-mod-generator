@@ -124,7 +124,7 @@ _CORPUS_EXPANSIONS = {
 def known_literal_tokens() -> frozenset[str]:
     """Tokens corpus_to_engine converts away -- safe to see in raw corpus
     text, never in shipped output. Callers auditing final translations
-    (pipeline/gold_join.py:audit_join) check against this rather than the
+    (pipeline/gs_join.py:audit_join) check against this rather than the
     private expansion table directly.
     """
     return frozenset(_CORPUS_EXPANSIONS)
@@ -178,8 +178,8 @@ def corpus_to_engine(text: str, *, bare_dynamic_tokens: bool = False) -> str:
     carries which of the cart's several wStringBufferN/wNameBuffer RAM
     slots is meant), and TextBox.lua's RAM token handler only recognises
     the bare "wStringBuffer"/"wNameBuffer" spellings -- not a numbered
-    "wStringBuffer2"/"wStringBuffer4" etc. Gold callers (gold_join.py,
-    gold_index_join.py, gold_mod.py) must pass True so a corpus row that
+    "wStringBuffer2"/"wStringBuffer4" etc. Gold callers (gs_join.py,
+    gs_index_join.py, gs_mod.py) must pass True so a corpus row that
     names its buffer (poke-corpus mirrors pret's own asm, which does name
     it) collapses to the bare form the engine actually renders, instead of
     shipping an unrecognised named token that silently prints nothing

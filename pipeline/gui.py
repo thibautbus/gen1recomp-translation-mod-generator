@@ -27,10 +27,10 @@ class GuiInputs:
 # "generation" is engine vocabulary the user does not need.
 GENERATIONS = (
     (1, "Red, Blue and Yellow"),
-    (2, "Gold"),
+    (2, "Gold and Silver"),
 )
 
-ROMS_BY_GENERATION = {1: ("red", "blue", "yellow"), 2: ("gold",)}
+ROMS_BY_GENERATION = {1: ("red", "blue", "yellow"), 2: ("gs",)}
 
 
 def generation_label(value: int) -> str:
@@ -120,14 +120,15 @@ def validate_inputs(
     for game in ROMS_BY_GENERATION[generation]:
         raw = rom_paths.get(game)
         if not raw or not str(raw).strip():
-            raise builder.BuildError(f"A Pokemon {game.capitalize()} ROM path is required.")
+            display = "Gold or Silver" if game == "gs" else game.capitalize()
+            raise builder.BuildError(f"A Pokemon {display} ROM path is required.")
         path = Path(raw).expanduser()
         if not path.is_file():
             raise builder.BuildError(f"File not found: {path}")
         if generation == 1:
             builder.verify_rom(path, game)
         else:
-            builder.verify_gold_rom(path)
+            builder.verify_gs_rom(path)
         resolved[game] = path.resolve()
     return GuiInputs(generation, resolved, code, profile, output.resolve())
 
@@ -160,7 +161,7 @@ def coverage_lines(path: str | Path) -> list[str]:
     section = report.get("engine_gen2") or {}
     if section.get("total"):
         lines.append(
-            "Gold-related engine strings: "
+            "Gold and Silver-related engine strings: "
             f"{int(section.get('translated', 0))}/{int(section.get('total', 0))} "
             f"({float(section.get('percent', 0.0)):.2f}%)"
         )
@@ -227,7 +228,7 @@ class TranslationBuilderApp:
     def _build_widgets(self):
         tk, ttk = self.tk, self.ttk
         self.generation_var = tk.StringVar(value=generation_label(1))
-        self.rom_vars = {game: tk.StringVar() for game in ("red", "blue", "yellow", "gold")}
+        self.rom_vars = {game: tk.StringVar() for game in ("red", "blue", "yellow", "gs")}
         self.language_var = tk.StringVar(value=language_label("fr"))
         self.font_profile_var = tk.StringVar(value=font_profile_label("fusion"))
         self.output_var = tk.StringVar()
@@ -251,7 +252,7 @@ class TranslationBuilderApp:
         # a flat form, not a wizard).
         rom_fields = (
             ("red", 2, "Required to extract shared and Pokémon Red-specific game text and data.", "Pokemon Red ROM (US)"),
-            ("gold", 2, "Required to extract Pokémon Gold game text and data.", "Pokemon Gold ROM (US)"),
+            ("gs", 2, "Required to extract Pokémon Gold and Silver game text and data.", "Pokemon Gold or Silver ROM (US)"),
             ("blue", 4, "Required to extract Pokémon Blue-specific game text and data.", "Pokemon Blue ROM (US)"),
             ("yellow", 6, "Required to extract Pokémon Yellow-specific game text and data.", "Pokemon Yellow ROM (US)"),
         )
@@ -445,7 +446,7 @@ class TranslationBuilderApp:
                 log_fn=lambda message: self._append_log(message),
                 status_fn=lambda message: self._post(lambda: self.status_var.set(message)),
             )
-            build_cache = "interactive" if inputs.generation == 1 else "interactive-gold"
+            build_cache = "interactive" if inputs.generation == 1 else "interactive-gs"
             coverage = workspace / build_cache / inputs.language / "coverage.json"
             self._post(lambda: self._complete(output, coverage))
         except (RuntimeError, ValueError, OSError) as error:

@@ -1,5 +1,5 @@
 {
-  "schema": "gen1recomp-translation-mods/gold-literal-handlers",
+  "schema": "gen1recomp-translation-mods/gs-literal-handlers",
   "version": 1,
   "description": "Corpus-backed labels for Gold UI hooks that already exist in gen1recomp.",
   "entries": {

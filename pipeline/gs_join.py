@@ -15,10 +15,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping
 
-from .gold_text import GoldTextRecord, normalise, split_lines
+from .gs_text import GsTextRecord, normalise, split_lines
 from .tokens import DYNAMIC_TOKEN_RE, TOKEN_RE, check_placeholders, corpus_to_engine, known_literal_tokens
 
-# Provenance values a GoldJoinEntry can carry.
+# Provenance values a GsJoinEntry can carry.
 UNIQUE = "unique"
 HARMLESS_AMBIGUOUS = "harmless_ambiguous"
 OVERRIDE = "override"
@@ -33,24 +33,25 @@ MARKUP_ONLY = "markup_only"
 # substituent DYNAMIC_TOKEN_RE recognises (checked separately, by identity,
 # not just "known").
 _KNOWN_LITERAL_TOKENS = known_literal_tokens()
-GOLD_POINTER_DECISIONS_SCHEMA = "gen1recomp-translation-mods/gold-pointer-decisions"
-GOLD_PLACEHOLDER_DECISIONS_SCHEMA = "gen1recomp-translation-mods/gold-placeholder-decisions"
+GS_POINTER_DECISIONS_SCHEMA = "gen1recomp-translation-mods/gs-pointer-decisions"
+GS_PLACEHOLDER_DECISIONS_SCHEMA = "gen1recomp-translation-mods/gs-placeholder-decisions"
+GOLD_SILVER_POINTER_ALIASES_SCHEMA = "gen1recomp-translation-mods/gold-silver-pointer-aliases"
 
 
 @dataclass(frozen=True)
-class GoldPlaceholderDecision:
+class GsPlaceholderDecision:
     qid: str
     errors: frozenset[str]
 
 
-def load_gold_pointer_decisions(path: str | Path | None = None) -> dict[str, str]:
+def load_gs_pointer_decisions(path: str | Path | None = None) -> dict[str, str]:
     """Load reviewed Gold pointer-to-corpus-QID decisions.
 
     Decisions select corpus rows rather than carrying translated prose, so one
     review applies consistently to every target language.
     """
     if path is None:
-        path = Path(__file__).resolve().parents[1] / "config" / "gold" / "pointer_decisions.json"
+        path = Path(__file__).resolve().parents[1] / "config" / "gs" / "pointer_decisions.json"
     path = Path(path)
     if not path.is_file():
         return {}
@@ -58,7 +59,7 @@ def load_gold_pointer_decisions(path: str | Path | None = None) -> dict[str, str
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ValueError(f"invalid Gold pointer decisions JSON: {path}") from exc
-    if not isinstance(data, dict) or data.get("schema") != GOLD_POINTER_DECISIONS_SCHEMA:
+    if not isinstance(data, dict) or data.get("schema") != GS_POINTER_DECISIONS_SCHEMA:
         raise ValueError("unsupported Gold pointer decisions schema")
     if data.get("version") != 1 or not isinstance(data.get("entries"), dict):
         raise ValueError("Gold pointer decisions require version 1 entries")
@@ -74,13 +75,13 @@ def load_gold_pointer_decisions(path: str | Path | None = None) -> dict[str, str
     return result
 
 
-def load_gold_placeholder_decisions(
+def load_gs_placeholder_decisions(
     language: str,
     path: str | Path | None = None,
-) -> dict[str, GoldPlaceholderDecision]:
+) -> dict[str, GsPlaceholderDecision]:
     """Load exact, reviewed placeholder differences in official localizations."""
     if path is None:
-        path = Path(__file__).resolve().parents[1] / "config" / "gold" / "placeholder_decisions.json"
+        path = Path(__file__).resolve().parents[1] / "config" / "gs" / "placeholder_decisions.json"
     path = Path(path)
     if not path.is_file():
         return {}
@@ -88,14 +89,14 @@ def load_gold_placeholder_decisions(
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ValueError(f"invalid Gold placeholder decisions JSON: {path}") from exc
-    if not isinstance(data, dict) or data.get("schema") != GOLD_PLACEHOLDER_DECISIONS_SCHEMA:
+    if not isinstance(data, dict) or data.get("schema") != GS_PLACEHOLDER_DECISIONS_SCHEMA:
         raise ValueError("unsupported Gold placeholder decisions schema")
     if data.get("version") != 1 or not isinstance(data.get("entries"), dict):
         raise ValueError("Gold placeholder decisions require version 1 entries")
     language_entries = data["entries"].get(language, {})
     if not isinstance(language_entries, dict):
         raise ValueError(f"invalid Gold placeholder decisions for language {language!r}")
-    result: dict[str, GoldPlaceholderDecision] = {}
+    result: dict[str, GsPlaceholderDecision] = {}
     for pointer, row in language_entries.items():
         if not re.fullmatch(r"[0-7][0-9a-f]:[0-7][0-9a-f]{3}", pointer):
             raise ValueError(f"invalid Gold placeholder decision key: {pointer!r}")
@@ -106,14 +107,51 @@ def load_gold_placeholder_decisions(
                 len(set(row["errors"])) != len(row["errors"]) or
                 not isinstance(row.get("reason"), str) or not row["reason"].strip()):
             raise ValueError(f"invalid Gold placeholder decision for {language}:{pointer}")
-        result[pointer] = GoldPlaceholderDecision(row["qid"], frozenset(row["errors"]))
+        result[pointer] = GsPlaceholderDecision(row["qid"], frozenset(row["errors"]))
+    return result
+
+
+def load_gold_silver_pointer_aliases(path: str | Path | None = None) -> dict[str, str]:
+    """Load {gold_pointer: silver_pointer} for text confirmed identical in both.
+
+    The handful of Gold dialogue pointers whose bank:address shifts in Silver
+    (see tools/spike_gold_silver_text_overlap.lua's measurement and
+    docs/upstream-fixes.md's "Silver: supported by declaration") but whose
+    text doesn't -- so a Gold pointer's own resolved translation can be
+    reused verbatim under its Silver pointer too, rather than left to
+    silently miss on a Silver save.
+    """
+    if path is None:
+        path = Path(__file__).resolve().parents[1] / "config" / "gs" / "silver_pointer_aliases.json"
+    path = Path(path)
+    if not path.is_file():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"invalid Gold/Silver pointer aliases JSON: {path}") from exc
+    if not isinstance(data, dict) or data.get("schema") != GOLD_SILVER_POINTER_ALIASES_SCHEMA:
+        raise ValueError("unsupported Gold/Silver pointer aliases schema")
+    if data.get("version") != 1 or not isinstance(data.get("entries"), dict):
+        raise ValueError("Gold/Silver pointer aliases require version 1 entries")
+    pointer_re = re.compile(r"[0-7][0-9a-f]:[0-7][0-9a-f]{3}")
+    result: dict[str, str] = {}
+    for gold_pointer, row in data["entries"].items():
+        if not pointer_re.fullmatch(gold_pointer):
+            raise ValueError(f"invalid Gold pointer in Gold/Silver alias key: {gold_pointer!r}")
+        if (not isinstance(row, dict) or "silver_pointer" not in row or
+                not isinstance(row.get("silver_pointer"), str) or
+                not pointer_re.fullmatch(row["silver_pointer"]) or
+                not isinstance(row.get("label"), str) or not row["label"]):
+            raise ValueError(f"invalid Gold/Silver pointer alias for {gold_pointer!r}")
+        result[gold_pointer] = row["silver_pointer"]
     return result
 
 
 def _token_aware_key(value: str) -> tuple[tuple[str, str], ...]:
     """Normalize prose while preserving every command token's SHIPPED spelling.
 
-    ``gold_text.normalise`` intentionally erases braces and punctuation for
+    ``gs_text.normalise`` intentionally erases braces and punctuation for
     the English lookup.  That is unsafe for ambiguity resolution: two corpus
     rows can have the same prose but different sound/RAM commands.  This key
     only folds prose segments and keeps token spelling/ordering visible.
@@ -142,7 +180,7 @@ def _token_aware_key(value: str) -> tuple[tuple[str, str], ...]:
 
 
 @dataclass(frozen=True)
-class GoldJoinEntry:
+class GsJoinEntry:
     pointer: str
     label: str | None
     english: str
@@ -163,12 +201,12 @@ def read_corpus_rows(corpus_dir: str | Path, target_lang: str = "fr") -> list[tu
     return list(zip(qids, ens, targets))
 
 
-def join_gold_pointers(
-    records: list[GoldTextRecord],
+def join_gs_pointers(
+    records: list[GsTextRecord],
     corpus_rows: list[tuple[str, str, str]],
     overrides: Mapping[str, str] | None = None,
     qid_decisions: Mapping[str, str] | None = None,
-) -> tuple[list[GoldJoinEntry], dict]:
+) -> tuple[list[GsJoinEntry], dict]:
     """Join Gold's pointer catalog to the corpus by normalised English.
 
     ``qid_decisions`` selects a reviewed corpus row while retaining its
@@ -190,7 +228,7 @@ def join_gold_pointers(
         if fr.strip() and corpus_to_engine(fr, bare_dynamic_tokens=True):
             by_english[normalise(en)].append((qid, fr))
 
-    entries: list[GoldJoinEntry] = []
+    entries: list[GsJoinEntry] = []
     stats = {
         "total": len(records), "unique": 0, "harmless_ambiguous": 0,
         "override": 0, "reviewed_qid": 0, "unresolved": 0, "no_match": 0,
@@ -205,7 +243,7 @@ def join_gold_pointers(
             translation = corpus_to_engine(overrides[pointer], bare_dynamic_tokens=True)
             if not overrides[pointer].strip() or not translation:
                 raise ValueError(f"empty Gold pointer override for {pointer!r}")
-            entries.append(GoldJoinEntry(pointer, label, english, translation, OVERRIDE))
+            entries.append(GsJoinEntry(pointer, label, english, translation, OVERRIDE))
             stats["override"] += 1
             continue
 
@@ -222,36 +260,36 @@ def join_gold_pointers(
             translation = corpus_to_engine(target, bare_dynamic_tokens=True)
             if not target.strip() or not translation:
                 raise ValueError(f"empty Gold pointer decision target for {pointer!r}: {qid!r}")
-            entries.append(GoldJoinEntry(pointer, label, english, translation, REVIEWED_QID, qid))
+            entries.append(GsJoinEntry(pointer, label, english, translation, REVIEWED_QID, qid))
             stats["reviewed_qid"] += 1
             continue
 
         if not norm:
-            entries.append(GoldJoinEntry(pointer, label, english, None, MARKUP_ONLY))
+            entries.append(GsJoinEntry(pointer, label, english, None, MARKUP_ONLY))
             stats["markup_only"] += 1
             continue
 
         candidates = by_english.get(norm)
         if not candidates:
-            entries.append(GoldJoinEntry(pointer, label, english, None, NO_MATCH))
+            entries.append(GsJoinEntry(pointer, label, english, None, NO_MATCH))
             stats["no_match"] += 1
             continue
 
         if len(candidates) == 1:
             qid, fr = candidates[0]
-            entries.append(GoldJoinEntry(pointer, label, english, corpus_to_engine(fr, bare_dynamic_tokens=True), UNIQUE, qid))
+            entries.append(GsJoinEntry(pointer, label, english, corpus_to_engine(fr, bare_dynamic_tokens=True), UNIQUE, qid))
             stats["unique"] += 1
             continue
 
         distinct_french = {_token_aware_key(fr) for _, fr in candidates}
         if len(distinct_french) == 1:
             qid, fr = candidates[0]
-            entries.append(GoldJoinEntry(pointer, label, english, corpus_to_engine(fr, bare_dynamic_tokens=True), HARMLESS_AMBIGUOUS,
+            entries.append(GsJoinEntry(pointer, label, english, corpus_to_engine(fr, bare_dynamic_tokens=True), HARMLESS_AMBIGUOUS,
                                           qid, tuple(sorted(c for c, _ in candidates))))
             stats["harmless_ambiguous"] += 1
             continue
 
-        entries.append(GoldJoinEntry(pointer, label, english, None, UNRESOLVED,
+        entries.append(GsJoinEntry(pointer, label, english, None, UNRESOLVED,
                                       candidate_qids=tuple(sorted(c for c, _ in candidates))))
         stats["unresolved"] += 1
 
@@ -259,8 +297,8 @@ def join_gold_pointers(
 
 
 def audit_join(
-    entries: list[GoldJoinEntry],
-    placeholder_decisions: Mapping[str, GoldPlaceholderDecision] | None = None,
+    entries: list[GsJoinEntry],
+    placeholder_decisions: Mapping[str, GsPlaceholderDecision] | None = None,
 ) -> list[str]:
     """Gate checks: no pointer collisions, no unknown token in any shipped
     translation, and no dropped/swapped runtime substitution.  Unresolved
@@ -304,7 +342,7 @@ def audit_join(
     return problems
 
 
-def unresolved_report(entries: list[GoldJoinEntry]) -> list[dict]:
+def unresolved_report(entries: list[GsJoinEntry]) -> list[dict]:
     """Pointers still needing a human -- for a future gold_pointer_overrides
     entry, not a guess. One row per NO_MATCH/UNRESOLVED entry.
     """
@@ -317,7 +355,7 @@ def unresolved_report(entries: list[GoldJoinEntry]) -> list[dict]:
     ]
 
 
-def to_aligned_rows(entries: list[GoldJoinEntry], target_lang: str = "fr") -> list[dict]:
+def to_aligned_rows(entries: list[GsJoinEntry], target_lang: str = "fr") -> list[dict]:
     """Serialize entries into the flat aligned.json shape pipeline/cli.py's
     ``validate``/``generate`` commands already read (see the loader at
     pipeline/cli.py:129-140) -- so Gold's join flows through the existing
@@ -334,7 +372,7 @@ def to_aligned_rows(entries: list[GoldJoinEntry], target_lang: str = "fr") -> li
     ]
 
 
-def gold_coverage_report(entries: list[GoldJoinEntry]) -> dict:
+def gs_coverage_report(entries: list[GsJoinEntry]) -> dict:
     """Report target-language coverage for user-visible pointer content.
 
     Markup-only records are reported separately: they contain no prose to

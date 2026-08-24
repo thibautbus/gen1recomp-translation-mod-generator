@@ -1,6 +1,6 @@
 {
-  "id": "broken_gold",
-  "name": "Broken Gold Fixture",
+  "id": "fixed_gs",
+  "name": "Fixed Gold and Silver Fixture",
   "version": "1.0.0",
   "entry": "main.lua",
   "api": 2,

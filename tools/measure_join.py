@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Measure the corpus <-> Gold-pointer join by normalised English.
 
-Reads gold_text.tsv (produced by gold_extract.lua) and the parallel
+Reads gs_text.tsv (produced by gs_extract.lua) and the parallel
 GoldSilver corpus files, then reports how many ROM pointers get exactly one
 corpus candidate, how many are ambiguous, and how many have none.
 
@@ -13,14 +13,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from pipeline.gold_text import normalise, split_lines, unescape  # noqa: E402
+from pipeline.gs_text import normalise, split_lines, unescape  # noqa: E402
 
 
 def main() -> int:
     out_dir, corpus_dir = Path(sys.argv[1]), Path(sys.argv[2])
 
     pointers = []
-    for line in split_lines((out_dir / "gold_text.tsv").read_text(encoding="utf-8")):
+    for line in split_lines((out_dir / "gs_text.tsv").read_text(encoding="utf-8")):
         if not line:
             continue
         key, _, raw = line.partition("\t")

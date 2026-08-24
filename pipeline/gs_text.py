@@ -1,10 +1,10 @@
 """Gold's text catalog: bank:address pointers, not TEXT_* labels.
 
-Parsed from tools/gold_extract.lua's gold_text.tsv/gold_labels.tsv output,
+Parsed from tools/gs_extract.lua's gs_text.tsv/gs_labels.tsv output,
 not from a real data/generated/text.lua: this project's Gold import
 deliberately neuters RomExtractorGen2:write/:save (see
-tools/gold_extract.lua's module docstring), so there is no such file on
-disk to parse. gold_text.tsv IS the Gold equivalent of RBY's text.lua for
+tools/gs_extract.lua's module docstring), so there is no such file on
+disk to parse. gs_text.tsv IS the Gold equivalent of RBY's text.lua for
 this pipeline's purposes -- see pipeline/yellow.py:parse_text_catalog for
 the RBY-side parser this mirrors, adapted for Gold's pointer keys
 (Schemas.GEN2.text routes to "gen2Text"; ids are ROM pointer strings like
@@ -15,7 +15,7 @@ are out of this slice).
 
 Also the single source for normalise()/unescape()/split_lines(): the
 corpus<->pointer join primitives tools/measure_join.py measured this
-backlog's go/no-go with, and pipeline/gold_join.py's join reuses verbatim
+backlog's go/no-go with, and pipeline/gs_join.py's join reuses verbatim
 so the shipped join and the measurement stay the same code.
 """
 from __future__ import annotations
@@ -52,7 +52,7 @@ def normalise(value: str) -> str:
 
 
 def unescape(value: str) -> str:
-    """Undo tools/gold_extract.lua's TSV escaping (\\\\, \\n, \\r, \\t)."""
+    """Undo tools/gs_extract.lua's TSV escaping (\\\\, \\n, \\r, \\t)."""
     out: list[str] = []
     index = 0
     while index < len(value):
@@ -81,22 +81,22 @@ def split_lines(text: str) -> list[str]:
 
 
 @dataclass(frozen=True)
-class GoldTextRecord:
+class GsTextRecord:
     pointer: str          # "bank:address", e.g. "55:4067"
     text: str             # raw pret-syntax value, as poke-corpus writes it
     label: str | None = None  # resolved NAMED_TEXT label, if any
 
 
-def parse_gold_text_catalog(
+def parse_gs_text_catalog(
     text_tsv: str | Path, labels_tsv: str | Path | None = None,
-) -> list[GoldTextRecord]:
-    """Parse gold_text.tsv (+ optional gold_labels.tsv) into records.
+) -> list[GsTextRecord]:
+    """Parse gs_text.tsv (+ optional gs_labels.tsv) into records.
 
     Rejects ambiguous input rather than guessing:
 
-    - a pointer repeated in gold_text.tsv with a DIFFERENT text raises;
+    - a pointer repeated in gs_text.tsv with a DIFFERENT text raises;
       repeated with the SAME text is tolerated (a harmless duplicate line);
-    - a label naming a pointer absent from gold_text.tsv raises: the
+    - a label naming a pointer absent from gs_text.tsv raises: the
       labels and pointer tables have drifted, and silently dropping the
       label would hide that;
     - two different labels naming the same pointer raise, and the same
@@ -142,6 +142,6 @@ def parse_gold_text_catalog(
             labels[pointer] = label
 
     return [
-        GoldTextRecord(pointer=pointer, text=text, label=labels.get(pointer))
+        GsTextRecord(pointer=pointer, text=text, label=labels.get(pointer))
         for pointer, text in sorted(pointer_text.items())
     ]

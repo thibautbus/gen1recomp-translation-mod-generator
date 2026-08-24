@@ -41,7 +41,7 @@ def _corpus_records(
     return records
 
 
-def match_gold_engine_strings(
+def match_gs_engine_strings(
     corpus_rows: Iterable[tuple[str, str, str]],
     gen1recomp: str | Path,
     target_lang: str,
@@ -53,7 +53,7 @@ def match_gold_engine_strings(
     all_keys, gen2_keys = engine_string_keys(callsites, manifest)
     root = Path(__file__).resolve().parents[1]
     overrides = load_engine_overrides(
-        root / "overrides" / target_lang / "gold" / "engine.json",
+        root / "overrides" / target_lang / "gs" / "engine.json",
     )
     stale_overrides = sorted(set(overrides) - all_keys)
     if stale_overrides:
@@ -65,7 +65,7 @@ def match_gold_engine_strings(
         sorted(all_keys),
         _corpus_records(corpus_rows, target_lang),
         overrides=overrides,
-        semantic_anchors=root / "config" / "gold" / "semantic_anchors.json",
+        semantic_anchors=root / "config" / "gs" / "semantic_anchors.json",
         target_lang=target_lang,
     )
     translated = {key for key, value in values.items() if value}

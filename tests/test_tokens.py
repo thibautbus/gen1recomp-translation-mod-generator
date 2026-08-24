@@ -108,7 +108,7 @@ class GoldBareDynamicTokensOptInTests(unittest.TestCase):
     for RBY (whose own extracted text.lua names its buffer) but wrong for
     Gold: RomExtractorGen2.lua:decodeGen2Text never names the buffer (TX_RAM
     always decodes to bare "{STRBUF}" -- confirmed in
-    .cache/gold/extracted/gold_text.tsv, pointer 40:4d90:
+    .cache/gold/extracted/gs_text.tsv, pointer 40:4d90:
     "{PLAYER} received\n{STRBUF}."), and src/render/TextBox.lua's RAM token
     handler only recognises the bare "wStringBuffer"/"wNameBuffer" spellings,
     not a numbered "wStringBuffer2/3/4". A named token silently renders as

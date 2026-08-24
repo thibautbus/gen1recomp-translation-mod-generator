@@ -19,8 +19,9 @@ for relative in (
     "config/pipeline.toml", "config/shared/engine_manifest.json", "config/rby/engine_scope.json",
     "config/rby/terminology_anchors.json", "config/rby/semantic_anchors.json", "config/rby/semantic_anchor_decisions.json",
     "config/rby/literal_handlers.json", "config/rby/yellow_coverage_exceptions.json",
-    "config/gold/semantic_anchors.json", "config/gold/pointer_decisions.json",
-    "config/gold/literal_handlers.json", "config/gold/placeholder_decisions.json",
+    "config/gs/semantic_anchors.json", "config/gs/pointer_decisions.json",
+    "config/gs/literal_handlers.json", "config/gs/placeholder_decisions.json",
+    "config/gs/silver_pointer_aliases.json",
     "config/rom_paths.example.toml",
     "pyproject.toml",
 ):
@@ -29,9 +30,9 @@ for relative in (
 for source in (ROOT / "overrides").rglob("*"):
     if source.is_file() and source.name != "rom_paths.toml":
         datas.append((str(source), str(source.parent.relative_to(ROOT))))
-# gold_extract.lua and the gate_*.lua scripts are read from resource_root()
-# at runtime (pipeline/roms.py, pipeline/gold_mod.py); missing from datas
-# meant a frozen Gold build failed with "cannot open ... gold_extract.lua:
+# gs_extract.lua and the gate_*.lua scripts are read from resource_root()
+# at runtime (pipeline/roms.py, pipeline/gs_mod.py); missing from datas
+# meant a frozen Gold build failed with "cannot open ... gs_extract.lua:
 # No such file or directory" past the first ROM extraction step. Bundle the
 # whole tools/ tree (including gen2_gate_fixtures/, the release gate's
 # fixture mods) rather than naming each script, so a future addition here

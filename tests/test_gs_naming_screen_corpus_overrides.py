@@ -41,7 +41,7 @@ NO_OP_KEYS = {"de": {"BOX NAME?"}}
 class GoldNamingScreenCorpusOverrideTests(unittest.TestCase):
     def test_all_languages_have_the_expected_corpus_values(self):
         for language in PROMPTS:
-            path = Path("overrides") / language / "gold" / "engine.json"
+            path = Path("overrides") / language / "gs" / "engine.json"
             overrides = load_engine_overrides(path)
             expected = {**PROMPTS[language], **BOTTOM[language]}
             for source, override in expected.items():
@@ -53,7 +53,7 @@ class GoldNamingScreenCorpusOverrideTests(unittest.TestCase):
 
     def test_identical_to_source_values_carry_no_pointless_override(self):
         for language, keys in NO_OP_KEYS.items():
-            path = Path("overrides") / language / "gold" / "engine.json"
+            path = Path("overrides") / language / "gs" / "engine.json"
             overrides = load_engine_overrides(path)
             for key in keys:
                 self.assertNotIn(key, overrides, (language, key))

@@ -986,7 +986,7 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
     # corpus_to_engine call below must bare a Gold row's named
     # {text_ram X}/{text_decimal X} the same way, or a matched translation
     # ships a numbered token gen1recomp's TextBox.lua RAM handler does not
-    # recognise (confirmed live in .cache/interactive-gold/*/lang/strings.lua
+    # recognise (confirmed live in .cache/interactive-gs/*/lang/strings.lua
     # before this fix: entries like "{RAM:wStringBuffer3}"). Alignment.game
     # is a required field, but RBY's own callers never set it to "gold" (and
     # CorpusRecord's own default is "red"), so this is False (today's
@@ -996,7 +996,7 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
         # One flag applies to the whole call (every helper below closes over
         # it), so a caller mixing Gold rows with anything else would corrupt
         # RAM/NUM matching for whichever game is in the minority. Every real
-        # caller today is single-game (pipeline/gold_engine.py tags every row
+        # caller today is single-game (pipeline/gs_engine.py tags every row
         # "gold"; RBY's own callers never do) -- fail loud instead of
         # silently doing the wrong thing for a future caller that mixes them.
         raise ValueError(
