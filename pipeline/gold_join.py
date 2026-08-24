@@ -35,6 +35,7 @@ MARKUP_ONLY = "markup_only"
 _KNOWN_LITERAL_TOKENS = known_literal_tokens()
 GOLD_POINTER_DECISIONS_SCHEMA = "gen1recomp-translation-mods/gold-pointer-decisions"
 GOLD_PLACEHOLDER_DECISIONS_SCHEMA = "gen1recomp-translation-mods/gold-placeholder-decisions"
+GOLD_SILVER_POINTER_ALIASES_SCHEMA = "gen1recomp-translation-mods/gold-silver-pointer-aliases"
 
 
 @dataclass(frozen=True)
@@ -107,6 +108,43 @@ def load_gold_placeholder_decisions(
                 not isinstance(row.get("reason"), str) or not row["reason"].strip()):
             raise ValueError(f"invalid Gold placeholder decision for {language}:{pointer}")
         result[pointer] = GoldPlaceholderDecision(row["qid"], frozenset(row["errors"]))
+    return result
+
+
+def load_gold_silver_pointer_aliases(path: str | Path | None = None) -> dict[str, str]:
+    """Load {gold_pointer: silver_pointer} for text confirmed identical in both.
+
+    The handful of Gold dialogue pointers whose bank:address shifts in Silver
+    (see tools/spike_gold_silver_text_overlap.lua's measurement and
+    docs/upstream-fixes.md's "Silver: supported by declaration") but whose
+    text doesn't -- so a Gold pointer's own resolved translation can be
+    reused verbatim under its Silver pointer too, rather than left to
+    silently miss on a Silver save.
+    """
+    if path is None:
+        path = Path(__file__).resolve().parents[1] / "config" / "gold" / "silver_pointer_aliases.json"
+    path = Path(path)
+    if not path.is_file():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"invalid Gold/Silver pointer aliases JSON: {path}") from exc
+    if not isinstance(data, dict) or data.get("schema") != GOLD_SILVER_POINTER_ALIASES_SCHEMA:
+        raise ValueError("unsupported Gold/Silver pointer aliases schema")
+    if data.get("version") != 1 or not isinstance(data.get("entries"), dict):
+        raise ValueError("Gold/Silver pointer aliases require version 1 entries")
+    pointer_re = re.compile(r"[0-7][0-9a-f]:[0-7][0-9a-f]{3}")
+    result: dict[str, str] = {}
+    for gold_pointer, row in data["entries"].items():
+        if not pointer_re.fullmatch(gold_pointer):
+            raise ValueError(f"invalid Gold pointer in Gold/Silver alias key: {gold_pointer!r}")
+        if (not isinstance(row, dict) or "silver_pointer" not in row or
+                not isinstance(row.get("silver_pointer"), str) or
+                not pointer_re.fullmatch(row["silver_pointer"]) or
+                not isinstance(row.get("label"), str) or not row["label"]):
+            raise ValueError(f"invalid Gold/Silver pointer alias for {gold_pointer!r}")
+        result[gold_pointer] = row["silver_pointer"]
     return result
 
 

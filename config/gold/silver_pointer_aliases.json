@@ -1,0 +1,17 @@
+{
+  "schema": "gen1recomp-translation-mods/gold-silver-pointer-aliases",
+  "version": 1,
+  "description": "Gold dialogue pointers whose text is verbatim-identical in Silver but sits at a different bank:address there (a uniform -2 byte shift within bank 03, all Rock Smash/Strength field-move prompts) -- confirmed by tools/spike_gold_silver_text_overlap.lua against real Gold and Silver ROMs (the other 3036 of 3044 dialogue pointers already match exactly). Each Gold pointer's own resolved translation is reused verbatim for its Silver pointer rather than left to silently miss on a Silver save (see docs/upstream-fixes.md's \"Silver: supported by declaration\").",
+  "gold_rom_sha1": "d8b8a3600a465308c9953dfa04f0081c05bdcb94",
+  "silver_rom_sha1": "49b163f7e57702bc939d642a18f591de55d92dae",
+  "entries": {
+    "03:4f5b": {"silver_pointer": "03:4f59", "label": "ROCK SMASH used"},
+    "03:4d44": {"silver_pointer": "03:4d42", "label": "STRENGTH used"},
+    "03:4d49": {"silver_pointer": "03:4d47", "label": "can move boulders"},
+    "03:4f7a": {"silver_pointer": "03:4f78", "label": "rock looks breakable, want ROCK SMASH?"},
+    "03:4f75": {"silver_pointer": "03:4f73", "label": "may be able to break it"},
+    "03:4d71": {"silver_pointer": "03:4d6f", "label": "boulders may now be moved"},
+    "03:4d76": {"silver_pointer": "03:4d74", "label": "may be able to move this"},
+    "03:4d6c": {"silver_pointer": "03:4d6a", "label": "may be able to move this, want STRENGTH?"}
+  }
+}

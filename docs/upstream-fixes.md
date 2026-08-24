@@ -648,21 +648,28 @@ itself is put together, not because of anything new in this pipeline:
   between editions degrade the same way: lose the hand-reviewed override,
   fall back to automatic resolution or `UNRESOLVED`, never corrupt.
 
-**Measured, not just argued from the named-symbol proxy:** `tools/
-spike_gold_silver_text_overlap.lua` (a standalone measurement script, not
-wired into the pipeline) extracts the real `data.text` key set from a real
-Gold ROM and a real Silver ROM independently and compares them directly.
-Result: **3036 of 3044 keys (99.7%) match between the two ROMs.** The 8
-that don't are all field-move prompts in bank `03` (Rock Smash/Strength:
+**Measured, not just argued from the named-symbol proxy, and now closed to
+100%:** `tools/spike_gold_silver_text_overlap.lua` (a standalone
+measurement script, not wired into the pipeline) extracts the real
+`data.text` key set from a real Gold ROM and a real Silver ROM
+independently and compares them directly. Result: 3036 of 3044 keys
+(99.7%) matched exactly between the two ROMs out of the box. The 8 that
+didn't were all field-move prompts in bank `03` (Rock Smash/Strength:
 `"A POKéMON may be able to break it."`, `"{STRBUF} used STRENGTH!"`, and
-similar), shifted a few bytes between editions but carrying the same or
-near-identical English text -- a small, identified, low-impact gap, not a
-sign of a broader problem. This confirms the "declare compatibility"
-approach above is enough: a dedicated Silver-specific extraction path
-(its own `[rom.silver]`, its own manifest selection in
-`tools/gold_extract.lua`, a version-scoped mod id/cache dir so a Gold and
-a Silver build don't collide) is not worth the added complexity for an
-8-key gain, and is not planned.
+similar) -- paired up by content, every one shifted the same uniform -2
+bytes between editions while carrying byte-identical English text.
+`config/gold/silver_pointer_aliases.json` records those 8 `{gold_pointer:
+silver_pointer}` pairs, and `gold_text_catalog_from_join()`
+(`pipeline/gold_mod.py`) now aliases each Gold pointer's resolved
+translation onto its Silver pointer too. **Dialogue-pointer coverage
+between Gold and Silver is the full 3044/3044 (100%),** verified by
+rebuilding a real French mod and confirming all 16 pointers (8 Gold + 8
+Silver) carry matching text in the generated `dialogue.lua`. This confirms
+the "declare compatibility" approach above is enough on its own: a
+dedicated Silver-specific extraction path (its own `[rom.silver]`, its own
+manifest selection in `tools/gold_extract.lua`, a version-scoped mod
+id/cache dir so a Gold and a Silver build don't collide) was never needed
+and is not planned.
 
 Crystal is a different, bigger question entirely -- see the project memory
 `project_gold_silver_crystal_unified_mod.md`. It uses a different

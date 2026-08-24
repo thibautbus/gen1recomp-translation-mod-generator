@@ -16,7 +16,7 @@ from .gold_index_join import join_by_index, join_dex_entries, join_landmarks, pa
 from .gold_join import (
     GoldJoinEntry, GoldPlaceholderDecision, audit_join, gold_coverage_report,
     join_gold_pointers, load_gold_placeholder_decisions,
-    load_gold_pointer_decisions, read_corpus_rows,
+    load_gold_pointer_decisions, load_gold_silver_pointer_aliases, read_corpus_rows,
 )
 from .gold_text import parse_gold_text_catalog
 from .tokens import corpus_to_engine
@@ -307,8 +307,22 @@ def package_gold_mod(
 
 
 def gold_text_catalog_from_join(entries: list[GoldJoinEntry]) -> dict[str, str]:
-    """{pointer: translation} for entries the join actually resolved."""
-    return {entry.pointer: entry.translation for entry in entries if entry.translation}
+    """{pointer: translation} for entries the join actually resolved.
+
+    Also aliases the handful of pointers config/gold/silver_pointer_aliases.json
+    knows shift address between Gold and Silver for verbatim-identical text
+    (see load_gold_silver_pointer_aliases's docstring): each Gold pointer's
+    own resolved translation, whatever it ended up being, is reused under
+    its Silver pointer too -- this mod already declares itself compatible
+    with a Silver save (see the "games" field in generate_gold_mod below),
+    and without this a Silver player would silently miss these 8 lines even
+    though the exact same English text is translated for Gold.
+    """
+    catalog = {entry.pointer: entry.translation for entry in entries if entry.translation}
+    for gold_pointer, silver_pointer in load_gold_silver_pointer_aliases().items():
+        if gold_pointer in catalog:
+            catalog[silver_pointer] = catalog[gold_pointer]
+    return catalog
 
 
 def gold_oak_speech_catalog_from_join(entries: list[GoldJoinEntry]) -> dict[str, str]:

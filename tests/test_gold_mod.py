@@ -289,6 +289,20 @@ class TextCatalogFromJoinTests(unittest.TestCase):
         ]
         self.assertEqual(gold_text_catalog_from_join(entries), {"55:0001": "Salut"})
 
+    def test_a_resolved_gold_pointer_is_also_aliased_onto_its_silver_pointer(self):
+        # config/gold/silver_pointer_aliases.json's real "03:4d76" -> "03:4d74"
+        # entry (see tools/spike_gold_silver_text_overlap.lua's measurement):
+        # whatever the Gold pointer resolves to should also land under the
+        # Silver pointer, so a Silver save gets the same translation.
+        entries = [GoldJoinEntry("03:4d76", None, "hi", "Salut", UNIQUE, "gs.a.One")]
+        catalog = gold_text_catalog_from_join(entries)
+        self.assertEqual(catalog["03:4d76"], "Salut")
+        self.assertEqual(catalog["03:4d74"], "Salut")
+
+    def test_an_unresolved_gold_pointer_is_not_aliased(self):
+        entries = [GoldJoinEntry("03:4d76", None, "hi", None, NO_MATCH)]
+        self.assertEqual(gold_text_catalog_from_join(entries), {})
+
     def test_oak_speech_catalog_uses_only_runtime_intro_labels(self):
         entries = [
             GoldJoinEntry("65:5624", "_OakText1", "Hello", "Bonjour", UNIQUE, "gs.a.One"),

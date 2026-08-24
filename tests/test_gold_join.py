@@ -6,7 +6,8 @@ from pipeline.gold_text import GoldTextRecord
 from pipeline.gold_join import (
     GoldPlaceholderDecision, HARMLESS_AMBIGUOUS, MARKUP_ONLY, NO_MATCH, OVERRIDE, REVIEWED_QID,
     UNIQUE, UNRESOLVED, audit_join, gold_coverage_report, join_gold_pointers,
-    load_gold_placeholder_decisions, load_gold_pointer_decisions, read_corpus_rows, to_aligned_rows,
+    load_gold_placeholder_decisions, load_gold_pointer_decisions,
+    load_gold_silver_pointer_aliases, read_corpus_rows, to_aligned_rows,
     unresolved_report,
 )
 
@@ -239,6 +240,13 @@ class GoldPointerDecisionConfigTests(unittest.TestCase):
         records = [GoldTextRecord("55:0001", "Hello there!")]
         entries, _ = join_gold_pointers(records, [("gs.a.Greeting", "Hello there!", "Bonjour!")])
         self.assertEqual(audit_join(entries), [])
+
+
+class GoldSilverPointerAliasConfigTests(unittest.TestCase):
+    def test_repository_aliases_are_valid_and_pointer_based(self):
+        aliases = load_gold_silver_pointer_aliases()
+        self.assertEqual(aliases["03:4d76"], "03:4d74")
+        self.assertEqual(len(aliases), 8)
 
 
 class GoldPlaceholderDecisionConfigTests(unittest.TestCase):
