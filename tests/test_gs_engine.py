@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from pipeline.gs_engine import engine_string_keys, match_gs_engine_strings
+from pipeline.gs_engine import engine_string_keys, load_gs_engine_scope_exclusions, match_gs_engine_strings
 from pipeline.engine_scope import is_gen2_path, load_manifest
 
 
@@ -30,12 +30,41 @@ class GoldEngineCatalogTests(unittest.TestCase):
             "forced_dynamic_keys": {"Forced": {}},
             "engine_dynamic_values": {"Dynamic": {}},
         }
-        catalog, gen2 = engine_string_keys(CALLSITES, manifest)
+        catalog, gen2 = engine_string_keys(CALLSITES, manifest, exclusions=set())
         self.assertEqual(
             catalog,
             {"Hello!", "Shared", "Fallback only", "Forced", "Dynamic"},
         )
         self.assertEqual(gen2, {"Hello!"})
+
+    def test_gen2_scope_drops_crystal_only_exclusions_but_keeps_them_in_catalog(self):
+        manifest = {**load_manifest(), "forced_dynamic_keys": {}, "engine_dynamic_values": {}}
+        catalog, gen2 = engine_string_keys(CALLSITES, manifest, exclusions={"Hello!"})
+        self.assertIn("Hello!", catalog)
+        self.assertNotIn("Hello!", gen2)
+
+    def test_engine_string_keys_defaults_to_the_real_exclusions_file(self):
+        exclusions = load_gs_engine_scope_exclusions()
+        self.assertIn("#MON Talk", exclusions)
+        self.assertGreaterEqual(len(exclusions), 40)
+
+    def test_load_gs_engine_scope_exclusions_rejects_malformed_input(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "exclusions.json"
+            path.write_text('{"schema": "wrong", "version": 1, "excluded_keys": {}}', encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "unsupported"):
+                load_gs_engine_scope_exclusions(path)
+            path.write_text(
+                '{"schema": "gen1recomp-translation-mods/gs-engine-scope-exclusions", '
+                '"version": 1, "excluded_keys": {"X": {"reason": ""}}}',
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "invalid"):
+                load_gs_engine_scope_exclusions(path)
+
+    def test_load_gs_engine_scope_exclusions_missing_file_is_empty(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertEqual(load_gs_engine_scope_exclusions(Path(directory) / "absent.json"), set())
 
     def test_matches_full_and_gen2_metrics_and_omits_empty_values(self):
         rows = [
