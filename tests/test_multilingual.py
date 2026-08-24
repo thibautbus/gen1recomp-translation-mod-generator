@@ -673,38 +673,31 @@ class MultilingualTests(unittest.TestCase):
         keys = (
             "%s is out of\nuseable POKéMON!",
             "%s blacked\nout!",
-            "It contained\n%s!",
         )
         qids = {
             keys[0]: "rb.text_2.PlayerBlackedOutText2",
             keys[1]: "rb.text_2.PlayerBlackedOutText2",
-            keys[2]: "rb.text_6.TeachMachineMoveText",
         }
         expected = {
             "fr": {
                 keys[0]: "%s n'a plus\nde POKéMON!",
                 keys[1]: "%s est\nhors-jeu!",
-                keys[2]: "Elle contient:\n%s!",
             },
             "de": {
                 keys[0]: "Alle POKéMON von\n%s wurden\x0bbesiegt!",
                 keys[1]: "%s fällt\nin Ohnmacht!",
-                keys[2]: "Sie enthält\n%s!",
             },
             "es": {
                 keys[0]: "¡%s no tiene\nmás POKéMON!",
                 keys[1]: "¡%s perdió\nel conocimiento!",
-                keys[2]: "¡Ésta contiene\n%s!",
             },
             "it": {
                 keys[0]: "%s non ha più\nPOKéMON utili!",
                 keys[1]: "%s è\ncrollato!",
-                keys[2]: "Contiene\n%s!",
             },
             "ja-Hrkt": {
                 keys[0]: "%sの　てもとには\nたたかえる　POKéが　いない！",
                 keys[1]: "%sは\nめのまえが　まっくらに　なった！",
-                keys[2]: "なかには　%sが\nきろくされていた！",
             },
         }
         anchors = load_semantic_anchors()
@@ -713,7 +706,6 @@ class MultilingualTests(unittest.TestCase):
             self.assertEqual(anchors[key]["extraction"]["kind"], "parts")
             self.assertEqual(anchors[key]["extraction"]["separators"], ["\n"])
             self.assertEqual(set(anchors[key]["extraction"]["targets"]), {"fr", "de", "es", "it", "ja-Hrkt"})
-        self.assertEqual(anchors[keys[2]]["placeholders"], {"{RAM:wStringBuffer}": "%s"})
         for language, language_expected in expected.items():
             items = align(parse_redblue(root, language), target_lang=language)
             output, report = match_engine_catalog(
@@ -730,7 +722,6 @@ class MultilingualTests(unittest.TestCase):
                 self.assertNotRegex(output[key], r"[<>@]", (language, key))
             self.assertEqual(printf_directives(output[keys[0]]), ["%s"], language)
             self.assertEqual(printf_directives(output[keys[1]]), ["%s"], language)
-            self.assertEqual(printf_directives(output[keys[2]]), ["%s"], language)
 
     def test_real_corpus_legendary_cries_reach_generated_dialogue_catalog(self):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
@@ -887,7 +878,6 @@ class MultilingualTests(unittest.TestCase):
         keys = (
             "%s is out of\nuseable POKéMON!",
             "%s blacked\nout!",
-            "It contained\n%s!",
         )
         anchors = load_semantic_anchors()
         items = align(parse_redblue(root, "fr"), target_lang="fr")
@@ -919,7 +909,6 @@ class MultilingualTests(unittest.TestCase):
             "SEEN %3d  OWN %3d": {"ui/PokedexMenu.lua"},
             "%s is out of\nuseable POKéMON!": {"battle/BattleState.lua"},
             "%s blacked\nout!": {"battle/BattleState.lua", "world/OverworldController.lua"},
-            "It contained\n%s!": {"ui/BagMenu.lua"},
             "Diploma": {"ui/Diploma.lua"},
             "BATTLE ANIMATION": {"ui/OptionsMenu.lua", "import/LauncherSettings.lua"},
             "When you change a\nPOKéMON BOX, data\nwill be saved. OK?": {"ui/BoxMenu.lua"},

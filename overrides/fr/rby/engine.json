@@ -95,11 +95,6 @@
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation retained as a technical height format; concrete engine contract limitation is missing unit context around numeric arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
-    "Use on which one?": {
-      "override": "Utiliser sur lequel ?",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation; concrete engine contract limitation is a missing target-selection argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
-    },
     "WT %.1flb": {
       "override": "WT %.1flb",
       "reason": "engine-contract-gap",
@@ -165,10 +160,10 @@
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
-    "GBC FX": {
-      "override": "FX GBC",
+    "SHADER FX": {
+      "override": "FX SHADER",
       "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+      "provenance": "gen1recomp renamed this row from \"GBC FX\" to \"SHADER FX\" on OptionsMenu.lua (LauncherSettings.lua dropped the row entirely rather than renaming it); adapted from the prior user-validated \"GBC FX\"/\"FX GBC\" translation (2026-08-05) by swapping the qualifier, not itself re-validated in-game yet."
     },
     "MAX FPS": {
       "override": "FPS MAX",
