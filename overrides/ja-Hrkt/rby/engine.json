@@ -369,6 +369,11 @@
       "override": "ポケモン　リーグ",
       "reason": "engine-original",
       "provenance": "Corpus-backed from rb.bills_pc.PKMNLeaguePCText ('ポケモン　リーグ@'); does not auto-match because this engine literal (world/OverworldController.lua's Bill's PC PKMN LEAGUE row, new in gen1recomp #1566) uses the <PK><MN> glyph-token pair while the real cart's own Japanese text spells the word out instead of using the glyph macro; requires in-game visual validation."
-    }
+    },
+    "COLOR": {"override": "カラー", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."},
+    "CONTROLS": {"override": "そうさ", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."},
+    "SCREEN POS": {"override": "がめんいち", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."},
+    "SHADER FX 2": {"override": "シェーダーエフェクト2", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."},
+    "VIBRATION": {"override": "しんどう", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."}
   }
 }
