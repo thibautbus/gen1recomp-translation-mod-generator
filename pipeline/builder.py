@@ -1177,7 +1177,7 @@ def main(
                 "Please specify the location of your Pokemon Gold or Silver ROM "
                 "(full path, e.g. C:\\Games\\PokemonGold.gbc): "
             )
-            gold = _prompt_configured_path(
+            gs_rom = _prompt_configured_path(
                 gs_prompt, configured_path(rom_paths, "rom", "gold"), input_fn
             )
             language, language_name = _prompt_language(input_fn, generation=generation)
@@ -1187,7 +1187,7 @@ def main(
                 warning = font_profile_warning(selected_profile)
                 if warning:
                     print(f"Warning: {warning}")
-            verify_gs_rom(gold)
+            verify_gs_rom(gs_rom)
             if not _confirm(input_fn):
                 if is_frozen():
                     print("\nBuild cancelled. No dependency downloads were performed.")
@@ -1196,7 +1196,7 @@ def main(
                 return 0
             from .orchestration import build_request
             output = build_request(
-                BuildRequest({"gold": gold}, release_profile("gs"), language, None, selected_profile),
+                BuildRequest({"gs": gs_rom}, release_profile("gs"), language, None, selected_profile),
                 language_name=language_name, luajit=luajit,
             )
     except (RuntimeError, ValueError, OSError) as error:

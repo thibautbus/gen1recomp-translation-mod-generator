@@ -660,7 +660,7 @@ def build_gs(
 
     language = canonical_language(language)
     profile = release_profile("gs")
-    spec = game_spec("gold")
+    spec = game_spec("gs")
     if spec.corpus_collection not in profile.corpus_collections:
         raise BuildError("Gold release profile and game spec disagree on corpus collection")
     font_profile = validate_font_profile(language, font_profile)

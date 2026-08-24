@@ -30,7 +30,7 @@ GENERATIONS = (
     (2, "Gold and Silver"),
 )
 
-ROMS_BY_GENERATION = {1: ("red", "blue", "yellow"), 2: ("gold",)}
+ROMS_BY_GENERATION = {1: ("red", "blue", "yellow"), 2: ("gs",)}
 
 
 def generation_label(value: int) -> str:
@@ -120,7 +120,8 @@ def validate_inputs(
     for game in ROMS_BY_GENERATION[generation]:
         raw = rom_paths.get(game)
         if not raw or not str(raw).strip():
-            raise builder.BuildError(f"A Pokemon {game.capitalize()} ROM path is required.")
+            display = "Gold or Silver" if game == "gs" else game.capitalize()
+            raise builder.BuildError(f"A Pokemon {display} ROM path is required.")
         path = Path(raw).expanduser()
         if not path.is_file():
             raise builder.BuildError(f"File not found: {path}")
@@ -227,7 +228,7 @@ class TranslationBuilderApp:
     def _build_widgets(self):
         tk, ttk = self.tk, self.ttk
         self.generation_var = tk.StringVar(value=generation_label(1))
-        self.rom_vars = {game: tk.StringVar() for game in ("red", "blue", "yellow", "gold")}
+        self.rom_vars = {game: tk.StringVar() for game in ("red", "blue", "yellow", "gs")}
         self.language_var = tk.StringVar(value=language_label("fr"))
         self.font_profile_var = tk.StringVar(value=font_profile_label("fusion"))
         self.output_var = tk.StringVar()
@@ -251,7 +252,7 @@ class TranslationBuilderApp:
         # a flat form, not a wizard).
         rom_fields = (
             ("red", 2, "Required to extract shared and Pokémon Red-specific game text and data.", "Pokemon Red ROM (US)"),
-            ("gold", 2, "Required to extract Pokémon Gold and Silver game text and data.", "Pokemon Gold or Silver ROM (US)"),
+            ("gs", 2, "Required to extract Pokémon Gold and Silver game text and data.", "Pokemon Gold or Silver ROM (US)"),
             ("blue", 4, "Required to extract Pokémon Blue-specific game text and data.", "Pokemon Blue ROM (US)"),
             ("yellow", 6, "Required to extract Pokémon Yellow-specific game text and data.", "Pokemon Yellow ROM (US)"),
         )

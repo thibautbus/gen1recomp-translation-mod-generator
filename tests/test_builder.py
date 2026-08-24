@@ -212,11 +212,11 @@ class BuilderTests(unittest.TestCase):
         rby = release_profile("rby")
         with self.assertRaisesRegex(ValueError, "missing ROM sources: yellow"):
             BuildRequest({"red": Path("red.gb"), "blue": Path("blue.gb")}, rby, "fr").validate()
-        with self.assertRaisesRegex(ValueError, "unexpected ROM sources: gold"):
+        with self.assertRaisesRegex(ValueError, "unexpected ROM sources: gs"):
             BuildRequest(
                 {
                     "red": Path("red.gb"), "blue": Path("blue.gb"),
-                    "yellow": Path("yellow.gb"), "gold": Path("gold.gbc"),
+                    "yellow": Path("yellow.gb"), "gs": Path("gold.gbc"),
                 },
                 rby,
                 "fr",
@@ -233,10 +233,10 @@ class BuilderTests(unittest.TestCase):
             gold = root / "gold.gbc"
             gold.write_bytes(b"gold")
             with patch.object(builder, "verify_gs_rom"):
-                inputs = validate_inputs(2, {"gold": gold}, "ko", root / "out", "fusion")
+                inputs = validate_inputs(2, {"gs": gold}, "ko", root / "out", "fusion")
                 self.assertEqual(inputs.language, "ko")
                 with self.assertRaisesRegex(ValueError, "Pokemon Font"):
-                    validate_inputs(2, {"gold": gold}, "ko", root / "out", "pokemon")
+                    validate_inputs(2, {"gs": gold}, "ko", root / "out", "pokemon")
     def test_absent_rom_path_config_is_empty(self):
         with tempfile.TemporaryDirectory() as directory:
             paths = load_rom_paths(Path(directory) / "rom_paths.toml")
