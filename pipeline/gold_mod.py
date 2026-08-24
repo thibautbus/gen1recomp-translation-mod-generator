@@ -243,14 +243,25 @@ def generate_gold_mod(
     (destination / "main.lua").write_text(main_body, encoding="utf-8")
     install_font_assets(destination, language, font_source, font_profile)
 
-    display_name = target_name or f"{language} translation for Gold"
+    display_name = target_name or f"{language} translation for Gold/Silver"
     description = target_description or (
         f"{display_name}, based mostly on PokeCorpus."
         + ("" if catalogs else " Text is not wired up yet; this is a loadable skeleton.")
     )
+    # "silver" alongside "gold": this mod is still built and extracted from a
+    # Gold ROM only, but Gold and Silver share the same pokegold source tree
+    # and near-identical dialogue text-table addresses (gen1recomp's own
+    # tools/make_silver_manifest.py derives Silver's manifest from Gold's,
+    # touching only sprite/Pokédex/graphics symbols), and a mod override that
+    # doesn't find a matching key in a Silver import's own extracted text
+    # just silently no-ops rather than showing wrong text (src/mods/
+    # Registry.lua's override folds onto the base table by exact id match) --
+    # so declaring "silver" here lets the same mod apply to a real Silver
+    # save via src/mods/ModTargets.lua's specApplies() with no separate
+    # Silver-specific build.
     manifest_body = {
         "id": mod_id, "name": display_name, "version": project_version(), "api": 2,
-        "entry": "main.lua", "profile": "content", "games": ["gold"],
+        "entry": "main.lua", "profile": "content", "games": ["gold", "silver"],
         "game_version": ">=0.0.0-dev <1.0.0", "category": "LANGUAGE",
         "priority": TRANSLATION_MOD_PRIORITY, "dependencies": [], "optional_dependencies": [],
         "conflicts": [], "permissions": [], "description": description,
@@ -666,7 +677,7 @@ def build_gold(
     status("Joining corpus and generating the mod")
     mod_dir, entries, stats = build_gold_dialogue_mod(
         gold_out, corpus_gold_silver, mod_dir, mod_id=mod_id, language=language,
-        target_name=f"{language_name} translation for Gold", font_source=font_source, font_profile=font_profile,
+        target_name=f"{language_name} translation for Gold/Silver", font_source=font_source, font_profile=font_profile,
         engine_source=gen1recomp,
     )
     log(

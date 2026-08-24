@@ -607,6 +607,63 @@ from the translation mod without gen1recomp itself changing.
 
 ## Gold
 
+### Silver: supported by declaration, not by a dedicated build
+
+The Gold mod's `manifest.json` now declares `"games": ["gold", "silver"]`
+instead of just `["gold"]` (`pipeline/gold_mod.py`'s `generate_gold_mod()`).
+The mod is still built and extracted from a Gold ROM only -- there is no
+separate Silver extraction path, no `[rom.silver]` in `config/pipeline.toml`,
+and no Silver-specific corpus join. This works because of how gen1recomp
+itself is put together, not because of anything new in this pipeline:
+
+- Gold and Silver share one `pokegold` source tree. gen1recomp's own
+  `tools/make_silver_manifest.py` derives Silver's import manifest from
+  Gold's, touching only `romSha1` and `symbols` -- and a scripted diff of
+  the two manifests' 2057 named symbols found only 818 actually differ,
+  every one of them a sprite (556), a `*PokedexEntry` symbol (241, which
+  doesn't even feed the dialogue text table -- resolved separately into
+  `pokedex.lua`), or misc graphics (21). **Zero of the 873 `*Text*` symbols
+  and zero of the 9 `*Script*` symbols differ.**
+- The dialogue text table this mod's `dialogue.lua` overrides
+  (`data.text`/`text.lua`, keyed `bank:address` via
+  `src/script/gen2/Opcodes.key`) is built the same way for both editions;
+  gen1recomp's own importer (`GameVersion.forSha1`) already picks the
+  correct manifest per ROM at runtime without any help from this project.
+- A mod override is a plain string-key match against whatever `data.text`
+  the *current* import produced (`Vm:showText`: `self.text[textKey]`,
+  folded on by `src/mods/Registry.lua`'s `override`). If a Gold-authored
+  key doesn't exist in a Silver import's own table, the override silently
+  never fires and the player sees Silver's own correct English text --
+  never garbled or wrong text, just occasionally untranslated.
+- `src/mods/ModTargets.lua`'s `specApplies()` already treats `"silver"` as
+  a first-class `games` token (same `GameVersion.VERSIONS` lookup as
+  `"gold"`), so declaring both is enough for the engine's own mod loader to
+  apply this mod to a Silver save with no further engine-side work.
+- This project's own automatic dialogue join
+  (`pipeline/gold_join.py`'s `join_gold_pointers`) matches primarily by
+  normalized English text, not by pointer -- `bank:address` is only used
+  to look up the small set of hand-reviewed, Gold-sha1-pinned overrides in
+  `config/gold/pointer_decisions.json`/`placeholder_decisions.json` and as
+  the final write-back key. Any of those specific entries that do differ
+  between editions degrade the same way: lose the hand-reviewed override,
+  fall back to automatic resolution or `UNRESOLVED`, never corrupt.
+
+Real per-key coverage for a Silver save hasn't been measured yet (a
+throwaway script, not a permanent part of this pipeline, is the planned way
+to do that against a real Silver ROM) -- if that measurement turns up
+meaningfully worse coverage than Gold's own, the next step would be a real
+Silver-specific extraction path (its own `[rom.silver]`, its own manifest
+selection in `tools/gold_extract.lua`, a version-scoped mod id/cache dir so
+a Gold and a Silver build don't collide), not attempted here.
+
+Crystal is a different, bigger question entirely -- see the project memory
+`project_gold_silver_crystal_unified_mod.md`. It uses a different
+`pokegold`-unrelated codebase with materially different `bank:address`
+values and its own poke-corpus collection (`Crystal/`, its own `c.text.*`
+qid namespace, distinct from `GoldSilver/`'s `gs.*`), plus real content
+Gold/Silver don't have at all (Battle Tower, Kris, an enhanced Pokégear).
+Nothing here extends to Crystal.
+
 ### Fixed: rows already reachable through an existing public hook
 
 `PcMenu`'s five storage-menu rows (`Withdraw Pokémon`, `Deposit Pokémon`,

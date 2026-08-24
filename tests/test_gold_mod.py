@@ -41,12 +41,19 @@ class IdentifierTests(unittest.TestCase):
 
 
 class GenerateGoldModTests(unittest.TestCase):
-    def test_manifest_declares_gold_and_nothing_else(self):
+    def test_manifest_declares_gold_and_silver_and_nothing_else(self):
+        # Built and extracted from a Gold ROM only, but declared compatible
+        # with Silver too: Gold/Silver share the same dialogue text-table
+        # addresses closely enough (see pipeline/gold_mod.py's comment above
+        # this manifest body) that the mod's overrides apply cleanly to a
+        # Silver save via src/mods/ModTargets.lua's specApplies(), and a
+        # miss there just silently falls back to Silver's own English text
+        # rather than showing anything wrong.
         with tempfile.TemporaryDirectory() as tmp:
             mod_dir = generate_gold_mod(Path(tmp) / "mod", language="fr")
             manifest = json.loads((mod_dir / "manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["id"], "translation-fr-gen2")
-            self.assertEqual(manifest["games"], ["gold"])
+            self.assertEqual(manifest["games"], ["gold", "silver"])
             self.assertEqual(manifest["api"], 2)
             self.assertEqual(manifest["entry"], "main.lua")
             self.assertEqual(manifest["permissions"], [])
@@ -302,7 +309,7 @@ class GenerateGoldModWithTextTests(unittest.TestCase):
             main = (mod_dir / "main.lua").read_text(encoding="utf-8")
             self.assertIn('mod.content.text:override(id, value)', main)
             manifest = json.loads((mod_dir / "manifest.json").read_text(encoding="utf-8"))
-            self.assertEqual(manifest["description"], "fr translation for Gold, based mostly on PokeCorpus.")
+            self.assertEqual(manifest["description"], "fr translation for Gold/Silver, based mostly on PokeCorpus.")
 
     def test_without_a_catalog_stays_the_step_9_skeleton(self):
         with tempfile.TemporaryDirectory() as tmp:
