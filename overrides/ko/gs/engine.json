@@ -37,6 +37,7 @@
     "№.": {"override": "№.", "reason": "engine-contract-gap", "provenance": "Corpus-inspired Pokédex number symbol."},
     "OT/": {"override": "어버이/", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.stats_screen.OTString; slash retained for the compact engine label."},
     "♀": {"override": "♀", "reason": "engine-original", "provenance": "Invariant gender symbol."},
-    "♂": {"override": "♂", "reason": "engine-original", "provenance": "Invariant gender symbol."}
+    "♂": {"override": "♂", "reason": "engine-original", "provenance": "Invariant gender symbol."},
+    "%s picked up %s%d!": {"override": "%s는 %s%d원 주웠다!", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.battle.BattleText_PlayerPickedUpPayDayMoney; currency and printf order follow the engine contract, same pattern as the sibling \"%s got %s%d for winning!\" entry."}
   }
 }
