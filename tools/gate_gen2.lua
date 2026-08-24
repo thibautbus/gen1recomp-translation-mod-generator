@@ -58,11 +58,11 @@ end
 --    chunk stays invisible -- the exact blind spot `modkit validate` has
 --    today because its driver never sets `generation`.
 do
-  local result = loadFixture("broken_gold", 1)
-  local mod = result.mods.broken_gold
-  check(mod ~= nil, "gen1: broken_gold is discovered")
+  local result = loadFixture("broken_gs", 1)
+  local mod = result.mods.broken_gs
+  check(mod ~= nil, "gen1: broken_gs is discovered")
   check(mod ~= nil and mod.state == "wrong_generation",
-    "gen1: broken_gold is gated out (state=wrong_generation), never run")
+    "gen1: broken_gs is gated out (state=wrong_generation), never run")
   check(#result.errors == 0, "gen1: a mod that never ran raises no error")
   result.release()
 end
@@ -71,10 +71,10 @@ end
 --    broken mod actually executes and fails -- proof this harness really
 --    loads Gold mods rather than only discovering them.
 do
-  local result = loadFixture("broken_gold", 2)
-  local mod = result.mods.broken_gold
+  local result = loadFixture("broken_gs", 2)
+  local mod = result.mods.broken_gs
   check(mod ~= nil and mod.state == "failed",
-    "gen2: broken_gold actually runs and fails (state=failed)")
+    "gen2: broken_gs actually runs and fails (state=failed)")
   check(#result.errors == 1, "gen2: the failure is reported to loader.errors")
   result.release()
 end
@@ -84,10 +84,10 @@ end
 --    `text` registry to for Gold -- proving a translation mod's registry
 --    write reaches the table Gold's TextBox actually reads.
 do
-  local result = loadFixture("fixed_gold", 2)
-  local mod = result.mods.fixed_gold
-  check(#result.errors == 0, "gen2: fixed_gold loads with no errors")
-  check(mod ~= nil and mod.state == "loaded", "gen2: fixed_gold reaches state=loaded")
+  local result = loadFixture("fixed_gs", 2)
+  local mod = result.mods.fixed_gs
+  check(#result.errors == 0, "gen2: fixed_gs loads with no errors")
+  check(mod ~= nil and mod.state == "loaded", "gen2: fixed_gs reaches state=loaded")
   check(result.data.gen2Text ~= nil and result.data.gen2Text["55:4067"] == "BONJOUR",
     "gen2: text:override(\"55:4067\", ...) lands in data.gen2Text")
   result.release()

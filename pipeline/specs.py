@@ -66,7 +66,7 @@ GAME_SPECS: Mapping[str, GameSpec] = {
 
 RELEASE_PROFILES: Mapping[str, ReleaseProfile] = {
     "rby": ReleaseProfile("rby", 1, ("red", "blue", "yellow")),
-    "gold": ReleaseProfile("gold", 2, ("gold",)),
+    "gs": ReleaseProfile("gs", 2, ("gold",)),
 }
 
 # The collection is the source of truth for the UI language domain.  Keeping

@@ -10,11 +10,11 @@
 -- Oak-speech hook, since those ROM-derived strings are consumed by the
 -- speech object rather than by a content registry.
 --
--- Usage: luajit gate_gold_registries.lua <gen1recomp_root> <mod_dir>
+-- Usage: luajit gate_gs_registries.lua <gen1recomp_root> <mod_dir>
 
 local engineRoot, modDir = ...
 if not engineRoot or engineRoot == "" or not modDir or modDir == "" then
-  io.stderr:write("usage: luajit gate_gold_registries.lua <gen1recomp_root> <mod_dir>\n")
+  io.stderr:write("usage: luajit gate_gs_registries.lua <gen1recomp_root> <mod_dir>\n")
   os.exit(2)
 end
 
@@ -139,10 +139,10 @@ if expectations then
   end
   result.release()
   if failures > 0 then
-    io.stderr:write(failures .. " gold registry gate check(s) failed\n")
+    io.stderr:write(failures .. " gs registry gate check(s) failed\n")
     os.exit(1)
   end
-  print("all gold registries gate checks passed")
+  print("all gs registries gate checks passed")
   os.exit(0)
 end
 
@@ -174,8 +174,8 @@ check(not (data.trainers and data.trainers.BEAUTY and data.trainers.BEAUTY.name 
 result.release()
 
 if failures > 0 then
-  io.stderr:write(failures .. " gold registries gate check(s) failed\n")
+  io.stderr:write(failures .. " gs registries gate check(s) failed\n")
   os.exit(1)
 end
-print("all gold registries gate checks passed")
+print("all gs registries gate checks passed")
 os.exit(0)

@@ -9,7 +9,7 @@ from .align import align, apply_corpus_overrides
 from .corpus import load_corpus, parse_redblue, canonical_language
 from .generate import generate_lua
 from .validate import release_gate, validate
-from .roms import catalog_roms, import_rom, import_all, import_gold_rom
+from .roms import catalog_roms, import_rom, import_all, import_gs_rom
 from .mod import font_profile_warning, generate_mod
 from .disassembly_audit import run_audit
 from .engine_backlog import MATRIX_LANGUAGES, run_backlog, run_backlog_matrix
@@ -27,26 +27,26 @@ def main(argv=None) -> int:
     cat = sub.add_parser("catalog"); cat.add_argument("--red", required=True); cat.add_argument("--blue", required=True); cat.add_argument("--yellow"); cat.add_argument("-o", "--output", required=True)
     imp = sub.add_parser("import"); imp.add_argument("version", choices=("red", "blue", "yellow")); imp.add_argument("rom"); imp.add_argument("--gen1recomp", required=True); imp.add_argument("--out", required=True); imp.add_argument("--assets", required=True)
     all_imp = sub.add_parser("import-all"); all_imp.add_argument("--red", required=True); all_imp.add_argument("--blue", required=True); all_imp.add_argument("--yellow"); all_imp.add_argument("--gen1recomp", required=True); all_imp.add_argument("--cache-root", required=True)
-    imp_gold = sub.add_parser(
-        "import-gold", help="developer-only: extract Gold catalogs under LuaJIT, no LÖVE",
+    imp_gs = sub.add_parser(
+        "import-gs", help="developer-only: extract Gold/Silver catalogs under LuaJIT, no LÖVE",
     )
-    imp_gold.add_argument("rom")
-    imp_gold.add_argument("--gen1recomp", required=True)
-    imp_gold.add_argument("--out", required=True)
-    build_gold = sub.add_parser(
-        "build-gold",
-        help="developer-only: join Gold extractor output and write a loadable mod",
+    imp_gs.add_argument("rom")
+    imp_gs.add_argument("--gen1recomp", required=True)
+    imp_gs.add_argument("--out", required=True)
+    build_gs = sub.add_parser(
+        "build-gs",
+        help="developer-only: join Gold/Silver extractor output and write a loadable mod",
     )
-    build_gold.add_argument(
-        "--gold-out", required=True, help="directory containing the Gold extractor TSV catalogs",
+    build_gs.add_argument(
+        "--gs-out", required=True, help="directory containing the Gold/Silver extractor TSV catalogs",
     )
-    build_gold.add_argument("--corpus", required=True, help="GoldSilver corpus directory")
-    build_gold.add_argument("-o", "--output", required=True)
-    build_gold.add_argument("--target-lang", default="fr")
-    build_gold.add_argument("--mod-id")
-    build_gold.add_argument("--font-source")
-    build_gold.add_argument("--gen1recomp", help="pinned checkout used to generate engine-string coverage")
-    build_gold.add_argument("--font-profile", choices=("fusion", "pokemon"), default="fusion")
+    build_gs.add_argument("--corpus", required=True, help="GoldSilver corpus directory")
+    build_gs.add_argument("-o", "--output", required=True)
+    build_gs.add_argument("--target-lang", default="fr")
+    build_gs.add_argument("--mod-id")
+    build_gs.add_argument("--font-source")
+    build_gs.add_argument("--gen1recomp", help="pinned checkout used to generate engine-string coverage")
+    build_gs.add_argument("--font-profile", choices=("fusion", "pokemon"), default="fusion")
     sub.add_parser("audit-disassemblies", help="developer-only private localized disassembly audit")
     backlog = sub.add_parser("engine-backlog", help="developer-only private unresolved engine-string backlog")
     backlog.add_argument("--language", "--target-lang", dest="language", default=None)
@@ -75,12 +75,12 @@ def main(argv=None) -> int:
         if args.yellow:
             roms["yellow"] = args.yellow
         import_all(roms, args.gen1recomp, args.cache_root); return 0
-    if args.command == "import-gold":
-        import_gold_rom(args.rom, args.gen1recomp, args.out); return 0
-    if args.command == "build-gold":
-        from .gold_mod import build_gold_dialogue_mod
-        mod_dir, entries, stats = build_gold_dialogue_mod(
-            args.gold_out, args.corpus, args.output, mod_id=args.mod_id, language=args.target_lang,
+    if args.command == "import-gs":
+        import_gs_rom(args.rom, args.gen1recomp, args.out); return 0
+    if args.command == "build-gs":
+        from .gs_mod import build_gs_dialogue_mod
+        mod_dir, entries, stats = build_gs_dialogue_mod(
+            args.gs_out, args.corpus, args.output, mod_id=args.mod_id, language=args.target_lang,
             font_source=args.font_source, font_profile=args.font_profile,
             engine_source=args.gen1recomp,
         )

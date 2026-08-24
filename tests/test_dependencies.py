@@ -278,9 +278,9 @@ class DependencyTests(unittest.TestCase):
 
     def test_spec_bundles_the_tools_lua_scripts_and_gate_fixtures(self):
         # A real Windows GUI report: a frozen Gold build failed with
-        # "cannot open ... tools\gold_extract.lua: No such file or
+        # "cannot open ... tools\gs_extract.lua: No such file or
         # directory" -- resource_root()/"tools"/... (pipeline/roms.py,
-        # pipeline/gold_mod.py) resolves to PyInstaller's extraction dir at
+        # pipeline/gs_mod.py) resolves to PyInstaller's extraction dir at
         # runtime, but nothing in the spec's datas ever bundled tools/ at
         # all.
         spec = Path(__file__).parents[1] / "packaging/translation_builder.spec"
@@ -289,10 +289,10 @@ class DependencyTests(unittest.TestCase):
             (root / "packaging").mkdir()
             (root / "build_translation.py").write_text("# test fixture\n")
             tools = root / "tools"
-            (tools / "gen2_gate_fixtures" / "broken_gold").mkdir(parents=True)
-            (tools / "gold_extract.lua").write_text("-- fixture\n")
+            (tools / "gen2_gate_fixtures" / "broken_gs").mkdir(parents=True)
+            (tools / "gs_extract.lua").write_text("-- fixture\n")
             (tools / "gate_gen2.lua").write_text("-- fixture\n")
-            (tools / "gen2_gate_fixtures" / "broken_gold" / "main.lua").write_text("-- fixture\n")
+            (tools / "gen2_gate_fixtures" / "broken_gs" / "main.lua").write_text("-- fixture\n")
             (tools / "__pycache__").mkdir()
             (tools / "__pycache__" / "stale.pyc").write_bytes(b"stale bytecode")
             captured = {}
@@ -311,9 +311,9 @@ class DependencyTests(unittest.TestCase):
                 },
             )
             found = {
-                (tools / "gold_extract.lua"): "tools",
+                (tools / "gs_extract.lua"): "tools",
                 (tools / "gate_gen2.lua"): "tools",
-                (tools / "gen2_gate_fixtures" / "broken_gold" / "main.lua"): str(Path("tools") / "gen2_gate_fixtures" / "broken_gold"),
+                (tools / "gen2_gate_fixtures" / "broken_gs" / "main.lua"): str(Path("tools") / "gen2_gate_fixtures" / "broken_gs"),
             }
             for expected_source, expected_destination in found.items():
                 self.assertTrue(

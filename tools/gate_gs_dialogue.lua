@@ -3,7 +3,7 @@
 -- stay absent from data.gen2Text so the ROM's own English renders,
 -- rather than showing up as an empty string or some placeholder.
 --
--- Usage: luajit gate_gold_dialogue.lua <gen1recomp_root> <mod_dir>
+-- Usage: luajit gate_gs_dialogue.lua <gen1recomp_root> <mod_dir>
 --          <expectation_json_path>
 --
 -- The expected translation is read from a JSON file rather than a plain
@@ -11,12 +11,12 @@
 -- ANSI codepage before the C runtime's main() ever sees it, mangling any
 -- translated text outside that codepage (confirmed: German round-tripped,
 -- Japanese and Korean did not). A file read as raw UTF-8 bytes sidesteps
--- that narrowing entirely -- see tools/gate_gold_registries.lua's own
+-- that narrowing entirely -- see tools/gate_gs_registries.lua's own
 -- expectation-file argument for the same reason.
 
 local engineRoot, modDir, expectationPath = ...
 if not (engineRoot and modDir and expectationPath) then
-  io.stderr:write("usage: luajit gate_gold_dialogue.lua <gen1recomp_root> <mod_dir> "
+  io.stderr:write("usage: luajit gate_gs_dialogue.lua <gen1recomp_root> <mod_dir> "
     .. "<expectation_json_path>\n")
   os.exit(2)
 end
@@ -83,8 +83,8 @@ check(text[unresolvedPointer] == nil,
 result.release()
 
 if failures > 0 then
-  io.stderr:write(failures .. " gold dialogue gate check(s) failed\n")
+  io.stderr:write(failures .. " gs dialogue gate check(s) failed\n")
   os.exit(1)
 end
-print("all gold dialogue gate checks passed")
+print("all gs dialogue gate checks passed")
 os.exit(0)

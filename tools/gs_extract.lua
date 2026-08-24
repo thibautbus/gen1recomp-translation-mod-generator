@@ -1,4 +1,5 @@
--- Headless Gold ROM extraction under plain LuaJIT (no LÖVE, no ROM in git).
+-- Headless Gold/Silver ROM extraction under plain LuaJIT (no LÖVE, no ROM
+-- in git).
 --
 -- Drives RomExtractorGen2:run()'s 26 stages in order under tests/love_stub,
 -- and reports which ones complete under the stub and which fail: LÖVE is
@@ -12,17 +13,29 @@
 -- only real LÖVE-coupled module). A translation mod needs neither, so
 -- nothing touches the filesystem outside <out_dir>.
 --
--- Usage: luajit gold_extract.lua <gen1recomp_root> <rom_path> <out_dir>
+-- Usage: luajit gs_extract.lua <gen1recomp_root> <rom_path> <out_dir> <edition>
+--
+-- <edition> is "gold" or "silver" -- gen1recomp-translation-mods' own
+-- pipeline/roms.py:verify_gs_rom() already computed the ROM's SHA-1 and
+-- knows which one it is by the time this script runs, so this script
+-- doesn't recompute it: love.data.hash (what gen1recomp's own
+-- GameVersion.forSha1 callers use) isn't available under the headless
+-- tests/love_stub.lua this script runs under. Picks
+-- rom_manifest_gold.json or rom_manifest_silver.json accordingly, the
+-- same manifest gen1recomp's own RomExtractorGen2 would read this ROM
+-- through at runtime.
 --
 -- Writes, in <out_dir>:
---   gold_text.tsv     pointer -> text, from the "scripts" stage (required)
---   gold_labels.tsv    resolved NAMED_TEXT label -> pointer (required)
---   gold_stages.tsv    stage name -> ok|FAIL and, on failure, the error
---   gold_species.tsv, gold_moves.tsv, gold_items.tsv,
---   gold_trainer_classes.tsv, gold_landmarks.tsv
+--   gs_text.tsv     pointer -> text, from the "scripts" stage (required)
+--   gs_labels.tsv    resolved NAMED_TEXT label -> pointer (required)
+--   gs_stages.tsv    stage name -> ok|FAIL and, on failure, the error
+--   gs_species.tsv, gs_moves.tsv, gs_items.tsv,
+--   gs_trainer_classes.tsv, gs_landmarks.tsv
 
-local root, romPath, outDir = ...
-assert(root and romPath and outDir, "usage: <gen1recomp_root> <rom> <out_dir>")
+local root, romPath, outDir, edition = ...
+assert(root and romPath and outDir, "usage: <gen1recomp_root> <rom> <out_dir> <edition>")
+edition = edition or "gold"
+assert(edition == "gold" or edition == "silver", "edition must be \"gold\" or \"silver\", got " .. tostring(edition))
 
 package.path = table.concat({
   root .. "/?.lua",
@@ -44,7 +57,8 @@ local function readFile(path, mode)
 end
 
 local romData = readFile(romPath, "rb")
-local manifest = Json.decode(readFile(root .. "/tools/rom_manifest_gold.json"))
+local manifestName = edition == "silver" and "rom_manifest_silver.json" or "rom_manifest_gold.json"
+local manifest = Json.decode(readFile(root .. "/tools/" .. manifestName))
 
 local extractor = RomExtractorGen2.new(romData, manifest)
 extractor.write = function() end
@@ -110,7 +124,7 @@ stage("battleAnims", function() return extractor:extractBattleAnims() end)
 stage("stubs", function() return extractor:extractStubs() end)
 
 if requiredFailed then
-  io.stderr:write("\na required stage failed; no gold_text.tsv/gold_labels.tsv written\n")
+  io.stderr:write("\na required stage failed; no gs_text.tsv/gs_labels.tsv written\n")
   os.exit(1)
 end
 
@@ -162,7 +176,7 @@ end
 table.sort(pointers, function(a, b) return a.key < b.key end)
 table.sort(meta)
 
-local textOut = assert(io.open(outDir .. "/gold_text.tsv", "w"))
+local textOut = assert(io.open(outDir .. "/gs_text.tsv", "w"))
 for _, row in ipairs(pointers) do
   textOut:write(row.key, "\t", escape(row.value), "\n")
 end
@@ -184,13 +198,13 @@ for label, key in pairs(labelsByName) do
 end
 table.sort(labels, function(a, b) return a.label < b.label end)
 
-local labelOut = assert(io.open(outDir .. "/gold_labels.tsv", "w"))
+local labelOut = assert(io.open(outDir .. "/gs_labels.tsv", "w"))
 for _, row in ipairs(labels) do
   labelOut:write(row.label, "\t", tostring(row.key), "\n")
 end
 labelOut:close()
 
-local stagesOut = assert(io.open(outDir .. "/gold_stages.tsv", "w"))
+local stagesOut = assert(io.open(outDir .. "/gs_stages.tsv", "w"))
 for _, row in ipairs(report) do
   stagesOut:write(row.name, "\t", row.ok and "ok" or "FAIL", "\t", row.err or "", "\n")
 end
@@ -223,14 +237,14 @@ local function dumpIndexed(fileName, indexField, table_)
   out:close()
 end
 
-dumpIndexed("gold_species.tsv", "dex", results.pokemon)
-dumpIndexed("gold_moves.tsv", "index", results.moves)
-dumpIndexed("gold_items.tsv", "index", results.items)
-dumpIndexed("gold_trainer_classes.tsv", "index", results.trainers and results.trainers.classes)
+dumpIndexed("gs_species.tsv", "dex", results.pokemon)
+dumpIndexed("gs_moves.tsv", "index", results.moves)
+dumpIndexed("gs_items.tsv", "index", results.items)
+dumpIndexed("gs_trainer_classes.tsv", "index", results.trainers and results.trainers.classes)
 -- landmarks (data.gen2Landmarks.landmarks -- Schemas.GEN2 routes the
 -- `landmarks` registry there): the per-id records sit one level under
 -- the stage's own return value, unlike pokemon/moves/items/trainers.
-dumpIndexed("gold_landmarks.tsv", "index", results.landmarks and results.landmarks.landmarks)
+dumpIndexed("gs_landmarks.tsv", "index", results.landmarks and results.landmarks.landmarks)
 
 io.write("\n")
 io.write(("text pointers   : %d\n"):format(#pointers))
@@ -239,6 +253,6 @@ io.write(("resolved labels : %d\n"):format(#labels))
 local okCount = 0
 for _, row in ipairs(report) do if row.ok then okCount = okCount + 1 end end
 io.write(("stages ok       : %d/%d\n"):format(okCount, #report))
-io.write("wrote gold_text.tsv, gold_labels.tsv, gold_stages.tsv, gold_species.tsv,\n"
-  .. "      gold_moves.tsv, gold_items.tsv, gold_trainer_classes.tsv,\n"
-  .. "      gold_landmarks.tsv\n")
+io.write("wrote gs_text.tsv, gs_labels.tsv, gs_stages.tsv, gs_species.tsv,\n"
+  .. "      gs_moves.tsv, gs_items.tsv, gs_trainer_classes.tsv,\n"
+  .. "      gs_landmarks.tsv\n")

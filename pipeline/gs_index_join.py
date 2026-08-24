@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from .gold_text import normalise, split_lines
+from .gs_text import normalise, split_lines
 from .tokens import corpus_to_engine
 
 

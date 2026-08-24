@@ -1,5 +1,5 @@
 {
-  "schema": "gen1recomp-translation-mods/gold-pointer-decisions",
+  "schema": "gen1recomp-translation-mods/gs-pointer-decisions",
   "version": 1,
   "description": "Reviewed pointer-to-QID decisions for normalized-English ambiguities in the canonical English Gold ROM.",
   "rom_sha1": "d8b8a3600a465308c9953dfa04f0081c05bdcb94",

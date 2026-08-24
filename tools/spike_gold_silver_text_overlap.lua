@@ -13,9 +13,9 @@
 -- not copied from those named anchors, so this measures the real thing
 -- directly instead of trusting that proxy.
 --
--- Runs the same stages as tools/gold_extract.lua, in the same order, up
+-- Runs the same stages as tools/gs_extract.lua, in the same order, up
 -- through "scripts" (the stage that produces the text table) -- copied
--- rather than importing gold_extract.lua, since that script is a
+-- rather than importing gs_extract.lua, since that script is a
 -- standalone CLI tool with no reusable function boundary, and this is a
 -- one-off measurement, not something to wire into the pipeline.
 --
@@ -43,7 +43,7 @@ local function readFile(path, mode)
   return body
 end
 
--- Same order as gold_extract.lua/RomExtractorGen2:run(), stopping once the
+-- Same order as gs_extract.lua/RomExtractorGen2:run(), stopping once the
 -- text table is available -- nothing after "scripts" is needed here.
 local function extractTextKeys(romPath, manifestPath, label)
   local romData = readFile(romPath, "rb")

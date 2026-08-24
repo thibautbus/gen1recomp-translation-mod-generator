@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from pipeline.gold_index_join import (
+from pipeline.gs_index_join import (
     IndexedEntry, join_by_index, join_dex_entries, join_landmarks, parse_indexed_catalog,
 )
 
@@ -10,14 +10,14 @@ from pipeline.gold_index_join import (
 class ParseIndexedCatalogTests(unittest.TestCase):
     def test_parses_id_index_name_rows(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "gold_species.tsv"
+            path = Path(tmp) / "gs_species.tsv"
             path.write_text("BULBASAUR\t1\tBULBASAUR\nABRA\t63\tABRA\n", encoding="utf-8")
             entries = parse_indexed_catalog(path)
             self.assertEqual(entries, [IndexedEntry("BULBASAUR", 1, "BULBASAUR"), IndexedEntry("ABRA", 63, "ABRA")])
 
     def test_drops_entries_with_no_index(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "gold_moves.tsv"
+            path = Path(tmp) / "gs_moves.tsv"
             path.write_text("REAL\t5\tREAL\nUNUSED\tnil\tUNUSED\n", encoding="utf-8")
             entries = parse_indexed_catalog(path)
             self.assertEqual(entries, [IndexedEntry("REAL", 5, "REAL")])

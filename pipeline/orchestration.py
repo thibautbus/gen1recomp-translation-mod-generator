@@ -93,10 +93,10 @@ def build_request(
     request.validate()
     if output_dir is None:
         output_dir = request.output_dir
-    if request.profile.id == "gold":
-        from .gold_mod import build_gold
+    if request.profile.id == "gs":
+        from .gs_mod import build_gs
 
-        return build_gold(
+        return build_gs(
             request.source_for("gold"), request.language, language_name, luajit,
             workspace_root=workspace_root, output_dir=output_dir,
             log_fn=log_fn, status_fn=status_fn, font_profile=request.font_profile,

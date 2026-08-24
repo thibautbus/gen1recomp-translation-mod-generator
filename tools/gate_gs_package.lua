@@ -1,13 +1,13 @@
 -- Side-by-side headless loader gate: the real RBY archive's shape (no
--- `games` field) and a Gold mod (games=["gold"]) loaded from the SAME
+-- `games` field) and a Gold mod (games=["gold","silver"]) loaded from the SAME
 -- virtual mods directory, proving they never collide and each is selected
 -- for its own generation. This is not a LÖVE boot or rendering test.
 --
--- Usage: luajit gate_gold_package.lua <gen1recomp_root> <rby_mod_dir> <gold_mod_dir>
+-- Usage: luajit gate_gs_package.lua <gen1recomp_root> <rby_mod_dir> <gold_mod_dir>
 
 local engineRoot, rbyDir, goldDir = ...
 if not engineRoot or engineRoot == "" or not rbyDir or rbyDir == "" or not goldDir or goldDir == "" then
-  io.stderr:write("usage: luajit gate_gold_package.lua <gen1recomp_root> <rby_mod_dir> <gold_mod_dir>\n")
+  io.stderr:write("usage: luajit gate_gs_package.lua <gen1recomp_root> <rby_mod_dir> <gold_mod_dir>\n")
   os.exit(2)
 end
 
@@ -32,7 +32,7 @@ end
 
 -- rbyDir and goldDir are two unrelated absolute directories (no shared
 -- parent in general), so the root=parent/path=name split that
--- tools/gate_gen2.lua and tools/gate_gold_dialogue.lua use for a single
+-- tools/gate_gen2.lua and tools/gate_gs_dialogue.lua use for a single
 -- absolute directory does not apply here: no single root can relativize
 -- both at once. Build a tiny two-alias filesystem instead, one FsIo
 -- instance per directory rooted at that directory itself, so every path
@@ -96,8 +96,8 @@ do
 end
 
 if failures > 0 then
-  io.stderr:write(failures .. " gold package gate check(s) failed\n")
+  io.stderr:write(failures .. " gs package gate check(s) failed\n")
   os.exit(1)
 end
-print("all gold package gate checks passed")
+print("all gs package gate checks passed")
 os.exit(0)

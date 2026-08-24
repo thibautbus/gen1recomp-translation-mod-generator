@@ -4,14 +4,14 @@ out of scope, so the announced Gold scope stops being an estimate.
 
 Two things can make a corpus entry reachable today:
 
-  pointer   its normalised English matches a ROM text pointer gold_extract.lua
+  pointer   its normalised English matches a ROM text pointer gs_extract.lua
             found (tools/measure_join.py's join) -> ships through the `text`
             registry, converted by pipeline/tokens.py:corpus_to_engine.
   strings   its normalised English matches a literal Strings(...) callsite
             found anywhere in the engine source (pipeline/engine_scope.py)
             -> ships through the `strings` registry the same way RBY's
             engine backlog does, via a language's shared_engine_overrides
-            (overrides/<language>/gold/engine.json, following the existing
+            (overrides/<language>/gs/engine.json, following the existing
             overrides/<language>/rby/yellow_engine.json precedent).
 
 Neither does not mean untranslatable: it means nothing in this Gen1Recomp
@@ -19,7 +19,7 @@ checkout reads that text yet (Phase 1 -- README.md:62), so shipping it
 would be a silent no-op. This script only reports; step 8/11 decide what
 to wire up.
 
-Usage: measure_engine_reach.py <gold_text.tsv> <corpus_dir> <gen1recomp_root>
+Usage: measure_engine_reach.py <gs_text.tsv> <corpus_dir> <gen1recomp_root>
 """
 import importlib.util
 import sys

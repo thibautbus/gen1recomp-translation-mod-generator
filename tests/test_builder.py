@@ -164,7 +164,7 @@ class BuilderTests(unittest.TestCase):
             }), encoding="utf-8")
             self.assertEqual(coverage_lines(report), [
                 "Red Blue ROM aggregate: 8/9 (88.89%)",
-                "Gold-related engine strings: 1/2 (50.00%)",
+                "Gold and Silver-related engine strings: 1/2 (50.00%)",
                 "All engine strings: 2/4 (50.00%)",
             ])
 
@@ -206,7 +206,7 @@ class BuilderTests(unittest.TestCase):
 
     def test_release_collections_are_derived_from_game_specs(self):
         self.assertEqual(release_profile("rby").corpus_collections, ("RedBlue", "Yellow"))
-        self.assertEqual(release_profile("gold").corpus_collections, ("GoldSilver",))
+        self.assertEqual(release_profile("gs").corpus_collections, ("GoldSilver",))
 
     def test_build_request_requires_exact_profile_sources(self):
         rby = release_profile("rby")
@@ -232,7 +232,7 @@ class BuilderTests(unittest.TestCase):
             root = Path(directory)
             gold = root / "gold.gbc"
             gold.write_bytes(b"gold")
-            with patch.object(builder, "verify_gold_rom"):
+            with patch.object(builder, "verify_gs_rom"):
                 inputs = validate_inputs(2, {"gold": gold}, "ko", root / "out", "fusion")
                 self.assertEqual(inputs.language, "ko")
                 with self.assertRaisesRegex(ValueError, "Pokemon Font"):
@@ -460,7 +460,7 @@ class BuilderTests(unittest.TestCase):
             self.assertEqual(prompts[0], "Games number [1]: ")
             self.assertEqual(build.call_args.kwargs["yellow_rom"], yellow.resolve())
 
-    def test_main_gold_prompts_single_rom_and_builds_gold(self):
+    def test_main_gs_prompts_single_rom_and_builds_gs(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             gold = root / "gold.gbc"
@@ -479,17 +479,17 @@ class BuilderTests(unittest.TestCase):
             with (
                 patch.object(builder, "check_prerequisites", return_value="luajit"),
                 patch.object(builder, "load_rom_paths", return_value=configured),
-                patch.object(builder, "verify_gold_rom") as verify,
+                patch.object(builder, "verify_gs_rom") as verify,
                 patch.object(builder, "_confirm", return_value=True),
-                patch("pipeline.gold_mod.build_gold", return_value=root / "out.zip") as build_gold,
+                patch("pipeline.gs_mod.build_gs", return_value=root / "out.zip") as build_gs,
             ):
                 self.assertEqual(builder.main(input_fn, generation=2), 0)
             verify.assert_called_once_with(gold.resolve())
             self.assertFalse(any("Red" in prompt or "Blue" in prompt or "Yellow" in prompt for prompt in prompts))
-            self.assertEqual(build_gold.call_args.args[0], gold.resolve())
-            self.assertEqual(build_gold.call_args.args[1], "ja-Hrkt")
-            self.assertEqual(build_gold.call_args.args[2], "Japanese")
-            self.assertEqual(build_gold.call_args.kwargs["font_profile"], "fusion")
+            self.assertEqual(build_gs.call_args.args[0], gold.resolve())
+            self.assertEqual(build_gs.call_args.args[1], "ja-Hrkt")
+            self.assertEqual(build_gs.call_args.args[2], "Japanese")
+            self.assertEqual(build_gs.call_args.kwargs["font_profile"], "fusion")
 
     def test_invalid_injected_generation_fails_cleanly(self):
         with (
@@ -981,7 +981,7 @@ class BuilderTests(unittest.TestCase):
             "All engine strings: 352/951 (37.01%)",
         ])
 
-    def test_coverage_shows_gold_related_engine_strings(self):
+    def test_coverage_shows_gold_and_silver_related_engine_strings(self):
         with tempfile.TemporaryDirectory() as directory:
             report = Path(directory) / "coverage.json"
             report.write_text(json.dumps({
@@ -992,7 +992,7 @@ class BuilderTests(unittest.TestCase):
             output = io.StringIO()
             with redirect_stdout(output):
                 builder.print_coverage(report)
-        self.assertIn("Gold-related engine strings: 1/2 (50.00%)", output.getvalue())
+        self.assertIn("Gold and Silver-related engine strings: 1/2 (50.00%)", output.getvalue())
 
     def test_prerequisite_message_is_actionable(self):
         with (

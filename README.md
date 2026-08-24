@@ -8,7 +8,7 @@ artifacts per language:
 
 - a universal Pokémon Red, Blue and Yellow mod, with a runtime-selected Yellow
   layer;
-- a Pokémon Gold mod for Gen1Recomp's generation-2 runtime.
+- a Pokémon Gold and Silver mod for Gen1Recomp's generation-2 runtime.
 
 The artifacts have distinct mod IDs and filenames, so they can be installed
 side by side.
@@ -27,7 +27,7 @@ then select the target games and the corresponding ROM dumps:
 
 ![Gen1Recomp translation mod generator GUI](docs/gui.png)
 
-1. Red, Blue and Yellow, or Gold;
+1. Red, Blue and Yellow, or Gold and Silver;
 2. your own canonical US ROM dumps for the selected games;
 3. the target language and output directory.
 
@@ -61,7 +61,7 @@ then extracts, translates, validates and packages the selected release in a
 private ignored workspace.
 
 The final file is `dist/translation-<lang>-<version>.zip` for RBY or
-`dist/translation-<lang>-gen2-<version>.zip` for Gold; the command prints its
+`dist/translation-<lang>-gen2-<version>.zip` for Gold and Silver; the command prints its
 absolute path.
 
 ### Optional local path configuration
@@ -75,10 +75,12 @@ red = "/absolute/path/to/PokemonRed.gb"
 blue = "/absolute/path/to/PokemonBlue.gb"
 yellow = "/absolute/path/to/PokemonYellow.gb"
 gold = "/absolute/path/to/PokemonGold.gbc"
+silver = "/absolute/path/to/PokemonSilver.gbc"
 ```
 
-The three RBY entries are required for the universal build; `gold` is required
-only for Gold. Relative paths resolve from this file and `~` expands, although
+The three RBY entries are required for the universal build; `gold`/`silver` are
+required only for the Gold and Silver build, and either one alone is enough (the
+prompt accepts a Gold or a Silver ROM interchangeably). Relative paths resolve from this file and `~` expands, although
 absolute paths are recommended. On Windows, use forward slashes or TOML
 single-quoted paths such as `red = 'C:\Games\PokemonRed.gb'`. Configured files
 are still checked for existence and SHA-1; declining one returns to the normal
@@ -97,15 +99,18 @@ ROM English text. The generated coverage report and
 breakdown. Yellow-specific manual translations live in
 `overrides/<language>/rby/yellow_engine.json`.
 
-## Pokémon Gold support
+## Pokémon Gold and Silver support
 
-Gold is published separately as `translation-<lang>-gen2`. It covers dialogue,
-Pokédex entries, named ROM catalogs and engine strings matched from production
-Gen 2 callsites. Missing or ambiguous matches remain in English.
+Gold and Silver is published separately as `translation-<lang>-gen2`. It is built
+and extracted from either a real Gold or a real Silver ROM (whichever one is
+supplied) and covers dialogue, Pokédex entries, named ROM catalogs and engine
+strings matched from production Gen 2 callsites. Missing or ambiguous matches
+remain in English. The manifest declares both `"gold"` and `"silver"` as
+supported games, so the same mod loads on either edition's save.
 
 Before packaging, headless generation-2 gates verify that the translated
-values reach the Gold registries. These checks do not replace an in-game smoke
-test before release.
+values reach the Gold and Silver registries. These checks do not replace an
+in-game smoke test before release.
 
 ## Legal inputs and privacy
 
@@ -117,6 +122,7 @@ Use dumps from your own original US cartridges:
 | Blue | `d7037c83e1ae5b39bde3c30787637ba1d4c48ce2` |
 | Yellow | `cc7d03262ebfaf2f06772c1a480c7d9d5f4a38e1` |
 | Gold | `d8b8a3600a465308c9953dfa04f0081c05bdcb94` |
+| Silver | `49b163f7e57702bc939d642a18f591de55d92dae` |
 
 The pipeline verifies these fingerprints and never downloads, provides or
 redistributes ROMs, patches or copyrighted text extracts. Generated data,
@@ -130,9 +136,9 @@ font profiles are:
 
 | Target languages | Releases | Default font | Optional font |
 | --- | --- | --- | --- |
-| `fr`, `de`, `es`, `it` | RBY and Gold | Fusion Pixel Latin, 10px | Pokemon Font, 8px |
-| `ja-Hrkt` | RBY and Gold | Fusion Pixel Japanese, 8px | — |
-| `ko` | Gold only | Fusion Pixel Hangul, 10px | — |
+| `fr`, `de`, `es`, `it` | RBY, Gold and Silver | Fusion Pixel Latin, 10px | Pokemon Font, 8px |
+| `ja-Hrkt` | RBY, Gold and Silver | Fusion Pixel Japanese, 8px | — |
+| `ko` | Gold and Silver only | Fusion Pixel Hangul, 10px | — |
 
 The optional Pokemon Font is more compact, but translated text can still
 overflow fixed-width interfaces.
@@ -171,20 +177,20 @@ Full per-key scope, matching strategy and fallback provenance remain available i
 the generated coverage report and
 [`engine_scope.json`](config/rby/engine_scope.json).
 
-### Gold
+### Gold and Silver
 
-Gold is built as a separate generation-2 artifact:
+Gold and Silver is built as a separate generation-2 artifact, from either ROM:
 
-- `Gold ROM aggregate` combines dialogue, Pokédex entries and the named ROM
+- `Gold and Silver ROM aggregate` combines dialogue, Pokédex entries and the named ROM
   catalogs. Its denominator excludes 14 markup-only records with no visible
   prose.
-- `Gold-related engine strings` covers the 218 engine keys used by at least
-  one production Gen 2 callsite.
+- `Gold and Silver-related engine strings` covers the 218 engine keys used by
+  at least one production Gen 2 callsite.
 
 The generated report retains the dialogue/catalog breakdown and per-key
 provenance. Future unresolved entries will keep their original English text.
 
-| Target | Gold ROM aggregate | Gold-related engine strings |
+| Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings |
 | --- | ---: | ---: |
 | `fr` | 4452/4452 (100%) | 218/218 (100%) |
 | `de` | 4452/4452 (100%) | 218/218 (100%) |
@@ -196,7 +202,7 @@ provenance. Future unresolved entries will keep their original English text.
 ### Other engine strings
 
 The remaining engine keys are reported separately below. They are keys used by
-neither RBY nor Gold, so their denominator is the residual scope:
+neither RBY nor Gold and Silver, so their denominator is the residual scope:
 `951 - (256 + 218 - 8) = 485`. The numerator counts keys translated in at
 least one of the two artifacts; this is a project-level metric, not a claim
 that every key is present in both games.
@@ -211,7 +217,7 @@ that every key is present in both games.
 | `ko` | 31/485 (6.39%) |
 
 The denominator is calculated as follows: `951` total engine keys, minus the
-`256` RBY-related keys and the `218` Gold-related keys, plus back the `8` keys
+`256` RBY-related keys and the `218` Gold and Silver-related keys, plus back the `8` keys
 shared by both scopes so they are subtracted only once. The resulting residual
 scope is `485` keys.
 
@@ -225,13 +231,13 @@ Every translated engine string remains traceable:
 | Origin | Meaning | Recorded in |
 | --- | --- | --- |
 | Automatic match | Exact, normalized, or structural match proved by the generator. | Generation report |
-| Deterministic anchor | Reliable PokeCorpus qid, composition, or extraction rule. | `config/{rby,gold}/semantic_anchors.json` |
+| Deterministic anchor | Reliable PokeCorpus qid, composition, or extraction rule. | `config/{rby,gs}/semantic_anchors.json` |
 | Human-reviewed RBY anchor | Contextual or language-specific extraction reviewed by a maintainer; text still comes from PokeCorpus. | `config/rby/semantic_anchor_decisions.json` |
-| Human-reviewed Gold pointer | Ambiguous ROM pointer resolved to a reviewed PokeCorpus qid. | `config/gold/pointer_decisions.json` |
-| Reviewed placeholder exception | Official localized wording legitimately adds or omits a runtime value such as the player name or an item quantity. This records no translated text and does not disable the audit; each exception is scoped to a language, ROM pointer, corpus QID, and exact audit message. | `config/gold/placeholder_decisions.json` |
+| Human-reviewed Gold pointer | Ambiguous ROM pointer resolved to a reviewed PokeCorpus qid. | `config/gs/pointer_decisions.json` |
+| Reviewed placeholder exception | Official localized wording legitimately adds or omits a runtime value such as the player name or an item quantity. This records no translated text and does not disable the audit; each exception is scoped to a language, ROM pointer, corpus QID, and exact audit message. | `config/gs/placeholder_decisions.json` |
 | Manual corpus correction | A maintainer corrects one selected-language corpus translation without changing the upstream corpus. Entries are indexed by qid. | `overrides/<language>/rby/corpus.json` |
-| Manual translation — engine contract gap | PokeCorpus has the text, but Gen1Recomp merges contexts or hides required parameters. | `overrides/<language>/{rby,gold}/engine.json`, `reason: "engine-contract-gap"` |
-| Manual translation — engine original | Engine-specific text with no compatible ROM source. | `overrides/<language>/{rby,gold}/engine.json`, `reason: "engine-original"` |
+| Manual translation — engine contract gap | PokeCorpus has the text, but Gen1Recomp merges contexts or hides required parameters. | `overrides/<language>/{rby,gs}/engine.json`, `reason: "engine-contract-gap"` |
+| Manual translation — engine original | Engine-specific text with no compatible ROM source. | `overrides/<language>/{rby,gs}/engine.json`, `reason: "engine-original"` |
 | Editorial correction | Deliberately preferred engine formulation. | `overrides/<language>/rby/engine.json`, `reason: "editorial-correction"` |
 | Manual translation — Yellow-only engine text | Engine-authored, Yellow-exclusive text (Surfing Pikachu minigame HUD) with no PokeCorpus source; applied only when `GameVersion.isYellow()`. | `overrides/<language>/rby/yellow_engine.json`, `reason: "yellow-only-engine-text"` |
 | Known limitation | Active anchor/override knowingly imperfect in a context or language; a status, not an origin. | Anchor metadata or override provenance |
@@ -280,7 +286,7 @@ explicit override > semantic anchor > exact > normalized
 > structural placeholder match > empty entry (runtime English fallback)
 ```
 
-Game-specific configuration lives under `config/rby/` and `config/gold/`;
+Game-specific configuration lives under `config/rby/` and `config/gs/`;
 language overrides follow the same split under `overrides/<language>/`.
 
 | Configuration | Purpose |
@@ -292,7 +298,7 @@ language overrides follow the same split under `overrides/<language>/`.
 
 The semantic anchors and reviewed decisions are described in the
 `Translation provenance` section above.
-Gold identifies its production strings directly from Gen 2 source subtrees.
+Gold and Silver identify their production strings directly from Gen 2 source subtrees.
 Missing or ambiguous evidence always falls back to English. Private review
 candidates never become executable configuration automatically.
 `strict_engine` requires the engine catalog and scaffold to be present, not
@@ -306,7 +312,7 @@ fully translated.
 | Inputs and workspace | `project.py`, `dependencies.py`, `rom_paths.py`, `roms.py` | Resolve paths, verify private ROMs and prepare pinned dependencies. |
 | Corpus model | `corpus.py`, `model.py`, `align.py`, `worksheet.py`, `tokens.py` | Parse parallel corpora, align qids and preserve control-token contracts. |
 | RBY generation | `join.py`, `generate.py`, `literals.py`, `yellow.py`, `yellow_audit.py`, `mod.py` | Join Red/Blue catalogs, build the Yellow layer and emit the universal mod. |
-| Gold generation | `gold_text.py`, `gold_join.py`, `gold_index_join.py`, `gold_engine.py`, `gold_mod.py` | Join GoldSilver to pointer/index catalogs, engine strings and the Gen 2 artifact. |
+| Gold and Silver generation | `gs_text.py`, `gs_join.py`, `gs_index_join.py`, `gs_engine.py`, `gs_mod.py` | Join GoldSilver to pointer/index catalogs, engine strings and the Gen 2 artifact. |
 | Engine strings | `engine.py`, `engine_scope.py` | Match the versioned engine catalog and classify production callsites. |
 | Validation and audits | `validate.py`, `disassembly_audit.py`, `engine_backlog.py` | Enforce release gates and produce private diagnostic reports. |
 
@@ -376,7 +382,7 @@ archive before upload.
   identical to an English type name is translated too.
 - The desktop launcher uses a separate renderer and is outside the content
   mod's translation hooks.
-- RBY- and Gold-specific upstream engine gaps are tracked in
+- RBY- and Gold and Silver-specific upstream engine gaps are tracked in
   [docs/upstream-fixes.md](docs/upstream-fixes.md).
 
 ## Credits
@@ -384,7 +390,7 @@ archive before upload.
 - [Gen1Recomp](https://github.com/bryanthaboi/gen1recomp) by [bryanthaboi](https://github.com/bryanthaboi), the native Lua / LÖVE2D recreation.
 - [PokéCorpus](https://github.com/abcboy101/poke-corpus) by [abcboy101](https://github.com/abcboy101), the multilingual translation corpus.
 - [pokemon-font](https://github.com/cooljeanius/pokemon-font) v1.8.2, the Pokemon Font clone by Superpencil, sourced from the fork maintained by [cooljeanius](https://github.com/cooljeanius), available as the optional Latin profile.
-- [Fusion Pixel Font](https://github.com/TakWolf/fusion-pixel-font) by [TakWolf](https://github.com/TakWolf), used by the recommended Latin profile, the Japanese profile, and the Korean profile (Gold only).
+- [Fusion Pixel Font](https://github.com/TakWolf/fusion-pixel-font) by [TakWolf](https://github.com/TakWolf), used by the recommended Latin profile, the Japanese profile, and the Korean profile (Gold and Silver only).
 
 ## Contributors ✨
 

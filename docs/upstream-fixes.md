@@ -605,16 +605,22 @@ from the translation mod without gen1recomp itself changing.
   regression (the nurse would stop healing the party), not just an
   incomplete translation.
 
-## Gold
+## Gold and Silver
 
-### Silver: supported by declaration, not by a dedicated build
+### Silver: supported by declaration, then by real dual-ROM extraction
 
-The Gold mod's `manifest.json` now declares `"games": ["gold", "silver"]`
-instead of just `["gold"]` (`pipeline/gold_mod.py`'s `generate_gold_mod()`).
-The mod is still built and extracted from a Gold ROM only -- there is no
-separate Silver extraction path, no `[rom.silver]` in `config/pipeline.toml`,
-and no Silver-specific corpus join. This works because of how gen1recomp
-itself is put together, not because of anything new in this pipeline:
+The mod's `manifest.json` declares `"games": ["gold", "silver"]` instead of
+just `["gold"]` (`pipeline/gs_mod.py`'s `generate_gs_mod()`). The rest of
+this section (measurement, aliasing) predates a later change that added a
+real dual-ROM extraction path: `pipeline/roms.py`'s `verify_gs_rom()` now
+accepts either a real Gold or a real Silver ROM (matching either SHA-1) and
+reports which one, `config/pipeline.toml` carries both `[rom.gold]` and
+`[rom.silver]`, and `tools/gs_extract.lua` selects the matching import
+manifest (`rom_manifest_gold.json`/`rom_manifest_silver.json`) for whichever
+edition was detected. There is still no Silver-specific corpus join --
+Gold's own extracted text and corpus alignment are reused as-is for a
+Silver-sourced build too. The reasoning below for why that's safe (not why
+it was originally declared-only) is what's still current:
 
 - Gold and Silver share one `pokegold` source tree. gen1recomp's own
   `tools/make_silver_manifest.py` derives Silver's import manifest from
@@ -640,10 +646,10 @@ itself is put together, not because of anything new in this pipeline:
   `"gold"`), so declaring both is enough for the engine's own mod loader to
   apply this mod to a Silver save with no further engine-side work.
 - This project's own automatic dialogue join
-  (`pipeline/gold_join.py`'s `join_gold_pointers`) matches primarily by
+  (`pipeline/gs_join.py`'s `join_gs_pointers`) matches primarily by
   normalized English text, not by pointer -- `bank:address` is only used
   to look up the small set of hand-reviewed, Gold-sha1-pinned overrides in
-  `config/gold/pointer_decisions.json`/`placeholder_decisions.json` and as
+  `config/gs/pointer_decisions.json`/`placeholder_decisions.json` and as
   the final write-back key. Any of those specific entries that do differ
   between editions degrade the same way: lose the hand-reviewed override,
   fall back to automatic resolution or `UNRESOLVED`, never corrupt.
@@ -658,18 +664,21 @@ didn't were all field-move prompts in bank `03` (Rock Smash/Strength:
 `"A POKéMON may be able to break it."`, `"{STRBUF} used STRENGTH!"`, and
 similar) -- paired up by content, every one shifted the same uniform -2
 bytes between editions while carrying byte-identical English text.
-`config/gold/silver_pointer_aliases.json` records those 8 `{gold_pointer:
-silver_pointer}` pairs, and `gold_text_catalog_from_join()`
-(`pipeline/gold_mod.py`) now aliases each Gold pointer's resolved
+`config/gs/silver_pointer_aliases.json` records those 8 `{gold_pointer:
+silver_pointer}` pairs, and `gs_text_catalog_from_join()`
+(`pipeline/gs_mod.py`) now aliases each Gold pointer's resolved
 translation onto its Silver pointer too. **Dialogue-pointer coverage
-between Gold and Silver is the full 3044/3044 (100%),** verified by
-rebuilding a real French mod and confirming all 16 pointers (8 Gold + 8
-Silver) carry matching text in the generated `dialogue.lua`. This confirms
-the "declare compatibility" approach above is enough on its own: a
-dedicated Silver-specific extraction path (its own `[rom.silver]`, its own
-manifest selection in `tools/gold_extract.lua`, a version-scoped mod
-id/cache dir so a Gold and a Silver build don't collide) was never needed
-and is not planned.
+between Gold and Silver is the full 3044/3044 (100%) when building from a
+Gold ROM,** verified by rebuilding a real French mod and confirming all 16
+pointers (8 Gold + 8 Silver) carry matching text in the generated
+`dialogue.lua`. This confirmed reusing Gold's own extraction and corpus
+join for Silver too was safe -- it's why the later dual-ROM extraction
+path (`[rom.silver]`, `verify_gs_rom()`, `gs_extract.lua`'s manifest
+selection, `.cache/interactive-gs/` as the shared cache dir for either
+edition) still doesn't need a separate Silver-specific corpus join: a real
+Silver ROM build resolves 3036/3051 pointers on its own (99.5%, one
+Silver-native pointer with no Gold-side alias), reusing the exact same
+Gold-sourced translation catalog.
 
 Crystal is a different, bigger question entirely -- see the project memory
 `project_gold_silver_crystal_unified_mod.md`. It uses a different
@@ -686,7 +695,7 @@ Nothing here extends to Crystal.
 submenu's `Switch`/`Stats` rows are *not* private-class reads: both already
 run through public list hooks (`ui.pc.items`, `ui.party.submenu`) that this
 mod already wraps for other rows (`Cancel`, item-PC actions, decoration,
-mail box). They were simply missing from `config/gold/literal_handlers.json`.
+mail box). They were simply missing from `config/gs/literal_handlers.json`.
 Likewise the START menu's two-line highlighted-entry description
 (`Pokémon database`, `Party Pokémon status`, `Contains items`, and five
 more) runs through `ui.start_menu.items`, whose `item.label` field this mod
@@ -1040,7 +1049,7 @@ a matter of wiring a few missed callsites.
   Points`, `Type`, `Item`, `Move`, `OT`, `Attack`, `Defense`, and related
   screens) through public data or hooks.
 
-The entries in `config/gold/literal_handlers.json` record known stable corpus
+The entries in `config/gs/literal_handlers.json` record known stable corpus
 matches for these screens. They can be activated when the corresponding public
 upstream hooks exist; they are deliberately not a private-class monkey patch.
 This keeps the release manifest permission-free and makes the remaining work
