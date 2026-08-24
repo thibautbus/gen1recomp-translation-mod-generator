@@ -54,7 +54,7 @@ CONTRACT_GAP_KEYS = (
     "%s's %s\nrose!",
     "Once released,\n%s is\ngone forever. OK?",
     "BADGES",
-    "HT %d′%02d″", "Use on which one?", "WT %.1flb",
+    "HT %d′%02d″", "WT %.1flb",
     "%sBOX %2d",
     "%s\nfainted!",
     "POKéDEX",
