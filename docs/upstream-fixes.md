@@ -293,7 +293,7 @@ acronym/label kept as-is where translating it would lose meaning (`SGB`,
 | `auto` / `balanced` / `high` / `low` | (per-context) | `ui/OptionsMenu.lua:264` (`Performance.label`) |
 
 **Corpus translations adapted to the engine's argument order or a
-fragmentary source** (7 entries): the real localized ROM phrasing exists in
+fragmentary source** (6 entries): the real localized ROM phrasing exists in
 the corpus, but the engine's `Strings()` callsite either reorders the
 `printf` arguments differently than the ROM script did, or only passes a
 fragment of the original sentence (a technical field like `HT`/`WT`, a
@@ -308,7 +308,6 @@ loses grammatical context a single upstream template change could restore.
 | `HT %d′%02d″` | `HT %d′%02d″` (kept) | Missing unit context around numeric arguments |
 | `WT %.1flb` | `WT %.1flb` (kept) | Missing unit-context argument |
 | `Once released,\n%s is\ngone forever. OK?` | `Une fois libéré,\n%s sera\nperdu à jamais. OK ?` | Reordered release-confirmation context around one argument |
-| `Use on which one?` | `Utiliser sur lequel ?` | Missing target-selection argument |
 
 **Corpus translations shared across multiple, incompatible original
 contexts** (2 entries): the engine collapses several different ROM strings
@@ -350,6 +349,47 @@ though `t._OnceReleasedText` already wins whenever it resolves. Whichever exact 
 fixed the last three wasn't tracked down -- v0.1.91..v0.2.19 spans close to
 200 merged upstream PRs and this project's local checkout of gen1recomp is
 shallow, so bisecting each one individually wasn't attempted.
+
+**Retired or renamed by the v0.2.24 pin bump**, discovered by CI rejecting
+a real build with `engine overrides contain N unknown key(s)` after that
+bump (v0.2.19..v0.2.24 was never audited commit-by-commit the way v0.2.19
+itself was):
+
+- **`GBC FX` renamed to `SHADER FX`** on `src/ui/OptionsMenu.lua`'s Options
+  menu row -- `src/core/Game2.lua`'s own comments confirm the rename
+  (`"...back when it was GBC FX"`). `src/import/LauncherSettings.lua`
+  didn't rename its own "GBC FX" row the same way: it dropped the row
+  entirely (both the Gen 1 and Gen 2 settings blocks), so it no longer
+  emits either literal and needs no override either way. Every language's
+  `overrides/<language>/rby/engine.json` entry was renamed to match, with
+  the translated value adapted from the prior user-validated `GBC FX`
+  wording by swapping the qualifier (not itself re-validated in-game yet).
+- **`Use on which one?` retired, not replaced by an override.**
+  `src/ui/PartyMenu.lua`'s single generic TM/item target-selection prompt
+  was split into two real cart-matching messages,
+  `Strings("Use TM on which\nPOKéMON?")` and `Strings("Use item on
+  which\nPOKéMON?")`. Unlike the old generic wording (an
+  `engine-contract-gap` AI-generated compromise, no compatible qid), both
+  new literals match real corpus rows in `corpus/RedBlue/en_msg.txt`
+  byte-for-byte and auto-translate via the normal exact-match path with no
+  override needed, in every one of fr/de/es/it/ja-Hrkt -- confirmed
+  directly against real corpus data before removing the old override entry.
+- **`It contained\n%s!` (`ui/BagMenu.lua`'s TM/HM "teach the move?" prompt)
+  moved off `Strings()` entirely**, folded into one `romText()` call
+  together with the confirmation prompt that used to be a separate
+  message: `romText(game.data, "_TeachMachineMoveText", "It
+  contained\n%s!\fTeach %s\nto a POKéMON?", moveName, moveName)`.
+  `_TeachMachineMoveText` is a real `pokered` ROM label already present in
+  `rom_manifest.json`, so `romText()` reads the actual imported ROM's own
+  text for it -- the same mechanism, and the same `data.text` table, as
+  every other RBY dialogue line, needing no `Strings()` catalog entry or
+  semantic anchor at all. `config/rby/semantic_anchor_decisions.json`'s
+  `It contained\n%s!` entry (qid `rb.text_6.TeachMachineMoveText`) is
+  retired: it can never match the real engine catalog again (that string
+  is no longer scanned as a `Strings()` callsite, and the new composite
+  fallback isn't in `iter_romtext_fallback_callsites`'s
+  `RENDERED_ROMTEXT_FALLBACKS` allowlist -- correctly so, since the
+  fallback never actually renders once the real ROM label resolves).
 
 ### Fixed: Surfing Pikachu/Hall of Fame HUD text rewritten upstream
 
@@ -582,44 +622,74 @@ already localized -- `item.desc` just wasn't wired up yet. All now fixed;
 `Party <PK><MN>\nstatus`'s French translation is slightly longer than the
 original two-glyph line and should get an in-game width check.
 
-### Not yet done: PcMenu's own CHANGE BOX save flow (no new capability needed)
+### Fixed: PcMenu's own CHANGE BOX save flow
 
-Unlike most gaps in this section, this one isn't blocked on anything --
-`Strings()` already works fine elsewhere in `src/ui/gen2/PcMenu.lua`
+`Strings()` already worked fine elsewhere in `src/ui/gen2/PcMenu.lua`
 (`self:notice({ Strings(MON_HOLDING_MAIL[1]), Strings(MON_HOLDING_MAIL[2]) })`,
-its one existing call site), it just hasn't been wired up for this one flow
-yet. (The five storage-menu row labels just above are already translated
-too, but through a different mechanism entirely -- a translation-mods-side
-hook into the public `ui.pc.items` list, not an engine-side `Strings()`
-call; see "Fixed: rows already reachable..." above. `entry.label` itself
-still reaches `Chrome.print` as a raw, unwrapped string,
+its one existing call site), it just hadn't been wired up for this one flow.
+(The five storage-menu row labels just above are already translated too,
+but through a different mechanism entirely -- a translation-mods-side hook
+into the public `ui.pc.items` list, not an engine-side `Strings()` call; see
+"Fixed: rows already reachable..." above. `entry.label` itself still
+reaches `Chrome.print` as a raw, unwrapped string,
 `Chrome.print(entry.label, 2, ty)`.)
 
 `PcMenu.lua`'s `savePrompt()` (`CHANGE BOX`'s own save confirmation --
 switching which box is the active one, not moving Pokémon between boxes;
-that's the separate `MOVE POKéMON W/O MAIL` entry) stays entirely in
-English today, confirmed against a real fr build: not just the
-overwrite/saving lines it shares with `SaveMenu.lua`
-(`OVERWRITE_PROMPT`/`SAVING_PROMPT`, deliberately kept as plain
-untranslated tables -- see `fix/translate-gold-title-and-save-menus`'s
-commit message on the gen1recomp side), but also its own done messages
-(`{ name .. " saved", "the game." }`/`"Could not save."`, built by
-concatenation rather than SaveMenu.lua's `"%s saved\nthe game."`
-format string) and its own `"YES"`/`"NO"` choice, none of which go
-through `Strings()` at all.
+that's the separate `MOVE POKéMON W/O MAIL` entry) used to stay entirely in
+English: not just the overwrite/saving lines it shares with `SaveMenu.lua`
+(`OVERWRITE_PROMPT`/`SAVING_PROMPT`, previously plain untranslated tables),
+but also its own done messages (`{ name .. " saved", "the game." }`/
+`"Could not save."`, built by concatenation rather than `SaveMenu.lua`'s
+`"%s saved\nthe game."` format string) and its own `"YES"`/`"NO"` choice,
+none of which went through `Strings()` at all.
 
-A real fix would export `SaveMenu.lua`'s `OVERWRITE_PROMPT_SOURCE`/
-`SAVING_PROMPT_SOURCE` constants and its `twoLines()` helper (currently
-file-local, not on the `SaveMenu` module table) and have
-`PcMenu:savePrompt()` call through `Strings()` the same way
-`SaveMenu:prompt()` does, plus wrap its own done/YES-NO messages the same
-way `SaveMenu.lua`'s were. Deliberately left out of
-`fix/translate-gold-title-and-save-menus`: that branch's own scope was
-already widened once by a review finding a `PcMenu.lua` regression (an
-earlier version broke this exact screen by changing `OVERWRITE_PROMPT`'s
-type), so extending translation to a second screen was left for a
-follow-up rather than risking a second regression in the same PR. Not
-attempted yet.
+Fixed on gen1recomp, merged as PR #1774 (`7d5856f9`): `SaveMenu.lua` now
+exports `OVERWRITE_PROMPT_SOURCE`/`SAVING_PROMPT_SOURCE` and its
+`twoLines()` helper (the plain `OVERWRITE_PROMPT`/`SAVING_PROMPT` tables
+they replaced are gone, along with the duplicate literal text that had to
+be kept in sync by hand), and `PcMenu:savePrompt()` calls through them the
+same way `SaveMenu:prompt()` does, plus wraps its own done/YES-NO messages
+in `Strings()` reusing `SaveMenu.lua`'s exact keys (`"%s saved\nthe
+game."`, `"Could not save."`, `"YES"`, `"NO"`) -- a translation covering
+`SaveMenu.lua`'s screen needs no `PcMenu`-specific fork for any of those.
+The confirm prompt itself gets one new key, `"#MON BOX, data\nwill be
+saved. OK?"` (see the truncation note below). Live as of gen1recomp
+v0.2.24 (`aea38240`, this project's pipeline pin as of this writing):
+this project's own `overrides/{fr,de,es,it,ja-Hrkt,ko}/gold/engine.json`
+already carry the new confirm-prompt key (merged to `main` as PR #40).
+
+Previously deliberately left out of `fix/translate-gold-title-and-save-menus`:
+that branch's own scope was already widened once by a review finding a
+`PcMenu.lua` regression (an earlier version broke this exact screen by
+changing `OVERWRITE_PROMPT`'s type), so extending translation to a second
+screen was left for this follow-up rather than risking a second regression
+in the same PR.
+
+**The confirm prompt's own text is a truncation too, same underlying cause
+as the SAVE screen's overwrite prompt below.** `PcMenu.lua`'s own English
+source for `"#MON BOX, data\nwill be saved. OK?"` is itself a two-line
+truncation of the real three-line cart text (`gs.common_2.ChangeBoxSaveText`,
+poke-corpus `GoldSilver`): `"When you change a<LINE>#MON BOX,
+data<CONT>will be saved. OK?<DONE>"` -- but where the port keeps the
+*first* two lines of `AlreadyASaveFileText` for the overwrite prompt, here
+it keeps the *last* two of `ChangeBoxSaveText` instead (the same fixed
+2-line box, just a different pre-existing truncation choice this project
+didn't introduce). Every other shipped language's own cart text for this
+line runs one line longer than English's three (`fr`/`de`/`es`/`it` all
+have four segments, `ja-Hrkt`/`ko` have three like English), so the same
+"keep the cart's own last two lines" rule was applied uniformly rather than
+composing anything new -- and unlike the overwrite prompt, it happened to
+work out clean: every language's last two lines read as a complete,
+non-dangling sentence (`fr` "les données sont / sauvegardées. OK?", `de`
+"wird das Spiel / gesichert!", `es` "los datos se / guardarán. ¿Vale?",
+`it` "dati vengono / salvati. Va bene?", `ja-Hrkt` "どうじに　レポートが　
+かかれます / いいですか？", `ko` "동시에 레포트가 기록되어집니다 /
+괜찮습니까?") -- confirmed in-game for fr. Real corpus phrasing ships as-is
+here, no compromise needed, but it is still missing real cart content (the
+"when you change a POKéMON BOX" framing, and for `fr`/`de`/`es`/`it` also
+the literal mention of the box itself) for the same reason as the overwrite
+prompt: this port's fixed 2-line box has no pagination.
 
 ### Fixed upstream (engine changes, not just this project's config)
 
@@ -637,10 +707,22 @@ attempted yet.
   the compromise table below), but the real corpus text is still directly
   available at `corpus/GoldSilver/{lang}_msg.txt` lines 904-905 (parallel
   to `qid_msg.txt`'s `gs.timeset.String_oclock`/`String_min`) -- no longer
-  a `Strings()` gap either way. Not a complete fix for these three screens,
-  though: each one also draws a separate `"AM"`/`"PM"` marker that this PR
-  didn't touch and still isn't wrapped in `Strings()` at all -- see
-  "Required upstream capabilities" below.
+  a `Strings()` gap either way. This PR didn't touch the separate `"AM"`/
+  `"PM"` marker each of these three screens also draws, but a later one
+  did -- see the next bullet.
+- **Clock "AM"/"PM" marker:** `src/ui/gen2/MainMenu.lua:174`,
+  `src/ui/gen2/Pokegear.lua:1963`, and `src/ui/gen2/Pokegear.lua:2377` now
+  all read `Strings(hour < 12 and "AM" or "PM")` -- fixed on gen1recomp as
+  part of `fix/translate-gold-title-and-save-menus` (`fad7443f`/
+  `654650e3`, merged as PR #1759, in v0.2.21). Verified against real
+  corpus text (`gs.print_hours_mins.String_AM`/`String_PM`, poke-corpus
+  `GoldSilver`): `fr`/`de`/`es`/`it`/`ko` all show plain `"AM@"`/`"PM@"`,
+  identical to the English source, so no override is needed -- matches
+  `overrides/{fr,de,es,it,ko}/gold/engine.json`'s current state, which
+  correctly carries none. `ja-Hrkt`'s corpus row for this exact string is
+  `[NULL]` (absent), consistent with Japanese Gold's clock not using this
+  marker on the cart at all; left as English-identical no-op there too,
+  same as every other shipped language.
 
 ### Translated via a compromise, not blocked (`engine-contract-gap`)
 
@@ -793,17 +875,6 @@ a matter of wiring a few missed callsites.
   can be blank.
 - **Pokegear "Press any button to exit":** still needs a public hook -- this
   one line is not covered by the fix below.
-- **Clock "AM"/"PM" marker:** found by an independent review of this doc,
-  confirmed directly against the source -- `src/ui/gen2/MainMenu.lua:173`,
-  `src/ui/gen2/Pokegear.lua:1884`, and `src/ui/gen2/Pokegear.lua:2221` all
-  build the digital time display with a raw
-  `hour < 12 and "AM" or "PM"` Lua literal, never passed through `Strings()`
-  at all. This is on the *same three screens* the "Fixed upstream" Clock UI
-  entry above covers (the main menu clock box and both of the Pokegear
-  clock card's displays) -- that fix's weekday name, `PrintHour` daytime
-  word (`MORN`/`DAY`/`NITE`), and `o'clock`/`min.` suffixes are real and
-  translated, but this separate AM/PM marker on the exact same lines was
-  never touched by it and stays in English on every non-English build.
 - **Gold in-game Options menu (from gen1recomp#1642, fixed upstream):**
   `src/ui/gen2/OptionsMenu.lua` had zero `Strings()` calls anywhere in the
   file -- confirmed directly against a real v0.2.19 checkout. Every row
@@ -825,12 +896,12 @@ a matter of wiring a few missed callsites.
   -- checked directly against poke-corpus (`gs.options_menu.StringOptions`
   and its `Options_*` rows) and they match the ROM's English source
   character-for-character, padding included, so this is official localized
-  phrasing, not a compromise. Still inert as of this writing: this
-  project's own pipeline pin (`config/pipeline.toml`, `116a6ba4`) predates
-  PR #1735, so any build made from the current pin still shows this screen
-  in English until the pin is bumped past that merge (ja-Hrkt/ko not
-  covered yet: their corpus rows use `<NEXT>` instead of `<LF>` and need a
-  closer look before trusting an extracted value).
+  phrasing, not a compromise. Live as of gen1recomp v0.2.24
+  (`aea38240`, this project's pipeline pin as of this writing): that
+  release includes PR #1735, so a build from the current pin shows this
+  screen translated (ja-Hrkt/ko not covered yet: their corpus rows use
+  `<NEXT>` instead of `<LF>` and need a closer look before trusting an
+  extracted value).
 
   **Future architectural note:** every one of these labels and value ladders
   is verbatim cart text, which argues for routing this screen through real
@@ -855,8 +926,8 @@ a matter of wiring a few missed callsites.
   report (the character/nickname naming screen). Fixed upstream on
   gen1recomp branch `fix/translate-gold-naming-screen`, mirroring the Gen 1
   naming screen's own `Strings(cell)`-per-keyboard-cell pattern, merged to
-  `dev` as PR #1738 (`41790637`). Also still inert as of this writing: same
-  pin-lag reason as the Options menu entry above.
+  `dev` as PR #1738 (`41790637`). Also live as of gen1recomp v0.2.24, same
+  as the Options menu entry above.
 
   A second, more severe bug turned up investigating this same report: with
   a translation mod's TTF font active, this screen's on-screen keyboard
