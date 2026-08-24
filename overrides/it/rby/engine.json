@@ -374,6 +374,16 @@
       "override": "Niente qua!",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; aligned with poke-corpus rb.text_1.NothingHereText phrasing per language; empty-list message (ui/ListMenu.lua:214, direct Strings render, no data.text shadow)."
+    },
+    "HP": {
+      "override": "PS",
+      "reason": "engine-contract-gap",
+      "provenance": "Standard Italian Pokémon abbreviation. Already carried by overrides/it/gs/engine.json for the same Strings.source(\"HP\") literal (inventory/ItemEffects.lua's STAT_LABEL, shared with ui/gen2/PhotoStudio.lua); missing here left RBY's own item-effect messages (vitamins, stat-boosting items) showing the raw English label."
+    },
+    "<PK><MN>LEAGUE": {
+      "override": "LEGA <PK><MN>",
+      "reason": "engine-original",
+      "provenance": "Corpus-backed from rb.bills_pc.PKMNLeaguePCText ('LEGA <PKMN>@'); does not auto-match because the corpus row spells the glyph as a single <PKMN> token while this engine literal (world/OverworldController.lua's Bill's PC PKMN LEAGUE row, new in gen1recomp #1566) uses the two-token <PK><MN> pair -- converted, order kept as the real cart's own (LEGA first, unlike English's PKMN LEAGUE); requires in-game visual validation."
     }
   }
 }

@@ -359,6 +359,16 @@
       "override": "なにもない",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; aligned with poke-corpus rb.text_1.NothingHereText phrasing per language; empty-list message (ui/ListMenu.lua:214, direct Strings render, no data.text shadow)."
+    },
+    "HP": {
+      "override": "HP",
+      "reason": "engine-contract-gap",
+      "provenance": "Canonical Japanese Pokémon abbreviation. Already carried by overrides/ja-Hrkt/gs/engine.json for the same Strings.source(\"HP\") literal (inventory/ItemEffects.lua's STAT_LABEL, shared with ui/gen2/PhotoStudio.lua); missing here left RBY's own item-effect messages (vitamins, stat-boosting items) showing the raw English label."
+    },
+    "<PK><MN>LEAGUE": {
+      "override": "ポケモン　リーグ",
+      "reason": "engine-original",
+      "provenance": "Corpus-backed from rb.bills_pc.PKMNLeaguePCText ('ポケモン　リーグ@'); does not auto-match because this engine literal (world/OverworldController.lua's Bill's PC PKMN LEAGUE row, new in gen1recomp #1566) uses the <PK><MN> glyph-token pair while the real cart's own Japanese text spells the word out instead of using the glyph macro; requires in-game visual validation."
     }
   }
 }
