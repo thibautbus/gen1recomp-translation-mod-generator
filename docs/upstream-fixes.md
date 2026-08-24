@@ -648,13 +648,21 @@ itself is put together, not because of anything new in this pipeline:
   between editions degrade the same way: lose the hand-reviewed override,
   fall back to automatic resolution or `UNRESOLVED`, never corrupt.
 
-Real per-key coverage for a Silver save hasn't been measured yet (a
-throwaway script, not a permanent part of this pipeline, is the planned way
-to do that against a real Silver ROM) -- if that measurement turns up
-meaningfully worse coverage than Gold's own, the next step would be a real
-Silver-specific extraction path (its own `[rom.silver]`, its own manifest
-selection in `tools/gold_extract.lua`, a version-scoped mod id/cache dir so
-a Gold and a Silver build don't collide), not attempted here.
+**Measured, not just argued from the named-symbol proxy:** `tools/
+spike_gold_silver_text_overlap.lua` (a standalone measurement script, not
+wired into the pipeline) extracts the real `data.text` key set from a real
+Gold ROM and a real Silver ROM independently and compares them directly.
+Result: **3036 of 3044 keys (99.7%) match between the two ROMs.** The 8
+that don't are all field-move prompts in bank `03` (Rock Smash/Strength:
+`"A POKéMON may be able to break it."`, `"{STRBUF} used STRENGTH!"`, and
+similar), shifted a few bytes between editions but carrying the same or
+near-identical English text -- a small, identified, low-impact gap, not a
+sign of a broader problem. This confirms the "declare compatibility"
+approach above is enough: a dedicated Silver-specific extraction path
+(its own `[rom.silver]`, its own manifest selection in
+`tools/gold_extract.lua`, a version-scoped mod id/cache dir so a Gold and
+a Silver build don't collide) is not worth the added complexity for an
+8-key gain, and is not planned.
 
 Crystal is a different, bigger question entirely -- see the project memory
 `project_gold_silver_crystal_unified_mod.md`. It uses a different
