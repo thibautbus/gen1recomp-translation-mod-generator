@@ -9,6 +9,7 @@
     "%s got %s%d for winning! Sent some to MOM!": {"override": "%s는 %s%d원을 받고\n일부를 엄마에게 보냈다!", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.common_1.SentSomeToMomText; printf order follows the engine contract."},
     "%s is missing.\nRe-import the Gold ROM.": {"override": "%s이(가) 없습니다.\nGold ROM을 다시 불러오세요.", "reason": "engine-original", "provenance": "AI-generated translation of a Gen1Recomp diagnostic with no ROM equivalent."},
     "%s o'clock": {"override": "%s시", "reason": "engine-contract-gap", "provenance": "Corpus-backed from gs.timeset.String_oclock (\"시\"); no space, matching Korean counter-word convention."},
+    "#MON BOX, data\nwill be saved. OK?": {"override": "동시에 레포트가 기록되어집니다\n괜찮습니까?", "reason": "engine-contract-gap", "provenance": "Last two lines of gs.common_2.ChangeBoxSaveText's real Gold ROM text (\"박스를 바꾸면 / 동시에 레포트가 기록되어집니다 / 괜찮습니까?\"); this port's own English source is itself already a last-two-lines truncation of the cart's three-line message, so the translation is truncated the same way."},
     "/": {"override": "/", "reason": "engine-original", "provenance": "Invariant interface symbol."},
     "<LV>": {"override": "<LV>", "reason": "engine-original", "provenance": "Invariant level token used by the engine renderer."},
     "A▶PRINT": {"override": "A▶인쇄", "reason": "engine-contract-gap", "provenance": "Corpus-inspired Unown printer label; physical button retained."},

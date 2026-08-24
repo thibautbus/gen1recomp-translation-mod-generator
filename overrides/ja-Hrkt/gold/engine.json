@@ -8,6 +8,7 @@
     "%s got %s%d for winning! Sent some to MOM!": {"override": "%sは %s%d円を てにいれ\nいくらか ママに おくった!", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.common_1.SentSomeToMomText; printf order follows the engine contract."},
     "%s is missing.\nRe-import the Gold ROM.": {"override": "%sが ありません。\nGold ROMを よみこみなおしてください。", "reason": "engine-original", "provenance": "AI-generated translation of a Gen1Recomp diagnostic with no ROM equivalent."},
     "%s o'clock": {"override": "%sじ", "reason": "engine-contract-gap", "provenance": "Corpus-backed from gs.timeset.String_oclock (\"じ\"); no space, matching this file's existing Japanese counter/particle convention."},
+    "#MON BOX, data\nwill be saved. OK?": {"override": "どうじに　レポートが　かかれます\nいいですか？", "reason": "engine-contract-gap", "provenance": "Last two lines of gs.common_2.ChangeBoxSaveText's real Gold ROM text (\"ボックスを　かえると / どうじに　レポートが　かかれます / いいですか？\"); this port's own English source is itself already a last-two-lines truncation of the cart's three-line message, so the translation is truncated the same way."},
     "/": {"override": "/", "reason": "engine-original", "provenance": "Invariant interface symbol."},
     "<LV>": {"override": "<LV>", "reason": "engine-original", "provenance": "Invariant level token used by the engine renderer."},
     "A▶PRINT": {"override": "A▶プリント", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.unown_dex.PrintUnown; physical button retained."},
