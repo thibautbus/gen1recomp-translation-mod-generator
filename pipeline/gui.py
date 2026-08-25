@@ -32,6 +32,13 @@ GENERATIONS = (
 
 ROMS_BY_GENERATION = {1: ("rb", "yellow"), 2: ("gs", "crystal")}
 
+# Fixed wrap width (pixels) for every Hint.TLabel. Without it, hint labels
+# with no wraplength request exactly as much width as their longest line
+# needs -- since the games/ROM hint text changes with the selected
+# generation, the window would otherwise grow or shrink width-wise every
+# time the user picks a different option instead of staying put.
+HINT_WRAPLENGTH = 640
+
 
 def generation_label(value: int) -> str:
     value = int(value)
@@ -215,7 +222,7 @@ class TranslationBuilderApp:
         style.configure("TLabel", background="#202124", foreground="#f1f3f4")
         style.configure(
             "Hint.TLabel", background="#202124", foreground="#9aa0a6",
-            font=("TkDefaultFont", 9),
+            font=("TkDefaultFont", 9), wraplength=HINT_WRAPLENGTH,
         )
         style.configure("TButton", padding=6)
         style.configure("TEntry", fieldbackground="#303134", foreground="#f1f3f4")
