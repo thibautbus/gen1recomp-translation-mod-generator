@@ -318,7 +318,8 @@ class TranslationBuilderApp:
         if generation == 1:
             self.games_hint_var.set(
                 "Which games do you want to translate? Red, Blue and Yellow "
-                "share one translation: select all three ROMs below, not just one."
+                "share one translation: select the two ROMs below (Red or "
+                "Blue, whichever you own, plus Yellow)."
             )
         else:
             self.games_hint_var.set("Which games do you want to translate?")
