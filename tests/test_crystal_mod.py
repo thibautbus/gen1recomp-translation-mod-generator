@@ -4,7 +4,8 @@ import unittest
 from pathlib import Path
 
 from pipeline.crystal_mod import (
-    crystal_text_catalog_from_join, join_crystal_dialogue, load_crystal_pointer_decisions,
+    crystal_text_catalog_from_join, join_crystal_dialogue,
+    load_crystal_dialogue_overrides, load_crystal_pointer_decisions,
 )
 from pipeline.gs_join import REVIEWED_QID, join_gs_pointers
 from pipeline.gs_text import GsTextRecord
@@ -122,6 +123,59 @@ class LoadCrystalPointerDecisionsTests(unittest.TestCase):
         entries, stats = join_gs_pointers(records, corpus_rows, qid_decisions={"00:0001": "c.SiteB.Line"})
         self.assertEqual(stats["reviewed_qid"], 1)
         self.assertEqual(entries[0].translation, "Ligne B.")
+
+
+class LoadCrystalDialogueOverridesTests(unittest.TestCase):
+    def test_repository_french_overrides_are_valid_and_cover_the_mobile_adapter_gap(self):
+        overrides = load_crystal_dialogue_overrides("fr")
+        self.assertEqual(len(overrides), 17)
+        for pointer, text in overrides.items():
+            self.assertRegex(pointer, r"^[0-7][0-9a-f]:[0-7][0-9a-f]{3}$")
+            self.assertTrue(text.strip())
+            self.assertNotIn("%", text)
+
+    def test_missing_language_file_is_empty(self):
+        self.assertEqual(load_crystal_dialogue_overrides("de"), {})
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(
+                load_crystal_dialogue_overrides("fr", Path(tmp) / "absent.json"), {},
+            )
+
+    def test_rejects_wrong_schema(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "overrides.json"
+            path.write_text(json.dumps({"schema": "wrong", "version": 1, "entries": {}}), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                load_crystal_dialogue_overrides("fr", path)
+
+    def test_rejects_a_row_missing_provenance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "overrides.json"
+            path.write_text(json.dumps({
+                "schema": "gen1recomp-translation-mods/crystal-dialogue-overrides",
+                "version": 1,
+                "entries": {"00:0001": {"override": "Bonjour!", "reason": "engine-original"}},
+            }), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                load_crystal_dialogue_overrides("fr", path)
+
+    def test_join_crystal_dialogue_applies_the_override_for_a_no_match_pointer(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            JoinCrystalDialogueTests.write_text_catalog(
+                root / "extracted", [("18:6674", "No corpus row for this at all.")],
+            )
+            JoinCrystalDialogueTests.write_corpus(
+                root / "corpus", "fr", [("c.text.Other", "Something else.", "Autre chose.")],
+            )
+            from unittest.mock import patch
+            with patch(
+                "pipeline.crystal_mod.load_crystal_dialogue_overrides",
+                return_value={"18:6674": "Texte traduit sans corpus."},
+            ):
+                entries, stats = join_crystal_dialogue(root / "extracted", root / "corpus", "fr")
+            self.assertEqual(stats["override"], 1)
+            self.assertEqual(crystal_text_catalog_from_join(entries), {"18:6674": "Texte traduit sans corpus."})
 
 
 if __name__ == "__main__":

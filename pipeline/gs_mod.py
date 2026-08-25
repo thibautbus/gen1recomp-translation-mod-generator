@@ -776,9 +776,12 @@ def build_gs(
     crystal_entries, crystal_stats = join_crystal_dialogue(crystal_out, corpus_crystal, language)
     crystal_text_catalog = crystal_text_catalog_from_join(crystal_entries)
     if crystal_stats["total"]:
-        crystal_resolved = (
-            crystal_stats["unique"] + crystal_stats["harmless_ambiguous"] + crystal_stats["reviewed_qid"]
-        )
+        # len(crystal_text_catalog), not a hand-picked sum of stats
+        # categories: join_gs_pointers() may grow new resolution categories
+        # over time, and a hand-picked sum silently drifts out of sync with
+        # what actually ships (this line undercounted twice already, first
+        # omitting reviewed_qid then override).
+        crystal_resolved = len(crystal_text_catalog)
         log(
             f"  crystal dialogue: {crystal_resolved}/{crystal_stats['total']} pointers"
             f" ({crystal_stats['unresolved']} unresolved, {crystal_stats['no_match']} no-match,"

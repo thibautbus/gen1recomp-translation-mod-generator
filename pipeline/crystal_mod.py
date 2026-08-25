@@ -109,6 +109,51 @@ def load_crystal_pointer_decisions(path: str | Path | None = None) -> dict[str, 
     return result
 
 
+CRYSTAL_DIALOGUE_OVERRIDES_SCHEMA = "gen1recomp-translation-mods/crystal-dialogue-overrides"
+
+
+def load_crystal_dialogue_overrides(language: str, path: str | Path | None = None) -> dict[str, str]:
+    """Load per-language, per-pointer Crystal dialogue overrides.
+
+    Unlike load_crystal_pointer_decisions() (language-independent qid
+    picks), this carries actual translated prose for pointers with no
+    PokeCorpus row at all -- e.g. the Mobile Adapter GB / PokeCom Center
+    content, a peripheral never sold outside Japan and (confirmed against a
+    real pokecrystal build) never localized, so no corpus match could ever
+    exist for it. Each entry's ``reason``/``provenance`` fields document why
+    (this function only returns the flat {pointer: override} shape
+    join_gs_pointers()'s own ``overrides`` parameter expects; the richer
+    metadata is for human readers of the checked-in JSON, not consumed
+    here). Missing file (a language with no such overrides yet) returns {}.
+    """
+    if path is None:
+        path = (
+            Path(__file__).resolve().parents[1] / "overrides" / language / "gsc" / "crystal_dialogue.json"
+        )
+    path = Path(path)
+    if not path.is_file():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"invalid Crystal dialogue overrides JSON: {path}") from exc
+    if not isinstance(data, dict) or data.get("schema") != CRYSTAL_DIALOGUE_OVERRIDES_SCHEMA:
+        raise ValueError("unsupported Crystal dialogue overrides schema")
+    if data.get("version") != 1 or not isinstance(data.get("entries"), dict):
+        raise ValueError("Crystal dialogue overrides require version 1 entries")
+    result: dict[str, str] = {}
+    for pointer, row in data["entries"].items():
+        if not _POINTER.fullmatch(pointer):
+            raise ValueError(f"invalid Crystal dialogue override key: {pointer!r}")
+        if (not isinstance(row, dict) or not isinstance(row.get("override"), str) or
+                not row["override"].strip() or not isinstance(row.get("reason"), str) or
+                not row["reason"].strip() or not isinstance(row.get("provenance"), str) or
+                not row["provenance"].strip()):
+            raise ValueError(f"invalid Crystal dialogue override for {pointer!r}")
+        result[pointer] = row["override"]
+    return result
+
+
 def join_crystal_dialogue(
     crystal_out_dir: str | Path, corpus_dir: str | Path, language: str,
 ) -> tuple[list[GsJoinEntry], dict]:
@@ -136,7 +181,11 @@ def join_crystal_dialogue(
         }
         return [], stats
     corpus_rows = read_corpus_rows(corpus_dir, target_lang=language)
-    return join_gs_pointers(records, corpus_rows, qid_decisions=load_crystal_pointer_decisions())
+    return join_gs_pointers(
+        records, corpus_rows,
+        overrides=load_crystal_dialogue_overrides(language),
+        qid_decisions=load_crystal_pointer_decisions(),
+    )
 
 
 def crystal_text_catalog_from_join(entries: list[GsJoinEntry]) -> dict[str, str]:
