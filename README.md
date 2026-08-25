@@ -91,7 +91,10 @@ prompt.
 One ZIP per language works on Pokémon Red, Blue and Yellow US. Red/Blue data
 lives in the common catalogs; entries whose source or translation differs in
 Yellow are emitted into `lang/*_yellow.lua` and applied only when
-`GameVersion.isYellow()`.
+`GameVersion.isYellow()`. Building it only needs a real Red *or* Blue ROM
+(whichever one is supplied) plus a real Yellow ROM: Red and Blue share
+byte-identical dialogue text and pointer tables, so either extracts into an
+equally correct build.
 
 Shared translations are not duplicated. Missing matches keep the appropriate
 ROM English text. The generated coverage report and

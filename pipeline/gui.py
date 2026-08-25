@@ -30,7 +30,7 @@ GENERATIONS = (
     (2, "Gold and Silver"),
 )
 
-ROMS_BY_GENERATION = {1: ("red", "blue", "yellow"), 2: ("gs",)}
+ROMS_BY_GENERATION = {1: ("rb", "yellow"), 2: ("gs",)}
 
 
 def generation_label(value: int) -> str:
@@ -106,8 +106,7 @@ def validate_inputs(
     """Validate GUI values using the same ROM checks as the CLI.
 
     ``rom_paths`` is a game -> path association, not a positional
-    red/blue/yellow triplet: which games it must contain depends on
-    ``generation``.
+    rb/yellow pair: which games it must contain depends on ``generation``.
     """
     if generation not in ROMS_BY_GENERATION:
         raise builder.BuildError(f"Invalid games selection: {generation!r}")
@@ -120,15 +119,17 @@ def validate_inputs(
     for game in ROMS_BY_GENERATION[generation]:
         raw = rom_paths.get(game)
         if not raw or not str(raw).strip():
-            display = "Gold or Silver" if game == "gs" else game.capitalize()
+            display = {"gs": "Gold or Silver", "rb": "Red or Blue"}.get(game, game.capitalize())
             raise builder.BuildError(f"A Pokemon {display} ROM path is required.")
         path = Path(raw).expanduser()
         if not path.is_file():
             raise builder.BuildError(f"File not found: {path}")
-        if generation == 1:
-            builder.verify_rom(path, game)
-        else:
+        if game == "rb":
+            builder.verify_rb_rom(path)
+        elif game == "gs":
             builder.verify_gs_rom(path)
+        else:
+            builder.verify_rom(path, game)
         resolved[game] = path.resolve()
     return GuiInputs(generation, resolved, code, profile, output.resolve())
 
@@ -228,7 +229,7 @@ class TranslationBuilderApp:
     def _build_widgets(self):
         tk, ttk = self.tk, self.ttk
         self.generation_var = tk.StringVar(value=generation_label(1))
-        self.rom_vars = {game: tk.StringVar() for game in ("red", "blue", "yellow", "gs")}
+        self.rom_vars = {game: tk.StringVar() for game in ("rb", "yellow", "gs")}
         self.language_var = tk.StringVar(value=language_label("fr"))
         self.font_profile_var = tk.StringVar(value=font_profile_label("fusion"))
         self.output_var = tk.StringVar()
@@ -247,13 +248,14 @@ class TranslationBuilderApp:
         self.generation_box.bind("<<ComboboxSelected>>", lambda _event: self._sync_generation())
         self._controls.append((self.generation_box, "readonly"))
 
-        # Gold occupies the same grid rows as Red: only one game's ROM row
-        # is ever shown at a time, toggled by _sync_generation (the GUI is
-        # a flat form, not a wizard).
+        # Gold occupies the same grid row as Red/Blue: only one game's ROM
+        # row is ever shown at a time, toggled by _sync_generation (the GUI
+        # is a flat form, not a wizard). Row 4 (formerly Blue's own field)
+        # is free: Red and Blue share byte-identical game text, so either
+        # ROM works and only one field is needed.
         rom_fields = (
-            ("red", 2, "Required to extract shared and Pokémon Red-specific game text and data.", "Pokemon Red ROM (US)"),
+            ("rb", 2, "Required to extract shared Pokémon Red/Blue game text and data. Either ROM works: Red and Blue share identical text.", "Pokemon Red or Blue ROM (US)"),
             ("gs", 2, "Required to extract Pokémon Gold and Silver game text and data.", "Pokemon Gold or Silver ROM (US)"),
-            ("blue", 4, "Required to extract Pokémon Blue-specific game text and data.", "Pokemon Blue ROM (US)"),
             ("yellow", 6, "Required to extract Pokémon Yellow-specific game text and data.", "Pokemon Yellow ROM (US)"),
         )
         self.rom_widgets: dict[str, tuple] = {}
@@ -316,7 +318,8 @@ class TranslationBuilderApp:
         if generation == 1:
             self.games_hint_var.set(
                 "Which games do you want to translate? Red, Blue and Yellow "
-                "share one translation: select all three ROMs below, not just one."
+                "share one translation: select the two ROMs below (Red or "
+                "Blue, whichever you own, plus Yellow)."
             )
         else:
             self.games_hint_var.set("Which games do you want to translate?")
