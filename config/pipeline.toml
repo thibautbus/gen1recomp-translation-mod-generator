@@ -5,7 +5,7 @@ source = "https://github.com/abcboy101/poke-corpus.git"
 revision = "aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
 # Standalone mode downloads only these exact files from the pinned commit.
 archive_base_url = "https://raw.githubusercontent.com/abcboy101/poke-corpus/aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
-format = "corpus/{RedBlue,Yellow,GoldSilver}/{qid,en,<target_lang>}_msg.txt (UTF-8 parallel lines)"
+format = "corpus/{RedBlue,Yellow,GoldSilver,Crystal}/{qid,en,<target_lang>}_msg.txt (UTF-8 parallel lines)"
 target_lang = "fr"
 
 [corpus.archive_files]
@@ -31,6 +31,14 @@ target_lang = "fr"
 "corpus/GoldSilver/it_msg.txt" = "05ea5658d209a598b963099750d6f5f395de7dea447f535669f6c1f96496bcd4"
 "corpus/GoldSilver/ja-Hrkt_msg.txt" = "7fd5a33ff3b83d63c354271c67b6557a476aed8b3875bf2aaf012cacf55b9612"
 "corpus/GoldSilver/ko_msg.txt" = "05c2d2d1cbabfd3de04106c82580fe3fa090e83d0f09a39df5dd359f195d0f1d"
+# Crystal has no Korean corpus, unlike GoldSilver.
+"corpus/Crystal/qid_msg.txt" = "3964cd43659ef7b2a68611e255cf8a11ecca01f68a41ef64aae83e12b27a4ddd"
+"corpus/Crystal/en_msg.txt" = "4a09803a6c7877e8f1cff7b13d0b9547c2ebec98a7378a36ee117a4345296ab8"
+"corpus/Crystal/fr_msg.txt" = "c2aa3aae1b9c4542dd55ff1240773c61d67d8d771b49d56d2dd90c6b5dd840f7"
+"corpus/Crystal/de_msg.txt" = "cd2a466718f979fb47f389928438adb5a66701b320cfa58ede9e89fef73f6b3f"
+"corpus/Crystal/es_msg.txt" = "940c2664ea592c4803fe16f3f3c721b9d8955b60c44021e2a6899a9e580e0e21"
+"corpus/Crystal/it_msg.txt" = "3f9f2b61cfdd7c98b1dc42d75654c59d64d70e7c1ff6dd185c9a6540c12931de"
+"corpus/Crystal/ja-Hrkt_msg.txt" = "7edbaf78018c1d8967acbff32e7d9ba8450fb37f52d8bc4ae947e637dc7dd23b"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
@@ -102,6 +110,9 @@ sha1 = "d8b8a3600a465308c9953dfa04f0081c05bdcb94"
 
 [rom.silver]
 sha1 = "49b163f7e57702bc939d642a18f591de55d92dae"
+
+[rom.crystal]
+sha1 = "f4cd194bdee0d04ca4eac29e09b8e4e9d818c133"
 
 [output]
 language_dir = "lang"

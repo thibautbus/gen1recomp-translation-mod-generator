@@ -19,7 +19,7 @@ from .subprocess_run import run_streamed
 # Product support is intentionally limited to the canonical US games; this
 # allowlist is independent of whatever sections a config may contain.
 SUPPORTED_VERSIONS = frozenset(("red", "blue", "yellow"))
-CONFIGURED_VERSIONS = SUPPORTED_VERSIONS | {"gold", "silver"}
+CONFIGURED_VERSIONS = SUPPORTED_VERSIONS | {"gold", "silver", "crystal"}
 _SHA1 = re.compile(r"[0-9a-f]{40}\Z")
 _MANIFESTS = {
     "red": "rom_manifest.json",
@@ -238,6 +238,81 @@ def import_gs_rom(rom: str | Path, gen1recomp: str | Path, out: str | Path, log_
         if missing:
             raise RuntimeError(
                 "Gold/Silver extraction completed without required non-empty outputs: "
+                + ", ".join(missing)
+            )
+
+        backup = temporary.with_name(f"{temporary.name}.old")
+        had_output = out.exists()
+        if had_output:
+            out.replace(backup)
+        try:
+            temporary.replace(out)
+        except Exception:
+            if had_output and backup.exists() and not out.exists():
+                backup.replace(out)
+            raise
+        if backup.exists():
+            shutil.rmtree(backup)
+    finally:
+        if temporary.exists():
+            shutil.rmtree(temporary, ignore_errors=True)
+
+
+# Crystal shares the canonical fingerprint registry and the gs_extract.lua
+# extractor contract with Gold/Silver, but it is not interchangeable with
+# either edition (its own corpus join, see pipeline/crystal_mod.py) -- so
+# unlike verify_gs_rom() it accepts a single fixed fingerprint, not "either
+# of two". [rom.crystal] is optional in pipeline.toml, like [rom.gold]/
+# [rom.silver]; None rather than a KeyError at import time when a
+# deployment omits it.
+CRYSTAL_SHA1 = CANONICAL.get("crystal")
+
+
+def verify_crystal_rom(path: str | Path) -> dict[str, Any]:
+    """Verify a real Crystal ROM against the canonical fingerprint."""
+    if CRYSTAL_SHA1 is None:
+        raise ValueError(
+            "missing [rom.crystal] configuration: Crystal ROM verification "
+            "requires that section in config/pipeline.toml"
+        )
+    path = Path(path)
+    actual = sha1(path)
+    if actual != CRYSTAL_SHA1:
+        raise ValueError(f"Crystal ROM SHA-1 mismatch: {actual} (expected: {CRYSTAL_SHA1})")
+    return {"version": "crystal", "path": str(path.resolve()), "sha1": actual, "size": path.stat().st_size}
+
+
+def import_crystal_rom(rom: str | Path, gen1recomp: str | Path, out: str | Path, log_fn: Callable[[str], None] | None = None) -> None:
+    """Extract and atomically publish Crystal's required TSV catalogs.
+
+    Mirrors import_gs_rom(): same tools/gs_extract.lua script and the same
+    GS_REQUIRED_TSV output contract (gs_extract.lua's edition branches cover
+    "crystal" alongside "gold"/"silver", producing the identical TSV set),
+    just against verify_crystal_rom()'s single fixed fingerprint instead of
+    Gold/Silver's either-of-two.
+    """
+    verify_crystal_rom(rom)
+    root = Path(gen1recomp).resolve()
+    rom = Path(rom).resolve()
+    out = Path(out).resolve()
+    out.parent.mkdir(parents=True, exist_ok=True)
+    luajit = which_luajit()
+    if luajit is None:
+        raise RuntimeError("LuaJIT is required to import a Crystal ROM; see MODKIT_LUAJIT")
+    script = resource_root() / "tools" / "gs_extract.lua"
+    temporary = Path(tempfile.mkdtemp(prefix=f".{out.name}-", dir=out.parent))
+    command = [luajit, str(script), str(root), str(rom), str(temporary), "crystal"]
+    try:
+        run_streamed(command, log_fn=log_fn)
+
+        missing = [
+            name for name in GS_REQUIRED_TSV
+            if not (temporary / name).is_file()
+            or not (temporary / name).read_text(encoding="utf-8").strip()
+        ]
+        if missing:
+            raise RuntimeError(
+                "Crystal extraction completed without required non-empty outputs: "
                 + ", ".join(missing)
             )
 

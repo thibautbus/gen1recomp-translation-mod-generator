@@ -97,7 +97,7 @@ def build_request(
         from .gs_mod import build_gs
 
         return build_gs(
-            request.source_for("gs"), request.language, language_name, luajit,
+            request.source_for("gs"), request.source_for("crystal"), request.language, language_name, luajit,
             workspace_root=workspace_root, output_dir=output_dir,
             log_fn=log_fn, status_fn=status_fn, font_profile=request.font_profile,
         )

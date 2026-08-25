@@ -205,7 +205,7 @@ class BuilderTests(unittest.TestCase):
 
     def test_release_collections_are_derived_from_game_specs(self):
         self.assertEqual(release_profile("rby").corpus_collections, ("RedBlue", "Yellow"))
-        self.assertEqual(release_profile("gs").corpus_collections, ("GoldSilver",))
+        self.assertEqual(release_profile("gs").corpus_collections, ("GoldSilver", "Crystal"))
 
     def test_build_request_requires_exact_profile_sources(self):
         rby = release_profile("rby")
@@ -231,11 +231,14 @@ class BuilderTests(unittest.TestCase):
             root = Path(directory)
             gold = root / "gold.gbc"
             gold.write_bytes(b"gold")
-            with patch.object(builder, "verify_gs_rom"):
-                inputs = validate_inputs(2, {"gs": gold}, "ko", root / "out", "fusion")
+            crystal = root / "crystal.gbc"
+            crystal.write_bytes(b"crystal")
+            roms = {"gs": gold, "crystal": crystal}
+            with patch.object(builder, "verify_gs_rom"), patch.object(builder, "verify_crystal_rom"):
+                inputs = validate_inputs(2, roms, "ko", root / "out", "fusion")
                 self.assertEqual(inputs.language, "ko")
                 with self.assertRaisesRegex(ValueError, "Pokemon Font"):
-                    validate_inputs(2, {"gs": gold}, "ko", root / "out", "pokemon")
+                    validate_inputs(2, roms, "ko", root / "out", "pokemon")
     def test_absent_rom_path_config_is_empty(self):
         with tempfile.TemporaryDirectory() as directory:
             paths = load_rom_paths(Path(directory) / "rom_paths.toml")
@@ -470,12 +473,14 @@ class BuilderTests(unittest.TestCase):
             root = Path(directory)
             gold = root / "gold.gbc"
             gold.write_bytes(b"rom")
-            configured = {"rom": {"gold": gold}}
+            crystal = root / "crystal.gbc"
+            crystal.write_bytes(b"rom")
+            configured = {"rom": {"gold": gold, "crystal": crystal}}
             prompts = []
-            # "" accepts the configured Gold path; "5" selects Japanese, which
-            # skips the font-profile prompt (Fusion-only), so no third answer
-            # is needed.
-            answers = iter(("", "5"))
+            # "" accepts the configured Gold path, "" the configured Crystal
+            # path; "5" selects Japanese, which skips the font-profile prompt
+            # (Fusion-only), so no fourth answer is needed.
+            answers = iter(("", "", "5"))
 
             def input_fn(prompt):
                 prompts.append(prompt)
@@ -485,15 +490,18 @@ class BuilderTests(unittest.TestCase):
                 patch.object(builder, "check_prerequisites", return_value="luajit"),
                 patch.object(builder, "load_rom_paths", return_value=configured),
                 patch.object(builder, "verify_gs_rom") as verify,
+                patch.object(builder, "verify_crystal_rom") as verify_crystal,
                 patch.object(builder, "_confirm", return_value=True),
                 patch("pipeline.gs_mod.build_gs", return_value=root / "out.zip") as build_gs,
             ):
                 self.assertEqual(builder.main(input_fn, generation=2), 0)
             verify.assert_called_once_with(gold.resolve())
+            verify_crystal.assert_called_once_with(crystal.resolve())
             self.assertFalse(any("Red" in prompt or "Blue" in prompt or "Yellow" in prompt for prompt in prompts))
             self.assertEqual(build_gs.call_args.args[0], gold.resolve())
-            self.assertEqual(build_gs.call_args.args[1], "ja-Hrkt")
-            self.assertEqual(build_gs.call_args.args[2], "Japanese")
+            self.assertEqual(build_gs.call_args.args[1], crystal.resolve())
+            self.assertEqual(build_gs.call_args.args[2], "ja-Hrkt")
+            self.assertEqual(build_gs.call_args.args[3], "Japanese")
             self.assertEqual(build_gs.call_args.kwargs["font_profile"], "fusion")
 
     def test_invalid_injected_generation_fails_cleanly(self):

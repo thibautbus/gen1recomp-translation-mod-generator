@@ -102,18 +102,30 @@ ROM English text. The generated coverage report and
 breakdown. Yellow-specific manual translations live in
 `overrides/<language>/rby/yellow_engine.json`.
 
-## Pokémon Gold and Silver support
+## Pokémon Gold, Silver and Crystal support
 
-Gold and Silver is published separately as `translation-<lang>-gen2`. It is built
-and extracted from either a real Gold or a real Silver ROM (whichever one is
-supplied) and covers dialogue, Pokédex entries, named ROM catalogs and engine
-strings matched from production Gen 2 callsites. Missing or ambiguous matches
-remain in English. The manifest declares both `"gold"` and `"silver"` as
-supported games, so the same mod loads on either edition's save.
+Gold, Silver and Crystal are published together as `translation-<lang>-gen2`. Gold's
+and Silver's own text is built and extracted from either a real Gold or a real
+Silver ROM (whichever one is supplied) and covers dialogue, Pokédex entries,
+named ROM catalogs and engine strings matched from production Gen 2 callsites.
+Crystal is a mandatory companion ROM, the same way Yellow is for the universal
+RBY mod: its own dialogue text uses different `bank:address` pointers from
+Gold/Silver (95.8% of shared symbol names diverge), so it gets its own corpus
+join against poke-corpus's separate `Crystal/` collection and ships as a
+`lang/dialogue_crystal.lua` layer, applied only at runtime on an actual Crystal
+save. Crystal reuses Gold/Silver's own engine-string catalog as-is (the
+Options/Menu `Strings()` code is identical across all three editions) and has
+no named ROM catalogs of its own yet (species/moves/items/trainer classes).
+Korean has no Crystal corpus in poke-corpus, unlike Gold/Silver -- Crystal's
+own dialogue simply stays in English for that language. Missing or ambiguous
+matches remain in English. The manifest declares `"gold"`, `"silver"` and
+`"crystal"` as supported games, so the same mod loads on any of the three
+editions' saves.
 
 Before packaging, headless generation-2 gates verify that the translated
-values reach the Gold and Silver registries. These checks do not replace an
-in-game smoke test before release.
+values reach the Gold and Silver registries (Crystal's own dialogue layer is
+not yet covered by a release gate). These checks do not replace an in-game
+smoke test before release.
 
 ## Legal inputs and privacy
 
@@ -126,6 +138,7 @@ Use dumps from your own original US cartridges:
 | Yellow | `cc7d03262ebfaf2f06772c1a480c7d9d5f4a38e1` |
 | Gold | `d8b8a3600a465308c9953dfa04f0081c05bdcb94` |
 | Silver | `49b163f7e57702bc939d642a18f591de55d92dae` |
+| Crystal | `f4cd194bdee0d04ca4eac29e09b8e4e9d818c133` |
 
 The pipeline verifies these fingerprints and never downloads, provides or
 redistributes ROMs, patches or copyrighted text extracts. Generated data,
@@ -139,9 +152,9 @@ font profiles are:
 
 | Target languages | Releases | Default font | Optional font |
 | --- | --- | --- | --- |
-| `fr`, `de`, `es`, `it` | RBY, Gold and Silver | Fusion Pixel Latin, 10px | Pokemon Font, 8px |
-| `ja-Hrkt` | RBY, Gold and Silver | Fusion Pixel Japanese, 8px | — |
-| `ko` | Gold and Silver only | Fusion Pixel Hangul, 10px | — |
+| `fr`, `de`, `es`, `it` | RBY, Gold/Silver/Crystal | Fusion Pixel Latin, 10px | Pokemon Font, 8px |
+| `ja-Hrkt` | RBY, Gold/Silver/Crystal | Fusion Pixel Japanese, 8px | — |
+| `ko` | Gold/Silver/Crystal only (Crystal's own dialogue stays in English) | Fusion Pixel Hangul, 10px | — |
 
 The optional Pokemon Font is more compact, but translated text can still
 overflow fixed-width interfaces.

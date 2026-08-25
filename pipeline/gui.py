@@ -27,10 +27,10 @@ class GuiInputs:
 # "generation" is engine vocabulary the user does not need.
 GENERATIONS = (
     (1, "Red, Blue and Yellow"),
-    (2, "Gold and Silver"),
+    (2, "Gold, Silver and Crystal"),
 )
 
-ROMS_BY_GENERATION = {1: ("rb", "yellow"), 2: ("gs",)}
+ROMS_BY_GENERATION = {1: ("rb", "yellow"), 2: ("gs", "crystal")}
 
 
 def generation_label(value: int) -> str:
@@ -128,6 +128,8 @@ def validate_inputs(
             builder.verify_rb_rom(path)
         elif game == "gs":
             builder.verify_gs_rom(path)
+        elif game == "crystal":
+            builder.verify_crystal_rom(path)
         else:
             builder.verify_rom(path, game)
         resolved[game] = path.resolve()
@@ -229,7 +231,7 @@ class TranslationBuilderApp:
     def _build_widgets(self):
         tk, ttk = self.tk, self.ttk
         self.generation_var = tk.StringVar(value=generation_label(1))
-        self.rom_vars = {game: tk.StringVar() for game in ("rb", "yellow", "gs")}
+        self.rom_vars = {game: tk.StringVar() for game in ("rb", "yellow", "gs", "crystal")}
         self.language_var = tk.StringVar(value=language_label("fr"))
         self.font_profile_var = tk.StringVar(value=font_profile_label("fusion"))
         self.output_var = tk.StringVar()
@@ -250,12 +252,13 @@ class TranslationBuilderApp:
 
         # Gold occupies the same grid row as Red/Blue: only one game's ROM
         # row is ever shown at a time, toggled by _sync_generation (the GUI
-        # is a flat form, not a wizard). Row 4 (formerly Blue's own field)
-        # is free: Red and Blue share byte-identical game text, so either
-        # ROM works and only one field is needed.
+        # is a flat form, not a wizard). Crystal takes row 4 (formerly
+        # Blue's own field, free since Red and Blue share byte-identical
+        # game text and only need one field between them).
         rom_fields = (
             ("rb", 2, "Required to extract shared Pokémon Red/Blue game text and data. Either ROM works: Red and Blue share identical text.", "Pokemon Red or Blue ROM (US)"),
             ("gs", 2, "Required to extract Pokémon Gold and Silver game text and data.", "Pokemon Gold or Silver ROM (US)"),
+            ("crystal", 4, "Required to extract Pokémon Crystal-specific game text and data.", "Pokemon Crystal ROM (US)"),
             ("yellow", 6, "Required to extract Pokémon Yellow-specific game text and data.", "Pokemon Yellow ROM (US)"),
         )
         self.rom_widgets: dict[str, tuple] = {}
@@ -320,6 +323,12 @@ class TranslationBuilderApp:
                 "Which games do you want to translate? Red, Blue and Yellow "
                 "share one translation: select the two ROMs below (Red or "
                 "Blue, whichever you own, plus Yellow)."
+            )
+        elif generation == 2:
+            self.games_hint_var.set(
+                "Which games do you want to translate? Gold, Silver and "
+                "Crystal share one translation: select the two ROMs below "
+                "(Gold or Silver, whichever you own, plus Crystal)."
             )
         else:
             self.games_hint_var.set("Which games do you want to translate?")

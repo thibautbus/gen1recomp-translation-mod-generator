@@ -680,13 +680,71 @@ Silver ROM build resolves 3036/3051 pointers on its own (99.5%, one
 Silver-native pointer with no Gold-side alias), reusing the exact same
 Gold-sourced translation catalog.
 
-Crystal is a different, bigger question entirely -- see the project memory
-`project_gold_silver_crystal_unified_mod.md`. It uses a different
-`pokegold`-unrelated codebase with materially different `bank:address`
-values and its own poke-corpus collection (`Crystal/`, its own `c.text.*`
-qid namespace, distinct from `GoldSilver/`'s `gs.*`), plus real content
-Gold/Silver don't have at all (Battle Tower, Kris, an enhanced Pokégear).
-Nothing here extends to Crystal.
+Crystal was a different, bigger question -- see the next section for how it
+was actually resolved.
+
+### Crystal: mandatory companion ROM, its own corpus join, shared engine strings
+
+Crystal uses a `pokegold`-derived but materially different codebase from
+Gold/Silver: of 2011 symbol names shared between Gold and Crystal, 1926
+(95.8%) resolve to a different `bank:address` -- essentially no free ride
+from Gold/Silver's own resolved dialogue catalog, unlike Silver's near-zero
+divergence from Gold. gen1recomp's own engine already has full Crystal
+support though: `tools/rom_manifest_crystal.json` is complete, and
+`src/import/RomExtractorGen2.lua` already has edition branches for
+`"crystal"` throughout (palettes, sprites, title screen, credits, music,
+text/opcodes, trade). This project's own `tools/gs_extract.lua` (a headless
+LuaJIT wrapper around that extractor, not gen1recomp's) just needed the same
+treatment as its existing `"gold"`/`"silver"` branches, accepting
+`"crystal"` and selecting `rom_manifest_crystal.json`.
+
+poke-corpus has a separate `Crystal/` collection in the exact same file
+format as `GoldSilver/` (`{qid,en,<lang>}_msg.txt`, same `<LINE>`/`<CONT>`/
+`<PARA>`/`@`/`[NULL]`/`<PK><MN>` tokens), under a flat `c.text.*` qid
+namespace with zero qid overlap with `gs.*` -- but 86% of GoldSilver's own
+unique English text reappears somewhere in Crystal's, so a from-scratch join
+against Crystal's own corpus (not a cross-collection qid alias) resolves
+most of it automatically: `pipeline.gs_join.join_gs_pointers()` already
+matches by normalized English text, not by pointer, so despite its "gs_"
+name it is edition-agnostic and needed no changes at all --
+`pipeline/crystal_mod.py`'s `join_crystal_dialogue()` just calls it against
+Crystal's own extracted TSVs and its own corpus collection. A real build
+resolved 3864/4010 dialogue pointers (96.4%) automatically, no manual
+overrides yet.
+
+Crystal ships as a mandatory companion ROM merged into the same
+`translation-<lang>-gen2` mod as Gold/Silver, the same way Yellow is a
+mandatory companion for the universal RBY mod: `pipeline/gs_mod.py`'s
+`build_gs()` now always extracts and joins a Crystal ROM too, and
+`generate_gs_mod()` writes Crystal's own resolved dialogue to a separate
+`lang/dialogue_crystal.lua` layer, applied at runtime only when
+`GameVersion.get() == "crystal"` (there is no upstream `isCrystal()` helper
+the way there's an `isYellow()`, but `.get() == "crystal"` is exactly what
+`isGold()`/`isYellow()`/`isBlue()` do internally for their own edition, so
+this mirrors `pipeline/mod.py`'s own `yellow_isyellow_guard_lines()`
+pattern for RBY's Yellow layer). The manifest declares `"gold"`, `"silver"`,
+and `"crystal"`. Korean has no Crystal corpus in poke-corpus (no
+`ko_msg.txt`, unlike GoldSilver's own six languages) -- rather than drop
+Korean from the whole generation-2 release, `join_crystal_dialogue()`
+detects the missing corpus file and returns an empty catalog instead of
+raising, so a Korean build still succeeds and still declares Crystal
+compatibility, it just leaves Crystal's own dialogue in English.
+
+Deliberately out of scope so far: Crystal's own named catalogs (species/
+moves/items/trainer classes -- likely reusable from Gold/Silver's own
+already-translated values, since it's the same Gen 2 roster, but not yet
+verified or wired up), Crystal-exclusive content (MoveTutor, GenderSelect,
+Battle Tower, Buena's Password -- the 48 keys already catalogued as
+`"crystal-only-feature"` in `config/gs/engine_scope_exclusions.json`, which
+excludes them from Gold/Silver's own engine-string metric precisely because
+they're Crystal's to translate, not Gold/Silver's), and a release gate for
+Crystal's own dialogue layer (Gold/Silver's existing gates are unaffected
+and still run; nothing yet verifies Crystal's layer the same way before
+packaging). Crystal's own engine strings (the Options/Menu `Strings()`
+catalog) need no separate work at all: `ui/gen2/OptionsMenu.lua`/
+`MainMenu.lua` have no edition branches, so Gold/Silver's own
+`overrides/<lang>/gs/engine.json` (302 keys, 100% translated) already
+applies unchanged on a Crystal save.
 
 ### Fixed: rows already reachable through an existing public hook
 
