@@ -23,7 +23,7 @@
       "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
     },
     "18:6828": {
-      "override": "Il y a un POKéCOM<LINE>CLUB à l'étage de<PARA>chaque POKéMON<LINE>CENTER.<PARA>Là, tu peux<LINE>combattre ou<PARA>échanger avec un<LINE>ami au loin grâce<CONT>à un MOBILE ADAPTER.<PARA>Pour vous<LINE>connecter, il<PARA>vous faut le même<LINE>type de MOBILE<CONT>ADAPTER.",
+      "override": "Il y a un POKéCOM<LINE>CLUB à l'étage de<PARA>chaque POKéMON<LINE>CENTER.<PARA>Là, tu peux<LINE>combattre ou<PARA>échanger avec un<LINE>ami au loin grâce<CONT>à un MOBILE ADAPTER.<PARA>Pour te<LINE>connecter, il<PARA>te faut le même<LINE>type de MOBILE<CONT>ADAPTER.",
       "reason": "engine-original",
       "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
     },
@@ -38,7 +38,7 @@
       "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
     },
     "18:69ae": {
-      "override": "Vérifiez que<LINE>votre téléphone et<PARA>le MOBILE ADAPTER<LINE>est bien relié.<PARA>Vérifiez que le<LINE>signal du téléphone<CONT>est bon.<PARA>Ne touchez pas<LINE>et ne raccrochez pas<CONT>pendant la connexion.",
+      "override": "Vérifiez que<LINE>votre téléphone et<PARA>le MOBILE ADAPTER<LINE>sont bien reliés.<PARA>Vérifiez que le<LINE>signal du téléphone<CONT>est bon.<PARA>Ne touchez pas<LINE>et ne raccrochez pas<CONT>pendant la connexion.",
       "reason": "engine-original",
       "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
     },
@@ -68,7 +68,7 @@
       "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
     },
     "64:72bc": {
-      "override": "Excusez-moi!<PARA>Pour les règles du<LINE>STADIUM, prévoyez<PARA>six POKéMON<LINE>différents, œufs<PARA>exclus.<LINE>Les six POKéMON<PARA>doivent être<LINE>différents.<CONT>Ils ne doivent pas<PARA>tenir d'objets<LINE>identiques.",
+      "override": "Excusez-moi!<PARA>Pour les règles du<LINE>STADIUM, prévoyez<PARA>six POKéMON<LINE>différents, œufs<PARA>exclus.<LINE>Les six POKéMON<PARA>doivent être différents,<LINE>et ne doivent pas<CONT>tenir d'objets identiques.<PARA>Revenez quand vous<LINE>êtes prêt.",
       "reason": "engine-original",
       "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
     },

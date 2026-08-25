@@ -327,8 +327,8 @@
       "symbol": "DarkCaveSignText"
     },
     "69:5bf9": {
-      "qid": "c.Route39Barn.MoomooHappyMooText",
-      "symbol": "MoomooHappyMooText"
+      "qid": "c.Route39.Route39MiltankText",
+      "symbol": "Route39MiltankText"
     },
     "6a:4134": {
       "qid": "c.NewBarkTown.Text_WaitPlayer",
@@ -451,8 +451,8 @@
       "symbol": "MartNoMoneyText"
     },
     "71:4ff9": {
-      "qid": "c.Pokecenter2F.Text_PleaseComeAgain",
-      "symbol": "Text_PleaseComeAgain"
+      "qid": "c.common_3.MartComeAgainText",
+      "symbol": "MartComeAgainText"
     }
   }
 }
