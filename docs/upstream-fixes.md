@@ -391,6 +391,39 @@ itself was):
   `RENDERED_ROMTEXT_FALLBACKS` allowlist -- correctly so, since the
   fallback never actually renders once the real ROM label resolves).
 
+**Retired or renamed by the v0.2.25 pin bump** (`gen1recomp_revision` in
+`config/pipeline.toml`/`config/shared/engine_manifest.json`, 24 commits
+ahead of v0.2.24, 101 files changed), found the same way: a real build
+against the bumped pin, not a source-diff guess.
+
+- **`%s got %s%d for winning! Sent some to MOM!`** (the Gold/Silver
+  "sent some money home" battle-prize message) had its `Strings.source()`
+  literal rewritten in `src/battle/gen2/Prize.lua` to bake in the same
+  `<LINE>`/`<CONT>` structure the real cart's own
+  `gs.battle.SentSomeToMomText` corpus row already carries (`%s got
+  %s%d\nfor winning!\x0bSent some to MOM!` instead of one flat sentence).
+  A real Gold/Silver/Crystal build against the bumped pin failed with
+  `Gold engine overrides contain 1 unknown key(s):
+  ['%s got %s%d for winning! Sent some to MOM!']`
+  (`pipeline/gs_engine.py`'s `match_gs_engine_strings()`, the Gold/Silver
+  analogue of the RBY check above). Every one of the six languages'
+  `overrides/<language>/gsc/engine.json` had its entry renamed to the new
+  key and its own translation reformatted onto the new two-break structure
+  -- the original wording was kept verbatim in each language, only the
+  `\n`/`\x0b` positions moved, so no re-translation was needed, just
+  re-punctuation.
+- No other engine-string key broke: real builds for all six GoldSilver-
+  Crystal languages and a real universal RBY build (fr, Red + Yellow) all
+  reached their usual 100% Gold/Silver-related and RBY-related
+  engine-string coverage, plus 100% ROM-aggregate coverage on both sides,
+  after this one fix. `config/shared/engine_manifest.json`'s
+  `forced_dynamic_keys`/`engine_dynamic_values` free-text `callsite`
+  fields (documentation only, never read by the matching logic itself)
+  went stale for the entries pointing at `src/ui/OptionsMenu.lua` and
+  `src/import/LauncherSettings.lua` line numbers -- both files shifted in
+  this bump -- but weren't re-audited line-by-line, the same practical
+  call already made for the v0.1.91..v0.2.19 range above.
+
 ### Fixed: Surfing Pikachu/Hall of Fame HUD text rewritten upstream
 
 Bumping this project's pin from v0.1.91 to v0.2.19 (`gen1recomp_revision`
