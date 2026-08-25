@@ -194,9 +194,11 @@ Full per-key scope, matching strategy and fallback provenance remain available i
 the generated coverage report and
 [`engine_scope.json`](config/rby/engine_scope.json).
 
-### Gold and Silver
+### Gold, Silver and Crystal
 
-Gold and Silver is built as a separate generation-2 artifact, from either ROM:
+Gold and Silver are built as a separate generation-2 artifact, from either ROM. Crystal is
+a mandatory companion ROM merged into the same artifact, applied at runtime only on an
+actual Crystal save:
 
 - `Gold and Silver ROM aggregate` combines dialogue, Pokédex entries and the named ROM
   catalogs. Its denominator excludes 14 markup-only records with no visible
@@ -208,18 +210,29 @@ Gold and Silver is built as a separate generation-2 artifact, from either ROM:
   -- none of it exists on a real Gold or Silver cart, so it has no PokeCorpus
   row and is not part of what this mod could ever cover; see
   [`config/gsc/engine_scope_exclusions.json`](config/gsc/engine_scope_exclusions.json).
+- `Crystal dialogue coverage` is Crystal's own dialogue pointers, joined
+  separately against poke-corpus's own `Crystal/` collection (different
+  `bank:address` values from Gold/Silver almost throughout, so this is not
+  the same catalog as the aggregate above). Its denominator excludes 16
+  markup-only records, same convention as the ROM aggregate. This is
+  dialogue only for now -- Crystal's own named catalogs (species/moves/
+  items/trainer classes) and its 48 Crystal-exclusive engine strings are
+  not covered yet; the `Gold and Silver-related engine strings` catalog
+  already applies unchanged on a Crystal save (same shared `Strings()`
+  code, no separate work needed there). `ko` has no Crystal corpus at all
+  in poke-corpus, so its dialogue stays in English.
 
 The generated report retains the dialogue/catalog breakdown and per-key
 provenance. Future unresolved entries will keep their original English text.
 
-| Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings |
-| --- | ---: | ---: |
-| `fr` | 4452/4452 (100%) | 302/302 (100%) |
-| `de` | 4452/4452 (100%) | 302/302 (100%) |
-| `es` | 4452/4452 (100%) | 302/302 (100%) |
-| `it` | 4452/4452 (100%) | 302/302 (100%) |
-| `ja-Hrkt` | 4452/4452 (100%) | 302/302 (100%) |
-| `ko` | 4452/4452 (100%) | 302/302 (100%) |
+| Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings | Crystal dialogue coverage |
+| --- | ---: | ---: | ---: |
+| `fr` | 4452/4452 (100%) | 302/302 (100%) | 3994/3994 (100%) |
+| `de` | 4452/4452 (100%) | 302/302 (100%) | 3934/3994 (98.50%) |
+| `es` | 4452/4452 (100%) | 302/302 (100%) | 3945/3994 (98.77%) |
+| `it` | 4452/4452 (100%) | 302/302 (100%) | 3924/3994 (98.25%) |
+| `ja-Hrkt` | 4452/4452 (100%) | 302/302 (100%) | 3986/3994 (99.80%) |
+| `ko` | 4452/4452 (100%) | 302/302 (100%) | 0/3994 (0%) |
 
 ### Other engine strings
 
