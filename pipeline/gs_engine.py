@@ -20,7 +20,7 @@ def load_gs_engine_scope_exclusions(path: str | Path | None = None) -> set[str]:
 
     gen1recomp's Gen 2 UI code bundles some pokecrystal-only content
     (MoveTutor, GenderSelect, the "PokeSeer"/Buena radio special, Battle
-    Tower -- see config/gs/engine_scope_exclusions.json's own entries for
+    Tower -- see config/gsc/engine_scope_exclusions.json's own entries for
     the exact source .asm each key traces to) under ``ui/gen2``/
     ``script/gen2`` alongside real Gold/Silver code. None of it exists on a
     real Gold or Silver cart, so it has no PokeCorpus row and would need
@@ -28,7 +28,7 @@ def load_gs_engine_scope_exclusions(path: str | Path | None = None) -> set[str]:
     Gold/Silver-related engine-string scope instead of counted against it.
     """
     if path is None:
-        path = Path(__file__).resolve().parents[1] / "config" / "gs" / "engine_scope_exclusions.json"
+        path = Path(__file__).resolve().parents[1] / "config" / "gsc" / "engine_scope_exclusions.json"
     path = Path(path)
     if not path.is_file():
         return set()
@@ -101,7 +101,7 @@ def match_gs_engine_strings(
     all_keys, gen2_keys = engine_string_keys(callsites, manifest)
     root = Path(__file__).resolve().parents[1]
     overrides = load_engine_overrides(
-        root / "overrides" / target_lang / "gs" / "engine.json",
+        root / "overrides" / target_lang / "gsc" / "engine.json",
     )
     stale_overrides = sorted(set(overrides) - all_keys)
     if stale_overrides:
@@ -113,7 +113,7 @@ def match_gs_engine_strings(
         sorted(all_keys),
         _corpus_records(corpus_rows, target_lang),
         overrides=overrides,
-        semantic_anchors=root / "config" / "gs" / "semantic_anchors.json",
+        semantic_anchors=root / "config" / "gsc" / "semantic_anchors.json",
         target_lang=target_lang,
     )
     translated = {key for key, value in values.items() if value}

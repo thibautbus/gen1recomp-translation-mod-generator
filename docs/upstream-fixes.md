@@ -649,7 +649,7 @@ it was originally declared-only) is what's still current:
   (`pipeline/gs_join.py`'s `join_gs_pointers`) matches primarily by
   normalized English text, not by pointer -- `bank:address` is only used
   to look up the small set of hand-reviewed, Gold-sha1-pinned overrides in
-  `config/gs/pointer_decisions.json`/`placeholder_decisions.json` and as
+  `config/gsc/pointer_decisions.json`/`placeholder_decisions.json` and as
   the final write-back key. Any of those specific entries that do differ
   between editions degrade the same way: lose the hand-reviewed override,
   fall back to automatic resolution or `UNRESOLVED`, never corrupt.
@@ -664,7 +664,7 @@ didn't were all field-move prompts in bank `03` (Rock Smash/Strength:
 `"A POKéMON may be able to break it."`, `"{STRBUF} used STRENGTH!"`, and
 similar) -- paired up by content, every one shifted the same uniform -2
 bytes between editions while carrying byte-identical English text.
-`config/gs/silver_pointer_aliases.json` records those 8 `{gold_pointer:
+`config/gsc/silver_pointer_aliases.json` records those 8 `{gold_pointer:
 silver_pointer}` pairs, and `gs_text_catalog_from_join()`
 (`pipeline/gs_mod.py`) now aliases each Gold pointer's resolved
 translation onto its Silver pointer too. **Dialogue-pointer coverage
@@ -735,7 +735,7 @@ moves/items/trainer classes -- likely reusable from Gold/Silver's own
 already-translated values, since it's the same Gen 2 roster, but not yet
 verified or wired up), Crystal-exclusive content (MoveTutor, GenderSelect,
 Battle Tower, Buena's Password -- the 48 keys already catalogued as
-`"crystal-only-feature"` in `config/gs/engine_scope_exclusions.json`, which
+`"crystal-only-feature"` in `config/gsc/engine_scope_exclusions.json`, which
 excludes them from Gold/Silver's own engine-string metric precisely because
 they're Crystal's to translate, not Gold/Silver's), and a release gate for
 Crystal's own dialogue layer (Gold/Silver's existing gates are unaffected
@@ -743,7 +743,7 @@ and still run; nothing yet verifies Crystal's layer the same way before
 packaging). Crystal's own engine strings (the Options/Menu `Strings()`
 catalog) need no separate work at all: `ui/gen2/OptionsMenu.lua`/
 `MainMenu.lua` have no edition branches, so Gold/Silver's own
-`overrides/<lang>/gs/engine.json` (302 keys, 100% translated) already
+`overrides/<lang>/gsc/engine.json` (302 keys, 100% translated) already
 applies unchanged on a Crystal save.
 
 ### Fixed: rows already reachable through an existing public hook
@@ -753,7 +753,7 @@ applies unchanged on a Crystal save.
 submenu's `Switch`/`Stats` rows are *not* private-class reads: both already
 run through public list hooks (`ui.pc.items`, `ui.party.submenu`) that this
 mod already wraps for other rows (`Cancel`, item-PC actions, decoration,
-mail box). They were simply missing from `config/gs/literal_handlers.json`.
+mail box). They were simply missing from `config/gsc/literal_handlers.json`.
 Likewise the START menu's two-line highlighted-entry description
 (`Pokémon database`, `Party Pokémon status`, `Contains items`, and five
 more) runs through `ui.start_menu.items`, whose `item.label` field this mod
@@ -1135,7 +1135,7 @@ a matter of wiring a few missed callsites.
   Points`, `Type`, `Item`, `Move`, `OT`, `Attack`, `Defense`, and related
   screens) through public data or hooks.
 
-The entries in `config/gs/literal_handlers.json` record known stable corpus
+The entries in `config/gsc/literal_handlers.json` record known stable corpus
 matches for these screens. They can be activated when the corresponding public
 upstream hooks exist; they are deliberately not a private-class monkey patch.
 This keeps the release manifest permission-free and makes the remaining work

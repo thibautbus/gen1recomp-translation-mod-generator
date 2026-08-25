@@ -51,7 +51,7 @@ def load_gs_pointer_decisions(path: str | Path | None = None) -> dict[str, str]:
     review applies consistently to every target language.
     """
     if path is None:
-        path = Path(__file__).resolve().parents[1] / "config" / "gs" / "pointer_decisions.json"
+        path = Path(__file__).resolve().parents[1] / "config" / "gsc" / "pointer_decisions.json"
     path = Path(path)
     if not path.is_file():
         return {}
@@ -81,7 +81,7 @@ def load_gs_placeholder_decisions(
 ) -> dict[str, GsPlaceholderDecision]:
     """Load exact, reviewed placeholder differences in official localizations."""
     if path is None:
-        path = Path(__file__).resolve().parents[1] / "config" / "gs" / "placeholder_decisions.json"
+        path = Path(__file__).resolve().parents[1] / "config" / "gsc" / "placeholder_decisions.json"
     path = Path(path)
     if not path.is_file():
         return {}
@@ -122,7 +122,7 @@ def load_gold_silver_pointer_aliases(path: str | Path | None = None) -> dict[str
     silently miss on a Silver save.
     """
     if path is None:
-        path = Path(__file__).resolve().parents[1] / "config" / "gs" / "silver_pointer_aliases.json"
+        path = Path(__file__).resolve().parents[1] / "config" / "gsc" / "silver_pointer_aliases.json"
     path = Path(path)
     if not path.is_file():
         return {}

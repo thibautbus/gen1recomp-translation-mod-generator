@@ -77,9 +77,9 @@ GS_CATALOG_HOOKS["ui_labels"] = None
 
 # A small part of Gold's menu text is supplied as labels to existing mod
 # hooks rather than through the engine Strings registry.  Keep the reviewed
-# QID/segment recipes in config/gs/literal_handlers.json; the runtime hook
+# QID/segment recipes in config/gsc/literal_handlers.json; the runtime hook
 # below only changes labels already exposed by gen1recomp's public hooks.
-_GS_UI_HANDLER_PATH = Path(__file__).resolve().parents[1] / "config" / "gs" / "literal_handlers.json"
+_GS_UI_HANDLER_PATH = Path(__file__).resolve().parents[1] / "config" / "gsc" / "literal_handlers.json"
 
 
 def _load_gs_ui_handlers() -> dict[str, tuple[str, int, int | None]]:
@@ -374,7 +374,7 @@ def package_gs_mod(
 def gs_text_catalog_from_join(entries: list[GsJoinEntry]) -> dict[str, str]:
     """{pointer: translation} for entries the join actually resolved.
 
-    Also aliases the handful of pointers config/gs/silver_pointer_aliases.json
+    Also aliases the handful of pointers config/gsc/silver_pointer_aliases.json
     knows shift address between Gold and Silver for verbatim-identical text
     (see load_gold_silver_pointer_aliases's docstring): each Gold pointer's
     own resolved translation, whatever it ended up being, is reused under
@@ -742,7 +742,7 @@ def build_gs(
             log_fn(message)
 
     language = canonical_language(language)
-    profile = release_profile("gs")
+    profile = release_profile("gsc")
     spec = game_spec("gs")
     if spec.corpus_collection not in profile.corpus_collections:
         raise BuildError("Gold release profile and game spec disagree on corpus collection")

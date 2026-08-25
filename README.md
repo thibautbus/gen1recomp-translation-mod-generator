@@ -207,7 +207,7 @@ Gold and Silver is built as a separate generation-2 artifact, from either ROM:
   Buena's Password radio special, Battle Tower) are excluded from this scope
   -- none of it exists on a real Gold or Silver cart, so it has no PokeCorpus
   row and is not part of what this mod could ever cover; see
-  [`config/gs/engine_scope_exclusions.json`](config/gs/engine_scope_exclusions.json).
+  [`config/gsc/engine_scope_exclusions.json`](config/gsc/engine_scope_exclusions.json).
 
 The generated report retains the dialogue/catalog breakdown and per-key
 provenance. Future unresolved entries will keep their original English text.
@@ -255,8 +255,8 @@ Every translated engine string remains traceable:
 | Automatic match | Exact, normalized, or structural match proved by the generator. | Generation report |
 | Deterministic anchor | Reliable PokeCorpus qid, composition, or extraction rule. | `config/{rby,gs}/semantic_anchors.json` |
 | Human-reviewed RBY anchor | Contextual or language-specific extraction reviewed by a maintainer; text still comes from PokeCorpus. | `config/rby/semantic_anchor_decisions.json` |
-| Human-reviewed Gold pointer | Ambiguous ROM pointer resolved to a reviewed PokeCorpus qid. | `config/gs/pointer_decisions.json` |
-| Reviewed placeholder exception | Official localized wording legitimately adds or omits a runtime value such as the player name or an item quantity. This records no translated text and does not disable the audit; each exception is scoped to a language, ROM pointer, corpus QID, and exact audit message. | `config/gs/placeholder_decisions.json` |
+| Human-reviewed Gold pointer | Ambiguous ROM pointer resolved to a reviewed PokeCorpus qid. | `config/gsc/pointer_decisions.json` |
+| Reviewed placeholder exception | Official localized wording legitimately adds or omits a runtime value such as the player name or an item quantity. This records no translated text and does not disable the audit; each exception is scoped to a language, ROM pointer, corpus QID, and exact audit message. | `config/gsc/placeholder_decisions.json` |
 | Manual corpus correction | A maintainer corrects one selected-language corpus translation without changing the upstream corpus. Entries are indexed by qid. | `overrides/<language>/rby/corpus.json` |
 | Manual translation — engine contract gap | PokeCorpus has the text, but Gen1Recomp merges contexts or hides required parameters. | `overrides/<language>/{rby,gs}/engine.json`, `reason: "engine-contract-gap"` |
 | Manual translation — engine original | Engine-specific text with no compatible ROM source. | `overrides/<language>/{rby,gs}/engine.json`, `reason: "engine-original"` |
@@ -308,7 +308,7 @@ explicit override > semantic anchor > exact > normalized
 > structural placeholder match > empty entry (runtime English fallback)
 ```
 
-Game-specific configuration lives under `config/rby/` and `config/gs/`;
+Game-specific configuration lives under `config/rby/` and `config/gsc/`;
 language overrides follow the same split under `overrides/<language>/`.
 
 | Configuration | Purpose |

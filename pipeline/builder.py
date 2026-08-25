@@ -1192,7 +1192,7 @@ def main(
                 return 0
             from .orchestration import build_request
             output = build_request(
-                BuildRequest({"gs": gs_rom, "crystal": crystal_rom}, release_profile("gs"), language, None, selected_profile),
+                BuildRequest({"gs": gs_rom, "crystal": crystal_rom}, release_profile("gsc"), language, None, selected_profile),
                 language_name=language_name, luajit=luajit,
             )
     except (RuntimeError, ValueError, OSError) as error:

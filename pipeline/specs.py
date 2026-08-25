@@ -70,8 +70,11 @@ RELEASE_PROFILES: Mapping[str, ReleaseProfile] = {
     # mod covers gold/silver/crystal, gated at runtime by GameVersion, not a
     # separate build target. Korean has no Crystal corpus (unlike GoldSilver)
     # -- Crystal dialogue simply stays in English for that language; see
-    # pipeline/gs_mod.py's build_gs().
-    "gs": ReleaseProfile("gs", 2, ("gs", "crystal")),
+    # pipeline/gs_mod.py's build_gs(). The profile id is "gsc" (Gold/Silver/
+    # Crystal), matching "rby"'s own full-initialism naming; the "gs" sub-key
+    # in its games tuple is GAME_SPECS' own Gold/Silver-only entry, matching
+    # how "rby"'s games tuple keeps "rb"/"yellow" as separate sub-keys.
+    "gsc": ReleaseProfile("gsc", 2, ("gs", "crystal")),
 }
 
 # The collection is the source of truth for the UI language domain.  Keeping

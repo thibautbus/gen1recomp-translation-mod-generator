@@ -331,7 +331,7 @@ class TextCatalogFromJoinTests(unittest.TestCase):
         self.assertEqual(gs_text_catalog_from_join(entries), {"55:0001": "Salut"})
 
     def test_a_resolved_gold_pointer_is_also_aliased_onto_its_silver_pointer(self):
-        # config/gs/silver_pointer_aliases.json's real "03:4d76" -> "03:4d74"
+        # config/gsc/silver_pointer_aliases.json's real "03:4d76" -> "03:4d74"
         # entry (see tools/spike_gold_silver_text_overlap.lua's measurement):
         # whatever the Gold pointer resolves to should also land under the
         # Silver pointer, so a Silver save gets the same translation.

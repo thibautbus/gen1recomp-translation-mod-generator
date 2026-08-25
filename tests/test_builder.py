@@ -205,7 +205,7 @@ class BuilderTests(unittest.TestCase):
 
     def test_release_collections_are_derived_from_game_specs(self):
         self.assertEqual(release_profile("rby").corpus_collections, ("RedBlue", "Yellow"))
-        self.assertEqual(release_profile("gs").corpus_collections, ("GoldSilver", "Crystal"))
+        self.assertEqual(release_profile("gsc").corpus_collections, ("GoldSilver", "Crystal"))
 
     def test_build_request_requires_exact_profile_sources(self):
         rby = release_profile("rby")

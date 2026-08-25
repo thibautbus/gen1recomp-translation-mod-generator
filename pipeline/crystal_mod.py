@@ -23,7 +23,7 @@ classes -- likely reusable from Gold/Silver's own translated values, since
 the roster is the same generation, but not yet verified or wired up), no
 engine-string catalog (the Options/Menu `Strings()` catalog is literally the
 same shared Lua code across gold/silver/crystal, so Crystal saves already
-get it for free from Gold/Silver's own `overrides/<lang>/gs/engine.json` --
+get it for free from Gold/Silver's own `overrides/<lang>/gsc/engine.json` --
 nothing Crystal-specific needed there), and no release gates.
 """
 from __future__ import annotations

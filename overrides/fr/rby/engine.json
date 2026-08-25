@@ -358,7 +358,7 @@
     "HP": {
       "override": "PV",
       "reason": "engine-contract-gap",
-      "provenance": "Standard French Pokémon abbreviation. Already carried by overrides/fr/gs/engine.json for the same Strings.source(\"HP\") literal (inventory/ItemEffects.lua's STAT_LABEL, shared with ui/gen2/PhotoStudio.lua); missing here left RBY's own item-effect messages (vitamins, stat-boosting items) showing the raw English label."
+      "provenance": "Standard French Pokémon abbreviation. Already carried by overrides/fr/gsc/engine.json for the same Strings.source(\"HP\") literal (inventory/ItemEffects.lua's STAT_LABEL, shared with ui/gen2/PhotoStudio.lua); missing here left RBY's own item-effect messages (vitamins, stat-boosting items) showing the raw English label."
     },
     "<PK><MN>LEAGUE": {
       "override": "LIGUE <PK><MN>",

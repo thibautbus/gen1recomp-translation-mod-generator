@@ -93,7 +93,7 @@ def build_request(
     request.validate()
     if output_dir is None:
         output_dir = request.output_dir
-    if request.profile.id == "gs":
+    if request.profile.id == "gsc":
         from .gs_mod import build_gs
 
         return build_gs(
