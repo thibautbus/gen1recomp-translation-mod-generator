@@ -12,7 +12,7 @@
     "#MON BOX, data\nwill be saved. OK?": {"override": "동시에 레포트가 기록되어집니다\n괜찮습니까?", "reason": "engine-contract-gap", "provenance": "Last two lines of gs.common_2.ChangeBoxSaveText's real Gold ROM text (\"박스를 바꾸면 / 동시에 레포트가 기록되어집니다 / 괜찮습니까?\"); this port's own English source is itself already a last-two-lines truncation of the cart's three-line message, so the translation is truncated the same way."},
     "/": {"override": "/", "reason": "engine-original", "provenance": "Invariant interface symbol."},
     "<LV>": {"override": "<LV>", "reason": "engine-original", "provenance": "Invariant level token used by the engine renderer."},
-    "A▶PRINT": {"override": "A▶인쇄", "reason": "engine-contract-gap", "provenance": "Corpus-inspired Unown printer label; physical button retained."},
+    "A▶PRINT": {"override": "A▶프린트", "reason": "engine-contract-gap", "provenance": "Corpus-backed from gs.RuinsOfAlphResearchCenter.RuinsOfAlphResearchCenterUnownPrinterText (\"UNOWN may be printed out\" -> \"프린트할 수 있습니다\"), the real cart's own flavor text for this exact Unown-dex printer screen; physical button retained."},
     "B▶CANCEL": {"override": "B▶취소", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from gs.unown_dex.PrintUnown; physical button retained."},
     "Congratulations!": {"override": "축하합니다!", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from Gold's diploma and congratulations messages; the Korean diploma combines this idea into its preceding line."},
     "Failed to boot %s:\n%s": {"override": "%s을(를) 시작하지 못했습니다:\n%s", "reason": "engine-original", "provenance": "AI-generated translation of a Gen1Recomp diagnostic with no ROM equivalent."},
