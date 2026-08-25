@@ -776,7 +776,9 @@ def build_gs(
     crystal_entries, crystal_stats = join_crystal_dialogue(crystal_out, corpus_crystal, language)
     crystal_text_catalog = crystal_text_catalog_from_join(crystal_entries)
     if crystal_stats["total"]:
-        crystal_resolved = crystal_stats["unique"] + crystal_stats["harmless_ambiguous"]
+        crystal_resolved = (
+            crystal_stats["unique"] + crystal_stats["harmless_ambiguous"] + crystal_stats["reviewed_qid"]
+        )
         log(
             f"  crystal dialogue: {crystal_resolved}/{crystal_stats['total']} pointers"
             f" ({crystal_stats['unresolved']} unresolved, {crystal_stats['no_match']} no-match,"

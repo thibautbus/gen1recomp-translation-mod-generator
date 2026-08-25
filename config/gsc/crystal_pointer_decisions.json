@@ -1,0 +1,94 @@
+{
+  "schema": "gen1recomp-translation-mods/crystal-pointer-decisions",
+  "version": 1,
+  "entries": {
+    "03:4d73": {
+      "qid": "c.common_2.BouldersMayMoveText",
+      "symbol": "BouldersMayMoveText"
+    },
+    "16:5ef4": {
+      "qid": "c.UnionCave1F.FirebreatherRayBeatenText",
+      "symbol": "FirebreatherRayBeatenText"
+    },
+    "17:68c8": {
+      "qid": "c.RadioTower3F.GruntM7BeatenText",
+      "symbol": "GruntM7BeatenText"
+    },
+    "18:6e83": {
+      "qid": "c.Route34IlexForestGate.Route34IlexForestGateButterfreeText",
+      "symbol": "Route34IlexForestGateButterfreeText"
+    },
+    "1a:4238": {
+      "qid": "c.Route11.Route11SignText",
+      "symbol": "Route11SignText"
+    },
+    "27:4d92": {
+      "qid": "c.Route39Barn.MoomooHappyMooText",
+      "symbol": "MoomooHappyMooText"
+    },
+    "27:54b1": {
+      "qid": "c.ManiasHouse.ManiaText_ThankYou",
+      "symbol": "ManiaText_ThankYou"
+    },
+    "61:4bc8": {
+      "qid": "c.SproutTower3F.SproutTowerRivalUsedEscapeRopeText",
+      "symbol": "SproutTowerRivalUsedEscapeRopeText"
+    },
+    "64:4de9": {
+      "qid": "c.Route32.FisherHenryBeatenText",
+      "symbol": "FisherHenryBeatenText"
+    },
+    "64:6f67": {
+      "qid": "c.Pokecenter2F.Text_PleaseWait",
+      "symbol": "Text_PleaseWait"
+    },
+    "64:6fd1": {
+      "qid": "c.Pokecenter2F.Text_PleaseComeAgain",
+      "symbol": "Text_PleaseComeAgain"
+    },
+    "65:4924": {
+      "qid": "c.Route36.Route36SignText",
+      "symbol": "Route36SignText"
+    },
+    "66:45b0": {
+      "qid": "c.AzaleaTown.AzaleaTownSlowpokeText1",
+      "symbol": "AzaleaTownSlowpokeText1"
+    },
+    "67:4f94": {
+      "qid": "c.Route35.Route35SignText",
+      "symbol": "Route35SignText"
+    },
+    "69:5413": {
+      "qid": "c.Route28.Route28SignText",
+      "symbol": "Route28SignText"
+    },
+    "69:5a6e": {
+      "qid": "c.Route31.DarkCaveSignText",
+      "symbol": "DarkCaveSignText"
+    },
+    "69:5bf9": {
+      "qid": "c.Route39Barn.MoomooHappyMooText",
+      "symbol": "MoomooHappyMooText"
+    },
+    "6a:5197": {
+      "qid": "c.Route37.Route37SignText",
+      "symbol": "Route37SignText"
+    },
+    "6b:4279": {
+      "qid": "c.Route33.Route33SignText",
+      "symbol": "Route33SignText"
+    },
+    "6b:4e10": {
+      "qid": "c.Route20.SwimmerfLoriBeatenText",
+      "symbol": "SwimmerfLoriBeatenText"
+    },
+    "70:4dd8": {
+      "qid": "c.common_2.BreedAskNicknameText",
+      "symbol": "BreedAskNicknameText"
+    },
+    "71:4ff9": {
+      "qid": "c.Pokecenter2F.Text_PleaseComeAgain",
+      "symbol": "Text_PleaseComeAgain"
+    }
+  }
+}
