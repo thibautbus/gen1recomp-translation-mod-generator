@@ -198,12 +198,12 @@ provenance. Future unresolved entries will keep their original English text.
 
 | Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings |
 | --- | ---: | ---: |
-| `fr` | 4452/4452 (100%) | 299/302 (99.01%) |
-| `de` | 4452/4452 (100%) | 299/302 (99.01%) |
-| `es` | 4452/4452 (100%) | 299/302 (99.01%) |
-| `it` | 4452/4452 (100%) | 300/302 (99.34%) |
-| `ja-Hrkt` | 4452/4452 (100%) | 274/302 (90.73%) |
-| `ko` | 4452/4452 (100%) | 274/302 (90.73%) |
+| `fr` | 4452/4452 (100%) | 300/302 (99.34%) |
+| `de` | 4452/4452 (100%) | 301/302 (99.67%) |
+| `es` | 4452/4452 (100%) | 301/302 (99.67%) |
+| `it` | 4452/4452 (100%) | 301/302 (99.67%) |
+| `ja-Hrkt` | 4452/4452 (100%) | 302/302 (100%) |
+| `ko` | 4452/4452 (100%) | 301/302 (99.67%) |
 
 ### Other engine strings
 
@@ -215,12 +215,12 @@ that every key is present in both games.
 
 | Target | Other engine strings |
 | --- | ---: |
-| `fr` | 121/716 (16.9%) |
-| `de` | 121/716 (16.9%) |
-| `es` | 120/716 (16.76%) |
-| `it` | 121/716 (16.9%) |
-| `ja-Hrkt` | 116/716 (16.2%) |
-| `ko` | 45/716 (6.28%) |
+| `fr` | 122/716 (17.04%) |
+| `de` | 122/716 (17.04%) |
+| `es` | 121/716 (16.9%) |
+| `it` | 122/716 (17.04%) |
+| `ja-Hrkt` | 117/716 (16.34%) |
+| `ko` | 46/716 (6.42%) |
 
 The denominator is calculated as follows: `1240` total engine keys, minus the
 `242` RBY-related keys and the `302` Gold and Silver-related keys, plus back the `20` keys
