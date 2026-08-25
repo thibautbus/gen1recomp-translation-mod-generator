@@ -53,19 +53,36 @@ def load_crystal_pointer_decisions(path: str | Path | None = None) -> dict[str, 
     accepting Crystal qids or vice versa.
 
     Decisions select corpus rows rather than carrying translated prose, so
-    one review applies consistently to every target language. Most entries
-    here were derived (not hand-reviewed one by one) from Gold's own
-    already-reviewed config/gsc/pointer_decisions.json: when a Crystal
-    pointer's ambiguous candidates include exactly one qid whose own
-    "gs."-prefixed counterpart Gold's reviewers already picked as the real,
-    reachable text over its sibling candidates (typically a std_text.Unused*
-    duplicate), the same suffix is picked here too -- Crystal reuses the
-    same per-location qid taxonomy, so a candidate Gold's own review never
-    needed for a real pointer is reliably dead/unreachable text in Crystal
-    as well. Ambiguous cases where multiple candidates are each already a
-    real, reviewed Gold qid (two genuinely different reachable locations,
-    e.g. two different named NPCs sharing a line) are NOT auto-derivable
-    this way and are left unresolved here.
+    one review applies consistently to every target language. Every entry
+    here was mechanically derived (not hand-picked one by one), from two
+    sources:
+
+    - A first pass reused Gold's own already-reviewed
+      config/gsc/pointer_decisions.json: when a Crystal pointer's ambiguous
+      candidates included exactly one qid whose "gs."-prefixed counterpart
+      Gold's reviewers already picked as the real, reachable text over its
+      sibling candidates (typically a std_text.Unused* duplicate), the same
+      suffix was picked here too -- Crystal reuses the same per-location qid
+      taxonomy, so a candidate Gold's own review never needed for a real
+      pointer is reliably dead/unreachable text in Crystal as well.
+    - A second pass resolved the rest against ground truth: the
+      pokecrystal disassembly (https://github.com/pret/pokecrystal) builds
+      byte-for-byte identical to the real retail ROM (verified: both hash to
+      f4cd194bdee0d04ca4eac29e09b8e4e9d818c133), so its own linker-generated
+      .sym file is an authoritative bank:address -> real ASM symbol name
+      map. For each still-ambiguous pointer, the candidate whose qid
+      suffix (stripped of a leading "_", pokecrystal's own local-label
+      convention) matches that pointer's one real symbol is correct by
+      construction, not inferred from corpus content -- this is not
+      building or shipping pokecrystal, just consulting its own linker
+      output once to generate this static, checked-in decision list.
+
+    Together these resolved every one of the 113 pointers that were
+    genuinely ambiguous (two-plus candidate qids, non-identical
+    translations) as of the corpus/engine revisions this file was last
+    regenerated against; a future corpus update could introduce new
+    ambiguous pointers this file doesn't cover yet, which join_gs_pointers()
+    reports as UNRESOLVED same as before this file existed.
     """
     if path is None:
         path = Path(__file__).resolve().parents[1] / "config" / "gsc" / "crystal_pointer_decisions.json"
