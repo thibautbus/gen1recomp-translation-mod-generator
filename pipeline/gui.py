@@ -264,7 +264,7 @@ class TranslationBuilderApp:
         # game text and only need one field between them).
         rom_fields = (
             ("rb", 2, "Required to extract shared Pokémon Red/Blue game text and data. Either ROM works: Red and Blue share identical text.", "Pokemon Red or Blue ROM (US)"),
-            ("gs", 2, "Required to extract Pokémon Gold and Silver game text and data.", "Pokemon Gold or Silver ROM (US)"),
+            ("gs", 2, "Required to extract Pokémon Gold and Silver game text and data. Either ROM works: Gold and Silver share identical text.", "Pokemon Gold or Silver ROM (US)"),
             ("crystal", 4, "Required to extract Pokémon Crystal-specific game text and data.", "Pokemon Crystal ROM (US)"),
             ("yellow", 6, "Required to extract Pokémon Yellow-specific game text and data.", "Pokemon Yellow ROM (US)"),
         )
