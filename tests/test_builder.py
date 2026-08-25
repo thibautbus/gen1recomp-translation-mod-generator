@@ -162,8 +162,8 @@ class BuilderTests(unittest.TestCase):
                 "engine": {"translated": 2, "total": 4, "percent": 50},
                 "engine_gen2": {"translated": 1, "total": 2, "percent": 50},
             }), encoding="utf-8")
-            self.assertEqual(coverage_lines(report), [
-                "Red Blue ROM aggregate: 8/9 (88.89%)",
+            self.assertEqual(coverage_lines(report, generation=2), [
+                "Gold and Silver ROM aggregate: 8/9 (88.89%)",
                 "Gold and Silver-related engine strings: 1/2 (50.00%)",
                 "All engine strings: 2/4 (50.00%)",
             ])

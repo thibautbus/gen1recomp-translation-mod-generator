@@ -143,17 +143,19 @@ def validate_inputs(
     return GuiInputs(generation, resolved, code, profile, output.resolve())
 
 
-def coverage_lines(path: str | Path) -> list[str]:
+def coverage_lines(path: str | Path, generation: int = 1) -> list[str]:
     """Return the compact coverage text shown after a successful build."""
     report = json.loads(Path(path).read_text(encoding="utf-8"))
     lines: list[str] = []
-    # ROM aggregates first (broad Red/Blue, then narrower Yellow), then
-    # engine-authored-text metrics from most to least specific: RBY/Gold's
-    # own filtered scope reads before the unfiltered "All engine strings"
-    # total, since that total is the least actionable number here.
+    # ROM aggregates first (broad Red/Blue or Gold/Silver, then narrower
+    # Yellow), then engine-authored-text metrics from most to least
+    # specific: RBY/Gold's own filtered scope reads before the unfiltered
+    # "All engine strings" total, since that total is the least
+    # actionable number here.
+    rom_label = "Red Blue ROM aggregate" if generation == 1 else "Gold and Silver ROM aggregate"
     section = report.get("rom") or {}
     lines.append(
-        f"Red Blue ROM aggregate: {int(section.get('translated', 0))}/{int(section.get('total', 0))} "
+        f"{rom_label}: {int(section.get('translated', 0))}/{int(section.get('total', 0))} "
         f"({float(section.get('percent', 0.0)):.2f}%)"
     )
     yellow = (report.get("yellow") or {}).get("coverage", {}).get("rom") or {}
@@ -468,7 +470,7 @@ class TranslationBuilderApp:
             )
             build_cache = "interactive" if inputs.generation == 1 else "interactive-gs"
             coverage = workspace / build_cache / inputs.language / "coverage.json"
-            self._post(lambda: self._complete(output, coverage))
+            self._post(lambda: self._complete(output, coverage, inputs.generation))
         except (RuntimeError, ValueError, OSError) as error:
             message = str(error)
             self._post(lambda: self._failed(message))
@@ -477,12 +479,12 @@ class TranslationBuilderApp:
             self._append_log(message)
             self._post(lambda: self._failed(message))
 
-    def _complete(self, output: Path, coverage: Path | None):
+    def _complete(self, output: Path, coverage: Path | None, generation: int = 1):
         from tkinter import messagebox
         self._finish()
         details = f"File generated at:\n{output}"
         if coverage is not None and coverage.is_file():
-            details += "\n\n" + "\n".join(coverage_lines(coverage))
+            details += "\n\n" + "\n".join(coverage_lines(coverage, generation))
         self.status_var.set("Build complete")
         messagebox.showinfo("Build complete", details, parent=self.root)
 
