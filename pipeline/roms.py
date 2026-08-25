@@ -140,6 +140,31 @@ def import_rom(version: str, rom: str | Path, gen1recomp: str | Path, out: str |
     run_streamed(command, cwd=root / "tools", log_fn=log_fn)
 
 
+def verify_rb_rom(path: str | Path) -> dict[str, Any]:
+    """Accept either a real Red or a real Blue ROM; report which one.
+
+    Red and Blue share byte-identical dialogue text and pointer tables (no
+    known divergence, unlike Gold/Silver's 8 shifted pointers) -- extracting
+    from either into the same canonical ``data/generated`` output produces
+    an equally correct build. Mirrors verify_gs_rom(); unlike Gold/Silver,
+    both [rom.red] and [rom.blue] are always present in pipeline.toml (RBY
+    is in SUPPORTED_VERSIONS, not just CONFIGURED_VERSIONS), so no None
+    handling is needed here.
+    """
+    path = Path(path)
+    actual = sha1(path)
+    if actual == CANONICAL["red"]:
+        version = "red"
+    elif actual == CANONICAL["blue"]:
+        version = "blue"
+    else:
+        raise ValueError(
+            f"Red/Blue ROM SHA-1 mismatch: {actual} "
+            f"(expected one of: {CANONICAL['red']}, {CANONICAL['blue']})"
+        )
+    return {"version": version, "path": str(path.resolve()), "sha1": actual, "size": path.stat().st_size}
+
+
 # Gold and Silver share the canonical fingerprint registry with RBY, while
 # remaining outside SUPPORTED_VERSIONS because they share a different
 # extractor contract (tools/gs_extract.lua). Unlike RBY, [rom.gold]/

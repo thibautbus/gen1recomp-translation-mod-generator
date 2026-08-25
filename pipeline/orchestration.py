@@ -105,7 +105,7 @@ def build_request(
         from .builder import build
 
         return build(
-            request.source_for("red"), request.source_for("blue"), request.language,
+            request.source_for("rb"), request.language,
             language_name, luajit, workspace_root=workspace_root, output_dir=output_dir,
             log_fn=log_fn, status_fn=status_fn, font_profile=request.font_profile,
             yellow_rom=request.source_for("yellow"),

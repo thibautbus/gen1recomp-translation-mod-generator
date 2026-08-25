@@ -34,7 +34,7 @@ from .project import (
     luajit_install_hint as _luajit_install_hint,
 )
 from .dependencies import DependencyError, fetch_archive, fetch_files
-from .roms import import_rom, verify_gs_rom, verify_rom
+from .roms import import_rom, verify_gs_rom, verify_rb_rom, verify_rom
 from .subprocess_run import run_streamed
 from .rom_paths import configured_path, load_rom_paths
 from .specs import game_spec, languages_for_collection, release_profile, release_profile_for_generation
@@ -825,8 +825,7 @@ def print_coverage(
 
 
 def build(
-    red_rom: Path,
-    blue_rom: Path,
+    rb_rom: Path,
     language: str,
     language_name: str,
     luajit: str,
@@ -839,6 +838,10 @@ def build(
 ) -> Path:
     """Execute the complete private extraction, translation, and pack flow.
 
+    ``rb_rom`` accepts either a real Red or a real Blue ROM (verify_rb_rom
+    picks whichever it is); the two share byte-identical dialogue text and
+    pointer tables, so either extracts into the same canonical output with
+    an equally correct result -- no separate Blue import or diff is needed.
     With ``yellow_rom`` the result is the universal Red/Blue/Yellow mod: the
     Yellow import stays in a separate cache directory and versioned catalog
     layers are applied at runtime when ``GameVersion.isYellow()``.
@@ -858,8 +861,7 @@ def build(
         raise BuildError("RBY release profile has no supported corpus collection")
     font_profile = validate_font_profile(language, font_profile)
     status("Validating ROMs")
-    verify_rom(red_rom, "red")
-    verify_rom(blue_rom, "blue")
+    rb_info = verify_rb_rom(rb_rom)
     if yellow_rom is not None:
         verify_rom(yellow_rom, "yellow")
 
@@ -876,15 +878,9 @@ def build(
     log("\nExtracting private ROM data...")
     status("Extracting private ROM data")
     import_rom(
-        "red", red_rom, gen1recomp,
+        rb_info["version"], rb_rom, gen1recomp,
         gen1recomp / "data" / "generated",
         gen1recomp / "assets" / "generated",
-        log_fn=log_fn,
-    )
-    import_rom(
-        "blue", blue_rom, gen1recomp,
-        gen1recomp / "blue" / "data" / "generated",
-        gen1recomp / "blue" / "assets" / "generated",
         log_fn=log_fn,
     )
     if yellow_rom is not None:
@@ -1130,19 +1126,12 @@ def main(
         elif generation not in (1, 2):
             raise BuildError(f"Invalid games selection: {generation!r}")
         if generation == 1:
-            red_prompt = (
-                "Please specify the location of your Pokemon Red ROM "
+            rb_prompt = (
+                "Please specify the location of your Pokemon Red or Blue ROM "
                 "(full path, e.g. C:\\Games\\PokemonRed.gb): "
             )
-            blue_prompt = (
-                "Please specify the location of your Pokemon Blue ROM "
-                "(full path, e.g. C:\\Games\\PokemonBlue.gb): "
-            )
-            red = _prompt_configured_path(
-                red_prompt, configured_path(rom_paths, "rom", "red"), input_fn
-            )
-            blue = _prompt_configured_path(
-                blue_prompt, configured_path(rom_paths, "rom", "blue"), input_fn
+            rb_rom = _prompt_configured_path(
+                rb_prompt, configured_path(rom_paths, "rom", "red"), input_fn
             )
             yellow_prompt = (
                 "Please specify the location of your Pokemon Yellow ROM "
@@ -1158,8 +1147,7 @@ def main(
                 warning = font_profile_warning(selected_profile)
                 if warning:
                     print(f"Warning: {warning}")
-            verify_rom(red, "red")
-            verify_rom(blue, "blue")
+            verify_rb_rom(rb_rom)
             verify_rom(yellow, "yellow")
             if not _confirm(input_fn):
                 if is_frozen():
@@ -1169,7 +1157,7 @@ def main(
                 return 0
             from .orchestration import build_request
             output = build_request(
-                BuildRequest({"red": red, "blue": blue, "yellow": yellow}, release_profile("rby"), language, None, selected_profile),
+                BuildRequest({"rb": rb_rom, "yellow": yellow}, release_profile("rby"), language, None, selected_profile),
                 language_name=language_name, luajit=luajit,
             )
         else:

@@ -58,14 +58,13 @@ class BuildRequest:
 
 
 GAME_SPECS: Mapping[str, GameSpec] = {
-    "red": GameSpec("red", 1, "RedBlue"),
-    "blue": GameSpec("blue", 1, "RedBlue"),
+    "rb": GameSpec("rb", 1, "RedBlue"),
     "yellow": GameSpec("yellow", 1, "Yellow"),
     "gs": GameSpec("gs", 2, "GoldSilver"),
 }
 
 RELEASE_PROFILES: Mapping[str, ReleaseProfile] = {
-    "rby": ReleaseProfile("rby", 1, ("red", "blue", "yellow")),
+    "rby": ReleaseProfile("rby", 1, ("rb", "yellow")),
     "gs": ReleaseProfile("gs", 2, ("gs",)),
 }
 

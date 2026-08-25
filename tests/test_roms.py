@@ -9,7 +9,7 @@ from unittest.mock import patch
 from pipeline.project import project_config
 from pipeline.roms import (
     CANONICAL, GS_REQUIRED_TSV, GOLD_SHA1, SILVER_SHA1, import_gs_rom, import_rom,
-    verify_gs_rom, verify_rom,
+    verify_gs_rom, verify_rb_rom, verify_rom,
 )
 
 
@@ -222,6 +222,37 @@ class RomConfigTests(unittest.TestCase):
             ):
                 import_rom("red", rom, root, out, assets, log_fn=lambda message: None)
             self.assertIn("exit code 120", str(caught.exception))
+
+
+class RbImportTests(unittest.TestCase):
+    """Red and Blue share one extractor contract despite each having its own ROM config."""
+
+    def test_verify_rb_rom_accepts_the_canonical_red_fingerprint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rom = Path(tmp) / "red.gb"
+            rom.write_bytes(b"pretend red rom bytes")
+            with patch("pipeline.roms.sha1", return_value=CANONICAL["red"]):
+                info = verify_rb_rom(rom)
+            self.assertEqual(info["version"], "red")
+            self.assertEqual(info["sha1"], CANONICAL["red"])
+
+    def test_verify_rb_rom_accepts_the_canonical_blue_fingerprint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rom = Path(tmp) / "blue.gb"
+            rom.write_bytes(b"pretend blue rom bytes")
+            with patch("pipeline.roms.sha1", return_value=CANONICAL["blue"]):
+                info = verify_rb_rom(rom)
+            self.assertEqual(info["version"], "blue")
+            self.assertEqual(info["sha1"], CANONICAL["blue"])
+
+    def test_verify_rb_rom_rejects_a_mismatch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rom = Path(tmp) / "red.gb"
+            payload = b"not the real red or blue rom"
+            rom.write_bytes(payload)
+            actual = hashlib.sha1(payload).hexdigest()
+            with self.assertRaisesRegex(ValueError, rf"Red/Blue ROM SHA-1 mismatch: {actual} \(expected one of: "):
+                verify_rb_rom(rom)
 
 
 class GsImportTests(unittest.TestCase):
