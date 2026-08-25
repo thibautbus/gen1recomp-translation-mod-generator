@@ -22,28 +22,28 @@ from pipeline.engine import load_engine_overrides
 ENGINE_ORIGINAL = {
     "fr": {
         "CONTINUE": "CONTINUER", "NEW GAME": "NOUVEAU JEU", "OPTION": "OPTIONS",
-        "TIME": "DUREE JEU", "YES": "OUI", "NO": "NON",
+        "TIME": "DUREE JEU", "YES": "OUI", "NO": "NON", "BADGES": "BADGES",
         "Would you like to\nsave the game?": "Voulez-vous sauve-\ngarder la partie?",
         "SAVING… DON'T TURN\nOFF THE POWER.": "SAUVEGARDE...\nNE PAS ETEINDRE.",
         "%s saved\nthe game.": "%s sauve\nla partie.",
     },
     "de": {
         "CONTINUE": "WEITER", "NEW GAME": "NEUES SPIEL", "OPTION": "OPTIONEN",
-        "TIME": "SPIELZEIT", "YES": "JA", "NO": "NEIN",
+        "TIME": "SPIELZEIT", "YES": "JA", "NO": "NEIN", "BADGES": "ORDEN",
         "Would you like to\nsave the game?": "Möchtest du das\nSpiel SICHERN?",
         "SAVING… DON'T TURN\nOFF THE POWER.": "Speichern…",
         "%s saved\nthe game.": "%s hat das\nSpiel gesichert.",
     },
     "es": {
         "CONTINUE": "CONTINUAR", "NEW GAME": "JUEGO NUEVO", "OPTION": "OPCIÓN",
-        "TIME": "TIEMPO J.", "YES": "SÍ",
+        "TIME": "TIEMPO J.", "YES": "SÍ", "NO": "NO", "BADGES": "MEDALLAS",
         "Would you like to\nsave the game?": "¿Quieres guardar\nel juego?",
         "SAVING… DON'T TURN\nOFF THE POWER.": "GUARDANDO… NO\nAPAGAR LA CONSOLA.",
         "%s saved\nthe game.": "%s guardó\nel juego.",
     },
     "it": {
         "CONTINUE": "CONTINUA", "NEW GAME": "NUOVO GIOCO", "OPTION": "OPZIONI",
-        "TIME": "DURATA", "YES": "SÌ",
+        "TIME": "DURATA", "YES": "SÌ", "NO": "NO", "BADGES": "MEDAGLIE",
         "Would you like to\nsave the game?": "Vuoi salvare il\ngioco?",
         "SAVING… DON'T TURN\nOFF THE POWER.": "SALVATAGGIO…\nNON SPEGNERE.",
         "%s saved\nthe game.": "%s ha\nsalvato il gioco.",
@@ -73,15 +73,18 @@ ENGINE_CONTRACT_GAP = {
     },
 }
 
-# BADGES/POKéDEX (#DEX) and AM/PM are identical to the English source in
-# every language poke-corpus covers here, so they carry no override at all;
-# "NO" is identical for es/it too (Spanish/Italian's own "NO" needs no
-# accent, unlike their "SÍ"/"SÌ").
+# POKéDEX (#DEX) and AM/PM are identical to the English source in every
+# language poke-corpus covers here, so they carry no override at all.
+# fr's BADGES and es/it's NO are also identical to their English source
+# (unlike German/Spanish/Italian's own real BADGES text -- ORDEN/MEDALLAS/
+# MEDAGLIE -- or Spanish/Italian's own accented "SÍ"/"SÌ"), but carry an
+# explicit "identical to source" override instead -- see ENGINE_ORIGINAL
+# above -- so the coverage report doesn't misreport them as untranslated.
 NO_OP_KEYS = {
-    "fr": {"BADGES", "POKéDEX", "AM", "PM"},
-    "de": {"BADGES", "POKéDEX", "AM", "PM"},
-    "es": {"BADGES", "POKéDEX", "AM", "PM", "NO"},
-    "it": {"BADGES", "POKéDEX", "AM", "PM", "NO"},
+    "fr": {"POKéDEX", "AM", "PM"},
+    "de": {"POKéDEX", "AM", "PM"},
+    "es": {"POKéDEX", "AM", "PM"},
+    "it": {"POKéDEX", "AM", "PM"},
 }
 
 

@@ -16,10 +16,11 @@ LABELS = {
         "TEXT SPEED": "VIT. TEXTE", "BATTLE SCENE": "ANIMATION COMBAT",
         "BATTLE STYLE": "STYLE COMBAT", "SOUND": "SON", "PRINT": "IMPRIMER",
         "MENU ACCOUNT": "COMPTE MENU", "FRAME": "FENETRE", "CANCEL": "RETOUR",
+        ":TYPE": ":TYPE",
     },
     "de": {
         "TEXT SPEED": "TEXT-TEMPO", "BATTLE SCENE": "KAMPFANIMATION",
-        "BATTLE STYLE": "KAMPFSTIL", "PRINT": "DRUCKEN",
+        "BATTLE STYLE": "KAMPFSTIL", "SOUND": "SOUND", "PRINT": "DRUCKEN",
         "MENU ACCOUNT": "MENÜ-STEUERUNG", "FRAME": "RAHMEN",
         "CANCEL": "ZURÜCK", ":TYPE": ":TYP ",
     },
@@ -67,11 +68,14 @@ VALUES = {
     },
 }
 
-# MONO  /STEREO are identical to the English source in fr/de/it (and ":TYPE"
-# in fr), so they carry no override at all -- Strings() already falls
-# through to the source with no catalog entry needed.
+# MONO  /STEREO are identical to the English source in fr/de/it, so they
+# carry no override at all -- Strings() already falls through to the source
+# with no catalog entry needed. (fr's ":TYPE" and de's "SOUND" are also
+# identical to the English source, but carry an explicit "identical to
+# source" override instead -- see LABELS above -- so the coverage report
+# doesn't misreport them as untranslated.)
 NO_OP_KEYS = {
-    "fr": {"MONO  ", "STEREO", ":TYPE"},
+    "fr": {"MONO  ", "STEREO"},
     "de": {"MONO  ", "STEREO"},
     "es": set(),
     "it": {"MONO  ", "STEREO"},
