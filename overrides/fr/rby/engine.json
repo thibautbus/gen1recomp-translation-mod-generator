@@ -354,6 +354,21 @@
       "override": "Rien ici!",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; aligned with poke-corpus rb.text_1.NothingHereText phrasing per language; empty-list message (ui/ListMenu.lua:214, direct Strings render, no data.text shadow)."
-    }
+    },
+    "HP": {
+      "override": "PV",
+      "reason": "engine-contract-gap",
+      "provenance": "Standard French Pokémon abbreviation. Already carried by overrides/fr/gs/engine.json for the same Strings.source(\"HP\") literal (inventory/ItemEffects.lua's STAT_LABEL, shared with ui/gen2/PhotoStudio.lua); missing here left RBY's own item-effect messages (vitamins, stat-boosting items) showing the raw English label."
+    },
+    "<PK><MN>LEAGUE": {
+      "override": "LIGUE <PK><MN>",
+      "reason": "engine-original",
+      "provenance": "Corpus-backed from rb.bills_pc.PKMNLeaguePCText ('LIGUE <PKMN>@'); does not auto-match because the corpus row spells the glyph as a single <PKMN> token while this engine literal (world/OverworldController.lua's Bill's PC PKMN LEAGUE row, new in gen1recomp #1566) uses the two-token <PK><MN> pair -- converted, order kept as the real cart's own (LIGUE first, unlike English's PKMN LEAGUE); requires in-game visual validation."
+    },
+    "COLOR": {"override": "COULEUR", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."},
+    "CONTROLS": {"override": "COMMANDES", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."},
+    "SCREEN POS": {"override": "POSITION ECRAN", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."},
+    "SHADER FX 2": {"override": "FX SHADER 2", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."},
+    "VIBRATION": {"override": "VIBRATION", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."}
   }
 }

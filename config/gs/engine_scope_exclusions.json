@@ -1,0 +1,198 @@
+{
+  "schema": "gen1recomp-translation-mods/gs-engine-scope-exclusions",
+  "version": 1,
+  "excluded_keys": {
+    "#MON Music": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "#MON Talk": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "%s is\nnot compatible\u000bwith %s.": {
+      "reason": "crystal-only-feature",
+      "source": "MoveTutor (move_tutor.asm)"
+    },
+    "%s knows\n%s.": {
+      "reason": "crystal-only-feature",
+      "source": "MoveTutor (move_tutor.asm)"
+    },
+    "%s may go\nonly to BATTLE\nROOMS that are\nLv.70 or higher.": {
+      "reason": "crystal-only-feature",
+      "source": "Battle Tower (mobile_46.asm)"
+    },
+    "???": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "A party POKéMON\ntops this level.": {
+      "reason": "crystal-only-feature",
+      "source": "Battle Tower (mobile_46.asm)"
+    },
+    "AZALEA TOWN": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Are you a boy?\nOr are you a girl?": {
+      "reason": "crystal-only-feature",
+      "source": "GenderSelect (init_gender.asm)"
+    },
+    "BUG": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "CHERRYGROVE CITY": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Cancel your BATTLE\nROOM challenge?": {
+      "reason": "crystal-only-feature",
+      "source": "Battle Tower (mobile_46.asm)"
+    },
+    "Challenge": {
+      "reason": "crystal-only-feature",
+      "source": "Battle Tower (battle_tower.asm)"
+    },
+    "Day": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Excuse me.\nYou're not ready.": {
+      "reason": "crystal-only-feature",
+      "source": "Battle Tower (battle_tower.asm)"
+    },
+    "Explanation": {
+      "reason": "crystal-only-feature",
+      "source": "Battle Tower (battle_tower.asm)"
+    },
+    "FLYING": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Fufufu! I saw that\nyou'd do nothing!": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "GRASS": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Here you go!": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Hey!\fThat's an EGG!\fYou can't say that\nyou've met it yet…": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Hm… %s\ncame from %s\u000bin a trade?\f%s\nwas where %s\u000bmet %s!": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Hm… I see you met\n%s here:\u000b%s!": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "I see all.\nI know all…\fCertainly, I know\nof your #MON!": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Incidentally…\f%s has\ngrown. It's gained\u000bmuch strength.": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Incidentally…\fI'm impressed by\nyour dedication.\fIt's been a long\ntime since I've\fseen a #MON as\nmighty as this\u000b%s.\fI'm sure that\nseeing %s\fin battle would\nexcite anyone.": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Incidentally…\fIt certainly has\ngrown mighty!\fThis %s\nmust have come\fthrough numerous\n#MON battles.\fIt looks brimming\nwith confidence.": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Incidentally…\fIt seems to have\ngrown a little.\f%s seems\nto be becoming\u000bmore confident.": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Incidentally…\fIt would be wise\nto raise your\f#MON with a\nlittle more care.": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Lucky Channel": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Morning": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "NEW BARK TOWN": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Night": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Oh. Please come\nback again!": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Only three POKéMON\nmay be entered.": {
+      "reason": "crystal-only-feature",
+      "source": "Battle Tower (battle_tower.asm)"
+    },
+    "Please return when\nyou're ready.": {
+      "reason": "crystal-only-feature",
+      "source": "Battle Tower (battle_tower.asm)"
+    },
+    "Points": {
+      "reason": "crystal-only-feature",
+      "source": "BuenaPassword (buena.asm)"
+    },
+    "The time was\n%s!\fIts level was %s!\fAm I good or what?": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "The {STRBUF} POKéMON\nmust all be different kinds.": {
+      "reason": "crystal-only-feature",
+      "source": "Battle Tower (battle_tower.asm)"
+    },
+    "The {STRBUF} POKéMON\nmust not hold the same items.": {
+      "reason": "crystal-only-feature",
+      "source": "Battle Tower (battle_tower.asm)"
+    },
+    "Whaaaat? I can't\ntell a thing!\fHow could I not\nknow of this?": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "What level do you\nwant to challenge?": {
+      "reason": "crystal-only-feature",
+      "source": "Battle Tower (mobile_46.asm)"
+    },
+    "What!? Incredible!\fI don't understand\nhow, but it is\fincredible!\nYou are special.\fI can't tell where\nyou met it, but it\u000bwas at level %s.\fAm I good or what?": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "Which prize would\nyou like?": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "You can't take an\nEGG!": {
+      "reason": "crystal-only-feature",
+      "source": "Battle Tower (battle_tower.asm)"
+    },
+    "You don't have\nenough points.": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "You have no room\nfor it.": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    },
+    "{STRBUF}?\nIs that right?": {
+      "reason": "crystal-only-feature",
+      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
+    }
+  }
+}

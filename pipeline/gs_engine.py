@@ -1,6 +1,7 @@
 """Match GoldSilver corpus rows to versioned Gen1Recomp engine strings."""
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
@@ -11,12 +12,58 @@ from .engine_scope import (
 )
 from .model import CorpusRecord
 
+GS_ENGINE_SCOPE_EXCLUSIONS_SCHEMA = "gen1recomp-translation-mods/gs-engine-scope-exclusions"
+
+
+def load_gs_engine_scope_exclusions(path: str | Path | None = None) -> set[str]:
+    """Load the Strings() keys reachable only from a Crystal-only feature.
+
+    gen1recomp's Gen 2 UI code bundles some pokecrystal-only content
+    (MoveTutor, GenderSelect, the "PokeSeer"/Buena radio special, Battle
+    Tower -- see config/gs/engine_scope_exclusions.json's own entries for
+    the exact source .asm each key traces to) under ``ui/gen2``/
+    ``script/gen2`` alongside real Gold/Silver code. None of it exists on a
+    real Gold or Silver cart, so it has no PokeCorpus row and would need
+    invented text to "translate" -- these keys are excluded from the
+    Gold/Silver-related engine-string scope instead of counted against it.
+    """
+    if path is None:
+        path = Path(__file__).resolve().parents[1] / "config" / "gs" / "engine_scope_exclusions.json"
+    path = Path(path)
+    if not path.is_file():
+        return set()
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"invalid Gold/Silver engine scope exclusions JSON: {path}") from exc
+    if not isinstance(data, dict) or data.get("schema") != GS_ENGINE_SCOPE_EXCLUSIONS_SCHEMA:
+        raise ValueError("unsupported Gold/Silver engine scope exclusions schema")
+    if data.get("version") != 1 or not isinstance(data.get("excluded_keys"), dict):
+        raise ValueError("Gold/Silver engine scope exclusions require version 1 excluded_keys")
+    result: set[str] = set()
+    for key, row in data["excluded_keys"].items():
+        if (not isinstance(row, dict) or not isinstance(row.get("reason"), str) or
+                not row["reason"].strip() or not isinstance(row.get("source"), str) or
+                not row["source"].strip()):
+            raise ValueError(f"invalid Gold/Silver engine scope exclusion for {key!r}")
+        result.add(key)
+    return result
+
 
 def engine_string_keys(
     callsites: Iterable[Mapping[str, Any]], manifest: Mapping[str, Any] | None = None,
+    exclusions: set[str] | None = None,
 ) -> tuple[set[str], set[str]]:
-    """Return the full Strings catalog and its Gen-2 callsite subset."""
+    """Return the full Strings catalog and its Gen-2 callsite subset.
+
+    ``exclusions`` (default: load_gs_engine_scope_exclusions()) drops keys
+    reachable only from a Crystal-only feature out of the Gen-2 subset --
+    they stay in the full catalog, since they are real Strings() callsites
+    a Gold/Silver-mod override could still target, just not counted toward
+    the Gold/Silver-related coverage metric.
+    """
     manifest = manifest or load_manifest()
+    exclusions = load_gs_engine_scope_exclusions() if exclusions is None else exclusions
     gen2_keys: set[str] = set()
     rows = list(callsites)
     for callsite in rows:
@@ -28,6 +75,7 @@ def engine_string_keys(
             continue
         if is_gen2_path(path):
             gen2_keys.add(source)
+    gen2_keys -= exclusions
     return complete_engine_keys(rows, manifest), gen2_keys
 
 

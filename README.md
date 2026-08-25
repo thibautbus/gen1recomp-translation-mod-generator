@@ -153,9 +153,10 @@ The ZIP is universal, but ROM coverage is reported separately for Red/Blue
 and Yellow:
 
 - `Red Blue ROM aggregate` is the release metric. It combines the six effective ROM
-  catalogs with 179 shared runtime entries (types, species kinds, literal
-  handlers, demo names and ROM-derived engine templates). Therefore
-  `3281 = 3102 + 179` for Red/Blue and `3405 = 3226 + 179` for Yellow.
+  catalogs (dialogue, species/move/item/trainer names, status labels) with a
+  handful of shared runtime entries (types, species kinds, literal handlers,
+  demo names and ROM-derived engine templates): `3286` for Red/Blue and
+  `3400` for Yellow.
 - `RBY-related engine strings` covers engine keys used by original RBY
   gameplay and interfaces.
 
@@ -164,11 +165,11 @@ engine's English fallback.
 
 | Target | Red Blue ROM aggregate | Yellow ROM aggregate | RBY-related engine strings |
 | --- | ---: | ---: | ---: |
-| `fr` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
-| `de` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
-| `es` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
-| `it` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
-| `ja-Hrkt` | 3281/3281 (100%) | 3405/3405 (100%) | 256/256 (100%) |
+| `fr` | 3286/3286 (100%) | 3400/3400 (100%) | 242/242 (100%) |
+| `de` | 3286/3286 (100%) | 3400/3400 (100%) | 242/242 (100%) |
+| `es` | 3286/3286 (100%) | 3400/3400 (100%) | 242/242 (100%) |
+| `it` | 3286/3286 (100%) | 3400/3400 (100%) | 242/242 (100%) |
+| `ja-Hrkt` | 3286/3286 (100%) | 3400/3400 (100%) | 242/242 (100%) |
 
 The ROM aggregates exclude extracted labels that do not render visible text.
 Reviewed exceptions are recorded in
@@ -184,45 +185,50 @@ Gold and Silver is built as a separate generation-2 artifact, from either ROM:
 - `Gold and Silver ROM aggregate` combines dialogue, Pokédex entries and the named ROM
   catalogs. Its denominator excludes 14 markup-only records with no visible
   prose.
-- `Gold and Silver-related engine strings` covers the 218 engine keys used by
-  at least one production Gen 2 callsite.
+- `Gold and Silver-related engine strings` covers the 302 engine keys used by
+  at least one production Gen 2 callsite. 48 keys reachable only from a
+  Crystal-exclusive feature (Move Tutor, gender selection, the "PokeSeer"/
+  Buena's Password radio special, Battle Tower) are excluded from this scope
+  -- none of it exists on a real Gold or Silver cart, so it has no PokeCorpus
+  row and is not part of what this mod could ever cover; see
+  [`config/gs/engine_scope_exclusions.json`](config/gs/engine_scope_exclusions.json).
 
 The generated report retains the dialogue/catalog breakdown and per-key
 provenance. Future unresolved entries will keep their original English text.
 
 | Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings |
 | --- | ---: | ---: |
-| `fr` | 4452/4452 (100%) | 218/218 (100%) |
-| `de` | 4452/4452 (100%) | 218/218 (100%) |
-| `es` | 4452/4452 (100%) | 218/218 (100%) |
-| `it` | 4452/4452 (100%) | 218/218 (100%) |
-| `ja-Hrkt` | 4452/4452 (100%) | 218/218 (100%) |
-| `ko` | 4452/4452 (100%) | 218/218 (100%) |
+| `fr` | 4452/4452 (100%) | 299/302 (99.01%) |
+| `de` | 4452/4452 (100%) | 299/302 (99.01%) |
+| `es` | 4452/4452 (100%) | 299/302 (99.01%) |
+| `it` | 4452/4452 (100%) | 300/302 (99.34%) |
+| `ja-Hrkt` | 4452/4452 (100%) | 274/302 (90.73%) |
+| `ko` | 4452/4452 (100%) | 274/302 (90.73%) |
 
 ### Other engine strings
 
 The remaining engine keys are reported separately below. They are keys used by
 neither RBY nor Gold and Silver, so their denominator is the residual scope:
-`951 - (256 + 218 - 8) = 485`. The numerator counts keys translated in at
+`1240 - (242 + 302 - 20) = 716`. The numerator counts keys translated in at
 least one of the two artifacts; this is a project-level metric, not a claim
 that every key is present in both games.
 
 | Target | Other engine strings |
 | --- | ---: |
-| `fr` | 111/485 (22.89%) |
-| `de` | 111/485 (22.89%) |
-| `es` | 109/485 (22.47%) |
-| `it` | 111/485 (22.89%) |
-| `ja-Hrkt` | 110/485 (22.68%) |
-| `ko` | 31/485 (6.39%) |
+| `fr` | 121/716 (16.9%) |
+| `de` | 121/716 (16.9%) |
+| `es` | 120/716 (16.76%) |
+| `it` | 121/716 (16.9%) |
+| `ja-Hrkt` | 116/716 (16.2%) |
+| `ko` | 45/716 (6.28%) |
 
-The denominator is calculated as follows: `951` total engine keys, minus the
-`256` RBY-related keys and the `218` Gold and Silver-related keys, plus back the `8` keys
+The denominator is calculated as follows: `1240` total engine keys, minus the
+`242` RBY-related keys and the `302` Gold and Silver-related keys, plus back the `20` keys
 shared by both scopes so they are subtracted only once. The resulting residual
-scope is `485` keys.
+scope is `716` keys.
 
 These values use the pinned ROMs, corpus snapshots and Gen1Recomp revision
-`1598f349`; regenerate them whenever one of those inputs changes.
+`aea38240`; regenerate them whenever one of those inputs changes.
 
 ## Translation provenance
 
