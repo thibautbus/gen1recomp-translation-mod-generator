@@ -1,0 +1,86 @@
+{
+  "schema": "gen1recomp-translation-mods/crystal-dialogue-overrides",
+  "version": 1,
+  "entries": {
+    "18:6674": {
+      "override": "Il POKéCOM CENTER<LINE>e il MOBILE CENTER<PARA>furono costruiti<LINE>per rispondere alla<PARA>richiesta di scambi<LINE>e combattimenti con<PARA>allenatori lontani<LINE>o sconosciuti.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
+    },
+    "18:66f9": {
+      "override": "Quando ti sei<LINE>collegato a qualcuno<PARA>per la prima volta<LINE>con il cellulare,<PARA>non sei rimasto<LINE>colpito?<PARA>Quando il mio<LINE>primo tentativo<PARA>ha funzionato, ero<LINE>così emozionato che tremavo!",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
+    },
+    "18:6795": {
+      "override": "Sono riusciti a<LINE>costruire questo<PARA>enorme complesso<LINE>grazie ai progressi<CONT>della tecnologia senza fili.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
+    },
+    "18:67ee": {
+      "override": "È un avviso su<LINE>dove vanno usati<PARA>i MOBILE<LINE>ADAPTER…",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
+    },
+    "18:6828": {
+      "override": "In ogni POKéMON<LINE>CENTER c'è un<PARA>POKéCOM CLUB al<LINE>piano di sopra.<PARA>Lì puoi<LINE>combattere o<PARA>scambiare con un<LINE>amico lontano usando<CONT>un MOBILE ADAPTER.<PARA>Per collegarti,<LINE>il tuo amico<PARA>deve avere lo<LINE>stesso tipo di<CONT>MOBILE ADAPTER.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
+    },
+    "18:68f4": {
+      "override": "Per usare il TRADE<LINE>CORNER o leggere<PARA>le POKéMON NEWS,<LINE>devi chiamare il<CONT>MOBILE CENTER.<PARA>Devi registrarti<LINE>al MOBILE<PARA>CENTER prima di<LINE>collegarti.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
+    },
+    "18:6989": {
+      "override": "È un avviso<LINE>sull'uso del<CONT>telefono…",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
+    },
+    "18:69ae": {
+      "override": "Assicurati che<LINE>il telefono e il<PARA>MOBILE ADAPTER<LINE>siano collegati correttamente.<PARA>Assicurati che il<LINE>segnale del telefono<CONT>senza fili sia forte.<PARA>Non toccare né<LINE>riagganciare il telefono<CONT>durante il collegamento.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
+    },
+    "18:6a5a": {
+      "override": "Se il server è<LINE>occupato, potrebbe<PARA>non essere possibile<LINE>accedere.<PARA>In tal caso,<LINE>richiama più tardi.<PARA>Se non riesci ad<LINE>accedere o non<PARA>capisci i messaggi<LINE>di errore,<PARA>chiama un centro<LINE>assistenza o leggi<CONT>le istruzioni.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
+    },
+    "18:6b26": {
+      "override": "L'UFFICIO<LINE>AMMINISTRATIVO ha<CONT>ricevuto una e-mail. Dice…<PARA>…… …… ……<PARA>Al personale del<LINE>POKéCOM CENTER…<PARA>La comunicazione<LINE>senza fili ha permesso<PARA>agli allenatori<LINE>di POKéMON di interagire<PARA>in tutta la nazione.<LINE>Continuiamo a lavorare<PARA>per il giorno in cui<LINE>tutti gli allenatori<PARA>del mondo potranno<LINE>collegarsi senza barriere!<PARA>…… …… ……",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
+    },
+    "62:428c": {
+      "override": "Combatti con il<LINE>cellulare?<PARA>Se il tempo scade<LINE>durante un combattimento,<PARA>aspettare di sapere<LINE>chi ha vinto è<CONT>davvero stressante.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
+    },
+    "62:6532": {
+      "override": "Come sono i<LINE>CENTRI POKéMON<CONT>di JOHTO?<PARA>…Ah, capisco.<LINE>Quindi ti permettono<PARA>di collegarti con<LINE>persone lontane?<PARA>Allora farò catturare<LINE>a un mio amico a JOHTO<PARA>un MARILL da<LINE>scambiare con me!",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
+    },
+    "64:6d39": {
+      "override": "Vuoi combattere<LINE>via cavo GAME<PARA>LINK o con il<LINE>cellulare?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
+    },
+    "64:6d7e": {
+      "override": "Vuoi scambiare<LINE>via cavo GAME<PARA>LINK o con il<LINE>cellulare?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
+    },
+    "64:7591": {
+      "override": "Stabilendo la<LINE>comunicazione…",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
+    },
+    "64:7626": {
+      "override": "Stabilendo la<LINE>comunicazione…",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."
+    }
+  }
+}

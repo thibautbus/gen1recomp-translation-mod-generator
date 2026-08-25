@@ -732,37 +732,47 @@ ASM symbol name map for every one of Crystal's 4010 pointers, not just
 the 97 gen1recomp's own extractor already names -- resolved all but one
 of the remaining 91 ambiguous pointers outright; the one leftover (two
 distinct corpus qids sharing an identical trailing symbol name) was
-confirmed by grepping the real disassembly source directly.
-`config/gsc/crystal_pointer_decisions.json` now carries 113 entries.
+confirmed by grepping the real disassembly source directly. This closed
+French's own ambiguous-pointer gap completely (113 entries), but German,
+Spanish, Italian and Japanese each had their own, distinct residual
+ambiguous pointers (French's disambiguation only fixes a pointer for
+every language at once when the *same* pointer was ambiguous for all of
+them -- a language whose corpus text for a given English line happens to
+match only one candidate never shows up as ambiguous in the first place,
+so it needed no decision, while a language matching several still did).
+The same symbol-table method was re-run against each of their own
+remaining unresolved pointers, extending
+`config/gsc/crystal_pointer_decisions.json` to 210 entries in total --
+every decision re-verified against the real `.sym` file, not assumed from
+French's.
 
-The last 17 pointers were never ambiguous, they simply had no corpus row
-at all -- and the same real symbol table confirmed why: every one
-resolves to a genuine Mobile Adapter GB / PokeCom Center script (real,
-scripted content in pokecrystal's own
-`maps/PokecomCenterAdminOfficeMobile.asm` and related files), a
-peripheral never sold outside Japan and therefore, in all likelihood,
-never localized into any Western language at all -- not a gap this
-pipeline's own matching could ever have closed from corpus data. These 17
-now carry hand-written, AI-generated French text instead
-(`overrides/fr/gsc/crystal_dialogue.json`, loaded by
-`pipeline/crystal_mod.py`'s `load_crystal_dialogue_overrides()`), each
-one's line/page-break structure checked to match the English source's own
-`<LINE>`/`<PARA>`/`<CONT>` positions exactly before being accepted.
+The rest were never ambiguous, they simply had no corpus row at all --
+and the same real symbol table confirmed why: every one resolves to a
+genuine Mobile Adapter GB / PokeCom Center script (real, scripted content
+in pokecrystal's own `maps/PokecomCenterAdminOfficeMobile.asm` and
+related files), a peripheral never sold outside Japan. Spanish and
+Japanese poke-corpus data turned out to already carry real, official
+translations for every one of these lines -- so only French, German and
+Italian genuinely lacked corpus coverage here. Those three now carry
+hand-written, AI-generated text instead (`overrides/<lang>/gsc/
+crystal_dialogue.json`, loaded by `pipeline/crystal_mod.py`'s
+`load_crystal_dialogue_overrides()`): 17 pointers for French, 9 for
+German (a subset of French's own set -- Spanish/Japanese's corpus already
+covered the rest for German too, it turned out), and 16 for Italian
+(mostly the same set, plus one pointer -- `62:6532` -- that French's own
+corpus resolves but Italian's doesn't). Each entry's line/page-break
+structure is checked to match the English source's own `<LINE>`/`<PARA>`/
+`<CONT>` positions exactly (same count and order of breaks, not
+necessarily the same word-for-word segment boundaries) before being
+accepted.
 
-**French Crystal dialogue resolution: 3994/4010 (99.60%)** -- every
-pointer with any real, visible text is translated; the only 16 left are
-markup-only entries with nothing to translate at all, the same category
-Gold/Silver's own 100%-covered catalog also carries. The 113
-pointer-decision entries are qid picks, language-independent, so they
-already apply automatically to every language's own corpus join, not
-just French's: de 3934/4010 (98.1%), es 3945/4010 (98.4%),
-it 3924/4010 (97.9%), ja-Hrkt 3986/4010 (99.4%), all measured directly
-(not estimated). Each language's own remaining gap differs because
-poke-corpus's own translation completeness for the same English text
-varies by language, not because of anything this pipeline does
-differently per language. The 17 hand-translated Mobile Adapter overrides
-are French-only so far -- closing the same gap for the other languages is
-future work, not yet attempted.
+**Crystal dialogue resolution is 3994/4010 (99.60%) for all five
+translated languages (fr/de/es/it/ja-Hrkt), i.e. 100% of the 3994
+pointers that carry any real, visible text** -- the only 16 left in every
+language are markup-only entries with nothing to translate at all, the
+same category Gold/Silver's own 100%-covered catalog also carries.
+Korean stays at 0/3994 (no Crystal corpus exists for it at all, see
+below).
 
 Crystal ships as a mandatory companion ROM merged into the same
 `translation-<lang>-gen2` mod as Gold/Silver, the same way Yellow is a

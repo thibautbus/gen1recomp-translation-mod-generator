@@ -134,8 +134,24 @@ class LoadCrystalDialogueOverridesTests(unittest.TestCase):
             self.assertTrue(text.strip())
             self.assertNotIn("%", text)
 
+    def test_repository_german_overrides_are_valid(self):
+        overrides = load_crystal_dialogue_overrides("de")
+        self.assertEqual(len(overrides), 9)
+        for pointer, text in overrides.items():
+            self.assertRegex(pointer, r"^[0-7][0-9a-f]:[0-7][0-9a-f]{3}$")
+            self.assertTrue(text.strip())
+            self.assertNotIn("%", text)
+
+    def test_repository_italian_overrides_are_valid(self):
+        overrides = load_crystal_dialogue_overrides("it")
+        self.assertEqual(len(overrides), 16)
+        for pointer, text in overrides.items():
+            self.assertRegex(pointer, r"^[0-7][0-9a-f]:[0-7][0-9a-f]{3}$")
+            self.assertTrue(text.strip())
+            self.assertNotIn("%", text)
+
     def test_missing_language_file_is_empty(self):
-        self.assertEqual(load_crystal_dialogue_overrides("de"), {})
+        self.assertEqual(load_crystal_dialogue_overrides("ko"), {})
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(
                 load_crystal_dialogue_overrides("fr", Path(tmp) / "absent.json"), {},

@@ -837,6 +837,10 @@
     "71:4ff9": {
       "qid": "c.common_3.MartComeAgainText",
       "symbol": "MartComeAgainText"
+    },
+    "09:6f9b": {
+      "qid": "c.common_1.LookTownMapText",
+      "symbol": "LookTownMapText"
     }
   }
 }
