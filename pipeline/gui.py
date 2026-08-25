@@ -320,15 +320,16 @@ class TranslationBuilderApp:
         active = set(ROMS_BY_GENERATION[generation])
         if generation == 1:
             self.games_hint_var.set(
-                "Which games do you want to translate? Red, Blue and Yellow "
-                "share one translation: select the two ROMs below (Red or "
-                "Blue, whichever you own, plus Yellow)."
+                "Which games do you want to translate?\n"
+                "Red, Blue and Yellow share one translation: select the two "
+                "ROMs below (Red or Blue, whichever you own, plus Yellow)."
             )
         elif generation == 2:
             self.games_hint_var.set(
-                "Which games do you want to translate? Gold, Silver and "
-                "Crystal share one translation: select the two ROMs below "
-                "(Gold or Silver, whichever you own, plus Crystal)."
+                "Which games do you want to translate?\n"
+                "Gold, Silver and Crystal share one translation: select the "
+                "two ROMs below (Gold or Silver, whichever you own, plus "
+                "Crystal)."
             )
         else:
             self.games_hint_var.set("Which games do you want to translate?")
