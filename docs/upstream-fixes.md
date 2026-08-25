@@ -709,8 +709,60 @@ matches by normalized English text, not by pointer, so despite its "gs_"
 name it is edition-agnostic and needed no changes at all --
 `pipeline/crystal_mod.py`'s `join_crystal_dialogue()` just calls it against
 Crystal's own extracted TSVs and its own corpus collection. A real build
-resolved 3864/4010 dialogue pointers (96.4%) automatically, no manual
-overrides yet.
+resolved 3864/4010 dialogue pointers (96.4%) automatically with no manual
+help at all.
+
+Closing the rest took two further passes, both against real, verifiable
+ground truth rather than guesswork. First, Crystal's qid namespace turned
+out to mirror Gold/Silver's own per-location taxonomy exactly (same
+trailing symbol names, `c.` prefix instead of `gs.`), so Gold's own
+already-reviewed `config/gsc/pointer_decisions.json` (164 entries picking
+the real, reachable text over an unused duplicate) doubled as a lookup:
+whenever a Crystal pointer's ambiguous candidates included exactly one
+qid whose `gs.`-prefixed counterpart Gold's reviewers already confirmed
+was a real pointer's target, the same pick applied to Crystal -- resolving
+22 of 113 ambiguous pointers this way
+(`pipeline/crystal_mod.py`'s `load_crystal_pointer_decisions()`). Second,
+the [pokecrystal disassembly](https://github.com/pret/pokecrystal) (the
+user's own clone) was built from source with `rgbds`, confirmed to
+produce a ROM byte-for-byte identical to the real retail cartridge (both
+hash to `f4cd194bdee0d04ca4eac29e09b8e4e9d818c133`), and its own
+linker-generated `.sym` file -- an authoritative `bank:address` -> real
+ASM symbol name map for every one of Crystal's 4010 pointers, not just
+the 97 gen1recomp's own extractor already names -- resolved all but one
+of the remaining 91 ambiguous pointers outright; the one leftover (two
+distinct corpus qids sharing an identical trailing symbol name) was
+confirmed by grepping the real disassembly source directly.
+`config/gsc/crystal_pointer_decisions.json` now carries 113 entries.
+
+The last 17 pointers were never ambiguous, they simply had no corpus row
+at all -- and the same real symbol table confirmed why: every one
+resolves to a genuine Mobile Adapter GB / PokeCom Center script (real,
+scripted content in pokecrystal's own
+`maps/PokecomCenterAdminOfficeMobile.asm` and related files), a
+peripheral never sold outside Japan and therefore, in all likelihood,
+never localized into any Western language at all -- not a gap this
+pipeline's own matching could ever have closed from corpus data. These 17
+now carry hand-written, AI-generated French text instead
+(`overrides/fr/gsc/crystal_dialogue.json`, loaded by
+`pipeline/crystal_mod.py`'s `load_crystal_dialogue_overrides()`), each
+one's line/page-break structure checked to match the English source's own
+`<LINE>`/`<PARA>`/`<CONT>` positions exactly before being accepted.
+
+**French Crystal dialogue resolution: 3994/4010 (99.60%)** -- every
+pointer with any real, visible text is translated; the only 16 left are
+markup-only entries with nothing to translate at all, the same category
+Gold/Silver's own 100%-covered catalog also carries. The 113
+pointer-decision entries are qid picks, language-independent, so they
+already apply automatically to every language's own corpus join, not
+just French's: de 3934/4010 (98.1%), es 3945/4010 (98.4%),
+it 3924/4010 (97.9%), ja-Hrkt 3986/4010 (99.4%), all measured directly
+(not estimated). Each language's own remaining gap differs because
+poke-corpus's own translation completeness for the same English text
+varies by language, not because of anything this pipeline does
+differently per language. The 17 hand-translated Mobile Adapter overrides
+are French-only so far -- closing the same gap for the other languages is
+future work, not yet attempted.
 
 Crystal ships as a mandatory companion ROM merged into the same
 `translation-<lang>-gen2` mod as Gold/Silver, the same way Yellow is a
