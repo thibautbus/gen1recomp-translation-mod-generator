@@ -772,6 +772,34 @@ here, no compromise needed, but it is still missing real cart content (the
 the literal mention of the box itself) for the same reason as the overwrite
 prompt: this port's fixed 2-line box has no pagination.
 
+### Verified working, not a gap
+
+- **`ja-Hrkt`'s garbled `Options_BattleScene.On` corpus text is never
+  actually used.** `gs.options_menu.Options_BattleScene.On`'s real Gold ROM
+  Japanese text extracts as `"５てへぷダレのじっくり　みる"`, which reads as
+  corrupted/mis-decoded (mixed digits and unrelated kana, unlike its clean
+  `Off` counterpart `"とばして　みる"`) -- looked like a real translation
+  gap worth chasing down. It isn't reachable: `ui/gen2/OptionsMenu.lua`'s
+  `BATTLE SCENE` and `MENU ACCOUNT` rows both draw their value through the
+  exact same shared literal, `Strings("ON ")`/`Strings("OFF")` (lines 65 and
+  95), rather than through separate per-row keys. The real cart shows two
+  different, context-specific phrases for these two screens in Japanese
+  (`Options_MenuAccount.On` cleanly extracts as `"ひょうじ　する"`,
+  "display"), but this port's shared key can only carry one value, so it
+  already had to use a generic word instead of either row's own real phrase
+  -- matching fr/de/es/it's own choice of a generic "yes"-style word here
+  rather than either row's real cart phrasing. `ON `/`OFF` ship `"オン"`/
+  `"オフ"` (ja-Hrkt) and `"온"`/`"오프"` (ko, AI-generated -- ko has no RBY
+  release to copy from), reusing the same generic word already established
+  for the *other*, unpadded `"ON"`/`"OFF"` key (RBY's own launcher/options
+  toggle, `ui/OptionsMenu.lua`, `ui/ShaderFXScreen.lua`,
+  `import/LauncherSettings.lua`, `import/LauncherView.lua` -- seven call
+  sites in total). ja-Hrkt and ko's `OFF` previously carried
+  `Options_BattleScene.Off`'s own context-specific phrase by mistake (a
+  plausible-looking but wrong match, since `OFF` is the one key shared by
+  every one of those seven other call sites too); ko's `ON ` had the same
+  mismatch for `Options_BattleScene.On`. Both fixed to the generic word.
+
 ### Fixed upstream (engine changes, not just this project's config)
 
 - **Clock UI (weekdays, `o'clock`, `MORN`/`DAY`/`NITE`):** `DAYS`
