@@ -56,6 +56,15 @@
     "SHADER FX 2": {"override": "シェーダーエフェクト2", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua row also used by RBY; no compatible PokeCorpus qid; requires in-game visual validation."},
     "VIBRATION": {"override": "しんどう", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by RBY; no compatible PokeCorpus qid; requires in-game visual validation."},
     "TOUCH LAYOUT": {"override": "タッチはいち", "reason": "engine-original", "provenance": "AI-generated engine-original translation; ui/gen2/OptionsMenu.lua only, no RBY equivalent; no compatible PokeCorpus qid; requires in-game visual validation."},
-    "Unknown": {"override": "ふめい", "reason": "engine-original", "provenance": "AI-generated engine-original translation; import/RomImporter.lua cart-author-label fallback, generic across generations; no compatible PokeCorpus qid; requires in-game visual validation."}
+    "Unknown": {"override": "ふめい", "reason": "engine-original", "provenance": "AI-generated engine-original translation; import/RomImporter.lua cart-author-label fallback, generic across generations; no compatible PokeCorpus qid; requires in-game visual validation."},
+    "YES": {"override": "はい", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.menu.YesNoMenuHeader.MenuData (real Gold ROM text)."},
+    "NO": {"override": "いいえ", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.menu.YesNoMenuHeader.MenuData (real Gold ROM text)."},
+    "CONTINUE": {"override": "つづきから　はじめる", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.main_menu.MainMenu.Strings (real Gold ROM title-menu text)."},
+    "NEW GAME": {"override": "さいしょから　はじめる", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.main_menu.MainMenu.Strings (real Gold ROM title-menu text)."},
+    "%s'S": {"override": "%s", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.naming_screen.NamingScreenJumptable.NicknameStrings (real Gold ROM naming-screen text)."},
+    "NICKNAME?": {"override": "のニックネームは？", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.naming_screen.NamingScreenJumptable.NicknameStrings (real Gold ROM naming-screen text). Unlike en/fr/de/es/it (two concatenated fragments), the real cart phrases this as one unified question with no separate 'S fragment, so \"%s'S\" carries no text of its own here."},
+    "PLAYER %s": {"override": "しゅじんこう%s", "reason": "engine-contract-gap", "provenance": "Label corpus-confirmed from gs.intro_menu.Continue_LoadMenuHeader.MenuData_Dex (\"しゅじんこう\"), adapted with an inline %s for the player name this port draws in the same call rather than a separate one."},
+    "TIME": {"override": "プレイじかん", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.intro_menu.Continue_LoadMenuHeader.MenuData_Dex (real Gold ROM CONTINUE-panel text)."},
+    "OFF": {"override": "とばして　みる", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_BattleScene.Off (real Gold ROM OPTION-screen text)."}
   }
 }

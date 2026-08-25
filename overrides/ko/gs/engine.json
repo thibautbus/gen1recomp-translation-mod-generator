@@ -57,6 +57,16 @@
     "TILT": {"override": "기울기", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by RBY, but ko has no RBY release to copy from; no compatible PokeCorpus qid; requires in-game visual validation."},
     "TOUCH PAD": {"override": "터치패드", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by RBY, but ko has no RBY release to copy from; no compatible PokeCorpus qid; requires in-game visual validation."},
     "VIDEO MODE": {"override": "화면 모드", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by RBY, but ko has no RBY release to copy from; no compatible PokeCorpus qid; requires in-game visual validation."},
-    "VOID FILL": {"override": "여백 채우기", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by RBY, but ko has no RBY release to copy from; no compatible PokeCorpus qid; requires in-game visual validation."}
+    "VOID FILL": {"override": "여백 채우기", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by RBY, but ko has no RBY release to copy from; no compatible PokeCorpus qid; requires in-game visual validation."},
+    "YES": {"override": "예", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.menu.YesNoMenuHeader.MenuData (real Gold ROM text)."},
+    "NO": {"override": "아니오", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.menu.YesNoMenuHeader.MenuData (real Gold ROM text)."},
+    "CONTINUE": {"override": "모험을 계속하다", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.main_menu.MainMenu.Strings (real Gold ROM title-menu text)."},
+    "NEW GAME": {"override": "새로운 모험을 시작하다", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.main_menu.MainMenu.Strings (real Gold ROM title-menu text)."},
+    "%s'S": {"override": "%s", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.naming_screen.NamingScreenJumptable.NicknameStrings (real Gold ROM naming-screen text)."},
+    "NICKNAME?": {"override": "의 닉네임은?", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.naming_screen.NamingScreenJumptable.NicknameStrings (real Gold ROM naming-screen text). Unlike en/fr/de/es/it (two concatenated fragments), the real cart phrases this as one unified question with no separate 'S fragment, so \"%s'S\" carries no text of its own here."},
+    "PLAYER %s": {"override": "주인공 %s", "reason": "engine-contract-gap", "provenance": "Label corpus-confirmed from gs.intro_menu.Continue_LoadMenuHeader.MenuData_Dex (\"주인공\"), adapted with an inline %s for the player name this port draws in the same call rather than a separate one."},
+    "TIME": {"override": "플레이 시간", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.intro_menu.Continue_LoadMenuHeader.MenuData_Dex (real Gold ROM CONTINUE-panel text)."},
+    "ON ": {"override": "천천히　보다", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_BattleScene.On (real Gold ROM OPTION-screen text)."},
+    "OFF": {"override": "빠르게　보다", "reason": "engine-original", "provenance": "Corpus-confirmed from gs.options_menu.Options_BattleScene.Off (real Gold ROM OPTION-screen text)."}
   }
 }
