@@ -54,6 +54,13 @@ if expectationPath and expectationPath ~= "" then
     "strings", "species_names", "species_kinds", "species_dex_text", "move_names",
     "item_names", "trainer_class_names", "landmarks", "oak_speech",
   }
+  -- species_dex_text2 (the #DEX entry's second page) is present only when
+  -- the language's corpus actually preserved one: ja-Hrkt/ko's
+  -- dex_entries_gold rows never do (verified against poke-corpus), so the
+  -- Python side omits the key entirely for those rather than shipping an
+  -- empty expectation. Still verified below like any other expectation
+  -- when it IS present.
+  local optional = { species_dex_text2 = true }
   for _, name in ipairs(required) do
     local value = expectations[name]
     if type(value) ~= "table" or type(value.id) ~= "string" or value.id == ""
@@ -63,7 +70,7 @@ if expectationPath and expectationPath ~= "" then
     end
   end
   for name, _ in pairs(expectations) do
-    local known = false
+    local known = optional[name] or false
     for _, requiredName in ipairs(required) do
       if name == requiredName then known = true break end
     end
@@ -106,6 +113,7 @@ if expectations then
     species_names = function(id) return data.pokemon and data.pokemon[id] end,
     species_kinds = function(id) return data.pokemon and data.pokemon[id] and data.pokemon[id].dexEntry end,
     species_dex_text = function(id) return data.pokemon and data.pokemon[id] and data.pokemon[id].dexEntry end,
+    species_dex_text2 = function(id) return data.pokemon and data.pokemon[id] and data.pokemon[id].dexEntry end,
     move_names = function(id) return data.moves and data.moves[id] end,
     item_names = function(id) return data.items and data.items[id] end,
     trainer_class_names = function(id) return data.gen2Trainers and data.gen2Trainers.classes and data.gen2Trainers.classes[id] end,
@@ -114,6 +122,7 @@ if expectations then
   local fields = {
     strings = "value",
     species_names = "name", species_kinds = "kind", species_dex_text = "text",
+    species_dex_text2 = "text2",
     move_names = "name", item_names = "name", trainer_class_names = "name", landmarks = "name",
   }
   for name, expected in pairs(expectations) do
@@ -151,6 +160,8 @@ eq(pokemon and pokemon.name, "BULBIZARRE", "pokemon BULBASAUR.name is the real t
 eq(pokemon and pokemon.dexEntry and pokemon.dexEntry.kind, "GRAINE", "pokemon BULBASAUR.dexEntry.kind is the real translation")
 check(pokemon and pokemon.dexEntry and pokemon.dexEntry.text and #pokemon.dexEntry.text > 0,
   "pokemon BULBASAUR.dexEntry.text is a non-empty real translation")
+check(pokemon and pokemon.dexEntry and pokemon.dexEntry.text2 and #pokemon.dexEntry.text2 > 0,
+  "pokemon BULBASAUR.dexEntry.text2 is a non-empty real translation")
 
 local move = data.moves and data.moves.ABSORB
 eq(move and move.name, "VOL-VIE", "moves ABSORB.name is the real translation")

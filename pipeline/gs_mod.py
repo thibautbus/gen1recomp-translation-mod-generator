@@ -13,7 +13,10 @@ from .crystal_mod import join_crystal_dialogue, crystal_text_catalog_from_join
 from .roms import GS_REQUIRED_TSV, import_crystal_rom, import_gs_rom, verify_crystal_rom, verify_gs_rom
 from .generate import lua_string
 from .gs_engine import match_gs_engine_strings
-from .gs_index_join import join_by_index, join_dex_entries, join_landmarks, parse_indexed_catalog
+from .gs_index_join import (
+    join_by_index, join_dex_entries, join_dex_entries_pages, join_landmarks,
+    parse_indexed_catalog,
+)
 from .gs_join import (
     GsJoinEntry, GsPlaceholderDecision, audit_join, gs_coverage_report,
     join_gs_pointers, load_gs_dialogue_overrides, load_gs_placeholder_decisions,
@@ -68,6 +71,7 @@ GS_CATALOG_HOOKS = {
     "species_names": "mod.content.pokemon:patch(id, { name = value })",
     "species_kinds": "mod.content.pokemon:patch(id, { dexEntry = { kind = value } })",
     "species_dex_text": "mod.content.pokemon:patch(id, { dexEntry = { text = value } })",
+    "species_dex_text2": "mod.content.pokemon:patch(id, { dexEntry = { text2 = value } })",
     "move_names": "mod.content.moves:patch(id, { name = value })",
     "item_names": "mod.content.items:patch(id, { name = value })",
     "trainer_class_names": "mod.content.trainers:patch(id, { name = value })",
@@ -194,9 +198,18 @@ assert not (set(GS_CATALOG_HOOKS) & _MODKIT_GENERATED_MODULES), (
 )
 
 GS_REQUIRED_REGISTRIES = (
-    "strings", "species_names", "species_kinds", "species_dex_text", "move_names",
-    "item_names", "trainer_class_names", "landmarks", GS_OAK_SPEECH_CATALOG,
+    "strings", "species_names", "species_kinds", "species_dex_text",
+    "move_names", "item_names", "trainer_class_names", "landmarks", GS_OAK_SPEECH_CATALOG,
 )
+
+# Present in every language's catalogs dict (build_gs_dialogue_mod always
+# joins it) but not guaranteed non-empty: ja-Hrkt/ko's dex_entries_gold
+# corpus rows never preserved a second #DEX description page (verified
+# directly against poke-corpus -- ja-Hrkt has no "@" page marker at all, ko
+# has only the row's own terminator), so species_dex_text2 is {} for those
+# languages rather than a BuildError. Verified by the release gate like any
+# required registry when it does have content (en/fr/de/es/it today).
+GS_OPTIONAL_VERIFIED_REGISTRIES = ("species_dex_text2",)
 
 def gs_mod_id(language: str) -> str:
     """Return the generation-scoped Gold mod identifier."""
@@ -401,7 +414,7 @@ def gs_oak_speech_catalog_from_join(entries: list[GsJoinEntry]) -> dict[str, str
 
 def _write_gate_expectations(mod_dir: Path, catalogs: dict[str, dict[str, str]]) -> Path:
     """Write a tiny, private expectation file consumed by the registry gate."""
-    optional = {"ui_labels"}
+    optional = {"ui_labels", *GS_OPTIONAL_VERIFIED_REGISTRIES}
     if not set(catalogs) - optional >= set(GS_REQUIRED_REGISTRIES):
         missing = sorted(set(GS_REQUIRED_REGISTRIES) - set(catalogs))
         raise BuildError(
@@ -415,8 +428,10 @@ def _write_gate_expectations(mod_dir: Path, catalogs: dict[str, dict[str, str]])
             + f"; unexpected: {', '.join(extra)}"
         )
     expected: dict[str, dict[str, str]] = {}
-    for name in GS_REQUIRED_REGISTRIES:
-        values = catalogs[name]
+    for name in (*GS_REQUIRED_REGISTRIES, *GS_OPTIONAL_VERIFIED_REGISTRIES):
+        values = catalogs.get(name)
+        if name in GS_OPTIONAL_VERIFIED_REGISTRIES and not values:
+            continue
         if not isinstance(values, dict) or not values:
             raise BuildError(f"Gold registry gate expectation is empty: {name}")
         key = sorted(values)[0]
@@ -657,9 +672,13 @@ def build_gs_dialogue_mod(
     kind_translations, kind_stats = join_dex_entries(species, corpus_rows, "dex_entries", "Species")
     extra_catalogs["species_kinds"] = kind_translations
     index_stats["species_kinds"] = kind_stats
-    text_translations, text_stats = join_dex_entries(species, corpus_rows, "dex_entries_gold")
+    text_translations, text2_translations, text_stats, text2_stats = join_dex_entries_pages(
+        species, corpus_rows, "dex_entries_gold",
+    )
     extra_catalogs["species_dex_text"] = text_translations
+    extra_catalogs["species_dex_text2"] = text2_translations
     index_stats["species_dex_text"] = text_stats
+    index_stats["species_dex_text2"] = text2_stats
     landmarks_path = gold_out_dir / "gs_landmarks.tsv"
     landmarks = parse_indexed_catalog(landmarks_path)
     if not landmarks:

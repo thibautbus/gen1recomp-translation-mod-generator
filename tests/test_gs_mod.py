@@ -126,7 +126,7 @@ class GsReleaseGateFlowTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "incomplete"):
                 _write_gate_expectations(Path(tmp) / "mod", {})
             catalogs = {name: {"ID": "VALUE"} for name in (
-                "strings", "species_names", "species_kinds", "species_dex_text", "move_names",
+                "strings", "species_names", "species_kinds", "species_dex_text", "species_dex_text2", "move_names",
                 "item_names", "trainer_class_names", "landmarks", "oak_speech",
             )}
             catalogs["landmarks"] = {}
@@ -152,7 +152,7 @@ class GsReleaseGateFlowTests(unittest.TestCase):
                 report = run_gs_release_gates(
                     mod, entries, engine, sys.executable,
                     catalogs={name: {"ID": "X"} for name in (
-                        "strings", "species_names", "species_kinds", "species_dex_text", "move_names",
+                        "strings", "species_names", "species_kinds", "species_dex_text", "species_dex_text2", "move_names",
                         "item_names", "trainer_class_names", "landmarks", "oak_speech",
                     )},
                     log_fn=log_fn,
@@ -194,7 +194,7 @@ class GsReleaseGateFlowTests(unittest.TestCase):
                 },
             }
             catalogs = {name: {"ID": "X"} for name in (
-                "strings", "species_names", "species_kinds", "species_dex_text", "move_names",
+                "strings", "species_names", "species_kinds", "species_dex_text", "species_dex_text2", "move_names",
                 "item_names", "trainer_class_names", "landmarks", "oak_speech",
             )}
             with patch("pipeline.gs_mod._run"):
@@ -238,6 +238,7 @@ class GsReleaseGateFlowTests(unittest.TestCase):
             "species_names": {"BULBASAUR": "BULBIZARRE"},
             "species_kinds": {"BULBASAUR": "GRAINE"},
             "species_dex_text": {"BULBASAUR": "Une graine."},
+            "species_dex_text2": {"BULBASAUR": "Sur le dos."},
             "move_names": {"ABSORB": "VOL-VIE"},
             "item_names": {"AMULET_COIN": "PIECE RUNE"},
             "trainer_class_names": {"BEAUTY": "CANON"},
@@ -503,10 +504,12 @@ class BuildGsDialogueModTests(unittest.TestCase):
             match.assert_called_once()
             self.assertEqual(stats["coverage"]["engine_gen2"]["total"], 2)
             self.assertEqual(stats["coverage"]["rom"], {
-                "translated": 1, "total": 9, "percent": 11.11,
+                "translated": 1, "total": 10, "percent": 10.0,
             })
             self.assertEqual(stats["coverage"]["rom_dialogue"]["total"], 2)
-            self.assertEqual(stats["coverage"]["rom_catalogs"]["total"], 7)
+            # 8, not 7: species_dex_text2 (the #DEX entry's second page) is
+            # its own index_stats entry alongside species_dex_text now.
+            self.assertEqual(stats["coverage"]["rom_catalogs"]["total"], 8)
             self.assertEqual(stats["_gate_catalogs"]["strings"], {"Hello!": "Bonjour!"})
             self.assertIn(
                 '["Hello!"] = "Bonjour!"',
@@ -537,8 +540,8 @@ class BuildGsDialogueModTests(unittest.TestCase):
         qid_lines = ["gs.names.PokemonNames.1", "gs.names.MoveNames.71", "gs.names.ItemNames.91",
                      "gs.class_names.TrainerClassNames.29", "gs.dex_entries.BulbasaurPokedexEntry.Species",
                      "gs.dex_entries_gold.BulbasaurPokedexEntry"]
-        en_lines = ["BULBASAUR", "ABSORB", "AMULET COIN", "BEAUTY", "SEED", "A seed."]
-        fr_lines = ["BULBIZARRE", "VOL-VIE", "PIECE RUNE", "CANON", "GRAINE", "Une graine."]
+        en_lines = ["BULBASAUR", "ABSORB", "AMULET COIN", "BEAUTY", "SEED", "A seed.@It hides.@"]
+        fr_lines = ["BULBIZARRE", "VOL-VIE", "PIECE RUNE", "CANON", "GRAINE", "Une graine.@Elle se cache.@"]
         existing_qid = (corpus / "qid_msg.txt").read_text(encoding="utf-8").splitlines()
         existing_en = (corpus / "en_msg.txt").read_text(encoding="utf-8").splitlines()
         existing_fr = (corpus / "fr_msg.txt").read_text(encoding="utf-8").splitlines()
@@ -567,10 +570,13 @@ class BuildGsDialogueModTests(unittest.TestCase):
                            (mod_dir / "lang" / "species_kinds.lua").read_text(encoding="utf-8"))
             self.assertIn('["BULBASAUR"] = "Une graine."',
                            (mod_dir / "lang" / "species_dex_text.lua").read_text(encoding="utf-8"))
+            self.assertIn('["BULBASAUR"] = "Elle se cache."',
+                           (mod_dir / "lang" / "species_dex_text2.lua").read_text(encoding="utf-8"))
             main = (mod_dir / "main.lua").read_text(encoding="utf-8")
             self.assertIn('mod.content.pokemon:patch(id, { name = value })', main)
             self.assertIn('mod.content.pokemon:patch(id, { dexEntry = { kind = value } })', main)
             self.assertIn('mod.content.pokemon:patch(id, { dexEntry = { text = value } })', main)
+            self.assertIn('mod.content.pokemon:patch(id, { dexEntry = { text2 = value } })', main)
             self.assertIn('mod.content.moves:patch(id, { name = value })', main)
             self.assertIn('mod.content.items:patch(id, { name = value })', main)
             self.assertIn('mod.content.trainers:patch(id, { name = value })', main)
@@ -636,6 +642,7 @@ class GsRegistriesGateTests(unittest.TestCase):
                     "species_names": {"BULBASAUR": "BULBIZARRE"},
                     "species_kinds": {"BULBASAUR": "GRAINE"},
                     "species_dex_text": {"BULBASAUR": "Une graine sur le dos."},
+                    "species_dex_text2": {"BULBASAUR": "Elle grandit avec le POKéMON."},
                     "move_names": {"ABSORB": "VOL-VIE"},
                     "item_names": {"AMULET_COIN": "PIECE RUNE"},
                     "trainer_class_names": {"BEAUTY": "CANON"},

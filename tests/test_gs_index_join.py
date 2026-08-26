@@ -3,7 +3,8 @@ import unittest
 from pathlib import Path
 
 from pipeline.gs_index_join import (
-    IndexedEntry, join_by_index, join_dex_entries, join_landmarks, parse_indexed_catalog,
+    IndexedEntry, join_by_index, join_dex_entries, join_dex_entries_pages,
+    join_landmarks, parse_indexed_catalog,
 )
 
 
@@ -144,6 +145,109 @@ class JoinDexEntriesTests(unittest.TestCase):
         gold_text, _ = join_dex_entries(species, rows, "dex_entries_gold")
         self.assertEqual(kind, {"BULBASAUR": "GRAINE"})
         self.assertEqual(gold_text, {"BULBASAUR": "Une graine."})
+
+
+class JoinDexEntriesPagesTests(unittest.TestCase):
+    """gen1recomp's PokedexMenu:drawEntryBody splits entry.text/text2 on the
+    literal "<NEXT>" substring, not a real newline (confirmed against
+    Rom:readString, the decoder RomExtractorGen2:extractPokedex uses for
+    this exact field -- unlike decodeGen2Text, the ordinary dialogue
+    pointer catalog's own decoder, which is what corpus_to_engine's
+    "<NEXT>" -> "\\n" mapping is written for). A real build showed this:
+    the #DEX screen's translated flavor text rendered as one run-on line
+    with no wrap at all.
+    """
+
+    def test_splits_the_two_pages_and_keeps_next_literal(self):
+        species = [IndexedEntry("CYNDAQUIL", 155, "CYNDAQUIL")]
+        rows = [(
+            "gs.dex_entries_gold.CyndaquilPokedexEntry",
+            "It is timid, and<NEXT>always curls itself up in a ball.@"
+            "If attacked, it<NEXT>flares up its back for protection.@",
+            "Il est timide et<NEXT>se roule en boule.@"
+            "S'il est attaque, il<NEXT>enflamme son dos.@",
+        )]
+        page1, page2, stats1, stats2 = join_dex_entries_pages(species, rows, "dex_entries_gold")
+        self.assertEqual(page1, {"CYNDAQUIL": "Il est timide et<NEXT>se roule en boule."})
+        self.assertEqual(page2, {"CYNDAQUIL": "S'il est attaque, il<NEXT>enflamme son dos."})
+        self.assertNotIn("\n", page1["CYNDAQUIL"])
+        self.assertNotIn("\n", page2["CYNDAQUIL"])
+        self.assertEqual(stats1, {"total": 1, "translated": 1, "no_corpus_entry": 0})
+        self.assertEqual(stats2, {"total": 1, "translated": 1, "no_corpus_entry": 0})
+
+    def test_a_row_with_no_page_marker_at_all_still_ships_page_one(self):
+        # ja-Hrkt's real GoldSilver dex_entries_gold rows are shaped exactly
+        # like this: no "@" anywhere (they end on "<DEXEND>" instead), so
+        # the corpus never preserved a second page for that language.
+        # Before this fix the whole species was dropped; page1 is real
+        # content and must still ship, just without a page2.
+        species = [IndexedEntry("BULBASAUR", 1, "BULBASAUR")]
+        rows = [("gs.dex_entries_gold.BulbasaurPokedexEntry", "A seed.", "Une graine.<DEXEND>")]
+        page1, page2, stats1, stats2 = join_dex_entries_pages(species, rows, "dex_entries_gold")
+        # <DEXEND> is a box/timing control corpus_to_engine already strips
+        # for every other category (pipeline/tokens.py); dropped here too.
+        self.assertEqual(page1, {"BULBASAUR": "Une graine."})
+        self.assertEqual(page2, {})
+        self.assertEqual(stats1["translated"], 1)
+        self.assertEqual(stats2["no_corpus_entry"], 1)
+
+    def test_a_row_with_only_the_terminator_at_still_ships_page_one(self):
+        # ko's real GoldSilver dex_entries_gold rows are shaped exactly like
+        # this: exactly one "@", the row's own terminator, never a second
+        # page's worth of content.
+        species = [IndexedEntry("BULBASAUR", 1, "BULBASAUR")]
+        rows = [("gs.dex_entries_gold.BulbasaurPokedexEntry", "A seed.", "Une graine.@")]
+        page1, page2, stats1, stats2 = join_dex_entries_pages(species, rows, "dex_entries_gold")
+        self.assertEqual(page1, {"BULBASAUR": "Une graine."})
+        self.assertEqual(page2, {})
+        self.assertEqual(stats1["translated"], 1)
+        self.assertEqual(stats2["no_corpus_entry"], 1)
+
+    def test_more_than_two_pages_raises_instead_of_silently_truncating(self):
+        species = [IndexedEntry("BULBASAUR", 1, "BULBASAUR")]
+        rows = [("gs.dex_entries_gold.BulbasaurPokedexEntry", "A seed.", "Une.@Deux.@Trois.@")]
+        with self.assertRaisesRegex(ValueError, "unexpected 'dex_entries_gold' page count"):
+            join_dex_entries_pages(species, rows, "dex_entries_gold")
+
+    def test_a_line_token_colliding_with_next_raises_instead_of_mislabeling(self):
+        # _CORPUS_EXPANSIONS maps both <LINE> and <NEXT> to "\n"; a blind
+        # "\n" -> "<NEXT>" reversal would silently relabel a genuine <LINE>
+        # break as <NEXT>. No real dex_entries_gold row does this today
+        # (verified against the corpus), so this must fail loudly instead.
+        species = [IndexedEntry("BULBASAUR", 1, "BULBASAUR")]
+        rows = [("gs.dex_entries_gold.BulbasaurPokedexEntry", "A seed.", "Une<LINE>graine.@Suite.@")]
+        with self.assertRaisesRegex(ValueError, "line-break token other than <NEXT>"):
+            join_dex_entries_pages(species, rows, "dex_entries_gold")
+
+    def test_missing_dex_entry_is_counted_not_guessed(self):
+        species = [IndexedEntry("MEWTWO", 150, "MEWTWO")]
+        page1, page2, stats1, stats2 = join_dex_entries_pages(species, [], "dex_entries_gold")
+        self.assertEqual(page1, {})
+        self.assertEqual(page2, {})
+        self.assertEqual(stats1["no_corpus_entry"], 1)
+        self.assertEqual(stats2["no_corpus_entry"], 1)
+
+    def test_conflicting_normalised_dex_names_are_rejected(self):
+        species = [IndexedEntry("HO_OH", 250, "HO-OH")]
+        rows = [
+            ("gs.dex_entries_gold.HoOhPokedexEntry", "Rainbow.@Bird.@", "Arc-en-ciel.@Oiseau.@"),
+            ("gs.dex_entries_gold.Ho_OhPokedexEntry", "Rainbow.@Bird.@", "Prisme.@Volatile.@"),
+        ]
+        with self.assertRaisesRegex(ValueError, "conflicting 'dex_entries_gold' translations"):
+            join_dex_entries_pages(species, rows, "dex_entries_gold")
+
+    def test_kind_category_is_untouched_by_the_page_split(self):
+        # dex_entries (the kind label) uses a fourth qid segment
+        # (".Species"); join_dex_entries_pages never passes a label_suffix,
+        # so this qid shape simply never matches, rather than silently
+        # mis-splitting a short label.
+        species = [IndexedEntry("BULBASAUR", 1, "BULBASAUR")]
+        rows = [("gs.dex_entries.BulbasaurPokedexEntry.Species", "SEED", "GRAINE")]
+        page1, page2, stats1, stats2 = join_dex_entries_pages(species, rows, "dex_entries")
+        self.assertEqual(page1, {})
+        self.assertEqual(page2, {})
+        self.assertEqual(stats1["no_corpus_entry"], 1)
+        self.assertEqual(stats2["no_corpus_entry"], 1)
 
 
 class JoinLandmarksTests(unittest.TestCase):
