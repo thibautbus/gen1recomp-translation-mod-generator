@@ -61,11 +61,20 @@ GAME_SPECS: Mapping[str, GameSpec] = {
     "rb": GameSpec("rb", 1, "RedBlue"),
     "yellow": GameSpec("yellow", 1, "Yellow"),
     "gs": GameSpec("gs", 2, "GoldSilver"),
+    "crystal": GameSpec("crystal", 2, "Crystal"),
 }
 
 RELEASE_PROFILES: Mapping[str, ReleaseProfile] = {
     "rby": ReleaseProfile("rby", 1, ("rb", "yellow")),
-    "gs": ReleaseProfile("gs", 2, ("gs",)),
+    # Crystal is a mandatory companion ROM, like Yellow is for "rby": one
+    # mod covers gold/silver/crystal, gated at runtime by GameVersion, not a
+    # separate build target. Korean has no Crystal corpus (unlike GoldSilver)
+    # -- Crystal dialogue simply stays in English for that language; see
+    # pipeline/gs_mod.py's build_gs(). The profile id is "gsc" (Gold/Silver/
+    # Crystal), matching "rby"'s own full-initialism naming; the "gs" sub-key
+    # in its games tuple is GAME_SPECS' own Gold/Silver-only entry, matching
+    # how "rby"'s games tuple keeps "rb"/"yellow" as separate sub-keys.
+    "gsc": ReleaseProfile("gsc", 2, ("gs", "crystal")),
 }
 
 # The collection is the source of truth for the UI language domain.  Keeping
@@ -77,6 +86,9 @@ COLLECTION_LANGUAGES: Mapping[str, tuple[tuple[str, str], ...]] = {
                ("it", "Italian"), ("ja-Hrkt", "Japanese")),
     "GoldSilver": (("fr", "French"), ("de", "German"), ("es", "Spanish"),
                    ("it", "Italian"), ("ja-Hrkt", "Japanese"), ("ko", "Korean")),
+    # Crystal has no Korean corpus, unlike GoldSilver.
+    "Crystal": (("fr", "French"), ("de", "German"), ("es", "Spanish"),
+                ("it", "Italian"), ("ja-Hrkt", "Japanese")),
 }
 
 

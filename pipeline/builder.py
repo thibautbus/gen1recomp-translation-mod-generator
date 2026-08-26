@@ -34,7 +34,7 @@ from .project import (
     luajit_install_hint as _luajit_install_hint,
 )
 from .dependencies import DependencyError, fetch_archive, fetch_files
-from .roms import import_rom, verify_gs_rom, verify_rb_rom, verify_rom
+from .roms import import_rom, verify_crystal_rom, verify_gs_rom, verify_rb_rom, verify_rom
 from .subprocess_run import run_streamed
 from .rom_paths import configured_path, load_rom_paths
 from .specs import game_spec, languages_for_collection, release_profile, release_profile_for_generation
@@ -336,8 +336,8 @@ def _prompt_generation(input_fn: Callable[[str], str]) -> int:
     "generation" is engine vocabulary the user does not need.
     """
     print("\nWhich games do you want to translate?")
-    print("  1 - Red, Blue and Yellow   (generation 1)")
-    print("  2 - Gold and Silver        (generation 2)")
+    print("  1 - Red, Blue and Yellow      (generation 1)")
+    print("  2 - Gold, Silver and Crystal  (generation 2)")
     raw = input_fn("Games number [1]: ").strip()
     if raw in {"", "1"}:
         return 1
@@ -1168,6 +1168,13 @@ def main(
             gs_rom = _prompt_configured_path(
                 gs_prompt, configured_path(rom_paths, "rom", "gold"), input_fn
             )
+            crystal_prompt = (
+                "Please specify the location of your Pokemon Crystal ROM "
+                "(full path, e.g. C:\\Games\\PokemonCrystal.gbc): "
+            )
+            crystal_rom = _prompt_configured_path(
+                crystal_prompt, configured_path(rom_paths, "rom", "crystal"), input_fn
+            )
             language, language_name = _prompt_language(input_fn, generation=generation)
             selected_profile = font_profile or _prompt_font_profile(language, input_fn)
             selected_profile = validate_font_profile(language, selected_profile)
@@ -1176,6 +1183,7 @@ def main(
                 if warning:
                     print(f"Warning: {warning}")
             verify_gs_rom(gs_rom)
+            verify_crystal_rom(crystal_rom)
             if not _confirm(input_fn):
                 if is_frozen():
                     print("\nBuild cancelled. No dependency downloads were performed.")
@@ -1184,7 +1192,7 @@ def main(
                 return 0
             from .orchestration import build_request
             output = build_request(
-                BuildRequest({"gs": gs_rom}, release_profile("gs"), language, None, selected_profile),
+                BuildRequest({"gs": gs_rom, "crystal": crystal_rom}, release_profile("gsc"), language, None, selected_profile),
                 language_name=language_name, luajit=luajit,
             )
     except (RuntimeError, ValueError, OSError) as error:

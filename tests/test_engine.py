@@ -50,7 +50,7 @@ class EngineTests(unittest.TestCase):
         # (pipeline/gs_engine.py:_corpus_records); this drives
         # match_engine_catalog the same way, with the real corpus source
         # (poke-corpus/corpus/GoldSilver/{en,fr}_msg.txt line 4727) and the
-        # real anchor (config/gs/semantic_anchors.json).
+        # real anchor (config/gsc/semantic_anchors.json).
         source = "{PLAYER} found\n{STRBUF}!"
         qid = "gs.common_2.FoundItemText"
         rows = [
@@ -66,7 +66,7 @@ class EngineTests(unittest.TestCase):
 
     def test_real_gold_semantic_anchor_config_matches_the_bare_form(self):
         # Real regression caught by an independent review of the fix above:
-        # config/gs/semantic_anchors.json's ONE composite (multi-placeholder)
+        # config/gsc/semantic_anchors.json's ONE composite (multi-placeholder)
         # Gold anchor, gs.battle.BattleText_EnemyIsAboutToUseWillPlayerChangeMon,
         # declared its RAM placeholder as the OLD named engine form
         # ("{RAM:wEnemyMonNickname}") -- what corpus_to_engine used to produce
@@ -88,7 +88,7 @@ class EngineTests(unittest.TestCase):
                 "{text_start}<ENEMY><LINE>va utiliser<CONT>@{text_ram wEnemyMonNickname}"
                 "{text_start}.<PARA><PLAYER> va-t-il<LINE>changer de PKMN?<DONE>", "gold"),
         ]
-        anchors_path = Path(__file__).resolve().parents[1] / "config" / "gs" / "semantic_anchors.json"
+        anchors_path = Path(__file__).resolve().parents[1] / "config" / "gsc" / "semantic_anchors.json"
         output, report = match_engine_catalog(
             {source: ""}, rows, semantic_anchors=anchors_path, target_lang="fr",
         )
@@ -117,7 +117,7 @@ class EngineTests(unittest.TestCase):
                 "qui a capturé un<CONT>@{text_ram wStringBuffer1}{text_start}!@@", "gold"),
         ]
         source = "This Bug-Catching\nContest winner is\x0c%s,\nwho caught a\n%s!"
-        anchors_path = Path(__file__).resolve().parents[1] / "config" / "gs" / "semantic_anchors.json"
+        anchors_path = Path(__file__).resolve().parents[1] / "config" / "gsc" / "semantic_anchors.json"
         output, report = match_engine_catalog(
             {source: ""}, rows, semantic_anchors=anchors_path, target_lang="fr",
         )
@@ -134,7 +134,7 @@ class EngineTests(unittest.TestCase):
         # "source_aliases" list): Gold's own extracted source text is always
         # bare (RomExtractorGen2.lua:decodeGen2Text never names the buffer --
         # see corpus_to_engine's bare_dynamic_tokens docstring), so ANY
-        # string anywhere in config/gs/*.json naming one
+        # string anywhere in config/gsc/*.json naming one
         # ("{RAM:...}"/"{NUM:...}") can never match again and silently drops
         # that entry -- regardless of which JSON key or file holds it. Walks
         # every file's whole structure rather than special-casing today's
@@ -143,7 +143,7 @@ class EngineTests(unittest.TestCase):
         import json
         import re
 
-        gold_config_dir = Path(__file__).resolve().parents[1] / "config" / "gs"
+        gold_config_dir = Path(__file__).resolve().parents[1] / "config" / "gsc"
         named_token = re.compile(r"\{(?:RAM|NUM):")
 
         def walk(value, where):

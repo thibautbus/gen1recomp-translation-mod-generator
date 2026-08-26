@@ -78,6 +78,47 @@ class GenerateGsModTests(unittest.TestCase):
             self.assertEqual(manifest["id"], "custom-id")
             self.assertEqual(manifest["description"], "Custom description.")
 
+    def test_crystal_catalog_declares_crystal_and_writes_a_conditional_layer(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            mod_dir = generate_gs_mod(
+                Path(tmp) / "mod", language="fr",
+                text_catalog={"55:0001": "Bonjour!"},
+                crystal_text_catalog={"00:0001": "Salut!"},
+            )
+            manifest = json.loads((mod_dir / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["games"], ["gold", "silver", "crystal"])
+            self.assertIn("Crystal", manifest["description"])
+            crystal_lua = (mod_dir / "lang" / "dialogue_crystal.lua").read_text(encoding="utf-8")
+            self.assertIn('["00:0001"] = "Salut!"', crystal_lua)
+            main = (mod_dir / "main.lua").read_text(encoding="utf-8")
+            self.assertIn('GameVersion.get() == "crystal"', main)
+            self.assertIn("crystal_game_version", main)
+            self.assertIn("dialogue_crystal.lua", main)
+            # Gold/Silver's own base dialogue catalog is untouched by the
+            # Crystal layer -- both files coexist, only one applies at a time.
+            self.assertTrue((mod_dir / "lang" / "dialogue.lua").is_file())
+
+    def test_empty_crystal_catalog_still_declares_crystal_with_no_layer_file(self):
+        # Korean: Crystal has no corpus for it, so the catalog resolves empty,
+        # but the mod still declares Crystal compatibility (its shared
+        # engine-string catalog still applies) -- see build_gs()'s own
+        # comment on join_crystal_dialogue()'s graceful degradation.
+        with tempfile.TemporaryDirectory() as tmp:
+            mod_dir = generate_gs_mod(
+                Path(tmp) / "mod", language="ko", crystal_text_catalog={},
+            )
+            manifest = json.loads((mod_dir / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["games"], ["gold", "silver", "crystal"])
+            self.assertFalse((mod_dir / "lang" / "dialogue_crystal.lua").exists())
+
+    def test_no_crystal_argument_keeps_the_gold_silver_only_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            mod_dir = generate_gs_mod(Path(tmp) / "mod", language="fr")
+            manifest = json.loads((mod_dir / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["games"], ["gold", "silver"])
+            main = (mod_dir / "main.lua").read_text(encoding="utf-8")
+            self.assertNotIn("crystal_game_version", main)
+
 
 class GsReleaseGateFlowTests(unittest.TestCase):
     def test_registry_expectations_reject_missing_or_empty_catalogs(self):
@@ -290,7 +331,7 @@ class TextCatalogFromJoinTests(unittest.TestCase):
         self.assertEqual(gs_text_catalog_from_join(entries), {"55:0001": "Salut"})
 
     def test_a_resolved_gold_pointer_is_also_aliased_onto_its_silver_pointer(self):
-        # config/gs/silver_pointer_aliases.json's real "03:4d76" -> "03:4d74"
+        # config/gsc/silver_pointer_aliases.json's real "03:4d76" -> "03:4d74"
         # entry (see tools/spike_gold_silver_text_overlap.lua's measurement):
         # whatever the Gold pointer resolves to should also land under the
         # Silver pointer, so a Silver save gets the same translation.

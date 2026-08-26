@@ -15,11 +15,6 @@
     "BORDERLESS": {"override": "ボーダーレス", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "TREES": {"override": "き", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "WATER": {"override": "みず", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "%s's\nhits will never\nmiss!": {
-      "override": "%sは\nぜったいに\nはずれない！",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; requires in-game visual validation."
-    },
     "%s :L%d": {
       "override": "%s :L%d",
       "reason": "engine-original",
@@ -363,7 +358,7 @@
     "HP": {
       "override": "HP",
       "reason": "engine-contract-gap",
-      "provenance": "Canonical Japanese Pokémon abbreviation. Already carried by overrides/ja-Hrkt/gs/engine.json for the same Strings.source(\"HP\") literal (inventory/ItemEffects.lua's STAT_LABEL, shared with ui/gen2/PhotoStudio.lua); missing here left RBY's own item-effect messages (vitamins, stat-boosting items) showing the raw English label."
+      "provenance": "Canonical Japanese Pokémon abbreviation. Already carried by overrides/ja-Hrkt/gsc/engine.json for the same Strings.source(\"HP\") literal (inventory/ItemEffects.lua's STAT_LABEL, shared with ui/gen2/PhotoStudio.lua); missing here left RBY's own item-effect messages (vitamins, stat-boosting items) showing the raw English label."
     },
     "<PK><MN>LEAGUE": {
       "override": "ポケモン　リーグ",

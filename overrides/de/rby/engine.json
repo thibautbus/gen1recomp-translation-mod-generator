@@ -25,11 +25,6 @@
       "reason": "engine-original",
       "provenance": "German corpus omits the greatly-stage fragment; manual engine-original wording, requires in-game visual validation."
     },
-    "%s's\nhits will never\nmiss!": {
-      "override": "%ss\ntrifft immer!",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; requires in-game visual validation."
-    },
     "%s :L%d": {
       "override": "%s :L%d",
       "reason": "engine-original",
@@ -368,7 +363,7 @@
     "HP": {
       "override": "KP",
       "reason": "engine-contract-gap",
-      "provenance": "Standard German Pokémon abbreviation. Already carried by overrides/de/gs/engine.json for the same Strings.source(\"HP\") literal (inventory/ItemEffects.lua's STAT_LABEL, shared with ui/gen2/PhotoStudio.lua); missing here left RBY's own item-effect messages (vitamins, stat-boosting items) showing the raw English label."
+      "provenance": "Standard German Pokémon abbreviation. Already carried by overrides/de/gsc/engine.json for the same Strings.source(\"HP\") literal (inventory/ItemEffects.lua's STAT_LABEL, shared with ui/gen2/PhotoStudio.lua); missing here left RBY's own item-effect messages (vitamins, stat-boosting items) showing the raw English label."
     },
     "<PK><MN>LEAGUE": {
       "override": "<PK><MN>-LIGA",

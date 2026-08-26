@@ -176,25 +176,6 @@ class MultilingualTests(unittest.TestCase):
             self.assertEqual(sum(entry.get("reason") == "editorial-correction" for entry in overrides.values()), 4)
             self.assertTrue(all(entry.get("provenance") for entry in overrides.values()))
 
-    def test_engine_original_editorial_overrides_are_scoped_and_printf_safe(self):
-        key = "%s's\nhits will never\nmiss!"
-        expected = {
-            "fr": "%s\nne ratera\njamais!",
-            "de": "%ss\ntrifft immer!",
-            "es": "¡%s\nsiempre acierta!",
-            "it": "%s\nnon sbaglia mai!",
-            "ja-Hrkt": "%sは\nぜったいに\nはずれない！",
-        }
-        for language, value in expected.items():
-            overrides = load_engine_overrides(Path("overrides") / language / "rby" / "engine.json")
-            self.assertEqual(overrides[key]["override"], value, language)
-            self.assertEqual(overrides[key]["reason"], "engine-original", language)
-            self.assertIn("AI-generated", overrides[key]["provenance"], language)
-            self.assertEqual(printf_directives(key), printf_directives(value), language)
-            output, report = match_engine_catalog({key: ""}, [], overrides, target_lang=language)
-            self.assertEqual(output[key], value, language)
-            self.assertEqual(report["details"][key], "override", language)
-
     def test_german_greatly_stage_overrides_cover_empty_corpus_fragments(self):
         expected = {
             "%s's\n%s\ngreatly rose!": "%ss\n%s nimmt stark zu!",

@@ -391,6 +391,93 @@ itself was):
   `RENDERED_ROMTEXT_FALLBACKS` allowlist -- correctly so, since the
   fallback never actually renders once the real ROM label resolves).
 
+**Retired or renamed by the v0.2.25 pin bump** (`gen1recomp_revision` in
+`config/pipeline.toml`/`config/shared/engine_manifest.json`, 24 commits
+ahead of v0.2.24, 101 files changed), found the same way: a real build
+against the bumped pin, not a source-diff guess.
+
+- **`%s got %s%d for winning! Sent some to MOM!`** (the Gold/Silver
+  "sent some money home" battle-prize message) had its `Strings.source()`
+  literal rewritten in `src/battle/gen2/Prize.lua` to bake in the same
+  `<LINE>`/`<CONT>` structure the real cart's own
+  `gs.battle.SentSomeToMomText` corpus row already carries (`%s got
+  %s%d\nfor winning!\x0bSent some to MOM!` instead of one flat sentence).
+  A real Gold/Silver/Crystal build against the bumped pin failed with
+  `Gold engine overrides contain 1 unknown key(s):
+  ['%s got %s%d for winning! Sent some to MOM!']`
+  (`pipeline/gs_engine.py`'s `match_gs_engine_strings()`, the Gold/Silver
+  analogue of the RBY check above). Every one of the six languages'
+  `overrides/<language>/gsc/engine.json` had its entry renamed to the new
+  key and its own translation reformatted onto the new two-break structure
+  -- the original wording was kept verbatim in each language, only the
+  `\n`/`\x0b` positions moved, so no re-translation was needed, just
+  re-punctuation.
+- No other engine-string key broke: real builds for all six GoldSilver-
+  Crystal languages and a real universal RBY build (fr, Red + Yellow) all
+  reached their usual 100% Gold/Silver-related and RBY-related
+  engine-string coverage, plus 100% ROM-aggregate coverage on both sides,
+  after this one fix. `config/shared/engine_manifest.json`'s
+  `forced_dynamic_keys`/`engine_dynamic_values` free-text `callsite`
+  fields (documentation only, never read by the matching logic itself)
+  went stale for the entries pointing at `src/ui/OptionsMenu.lua` and
+  `src/import/LauncherSettings.lua` line numbers -- both files shifted in
+  this bump -- but weren't re-audited line-by-line, the same practical
+  call already made for the v0.1.91..v0.2.19 range above.
+
+**Retired by the v0.2.26 pin bump** (`gen1recomp_revision` in
+`config/pipeline.toml`/`config/shared/engine_manifest.json`, 15 commits
+ahead of v0.2.25, 63 files changed -- mostly mobile/Android/iOS bridge work,
+a battle-rule-hooks RFC and Yellow-specific fixes unrelated to translation),
+found the same way: a real build against the bumped pin, not a source-diff
+guess.
+
+- **`%s's\nhits will never\nmiss!` (X Accuracy's battle message) retired,
+  not replaced.** `src/inventory/ItemEffects.lua`'s item-use rewrite
+  (adding a shared `itemUseLine()` helper and an item-use jingle, #1635)
+  dropped the `Strings("%s's\nhits will never\nmiss!", b.name)` call
+  entirely: X Accuracy now prints only the generic "X ACCURACY used!" line,
+  matching Dire Hit and Guard Spec (whose own `Strings()`/`romText()` calls
+  for "getting pumped"/"protected against stat changes" were removed the
+  same way, but neither needed a fix: Dire Hit's was already a `romText()`
+  fallback with no engine.json entry, and Guard Spec's identical literal
+  has a second, untouched `Strings()` call site in
+  `src/battle/TrainerAI.lua` -- a coincidental duplicate kept alive by the
+  AI's own use of the same message, not an allowlist exclusion). A real
+  RBY build against the bumped pin failed with `engine overrides contain 1
+  unknown key(s):
+  ["%s's\nhits will never\nmiss!"]` (`pipeline/mod.py`'s
+  `generate_mod()`). The entry was removed outright (not renamed) from all
+  five languages' `overrides/<language>/rby/engine.json` -- fr, de, es, it,
+  ja-Hrkt all had it; ko has no `rby/engine.json`.
+- **`%s used\n%s!` moved off `Strings()` without breaking anything, but
+  needed a fix of its own.** The same `itemUseLine()` refactor replaced
+  `ItemEffects.lua`'s other direct `Strings("%s used\n%s!", ...)` call
+  (Repel/X-item usage) with `romText(data, "_ItemUseText001", "%s
+  used\n%s!", ...)` -- the same ROM label and *rendered* fallback text
+  `BattleState.lua`'s held-item-use line already used, just reached from a
+  second call site. No override referenced this literal, so no build
+  broke, but `pipeline/engine_backlog.py`'s `iter_romtext_fallback_callsites()`
+  only counts a romText fallback as a real (translatable) engine callsite
+  when its literal is in the hand-maintained `RENDERED_ROMTEXT_FALLBACKS`
+  allowlist -- and only the *other* `_ItemUseText001` fallback phrasing
+  (`%s\nused %s!`, `BattleState.lua`'s held-item-in-battle line) was listed.
+  Once `ItemEffects.lua` stopped calling `Strings()` on this exact literal
+  directly, it silently dropped out of the RBY-related engine-string scan
+  (242 -> 240 keys scanned, not just the 1 legitimately retired one) --
+  confirmed with a standalone before/after scan of both pinned revisions
+  via `pipeline.engine_backlog`/`pipeline.engine_scope`, not just the
+  build's pass/fail. Fixed by adding `"%s used\n%s!"` to
+  `RENDERED_ROMTEXT_FALLBACKS` alongside its sibling phrasing.
+- No other engine-string key broke or silently dropped out of scope: a
+  standalone `Strings()`/`romText()` callsite scan diffed against the
+  pinned v0.2.25 source found exactly these two keys affected (one
+  genuinely gone, one needing the allowlist fix above); real builds for
+  all five RBY languages (fr, de, es, it, ja-Hrkt; Red + Yellow) and a real
+  Gold/Silver/Crystal build (fr) all reached their usual 100% RBY-related
+  (241/241, down from 242/242 -- the one retired key) and Gold/Silver-
+  related (302/302, unchanged) engine-string coverage, plus 100%
+  ROM-aggregate coverage on every side, after these two fixes.
+
 ### Fixed: Surfing Pikachu/Hall of Fame HUD text rewritten upstream
 
 Bumping this project's pin from v0.1.91 to v0.2.19 (`gen1recomp_revision`
@@ -649,7 +736,7 @@ it was originally declared-only) is what's still current:
   (`pipeline/gs_join.py`'s `join_gs_pointers`) matches primarily by
   normalized English text, not by pointer -- `bank:address` is only used
   to look up the small set of hand-reviewed, Gold-sha1-pinned overrides in
-  `config/gs/pointer_decisions.json`/`placeholder_decisions.json` and as
+  `config/gsc/pointer_decisions.json`/`placeholder_decisions.json` and as
   the final write-back key. Any of those specific entries that do differ
   between editions degrade the same way: lose the hand-reviewed override,
   fall back to automatic resolution or `UNRESOLVED`, never corrupt.
@@ -664,7 +751,7 @@ didn't were all field-move prompts in bank `03` (Rock Smash/Strength:
 `"A POKéMON may be able to break it."`, `"{STRBUF} used STRENGTH!"`, and
 similar) -- paired up by content, every one shifted the same uniform -2
 bytes between editions while carrying byte-identical English text.
-`config/gs/silver_pointer_aliases.json` records those 8 `{gold_pointer:
+`config/gsc/silver_pointer_aliases.json` records those 8 `{gold_pointer:
 silver_pointer}` pairs, and `gs_text_catalog_from_join()`
 (`pipeline/gs_mod.py`) now aliases each Gold pointer's resolved
 translation onto its Silver pointer too. **Dialogue-pointer coverage
@@ -680,13 +767,133 @@ Silver ROM build resolves 3036/3051 pointers on its own (99.5%, one
 Silver-native pointer with no Gold-side alias), reusing the exact same
 Gold-sourced translation catalog.
 
-Crystal is a different, bigger question entirely -- see the project memory
-`project_gold_silver_crystal_unified_mod.md`. It uses a different
-`pokegold`-unrelated codebase with materially different `bank:address`
-values and its own poke-corpus collection (`Crystal/`, its own `c.text.*`
-qid namespace, distinct from `GoldSilver/`'s `gs.*`), plus real content
-Gold/Silver don't have at all (Battle Tower, Kris, an enhanced Pokégear).
-Nothing here extends to Crystal.
+Crystal was a different, bigger question -- see the next section for how it
+was actually resolved.
+
+### Crystal: mandatory companion ROM, its own corpus join, shared engine strings
+
+Crystal uses a `pokegold`-derived but materially different codebase from
+Gold/Silver: of 2011 symbol names shared between Gold and Crystal, 1926
+(95.8%) resolve to a different `bank:address` -- essentially no free ride
+from Gold/Silver's own resolved dialogue catalog, unlike Silver's near-zero
+divergence from Gold. gen1recomp's own engine already has full Crystal
+support though: `tools/rom_manifest_crystal.json` is complete, and
+`src/import/RomExtractorGen2.lua` already has edition branches for
+`"crystal"` throughout (palettes, sprites, title screen, credits, music,
+text/opcodes, trade). This project's own `tools/gs_extract.lua` (a headless
+LuaJIT wrapper around that extractor, not gen1recomp's) just needed the same
+treatment as its existing `"gold"`/`"silver"` branches, accepting
+`"crystal"` and selecting `rom_manifest_crystal.json`.
+
+poke-corpus has a separate `Crystal/` collection in the exact same file
+format as `GoldSilver/` (`{qid,en,<lang>}_msg.txt`, same `<LINE>`/`<CONT>`/
+`<PARA>`/`@`/`[NULL]`/`<PK><MN>` tokens), under a flat `c.text.*` qid
+namespace with zero qid overlap with `gs.*` -- but 86% of GoldSilver's own
+unique English text reappears somewhere in Crystal's, so a from-scratch join
+against Crystal's own corpus (not a cross-collection qid alias) resolves
+most of it automatically: `pipeline.gs_join.join_gs_pointers()` already
+matches by normalized English text, not by pointer, so despite its "gs_"
+name it is edition-agnostic and needed no changes at all --
+`pipeline/crystal_mod.py`'s `join_crystal_dialogue()` just calls it against
+Crystal's own extracted TSVs and its own corpus collection. A real build
+resolved 3864/4010 dialogue pointers (96.4%) automatically with no manual
+help at all.
+
+Closing the rest took two further passes, both against real, verifiable
+ground truth rather than guesswork. First, Crystal's qid namespace turned
+out to mirror Gold/Silver's own per-location taxonomy exactly (same
+trailing symbol names, `c.` prefix instead of `gs.`), so Gold's own
+already-reviewed `config/gsc/pointer_decisions.json` (164 entries picking
+the real, reachable text over an unused duplicate) doubled as a lookup:
+whenever a Crystal pointer's ambiguous candidates included exactly one
+qid whose `gs.`-prefixed counterpart Gold's reviewers already confirmed
+was a real pointer's target, the same pick applied to Crystal -- resolving
+22 of 113 ambiguous pointers this way
+(`pipeline/crystal_mod.py`'s `load_crystal_pointer_decisions()`). Second,
+the [pokecrystal disassembly](https://github.com/pret/pokecrystal) (the
+user's own clone) was built from source with `rgbds`, confirmed to
+produce a ROM byte-for-byte identical to the real retail cartridge (both
+hash to `f4cd194bdee0d04ca4eac29e09b8e4e9d818c133`), and its own
+linker-generated `.sym` file -- an authoritative `bank:address` -> real
+ASM symbol name map for every one of Crystal's 4010 pointers, not just
+the 97 gen1recomp's own extractor already names -- resolved all but one
+of the remaining 91 ambiguous pointers outright; the one leftover (two
+distinct corpus qids sharing an identical trailing symbol name) was
+confirmed by grepping the real disassembly source directly. This closed
+French's own ambiguous-pointer gap completely (113 entries), but German,
+Spanish, Italian and Japanese each had their own, distinct residual
+ambiguous pointers (French's disambiguation only fixes a pointer for
+every language at once when the *same* pointer was ambiguous for all of
+them -- a language whose corpus text for a given English line happens to
+match only one candidate never shows up as ambiguous in the first place,
+so it needed no decision, while a language matching several still did).
+The same symbol-table method was re-run against each of their own
+remaining unresolved pointers, extending
+`config/gsc/crystal_pointer_decisions.json` to 210 entries in total --
+every decision re-verified against the real `.sym` file, not assumed from
+French's.
+
+The rest were never ambiguous, they simply had no corpus row at all --
+and the same real symbol table confirmed why: every one resolves to a
+genuine Mobile Adapter GB / PokeCom Center script (real, scripted content
+in pokecrystal's own `maps/PokecomCenterAdminOfficeMobile.asm` and
+related files), a peripheral never sold outside Japan. Spanish and
+Japanese poke-corpus data turned out to already carry real, official
+translations for every one of these lines -- so only French, German and
+Italian genuinely lacked corpus coverage here. Those three now carry
+hand-written, AI-generated text instead (`overrides/<lang>/gsc/
+crystal_dialogue.json`, loaded by `pipeline/crystal_mod.py`'s
+`load_crystal_dialogue_overrides()`): 17 pointers for French, 9 for
+German (a subset of French's own set -- Spanish/Japanese's corpus already
+covered the rest for German too, it turned out), and 16 for Italian
+(mostly the same set, plus one pointer -- `62:6532` -- that French's own
+corpus resolves but Italian's doesn't). Each entry's line/page-break
+structure is checked to match the English source's own `<LINE>`/`<PARA>`/
+`<CONT>` positions exactly (same count and order of breaks, not
+necessarily the same word-for-word segment boundaries) before being
+accepted.
+
+**Crystal dialogue resolution is 3994/4010 (99.60%) for all five
+translated languages (fr/de/es/it/ja-Hrkt), i.e. 100% of the 3994
+pointers that carry any real, visible text** -- the only 16 left in every
+language are markup-only entries with nothing to translate at all, the
+same category Gold/Silver's own 100%-covered catalog also carries.
+Korean stays at 0/3994 (no Crystal corpus exists for it at all, see
+below).
+
+Crystal ships as a mandatory companion ROM merged into the same
+`translation-<lang>-gen2` mod as Gold/Silver, the same way Yellow is a
+mandatory companion for the universal RBY mod: `pipeline/gs_mod.py`'s
+`build_gs()` now always extracts and joins a Crystal ROM too, and
+`generate_gs_mod()` writes Crystal's own resolved dialogue to a separate
+`lang/dialogue_crystal.lua` layer, applied at runtime only when
+`GameVersion.get() == "crystal"` (there is no upstream `isCrystal()` helper
+the way there's an `isYellow()`, but `.get() == "crystal"` is exactly what
+`isGold()`/`isYellow()`/`isBlue()` do internally for their own edition, so
+this mirrors `pipeline/mod.py`'s own `yellow_isyellow_guard_lines()`
+pattern for RBY's Yellow layer). The manifest declares `"gold"`, `"silver"`,
+and `"crystal"`. Korean has no Crystal corpus in poke-corpus (no
+`ko_msg.txt`, unlike GoldSilver's own six languages) -- rather than drop
+Korean from the whole generation-2 release, `join_crystal_dialogue()`
+detects the missing corpus file and returns an empty catalog instead of
+raising, so a Korean build still succeeds and still declares Crystal
+compatibility, it just leaves Crystal's own dialogue in English.
+
+Deliberately out of scope so far: Crystal's own named catalogs (species/
+moves/items/trainer classes -- likely reusable from Gold/Silver's own
+already-translated values, since it's the same Gen 2 roster, but not yet
+verified or wired up), Crystal-exclusive content (MoveTutor, GenderSelect,
+Battle Tower, Buena's Password -- the 48 keys already catalogued as
+`"crystal-only-feature"` in `config/gsc/engine_scope_exclusions.json`, which
+excludes them from Gold/Silver's own engine-string metric precisely because
+they're Crystal's to translate, not Gold/Silver's), and a release gate for
+Crystal's own dialogue layer (Gold/Silver's existing gates are unaffected
+and still run; nothing yet verifies Crystal's layer the same way before
+packaging). Crystal's own engine strings (the Options/Menu `Strings()`
+catalog) need no separate work at all: `ui/gen2/OptionsMenu.lua`/
+`MainMenu.lua` have no edition branches, so Gold/Silver's own
+`overrides/<lang>/gsc/engine.json` (302 keys, 100% translated) already
+applies unchanged on a Crystal save.
 
 ### Fixed: rows already reachable through an existing public hook
 
@@ -695,7 +902,7 @@ Nothing here extends to Crystal.
 submenu's `Switch`/`Stats` rows are *not* private-class reads: both already
 run through public list hooks (`ui.pc.items`, `ui.party.submenu`) that this
 mod already wraps for other rows (`Cancel`, item-PC actions, decoration,
-mail box). They were simply missing from `config/gs/literal_handlers.json`.
+mail box). They were simply missing from `config/gsc/literal_handlers.json`.
 Likewise the START menu's two-line highlighted-entry description
 (`Pokémon database`, `Party Pokémon status`, `Contains items`, and five
 more) runs through `ui.start_menu.items`, whose `item.label` field this mod
@@ -1077,7 +1284,7 @@ a matter of wiring a few missed callsites.
   Points`, `Type`, `Item`, `Move`, `OT`, `Attack`, `Defense`, and related
   screens) through public data or hooks.
 
-The entries in `config/gs/literal_handlers.json` record known stable corpus
+The entries in `config/gsc/literal_handlers.json` record known stable corpus
 matches for these screens. They can be activated when the corresponding public
 upstream hooks exist; they are deliberately not a private-class monkey patch.
 This keeps the release manifest permission-free and makes the remaining work

@@ -15,11 +15,6 @@
     "BORDERLESS": {"override": "SANS BORD", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "TREES": {"override": "ARBRES", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "WATER": {"override": "EAU", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "%s's\nhits will never\nmiss!": {
-      "override": "%s\nne ratera\njamais!",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; requires in-game visual validation."
-    },
     "%s :L%d": {
       "override": "%s :N%d",
       "reason": "engine-original",
@@ -358,7 +353,7 @@
     "HP": {
       "override": "PV",
       "reason": "engine-contract-gap",
-      "provenance": "Standard French Pokémon abbreviation. Already carried by overrides/fr/gs/engine.json for the same Strings.source(\"HP\") literal (inventory/ItemEffects.lua's STAT_LABEL, shared with ui/gen2/PhotoStudio.lua); missing here left RBY's own item-effect messages (vitamins, stat-boosting items) showing the raw English label."
+      "provenance": "Standard French Pokémon abbreviation. Already carried by overrides/fr/gsc/engine.json for the same Strings.source(\"HP\") literal (inventory/ItemEffects.lua's STAT_LABEL, shared with ui/gen2/PhotoStudio.lua); missing here left RBY's own item-effect messages (vitamins, stat-boosting items) showing the raw English label."
     },
     "<PK><MN>LEAGUE": {
       "override": "LIGUE <PK><MN>",

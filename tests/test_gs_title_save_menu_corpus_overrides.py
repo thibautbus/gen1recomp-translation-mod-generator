@@ -91,7 +91,7 @@ NO_OP_KEYS = {
 class GoldTitleSaveMenuCorpusOverrideTests(unittest.TestCase):
     def test_engine_original_languages_have_the_expected_corpus_values(self):
         for language, expected in ENGINE_ORIGINAL.items():
-            path = Path("overrides") / language / "gs" / "engine.json"
+            path = Path("overrides") / language / "gsc" / "engine.json"
             overrides = load_engine_overrides(path)
             for source, override in expected.items():
                 self.assertIn(source, overrides, (language, source))
@@ -102,7 +102,7 @@ class GoldTitleSaveMenuCorpusOverrideTests(unittest.TestCase):
 
     def test_engine_contract_gap_languages_have_the_expected_values(self):
         for language, expected in ENGINE_CONTRACT_GAP.items():
-            path = Path("overrides") / language / "gs" / "engine.json"
+            path = Path("overrides") / language / "gsc" / "engine.json"
             overrides = load_engine_overrides(path)
             for source, override in expected.items():
                 self.assertIn(source, overrides, (language, source))
@@ -112,7 +112,7 @@ class GoldTitleSaveMenuCorpusOverrideTests(unittest.TestCase):
 
     def test_identical_to_source_values_carry_no_pointless_override(self):
         for language, keys in NO_OP_KEYS.items():
-            path = Path("overrides") / language / "gs" / "engine.json"
+            path = Path("overrides") / language / "gsc" / "engine.json"
             overrides = load_engine_overrides(path)
             for key in keys:
                 self.assertNotIn(key, overrides, (language, key))

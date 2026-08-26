@@ -15,15 +15,16 @@
 --
 -- Usage: luajit gs_extract.lua <gen1recomp_root> <rom_path> <out_dir> <edition>
 --
--- <edition> is "gold" or "silver" -- gen1recomp-translation-mods' own
--- pipeline/roms.py:verify_gs_rom() already computed the ROM's SHA-1 and
--- knows which one it is by the time this script runs, so this script
--- doesn't recompute it: love.data.hash (what gen1recomp's own
+-- <edition> is "gold", "silver", or "crystal" -- gen1recomp-translation-mods'
+-- own pipeline/roms.py:verify_gs_rom()/verify_crystal_rom() already computed
+-- the ROM's SHA-1 and knows which one it is by the time this script runs, so
+-- this script doesn't recompute it: love.data.hash (what gen1recomp's own
 -- GameVersion.forSha1 callers use) isn't available under the headless
--- tests/love_stub.lua this script runs under. Picks
--- rom_manifest_gold.json or rom_manifest_silver.json accordingly, the
+-- tests/love_stub.lua this script runs under. Picks rom_manifest_gold.json,
+-- rom_manifest_silver.json, or rom_manifest_crystal.json accordingly, the
 -- same manifest gen1recomp's own RomExtractorGen2 would read this ROM
--- through at runtime.
+-- through at runtime (RomExtractorGen2.lua's own edition branches already
+-- cover "crystal" alongside "gold"/"silver").
 --
 -- Writes, in <out_dir>:
 --   gs_text.tsv     pointer -> text, from the "scripts" stage (required)
@@ -35,7 +36,8 @@
 local root, romPath, outDir, edition = ...
 assert(root and romPath and outDir, "usage: <gen1recomp_root> <rom> <out_dir> <edition>")
 edition = edition or "gold"
-assert(edition == "gold" or edition == "silver", "edition must be \"gold\" or \"silver\", got " .. tostring(edition))
+assert(edition == "gold" or edition == "silver" or edition == "crystal",
+  "edition must be \"gold\", \"silver\", or \"crystal\", got " .. tostring(edition))
 
 package.path = table.concat({
   root .. "/?.lua",
@@ -57,7 +59,12 @@ local function readFile(path, mode)
 end
 
 local romData = readFile(romPath, "rb")
-local manifestName = edition == "silver" and "rom_manifest_silver.json" or "rom_manifest_gold.json"
+local manifestNames = {
+  gold = "rom_manifest_gold.json",
+  silver = "rom_manifest_silver.json",
+  crystal = "rom_manifest_crystal.json",
+}
+local manifestName = manifestNames[edition]
 local manifest = Json.decode(readFile(root .. "/tools/" .. manifestName))
 
 local extractor = RomExtractorGen2.new(romData, manifest)

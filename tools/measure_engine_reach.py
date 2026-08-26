@@ -11,7 +11,7 @@ Two things can make a corpus entry reachable today:
             found anywhere in the engine source (pipeline/engine_scope.py)
             -> ships through the `strings` registry the same way RBY's
             engine backlog does, via a language's shared_engine_overrides
-            (overrides/<language>/gs/engine.json, following the existing
+            (overrides/<language>/gsc/engine.json, following the existing
             overrides/<language>/rby/yellow_engine.json precedent).
 
 Neither does not mean untranslatable: it means nothing in this Gen1Recomp

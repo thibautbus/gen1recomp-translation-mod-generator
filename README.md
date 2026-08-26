@@ -102,18 +102,30 @@ ROM English text. The generated coverage report and
 breakdown. Yellow-specific manual translations live in
 `overrides/<language>/rby/yellow_engine.json`.
 
-## Pokémon Gold and Silver support
+## Pokémon Gold, Silver and Crystal support
 
-Gold and Silver is published separately as `translation-<lang>-gen2`. It is built
-and extracted from either a real Gold or a real Silver ROM (whichever one is
-supplied) and covers dialogue, Pokédex entries, named ROM catalogs and engine
-strings matched from production Gen 2 callsites. Missing or ambiguous matches
-remain in English. The manifest declares both `"gold"` and `"silver"` as
-supported games, so the same mod loads on either edition's save.
+Gold, Silver and Crystal are published together as `translation-<lang>-gen2`. Gold's
+and Silver's own text is built and extracted from either a real Gold or a real
+Silver ROM (whichever one is supplied) and covers dialogue, Pokédex entries,
+named ROM catalogs and engine strings matched from production Gen 2 callsites.
+Crystal is a mandatory companion ROM, the same way Yellow is for the universal
+RBY mod: its own dialogue text uses different `bank:address` pointers from
+Gold/Silver (95.8% of shared symbol names diverge), so it gets its own corpus
+join against poke-corpus's separate `Crystal/` collection and ships as a
+`lang/dialogue_crystal.lua` layer, applied only at runtime on an actual Crystal
+save. Crystal reuses Gold/Silver's own engine-string catalog as-is (the
+Options/Menu `Strings()` code is identical across all three editions) and has
+no named ROM catalogs of its own yet (species/moves/items/trainer classes).
+Korean has no Crystal corpus in poke-corpus, unlike Gold/Silver -- Crystal's
+own dialogue simply stays in English for that language. Missing or ambiguous
+matches remain in English. The manifest declares `"gold"`, `"silver"` and
+`"crystal"` as supported games, so the same mod loads on any of the three
+editions' saves.
 
 Before packaging, headless generation-2 gates verify that the translated
-values reach the Gold and Silver registries. These checks do not replace an
-in-game smoke test before release.
+values reach the Gold and Silver registries (Crystal's own dialogue layer is
+not yet covered by a release gate). These checks do not replace an in-game
+smoke test before release.
 
 ## Legal inputs and privacy
 
@@ -126,6 +138,7 @@ Use dumps from your own original US cartridges:
 | Yellow | `cc7d03262ebfaf2f06772c1a480c7d9d5f4a38e1` |
 | Gold | `d8b8a3600a465308c9953dfa04f0081c05bdcb94` |
 | Silver | `49b163f7e57702bc939d642a18f591de55d92dae` |
+| Crystal | `f4cd194bdee0d04ca4eac29e09b8e4e9d818c133` |
 
 The pipeline verifies these fingerprints and never downloads, provides or
 redistributes ROMs, patches or copyrighted text extracts. Generated data,
@@ -139,9 +152,9 @@ font profiles are:
 
 | Target languages | Releases | Default font | Optional font |
 | --- | --- | --- | --- |
-| `fr`, `de`, `es`, `it` | RBY, Gold and Silver | Fusion Pixel Latin, 10px | Pokemon Font, 8px |
-| `ja-Hrkt` | RBY, Gold and Silver | Fusion Pixel Japanese, 8px | — |
-| `ko` | Gold and Silver only | Fusion Pixel Hangul, 10px | — |
+| `fr`, `de`, `es`, `it` | RBY, Gold/Silver/Crystal | Fusion Pixel Latin, 10px | Pokemon Font, 8px |
+| `ja-Hrkt` | RBY, Gold/Silver/Crystal | Fusion Pixel Japanese, 8px | — |
+| `ko` | Gold/Silver/Crystal only (Crystal's own dialogue stays in English) | Fusion Pixel Hangul, 10px | — |
 
 The optional Pokemon Font is more compact, but translated text can still
 overflow fixed-width interfaces.
@@ -168,11 +181,11 @@ engine's English fallback.
 
 | Target | Red Blue ROM aggregate | Yellow ROM aggregate | RBY-related engine strings |
 | --- | ---: | ---: | ---: |
-| `fr` | 3286/3286 (100%) | 3400/3400 (100%) | 242/242 (100%) |
-| `de` | 3286/3286 (100%) | 3400/3400 (100%) | 242/242 (100%) |
-| `es` | 3286/3286 (100%) | 3400/3400 (100%) | 242/242 (100%) |
-| `it` | 3286/3286 (100%) | 3400/3400 (100%) | 242/242 (100%) |
-| `ja-Hrkt` | 3286/3286 (100%) | 3400/3400 (100%) | 242/242 (100%) |
+| `fr` | 3286/3286 (100%) | 3400/3400 (100%) | 241/241 (100%) |
+| `de` | 3286/3286 (100%) | 3400/3400 (100%) | 241/241 (100%) |
+| `es` | 3286/3286 (100%) | 3400/3400 (100%) | 241/241 (100%) |
+| `it` | 3286/3286 (100%) | 3400/3400 (100%) | 241/241 (100%) |
+| `ja-Hrkt` | 3286/3286 (100%) | 3400/3400 (100%) | 241/241 (100%) |
 
 The ROM aggregates exclude extracted labels that do not render visible text.
 Reviewed exceptions are recorded in
@@ -181,9 +194,11 @@ Full per-key scope, matching strategy and fallback provenance remain available i
 the generated coverage report and
 [`engine_scope.json`](config/rby/engine_scope.json).
 
-### Gold and Silver
+### Gold, Silver and Crystal
 
-Gold and Silver is built as a separate generation-2 artifact, from either ROM:
+Gold and Silver are built as a separate generation-2 artifact, from either ROM. Crystal is
+a mandatory companion ROM merged into the same artifact, applied at runtime only on an
+actual Crystal save:
 
 - `Gold and Silver ROM aggregate` combines dialogue, Pokédex entries and the named ROM
   catalogs. Its denominator excludes 14 markup-only records with no visible
@@ -194,19 +209,30 @@ Gold and Silver is built as a separate generation-2 artifact, from either ROM:
   Buena's Password radio special, Battle Tower) are excluded from this scope
   -- none of it exists on a real Gold or Silver cart, so it has no PokeCorpus
   row and is not part of what this mod could ever cover; see
-  [`config/gs/engine_scope_exclusions.json`](config/gs/engine_scope_exclusions.json).
+  [`config/gsc/engine_scope_exclusions.json`](config/gsc/engine_scope_exclusions.json).
+- `Crystal dialogue coverage` is Crystal's own dialogue pointers, joined
+  separately against poke-corpus's own `Crystal/` collection (different
+  `bank:address` values from Gold/Silver almost throughout, so this is not
+  the same catalog as the aggregate above). Its denominator excludes 16
+  markup-only records, same convention as the ROM aggregate. This is
+  dialogue only for now -- Crystal's own named catalogs (species/moves/
+  items/trainer classes) and its 48 Crystal-exclusive engine strings are
+  not covered yet; the `Gold and Silver-related engine strings` catalog
+  already applies unchanged on a Crystal save (same shared `Strings()`
+  code, no separate work needed there). `ko` has no Crystal corpus at all
+  in poke-corpus, so its dialogue stays in English.
 
 The generated report retains the dialogue/catalog breakdown and per-key
 provenance. Future unresolved entries will keep their original English text.
 
-| Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings |
-| --- | ---: | ---: |
-| `fr` | 4452/4452 (100%) | 302/302 (100%) |
-| `de` | 4452/4452 (100%) | 302/302 (100%) |
-| `es` | 4452/4452 (100%) | 302/302 (100%) |
-| `it` | 4452/4452 (100%) | 302/302 (100%) |
-| `ja-Hrkt` | 4452/4452 (100%) | 302/302 (100%) |
-| `ko` | 4452/4452 (100%) | 302/302 (100%) |
+| Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings | Crystal dialogue coverage |
+| --- | ---: | ---: | ---: |
+| `fr` | 4452/4452 (100%) | 302/302 (100%) | 3994/3994 (100%) |
+| `de` | 4452/4452 (100%) | 302/302 (100%) | 3994/3994 (100%) |
+| `es` | 4452/4452 (100%) | 302/302 (100%) | 3994/3994 (100%) |
+| `it` | 4452/4452 (100%) | 302/302 (100%) | 3994/3994 (100%) |
+| `ja-Hrkt` | 4452/4452 (100%) | 302/302 (100%) | 3994/3994 (100%) |
+| `ko` | 4452/4452 (100%) | 302/302 (100%) | 0/3994 (0%) |
 
 ### Other engine strings
 
@@ -242,8 +268,8 @@ Every translated engine string remains traceable:
 | Automatic match | Exact, normalized, or structural match proved by the generator. | Generation report |
 | Deterministic anchor | Reliable PokeCorpus qid, composition, or extraction rule. | `config/{rby,gs}/semantic_anchors.json` |
 | Human-reviewed RBY anchor | Contextual or language-specific extraction reviewed by a maintainer; text still comes from PokeCorpus. | `config/rby/semantic_anchor_decisions.json` |
-| Human-reviewed Gold pointer | Ambiguous ROM pointer resolved to a reviewed PokeCorpus qid. | `config/gs/pointer_decisions.json` |
-| Reviewed placeholder exception | Official localized wording legitimately adds or omits a runtime value such as the player name or an item quantity. This records no translated text and does not disable the audit; each exception is scoped to a language, ROM pointer, corpus QID, and exact audit message. | `config/gs/placeholder_decisions.json` |
+| Human-reviewed Gold pointer | Ambiguous ROM pointer resolved to a reviewed PokeCorpus qid. | `config/gsc/pointer_decisions.json` |
+| Reviewed placeholder exception | Official localized wording legitimately adds or omits a runtime value such as the player name or an item quantity. This records no translated text and does not disable the audit; each exception is scoped to a language, ROM pointer, corpus QID, and exact audit message. | `config/gsc/placeholder_decisions.json` |
 | Manual corpus correction | A maintainer corrects one selected-language corpus translation without changing the upstream corpus. Entries are indexed by qid. | `overrides/<language>/rby/corpus.json` |
 | Manual translation — engine contract gap | PokeCorpus has the text, but Gen1Recomp merges contexts or hides required parameters. | `overrides/<language>/{rby,gs}/engine.json`, `reason: "engine-contract-gap"` |
 | Manual translation — engine original | Engine-specific text with no compatible ROM source. | `overrides/<language>/{rby,gs}/engine.json`, `reason: "engine-original"` |
@@ -295,7 +321,7 @@ explicit override > semantic anchor > exact > normalized
 > structural placeholder match > empty entry (runtime English fallback)
 ```
 
-Game-specific configuration lives under `config/rby/` and `config/gs/`;
+Game-specific configuration lives under `config/rby/` and `config/gsc/`;
 language overrides follow the same split under `overrides/<language>/`.
 
 | Configuration | Purpose |

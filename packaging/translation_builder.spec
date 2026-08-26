@@ -19,9 +19,9 @@ for relative in (
     "config/pipeline.toml", "config/shared/engine_manifest.json", "config/rby/engine_scope.json",
     "config/rby/terminology_anchors.json", "config/rby/semantic_anchors.json", "config/rby/semantic_anchor_decisions.json",
     "config/rby/literal_handlers.json", "config/rby/yellow_coverage_exceptions.json",
-    "config/gs/semantic_anchors.json", "config/gs/pointer_decisions.json",
-    "config/gs/literal_handlers.json", "config/gs/placeholder_decisions.json",
-    "config/gs/silver_pointer_aliases.json",
+    "config/gsc/semantic_anchors.json", "config/gsc/pointer_decisions.json",
+    "config/gsc/literal_handlers.json", "config/gsc/placeholder_decisions.json",
+    "config/gsc/silver_pointer_aliases.json",
     "config/rom_paths.example.toml",
     "pyproject.toml",
 ):

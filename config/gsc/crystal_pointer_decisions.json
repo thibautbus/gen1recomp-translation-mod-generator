@@ -1,0 +1,846 @@
+{
+  "schema": "gen1recomp-translation-mods/crystal-pointer-decisions",
+  "version": 1,
+  "entries": {
+    "03:4d73": {
+      "qid": "c.common_2.BouldersMayMoveText",
+      "symbol": "BouldersMayMoveText"
+    },
+    "03:4f72": {
+      "qid": "c.common_2.MaySmashText",
+      "symbol": "MaySmashText"
+    },
+    "15:51ed": {
+      "qid": "c.GoldenrodMagnetTrainStation.GoldenrodMagnetTrainStationOfficerRightThisWayText",
+      "symbol": "GoldenrodMagnetTrainStationOfficerRightThisWayText"
+    },
+    "15:524f": {
+      "qid": "c.GoldenrodMagnetTrainStation.GoldenrodMagnetTrainStationOfficerHopeToSeeYouAgainText",
+      "symbol": "GoldenrodMagnetTrainStationOfficerHopeToSeeYouAgainText"
+    },
+    "15:64cb": {
+      "qid": "c.GoldenrodDeptStore6F.GoldenrodVendingText",
+      "symbol": "GoldenrodVendingText"
+    },
+    "15:6512": {
+      "qid": "c.GoldenrodDeptStore6F.GoldenrodVendingNoMoneyText",
+      "symbol": "GoldenrodVendingNoMoneyText"
+    },
+    "15:652b": {
+      "qid": "c.GoldenrodDeptStore6F.GoldenrodVendingNoSpaceText",
+      "symbol": "GoldenrodVendingNoSpaceText"
+    },
+    "15:6e8b": {
+      "qid": "c.GoldenrodGameCorner.GoldenrodGameCornerPrizeVendorWhichPrizeText",
+      "symbol": "GoldenrodGameCornerPrizeVendorWhichPrizeText"
+    },
+    "15:6ea8": {
+      "qid": "c.GoldenrodGameCorner.GoldenrodGameCornerPrizeVendorConfirmPrizeText",
+      "symbol": "GoldenrodGameCornerPrizeVendorConfirmPrizeText"
+    },
+    "15:6ebd": {
+      "qid": "c.GoldenrodGameCorner.GoldenrodGameCornerPrizeVendorHereYouGoText",
+      "symbol": "GoldenrodGameCornerPrizeVendorHereYouGoText"
+    },
+    "15:6f35": {
+      "qid": "c.GoldenrodGameCorner.GoldenrodGameCornerPrizeVendorNoCoinCaseText",
+      "symbol": "GoldenrodGameCornerPrizeVendorNoCoinCaseText"
+    },
+    "16:4685": {
+      "qid": "c.RuinsOfAlphHoOhChamber.RuinsOfAlphHoOhChamberAncientReplicaText",
+      "symbol": "RuinsOfAlphHoOhChamberAncientReplicaText"
+    },
+    "16:4b1a": {
+      "qid": "c.RuinsOfAlphKabutoChamber.RuinsOfAlphKabutoChamberAncientReplicaText",
+      "symbol": "RuinsOfAlphKabutoChamberAncientReplicaText"
+    },
+    "16:4d01": {
+      "qid": "c.RuinsOfAlphOmanyteChamber.RuinsOfAlphOmanyteChamberAncientReplicaText",
+      "symbol": "RuinsOfAlphOmanyteChamberAncientReplicaText"
+    },
+    "16:4ec2": {
+      "qid": "c.RuinsOfAlphAerodactylChamber.RuinsOfAlphAerodactylChamberAncientReplicaText",
+      "symbol": "RuinsOfAlphAerodactylChamberAncientReplicaText"
+    },
+    "16:5072": {
+      "qid": "c.RuinsOfAlphInnerChamber.RuinsOfAlphInnerChamberStatueText",
+      "symbol": "RuinsOfAlphInnerChamberStatueText"
+    },
+    "16:5923": {
+      "qid": "c.RuinsOfAlphHoOhItemRoom.RuinsOfAlphHoOhItemRoomAncientReplicaText",
+      "symbol": "RuinsOfAlphHoOhItemRoomAncientReplicaText"
+    },
+    "16:59ad": {
+      "qid": "c.RuinsOfAlphKabutoItemRoom.RuinsOfAlphKabutoItemRoomAncientReplicaText",
+      "symbol": "RuinsOfAlphKabutoItemRoomAncientReplicaText"
+    },
+    "16:5a37": {
+      "qid": "c.RuinsOfAlphOmanyteItemRoom.RuinsOfAlphOmanyteItemRoomAncientReplicaText",
+      "symbol": "RuinsOfAlphOmanyteItemRoomAncientReplicaText"
+    },
+    "16:5ac1": {
+      "qid": "c.RuinsOfAlphAerodactylItemRoom.RuinsOfAlphAerodactylItemRoomAncientReplicaText",
+      "symbol": "RuinsOfAlphAerodactylItemRoomAncientReplicaText"
+    },
+    "16:5ef4": {
+      "qid": "c.UnionCave1F.FirebreatherRayBeatenText",
+      "symbol": "FirebreatherRayBeatenText"
+    },
+    "17:4771": {
+      "qid": "c.NationalPark.NationalParkBattleNoticeText",
+      "symbol": "NationalParkBattleNoticeText"
+    },
+    "17:47c6": {
+      "qid": "c.NationalPark.NationalParkTrainerTipsText",
+      "symbol": "NationalParkTrainerTipsText"
+    },
+    "17:4bc8": {
+      "qid": "c.NationalParkBugContest.NationalParkBugContestBattleNoticeText",
+      "symbol": "NationalParkBugContestBattleNoticeText"
+    },
+    "17:4c1d": {
+      "qid": "c.NationalParkBugContest.NationalParkBugContestTrainerTipsText",
+      "symbol": "NationalParkBugContestTrainerTipsText"
+    },
+    "17:55e7": {
+      "qid": "c.RadioTower1F.RadioTower1FDirectoryText",
+      "symbol": "RadioTower1FDirectoryText"
+    },
+    "17:68c8": {
+      "qid": "c.RadioTower3F.GruntM7BeatenText",
+      "symbol": "GruntM7BeatenText"
+    },
+    "17:6934": {
+      "qid": "c.RadioTower3F.GruntM8BeatenText",
+      "symbol": "GruntM8BeatenText"
+    },
+    "18:6e83": {
+      "qid": "c.Route34IlexForestGate.Route34IlexForestGateButterfreeText",
+      "symbol": "Route34IlexForestGateButterfreeText"
+    },
+    "19:6c58": {
+      "qid": "c.wilton_caller.WiltonHangUpText",
+      "symbol": "WiltonHangUpText"
+    },
+    "1a:4238": {
+      "qid": "c.Route11.Route11SignText",
+      "symbol": "Route11SignText"
+    },
+    "1a:62eb": {
+      "qid": "c.Route35NationalParkGate.Route35NationalParkGateOfficer1AskToParticipateText",
+      "symbol": "Route35NationalParkGateOfficer1AskToParticipateText"
+    },
+    "1a:639d": {
+      "qid": "c.Route35NationalParkGate.Route35NationalParkGateOfficer1GiveParkBallsText",
+      "symbol": "Route35NationalParkGateOfficer1GiveParkBallsText"
+    },
+    "1a:63e2": {
+      "qid": "c.Route35NationalParkGate.Route35NationalParkGateOfficer1ExplainsRulesText",
+      "symbol": "Route35NationalParkGateOfficer1ExplainsRulesText"
+    },
+    "1a:64c6": {
+      "qid": "c.Route35NationalParkGate.Route35NationalParkGateOfficer1AskToUseFirstMonText",
+      "symbol": "Route35NationalParkGateOfficer1AskToUseFirstMonText"
+    },
+    "1a:6537": {
+      "qid": "c.Route35NationalParkGate.Route35NationalParkGateOfficer1WellHoldYourMonText",
+      "symbol": "Route35NationalParkGateOfficer1WellHoldYourMonText"
+    },
+    "1a:656b": {
+      "qid": "c.Route35NationalParkGate.Route35NationalParkGatePlayersMonLeftWithHelperText",
+      "symbol": "Route35NationalParkGatePlayersMonLeftWithHelperText"
+    },
+    "1a:6597": {
+      "qid": "c.Route35NationalParkGate.Route35NationalParkGateOfficer1ChooseMonAndComeBackText",
+      "symbol": "Route35NationalParkGateOfficer1ChooseMonAndComeBackText"
+    },
+    "1a:65dc": {
+      "qid": "c.Route35NationalParkGate.Route35NationalParkGateOfficer1TakePartInFutureText",
+      "symbol": "Route35NationalParkGateOfficer1TakePartInFutureText"
+    },
+    "1a:6608": {
+      "qid": "c.Route35NationalParkGate.Route35NationalParkGateOfficer1FirstMonCantBattleText",
+      "symbol": "Route35NationalParkGateOfficer1FirstMonCantBattleText"
+    },
+    "1a:667c": {
+      "qid": "c.Route35NationalParkGate.Route35NationalParkGateOfficer1MakeRoomText",
+      "symbol": "Route35NationalParkGateOfficer1MakeRoomText"
+    },
+    "1a:671f": {
+      "qid": "c.Route35NationalParkGate.Route35NationalParkGateOfficer1EggAsFirstMonText",
+      "symbol": "Route35NationalParkGateOfficer1EggAsFirstMonText"
+    },
+    "1a:679a": {
+      "qid": "c.Route35NationalParkGate.Route35NationalParkGateOfficer1WantToFinishText",
+      "symbol": "Route35NationalParkGateOfficer1WantToFinishText"
+    },
+    "1a:684f": {
+      "qid": "c.Route35NationalParkGate.Route35NationalParkGateOfficer1ContestIsOverText",
+      "symbol": "Route35NationalParkGateOfficer1ContestIsOverText"
+    },
+    "1a:690e": {
+      "qid": "c.Route35NationalParkGate.BugCatchingContestExplanationText",
+      "symbol": "BugCatchingContestExplanationText"
+    },
+    "1a:6dd5": {
+      "qid": "c.Route36NationalParkGate.Route36NationalParkGateOfficer1AskToParticipateText",
+      "symbol": "Route36NationalParkGateOfficer1AskToParticipateText"
+    },
+    "1a:6e87": {
+      "qid": "c.Route36NationalParkGate.Route36NationalParkGateOfficer1GiveParkBallsText",
+      "symbol": "Route36NationalParkGateOfficer1GiveParkBallsText"
+    },
+    "1a:6ecc": {
+      "qid": "c.Route36NationalParkGate.Route36NationalParkGateOfficer1ExplainsRulesText",
+      "symbol": "Route36NationalParkGateOfficer1ExplainsRulesText"
+    },
+    "1a:6fb0": {
+      "qid": "c.Route36NationalParkGate.Route36NationalParkGateOfficer1AskToUseFirstMonText",
+      "symbol": "Route36NationalParkGateOfficer1AskToUseFirstMonText"
+    },
+    "1a:7021": {
+      "qid": "c.Route36NationalParkGate.Route36NationalParkGateOfficer1WellHoldYourMonText",
+      "symbol": "Route36NationalParkGateOfficer1WellHoldYourMonText"
+    },
+    "1a:7055": {
+      "qid": "c.Route36NationalParkGate.Route36NationalParkGatePlayersMonLeftWithHelperText",
+      "symbol": "Route36NationalParkGatePlayersMonLeftWithHelperText"
+    },
+    "1a:7081": {
+      "qid": "c.Route36NationalParkGate.Route36NationalParkGateOfficer1ChooseMonAndComeBackText",
+      "symbol": "Route36NationalParkGateOfficer1ChooseMonAndComeBackText"
+    },
+    "1a:70c6": {
+      "qid": "c.Route36NationalParkGate.Route36NationalParkGateOfficer1TakePartInFutureText",
+      "symbol": "Route36NationalParkGateOfficer1TakePartInFutureText"
+    },
+    "1a:70f2": {
+      "qid": "c.Route36NationalParkGate.Route36NationalParkGateOfficer1FirstMonCantBattleText",
+      "symbol": "Route36NationalParkGateOfficer1FirstMonCantBattleText"
+    },
+    "1a:7166": {
+      "qid": "c.Route36NationalParkGate.Route36NationalParkGateOfficer1MakeRoomText",
+      "symbol": "Route36NationalParkGateOfficer1MakeRoomText"
+    },
+    "1a:7209": {
+      "qid": "c.Route36NationalParkGate.Route36NationalParkGateOfficer1EggAsFirstMonText",
+      "symbol": "Route36NationalParkGateOfficer1EggAsFirstMonText"
+    },
+    "1a:7284": {
+      "qid": "c.Route36NationalParkGate.Route36NationalParkGateOfficer1WantToFinishText",
+      "symbol": "Route36NationalParkGateOfficer1WantToFinishText"
+    },
+    "1a:732b": {
+      "qid": "c.Route36NationalParkGate.Route36NationalParkGateOfficer1ContestIsOverText",
+      "symbol": "Route36NationalParkGateOfficer1ContestIsOverText"
+    },
+    "1b:42aa": {
+      "qid": "c.Route8.Route8LockedDoorText",
+      "symbol": "Route8LockedDoorText"
+    },
+    "1b:5c09": {
+      "qid": "c.TeamRocketBaseB2F.GruntM18BeatenText",
+      "symbol": "GruntM18BeatenText"
+    },
+    "1b:7086": {
+      "qid": "c.IlexForest.Text_Kwaaaa",
+      "symbol": "Text_Kwaaaa"
+    },
+    "1c:5250": {
+      "qid": "c.CeladonDeptStore6F.CeladonVendingText",
+      "symbol": "CeladonVendingText"
+    },
+    "1c:528e": {
+      "qid": "c.CeladonDeptStore6F.CeladonVendingNoMoneyText",
+      "symbol": "CeladonVendingNoMoneyText"
+    },
+    "1c:52a7": {
+      "qid": "c.CeladonDeptStore6F.CeladonVendingNoSpaceText",
+      "symbol": "CeladonVendingNoSpaceText"
+    },
+    "1c:6974": {
+      "qid": "c.CeladonGameCornerPrizeRoom.CeladonPrizeRoom_AskWhichPrizeText",
+      "symbol": "CeladonPrizeRoom_AskWhichPrizeText"
+    },
+    "1c:69ad": {
+      "qid": "c.CeladonGameCornerPrizeRoom.CeladonPrizeRoom_HereYouGoText",
+      "symbol": "CeladonPrizeRoom_HereYouGoText"
+    },
+    "1c:69d8": {
+      "qid": "c.CeladonGameCornerPrizeRoom.CeladonPrizeRoom_NotEnoughRoomText",
+      "symbol": "CeladonPrizeRoom_NotEnoughRoomText"
+    },
+    "1c:6a14": {
+      "qid": "c.CeladonGameCornerPrizeRoom.CeladonPrizeRoom_NoCoinCaseText",
+      "symbol": "CeladonPrizeRoom_NoCoinCaseText"
+    },
+    "1c:6f62": {
+      "qid": "c.CeladonGym.TwinsJoAndZoe1BeatenText",
+      "symbol": "TwinsJoAndZoe1BeatenText"
+    },
+    "1c:72e7": {
+      "qid": "c.CeladonCafe.FoundLeftoversText",
+      "symbol": "FoundLeftoversText"
+    },
+    "1d:4a55": {
+      "qid": "c.OlivinePort.OlivinePortSailorGetOnBoardText",
+      "symbol": "OlivinePortSailorGetOnBoardText"
+    },
+    "1d:4a80": {
+      "qid": "c.OlivinePort.OlivinePortCantBoardText",
+      "symbol": "OlivinePortCantBoardText"
+    },
+    "1d:4ada": {
+      "qid": "c.OlivinePort.OlivinePortAskTicketText",
+      "symbol": "OlivinePortAskTicketText"
+    },
+    "1d:4af6": {
+      "qid": "c.OlivinePort.OlivinePortComeAgainText",
+      "symbol": "OlivinePortComeAgainText"
+    },
+    "1d:4b41": {
+      "qid": "c.OlivinePort.OlivinePortNoTicketText",
+      "symbol": "OlivinePortNoTicketText"
+    },
+    "1d:4f06": {
+      "qid": "c.VermilionPort.VermilionPortDepartingText",
+      "symbol": "VermilionPortDepartingText"
+    },
+    "1d:4f31": {
+      "qid": "c.VermilionPort.VermilionPortCantBoardText",
+      "symbol": "VermilionPortCantBoardText"
+    },
+    "1d:4f8b": {
+      "qid": "c.VermilionPort.VermilionPortAskTicketText",
+      "symbol": "VermilionPortAskTicketText"
+    },
+    "1d:4fa7": {
+      "qid": "c.VermilionPort.VermilionPortComeAgainText",
+      "symbol": "VermilionPortComeAgainText"
+    },
+    "1d:4ff2": {
+      "qid": "c.VermilionPort.VermilionPortNoTicketText",
+      "symbol": "VermilionPortNoTicketText"
+    },
+    "1d:548d": {
+      "qid": "c.FastShip1F.FastShip1FSailor1Text_InOlivine",
+      "symbol": "FastShip1FSailor1Text_InOlivine"
+    },
+    "1d:54be": {
+      "qid": "c.FastShip1F.FastShip1FSailor1Text_InVermilion",
+      "symbol": "FastShip1FSailor1Text_InVermilion"
+    },
+    "1d:5dde": {
+      "qid": "c.FastShipCabins_SW_SSW_NW.FastShipArrivedOlivineText",
+      "symbol": "FastShipArrivedOlivineText"
+    },
+    "1d:5e0f": {
+      "qid": "c.FastShipCabins_SW_SSW_NW.FastShipArrivedVermilionText",
+      "symbol": "FastShipArrivedVermilionText"
+    },
+    "1d:634c": {
+      "qid": "c.FastShipCabins_SE_SSE_CaptainsCabin.PokefanmColinBeatenText",
+      "symbol": "PokefanmColinBeatenText"
+    },
+    "1d:63b4": {
+      "qid": "c.FastShipCabins_SE_SSE_CaptainsCabin.TwinsMegandpeg1BeatenText",
+      "symbol": "TwinsMegandpeg1BeatenText"
+    },
+    "1d:641a": {
+      "qid": "c.FastShipCabins_SE_SSE_CaptainsCabin.TwinsMegandpeg2BeatenText",
+      "symbol": "TwinsMegandpeg2BeatenText"
+    },
+    "1d:6645": {
+      "qid": "c.FastShipCabins_SE_SSE_CaptainsCabin.SSAquaHasArrivedVermilionText",
+      "symbol": "SSAquaHasArrivedVermilionText"
+    },
+    "1e:4532": {
+      "qid": "c.Route34.CamperToddSaleText",
+      "symbol": "CamperToddSaleText"
+    },
+    "1e:54ad": {
+      "qid": "c.ElmsLab.ReceivedStarterText",
+      "symbol": "ReceivedStarterText"
+    },
+    "1e:6c24": {
+      "qid": "c.PlayersHouse2F.PlayersRadioText1",
+      "symbol": "PlayersRadioText1"
+    },
+    "1e:6c55": {
+      "qid": "c.PlayersHouse2F.PlayersRadioText2",
+      "symbol": "PlayersRadioText2"
+    },
+    "1e:6c64": {
+      "qid": "c.PlayersHouse2F.PlayersRadioText3",
+      "symbol": "PlayersRadioText3"
+    },
+    "1e:6e3b": {
+      "qid": "c.PlayersNeighborsHouse.PlayerNeighborRadioText1",
+      "symbol": "PlayerNeighborRadioText1"
+    },
+    "1e:6e6c": {
+      "qid": "c.PlayersNeighborsHouse.PlayerNeighborRadioText2",
+      "symbol": "PlayerNeighborRadioText2"
+    },
+    "1e:6e7b": {
+      "qid": "c.PlayersNeighborsHouse.PlayerNeighborRadioText3",
+      "symbol": "PlayerNeighborRadioText3"
+    },
+    "1f:6512": {
+      "qid": "c.IcePathB1F.IcePathBoulderFellThroughText",
+      "symbol": "IcePathBoulderFellThroughText"
+    },
+    "1f:72e3": {
+      "qid": "c.LavRadioTower1F.LavRadioTower1FDirectoryText",
+      "symbol": "LavRadioTower1FDirectoryText"
+    },
+    "27:4d92": {
+      "qid": "c.Route39Barn.MoomooHappyMooText",
+      "symbol": "MoomooHappyMooText"
+    },
+    "27:54b1": {
+      "qid": "c.ManiasHouse.ManiaText_ThankYou",
+      "symbol": "ManiaText_ThankYou"
+    },
+    "27:6c09": {
+      "qid": "c.BattleTower1F.Text_WeHopeToServeYouAgain",
+      "symbol": "Text_WeHopeToServeYouAgain"
+    },
+    "27:6fbf": {
+      "qid": "c.BattleTower1F.Text_CancelYourBattleRoomChallenge",
+      "symbol": "Text_CancelYourBattleRoomChallenge"
+    },
+    "29:50b1": {
+      "qid": "c.chad_overworld.ChadRematchText",
+      "symbol": "ChadRematchText"
+    },
+    "5d:4ec5": {
+      "qid": "c.beth_caller.BethLetsBattleAgainSometimeText",
+      "symbol": "BethLetsBattleAgainSometimeText"
+    },
+    "5d:570a": {
+      "qid": "c.joey_caller.JoeyHangUpText",
+      "symbol": "JoeyHangUpText"
+    },
+    "61:4450": {
+      "qid": "c.CeruleanCity.CeruleanLockedDoorText",
+      "symbol": "CeruleanLockedDoorText"
+    },
+    "61:4bc8": {
+      "qid": "c.SproutTower3F.SproutTowerRivalUsedEscapeRopeText",
+      "symbol": "SproutTowerRivalUsedEscapeRopeText"
+    },
+    "62:6917": {
+      "qid": "c.SaffronMagnetTrainStation.SaffronMagnetTrainStationOfficerRightThisWayText",
+      "symbol": "SaffronMagnetTrainStationOfficerRightThisWayText"
+    },
+    "62:6978": {
+      "qid": "c.SaffronMagnetTrainStation.SaffronMagnetTrainStationOfficerHopeToSeeYouAgainText",
+      "symbol": "SaffronMagnetTrainStationOfficerHopeToSeeYouAgainText"
+    },
+    "63:49b8": {
+      "qid": "c.DragonsDenB1F.ClairText_Wait",
+      "symbol": "ClairText_Wait"
+    },
+    "63:49fb": {
+      "qid": "c.DragonsDenB1F.Text_ReceivedTM24",
+      "symbol": "Text_ReceivedTM24"
+    },
+    "63:4a0d": {
+      "qid": "c.DragonsDenB1F.ClairText_DescribeDragonbreathDragonDen",
+      "symbol": "ClairText_DescribeDragonbreathDragonDen"
+    },
+    "63:4f41": {
+      "qid": "c.DragonsDenB1F.Text_FoundDragonFang",
+      "symbol": "Text_FoundDragonFang"
+    },
+    "63:4f51": {
+      "qid": "c.DragonsDenB1F.Text_NoRoomForDragonFang",
+      "symbol": "Text_NoRoomForDragonFang"
+    },
+    "63:5fe5": {
+      "qid": "c.CharcoalKiln.FarfetchdText",
+      "symbol": "FarfetchdText"
+    },
+    "63:71db": {
+      "qid": "c.AzaleaGym.TwinsAmyandmay1BeatenText",
+      "symbol": "TwinsAmyandmay1BeatenText"
+    },
+    "63:7248": {
+      "qid": "c.AzaleaGym.TwinsAmyandmay2BeatenText",
+      "symbol": "TwinsAmyandmay2BeatenText"
+    },
+    "64:415b": {
+      "qid": "c.MahoganyTown.RageCandyBarMerchantNotEnoughMoneyText",
+      "symbol": "RageCandyBarMerchantNotEnoughMoneyText"
+    },
+    "64:4178": {
+      "qid": "c.MahoganyTown.RageCandyBarMerchantRefusedText",
+      "symbol": "RageCandyBarMerchantRefusedText"
+    },
+    "64:4de9": {
+      "qid": "c.Route32.FisherHenryBeatenText",
+      "symbol": "FisherHenryBeatenText"
+    },
+    "64:4e73": {
+      "qid": "c.Route32.YoungsterAlbertBeatenText",
+      "symbol": "YoungsterAlbertBeatenText"
+    },
+    "64:6f67": {
+      "qid": "c.Pokecenter2F.Text_PleaseWait",
+      "symbol": "Text_PleaseWait"
+    },
+    "64:6fd1": {
+      "qid": "c.Pokecenter2F.Text_PleaseComeAgain",
+      "symbol": "Text_PleaseComeAgain"
+    },
+    "64:706b": {
+      "qid": "c.Pokecenter2F.Text_PleaseComeIn",
+      "symbol": "Text_PleaseComeIn"
+    },
+    "64:71c4": {
+      "qid": "c.Pokecenter2F.Text_MysteryGiftDeliveryGuy_HereYouGo",
+      "symbol": "Text_MysteryGiftDeliveryGuy_HereYouGo"
+    },
+    "64:71d2": {
+      "qid": "c.Pokecenter2F.Text_MysteryGiftDeliveryGuy_Outro",
+      "symbol": "Text_MysteryGiftDeliveryGuy_Outro"
+    },
+    "65:4924": {
+      "qid": "c.Route36.Route36SignText",
+      "symbol": "Route36SignText"
+    },
+    "65:51bf": {
+      "qid": "c.BlackthornGym1F.BlackthornGymText_ReceivedTM24",
+      "symbol": "BlackthornGymText_ReceivedTM24"
+    },
+    "65:51d1": {
+      "qid": "c.BlackthornGym1F.BlackthornGymClairText_DescribeTM24",
+      "symbol": "BlackthornGymClairText_DescribeTM24"
+    },
+    "65:58a5": {
+      "qid": "c.BlackthornGym2F.BlackthornGym2FBoulderFellText",
+      "symbol": "BlackthornGym2FBoulderFellText"
+    },
+    "66:45b0": {
+      "qid": "c.AzaleaTown.AzaleaTownSlowpokeText1",
+      "symbol": "AzaleaTownSlowpokeText1"
+    },
+    "66:7945": {
+      "qid": "c.OaksLab.OaksLabTrashcanText",
+      "symbol": "OaksLabTrashcanText"
+    },
+    "67:459e": {
+      "qid": "c.CherrygroveCity.CherrygroveRivalText_YouLost",
+      "symbol": "CherrygroveRivalText_YouLost"
+    },
+    "67:4608": {
+      "qid": "c.CherrygroveCity.CherrygroveRivalText_YouWon",
+      "symbol": "CherrygroveRivalText_YouWon"
+    },
+    "67:4f94": {
+      "qid": "c.Route35.Route35SignText",
+      "symbol": "Route35SignText"
+    },
+    "67:71b5": {
+      "qid": "c.Route25.SchoolboyDudleyAfterBattleText",
+      "symbol": "SchoolboyDudleyAfterBattleText"
+    },
+    "67:7208": {
+      "qid": "c.Route25.LassEllenAfterBattleText",
+      "symbol": "LassEllenAfterBattleText"
+    },
+    "67:725c": {
+      "qid": "c.Route25.SchoolboyJoeAfterBattleText",
+      "symbol": "SchoolboyJoeAfterBattleText"
+    },
+    "67:72a6": {
+      "qid": "c.Route25.LassLauraAfterBattleText",
+      "symbol": "LassLauraAfterBattleText"
+    },
+    "67:72f8": {
+      "qid": "c.Route25.CamperLloydAfterBattleText",
+      "symbol": "CamperLloydAfterBattleText"
+    },
+    "67:734b": {
+      "qid": "c.Route25.LassShannonBeatenText",
+      "symbol": "LassShannonBeatenText"
+    },
+    "67:735b": {
+      "qid": "c.Route25.LassShannonAfterBattleText",
+      "symbol": "LassShannonAfterBattleText"
+    },
+    "68:66b9": {
+      "qid": "c.Route13.HikerKennyBeatenText",
+      "symbol": "HikerKennyBeatenText"
+    },
+    "69:5413": {
+      "qid": "c.Route28.Route28SignText",
+      "symbol": "Route28SignText"
+    },
+    "69:5a6e": {
+      "qid": "c.Route31.DarkCaveSignText",
+      "symbol": "DarkCaveSignText"
+    },
+    "69:5bf9": {
+      "qid": "c.Route39.Route39MiltankText",
+      "symbol": "Route39MiltankText"
+    },
+    "6a:4134": {
+      "qid": "c.NewBarkTown.Text_WaitPlayer",
+      "symbol": "Text_WaitPlayer"
+    },
+    "6a:5004": {
+      "qid": "c.Route37.SunnyGivesGiftText1",
+      "symbol": "SunnyGivesGiftText1"
+    },
+    "6a:502f": {
+      "qid": "c.Route37.SunnyGivesGiftText2",
+      "symbol": "SunnyGivesGiftText2"
+    },
+    "6a:5197": {
+      "qid": "c.Route37.Route37SignText",
+      "symbol": "Route37SignText"
+    },
+    "6a:555f": {
+      "qid": "c.Route42.MtMortarSign1Text",
+      "symbol": "MtMortarSign1Text"
+    },
+    "6a:5580": {
+      "qid": "c.Route42.MtMortarSign2Text",
+      "symbol": "MtMortarSign2Text"
+    },
+    "6a:6e4e": {
+      "qid": "c.VermilionCity.VermilionCityDiglettsCaveSignText",
+      "symbol": "VermilionCityDiglettsCaveSignText"
+    },
+    "6b:4279": {
+      "qid": "c.Route33.Route33SignText",
+      "symbol": "Route33SignText"
+    },
+    "6b:449f": {
+      "qid": "c.Route2.Route2DiglettsCaveSignText",
+      "symbol": "Route2DiglettsCaveSignText"
+    },
+    "6b:4e10": {
+      "qid": "c.Route20.SwimmerfLoriBeatenText",
+      "symbol": "SwimmerfLoriBeatenText"
+    },
+    "6b:5456": {
+      "qid": "c.Route7.Route7LockedDoorText",
+      "symbol": "Route7LockedDoorText"
+    },
+    "6b:5957": {
+      "qid": "c.Route6.Route6PokefanMText",
+      "symbol": "Route6PokefanMText"
+    },
+    "6b:5b22": {
+      "qid": "c.Route5.Route5PokefanMText",
+      "symbol": "Route5PokefanMText"
+    },
+    "6b:6040": {
+      "qid": "c.Route3.YoungsterWarrenBeatenText",
+      "symbol": "YoungsterWarrenBeatenText"
+    },
+    "6b:6163": {
+      "qid": "c.Route3.Route3MtMoonSquareSignText",
+      "symbol": "Route3MtMoonSquareSignText"
+    },
+    "6b:6384": {
+      "qid": "c.Route4.MtMoonSquareSignText",
+      "symbol": "MtMoonSquareSignText"
+    },
+    "6c:420b": {
+      "qid": "c.std_text.NurseGoodbyeText",
+      "symbol": "NurseGoodbyeText"
+    },
+    "6c:448d": {
+      "qid": "c.std_text.LookTownMapText",
+      "symbol": "LookTownMapText"
+    },
+    "6c:4526": {
+      "qid": "c.std_text.TrashCanText",
+      "symbol": "TrashCanText"
+    },
+    "6c:4648": {
+      "qid": "c.std_text.ReceivedItemText",
+      "symbol": "ReceivedItemText"
+    },
+    "6c:486f": {
+      "qid": "c.std_text.CoinVendor_NotEnoughMoneyText",
+      "symbol": "CoinVendor_NotEnoughMoneyText"
+    },
+    "6c:5392": {
+      "qid": "c.beth_overworld.BethNumberAcceptedText",
+      "symbol": "BethNumberAcceptedText"
+    },
+    "6c:5954": {
+      "qid": "c.joey_overworld.JoeyRematchText",
+      "symbol": "JoeyRematchText"
+    },
+    "6d:4e3e": {
+      "qid": "c.jack_callee.JackGreetText",
+      "symbol": "JackGreetText"
+    },
+    "6d:4e72": {
+      "qid": "c.jack_callee.JackGreetDayText",
+      "symbol": "JackGreetDayText"
+    },
+    "6d:4f21": {
+      "qid": "c.beverly_callee.BeverlyAnswerPhoneText",
+      "symbol": "BeverlyAnswerPhoneText"
+    },
+    "6d:4f75": {
+      "qid": "c.beverly_callee.BeverlyAnswerPhoneNiteText",
+      "symbol": "BeverlyAnswerPhoneNiteText"
+    },
+    "6d:5073": {
+      "qid": "c.huey_callee.HueyAnswerPhoneText",
+      "symbol": "HueyAnswerPhoneText"
+    },
+    "6d:509b": {
+      "qid": "c.huey_callee.HueyAnswerPhoneDayText",
+      "symbol": "HueyAnswerPhoneDayText"
+    },
+    "6d:50c2": {
+      "qid": "c.huey_callee.HueyAnswerPhoneNiteText",
+      "symbol": "HueyAnswerPhoneNiteText"
+    },
+    "6d:5301": {
+      "qid": "c.gaven_callee.GavenGreetText",
+      "symbol": "GavenGreetText"
+    },
+    "6d:53f7": {
+      "qid": "c.beth_callee.BethAnswerPhoneText",
+      "symbol": "BethAnswerPhoneText"
+    },
+    "6d:5424": {
+      "qid": "c.beth_callee.BethAnswerPhoneDayText",
+      "symbol": "BethAnswerPhoneDayText"
+    },
+    "6d:5446": {
+      "qid": "c.beth_callee.BethAnswerPhoneNiteText",
+      "symbol": "BethAnswerPhoneNiteText"
+    },
+    "6d:5472": {
+      "qid": "c.beth_callee.BethGreetText",
+      "symbol": "BethGreetText"
+    },
+    "6d:55ae": {
+      "qid": "c.jose_callee.JoseAnswerPhoneText",
+      "symbol": "JoseAnswerPhoneText"
+    },
+    "6d:55da": {
+      "qid": "c.jose_callee.JoseAnswerPhoneDayText",
+      "symbol": "JoseAnswerPhoneDayText"
+    },
+    "6d:55fc": {
+      "qid": "c.jose_callee.JoseAnswerPhoneNiteText",
+      "symbol": "JoseAnswerPhoneNiteText"
+    },
+    "6d:5912": {
+      "qid": "c.joey_callee.JoeyGreetText",
+      "symbol": "JoeyGreetText"
+    },
+    "6d:597c": {
+      "qid": "c.joey_callee.JoeyGreetNiteText",
+      "symbol": "JoeyGreetNiteText"
+    },
+    "6d:5b0b": {
+      "qid": "c.wade_callee.WadeGreetDayText",
+      "symbol": "WadeGreetDayText"
+    },
+    "6d:5e25": {
+      "qid": "c.liz_callee.LizGreetText",
+      "symbol": "LizGreetText"
+    },
+    "6d:626a": {
+      "qid": "c.gina_callee.GinaAnswerPhoneText",
+      "symbol": "GinaAnswerPhoneText"
+    },
+    "6d:62c5": {
+      "qid": "c.gina_callee.GinaAnswerPhoneNiteText",
+      "symbol": "GinaAnswerPhoneNiteText"
+    },
+    "6d:62f1": {
+      "qid": "c.gina_callee.GinaGreetText",
+      "symbol": "GinaGreetText"
+    },
+    "6d:647e": {
+      "qid": "c.arnie_callee.ArnieAnswerPhoneDayText",
+      "symbol": "ArnieAnswerPhoneDayText"
+    },
+    "6d:64a8": {
+      "qid": "c.arnie_callee.ArnieAnswerPhoneNiteText",
+      "symbol": "ArnieAnswerPhoneNiteText"
+    },
+    "6d:6b39": {
+      "qid": "c.tully_callee.TullyAnswerPhoneText",
+      "symbol": "TullyAnswerPhoneText"
+    },
+    "6d:6c96": {
+      "qid": "c.brent_callee.BrentAnswerPhoneText",
+      "symbol": "BrentAnswerPhoneText"
+    },
+    "6d:6cc6": {
+      "qid": "c.brent_callee.BrentAnswerPhoneDayText",
+      "symbol": "BrentAnswerPhoneDayText"
+    },
+    "6d:6cf6": {
+      "qid": "c.brent_callee.BrentAnswerPhoneNiteText",
+      "symbol": "BrentAnswerPhoneNiteText"
+    },
+    "6d:73c7": {
+      "qid": "c.parry_callee.ParryAnswerPhoneText",
+      "symbol": "ParryAnswerPhoneText"
+    },
+    "6d:73ef": {
+      "qid": "c.parry_callee.ParryAnswerPhoneDayText",
+      "symbol": "ParryAnswerPhoneDayText"
+    },
+    "6d:7417": {
+      "qid": "c.parry_callee.ParryAnswerPhoneNiteText",
+      "symbol": "ParryAnswerPhoneNiteText"
+    },
+    "6d:758f": {
+      "qid": "c.erin_callee.ErinGreetText",
+      "symbol": "ErinGreetText"
+    },
+    "6f:5ea2": {
+      "qid": "c.common_1.HaveNoRoomText",
+      "symbol": "HaveNoRoomText"
+    },
+    "6f:5ebc": {
+      "qid": "c.common_1.NotEnoughMoneyText",
+      "symbol": "NotEnoughMoneyText"
+    },
+    "6f:5ed9": {
+      "qid": "c.common_1.OhFineThenText",
+      "symbol": "OhFineThenText"
+    },
+    "70:4dd8": {
+      "qid": "c.common_2.BreedAskNicknameText",
+      "symbol": "BreedAskNicknameText"
+    },
+    "71:4c08": {
+      "qid": "c.common_3.MartFinalPriceText",
+      "symbol": "MartFinalPriceText"
+    },
+    "71:4cae": {
+      "qid": "c.common_3.HerbalLadyFinalPriceText",
+      "symbol": "HerbalLadyFinalPriceText"
+    },
+    "71:4f9a": {
+      "qid": "c.common_3.MartNoMoneyText",
+      "symbol": "MartNoMoneyText"
+    },
+    "71:4ff9": {
+      "qid": "c.common_3.MartComeAgainText",
+      "symbol": "MartComeAgainText"
+    },
+    "09:6f9b": {
+      "qid": "c.common_1.LookTownMapText",
+      "symbol": "LookTownMapText"
+    }
+  }
+}

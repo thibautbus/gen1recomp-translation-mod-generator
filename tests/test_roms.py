@@ -8,8 +8,8 @@ from unittest.mock import patch
 
 from pipeline.project import project_config
 from pipeline.roms import (
-    CANONICAL, GS_REQUIRED_TSV, GOLD_SHA1, SILVER_SHA1, import_gs_rom, import_rom,
-    verify_gs_rom, verify_rb_rom, verify_rom,
+    CANONICAL, CRYSTAL_SHA1, GS_REQUIRED_TSV, GOLD_SHA1, SILVER_SHA1, import_crystal_rom,
+    import_gs_rom, import_rom, verify_crystal_rom, verify_gs_rom, verify_rb_rom, verify_rom,
 )
 
 
@@ -37,7 +37,7 @@ class RomConfigTests(unittest.TestCase):
 
     def test_checked_in_rom_sections_have_no_paths(self):
         config = project_config()
-        self.assertEqual(set(config["rom"]), {"red", "blue", "yellow", "gold", "silver"})
+        self.assertEqual(set(config["rom"]), {"red", "blue", "yellow", "gold", "silver", "crystal"})
         for section in config["rom"].values():
             self.assertNotIn("path", section)
 
@@ -459,6 +459,58 @@ class GsImportTests(unittest.TestCase):
             ):
                 import_gs_rom(root / "gold.gbc", root / "engine", root / "out", log_fn=lambda message: None)
             self.assertIn("bad ROM bank", str(caught.exception))
+
+
+class CrystalImportTests(unittest.TestCase):
+    """Crystal shares Gold/Silver's gs_extract.lua contract, but not their ROM."""
+
+    @staticmethod
+    def write_extractor_outputs(destination: str | Path) -> None:
+        destination = Path(destination)
+        destination.mkdir(parents=True, exist_ok=True)
+        for name in GS_REQUIRED_TSV:
+            (destination / name).write_text("fixture\n", encoding="utf-8")
+
+    def test_verify_crystal_rom_accepts_the_canonical_fingerprint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rom = Path(tmp) / "crystal.gbc"
+            rom.write_bytes(b"pretend crystal rom bytes")
+            with patch("pipeline.roms.sha1", return_value=CRYSTAL_SHA1):
+                info = verify_crystal_rom(rom)
+            self.assertEqual(info["version"], "crystal")
+            self.assertEqual(info["sha1"], CRYSTAL_SHA1)
+
+    def test_verify_crystal_rom_rejects_a_mismatch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rom = Path(tmp) / "crystal.gbc"
+            payload = b"not the real crystal rom"
+            rom.write_bytes(payload)
+            actual = hashlib.sha1(payload).hexdigest()
+            with self.assertRaisesRegex(ValueError, rf"Crystal ROM SHA-1 mismatch: {actual} \(expected: "):
+                verify_crystal_rom(rom)
+
+    def test_import_crystal_rom_builds_the_luajit_command(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rom = root / "crystal.gbc"
+            out = root / "out"
+            with (
+                patch("pipeline.roms.verify_crystal_rom", return_value={"version": "crystal"}),
+                patch("pipeline.roms.which_luajit", return_value="/usr/bin/luajit"),
+                patch("pipeline.roms.resource_root", return_value=root),
+                patch(
+                    "pipeline.roms.subprocess.run",
+                    side_effect=lambda command, **_: self.write_extractor_outputs(command[-2]),
+                ) as run,
+            ):
+                import_crystal_rom(rom, root / "engine", out)
+            command = run.call_args.args[0]
+            self.assertEqual(command[0], "/usr/bin/luajit")
+            self.assertEqual(Path(command[1]), root / "tools" / "gs_extract.lua")
+            self.assertEqual(Path(command[2]), (root / "engine").resolve())
+            self.assertEqual(Path(command[3]), rom.resolve())
+            self.assertEqual(command[5], "crystal")
+            self.assertTrue(out.is_dir())
 
 
 if __name__ == "__main__":

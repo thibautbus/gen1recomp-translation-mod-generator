@@ -15,11 +15,6 @@
     "BORDERLESS": {"override": "SIN BORDES", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "TREES": {"override": "ÁRBOLES", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "WATER": {"override": "AGUA", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "%s's\nhits will never\nmiss!": {
-      "override": "¡%s\nsiempre acierta!",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; requires in-game visual validation."
-    },
     "%s's\n%s rose!": {
       "override": "¡%s\nsu %s subió!",
       "reason": "editorial-correction",
@@ -378,7 +373,7 @@
     "HP": {
       "override": "PS",
       "reason": "engine-contract-gap",
-      "provenance": "Standard Spanish Pokémon abbreviation. Already carried by overrides/es/gs/engine.json for the same Strings.source(\"HP\") literal (inventory/ItemEffects.lua's STAT_LABEL, shared with ui/gen2/PhotoStudio.lua); missing here left RBY's own item-effect messages (vitamins, stat-boosting items) showing the raw English label."
+      "provenance": "Standard Spanish Pokémon abbreviation. Already carried by overrides/es/gsc/engine.json for the same Strings.source(\"HP\") literal (inventory/ItemEffects.lua's STAT_LABEL, shared with ui/gen2/PhotoStudio.lua); missing here left RBY's own item-effect messages (vitamins, stat-boosting items) showing the raw English label."
     },
     "<PK><MN>LEAGUE": {
       "override": "LIGA <PK><MN>",

@@ -27,10 +27,17 @@ class GuiInputs:
 # "generation" is engine vocabulary the user does not need.
 GENERATIONS = (
     (1, "Red, Blue and Yellow"),
-    (2, "Gold and Silver"),
+    (2, "Gold, Silver and Crystal"),
 )
 
-ROMS_BY_GENERATION = {1: ("rb", "yellow"), 2: ("gs",)}
+ROMS_BY_GENERATION = {1: ("rb", "yellow"), 2: ("gs", "crystal")}
+
+# Fixed wrap width (pixels) for every Hint.TLabel. Without it, hint labels
+# with no wraplength request exactly as much width as their longest line
+# needs -- since the games/ROM hint text changes with the selected
+# generation, the window would otherwise grow or shrink width-wise every
+# time the user picks a different option instead of staying put.
+HINT_WRAPLENGTH = 640
 
 
 def generation_label(value: int) -> str:
@@ -128,23 +135,27 @@ def validate_inputs(
             builder.verify_rb_rom(path)
         elif game == "gs":
             builder.verify_gs_rom(path)
+        elif game == "crystal":
+            builder.verify_crystal_rom(path)
         else:
             builder.verify_rom(path, game)
         resolved[game] = path.resolve()
     return GuiInputs(generation, resolved, code, profile, output.resolve())
 
 
-def coverage_lines(path: str | Path) -> list[str]:
+def coverage_lines(path: str | Path, generation: int = 1) -> list[str]:
     """Return the compact coverage text shown after a successful build."""
     report = json.loads(Path(path).read_text(encoding="utf-8"))
     lines: list[str] = []
-    # ROM aggregates first (broad Red/Blue, then narrower Yellow), then
-    # engine-authored-text metrics from most to least specific: RBY/Gold's
-    # own filtered scope reads before the unfiltered "All engine strings"
-    # total, since that total is the least actionable number here.
+    # ROM aggregates first (broad Red/Blue or Gold/Silver, then narrower
+    # Yellow), then engine-authored-text metrics from most to least
+    # specific: RBY/Gold's own filtered scope reads before the unfiltered
+    # "All engine strings" total, since that total is the least
+    # actionable number here.
+    rom_label = "Red Blue ROM aggregate" if generation == 1 else "Gold and Silver ROM aggregate"
     section = report.get("rom") or {}
     lines.append(
-        f"Red Blue ROM aggregate: {int(section.get('translated', 0))}/{int(section.get('total', 0))} "
+        f"{rom_label}: {int(section.get('translated', 0))}/{int(section.get('total', 0))} "
         f"({float(section.get('percent', 0.0)):.2f}%)"
     )
     yellow = (report.get("yellow") or {}).get("coverage", {}).get("rom") or {}
@@ -213,7 +224,7 @@ class TranslationBuilderApp:
         style.configure("TLabel", background="#202124", foreground="#f1f3f4")
         style.configure(
             "Hint.TLabel", background="#202124", foreground="#9aa0a6",
-            font=("TkDefaultFont", 9),
+            font=("TkDefaultFont", 9), wraplength=HINT_WRAPLENGTH,
         )
         style.configure("TButton", padding=6)
         style.configure("TEntry", fieldbackground="#303134", foreground="#f1f3f4")
@@ -229,7 +240,7 @@ class TranslationBuilderApp:
     def _build_widgets(self):
         tk, ttk = self.tk, self.ttk
         self.generation_var = tk.StringVar(value=generation_label(1))
-        self.rom_vars = {game: tk.StringVar() for game in ("rb", "yellow", "gs")}
+        self.rom_vars = {game: tk.StringVar() for game in ("rb", "yellow", "gs", "crystal")}
         self.language_var = tk.StringVar(value=language_label("fr"))
         self.font_profile_var = tk.StringVar(value=font_profile_label("fusion"))
         self.output_var = tk.StringVar()
@@ -250,12 +261,13 @@ class TranslationBuilderApp:
 
         # Gold occupies the same grid row as Red/Blue: only one game's ROM
         # row is ever shown at a time, toggled by _sync_generation (the GUI
-        # is a flat form, not a wizard). Row 4 (formerly Blue's own field)
-        # is free: Red and Blue share byte-identical game text, so either
-        # ROM works and only one field is needed.
+        # is a flat form, not a wizard). Crystal takes row 4 (formerly
+        # Blue's own field, free since Red and Blue share byte-identical
+        # game text and only need one field between them).
         rom_fields = (
             ("rb", 2, "Required to extract shared Pokémon Red/Blue game text and data. Either ROM works: Red and Blue share identical text.", "Pokemon Red or Blue ROM (US)"),
-            ("gs", 2, "Required to extract Pokémon Gold and Silver game text and data.", "Pokemon Gold or Silver ROM (US)"),
+            ("gs", 2, "Required to extract Pokémon Gold and Silver game text and data. Either ROM works: Gold and Silver share identical text.", "Pokemon Gold or Silver ROM (US)"),
+            ("crystal", 4, "Required to extract Pokémon Crystal-specific game text and data.", "Pokemon Crystal ROM (US)"),
             ("yellow", 6, "Required to extract Pokémon Yellow-specific game text and data.", "Pokemon Yellow ROM (US)"),
         )
         self.rom_widgets: dict[str, tuple] = {}
@@ -317,9 +329,16 @@ class TranslationBuilderApp:
         active = set(ROMS_BY_GENERATION[generation])
         if generation == 1:
             self.games_hint_var.set(
-                "Which games do you want to translate? Red, Blue and Yellow "
-                "share one translation: select the two ROMs below (Red or "
-                "Blue, whichever you own, plus Yellow)."
+                "Which games do you want to translate?\n"
+                "Red, Blue and Yellow share one translation: select the two "
+                "ROMs below (Red or Blue, whichever you own, plus Yellow)."
+            )
+        elif generation == 2:
+            self.games_hint_var.set(
+                "Which games do you want to translate?\n"
+                "Gold, Silver and Crystal share one translation: select the "
+                "two ROMs below (Gold or Silver, whichever you own, plus "
+                "Crystal)."
             )
         else:
             self.games_hint_var.set("Which games do you want to translate?")
@@ -451,7 +470,7 @@ class TranslationBuilderApp:
             )
             build_cache = "interactive" if inputs.generation == 1 else "interactive-gs"
             coverage = workspace / build_cache / inputs.language / "coverage.json"
-            self._post(lambda: self._complete(output, coverage))
+            self._post(lambda: self._complete(output, coverage, inputs.generation))
         except (RuntimeError, ValueError, OSError) as error:
             message = str(error)
             self._post(lambda: self._failed(message))
@@ -460,12 +479,12 @@ class TranslationBuilderApp:
             self._append_log(message)
             self._post(lambda: self._failed(message))
 
-    def _complete(self, output: Path, coverage: Path | None):
+    def _complete(self, output: Path, coverage: Path | None, generation: int = 1):
         from tkinter import messagebox
         self._finish()
         details = f"File generated at:\n{output}"
         if coverage is not None and coverage.is_file():
-            details += "\n\n" + "\n".join(coverage_lines(coverage))
+            details += "\n\n" + "\n".join(coverage_lines(coverage, generation))
         self.status_var.set("Build complete")
         messagebox.showinfo("Build complete", details, parent=self.root)
 
