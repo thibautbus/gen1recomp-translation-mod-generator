@@ -111,6 +111,45 @@ class GenerateGsModTests(unittest.TestCase):
             self.assertEqual(manifest["games"], ["gold", "silver", "crystal"])
             self.assertFalse((mod_dir / "lang" / "dialogue_crystal.lua").exists())
 
+    def test_silver_dex_text_writes_a_conditional_layer_over_golds(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            mod_dir = generate_gs_mod(
+                Path(tmp) / "mod", language="fr",
+                extra_catalogs={"species_dex_text": {"BULBASAUR": "Texte Or."}},
+                silver_dex_text_catalog={"BULBASAUR": "Texte Argent."},
+                silver_dex_text2_catalog={"BULBASAUR": "Texte Argent, page 2."},
+            )
+            self.assertIn(
+                '["BULBASAUR"] = "Texte Or."',
+                (mod_dir / "lang" / "species_dex_text.lua").read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                '["BULBASAUR"] = "Texte Argent."',
+                (mod_dir / "lang" / "species_dex_text_silver.lua").read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                '["BULBASAUR"] = "Texte Argent, page 2."',
+                (mod_dir / "lang" / "species_dex_text2_silver.lua").read_text(encoding="utf-8"),
+            )
+            main = (mod_dir / "main.lua").read_text(encoding="utf-8")
+            self.assertIn('SilverGameVersion.get() == "silver"', main)
+            self.assertIn("silver_game_version", main)
+            self.assertIn("species_dex_text_silver", main)
+            self.assertIn("species_dex_text2_silver", main)
+            self.assertIn("dexEntry = { text = value }", main)
+            self.assertIn("dexEntry = { text2 = value }", main)
+            # The unconditional Gold catalog registration still runs too --
+            # the Silver layer patches over it at runtime, it doesn't replace it.
+            self.assertIn("species_dex_text", main)
+
+    def test_no_silver_dex_text_argument_writes_no_conditional_layer(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            mod_dir = generate_gs_mod(Path(tmp) / "mod", language="fr")
+            self.assertFalse((mod_dir / "lang" / "species_dex_text_silver.lua").exists())
+            self.assertFalse((mod_dir / "lang" / "species_dex_text2_silver.lua").exists())
+            main = (mod_dir / "main.lua").read_text(encoding="utf-8")
+            self.assertNotIn("silver_game_version", main)
+
     def test_no_crystal_argument_keeps_the_gold_silver_only_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             mod_dir = generate_gs_mod(Path(tmp) / "mod", language="fr")
@@ -504,12 +543,13 @@ class BuildGsDialogueModTests(unittest.TestCase):
             match.assert_called_once()
             self.assertEqual(stats["coverage"]["engine_gen2"]["total"], 2)
             self.assertEqual(stats["coverage"]["rom"], {
-                "translated": 1, "total": 10, "percent": 10.0,
+                "translated": 1, "total": 12, "percent": 8.33,
             })
             self.assertEqual(stats["coverage"]["rom_dialogue"]["total"], 2)
-            # 8, not 7: species_dex_text2 (the #DEX entry's second page) is
-            # its own index_stats entry alongside species_dex_text now.
-            self.assertEqual(stats["coverage"]["rom_catalogs"]["total"], 8)
+            # 10, not 7: species_dex_text2 and Silver's own
+            # species_dex_text_silver/species_dex_text2_silver are each
+            # their own index_stats entry alongside species_dex_text now.
+            self.assertEqual(stats["coverage"]["rom_catalogs"]["total"], 10)
             self.assertEqual(stats["_gate_catalogs"]["strings"], {"Hello!": "Bonjour!"})
             self.assertIn(
                 '["Hello!"] = "Bonjour!"',
@@ -539,9 +579,12 @@ class BuildGsDialogueModTests(unittest.TestCase):
         (gold_out / "gs_trainer_classes.tsv").write_text("BEAUTY\t29\tBEAUTY\n", encoding="utf-8")
         qid_lines = ["gs.names.PokemonNames.1", "gs.names.MoveNames.71", "gs.names.ItemNames.91",
                      "gs.class_names.TrainerClassNames.29", "gs.dex_entries.BulbasaurPokedexEntry.Species",
-                     "gs.dex_entries_gold.BulbasaurPokedexEntry"]
-        en_lines = ["BULBASAUR", "ABSORB", "AMULET COIN", "BEAUTY", "SEED", "A seed.@It hides.@"]
-        fr_lines = ["BULBIZARRE", "VOL-VIE", "PIECE RUNE", "CANON", "GRAINE", "Une graine.@Elle se cache.@"]
+                     "gs.dex_entries_gold.BulbasaurPokedexEntry",
+                     "gs.dex_entries_silver.BulbasaurPokedexEntry"]
+        en_lines = ["BULBASAUR", "ABSORB", "AMULET COIN", "BEAUTY", "SEED", "A seed.@It hides.@",
+                    "A different seed.@It really hides.@"]
+        fr_lines = ["BULBIZARRE", "VOL-VIE", "PIECE RUNE", "CANON", "GRAINE", "Une graine.@Elle se cache.@",
+                    "Une autre graine.@Elle se cache vraiment.@"]
         existing_qid = (corpus / "qid_msg.txt").read_text(encoding="utf-8").splitlines()
         existing_en = (corpus / "en_msg.txt").read_text(encoding="utf-8").splitlines()
         existing_fr = (corpus / "fr_msg.txt").read_text(encoding="utf-8").splitlines()
@@ -572,11 +615,19 @@ class BuildGsDialogueModTests(unittest.TestCase):
                            (mod_dir / "lang" / "species_dex_text.lua").read_text(encoding="utf-8"))
             self.assertIn('["BULBASAUR"] = "Elle se cache."',
                            (mod_dir / "lang" / "species_dex_text2.lua").read_text(encoding="utf-8"))
+            self.assertIn('["BULBASAUR"] = "Une autre graine."',
+                           (mod_dir / "lang" / "species_dex_text_silver.lua").read_text(encoding="utf-8"))
+            self.assertIn('["BULBASAUR"] = "Elle se cache vraiment."',
+                           (mod_dir / "lang" / "species_dex_text2_silver.lua").read_text(encoding="utf-8"))
+            self.assertEqual(stats["index_catalogs"]["species_dex_text_silver"], {
+                "total": 1, "translated": 1, "no_corpus_entry": 0,
+            })
             main = (mod_dir / "main.lua").read_text(encoding="utf-8")
             self.assertIn('mod.content.pokemon:patch(id, { name = value })', main)
             self.assertIn('mod.content.pokemon:patch(id, { dexEntry = { kind = value } })', main)
             self.assertIn('mod.content.pokemon:patch(id, { dexEntry = { text = value } })', main)
             self.assertIn('mod.content.pokemon:patch(id, { dexEntry = { text2 = value } })', main)
+            self.assertIn('SilverGameVersion.get() == "silver"', main)
             self.assertIn('mod.content.moves:patch(id, { name = value })', main)
             self.assertIn('mod.content.items:patch(id, { name = value })', main)
             self.assertIn('mod.content.trainers:patch(id, { name = value })', main)
