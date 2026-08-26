@@ -1,0 +1,11 @@
+{
+  "schema": "gen1recomp-translation-mods/gs-dialogue-overrides",
+  "version": 1,
+  "entries": {
+    "21:66db": {
+      "override": "Maître Célébrité!",
+      "reason": "corpus-defect",
+      "provenance": "PokeCorpus's GoldSilver/fr_msg.txt row for gs.halloffame.HallOfFamePC.HOFMaster (English \"    HOF Master!\") is \"Maître Célébrit\\x03@\": byte 0x03 is outside gen1recomp's own Gold charmap (tools/rom_manifest_gold.json has no entry for it, matching pokecrystal's constants/charmap.asm, where the byte is unused/reserved), so it is almost certainly a localized accented glyph (\"é\") that PokeCorpus's own extractor could not decode either. Confirmed against PokeCorpus's separate Crystal collection: Crystal/fr_msg.txt's row for the identical qid/English source (c.halloffame.HallOfFamePC.HOFMaster) decodes cleanly to \"Maître Célébrité!\", with no such artifact -- reused verbatim here."
+    }
+  }
+}

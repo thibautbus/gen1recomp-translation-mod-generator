@@ -16,7 +16,7 @@ from .gs_engine import match_gs_engine_strings
 from .gs_index_join import join_by_index, join_dex_entries, join_landmarks, parse_indexed_catalog
 from .gs_join import (
     GsJoinEntry, GsPlaceholderDecision, audit_join, gs_coverage_report,
-    join_gs_pointers, load_gs_placeholder_decisions,
+    join_gs_pointers, load_gs_dialogue_overrides, load_gs_placeholder_decisions,
     load_gs_pointer_decisions, load_gold_silver_pointer_aliases, read_corpus_rows,
 )
 from .gs_text import parse_gs_text_catalog
@@ -797,6 +797,7 @@ def build_gs(
         gold_out, corpus_gold_silver, mod_dir, mod_id=mod_id, language=language,
         target_name=f"{language_name} translation for Gold, Silver and Crystal", font_source=font_source, font_profile=font_profile,
         engine_source=gen1recomp, crystal_text_catalog=crystal_text_catalog,
+        overrides=load_gs_dialogue_overrides(language),
     )
     log(
         f"  text: {stats['unique'] + stats['harmless_ambiguous'] + stats['override'] + stats['reviewed_qid']}/{stats['total']} pointers"

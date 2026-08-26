@@ -6,7 +6,7 @@ from pipeline.gs_text import GsTextRecord
 from pipeline.gs_join import (
     GsPlaceholderDecision, HARMLESS_AMBIGUOUS, MARKUP_ONLY, NO_MATCH, OVERRIDE, REVIEWED_QID,
     UNIQUE, UNRESOLVED, audit_join, gs_coverage_report, join_gs_pointers,
-    load_gs_placeholder_decisions, load_gs_pointer_decisions,
+    load_gs_dialogue_overrides, load_gs_placeholder_decisions, load_gs_pointer_decisions,
     load_gold_silver_pointer_aliases, read_corpus_rows, to_aligned_rows,
     unresolved_report,
 )
@@ -240,6 +240,35 @@ class GsPointerDecisionConfigTests(unittest.TestCase):
         records = [GsTextRecord("55:0001", "Hello there!")]
         entries, _ = join_gs_pointers(records, [("gs.a.Greeting", "Hello there!", "Bonjour!")])
         self.assertEqual(audit_join(entries), [])
+
+
+class GsDialogueOverridesConfigTests(unittest.TestCase):
+    def test_repository_french_overrides_are_valid_and_cover_the_hof_master_corpus_defect(self):
+        overrides = load_gs_dialogue_overrides("fr")
+        self.assertEqual(len(overrides), 1)
+        self.assertEqual(overrides["21:66db"], "Maître Célébrité!")
+
+    def test_missing_language_file_is_empty(self):
+        self.assertEqual(load_gs_dialogue_overrides("ko"), {})
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(
+                load_gs_dialogue_overrides("fr", Path(tmp) / "absent.json"), {},
+            )
+
+    def test_rejects_wrong_schema(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "overrides.json"
+            path.write_text('{"schema": "wrong", "version": 1, "entries": {}}', encoding="utf-8")
+            with self.assertRaises(ValueError):
+                load_gs_dialogue_overrides("fr", path)
+
+    def test_wires_into_join_gs_pointers(self):
+        records = [GsTextRecord("21:66db", "    HOF Master!")]
+        entries, stats = join_gs_pointers(
+            records, [], overrides=load_gs_dialogue_overrides("fr"),
+        )
+        self.assertEqual(entries[0].translation, "Maître Célébrité!")
+        self.assertEqual(stats["override"], 1)
 
 
 class GoldSilverPointerAliasConfigTests(unittest.TestCase):

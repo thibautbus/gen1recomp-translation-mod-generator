@@ -36,6 +36,7 @@ _KNOWN_LITERAL_TOKENS = known_literal_tokens()
 GS_POINTER_DECISIONS_SCHEMA = "gen1recomp-translation-mods/gs-pointer-decisions"
 GS_PLACEHOLDER_DECISIONS_SCHEMA = "gen1recomp-translation-mods/gs-placeholder-decisions"
 GOLD_SILVER_POINTER_ALIASES_SCHEMA = "gen1recomp-translation-mods/gold-silver-pointer-aliases"
+GS_DIALOGUE_OVERRIDES_SCHEMA = "gen1recomp-translation-mods/gs-dialogue-overrides"
 
 
 @dataclass(frozen=True)
@@ -72,6 +73,58 @@ def load_gs_pointer_decisions(path: str | Path | None = None) -> dict[str, str]:
                 not isinstance(row.get("symbol"), str) or not row["symbol"]):
             raise ValueError(f"invalid Gold pointer decision for {pointer!r}")
         result[pointer] = row["qid"]
+    return result
+
+
+def load_gs_dialogue_overrides(
+    language: str,
+    path: str | Path | None = None,
+) -> dict[str, str]:
+    """Load per-language, per-pointer Gold/Silver dialogue overrides.
+
+    Mirrors pipeline.crystal_mod.load_crystal_dialogue_overrides(): unlike
+    load_gs_pointer_decisions() (a language-independent QID pick), this
+    carries actual translated prose for a pointer whose corpus row cannot
+    simply be joined as-is -- e.g. gs.halloffame.HallOfFamePC.HOFMaster's
+    French row ("Maître Célébrit\\x03@"), a poke-corpus GoldSilver
+    collection defect: byte 0x03 is outside gen1recomp's own Gold charmap
+    (rom_manifest_gold.json has no "3" entry, matching pokecrystal's
+    constants/charmap.asm, where it is simply unused/reserved), so it is
+    almost certainly a localized accented glyph poke-corpus's own extractor
+    could not decode either -- confirmed by poke-corpus's separate Crystal
+    collection, whose row for the same qid/English source decodes cleanly
+    to "Maître Célébrité!". Each entry's ``reason``/``provenance`` fields
+    document why (this function only returns the flat {pointer: override}
+    shape join_gs_pointers()'s own ``overrides`` parameter expects; the
+    richer metadata is for human readers of the checked-in JSON, not
+    consumed here). Missing file (a language with no such overrides yet)
+    returns {}.
+    """
+    if path is None:
+        path = (
+            Path(__file__).resolve().parents[1] / "overrides" / language / "gsc" / "dialogue.json"
+        )
+    path = Path(path)
+    if not path.is_file():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"invalid Gold/Silver dialogue overrides JSON: {path}") from exc
+    if not isinstance(data, dict) or data.get("schema") != GS_DIALOGUE_OVERRIDES_SCHEMA:
+        raise ValueError("unsupported Gold/Silver dialogue overrides schema")
+    if data.get("version") != 1 or not isinstance(data.get("entries"), dict):
+        raise ValueError("Gold/Silver dialogue overrides require version 1 entries")
+    result: dict[str, str] = {}
+    for pointer, row in data["entries"].items():
+        if not re.fullmatch(r"[0-7][0-9a-f]:[0-7][0-9a-f]{3}", pointer):
+            raise ValueError(f"invalid Gold/Silver dialogue override key: {pointer!r}")
+        if (not isinstance(row, dict) or not isinstance(row.get("override"), str) or
+                not row["override"].strip() or not isinstance(row.get("reason"), str) or
+                not row["reason"].strip() or not isinstance(row.get("provenance"), str) or
+                not row["provenance"].strip()):
+            raise ValueError(f"invalid Gold/Silver dialogue override for {pointer!r}")
+        result[pointer] = row["override"]
     return result
 
 
