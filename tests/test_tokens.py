@@ -44,6 +44,15 @@ class GoldTokenExpansionTests(unittest.TestCase):
     def test_japanese_gold_text_controls_do_not_ship_as_tokens(self):
         self.assertEqual(corpus_to_engine("<_CONT><SCROLL>ずかん<DEXEND>"), "\vずかん")
 
+    def test_play_g_is_a_crystal_synonym_for_player(self):
+        # <PLAY_G> is pokecrystal's PlaceGenderedPlayerName (home/text.asm):
+        # places wPlayerName then a JP-only honorific suffix that is an
+        # empty "@" terminator in every localized ROM, so it substitutes
+        # identically to <PLAYER> -- reported as a raw leaked token in
+        # built Crystal dialogue before this mapping existed.
+        self.assertEqual(corpus_to_engine("Salut, <PLAY_G>!"), "Salut, {PLAYER}!")
+        self.assertTrue(DYNAMIC_TOKEN_RE.fullmatch("{PLAYER}"))
+
     def test_po_and_ke_are_deliberately_left_unmapped(self):
         # Matches this table's existing <PK>/<MN> precedent: naming-screen
         # alphabet fragments, not prose -- see pipeline/tokens.py's comment.
