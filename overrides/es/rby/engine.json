@@ -15,11 +15,6 @@
     "BORDERLESS": {"override": "SIN BORDES", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "TREES": {"override": "ÁRBOLES", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "WATER": {"override": "AGUA", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "%s's\nhits will never\nmiss!": {
-      "override": "¡%s\nsiempre acierta!",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; requires in-game visual validation."
-    },
     "%s's\n%s rose!": {
       "override": "¡%s\nsu %s subió!",
       "reason": "editorial-correction",

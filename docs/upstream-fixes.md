@@ -424,6 +424,60 @@ against the bumped pin, not a source-diff guess.
   this bump -- but weren't re-audited line-by-line, the same practical
   call already made for the v0.1.91..v0.2.19 range above.
 
+**Retired by the v0.2.26 pin bump** (`gen1recomp_revision` in
+`config/pipeline.toml`/`config/shared/engine_manifest.json`, 15 commits
+ahead of v0.2.25, 63 files changed -- mostly mobile/Android/iOS bridge work,
+a battle-rule-hooks RFC and Yellow-specific fixes unrelated to translation),
+found the same way: a real build against the bumped pin, not a source-diff
+guess.
+
+- **`%s's\nhits will never\nmiss!` (X Accuracy's battle message) retired,
+  not replaced.** `src/inventory/ItemEffects.lua`'s item-use rewrite
+  (adding a shared `itemUseLine()` helper and an item-use jingle, #1635)
+  dropped the `Strings("%s's\nhits will never\nmiss!", b.name)` call
+  entirely: X Accuracy now prints only the generic "X ACCURACY used!" line,
+  matching Dire Hit and Guard Spec (whose own `Strings()`/`romText()` calls
+  for "getting pumped"/"protected against stat changes" were removed the
+  same way, but neither needed a fix: Dire Hit's was already a `romText()`
+  fallback with no engine.json entry, and Guard Spec's identical literal
+  has a second, untouched `Strings()` call site in
+  `src/battle/TrainerAI.lua` -- a coincidental duplicate kept alive by the
+  AI's own use of the same message, not an allowlist exclusion). A real
+  RBY build against the bumped pin failed with `engine overrides contain 1
+  unknown key(s):
+  ["%s's\nhits will never\nmiss!"]` (`pipeline/mod.py`'s
+  `generate_mod()`). The entry was removed outright (not renamed) from all
+  five languages' `overrides/<language>/rby/engine.json` -- fr, de, es, it,
+  ja-Hrkt all had it; ko has no `rby/engine.json`.
+- **`%s used\n%s!` moved off `Strings()` without breaking anything, but
+  needed a fix of its own.** The same `itemUseLine()` refactor replaced
+  `ItemEffects.lua`'s other direct `Strings("%s used\n%s!", ...)` call
+  (Repel/X-item usage) with `romText(data, "_ItemUseText001", "%s
+  used\n%s!", ...)` -- the same ROM label and *rendered* fallback text
+  `BattleState.lua`'s held-item-use line already used, just reached from a
+  second call site. No override referenced this literal, so no build
+  broke, but `pipeline/engine_backlog.py`'s `iter_romtext_fallback_callsites()`
+  only counts a romText fallback as a real (translatable) engine callsite
+  when its literal is in the hand-maintained `RENDERED_ROMTEXT_FALLBACKS`
+  allowlist -- and only the *other* `_ItemUseText001` fallback phrasing
+  (`%s\nused %s!`, `BattleState.lua`'s held-item-in-battle line) was listed.
+  Once `ItemEffects.lua` stopped calling `Strings()` on this exact literal
+  directly, it silently dropped out of the RBY-related engine-string scan
+  (242 -> 240 keys scanned, not just the 1 legitimately retired one) --
+  confirmed with a standalone before/after scan of both pinned revisions
+  via `pipeline.engine_backlog`/`pipeline.engine_scope`, not just the
+  build's pass/fail. Fixed by adding `"%s used\n%s!"` to
+  `RENDERED_ROMTEXT_FALLBACKS` alongside its sibling phrasing.
+- No other engine-string key broke or silently dropped out of scope: a
+  standalone `Strings()`/`romText()` callsite scan diffed against the
+  pinned v0.2.25 source found exactly these two keys affected (one
+  genuinely gone, one needing the allowlist fix above); real builds for
+  all five RBY languages (fr, de, es, it, ja-Hrkt; Red + Yellow) and a real
+  Gold/Silver/Crystal build (fr) all reached their usual 100% RBY-related
+  (241/241, down from 242/242 -- the one retired key) and Gold/Silver-
+  related (302/302, unchanged) engine-string coverage, plus 100%
+  ROM-aggregate coverage on every side, after these two fixes.
+
 ### Fixed: Surfing Pikachu/Hall of Fame HUD text rewritten upstream
 
 Bumping this project's pin from v0.1.91 to v0.2.19 (`gen1recomp_revision`

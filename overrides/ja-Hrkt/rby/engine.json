@@ -15,11 +15,6 @@
     "BORDERLESS": {"override": "ボーダーレス", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "TREES": {"override": "き", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "WATER": {"override": "みず", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "%s's\nhits will never\nmiss!": {
-      "override": "%sは\nぜったいに\nはずれない！",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; requires in-game visual validation."
-    },
     "%s :L%d": {
       "override": "%s :L%d",
       "reason": "engine-original",

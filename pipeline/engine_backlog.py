@@ -234,6 +234,9 @@ def iter_romtext_fallback_callsites(checkout: str | Path) -> list[dict[str, Any]
     """
     RENDERED_ROMTEXT_FALLBACKS = {
         "%s\nused %s!",                  # _ItemUseText001: 1 slot, 2 args
+        "%s used\n%s!",                  # _ItemUseText001: same label, ItemEffects.lua's own
+                                          # item-use line and BattleState.lua's held-item line
+                                          # (gen1recomp v0.2.26) render this phrasing instead
         "The enemy's weak!\nGet'm! %s!", # _EnemysWeakText: 0 slots, 1 arg
         "%s\nis refusing!",              # _RefusingText: Yellow-only, absent from RB import
     }
