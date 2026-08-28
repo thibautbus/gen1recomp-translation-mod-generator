@@ -571,9 +571,23 @@ def romtext_fallback_catalog(values: dict[str, str], items: list[Alignment], tar
     output: dict[str, str] = {}
     report = {"translated": 0, "unmatched": [], "strategies": {}, "reasons": {}}
     alias = values.get(ROMTEXT_USED_ALIAS)
+    if not alias:
+        # gen1recomp v0.2.33 no longer exposes the item-use alias through its
+        # extracted Strings catalog: both remaining callsites use romText().
+        # Reuse the same reviewed, two-qid semantic recipe as the ordinary
+        # engine matcher instead of duplicating its placeholder composition
+        # here.  This still fails closed when either corpus row is missing,
+        # duplicated, empty, or structurally incompatible.
+        from .engine import match_engine_catalog
+        derived, _ = match_engine_catalog(
+            [ROMTEXT_USED_ALIAS], items, target_lang=target_lang,
+        )
+        alias = derived.get(ROMTEXT_USED_ALIAS)
     if alias:
         output[ROMTEXT_USED_KEY] = alias
-        report["strategies"][ROMTEXT_USED_KEY] = "alias_item_use"
+        report["strategies"][ROMTEXT_USED_KEY] = (
+            "alias_item_use" if values.get(ROMTEXT_USED_ALIAS) else "semantic_item_use"
+        )
     else:
         report["unmatched"].append(ROMTEXT_USED_KEY)
         report["strategies"][ROMTEXT_USED_KEY] = "manual_review"

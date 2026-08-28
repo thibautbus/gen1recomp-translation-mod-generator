@@ -146,6 +146,34 @@ if expectations then
       check(false, "unsupported registry expectation " .. tostring(name))
     end
   end
+
+  -- The `pokemon` registry's own dexEntry (verified above) is a separate
+  -- table from data.gen2Pokedex.entries, which is what
+  -- src/ui/gen2/PokedexMenu.lua actually reads for the #DEX screen; before
+  -- gen1recomp v0.2.33 nothing routed one into the other, so a translated
+  -- #DEX entry validated against the registry but stayed invisible in-game
+  -- (see src/core/gen2/PokedexText.lua's own docstring). Game2:load() closes
+  -- that gap by calling PokedexText.apply(data) once after the mod merge;
+  -- this SDK harness never boots a real Game2, so the bridge is invoked here
+  -- directly, over a synthetic pre-merge entry (STALE placeholders standing
+  -- in for the real ROM-extracted English #DEX text Game2:load() would have
+  -- loaded from disk), to prove this translation's dexEntry actually reaches
+  -- the same table the #DEX screen reads.
+  if expectations.species_dex_text then
+    local PokedexText = require("src.core.gen2.PokedexText")
+    local dexId = expectations.species_dex_text.id
+    data.gen2Pokedex = data.gen2Pokedex or {}
+    data.gen2Pokedex.entries = data.gen2Pokedex.entries or {}
+    data.gen2Pokedex.entries[dexId] = { kind = "STALE", text = "STALE", text2 = "STALE" }
+    PokedexText.apply(data)
+    eq(data.gen2Pokedex.entries[dexId].text, expectations.species_dex_text.value,
+      "PokedexText.apply projects species_dex_text[" .. dexId .. "] onto the #DEX screen's own read table")
+    if expectations.species_dex_text2 then
+      eq(data.gen2Pokedex.entries[dexId].text2, expectations.species_dex_text2.value,
+        "PokedexText.apply projects species_dex_text2[" .. dexId .. "] onto the #DEX screen's own read table")
+    end
+  end
+
   result.release()
   if failures > 0 then
     io.stderr:write(failures .. " gs registry gate check(s) failed\n")

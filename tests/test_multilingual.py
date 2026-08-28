@@ -265,12 +265,14 @@ class MultilingualTests(unittest.TestCase):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
         if not (root / "qid_msg.txt").is_file():
             self.skipTest("canonical local poke-corpus checkout is unavailable")
+        box_prompt = "When you change a\nPOKéMON BOX, data\x0bwill be saved.\x0cIs that okay?"
+        legacy_box_prompt = "When you change a\nPOKéMON BOX, data\nwill be saved. OK?"
         keys = [
             "TYPE/", "TYPE1/", "TYPE2/", "OT/", "LEVEL/", "BALLx", "THROW ROCK",
             "STATS", "SWITCH", "CHANGE BOX", "SEE YA!", "WITHDRAW ITEM",
             "DEPOSIT ITEM", "TOSS ITEM",
             "You don't have\nenough money.", "BATTLE ANIMATION",
-            "When you change a\nPOKéMON BOX, data\nwill be saved. OK?",
+            box_prompt,
         ]
         qids = {
             "TYPE/": "rb.core.TypeText",
@@ -289,7 +291,7 @@ class MultilingualTests(unittest.TestCase):
             "TOSS ITEM": "rb.players_pc.PlayersPCMenuEntries",
             "You don't have\nenough money.": "rb.text_4.PokemartNotEnoughMoneyText",
             "BATTLE ANIMATION": "rb.main_menu.BattleAnimationOptionText",
-            "When you change a\nPOKéMON BOX, data\nwill be saved. OK?": "rb.text_3.WhenYouChangeBoxText",
+            box_prompt: "rb.text_3.WhenYouChangeBoxText",
         }
         expected = {
             "fr": ["TYPE", "TYPE1", "TYPE2", "DO", "NIVEAU", "BALL×", "CAILLOU", "STATS", "ORDRE", "CHANGER BOITE", "SALUT!", "RETIRER OBJET", "STOCKER OBJET", "JETER OBJET", "Ah! Pas d'argent,\npas d'copains!", "ANIMATION COMBAT", "En activant\nune autre boîte\x0bde POKéMON, les\x0bdonnées seront\x0bsauvegardées.\x0cEtes-vous\nd'accord?"],
@@ -304,9 +306,8 @@ class MultilingualTests(unittest.TestCase):
         self.assertEqual(anchors["TYPE/"]["source_aliases"], ["TYPE"])
         self.assertEqual(anchors["BALLx"]["source_aliases"], ["BALL×"])
         self.assertEqual(anchors["BATTLE ANIMATION"]["source_aliases"], ["BATTLE ANIMATION"])
-        self.assertEqual(anchors["When you change a\nPOKéMON BOX, data\nwill be saved. OK?"]["source_aliases"], [
-            "When you change a\nPOKéMON BOX, data\u000bwill be saved.\u000cIs that okay?",
-        ])
+        self.assertEqual(anchors[box_prompt]["engine_keys"], [legacy_box_prompt])
+        self.assertEqual(anchors[box_prompt]["source_aliases"], [legacy_box_prompt])
         for language, values in expected.items():
             items = align(parse_redblue(root, language), target_lang=language)
             output, report = match_engine_catalog({key: "" for key in keys}, items, semantic_anchors=anchors, target_lang=language)
@@ -317,6 +318,16 @@ class MultilingualTests(unittest.TestCase):
                 self.assertEqual(output[key], value, (language, key))
                 self.assertEqual(report["details"][key], "semantic", (language, key))
                 self.assertEqual(report["provenance"][key]["qid"], qids[key], (language, key))
+            legacy_output, legacy_report = match_engine_catalog(
+                {legacy_box_prompt: ""}, items,
+                semantic_anchors=anchors, target_lang=language,
+            )
+            self.assertEqual(legacy_output[legacy_box_prompt], values[-1], language)
+            self.assertEqual(legacy_report["details"][legacy_box_prompt], "semantic", language)
+            self.assertEqual(
+                legacy_report["provenance"][legacy_box_prompt]["qid"],
+                "rb.text_3.WhenYouChangeBoxText", language,
+            )
 
     def test_yellow_engine_print_box_override_matches_the_real_corpus_segment(self):
         # PRINT BOX is Yellow-exclusive: y.bills_pc.BillsPCMenuText inserts a
@@ -345,7 +356,7 @@ class MultilingualTests(unittest.TestCase):
             self.skipTest("canonical local poke-corpus checkout is unavailable")
         anchors = load_semantic_anchors()
         items = align(parse_redblue(root, "fr"), target_lang="fr")
-        for key in ("TYPE/", "THROW ROCK", "BATTLE ANIMATION", "When you change a\nPOKéMON BOX, data\nwill be saved. OK?"):
+        for key in ("TYPE/", "THROW ROCK", "BATTLE ANIMATION", "When you change a\nPOKéMON BOX, data\x0bwill be saved.\x0cIs that okay?"):
             qid = anchors[key]["qid"]
             row = next(item for item in items if item.qid == qid)
             output, report = match_engine_catalog({key: ""}, items + [row], semantic_anchors=anchors, target_lang="fr")
@@ -892,7 +903,7 @@ class MultilingualTests(unittest.TestCase):
             "%s blacked\nout!": {"battle/BattleState.lua", "world/OverworldController.lua"},
             "Diploma": {"ui/Diploma.lua"},
             "BATTLE ANIMATION": {"ui/OptionsMenu.lua", "import/LauncherSettings.lua"},
-            "When you change a\nPOKéMON BOX, data\nwill be saved. OK?": {"ui/BoxMenu.lua"},
+            "When you change a\nPOKéMON BOX, data\x0bwill be saved.\x0cIs that okay?": {"ui/BoxMenu.lua"},
         }
         catalog = classify_callsites(iter_callsites(checkout))
         for key, paths in keys.items():
