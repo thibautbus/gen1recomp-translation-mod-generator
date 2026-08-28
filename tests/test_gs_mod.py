@@ -150,6 +150,45 @@ class GenerateGsModTests(unittest.TestCase):
             main = (mod_dir / "main.lua").read_text(encoding="utf-8")
             self.assertNotIn("silver_game_version", main)
 
+    def test_crystal_dex_text_writes_a_conditional_layer_over_golds(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            mod_dir = generate_gs_mod(
+                Path(tmp) / "mod", language="fr",
+                extra_catalogs={"species_dex_text": {"BULBASAUR": "Texte Or."}},
+                crystal_dex_text_catalog={"BULBASAUR": "Texte Cristal."},
+                crystal_dex_text2_catalog={"BULBASAUR": "Texte Cristal, page 2."},
+            )
+            self.assertIn(
+                '["BULBASAUR"] = "Texte Or."',
+                (mod_dir / "lang" / "species_dex_text.lua").read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                '["BULBASAUR"] = "Texte Cristal."',
+                (mod_dir / "lang" / "species_dex_text_crystal.lua").read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                '["BULBASAUR"] = "Texte Cristal, page 2."',
+                (mod_dir / "lang" / "species_dex_text2_crystal.lua").read_text(encoding="utf-8"),
+            )
+            main = (mod_dir / "main.lua").read_text(encoding="utf-8")
+            self.assertIn('CrystalDexGameVersion.get() == "crystal"', main)
+            self.assertIn("crystal_dex_game_version", main)
+            self.assertIn("species_dex_text_crystal", main)
+            self.assertIn("species_dex_text2_crystal", main)
+            self.assertIn("dexEntry = { text = value }", main)
+            self.assertIn("dexEntry = { text2 = value }", main)
+            # The unconditional Gold catalog registration still runs too --
+            # the Crystal layer patches over it at runtime, it doesn't replace it.
+            self.assertIn("species_dex_text", main)
+
+    def test_no_crystal_dex_text_argument_writes_no_conditional_layer(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            mod_dir = generate_gs_mod(Path(tmp) / "mod", language="fr")
+            self.assertFalse((mod_dir / "lang" / "species_dex_text_crystal.lua").exists())
+            self.assertFalse((mod_dir / "lang" / "species_dex_text2_crystal.lua").exists())
+            main = (mod_dir / "main.lua").read_text(encoding="utf-8")
+            self.assertNotIn("crystal_dex_game_version", main)
+
     def test_no_crystal_argument_keeps_the_gold_silver_only_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             mod_dir = generate_gs_mod(Path(tmp) / "mod", language="fr")
@@ -631,6 +670,47 @@ class BuildGsDialogueModTests(unittest.TestCase):
             self.assertIn('mod.content.moves:patch(id, { name = value })', main)
             self.assertIn('mod.content.items:patch(id, { name = value })', main)
             self.assertIn('mod.content.trainers:patch(id, { name = value })', main)
+
+    def test_builds_a_mod_with_crystals_own_dex_text_when_a_crystal_corpus_is_given(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            gold_out, corpus = self._write_fixture(root)
+            self._write_index_fixtures(gold_out, corpus)
+            crystal_corpus = root / "crystal-corpus"
+            crystal_corpus.mkdir()
+            (crystal_corpus / "qid_msg.txt").write_text(
+                "c.dex_entries.BulbasaurPokedexEntry\n", encoding="utf-8",
+            )
+            (crystal_corpus / "en_msg.txt").write_text(
+                "A Crystal-only seed.@It really grows.@\n", encoding="utf-8",
+            )
+            (crystal_corpus / "fr_msg.txt").write_text(
+                "Une graine Cristal.@Elle grandit vraiment.@\n", encoding="utf-8",
+            )
+            mod_dir, _entries, stats = build_gs_dialogue_mod(
+                gold_out, corpus, root / "mod", language="fr", crystal_corpus_dir=crystal_corpus,
+            )
+            self.assertIn('["BULBASAUR"] = "Une graine Cristal."',
+                           (mod_dir / "lang" / "species_dex_text_crystal.lua").read_text(encoding="utf-8"))
+            self.assertIn('["BULBASAUR"] = "Elle grandit vraiment."',
+                           (mod_dir / "lang" / "species_dex_text2_crystal.lua").read_text(encoding="utf-8"))
+            self.assertEqual(stats["index_catalogs"]["species_dex_text_crystal"], {
+                "total": 1, "translated": 1, "no_corpus_entry": 0,
+            })
+            main = (mod_dir / "main.lua").read_text(encoding="utf-8")
+            self.assertIn('CrystalDexGameVersion.get() == "crystal"', main)
+            self.assertIn("species_dex_text_crystal", main)
+
+    def test_no_crystal_dex_catalog_or_stats_without_a_crystal_corpus(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            gold_out, corpus = self._write_fixture(root)
+            self._write_index_fixtures(gold_out, corpus)
+            mod_dir, _entries, stats = build_gs_dialogue_mod(gold_out, corpus, root / "mod", language="fr")
+            self.assertNotIn("species_dex_text_crystal", stats["index_catalogs"])
+            self.assertFalse((mod_dir / "lang" / "species_dex_text_crystal.lua").exists())
+            main = (mod_dir / "main.lua").read_text(encoding="utf-8")
+            self.assertNotIn("crystal_dex_game_version", main)
 
 
 class GsDialogueGateTests(unittest.TestCase):
