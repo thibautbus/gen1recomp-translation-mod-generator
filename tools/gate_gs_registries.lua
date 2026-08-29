@@ -26,6 +26,16 @@ if not ok then
   os.exit(2)
 end
 
+-- Single source of truth for the four Silver/Crystal #DEX expectation keys:
+-- both the top-level shape validation (an "optional" member, like
+-- species_dex_text2) and the per-edition check below (which must NOT be
+-- routed through the generic single-load targets/fields check further down,
+-- see editionSpecific's own comment) need the exact same name set.
+local EDITION_DEX_TEXT_KEYS = {
+  species_dex_text_silver = true, species_dex_text2_silver = true,
+  species_dex_text_crystal = true, species_dex_text2_crystal = true,
+}
+
 -- The build flow supplies a small JSON file containing one id/value from each
 -- generated catalog.  Keeping the old no-argument fixture below preserves a
 -- useful focused regression test while making the release gate check the
@@ -54,6 +64,23 @@ if expectationPath and expectationPath ~= "" then
     "strings", "species_names", "species_kinds", "species_dex_text", "move_names",
     "item_names", "trainer_class_names", "landmarks", "oak_speech",
   }
+  -- species_dex_text2 (the #DEX entry's second page) is present only when
+  -- the language's corpus actually preserved one: ja-Hrkt/ko's
+  -- dex_entries_gold rows never do (verified against poke-corpus), so the
+  -- Python side omits the key entirely for those rather than shipping an
+  -- empty expectation. Still verified below like any other expectation
+  -- when it IS present.
+  --
+  -- species_dex_text_{silver,crystal}/species_dex_text2_{silver,crystal}
+  -- are Silver's/Crystal's OWN #DEX flavor text (see generate_gs_mod's
+  -- docstring): unlike every registry above, these only apply behind a
+  -- GameVersion-gated conditional layer, so a bug in that layer never shows
+  -- up in the unconditional checks below. Optional the same way
+  -- species_dex_text2 is (a missing/empty per-edition catalog -- e.g. no
+  -- Crystal corpus supplied -- degrades to omitting the key, not a
+  -- BuildError; see pipeline.gs_mod._write_gate_expectations).
+  local optional = { species_dex_text2 = true }
+  for name, _ in pairs(EDITION_DEX_TEXT_KEYS) do optional[name] = true end
   for _, name in ipairs(required) do
     local value = expectations[name]
     if type(value) ~= "table" or type(value.id) ~= "string" or value.id == ""
@@ -63,7 +90,7 @@ if expectationPath and expectationPath ~= "" then
     end
   end
   for name, _ in pairs(expectations) do
-    local known = false
+    local known = optional[name] or false
     for _, requiredName in ipairs(required) do
       if name == requiredName then known = true break end
     end
@@ -106,6 +133,7 @@ if expectations then
     species_names = function(id) return data.pokemon and data.pokemon[id] end,
     species_kinds = function(id) return data.pokemon and data.pokemon[id] and data.pokemon[id].dexEntry end,
     species_dex_text = function(id) return data.pokemon and data.pokemon[id] and data.pokemon[id].dexEntry end,
+    species_dex_text2 = function(id) return data.pokemon and data.pokemon[id] and data.pokemon[id].dexEntry end,
     move_names = function(id) return data.moves and data.moves[id] end,
     item_names = function(id) return data.items and data.items[id] end,
     trainer_class_names = function(id) return data.gen2Trainers and data.gen2Trainers.classes and data.gen2Trainers.classes[id] end,
@@ -114,14 +142,23 @@ if expectations then
   local fields = {
     strings = "value",
     species_names = "name", species_kinds = "kind", species_dex_text = "text",
+    species_dex_text2 = "text2",
     move_names = "name", item_names = "name", trainer_class_names = "name", landmarks = "name",
   }
+  -- Verified separately below, each under its own edition's GameVersion --
+  -- these only ever patch data.pokemon on a Silver/Crystal save, so
+  -- checking them against this (default-edition) load's data would either
+  -- find the guard never ran (false pass) or nothing at all.
+  local editionSpecific = EDITION_DEX_TEXT_KEYS
   for name, expected in pairs(expectations) do
     local target = targets[name]
     local field = fields[name]
     check(type(expected) == "table" and type(expected.id) == "string" and type(expected.value) == "string",
       name .. " gate expectation has a valid shape")
-    if name == "oak_speech" and type(expected) == "table" then
+    if editionSpecific[name] then
+      -- shape already checked above; value verified under its own edition
+      -- load further down.
+    elseif name == "oak_speech" and type(expected) == "table" then
       local Runtime = require("src.mods.Runtime")
       local speech = { texts = {} }
       local steps = {}
@@ -137,7 +174,82 @@ if expectations then
       check(false, "unsupported registry expectation " .. tostring(name))
     end
   end
+
+  -- The `pokemon` registry's own dexEntry (verified above) is a separate
+  -- table from data.gen2Pokedex.entries, which is what
+  -- src/ui/gen2/PokedexMenu.lua actually reads for the #DEX screen; before
+  -- gen1recomp v0.2.33 nothing routed one into the other, so a translated
+  -- #DEX entry validated against the registry but stayed invisible in-game
+  -- (see src/core/gen2/PokedexText.lua's own docstring). Game2:load() closes
+  -- that gap by calling PokedexText.apply(data) once after the mod merge;
+  -- this SDK harness never boots a real Game2, so the bridge is invoked here
+  -- directly, over a synthetic pre-merge entry (STALE placeholders standing
+  -- in for the real ROM-extracted English #DEX text Game2:load() would have
+  -- loaded from disk), to prove this translation's dexEntry actually reaches
+  -- the same table the #DEX screen reads.
+  if expectations.species_dex_text then
+    local PokedexText = require("src.core.gen2.PokedexText")
+    local dexId = expectations.species_dex_text.id
+    data.gen2Pokedex = data.gen2Pokedex or {}
+    data.gen2Pokedex.entries = data.gen2Pokedex.entries or {}
+    data.gen2Pokedex.entries[dexId] = { kind = "STALE", text = "STALE", text2 = "STALE" }
+    PokedexText.apply(data)
+    eq(data.gen2Pokedex.entries[dexId].text, expectations.species_dex_text.value,
+      "PokedexText.apply projects species_dex_text[" .. dexId .. "] onto the #DEX screen's own read table")
+    if expectations.species_dex_text2 then
+      eq(data.gen2Pokedex.entries[dexId].text2, expectations.species_dex_text2.value,
+        "PokedexText.apply projects species_dex_text2[" .. dexId .. "] onto the #DEX screen's own read table")
+    end
+  end
+
+  -- Silver's/Crystal's own #DEX flavor text (generate_gs_mod's silver_
+  -- registration/crystal_dex_registration) each patch mod.content.pokemon
+  -- behind their own "GameVersion.get() == edition" guard, AFTER the
+  -- unconditional Gold catalog checked above -- so re-loading the same mod
+  -- under that edition's GameVersion is the only way to prove the guard
+  -- actually fires and the patch lands, instead of only proving the
+  -- unconditional Gold text is correct (the gap a prior review found: this
+  -- gate never exercised these guards at all, always loading under the
+  -- SDK's default GameVersion, which is neither "silver" nor "crystal").
+  -- GameVersion is process-wide (see src/core/GameVersion.lua's own
+  -- docstring), so it must be set again before each edition's load, and the
+  -- previous result released first -- Sdk.loadMods captures the runtime
+  -- bus globals into one shared slot, and capturing over an unreleased
+  -- load would leak/corrupt that slot instead of restoring it.
   result.release()
+  local editionExpectations = {
+    silver = { text = expectations.species_dex_text_silver, text2 = expectations.species_dex_text2_silver },
+    crystal = { text = expectations.species_dex_text_crystal, text2 = expectations.species_dex_text2_crystal },
+  }
+  local anyEditionExpectation = expectations.species_dex_text_silver or expectations.species_dex_text_crystal
+  if anyEditionExpectation then
+    local okGameVersion, GameVersion = pcall(require, "src.core.GameVersion")
+    local gameVersionUsable = okGameVersion and type(GameVersion) == "table" and type(GameVersion.set) == "function"
+    check(gameVersionUsable,
+      "src.core.GameVersion is loadable and exposes set() for the edition-specific #DEX checks")
+    if gameVersionUsable then
+      for edition, pages in pairs(editionExpectations) do
+        if pages.text or pages.text2 then
+          GameVersion.set(edition)
+          local editionResult = T.sdk.loadMod(modName, { generation = 2, root = modParent })
+          check(#editionResult.errors == 0, "the mod loads with no errors under GameVersion=" .. edition)
+          local editionData = editionResult.data
+          if pages.text then
+            local record = editionData.pokemon and editionData.pokemon[pages.text.id]
+            eq(record and record.dexEntry and record.dexEntry.text, pages.text.value,
+              "species_dex_text_" .. edition .. "[" .. pages.text.id .. "] replaces Gold's text under GameVersion=" .. edition)
+          end
+          if pages.text2 then
+            local record = editionData.pokemon and editionData.pokemon[pages.text2.id]
+            eq(record and record.dexEntry and record.dexEntry.text2, pages.text2.value,
+              "species_dex_text2_" .. edition .. "[" .. pages.text2.id .. "] replaces Gold's text under GameVersion=" .. edition)
+          end
+          editionResult.release()
+        end
+      end
+    end
+  end
+
   if failures > 0 then
     io.stderr:write(failures .. " gs registry gate check(s) failed\n")
     os.exit(1)
@@ -151,6 +263,8 @@ eq(pokemon and pokemon.name, "BULBIZARRE", "pokemon BULBASAUR.name is the real t
 eq(pokemon and pokemon.dexEntry and pokemon.dexEntry.kind, "GRAINE", "pokemon BULBASAUR.dexEntry.kind is the real translation")
 check(pokemon and pokemon.dexEntry and pokemon.dexEntry.text and #pokemon.dexEntry.text > 0,
   "pokemon BULBASAUR.dexEntry.text is a non-empty real translation")
+check(pokemon and pokemon.dexEntry and pokemon.dexEntry.text2 and #pokemon.dexEntry.text2 > 0,
+  "pokemon BULBASAUR.dexEntry.text2 is a non-empty real translation")
 
 local move = data.moves and data.moves.ABSORB
 eq(move and move.name, "VOL-VIE", "moves ABSORB.name is the real translation")

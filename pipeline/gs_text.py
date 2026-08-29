@@ -29,6 +29,13 @@ _TAG = re.compile(r"<[^>]*>")
 _BRACE = re.compile(r"\{[^}]*\}")
 _NON_ALNUM = re.compile(r"[^0-9A-Za-z]+")
 
+# "bank:address", e.g. "55:4067" (see this module's docstring). The single
+# shared compiled pattern for every Gold/Silver/Crystal pointer key
+# validator in the pipeline (pipeline/gs_join.py, pipeline/crystal_mod.py)
+# -- previously five separately inlined copies across two files, which is
+# exactly the kind of thing that silently drifts when only one gets updated.
+GS_POINTER_RE = re.compile(r"[0-7][0-9a-f]:[0-7][0-9a-f]{3}")
+
 
 def normalise(value: str) -> str:
     """Collapse a string to its comparable letters, for joining across the

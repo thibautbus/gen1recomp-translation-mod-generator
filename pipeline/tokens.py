@@ -35,6 +35,11 @@ _CORPUS_EXPANSIONS = {
     "<……>": "……",
     "<LV>": "{LV}",
     "<PLAYER>": "{PLAYER}",
+    # Crystal-only synonym for <PLAYER> (pokecrystal's PlaceGenderedPlayerName,
+    # home/text.asm): places wPlayerName then an optional JP honorific suffix
+    # that is a no-op "@" terminator in every localized ROM, so it substitutes
+    # identically to <PLAYER> here -- verified against the disassembly.
+    "<PLAY_G>": "{PLAYER}",
     "<RIVAL>": "{RIVAL}",
     "<TARGET>": "{TARGET}",
     "<USER>": "{USER}",

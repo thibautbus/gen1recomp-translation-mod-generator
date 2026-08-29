@@ -13,10 +13,13 @@ from .crystal_mod import join_crystal_dialogue, crystal_text_catalog_from_join
 from .roms import GS_REQUIRED_TSV, import_crystal_rom, import_gs_rom, verify_crystal_rom, verify_gs_rom
 from .generate import lua_string
 from .gs_engine import match_gs_engine_strings
-from .gs_index_join import join_by_index, join_dex_entries, join_landmarks, parse_indexed_catalog
+from .gs_index_join import (
+    join_by_index, join_dex_entries, join_dex_entries_pages, join_landmarks,
+    parse_indexed_catalog,
+)
 from .gs_join import (
     GsJoinEntry, GsPlaceholderDecision, audit_join, gs_coverage_report,
-    join_gs_pointers, load_gs_placeholder_decisions,
+    join_gs_pointers, load_gs_dialogue_overrides, load_gs_placeholder_decisions,
     load_gs_pointer_decisions, load_gold_silver_pointer_aliases, read_corpus_rows,
 )
 from .gs_text import parse_gs_text_catalog
@@ -30,6 +33,8 @@ return function(mod)
 __TTF_REGISTRATION__
 __CATALOG_REGISTRATION__
 __CRYSTAL_DIALOGUE_REGISTRATION__
+__SILVER_DEX_TEXT_REGISTRATION__
+__CRYSTAL_DEX_TEXT_REGISTRATION__
 end
 '''
 
@@ -42,6 +47,32 @@ _CRYSTAL_GUARD = (
     "  local crystal_game_version = okGame and type(GameVersion) == \"table\"\n"
     "      and type(GameVersion.get) == \"function\"\n"
     "      and GameVersion.get() == \"crystal\"\n"
+)
+
+# Same shape as _CRYSTAL_GUARD, for the same reason (no GameVersion.isSilver()
+# upstream). Kept separate rather than sharing a helper with the Crystal
+# guard: the two guards are generated into the same main.lua independently
+# (species_dex_text_silver may exist with no crystal_text_catalog and vice
+# versa), and this project's other per-edition guards (mod.py's
+# yellow_isyellow_guard_lines()) are each self-contained the same way.
+_SILVER_GUARD = (
+    '  local okSilverGame, SilverGameVersion = pcall(require, "src.core.GameVersion")\n'
+    "  local silver_game_version = okSilverGame and type(SilverGameVersion) == \"table\"\n"
+    "      and type(SilverGameVersion.get) == \"function\"\n"
+    "      and SilverGameVersion.get() == \"silver\"\n"
+)
+
+# Same shape again, for the same reason -- the dialogue layer's own
+# crystal_registration block (_CRYSTAL_GUARD above) and this dex-text layer
+# are each generated independently (an empty crystal_text_catalog, e.g.
+# Korean, still declares Crystal compatibility with no dialogue layer, while
+# crystal_dex_text_catalog is keyed by species name and unaffected by that),
+# so neither can assume the other's guard variables exist.
+_CRYSTAL_DEX_GUARD = (
+    '  local okCrystalDexGame, CrystalDexGameVersion = pcall(require, "src.core.GameVersion")\n'
+    "  local crystal_dex_game_version = okCrystalDexGame and type(CrystalDexGameVersion) == \"table\"\n"
+    "      and type(CrystalDexGameVersion.get) == \"function\"\n"
+    "      and CrystalDexGameVersion.get() == \"crystal\"\n"
 )
 
 _CATALOG_HELPER = '''  local function catalog(name)
@@ -68,6 +99,7 @@ GS_CATALOG_HOOKS = {
     "species_names": "mod.content.pokemon:patch(id, { name = value })",
     "species_kinds": "mod.content.pokemon:patch(id, { dexEntry = { kind = value } })",
     "species_dex_text": "mod.content.pokemon:patch(id, { dexEntry = { text = value } })",
+    "species_dex_text2": "mod.content.pokemon:patch(id, { dexEntry = { text2 = value } })",
     "move_names": "mod.content.moves:patch(id, { name = value })",
     "item_names": "mod.content.items:patch(id, { name = value })",
     "trainer_class_names": "mod.content.trainers:patch(id, { name = value })",
@@ -194,9 +226,18 @@ assert not (set(GS_CATALOG_HOOKS) & _MODKIT_GENERATED_MODULES), (
 )
 
 GS_REQUIRED_REGISTRIES = (
-    "strings", "species_names", "species_kinds", "species_dex_text", "move_names",
-    "item_names", "trainer_class_names", "landmarks", GS_OAK_SPEECH_CATALOG,
+    "strings", "species_names", "species_kinds", "species_dex_text",
+    "move_names", "item_names", "trainer_class_names", "landmarks", GS_OAK_SPEECH_CATALOG,
 )
+
+# Present in every language's catalogs dict (build_gs_dialogue_mod always
+# joins it) but not guaranteed non-empty: ja-Hrkt/ko's dex_entries_gold
+# corpus rows never preserved a second #DEX description page (verified
+# directly against poke-corpus -- ja-Hrkt has no "@" page marker at all, ko
+# has only the row's own terminator), so species_dex_text2 is {} for those
+# languages rather than a BuildError. Verified by the release gate like any
+# required registry when it does have content (en/fr/de/es/it today).
+GS_OPTIONAL_VERIFIED_REGISTRIES = ("species_dex_text2",)
 
 def gs_mod_id(language: str) -> str:
     """Return the generation-scoped Gold mod identifier."""
@@ -218,6 +259,10 @@ def generate_gs_mod(
     text_catalog: dict[str, str] | None = None,
     extra_catalogs: dict[str, dict[str, str]] | None = None,
     crystal_text_catalog: dict[str, str] | None = None,
+    silver_dex_text_catalog: dict[str, str] | None = None,
+    silver_dex_text2_catalog: dict[str, str] | None = None,
+    crystal_dex_text_catalog: dict[str, str] | None = None,
+    crystal_dex_text2_catalog: dict[str, str] | None = None,
 ) -> Path:
     """Write a deterministic Gold manifest, entry point, and catalogs.
 
@@ -229,6 +274,30 @@ def generate_gs_mod(
     Yellow's own dialogue_yellow.lua). An empty dict still declares "crystal"
     compatibility with no translated layer (Korean: Crystal has no corpus for
     it, so its dialogue simply stays in English on a Crystal save).
+
+    ``silver_dex_text_catalog``/``silver_dex_text2_catalog``, when non-empty,
+    are Silver's OWN #DEX flavor-text pages (join_dex_entries_pages against
+    the "dex_entries_silver" corpus category, not "dex_entries_gold"):
+    verified directly against poke-corpus, Gold and Silver have a genuinely
+    different description for every one of the 251 species (unlike the kind
+    label, species/move/item/trainer names, which the two versions share
+    verbatim). Written to their own lang/species_dex_text{,2}_silver.lua
+    layer and applied only when GameVersion.get() == "silver", AFTER the
+    unconditional "species_dex_text"/"species_dex_text2" catalogs above (a
+    later mod.content.pokemon:patch on the same dexEntry field replaces the
+    earlier one) -- so a Gold or Crystal save is unaffected and keeps Gold's
+    text, and a Silver save ends up with Silver's own.
+
+    ``crystal_dex_text_catalog``/``crystal_dex_text2_catalog`` are the same
+    idea for Crystal's OWN #DEX flavor-text pages (join_dex_entries_pages
+    against Crystal's own poke-corpus collection, category "dex_entries" --
+    verified directly against poke-corpus, Crystal's kind label and named
+    catalogs are identical to Gold/Silver's, but its flavor text is its own
+    third, genuinely different description per species). Written to their
+    own lang/species_dex_text{,2}_crystal.lua layer, applied only when
+    GameVersion.get() == "crystal", AFTER the unconditional Gold catalogs --
+    so a Gold or Silver save is unaffected, and a Crystal save ends up with
+    Crystal's own text instead of Gold's.
     """
     language = canonical_language(language)
     destination = Path(destination)
@@ -290,16 +359,110 @@ def generate_gs_mod(
             "    end\n"
             "  end\n"
         )
+    silver_registration = ""
+    silver_dex_text_layers = [
+        ("species_dex_text_silver", silver_dex_text_catalog, "text"),
+        ("species_dex_text2_silver", silver_dex_text2_catalog, "text2"),
+    ]
+    active_silver_layers = [
+        (name, values, field) for name, values, field in silver_dex_text_layers if values
+    ]
+    if active_silver_layers:
+        if not lang_dir.is_dir():
+            lang_dir.mkdir(parents=True, exist_ok=True)
+        silver_loops = ""
+        for name, values, field in active_silver_layers:
+            lines = [f"-- Generated by the Gold pipeline ({language}): {name}", "return {"]
+            lines.extend(
+                f"  [{lua_string(id_)}] = {lua_string(value)}," for id_, value in sorted(values.items())
+            )
+            lines.append("}")
+            (lang_dir / f"{name}.lua").write_text("\n".join(lines) + "\n", encoding="utf-8")
+            silver_loops += (
+                f'    for id, value in pairs(silverDexTextCatalog("{name}")) do\n'
+                '      if type(value) == "string" and value ~= "" then\n'
+                f"        mod.content.pokemon:patch(id, {{ dexEntry = {{ {field} = value }} }})\n"
+                "      end\n"
+                "    end\n"
+            )
+        silver_registration = (
+            "  -- Silver layer: its own #DEX flavor-text pages, applied only\n"
+            "  -- when running Pokemon Silver -- Gold and Silver have\n"
+            "  -- genuinely different Pokedex descriptions per species,\n"
+            "  -- unlike every other named catalog above (which the two\n"
+            "  -- versions share verbatim), so this patches over the\n"
+            "  -- unconditional species_dex_text{,2} catalogs' Gold text.\n"
+            + _SILVER_GUARD
+            + "  if silver_game_version then\n"
+            "    local function silverDexTextCatalog(name)\n"
+            '      local body = mod:read("lang/" .. name .. ".lua")\n'
+            "      if not body then return {} end\n"
+            "      local chunk = loadstring(body)\n"
+            "      if not chunk then return {} end\n"
+            "      local ok, value = pcall(chunk)\n"
+            "      return ok and type(value) == \"table\" and value or {}\n"
+            "    end\n"
+            + silver_loops
+            + "  end\n"
+        )
+    crystal_dex_registration = ""
+    crystal_dex_text_layers = [
+        ("species_dex_text_crystal", crystal_dex_text_catalog, "text"),
+        ("species_dex_text2_crystal", crystal_dex_text2_catalog, "text2"),
+    ]
+    active_crystal_dex_layers = [
+        (name, values, field) for name, values, field in crystal_dex_text_layers if values
+    ]
+    if active_crystal_dex_layers:
+        if not lang_dir.is_dir():
+            lang_dir.mkdir(parents=True, exist_ok=True)
+        crystal_dex_loops = ""
+        for name, values, field in active_crystal_dex_layers:
+            lines = [f"-- Generated by the Crystal pipeline ({language}): {name}", "return {"]
+            lines.extend(
+                f"  [{lua_string(id_)}] = {lua_string(value)}," for id_, value in sorted(values.items())
+            )
+            lines.append("}")
+            (lang_dir / f"{name}.lua").write_text("\n".join(lines) + "\n", encoding="utf-8")
+            crystal_dex_loops += (
+                f'    for id, value in pairs(crystalDexTextCatalog("{name}")) do\n'
+                '      if type(value) == "string" and value ~= "" then\n'
+                f"        mod.content.pokemon:patch(id, {{ dexEntry = {{ {field} = value }} }})\n"
+                "      end\n"
+                "    end\n"
+            )
+        crystal_dex_registration = (
+            "  -- Crystal layer: its own #DEX flavor-text pages, applied only\n"
+            "  -- when running Pokemon Crystal -- Crystal has a genuinely\n"
+            "  -- different Pokedex description per species from both Gold and\n"
+            "  -- Silver, unlike every other named catalog above (which all\n"
+            "  -- three versions share verbatim), so this patches over the\n"
+            "  -- unconditional species_dex_text{,2} catalogs' Gold text.\n"
+            + _CRYSTAL_DEX_GUARD
+            + "  if crystal_dex_game_version then\n"
+            "    local function crystalDexTextCatalog(name)\n"
+            '      local body = mod:read("lang/" .. name .. ".lua")\n'
+            "      if not body then return {} end\n"
+            "      local chunk = loadstring(body)\n"
+            "      if not chunk then return {} end\n"
+            "      local ok, value = pcall(chunk)\n"
+            "      return ok and type(value) == \"table\" and value or {}\n"
+            "    end\n"
+            + crystal_dex_loops
+            + "  end\n"
+        )
     main_body = (
         MAIN.replace("__TTF_REGISTRATION__", ttf_registration(language, font_source, font_profile))
         .replace("__CATALOG_REGISTRATION__", catalog_registration)
         .replace("__CRYSTAL_DIALOGUE_REGISTRATION__", crystal_registration)
+        .replace("__SILVER_DEX_TEXT_REGISTRATION__", silver_registration)
+        .replace("__CRYSTAL_DEX_TEXT_REGISTRATION__", crystal_dex_registration)
     )
     (destination / "main.lua").write_text(main_body, encoding="utf-8")
     install_font_assets(destination, language, font_source, font_profile)
 
     games = ["gold", "silver"]
-    if crystal_text_catalog is not None:
+    if crystal_text_catalog is not None or crystal_dex_text_catalog or crystal_dex_text2_catalog:
         games.append("crystal")
     display_name = target_name or (
         f"{language} translation for Gold, Silver and Crystal" if "crystal" in games
@@ -319,11 +482,15 @@ def generate_gs_mod(
     # Registry.lua's override folds onto the base table by exact id match) --
     # so declaring "silver" here lets the same mod apply to a real Silver
     # save via src/mods/ModTargets.lua's specApplies() with no separate
-    # Silver-specific build. "crystal" (when crystal_text_catalog is given)
-    # works the same way, plus its own conditional dialogue_crystal.lua layer
-    # above -- Crystal's pointers mostly don't exist in the base "dialogue"
-    # catalog at all (95.8% diverge from Gold's), so without that separate
-    # layer a Crystal save would see almost no translation from this mod.
+    # Silver-specific build. "crystal" (when crystal_text_catalog is given,
+    # even empty, or either Crystal dex-text catalog is non-empty -- either
+    # one alone still emits a real conditional layer below that only runs on
+    # a Crystal save, so the manifest must declare compatibility for it to
+    # ever load there) works the same way, plus its own conditional
+    # dialogue_crystal.lua layer above -- Crystal's pointers mostly don't
+    # exist in the base "dialogue" catalog at all (95.8% diverge from
+    # Gold's), so without that separate layer a Crystal save would see
+    # almost no translation from this mod.
     manifest_body = {
         "id": mod_id, "name": display_name, "version": project_version(), "api": 2,
         "entry": "main.lua", "profile": "content", "games": games,
@@ -399,9 +566,24 @@ def gs_oak_speech_catalog_from_join(entries: list[GsJoinEntry]) -> dict[str, str
     }
 
 
-def _write_gate_expectations(mod_dir: Path, catalogs: dict[str, dict[str, str]]) -> Path:
-    """Write a tiny, private expectation file consumed by the registry gate."""
-    optional = {"ui_labels"}
+def _write_gate_expectations(
+    mod_dir: Path,
+    catalogs: dict[str, dict[str, str]],
+    edition_dex_text: dict[str, dict[str, dict[str, str]]] | None = None,
+) -> Path:
+    """Write a tiny, private expectation file consumed by the registry gate.
+
+    ``edition_dex_text`` (optional) carries Silver's/Crystal's own #DEX
+    flavor text -- e.g. ``{"silver": {"text": {...}, "text2": {...}}}`` --
+    from build_gs_dialogue_mod's own local silver_text/silver_text2/
+    crystal_text/crystal_text2. Unlike every catalog in ``catalogs``, these
+    only apply behind a GameVersion-gated conditional layer (see
+    generate_gs_mod's docstring), so the gate needs the same species id
+    checked under "species_dex_text" above to prove that id's text actually
+    changes on that edition's save, not merely that the base Gold catalog is
+    correct.
+    """
+    optional = {"ui_labels", *GS_OPTIONAL_VERIFIED_REGISTRIES}
     if not set(catalogs) - optional >= set(GS_REQUIRED_REGISTRIES):
         missing = sorted(set(GS_REQUIRED_REGISTRIES) - set(catalogs))
         raise BuildError(
@@ -415,8 +597,10 @@ def _write_gate_expectations(mod_dir: Path, catalogs: dict[str, dict[str, str]])
             + f"; unexpected: {', '.join(extra)}"
         )
     expected: dict[str, dict[str, str]] = {}
-    for name in GS_REQUIRED_REGISTRIES:
-        values = catalogs[name]
+    for name in (*GS_REQUIRED_REGISTRIES, *GS_OPTIONAL_VERIFIED_REGISTRIES):
+        values = catalogs.get(name)
+        if name in GS_OPTIONAL_VERIFIED_REGISTRIES and not values:
+            continue
         if not isinstance(values, dict) or not values:
             raise BuildError(f"Gold registry gate expectation is empty: {name}")
         key = sorted(values)[0]
@@ -424,6 +608,16 @@ def _write_gate_expectations(mod_dir: Path, catalogs: dict[str, dict[str, str]])
         if not isinstance(key, str) or not isinstance(value, str) or not value:
             raise BuildError(f"Gold registry gate expectation is malformed: {name}")
         expected[name] = {"id": key, "value": value}
+    base_id = expected["species_dex_text"]["id"]
+    for edition, pages in (edition_dex_text or {}).items():
+        for field, catalog_name in (("text", f"species_dex_text_{edition}"), ("text2", f"species_dex_text2_{edition}")):
+            values = pages.get(field) or {}
+            if not values:
+                continue
+            key = base_id if base_id in values else sorted(values)[0]
+            value = values[key]
+            if isinstance(key, str) and isinstance(value, str) and value:
+                expected[catalog_name] = {"id": key, "value": value}
     path = mod_dir.parent / f".{mod_dir.name}.registry-gate.json"
     path.write_text(json.dumps(expected, ensure_ascii=False, sort_keys=True), encoding="utf-8")
     return path
@@ -466,6 +660,7 @@ def run_gs_release_gates(
     luajit: str,
     *,
     catalogs: dict[str, dict[str, str]] | None = None,
+    edition_dex_text: dict[str, dict[str, dict[str, str]]] | None = None,
     coverage: dict | None = None,
     placeholder_decisions: dict[str, GsPlaceholderDecision] | None = None,
     log_fn: Callable[[str], None] | None = None,
@@ -509,7 +704,7 @@ def run_gs_release_gates(
               str(dialogue_expectation_path)], log_fn=log_fn)
     finally:
         dialogue_expectation_path.unlink(missing_ok=True)
-    expectation_path = _write_gate_expectations(mod_dir, catalogs or {})
+    expectation_path = _write_gate_expectations(mod_dir, catalogs or {}, edition_dex_text)
     try:
         _run([luajit, str(tools / "gate_gs_registries.lua"), str(gen1recomp), str(mod_dir), str(expectation_path)], log_fn=log_fn)
     finally:
@@ -597,6 +792,7 @@ def build_gs_dialogue_mod(
     overrides: dict[str, str] | None = None,
     engine_source: str | Path | None = None,
     crystal_text_catalog: dict[str, str] | None = None,
+    crystal_corpus_dir: str | Path | None = None,
 ) -> tuple[Path, list[GsJoinEntry], dict]:
     """Join extracted Gold catalogs to the corpus and generate the mod.
 
@@ -607,6 +803,17 @@ def build_gs_dialogue_mod(
     moves/items/trainer classes, Oak speech, engine strings -- Crystal saves
     already get the engine-string catalog for free, it's the same shared
     Strings() Lua code as Gold/Silver).
+
+    ``crystal_corpus_dir``, when given, is poke-corpus's own Crystal/
+    collection: used here (not in crystal_mod.py, unlike the dialogue join)
+    because Crystal's #DEX flavor text is joined by species name against the
+    same ``species`` list this function already extracts from Gold's own
+    gs_species.tsv (Crystal's roster/ids are identical -- only the kind
+    label and named catalogs are shared verbatim; the flavor text itself is
+    genuinely Crystal's own, see generate_gs_mod()'s docstring). Missing
+    corpus file for ``language`` (Crystal's collection has no Korean, unlike
+    GoldSilver's) degrades to empty catalogs, same as
+    crystal_mod.join_crystal_dialogue()'s own graceful degradation.
     """
     gold_out_dir = Path(gold_out_dir)
     language = canonical_language(language)
@@ -657,9 +864,47 @@ def build_gs_dialogue_mod(
     kind_translations, kind_stats = join_dex_entries(species, corpus_rows, "dex_entries", "Species")
     extra_catalogs["species_kinds"] = kind_translations
     index_stats["species_kinds"] = kind_stats
-    text_translations, text_stats = join_dex_entries(species, corpus_rows, "dex_entries_gold")
+    text_translations, text2_translations, text_stats, text2_stats = join_dex_entries_pages(
+        species, corpus_rows, "dex_entries_gold",
+    )
     extra_catalogs["species_dex_text"] = text_translations
+    extra_catalogs["species_dex_text2"] = text2_translations
     index_stats["species_dex_text"] = text_stats
+    index_stats["species_dex_text2"] = text2_stats
+    # Silver's OWN #DEX flavor text (genuinely different prose from Gold's
+    # for every species -- verified against the corpus). Kept OUT of
+    # extra_catalogs/index_stats' generic unconditional-registration path
+    # on purpose: it must only apply on a Silver save, so it is passed to
+    # generate_gs_mod() separately and registered behind its own
+    # GameVersion.get() == "silver" guard (see generate_gs_mod's docstring).
+    silver_text, silver_text2, silver_text_stats, silver_text2_stats = join_dex_entries_pages(
+        species, corpus_rows, "dex_entries_silver",
+    )
+    index_stats["species_dex_text_silver"] = silver_text_stats
+    index_stats["species_dex_text2_silver"] = silver_text2_stats
+    # Crystal's OWN #DEX flavor text, same idea as Silver's above but joined
+    # against a wholly separate corpus collection (Crystal's pointers are
+    # 95.8% divergent from Gold/Silver's, see crystal_mod.py's docstring,
+    # but the #DEX text is joined by species name here, not by pointer, so
+    # that divergence doesn't matter for this join). Only counted into
+    # index_stats/coverage when a Crystal corpus was actually supplied --
+    # like "engine"/"engine_gen2" below, a caller not passing one keeps the
+    # exact same coverage totals as before this catalog existed.
+    crystal_text: dict[str, str] = {}
+    crystal_text2: dict[str, str] = {}
+    if crystal_corpus_dir is not None:
+        crystal_corpus_dir = Path(crystal_corpus_dir)
+        if (crystal_corpus_dir / f"{language}_msg.txt").is_file():
+            crystal_corpus_rows = read_corpus_rows(crystal_corpus_dir, target_lang=language)
+            crystal_text, crystal_text2, crystal_text_stats, crystal_text2_stats = join_dex_entries_pages(
+                species, crystal_corpus_rows, "dex_entries",
+            )
+        else:
+            crystal_text_stats = crystal_text2_stats = {
+                "total": len(species), "translated": 0, "no_corpus_entry": len(species),
+            }
+        index_stats["species_dex_text_crystal"] = crystal_text_stats
+        index_stats["species_dex_text2_crystal"] = crystal_text2_stats
     landmarks_path = gold_out_dir / "gs_landmarks.tsv"
     landmarks = parse_indexed_catalog(landmarks_path)
     if not landmarks:
@@ -701,6 +946,15 @@ def build_gs_dialogue_mod(
     # Kept in-memory for the pre-publication registry gate; callers that
     # serialize stats can omit this private payload.
     stats["_gate_catalogs"] = extra_catalogs
+    # Silver's and Crystal's own #DEX flavor text are deliberately excluded
+    # from extra_catalogs above (they must only apply on their own edition's
+    # save, not unconditionally), so the gate needs them threaded through
+    # separately to actually exercise their GameVersion-gated patch loops
+    # instead of only checking the unconditional Gold catalogs.
+    stats["_gate_edition_dex_text"] = {
+        "silver": {"text": silver_text, "text2": silver_text2},
+        "crystal": {"text": crystal_text, "text2": crystal_text2},
+    }
     stats["_placeholder_decisions"] = load_gs_placeholder_decisions(language)
 
     mod_dir = generate_gs_mod(
@@ -709,6 +963,10 @@ def build_gs_dialogue_mod(
         text_catalog=gs_text_catalog_from_join(entries),
         extra_catalogs=extra_catalogs,
         crystal_text_catalog=crystal_text_catalog,
+        silver_dex_text_catalog=silver_text,
+        silver_dex_text2_catalog=silver_text2,
+        crystal_dex_text_catalog=crystal_text,
+        crystal_dex_text2_catalog=crystal_text2,
     )
     return mod_dir, entries, stats
 
@@ -797,6 +1055,8 @@ def build_gs(
         gold_out, corpus_gold_silver, mod_dir, mod_id=mod_id, language=language,
         target_name=f"{language_name} translation for Gold, Silver and Crystal", font_source=font_source, font_profile=font_profile,
         engine_source=gen1recomp, crystal_text_catalog=crystal_text_catalog,
+        crystal_corpus_dir=corpus_crystal,
+        overrides=load_gs_dialogue_overrides(language),
     )
     log(
         f"  text: {stats['unique'] + stats['harmless_ambiguous'] + stats['override'] + stats['reviewed_qid']}/{stats['total']} pointers"
@@ -807,6 +1067,7 @@ def build_gs(
     gate_report = run_gs_release_gates(
         mod_dir, entries, gen1recomp, luajit,
         catalogs=stats.get("_gate_catalogs", {}),
+        edition_dex_text=stats.get("_gate_edition_dex_text", {}),
         coverage=stats["coverage"],
         placeholder_decisions=stats.get("_placeholder_decisions", {}),
         log_fn=log_fn,

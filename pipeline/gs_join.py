@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping
 
-from .gs_text import GsTextRecord, normalise, split_lines
+from .gs_text import GS_POINTER_RE, GsTextRecord, normalise, split_lines
 from .tokens import DYNAMIC_TOKEN_RE, TOKEN_RE, check_placeholders, corpus_to_engine, known_literal_tokens
 
 # Provenance values a GsJoinEntry can carry.
@@ -36,6 +36,7 @@ _KNOWN_LITERAL_TOKENS = known_literal_tokens()
 GS_POINTER_DECISIONS_SCHEMA = "gen1recomp-translation-mods/gs-pointer-decisions"
 GS_PLACEHOLDER_DECISIONS_SCHEMA = "gen1recomp-translation-mods/gs-placeholder-decisions"
 GOLD_SILVER_POINTER_ALIASES_SCHEMA = "gen1recomp-translation-mods/gold-silver-pointer-aliases"
+GS_DIALOGUE_OVERRIDES_SCHEMA = "gen1recomp-translation-mods/gs-dialogue-overrides"
 
 
 @dataclass(frozen=True)
@@ -65,13 +66,65 @@ def load_gs_pointer_decisions(path: str | Path | None = None) -> dict[str, str]:
         raise ValueError("Gold pointer decisions require version 1 entries")
     result: dict[str, str] = {}
     for pointer, row in data["entries"].items():
-        if not re.fullmatch(r"[0-7][0-9a-f]:[0-7][0-9a-f]{3}", pointer):
+        if not GS_POINTER_RE.fullmatch(pointer):
             raise ValueError(f"invalid Gold pointer decision key: {pointer!r}")
         if (not isinstance(row, dict) or set(row) != {"qid", "symbol"} or
                 not isinstance(row.get("qid"), str) or not row["qid"].startswith("gs.") or
                 not isinstance(row.get("symbol"), str) or not row["symbol"]):
             raise ValueError(f"invalid Gold pointer decision for {pointer!r}")
         result[pointer] = row["qid"]
+    return result
+
+
+def load_gs_dialogue_overrides(
+    language: str,
+    path: str | Path | None = None,
+) -> dict[str, str]:
+    """Load per-language, per-pointer Gold/Silver dialogue overrides.
+
+    Mirrors pipeline.crystal_mod.load_crystal_dialogue_overrides(): unlike
+    load_gs_pointer_decisions() (a language-independent QID pick), this
+    carries actual translated prose for a pointer whose corpus row cannot
+    simply be joined as-is -- e.g. gs.halloffame.HallOfFamePC.HOFMaster's
+    French row ("Maître Célébrit\\x03@"), a poke-corpus GoldSilver
+    collection defect: byte 0x03 is outside gen1recomp's own Gold charmap
+    (rom_manifest_gold.json has no "3" entry, matching pokecrystal's
+    constants/charmap.asm, where it is simply unused/reserved), so it is
+    almost certainly a localized accented glyph poke-corpus's own extractor
+    could not decode either -- confirmed by poke-corpus's separate Crystal
+    collection, whose row for the same qid/English source decodes cleanly
+    to "Maître Célébrité!". Each entry's ``reason``/``provenance`` fields
+    document why (this function only returns the flat {pointer: override}
+    shape join_gs_pointers()'s own ``overrides`` parameter expects; the
+    richer metadata is for human readers of the checked-in JSON, not
+    consumed here). Missing file (a language with no such overrides yet)
+    returns {}.
+    """
+    if path is None:
+        path = (
+            Path(__file__).resolve().parents[1] / "overrides" / language / "gsc" / "dialogue.json"
+        )
+    path = Path(path)
+    if not path.is_file():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"invalid Gold/Silver dialogue overrides JSON: {path}") from exc
+    if not isinstance(data, dict) or data.get("schema") != GS_DIALOGUE_OVERRIDES_SCHEMA:
+        raise ValueError("unsupported Gold/Silver dialogue overrides schema")
+    if data.get("version") != 1 or not isinstance(data.get("entries"), dict):
+        raise ValueError("Gold/Silver dialogue overrides require version 1 entries")
+    result: dict[str, str] = {}
+    for pointer, row in data["entries"].items():
+        if not GS_POINTER_RE.fullmatch(pointer):
+            raise ValueError(f"invalid Gold/Silver dialogue override key: {pointer!r}")
+        if (not isinstance(row, dict) or not isinstance(row.get("override"), str) or
+                not row["override"].strip() or not isinstance(row.get("reason"), str) or
+                not row["reason"].strip() or not isinstance(row.get("provenance"), str) or
+                not row["provenance"].strip()):
+            raise ValueError(f"invalid Gold/Silver dialogue override for {pointer!r}")
+        result[pointer] = row["override"]
     return result
 
 
@@ -98,7 +151,7 @@ def load_gs_placeholder_decisions(
         raise ValueError(f"invalid Gold placeholder decisions for language {language!r}")
     result: dict[str, GsPlaceholderDecision] = {}
     for pointer, row in language_entries.items():
-        if not re.fullmatch(r"[0-7][0-9a-f]:[0-7][0-9a-f]{3}", pointer):
+        if not GS_POINTER_RE.fullmatch(pointer):
             raise ValueError(f"invalid Gold placeholder decision key: {pointer!r}")
         if (not isinstance(row, dict) or set(row) != {"qid", "errors", "reason"} or
                 not isinstance(row.get("qid"), str) or not row["qid"].startswith("gs.") or
@@ -134,14 +187,13 @@ def load_gold_silver_pointer_aliases(path: str | Path | None = None) -> dict[str
         raise ValueError("unsupported Gold/Silver pointer aliases schema")
     if data.get("version") != 1 or not isinstance(data.get("entries"), dict):
         raise ValueError("Gold/Silver pointer aliases require version 1 entries")
-    pointer_re = re.compile(r"[0-7][0-9a-f]:[0-7][0-9a-f]{3}")
     result: dict[str, str] = {}
     for gold_pointer, row in data["entries"].items():
-        if not pointer_re.fullmatch(gold_pointer):
+        if not GS_POINTER_RE.fullmatch(gold_pointer):
             raise ValueError(f"invalid Gold pointer in Gold/Silver alias key: {gold_pointer!r}")
         if (not isinstance(row, dict) or "silver_pointer" not in row or
                 not isinstance(row.get("silver_pointer"), str) or
-                not pointer_re.fullmatch(row["silver_pointer"]) or
+                not GS_POINTER_RE.fullmatch(row["silver_pointer"]) or
                 not isinstance(row.get("label"), str) or not row["label"]):
             raise ValueError(f"invalid Gold/Silver pointer alias for {gold_pointer!r}")
         result[gold_pointer] = row["silver_pointer"]

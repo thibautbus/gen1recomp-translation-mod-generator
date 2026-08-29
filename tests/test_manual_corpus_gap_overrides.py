@@ -5,48 +5,47 @@ from pipeline.engine import load_engine_overrides, printf_directives
 
 
 KEYS = (
-    "%s :L%d",
+    ":L%d",
     ":L%d No.%03d",
     "Empty.",
     "No good! It's not\neven near water.",
     "PP",
     "PRNT",
-    "BOX %d (WITHDRAW)",
-    "BOX %d (RELEASE)",
     "Data unknown.",
     "The boulder fell\nthrough the hole!",
+    "BOX%2d",
 )
 
 EXPECTED = {
     "fr": [
-        "%s :N%d", ":N%d No.%03d", "Vide.",
+        ":N%d", ":N%d No.%03d", "Vide.",
         "Pas bon! Même pas\nprès de l'eau.", "PP", "PRNT",
-        "BOITE %d (RETIRER)", "BOITE %d (RELACHER)", "Données inconnues.",
-        "Le rocher est tombé\ndans le trou!",
+        "Données inconnues.",
+        "Le rocher est tombé\ndans le trou!", "BOITE%2d",
     ],
     "de": [
-        "%s :L%d", ":L%d Nr.%03d", "Leer.",
+        ":L%d", ":L%d Nr.%03d", "Leer.",
         "Schade! Nicht mal\nin Wassernähe.", "PP", "PRNT",
-        "BOX %d (MITNEHMEN)", "BOX %d (FREILASSEN)", "Daten unbekannt.",
-        "Der Felsen fiel\ndurch das Loch!",
+        "Daten unbekannt.",
+        "Der Felsen fiel\ndurch das Loch!", "BOX%2d",
     ],
     "es": [
-        "%s :N%d", ":N%d Nº%03d", "Vacía.",
+        ":N%d", ":N%d Nº%03d", "Vacía.",
         "¡Qué mal! No estás\nni cerca del agua.", "PP", "PRNT",
-        "CAJA %d (SACAR)", "CAJA %d (SOLTAR)", "Datos desconocidos.",
-        "¡La roca cayó\npor el agujero!",
+        "Datos desconocidos.",
+        "¡La roca cayó\npor el agujero!", "CAJA%2d",
     ],
     "it": [
-        "%s :L%d", ":L%d Nº%03d", "Vuoto.",
+        ":L%d", ":L%d Nº%03d", "Vuoto.",
         "Niente da fare!\nLontano dall'acqua.", "PP", "PRNT",
-        "BOX %d (RITIRA)", "BOX %d (LIBERA)", "Dati sconosciuti.",
-        "Il masso è caduto\nnel buco!",
+        "Dati sconosciuti.",
+        "Il masso è caduto\nnel buco!", "BOX%2d",
     ],
     "ja-Hrkt": [
-        "%s :L%d", ":L%d No.%03d", "からっぽ。",
+        ":L%d", ":L%d No.%03d", "からっぽ。",
         "だめだ！\nみずの　そばじゃ　ない！", "PP", "PRNT",
-        "ボックス%d（つれていく）", "ボックス%d（にがす）", "データ　ふめい。",
-        "いわが　あなに\nおちた！",
+        "データ　ふめい。",
+        "いわが　あなに\nおちた！", "ボックス%2d",
     ],
 }
 
@@ -55,7 +54,6 @@ CONTRACT_GAP_KEYS = (
     "Once released,\n%s is\ngone forever. OK?",
     "BADGES",
     "HT %d′%02d″", "WT %.1flb",
-    "%sBOX %2d",
     "%s\nfainted!",
     "POKéDEX",
 )

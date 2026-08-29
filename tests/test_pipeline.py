@@ -635,6 +635,19 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(report["translated"], 2)
         self.assertEqual(report["unmatched"], [])
 
+    def test_romtext_fallback_catalog_derives_used_from_corpus_without_engine_alias(self):
+        rows = align([
+            CorpusRecord("rb.text_7.ItemUseText001", "en", "{text_start}<PLAYER> used@@"),
+            CorpusRecord("rb.text_7.ItemUseText001", "fr", "{text_start}<PLAYER> utilise:@@"),
+            CorpusRecord("rb.text_7.ItemUseText002", "en", "{text_ram wStringBuffer}{text_start}!<DONE>"),
+            CorpusRecord("rb.text_7.ItemUseText002", "fr", "{text_ram wStringBuffer}{text_start}!<DONE>"),
+        ])
+        output, report = romtext_fallback_catalog({}, rows, "fr")
+        self.assertEqual(output, {"%s\nused %s!": "%s utilise:\n%s!"})
+        self.assertEqual(report["strategies"]["%s\nused %s!"], "semantic_item_use")
+        self.assertEqual(report["translated"], 1)
+        self.assertEqual(report["unmatched"], ["The enemy's weak!\nGet'm! %s!"])
+
     def test_romtext_fallback_catalog_unmatched_without_source(self):
         rows = align([
             CorpusRecord("rb.text_7.ItemUseText001", "en", "{text_start}<PLAYER> used@@"),

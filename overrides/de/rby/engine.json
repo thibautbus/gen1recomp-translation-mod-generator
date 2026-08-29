@@ -25,10 +25,10 @@
       "reason": "engine-original",
       "provenance": "German corpus omits the greatly-stage fragment; manual engine-original wording, requires in-game visual validation."
     },
-    "%s :L%d": {
-      "override": "%s :L%d",
+    ":L%d": {
+      "override": ":L%d",
       "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation. Renamed from \"%s :L%d\" -- gen1recomp v0.2.33's src/ui/BoxMenu.lua:monRow split the nickname (now unwrapped, not run through Strings()) from the level suffix into a separate Strings(\":L%d\", ...) call."
     },
     ":L%d No.%03d": {
       "override": ":L%d Nr.%03d",
@@ -57,16 +57,6 @@
     },
     "PRNT": {
       "override": "PRNT",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
-    },
-    "BOX %d (WITHDRAW)": {
-      "override": "BOX %d (MITNEHMEN)",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
-    },
-    "BOX %d (RELEASE)": {
-      "override": "BOX %d (FREILASSEN)",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
@@ -105,10 +95,10 @@
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation retained as a technical weight format; concrete engine contract limitation is a missing unit-context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
-    "%sBOX %2d": {
-      "override": "%sBOX %2d",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation retained as the technical BOX label; concrete engine contract limitation is reordered box-name and numeric arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    "BOX%2d": {
+      "override": "BOX%2d",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation. Renamed from \"%sBOX %2d\" -- gen1recomp v0.2.33's src/ui/BoxMenu.lua:changeBoxMenu dropped the leading selection-mark argument and the space before \"BOX\"."
     },
     "%s\nfainted!": {
       "override": "%s\nwurde besiegt!",

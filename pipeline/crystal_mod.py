@@ -33,14 +33,13 @@ nothing Crystal-specific needed there), and no release gates.
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 
 from .gs_join import GsJoinEntry, join_gs_pointers, read_corpus_rows
-from .gs_text import parse_gs_text_catalog
+from .gs_text import GS_POINTER_RE, parse_gs_text_catalog
 
 CRYSTAL_POINTER_DECISIONS_SCHEMA = "gen1recomp-translation-mods/crystal-pointer-decisions"
-_POINTER = re.compile(r"[0-7][0-9a-f]:[0-7][0-9a-f]{3}")
+_POINTER = GS_POINTER_RE
 
 
 def load_crystal_pointer_decisions(path: str | Path | None = None) -> dict[str, str]:

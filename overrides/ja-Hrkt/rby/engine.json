@@ -15,10 +15,10 @@
     "BORDERLESS": {"override": "ボーダーレス", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "TREES": {"override": "き", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
     "WATER": {"override": "みず", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; kana-only raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "%s :L%d": {
-      "override": "%s :L%d",
+    ":L%d": {
+      "override": ":L%d",
       "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation. Renamed from \"%s :L%d\" -- gen1recomp v0.2.33's src/ui/BoxMenu.lua:monRow split the nickname (now unwrapped, not run through Strings()) from the level suffix into a separate Strings(\":L%d\", ...) call."
     },
     ":L%d No.%03d": {
       "override": ":L%d No.%03d",
@@ -52,16 +52,6 @@
     },
     "PRNT": {
       "override": "PRNT",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
-    },
-    "BOX %d (WITHDRAW)": {
-      "override": "ボックス%d（つれていく）",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
-    },
-    "BOX %d (RELEASE)": {
-      "override": "ボックス%d（にがす）",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
@@ -100,10 +90,10 @@
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation retained as a technical weight format; concrete engine contract limitation is a missing unit-context argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
-    "%sBOX %2d": {
-      "override": "%sボックス %2d",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation; concrete engine contract limitation is reordered box-name and numeric arguments; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    "BOX%2d": {
+      "override": "ボックス%2d",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation. Renamed from \"%sBOX %2d\" -- gen1recomp v0.2.33's src/ui/BoxMenu.lua:changeBoxMenu dropped the leading selection-mark argument and the space before \"BOX\"."
     },
     "%s\nfainted!": {
       "override": "%sは\nたおれた！",

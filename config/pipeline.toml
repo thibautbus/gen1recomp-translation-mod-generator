@@ -42,13 +42,13 @@ target_lang = "fr"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
-# Pinned at v0.2.26, the upstream release used to validate and package the
+# Pinned at v0.2.36, the upstream release used to validate and package the
 # RBY, Gold/Silver and Crystal translation mods.
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "0c6c813e87d61a0b61ebd904cbb98a830a8f4be1"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/0c6c813e87d61a0b61ebd904cbb98a830a8f4be1"
-archive_sha256 = "295e7611105e6d1215472d552320d76bf71c45d795bbb7ff8ca2ea91d508db2c"
-archive_tree_sha256 = "4ac2601b1068595ad2256d65bf37def323281e8af851d2899294990c7f0b0afe"
+revision = "fc56b9b05f01c559610c71f801355abfa4ae920f"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/fc56b9b05f01c559610c71f801355abfa4ae920f"
+archive_sha256 = "15781ad21e35ad51eb3ec2111419f28d3a850ab91146a84895c5f332d6df1584"
+archive_tree_sha256 = "ffa0936bfa8e64ec6713665614983cbfcbd71722c3fe8506791cb72096a5d2cc"
 
 [fonts.pokemon]
 revision = "81b60805150c75ebfdfcec6d8352c67e491f8a6c"

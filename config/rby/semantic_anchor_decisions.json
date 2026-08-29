@@ -1555,18 +1555,21 @@
       "trace_status": "reviewed",
       "languages_verified": true
     },
-    "When you change a\nPOKéMON BOX, data\nwill be saved. OK?": {
+    "When you change a\nPOKéMON BOX, data\u000bwill be saved.\fIs that okay?": {
       "anchor": {
         "qid": "rb.text_3.WhenYouChangeBoxText",
+        "engine_keys": [
+          "When you change a\nPOKéMON BOX, data\nwill be saved. OK?"
+        ],
         "source_aliases": [
-          "When you change a\nPOKéMON BOX, data\u000bwill be saved.\fIs that okay?"
+          "When you change a\nPOKéMON BOX, data\nwill be saved. OK?"
         ],
         "extraction": {
           "kind": "full"
         }
       },
       "decision_type": "source_alias",
-      "rationale": "Reviewed source alias: rb.text_3.WhenYouChangeBoxText is the save-confirmation prompt for the box-change callsite; its multiline reflow and OK prompt are semantically equivalent.",
+      "rationale": "Reviewed source alias: rb.text_3.WhenYouChangeBoxText is the save-confirmation prompt for the box-change callsite; its multiline reflow and OK prompt are semantically equivalent. gen1recomp reworded this callsite from \"OK?\" (through v0.2.26, kept under engine_keys/source_aliases for older checkouts) to \"Is that okay?\" (v0.2.33+, now the primary key anchor_for() looks up).",
       "languages": [
         "fr",
         "de",
