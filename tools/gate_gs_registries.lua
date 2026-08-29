@@ -26,6 +26,16 @@ if not ok then
   os.exit(2)
 end
 
+-- Single source of truth for the four Silver/Crystal #DEX expectation keys:
+-- both the top-level shape validation (an "optional" member, like
+-- species_dex_text2) and the per-edition check below (which must NOT be
+-- routed through the generic single-load targets/fields check further down,
+-- see editionSpecific's own comment) need the exact same name set.
+local EDITION_DEX_TEXT_KEYS = {
+  species_dex_text_silver = true, species_dex_text2_silver = true,
+  species_dex_text_crystal = true, species_dex_text2_crystal = true,
+}
+
 -- The build flow supplies a small JSON file containing one id/value from each
 -- generated catalog.  Keeping the old no-argument fixture below preserves a
 -- useful focused regression test while making the release gate check the
@@ -60,7 +70,17 @@ if expectationPath and expectationPath ~= "" then
   -- Python side omits the key entirely for those rather than shipping an
   -- empty expectation. Still verified below like any other expectation
   -- when it IS present.
+  --
+  -- species_dex_text_{silver,crystal}/species_dex_text2_{silver,crystal}
+  -- are Silver's/Crystal's OWN #DEX flavor text (see generate_gs_mod's
+  -- docstring): unlike every registry above, these only apply behind a
+  -- GameVersion-gated conditional layer, so a bug in that layer never shows
+  -- up in the unconditional checks below. Optional the same way
+  -- species_dex_text2 is (a missing/empty per-edition catalog -- e.g. no
+  -- Crystal corpus supplied -- degrades to omitting the key, not a
+  -- BuildError; see pipeline.gs_mod._write_gate_expectations).
   local optional = { species_dex_text2 = true }
+  for name, _ in pairs(EDITION_DEX_TEXT_KEYS) do optional[name] = true end
   for _, name in ipairs(required) do
     local value = expectations[name]
     if type(value) ~= "table" or type(value.id) ~= "string" or value.id == ""
@@ -125,12 +145,20 @@ if expectations then
     species_dex_text2 = "text2",
     move_names = "name", item_names = "name", trainer_class_names = "name", landmarks = "name",
   }
+  -- Verified separately below, each under its own edition's GameVersion --
+  -- these only ever patch data.pokemon on a Silver/Crystal save, so
+  -- checking them against this (default-edition) load's data would either
+  -- find the guard never ran (false pass) or nothing at all.
+  local editionSpecific = EDITION_DEX_TEXT_KEYS
   for name, expected in pairs(expectations) do
     local target = targets[name]
     local field = fields[name]
     check(type(expected) == "table" and type(expected.id) == "string" and type(expected.value) == "string",
       name .. " gate expectation has a valid shape")
-    if name == "oak_speech" and type(expected) == "table" then
+    if editionSpecific[name] then
+      -- shape already checked above; value verified under its own edition
+      -- load further down.
+    elseif name == "oak_speech" and type(expected) == "table" then
       local Runtime = require("src.mods.Runtime")
       local speech = { texts = {} }
       local steps = {}
@@ -174,7 +202,54 @@ if expectations then
     end
   end
 
+  -- Silver's/Crystal's own #DEX flavor text (generate_gs_mod's silver_
+  -- registration/crystal_dex_registration) each patch mod.content.pokemon
+  -- behind their own "GameVersion.get() == edition" guard, AFTER the
+  -- unconditional Gold catalog checked above -- so re-loading the same mod
+  -- under that edition's GameVersion is the only way to prove the guard
+  -- actually fires and the patch lands, instead of only proving the
+  -- unconditional Gold text is correct (the gap a prior review found: this
+  -- gate never exercised these guards at all, always loading under the
+  -- SDK's default GameVersion, which is neither "silver" nor "crystal").
+  -- GameVersion is process-wide (see src/core/GameVersion.lua's own
+  -- docstring), so it must be set again before each edition's load, and the
+  -- previous result released first -- Sdk.loadMods captures the runtime
+  -- bus globals into one shared slot, and capturing over an unreleased
+  -- load would leak/corrupt that slot instead of restoring it.
   result.release()
+  local editionExpectations = {
+    silver = { text = expectations.species_dex_text_silver, text2 = expectations.species_dex_text2_silver },
+    crystal = { text = expectations.species_dex_text_crystal, text2 = expectations.species_dex_text2_crystal },
+  }
+  local anyEditionExpectation = expectations.species_dex_text_silver or expectations.species_dex_text_crystal
+  if anyEditionExpectation then
+    local okGameVersion, GameVersion = pcall(require, "src.core.GameVersion")
+    local gameVersionUsable = okGameVersion and type(GameVersion) == "table" and type(GameVersion.set) == "function"
+    check(gameVersionUsable,
+      "src.core.GameVersion is loadable and exposes set() for the edition-specific #DEX checks")
+    if gameVersionUsable then
+      for edition, pages in pairs(editionExpectations) do
+        if pages.text or pages.text2 then
+          GameVersion.set(edition)
+          local editionResult = T.sdk.loadMod(modName, { generation = 2, root = modParent })
+          check(#editionResult.errors == 0, "the mod loads with no errors under GameVersion=" .. edition)
+          local editionData = editionResult.data
+          if pages.text then
+            local record = editionData.pokemon and editionData.pokemon[pages.text.id]
+            eq(record and record.dexEntry and record.dexEntry.text, pages.text.value,
+              "species_dex_text_" .. edition .. "[" .. pages.text.id .. "] replaces Gold's text under GameVersion=" .. edition)
+          end
+          if pages.text2 then
+            local record = editionData.pokemon and editionData.pokemon[pages.text2.id]
+            eq(record and record.dexEntry and record.dexEntry.text2, pages.text2.value,
+              "species_dex_text2_" .. edition .. "[" .. pages.text2.id .. "] replaces Gold's text under GameVersion=" .. edition)
+          end
+          editionResult.release()
+        end
+      end
+    end
+  end
+
   if failures > 0 then
     io.stderr:write(failures .. " gs registry gate check(s) failed\n")
     os.exit(1)

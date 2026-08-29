@@ -462,7 +462,7 @@ def generate_gs_mod(
     install_font_assets(destination, language, font_source, font_profile)
 
     games = ["gold", "silver"]
-    if crystal_text_catalog is not None:
+    if crystal_text_catalog is not None or crystal_dex_text_catalog or crystal_dex_text2_catalog:
         games.append("crystal")
     display_name = target_name or (
         f"{language} translation for Gold, Silver and Crystal" if "crystal" in games
@@ -482,11 +482,15 @@ def generate_gs_mod(
     # Registry.lua's override folds onto the base table by exact id match) --
     # so declaring "silver" here lets the same mod apply to a real Silver
     # save via src/mods/ModTargets.lua's specApplies() with no separate
-    # Silver-specific build. "crystal" (when crystal_text_catalog is given)
-    # works the same way, plus its own conditional dialogue_crystal.lua layer
-    # above -- Crystal's pointers mostly don't exist in the base "dialogue"
-    # catalog at all (95.8% diverge from Gold's), so without that separate
-    # layer a Crystal save would see almost no translation from this mod.
+    # Silver-specific build. "crystal" (when crystal_text_catalog is given,
+    # even empty, or either Crystal dex-text catalog is non-empty -- either
+    # one alone still emits a real conditional layer below that only runs on
+    # a Crystal save, so the manifest must declare compatibility for it to
+    # ever load there) works the same way, plus its own conditional
+    # dialogue_crystal.lua layer above -- Crystal's pointers mostly don't
+    # exist in the base "dialogue" catalog at all (95.8% diverge from
+    # Gold's), so without that separate layer a Crystal save would see
+    # almost no translation from this mod.
     manifest_body = {
         "id": mod_id, "name": display_name, "version": project_version(), "api": 2,
         "entry": "main.lua", "profile": "content", "games": games,
@@ -562,8 +566,23 @@ def gs_oak_speech_catalog_from_join(entries: list[GsJoinEntry]) -> dict[str, str
     }
 
 
-def _write_gate_expectations(mod_dir: Path, catalogs: dict[str, dict[str, str]]) -> Path:
-    """Write a tiny, private expectation file consumed by the registry gate."""
+def _write_gate_expectations(
+    mod_dir: Path,
+    catalogs: dict[str, dict[str, str]],
+    edition_dex_text: dict[str, dict[str, dict[str, str]]] | None = None,
+) -> Path:
+    """Write a tiny, private expectation file consumed by the registry gate.
+
+    ``edition_dex_text`` (optional) carries Silver's/Crystal's own #DEX
+    flavor text -- e.g. ``{"silver": {"text": {...}, "text2": {...}}}`` --
+    from build_gs_dialogue_mod's own local silver_text/silver_text2/
+    crystal_text/crystal_text2. Unlike every catalog in ``catalogs``, these
+    only apply behind a GameVersion-gated conditional layer (see
+    generate_gs_mod's docstring), so the gate needs the same species id
+    checked under "species_dex_text" above to prove that id's text actually
+    changes on that edition's save, not merely that the base Gold catalog is
+    correct.
+    """
     optional = {"ui_labels", *GS_OPTIONAL_VERIFIED_REGISTRIES}
     if not set(catalogs) - optional >= set(GS_REQUIRED_REGISTRIES):
         missing = sorted(set(GS_REQUIRED_REGISTRIES) - set(catalogs))
@@ -589,6 +608,16 @@ def _write_gate_expectations(mod_dir: Path, catalogs: dict[str, dict[str, str]])
         if not isinstance(key, str) or not isinstance(value, str) or not value:
             raise BuildError(f"Gold registry gate expectation is malformed: {name}")
         expected[name] = {"id": key, "value": value}
+    base_id = expected["species_dex_text"]["id"]
+    for edition, pages in (edition_dex_text or {}).items():
+        for field, catalog_name in (("text", f"species_dex_text_{edition}"), ("text2", f"species_dex_text2_{edition}")):
+            values = pages.get(field) or {}
+            if not values:
+                continue
+            key = base_id if base_id in values else sorted(values)[0]
+            value = values[key]
+            if isinstance(key, str) and isinstance(value, str) and value:
+                expected[catalog_name] = {"id": key, "value": value}
     path = mod_dir.parent / f".{mod_dir.name}.registry-gate.json"
     path.write_text(json.dumps(expected, ensure_ascii=False, sort_keys=True), encoding="utf-8")
     return path
@@ -631,6 +660,7 @@ def run_gs_release_gates(
     luajit: str,
     *,
     catalogs: dict[str, dict[str, str]] | None = None,
+    edition_dex_text: dict[str, dict[str, dict[str, str]]] | None = None,
     coverage: dict | None = None,
     placeholder_decisions: dict[str, GsPlaceholderDecision] | None = None,
     log_fn: Callable[[str], None] | None = None,
@@ -674,7 +704,7 @@ def run_gs_release_gates(
               str(dialogue_expectation_path)], log_fn=log_fn)
     finally:
         dialogue_expectation_path.unlink(missing_ok=True)
-    expectation_path = _write_gate_expectations(mod_dir, catalogs or {})
+    expectation_path = _write_gate_expectations(mod_dir, catalogs or {}, edition_dex_text)
     try:
         _run([luajit, str(tools / "gate_gs_registries.lua"), str(gen1recomp), str(mod_dir), str(expectation_path)], log_fn=log_fn)
     finally:
@@ -916,6 +946,15 @@ def build_gs_dialogue_mod(
     # Kept in-memory for the pre-publication registry gate; callers that
     # serialize stats can omit this private payload.
     stats["_gate_catalogs"] = extra_catalogs
+    # Silver's and Crystal's own #DEX flavor text are deliberately excluded
+    # from extra_catalogs above (they must only apply on their own edition's
+    # save, not unconditionally), so the gate needs them threaded through
+    # separately to actually exercise their GameVersion-gated patch loops
+    # instead of only checking the unconditional Gold catalogs.
+    stats["_gate_edition_dex_text"] = {
+        "silver": {"text": silver_text, "text2": silver_text2},
+        "crystal": {"text": crystal_text, "text2": crystal_text2},
+    }
     stats["_placeholder_decisions"] = load_gs_placeholder_decisions(language)
 
     mod_dir = generate_gs_mod(
@@ -1028,6 +1067,7 @@ def build_gs(
     gate_report = run_gs_release_gates(
         mod_dir, entries, gen1recomp, luajit,
         catalogs=stats.get("_gate_catalogs", {}),
+        edition_dex_text=stats.get("_gate_edition_dex_text", {}),
         coverage=stats["coverage"],
         placeholder_decisions=stats.get("_placeholder_decisions", {}),
         log_fn=log_fn,
