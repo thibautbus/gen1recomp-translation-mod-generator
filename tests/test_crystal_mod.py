@@ -290,17 +290,33 @@ class LoadCrystalDialogueOverridesTests(unittest.TestCase):
             self.assertTrue(text.strip())
             self.assertNotIn("%", text)
 
-    def test_repository_german_overrides_are_valid(self):
+    def test_repository_german_overrides_are_valid_and_cover_the_mobile_adapter_gap(self):
         overrides = load_crystal_dialogue_overrides("de")
-        self.assertEqual(len(overrides), 9)
+        self.assertEqual(len(overrides), 17)
         for pointer, text in overrides.items():
             self.assertRegex(pointer, r"^[0-7][0-9a-f]:[0-7][0-9a-f]{3}$")
             self.assertTrue(text.strip())
             self.assertNotIn("%", text)
 
-    def test_repository_italian_overrides_are_valid(self):
+    def test_repository_italian_overrides_are_valid_and_cover_the_mobile_adapter_gap(self):
         overrides = load_crystal_dialogue_overrides("it")
-        self.assertEqual(len(overrides), 16)
+        self.assertEqual(len(overrides), 18)
+        for pointer, text in overrides.items():
+            self.assertRegex(pointer, r"^[0-7][0-9a-f]:[0-7][0-9a-f]{3}$")
+            self.assertTrue(text.strip())
+            self.assertNotIn("%", text)
+
+    def test_repository_spanish_overrides_are_valid_and_cover_the_mobile_adapter_gap(self):
+        overrides = load_crystal_dialogue_overrides("es")
+        self.assertEqual(len(overrides), 17)
+        for pointer, text in overrides.items():
+            self.assertRegex(pointer, r"^[0-7][0-9a-f]:[0-7][0-9a-f]{3}$")
+            self.assertTrue(text.strip())
+            self.assertNotIn("%", text)
+
+    def test_repository_japanese_overrides_are_valid_and_cover_the_mobile_adapter_gap(self):
+        overrides = load_crystal_dialogue_overrides("ja-Hrkt")
+        self.assertEqual(len(overrides), 17)
         for pointer, text in overrides.items():
             self.assertRegex(pointer, r"^[0-7][0-9a-f]:[0-7][0-9a-f]{3}$")
             self.assertTrue(text.strip())

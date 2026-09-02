@@ -2,6 +2,8 @@
   "schema": "gen1recomp-translation-mods/crystal-dialogue-overrides",
   "version": 1,
   "entries": {
+    "64:72bc": {"override": "Scusa!\fPer le regole\ndello STADIUM,\fporta sei POKéMON\ndiversi, UOVA\u000bescluse.\fI sei POKéMON\ndevono essere\fdiversi.\nInoltre, non\fdevono avere\noggetti\u000bidentici.\fTorna quando sei\npronto.", "reason": "engine-original", "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."},
+    "64:7644": {"override": "I tuoi POKéMON\nsaranno curati\u000bdel tutto prima della lotta.", "reason": "engine-original", "provenance": "AI-generated translation; no PokeCorpus row exists for this pointer -- confirmed (real pokecrystal build, byte-identical to the retail ROM) to be genuine Mobile Adapter GB / PokeCom Center script text, a peripheral never sold outside Japan and almost certainly never localized at all."},
     "18:6674": {
       "override": "Il POKéCOM CENTER<LINE>e il MOBILE CENTER<PARA>furono costruiti<LINE>per rispondere alla<PARA>richiesta di scambi<LINE>e combattimenti con<PARA>allenatori lontani<LINE>o sconosciuti.",
       "reason": "engine-original",
