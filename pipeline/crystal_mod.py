@@ -38,7 +38,7 @@ from .engine import match_engine_catalog
 from .gs_engine import _corpus_records
 from .gs_join import GsJoinEntry, join_gs_pointers, read_corpus_rows
 from .gs_text import GS_POINTER_RE, parse_gs_text_catalog, split_lines
-from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE, normalize_engine_profile
+from .engine_profile import UPSTREAM_PROFILE, normalize_engine_profile, profile_for
 
 CRYSTAL_POINTER_DECISIONS_SCHEMA = "gen1recomp-translation-mods/crystal-pointer-decisions"
 _POINTER = GS_POINTER_RE
@@ -240,8 +240,13 @@ def load_crystal_rom_text_anchors(path: str | Path | None = None) -> dict[str, s
 
 def join_crystal_rom_text(
     crystal_out_dir: str | Path, corpus_dir: str | Path, language: str,
+    corpus_rows: list[tuple[str, str, str]] | None = None,
 ) -> tuple[dict[str, str], dict]:
-    """Translate the seven Crystal ``RomText`` labels missed by script walk."""
+    """Translate the seven Crystal ``RomText`` labels missed by script walk.
+
+    ``corpus_rows``, when given, is read_corpus_rows()'s own output for this
+    corpus_dir/language, same as crystal_registry_catalogs() above.
+    """
     labels = load_crystal_rom_text_anchors()
     extracted = parse_rom_text_catalog(Path(crystal_out_dir) / "gs_rom_text.tsv")
     missing_labels = sorted(set(labels) - set(extracted))
@@ -249,13 +254,16 @@ def join_crystal_rom_text(
         raise ValueError("Crystal ROM-text extraction is incomplete: " + ", ".join(missing_labels))
     total = len(labels)
     corpus_dir = Path(corpus_dir)
-    if not (corpus_dir / f"{language}_msg.txt").is_file():
+    if corpus_rows is not None:
+        rows = corpus_rows
+    elif not (corpus_dir / f"{language}_msg.txt").is_file():
         return {}, {
             "translated": 0, "total": total, "percent": 0.0,
             "fallback_english": total, "unmatched": sorted(labels),
             "policy": "english-fallback",
         }
-    rows = read_corpus_rows(corpus_dir, target_lang=language)
+    else:
+        rows = read_corpus_rows(corpus_dir, target_lang=language)
     source_to_label = {extracted[label]: label for label in labels}
     if len(source_to_label) != total:
         raise ValueError("Crystal ROM-text labels do not have unique extracted source strings")
@@ -283,61 +291,54 @@ def crystal_feature_catalogs(
 ) -> tuple[dict[str, dict[str, str]], dict]:
     """Build every Crystal-only non-dialogue catalog and structured metrics."""
     profile = normalize_engine_profile(engine_profile)
-    if profile == PINNED_PROFILE:
-        # The v0.2.41 runtime can consume the ordinary named-record and
-        # Strings overlays.  Only the newer RomText/type/status contracts are
-        # unavailable, so keep the six named rows plus 48 Crystal Strings in
-        # the autonomous aggregate and report RomText as a disabled overlay.
-        named, named_stats = crystal_registry_catalogs(crystal_out_dir, corpus_dir, language)
-        strings, engine_crystal_stats = match_crystal_engine_strings(corpus_dir, language)
-        translated = sum(
-            section["translated"] for section in (*named_stats.values(), engine_crystal_stats)
-        )
-        total = sum(
-            section["total"] for section in (*named_stats.values(), engine_crystal_stats)
-        )
-        return {**named, "strings": strings}, {
-            "named_registries": named_stats,
-            "rom_text": {
-                "translated": 0, "total": 0, "fallback_english": 0,
-                "runtime_dependency": "not available in v0.2.41",
-                "scope": "upstream-dependent; disabled by pinned profile",
-            },
-            "engine_crystal": engine_crystal_stats,
-            "aggregate": {
-                "translated": translated,
-                "total": total,
-                "percent": round(100.0 * translated / total, 2) if total else 100.0,
-                "policy": "english-fallback",
-            },
-        }
-    named, named_stats = crystal_registry_catalogs(crystal_out_dir, corpus_dir, language)
-    rom_text, rom_text_stats = join_crystal_rom_text(crystal_out_dir, corpus_dir, language)
-    strings, engine_crystal_stats = match_crystal_engine_strings(corpus_dir, language)
-    catalogs = {**named, "rom_text": rom_text, "strings": strings}
-    # The autonomous v0.2.41 layer is exactly 54 entries: 48 engine Strings
-    # plus the six Crystal-only named records.  RomText is reported beside
-    # that aggregate, never inside it, because publishing those seven labels
-    # requires the upstream `rom_text` registry (the public `text` registry is
-    # routed to gen2Text and cannot reach data.text on v0.2.41).
+    corpus_dir = Path(corpus_dir)
+    # Read once and hand the same rows to every joiner below instead of each
+    # of the three re-opening and re-parsing qid/en/<lang>_msg.txt on its own
+    # (a language absent from the Crystal collection, currently Korean,
+    # keeps degrading to English -- an absent corpus_rows still lets each
+    # joiner take its own missing-file fallback path).
+    corpus_rows = (
+        read_corpus_rows(corpus_dir, target_lang=language)
+        if (corpus_dir / f"{language}_msg.txt").is_file() else None
+    )
+    # The v0.2.41 runtime can consume the ordinary named-record and Strings
+    # overlays on both profiles; only RomText needs the upstream `rom_text`
+    # registry (the public `text` registry is routed to gen2Text and cannot
+    # reach data.text on v0.2.41), so it alone is reported beside the
+    # aggregate rather than folded into it, and stays a disabled placeholder
+    # under the pinned profile.
+    named, named_stats = crystal_registry_catalogs(crystal_out_dir, corpus_dir, language, corpus_rows)
+    strings, engine_crystal_stats = match_crystal_engine_strings(corpus_dir, language, corpus_rows)
     translated = sum(
         section["translated"] for section in (*named_stats.values(), engine_crystal_stats)
     )
     total = sum(
         section["total"] for section in (*named_stats.values(), engine_crystal_stats)
     )
-    return catalogs, {
-        "named_registries": named_stats,
-        "rom_text": {
+    aggregate = {
+        "translated": translated,
+        "total": total,
+        "percent": round(100.0 * translated / total, 2) if total else 100.0,
+        "policy": "english-fallback",
+    }
+    if profile_for(profile).supports_rom_text:
+        rom_text, rom_text_stats = join_crystal_rom_text(crystal_out_dir, corpus_dir, language, corpus_rows)
+        catalogs = {**named, "rom_text": rom_text, "strings": strings}
+        rom_text_report = {
             **rom_text_stats,
             "runtime_dependency": "mod.content.rom_text",
             "scope": "upstream-dependent; excluded from aggregate",
-        },
+        }
+    else:
+        catalogs = {**named, "strings": strings}
+        rom_text_report = {
+            "translated": 0, "total": 0, "fallback_english": 0,
+            "runtime_dependency": "not available in v0.2.41",
+            "scope": "upstream-dependent; disabled by pinned profile",
+        }
+    return catalogs, {
+        "named_registries": named_stats,
+        "rom_text": rom_text_report,
         "engine_crystal": engine_crystal_stats,
-        "aggregate": {
-            "translated": translated,
-            "total": total,
-            "percent": round(100.0 * translated / total, 2) if total else 100.0,
-            "policy": "english-fallback",
-        },
+        "aggregate": aggregate,
     }

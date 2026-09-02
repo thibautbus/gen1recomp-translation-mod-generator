@@ -28,6 +28,11 @@ class EngineProfileTests(unittest.TestCase):
         self.assertEqual(normalize_engine_profile("upstream-local"), UPSTREAM_PROFILE)
         self.assertFalse(profile_for(PINNED_PROFILE).supports_rom_text)
         self.assertTrue(profile_for(UPSTREAM_PROFILE).supports_rom_text)
+        # Strings()/Strings.source() matching works on both profiles --
+        # match_gs_engine_strings() verifies a pinned checkout against the
+        # pin itself instead of refusing it outright.
+        self.assertTrue(profile_for(PINNED_PROFILE).supports_engine_strings)
+        self.assertTrue(profile_for(UPSTREAM_PROFILE).supports_engine_strings)
         self.assertIn("gs_rom_text.tsv", GS_REQUIRED_TSV)
 
 

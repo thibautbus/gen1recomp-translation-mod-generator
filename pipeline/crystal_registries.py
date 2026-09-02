@@ -26,8 +26,15 @@ def _filter(entries: list[IndexedEntry], ids: frozenset[str], name: str) -> list
 
 def crystal_registry_catalogs(
     crystal_out_dir: str | Path, corpus_dir: str | Path, language: str,
+    corpus_rows: list[tuple[str, str, str]] | None = None,
 ) -> tuple[dict[str, dict[str, str]], dict[str, dict]]:
-    """Return the six Crystal-only named records, never Gold/Silver rows."""
+    """Return the six Crystal-only named records, never Gold/Silver rows.
+
+    ``corpus_rows``, when given, is read_corpus_rows()'s own output for this
+    corpus_dir/language: callers that already read it for another Crystal
+    catalog in the same build (crystal_feature_catalogs joins three) can pass
+    it through instead of having this function read the corpus files again.
+    """
     crystal_out_dir, corpus_dir = Path(crystal_out_dir), Path(corpus_dir)
     items = _filter(parse_indexed_catalog(crystal_out_dir / "gs_items.tsv"), CRYSTAL_ONLY_ITEMS, "gs_items.tsv")
     classes = _filter(
@@ -44,12 +51,15 @@ def crystal_registry_catalogs(
         "item_names": (items, "c.names.ItemNames."),
         "trainer_class_names": (classes, "c.class_names.TrainerClassNames."),
     }
-    if not (corpus_dir / f"{language}_msg.txt").is_file():
+    if corpus_rows is not None:
+        rows = corpus_rows
+    elif not (corpus_dir / f"{language}_msg.txt").is_file():
         catalogs = {name: {} for name in (*groups, "landmarks")}
         stats = {name: _empty_stats(len(entries)) for name, (entries, _prefix) in groups.items()}
         stats["landmarks"] = _empty_stats(len(landmarks))
         return catalogs, stats
-    rows = read_corpus_rows(corpus_dir, target_lang=language)
+    else:
+        rows = read_corpus_rows(corpus_dir, target_lang=language)
     catalogs: dict[str, dict[str, str]] = {}
     stats: dict[str, dict] = {}
     for name, (entries, prefix) in groups.items():

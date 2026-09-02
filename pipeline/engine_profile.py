@@ -26,7 +26,11 @@ class EngineProfile:
 
 
 PROFILES = {
-    PINNED_PROFILE: EngineProfile(PINNED_PROFILE, False, False, False),
+    # The pinned profile still resolves engine Strings()/Strings.source()
+    # callsites (match_gs_engine_strings verifies the checkout against the
+    # pin itself instead of trusting it outright) -- only the genuinely new
+    # Gen 2 registries and RomText support are upstream-local exclusives.
+    PINNED_PROFILE: EngineProfile(PINNED_PROFILE, True, False, False),
     UPSTREAM_PROFILE: EngineProfile(UPSTREAM_PROFILE, True, True, True),
 }
 

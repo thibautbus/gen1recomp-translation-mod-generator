@@ -86,17 +86,22 @@ def _selected_value(source: str, row: dict, english: str, target: str, language:
 
 def match_crystal_engine_strings(
     corpus_dir: str | Path, language: str,
+    corpus_rows: list[tuple[str, str, str]] | None = None,
 ) -> tuple[dict[str, str], dict]:
     """Resolve the 48 known Crystal-only ``Strings`` keys from PokeCorpus.
 
     A language absent from the Crystal collection (currently Korean) is an
     explicit English fallback: no override is emitted and the structured
-    report accounts for every key as ``fallback_english``.
+    report accounts for every key as ``fallback_english``. ``corpus_rows``,
+    when given, is read_corpus_rows()'s own output for this corpus_dir/
+    language, same as crystal_registry_catalogs()/join_crystal_rom_text().
     """
     keys = sorted(load_gs_engine_scope_exclusions())
     corpus_dir = Path(corpus_dir)
     target = corpus_dir / f"{language}_msg.txt"
-    if not target.is_file():
+    if corpus_rows is not None:
+        rows = corpus_rows
+    elif not target.is_file():
         return {}, {
             "translated": 0,
             "total": len(keys),
@@ -107,7 +112,8 @@ def match_crystal_engine_strings(
             "catalog_kind": "Crystal-exclusive Strings callsites",
             "scope": "Crystal-only keys excluded from the Gold/Silver engine metric",
         }
-    rows = read_corpus_rows(corpus_dir, target_lang=language)
+    else:
+        rows = read_corpus_rows(corpus_dir, target_lang=language)
     all_overrides = load_engine_overrides(
         _ROOT / "overrides" / language / "gsc" / "engine.json",
     )

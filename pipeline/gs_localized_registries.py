@@ -11,25 +11,45 @@ from .tokens import corpus_to_engine
 _ROOT = Path(__file__).resolve().parents[1]
 
 
-def _corpus_value(rows: list[tuple[str, str, str]], qid: str, fallback: str) -> str:
+def _index_corpus(rows: list[tuple[str, str, str]]) -> dict[str, str]:
+    """Build the qid -> target lookup once for a batch of _corpus_value_info calls.
+
+    Raises on a duplicate qid rather than silently keeping whichever row
+    happens to come last: build_gs_dialogue_mod's own corpus_rows is already
+    guaranteed duplicate-free by join_gs_pointers() (which raises first), but
+    this function is also callable on its own, and a dict comprehension would
+    otherwise pick a row by list order with no warning.
+    """
+    result: dict[str, str] = {}
+    for qid, _english, target in rows:
+        if qid in result:
+            raise ValueError(f"duplicate corpus qid: {qid!r}")
+        result[qid] = target
+    return result
+
+
+def _corpus_value(rows: dict[str, str], qid: str, fallback: str) -> str:
     """Return one audited corpus value, with an explicit English fallback."""
     return _corpus_value_info(rows, qid, fallback)[0]
 
 
 def _corpus_value_info(
-    rows: list[tuple[str, str, str]], qid: str, fallback: str,
+    rows: dict[str, str], qid: str, fallback: str,
 ) -> tuple[str, bool]:
     """Return a corpus value and whether a non-empty row supplied it.
 
     A row whose target happens to equal English is still corpus-backed.  Keep
     that distinction separate from a missing row so coverage reports do not
-    call an audited same-as-English label an unreviewed fallback.
+    call an audited same-as-English label an unreviewed fallback. ``rows`` is
+    the _index_corpus() lookup, not the raw corpus_rows list: callers resolve
+    several qids per catalog, and re-scanning the whole corpus for each one
+    was the dominant cost of building these catalogs.
     """
-    for row_qid, _english, target in rows:
-        if row_qid == qid:
-            value = corpus_to_engine(target, bare_dynamic_tokens=True).replace("@", "").strip()
-            if value:
-                return value, True
+    target = rows.get(qid)
+    if target is not None:
+        value = corpus_to_engine(target, bare_dynamic_tokens=True).replace("@", "").strip()
+        if value:
+            return value, True
     return fallback, False
 
 
@@ -70,6 +90,7 @@ PHONE_REGISTERED_IDS = (
 
 def phone_contact_catalog(
     corpus_rows: list[tuple[str, str, str]],
+    corpus_index: dict[str, str] | None = None,
 ) -> tuple[dict[str, str], dict]:
     """Join the four localized non-trainer phone display names.
 
@@ -78,8 +99,9 @@ def phone_contact_catalog(
     registry, while replacing them with an invented literal would break that
     identity.  The report still accounts for all 33 registered contact ids.
     """
+    rows = corpus_index if corpus_index is not None else _index_corpus(corpus_rows)
     resolved = {
-        contact_id: _corpus_value_info(corpus_rows, qid, english)
+        contact_id: _corpus_value_info(rows, qid, english)
         for contact_id, (qid, english) in PHONE_CONTACT_NAMES.items()
     }
     # Never publish the English fallback as a runtime patch. Missing rows are
@@ -131,10 +153,12 @@ RADIO_CHANNEL_NAMES = {
 
 def radio_channel_catalog(
     corpus_rows: list[tuple[str, str, str]],
+    corpus_index: dict[str, str] | None = None,
 ) -> tuple[dict[str, str], dict]:
     """Join all ten radio station display names by their stable station id."""
+    rows = corpus_index if corpus_index is not None else _index_corpus(corpus_rows)
     resolved = {
-        station: _corpus_value_info(corpus_rows, qid, english)
+        station: _corpus_value_info(rows, qid, english)
         for station, (qid, english) in RADIO_CHANNEL_NAMES.items()
     }
     # Identity English labels with no corpus row are fallback/backlog only;
@@ -196,11 +220,15 @@ DECORATION_ATTR_NAMES = (
 
 def decoration_catalog(
     corpus_rows: list[tuple[str, str, str]],
+    corpus_index: dict[str, str] | None = None,
 ) -> tuple[dict[str, str], dict]:
     """Join authored decoration names without replacing species identity."""
+    rows = corpus_index if corpus_index is not None else _index_corpus(corpus_rows)
     result: dict[str, str] = {}
     found_by_id: dict[int, bool] = {}
-    for deco_id, english in enumerate(DECORATION_ATTR_NAMES):
+    translated = 0
+    same_as_english = 0
+    for deco_id in range(len(DECORATION_ATTR_NAMES)):
         qid_number = DECORATION_NAME_QIDS.get(deco_id)
         if qid_number is None:
             # These rows are species-backed dolls.  Emitting their English
@@ -210,20 +238,12 @@ def decoration_catalog(
             found_by_id[deco_id] = False
             continue
         qid = f"gs.names.DecorationNames.{qid_number}"
-        fallback = DECORATION_NAME_ENGLISH[qid_number].replace("@", "").strip()
-        value, found_by_id[deco_id] = _corpus_value_info(corpus_rows, qid, fallback)
+        english = DECORATION_NAME_ENGLISH[qid_number].replace("@", "").strip()
+        value, found_by_id[deco_id] = _corpus_value_info(rows, qid, english)
         if found_by_id[deco_id]:
             result[f"deco:{deco_id}"] = value
-    translated = 0
-    same_as_english = 0
-    for deco_id, english in enumerate(DECORATION_ATTR_NAMES):
-        qid_number = DECORATION_NAME_QIDS.get(deco_id)
-        if qid_number is None:
-            continue
-        english = DECORATION_NAME_ENGLISH[qid_number].replace("@", "").strip()
-        if found_by_id[deco_id]:
             translated += 1
-            if result[f"deco:{deco_id}"] == english:
+            if value == english:
                 same_as_english += 1
     stats = _catalog_stats(
         53, translated,
@@ -291,6 +311,7 @@ def type_name_catalog(
 
 def status_label_catalog(
     corpus_rows: list[tuple[str, str, str]], path: str | Path | None = None,
+    corpus_index: dict[str, str] | None = None,
 ) -> tuple[dict[str, str], dict]:
     """Resolve Gen 2 status labels by audited qid, including toxic -> PSN."""
     path = Path(path) if path is not None else _ROOT / "config" / "gsc" / "status_anchors.json"
@@ -300,7 +321,7 @@ def status_label_catalog(
     anchors = data.get("statuses")
     if not isinstance(anchors, dict) or not anchors:
         raise ValueError("Gen 2 status anchors require a non-empty statuses object")
-    rows = {qid: target for qid, _english, target in corpus_rows}
+    rows = corpus_index if corpus_index is not None else _index_corpus(corpus_rows)
     result: dict[str, str] = {}
     for status, qid in anchors.items():
         if not isinstance(status, str) or not status or not isinstance(qid, str) or not qid.startswith("gs."):

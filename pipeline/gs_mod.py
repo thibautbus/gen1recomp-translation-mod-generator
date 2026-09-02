@@ -20,7 +20,7 @@ from .gs_index_join import (
     parse_indexed_catalog,
 )
 from .gs_localized_registries import (
-    decoration_catalog, phone_contact_catalog, radio_channel_catalog,
+    _index_corpus, decoration_catalog, phone_contact_catalog, radio_channel_catalog,
     status_label_catalog, type_name_catalog,
 )
 from .gs_join import (
@@ -33,7 +33,7 @@ from .tokens import corpus_to_engine
 from .mod import TRANSLATION_MOD_PRIORITY, install_font_assets, ttf_registration, validate_font_profile
 from .project import is_frozen, project_config, project_version, resource_root
 from .specs import game_spec, release_profile
-from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE, normalize_engine_profile, validate_upstream_checkout
+from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE, normalize_engine_profile, profile_for, validate_upstream_checkout
 
 MAIN = '''-- Generated Gold translation mod.
 return function(mod)
@@ -246,7 +246,8 @@ GS_REQUIRED_REGISTRIES = (
 
 GS_PINNED_REQUIRED_REGISTRIES = (
     "species_names", "species_kinds", "species_dex_text", "move_names",
-    "item_names", "trainer_class_names", "landmarks",
+    "item_names", "trainer_class_names", "landmarks", "strings",
+    GS_OAK_SPEECH_CATALOG,
 )
 
 # These registries are available only on the Gen 2 upstream target.  They are
@@ -930,14 +931,15 @@ def build_gs_dialogue_mod(
     GoldSilver's) degrades to empty catalogs, same as
     crystal_mod.join_crystal_dialogue()'s own graceful degradation.
     """
-    # A local checkout is never a profile selector by itself.  In particular,
-    # accidentally passing the workspace's ``src`` directory to a pinned
-    # build must not make it consume upstream-only catalogs or contracts.
+    # A local checkout is never a profile selector by itself: ``engine_source``
+    # only says where to look for Strings()/Strings.source() callsites, and
+    # match_gs_engine_strings() verifies it against the pin itself unless the
+    # caller explicitly opted into the upstream-local profile. The genuinely
+    # upstream-only registries stay behind that profile check below, on their
+    # own -- not by refusing ``engine_source`` outright, which used to make a
+    # perfectly ordinary ``--gen1recomp <pinned checkout>`` build-gs
+    # invocation raise.
     profile = normalize_engine_profile(engine_profile)
-    if engine_source is not None and profile != UPSTREAM_PROFILE:
-        raise ValueError(
-            "engine_source requires the explicit 'upstream-local' engine profile"
-        )
     gold_out_dir = Path(gold_out_dir)
     language = canonical_language(language)
     missing_or_empty = []
@@ -960,19 +962,27 @@ def build_gs_dialogue_mod(
     )
 
     extra_catalogs: dict[str, dict[str, str]] = {}
+    # Oak's speech has shipped through mod.hooks:wrap("intro.oak_speech.build")
+    # since before this profile split existed and needs no upstream-only
+    # registry, so it applies on every profile, not just upstream-local.
     oak_speech = gs_oak_speech_catalog_from_join(entries)
-    if profile == UPSTREAM_PROFILE and oak_speech:
+    if oak_speech:
         missing_oak = sorted(GS_OAK_SPEECH_KEYS - set(oak_speech))
         if missing_oak:
             raise ValueError("Gold Oak speech catalog is incomplete: " + ", ".join(missing_oak))
         extra_catalogs[GS_OAK_SPEECH_CATALOG] = oak_speech
     index_stats: dict[str, dict] = {}
-    if profile == UPSTREAM_PROFILE:
+    if profile_for(profile).supports_gen2_registries:
+        # Built once and threaded through instead of each of the four qid-
+        # exact-match catalogs below rescanning the whole GS corpus on its
+        # own (the same class of redundant read this diff already fixed for
+        # crystal_mod.py's joiners).
+        corpus_index = _index_corpus(corpus_rows)
         type_names, type_stats = type_name_catalog(gold_out_dir / "gs_types.tsv", corpus_rows)
-        status_labels, status_stats = status_label_catalog(corpus_rows)
-        phone_contacts, phone_stats = phone_contact_catalog(corpus_rows)
-        decorations, decoration_stats = decoration_catalog(corpus_rows)
-        radio_channels, radio_stats = radio_channel_catalog(corpus_rows)
+        status_labels, status_stats = status_label_catalog(corpus_rows, corpus_index=corpus_index)
+        phone_contacts, phone_stats = phone_contact_catalog(corpus_rows, corpus_index)
+        decorations, decoration_stats = decoration_catalog(corpus_rows, corpus_index)
+        radio_channels, radio_stats = radio_channel_catalog(corpus_rows, corpus_index)
         extra_catalogs["type_names"] = type_names
         extra_catalogs["status_labels"] = status_labels
         extra_catalogs["phone_contacts"] = phone_contacts
@@ -1051,14 +1061,21 @@ def build_gs_dialogue_mod(
     landmark_translations, landmark_stats = join_landmarks(landmarks, corpus_rows)
     extra_catalogs["landmarks"] = landmark_translations
     index_stats["landmarks"] = landmark_stats
-    if profile == UPSTREAM_PROFILE and engine_source is not None:
+    # match_gs_engine_strings() supports both profiles itself (a pinned
+    # checkout is verified against the pin, an upstream-local one is only
+    # trusted informationally) -- supports_engine_strings is true for both
+    # today, so the practical gate is whether a checkout was given at all,
+    # but the capability flag stays consulted rather than a raw profile
+    # comparison so a future profile that lacks the capability is honored.
+    if engine_source is not None and profile_for(profile).supports_engine_strings:
         engine_values, engine_coverage = match_gs_engine_strings(
             corpus_rows, engine_source, language, engine_profile=profile,
         )
         extra_catalogs["strings"] = engine_values
         stats.update(engine_coverage)
-    if profile == UPSTREAM_PROFILE:
-        extra_catalogs["ui_labels"] = _gs_ui_labels(corpus_rows)
+    # ui_labels reuses hooks already exposed on the pinned engine
+    # (ui.pc.items, ui.options.rows, ...), same as oak_speech above.
+    extra_catalogs["ui_labels"] = _gs_ui_labels(corpus_rows)
     stats["index_catalogs"] = index_stats
     stats["engine_profile"] = profile
     pointer_coverage = gs_coverage_report(entries)
@@ -1221,7 +1238,7 @@ def build_gs(
     mod_dir, entries, stats = build_gs_dialogue_mod(
         gold_out, corpus_gold_silver, mod_dir, mod_id=mod_id, language=language,
         target_name=f"{language_name} translation for Gold, Silver and Crystal", font_source=font_source, font_profile=font_profile,
-        engine_source=gen1recomp if engine_profile == UPSTREAM_PROFILE else None,
+        engine_source=gen1recomp,
         engine_profile=engine_profile, crystal_text_catalog=crystal_text_catalog,
         crystal_corpus_dir=corpus_crystal,
         crystal_catalogs=crystal_catalogs, crystal_coverage=crystal_coverage,

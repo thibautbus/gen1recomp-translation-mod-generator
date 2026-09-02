@@ -17,7 +17,7 @@ from pipeline.gs_mod import (
 )
 from pipeline.gs_mod import _gs_ui_labels, _write_dialogue_gate_expectation, _write_gate_expectations
 from pipeline.project import project_version
-from pipeline.engine_profile import UPSTREAM_PROFILE
+from pipeline.engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE
 
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE_ROOT = ROOT / ".cache" / "dependencies" / "gen1recomp"
@@ -810,13 +810,26 @@ class BuildGsDialogueModTests(unittest.TestCase):
             main = (mod_dir / "main.lua").read_text(encoding="utf-8")
             self.assertNotIn("crystal_dex_game_version", main)
 
-    def test_engine_source_alone_cannot_select_upstream_profile(self):
+    def test_engine_source_works_with_the_pinned_profile(self):
+        # A local checkout is not a profile selector by itself: the pinned
+        # profile is the default and match_gs_engine_strings() verifies the
+        # checkout against the pin itself, so passing --gen1recomp without
+        # also picking upstream-local must keep working (gen1recomp#1642-
+        # adjacent: this used to be the CLI's own documented usage).
         with tempfile.TemporaryDirectory() as tmp:
-            with self.assertRaisesRegex(ValueError, "explicit.*upstream-local"):
-                build_gs_dialogue_mod(
-                    Path(tmp) / "gold", Path(tmp) / "corpus", Path(tmp) / "mod",
-                    engine_source=Path(tmp) / "engine",
+            root = Path(tmp)
+            gold_out, corpus = self._write_fixture(root)
+            with patch(
+                "pipeline.gs_mod.match_gs_engine_strings",
+                return_value=({"Hello!": "Bonjour!"}, {"engine": {}, "engine_gen2": {}}),
+            ) as match:
+                mod_dir, _entries, stats = build_gs_dialogue_mod(
+                    gold_out, corpus, root / "mod", language="fr", engine_source=root / "engine",
                 )
+            match.assert_called_once()
+            self.assertEqual(match.call_args.kwargs["engine_profile"], PINNED_PROFILE)
+            self.assertEqual(stats["_gate_catalogs"]["strings"], {"Hello!": "Bonjour!"})
+            self.assertEqual(stats["engine_profile"], PINNED_PROFILE)
 
 
 class GsDialogueGateTests(unittest.TestCase):
