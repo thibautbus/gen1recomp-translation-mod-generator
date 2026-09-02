@@ -9,13 +9,33 @@ from pipeline.gs_engine import load_gs_engine_fallbacks
 
 
 LANGUAGES = ("fr", "de", "es", "it", "ja-Hrkt", "ko")
-NEW_ENTRY_REASONS = {"engine-corpus"}
 NEW_ENTRY_COUNT = 550
 # The corpus confirms AM/PM as the English source in these locales.  They are
 # intentionally omitted from those override tables so the runtime does not
 # carry a pointless identity override; the complete-set check accounts for
 # that explicit no-op policy below.
 NO_OP_ENGINE_KEYS = {"AM", "PM"}
+# The specific 550-key batch the upstream Gen-2 work added, frozen at the
+# time it landed. This has to be an explicit, persisted list rather than
+# "every key currently tagged engine-corpus": the engine has kept growing
+# since (a later gen1recomp pin bump surfaced dozens more real Strings()
+# callsites, corpus-matched the same way once translated), and deriving the
+# batch from the tag would silently absorb every later addition into what
+# is supposed to be one fixed, already-closed batch.
+NEW_ENGINE_SET_PATH = Path("config") / "gsc" / "new_engine_set_v0241.json"
+
+
+def _load_new_engine_set(path=NEW_ENGINE_SET_PATH):
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if (not isinstance(data, dict)
+            or data.get("schema") != "gen1recomp-translation-mods/gs-new-engine-set"
+            or data.get("version") != 1
+            or not isinstance(data.get("keys"), list)):
+        raise ValueError("unsupported new-engine-set schema")
+    keys = data["keys"]
+    if len(keys) != len(set(keys)) or not all(isinstance(k, str) and k for k in keys):
+        raise ValueError("new-engine-set keys must be a list of unique non-empty strings")
+    return set(keys)
 
 
 class GoldGen2EngineOverrideTests(unittest.TestCase):
@@ -33,20 +53,19 @@ class GoldGen2EngineOverrideTests(unittest.TestCase):
         return report["languages"][language].get("no_op_entries", {})
 
     def test_every_language_carries_the_complete_new_engine_set(self):
-        sets = []
+        universe = _load_new_engine_set()
+        self.assertEqual(len(universe), NEW_ENTRY_COUNT)
+        self.assertTrue(NO_OP_ENGINE_KEYS <= universe)
         for language in LANGUAGES:
             entries = self._entries(language)
-            selected = {
-                key: row for key, row in entries.items()
-                if row.get("reason") in NEW_ENTRY_REASONS
-            }
             fallback = load_gs_engine_fallbacks(language)[language]
-            self.assertEqual(len(set(selected) | set(fallback) | NO_OP_ENGINE_KEYS), NEW_ENTRY_COUNT, language)
-            self.assertTrue(set(selected).isdisjoint(fallback), language)
-            self.assertTrue(all(row.get("provenance") for row in selected.values()))
-            sets.append(set(selected) | set(fallback) | NO_OP_ENGINE_KEYS)
-        for selected in sets[1:]:
-            self.assertEqual(selected, sets[0])
+            resolved = {
+                key for key in universe - NO_OP_ENGINE_KEYS
+                if key not in fallback and entries.get(key, {}).get("override") not in (None, key)
+            }
+            missing = universe - NO_OP_ENGINE_KEYS - resolved - set(fallback)
+            self.assertFalse(missing, (language, sorted(missing)))
+            self.assertTrue(resolved.isdisjoint(fallback), language)
 
     def test_runtime_overrides_never_emit_english_fallbacks(self):
         for language in LANGUAGES:

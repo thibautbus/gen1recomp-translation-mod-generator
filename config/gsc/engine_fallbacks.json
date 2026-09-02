@@ -4,7 +4,7 @@
   "policy": "fallbacks are tracked but never emitted as runtime overrides",
   "languages": {
     "de": {
-      "total": 222,
+      "total": 215,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -116,16 +116,6 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "%s gained %d EXP. Points!": {
-          "override": "%s gained %d EXP. Points!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s gained a boosted %d EXP. Points!": {
-          "override": "%s gained a boosted %d EXP. Points!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "%s grew to level %d!": {
           "override": "%s grew to level %d!",
           "reason": "engine-fallback",
@@ -168,11 +158,6 @@
         },
         "%s is hurt by its burn!": {
           "override": "%s is hurt by its burn!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s is paralyzed! It may be unable to move!": {
-          "override": "%s is paralyzed! It may be unable to move!",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -251,28 +236,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "%s's %s fell!": {
-          "override": "%s's %s fell!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "%s's %s restored health!": {
           "override": "%s's %s restored health!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s rose!": {
-          "override": "%s's %s rose!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s sharply fell!": {
-          "override": "%s's %s sharply fell!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s sharply rose!": {
-          "override": "%s's %s sharply rose!",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -1227,7 +1192,7 @@
       "no_op_total": 13
     },
     "es": {
-      "total": 212,
+      "total": 205,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -1344,16 +1309,6 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "%s gained %d EXP. Points!": {
-          "override": "%s gained %d EXP. Points!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s gained a boosted %d EXP. Points!": {
-          "override": "%s gained a boosted %d EXP. Points!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "%s has no move to use!": {
           "override": "%s has no move to use!",
           "reason": "engine-fallback",
@@ -1386,11 +1341,6 @@
         },
         "%s is hurt by its burn!": {
           "override": "%s is hurt by its burn!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s is paralyzed! It may be unable to move!": {
-          "override": "%s is paralyzed! It may be unable to move!",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -1464,28 +1414,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "%s's %s fell!": {
-          "override": "%s's %s fell!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "%s's %s restored health!": {
           "override": "%s's %s restored health!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s rose!": {
-          "override": "%s's %s rose!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s sharply fell!": {
-          "override": "%s's %s sharply fell!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s sharply rose!": {
-          "override": "%s's %s sharply rose!",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -2384,7 +2314,7 @@
       "no_op_total": 11
     },
     "fr": {
-      "total": 218,
+      "total": 211,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -2496,16 +2426,6 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "%s gained %d EXP. Points!": {
-          "override": "%s gained %d EXP. Points!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s gained a boosted %d EXP. Points!": {
-          "override": "%s gained a boosted %d EXP. Points!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "%s has no move to use!": {
           "override": "%s has no move to use!",
           "reason": "engine-fallback",
@@ -2543,11 +2463,6 @@
         },
         "%s is hurt by its burn!": {
           "override": "%s is hurt by its burn!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s is paralyzed! It may be unable to move!": {
-          "override": "%s is paralyzed! It may be unable to move!",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -2626,28 +2541,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "%s's %s fell!": {
-          "override": "%s's %s fell!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "%s's %s restored health!": {
           "override": "%s's %s restored health!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s rose!": {
-          "override": "%s's %s rose!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s sharply fell!": {
-          "override": "%s's %s sharply fell!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s sharply rose!": {
-          "override": "%s's %s sharply rose!",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -3591,7 +3486,7 @@
       "no_op_total": 13
     },
     "it": {
-      "total": 214,
+      "total": 207,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -3703,16 +3598,6 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "%s gained %d EXP. Points!": {
-          "override": "%s gained %d EXP. Points!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s gained a boosted %d EXP. Points!": {
-          "override": "%s gained a boosted %d EXP. Points!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "%s has no move to use!": {
           "override": "%s has no move to use!",
           "reason": "engine-fallback",
@@ -3745,11 +3630,6 @@
         },
         "%s is hurt by its burn!": {
           "override": "%s is hurt by its burn!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s is paralyzed! It may be unable to move!": {
-          "override": "%s is paralyzed! It may be unable to move!",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -3823,28 +3703,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "%s's %s fell!": {
-          "override": "%s's %s fell!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "%s's %s restored health!": {
           "override": "%s's %s restored health!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s rose!": {
-          "override": "%s's %s rose!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s sharply fell!": {
-          "override": "%s's %s sharply fell!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s sharply rose!": {
-          "override": "%s's %s sharply rose!",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -4749,7 +4609,7 @@
       "no_op_total": 10
     },
     "ja-Hrkt": {
-      "total": 225,
+      "total": 218,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -4866,16 +4726,6 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "%s gained %d EXP. Points!": {
-          "override": "%s gained %d EXP. Points!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s gained a boosted %d EXP. Points!": {
-          "override": "%s gained a boosted %d EXP. Points!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "%s grew to level %d!": {
           "override": "%s grew to level %d!",
           "reason": "engine-fallback",
@@ -4918,11 +4768,6 @@
         },
         "%s is hurt by its burn!": {
           "override": "%s is hurt by its burn!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s is paralyzed! It may be unable to move!": {
-          "override": "%s is paralyzed! It may be unable to move!",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -5001,28 +4846,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "%s's %s fell!": {
-          "override": "%s's %s fell!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "%s's %s restored health!": {
           "override": "%s's %s restored health!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s rose!": {
-          "override": "%s's %s rose!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s sharply fell!": {
-          "override": "%s's %s sharply fell!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s sharply rose!": {
-          "override": "%s's %s sharply rose!",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -5942,7 +5767,7 @@
       "no_op_total": 8
     },
     "ko": {
-      "total": 234,
+      "total": 227,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -6064,16 +5889,6 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "%s gained %d EXP. Points!": {
-          "override": "%s gained %d EXP. Points!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s gained a boosted %d EXP. Points!": {
-          "override": "%s gained a boosted %d EXP. Points!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "%s grew to level %d!": {
           "override": "%s grew to level %d!",
           "reason": "engine-fallback",
@@ -6128,11 +5943,6 @@
           "override": "%s is loafing around.",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: ambiguous corpus candidates; no translation invented."
-        },
-        "%s is paralyzed! It may be unable to move!": {
-          "override": "%s is paralyzed! It may be unable to move!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
         "%s is storing energy!": {
           "override": "%s is storing energy!",
@@ -6229,11 +6039,6 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "%s's %s fell!": {
-          "override": "%s's %s fell!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "%s's %s is DISABLED!": {
           "override": "%s's %s is DISABLED!",
           "reason": "engine-fallback",
@@ -6241,21 +6046,6 @@
         },
         "%s's %s restored health!": {
           "override": "%s's %s restored health!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s rose!": {
-          "override": "%s's %s rose!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s sharply fell!": {
-          "override": "%s's %s sharply fell!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "%s's %s sharply rose!": {
-          "override": "%s's %s sharply rose!",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
