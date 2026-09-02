@@ -729,6 +729,8 @@ def _write_gate_expectations(
 
 def _write_dialogue_gate_expectation(
     mod_dir: Path, resolved_pointer: str, expected_translation: str, unresolved_pointer: str,
+    crystal_resolved_pointer: str | None = None, crystal_expected_translation: str | None = None,
+    crystal_unresolved_pointer: str | None = None,
 ) -> Path:
     """Write a tiny, private expectation file consumed by the dialogue gate.
 
@@ -741,17 +743,29 @@ def _write_dialogue_gate_expectation(
     failing "gen2Text[...] is the expected translation" with mojibake in
     place of the real string. A file read as raw UTF-8 bytes is not subject
     to that narrowing at all.
+
+    The three ``crystal_*`` fields are optional and, when all given, add
+    Crystal's own dialogue layer (its own mostly-disjoint pointer space,
+    merged into the same data.gen2Text via the same mod.content.text
+    registry Gold/Silver's own dialogue above uses, but only registered
+    under GameVersion=="crystal") to what the gate checks -- mirroring the
+    resolved/unresolved/leak shape tools/gate_gs_registries.lua already
+    checks for Crystal's registries, just never extended to dialogue.
     """
+    expectation = {
+        "resolved_pointer": resolved_pointer,
+        "expected_translation": expected_translation,
+        "unresolved_pointer": unresolved_pointer,
+    }
+    if crystal_resolved_pointer and crystal_expected_translation and crystal_unresolved_pointer:
+        expectation.update({
+            "crystal_resolved_pointer": crystal_resolved_pointer,
+            "crystal_expected_translation": crystal_expected_translation,
+            "crystal_unresolved_pointer": crystal_unresolved_pointer,
+        })
     path = mod_dir.parent / f".{mod_dir.name}.dialogue-gate.json"
     path.write_text(
-        json.dumps(
-            {
-                "resolved_pointer": resolved_pointer,
-                "expected_translation": expected_translation,
-                "unresolved_pointer": unresolved_pointer,
-            },
-            ensure_ascii=False,
-        ),
+        json.dumps(expectation, ensure_ascii=False),
         encoding="utf-8",
     )
     return path
@@ -763,6 +777,7 @@ def run_gs_release_gates(
     gen1recomp: str | Path,
     luajit: str,
     *,
+    crystal_entries: list[GsJoinEntry] | None = None,
     catalogs: dict[str, dict[str, str]] | None = None,
     edition_dex_text: dict[str, dict[str, dict[str, str]]] | None = None,
     crystal_catalogs: dict[str, dict[str, str]] | None = None,
@@ -803,8 +818,22 @@ def run_gs_release_gates(
         raise BuildError("Gold dialogue gate requires at least one translated pointer")
     unresolved = next((e for e in entries if e.translation is None), None)
     unresolved_pointer = unresolved.pointer if unresolved else "__gs_unresolved_gate_pointer__"
+    # Crystal's own dialogue is optional here the same way its registries
+    # already are: a language with no Crystal corpus row at all (Korean)
+    # or a build that resolved nothing still has to gate cleanly rather than
+    # fail on a layer that legitimately has no content to check.
+    crystal_translated = next((e for e in (crystal_entries or []) if e.translation), None)
+    crystal_resolved_pointer = crystal_expected_translation = crystal_unresolved_pointer = None
+    if crystal_translated is not None:
+        crystal_unresolved = next((e for e in crystal_entries if e.translation is None), None)
+        crystal_resolved_pointer = crystal_translated.pointer
+        crystal_expected_translation = crystal_translated.translation
+        crystal_unresolved_pointer = (
+            crystal_unresolved.pointer if crystal_unresolved else "__crystal_unresolved_gate_pointer__"
+        )
     dialogue_expectation_path = _write_dialogue_gate_expectation(
         mod_dir, translated.pointer, translated.translation, unresolved_pointer,
+        crystal_resolved_pointer, crystal_expected_translation, crystal_unresolved_pointer,
     )
     try:
         _run([luajit, str(tools / "gate_gs_dialogue.lua"), str(gen1recomp), str(mod_dir),
@@ -1252,6 +1281,7 @@ def build_gs(
     status("Running Gold release gates")
     gate_report = run_gs_release_gates(
         mod_dir, entries, gen1recomp, luajit,
+        crystal_entries=crystal_entries,
         catalogs=stats.get("_gate_catalogs", {}),
         edition_dex_text=stats.get("_gate_edition_dex_text", {}),
         crystal_catalogs=stats.get("_gate_crystal_catalogs", {}),

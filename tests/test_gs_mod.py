@@ -871,6 +871,43 @@ class GsDialogueGateTests(unittest.TestCase):
         )
         self.assertIn("all gs dialogue gate checks passed", result.stdout)
 
+    def test_crystal_translation_is_selected_only_under_crystal_and_does_not_leak(self):
+        # Crystal's own dialogue layer: resolved under GameVersion=="crystal",
+        # absent (English fallback) for its own unresolved pointer, and never
+        # showing up under Gold or Silver -- the same three properties the
+        # test above already proves for the ungated Gold/Silver layer, plus
+        # the leak check that layer does not need since it always applies.
+        luajit = _which_luajit()
+        if luajit is None:
+            self.skipTest("luajit is unavailable")
+        if not (ENGINE_ROOT / "src").is_dir():
+            self.skipTest("cached Gen1Recomp checkout is unavailable")
+        with tempfile.TemporaryDirectory() as tmp:
+            mod_dir = generate_gs_mod(
+                Path(tmp) / "translation-fr-gen2", language="fr",
+                text_catalog={"55:0001": "Bonjour !"},
+                crystal_text_catalog={"00:0001": "Bonjour Cristal !"},
+            )
+            expectation_path = _write_dialogue_gate_expectation(
+                mod_dir, "55:0001", "Bonjour !", "55:9999",
+                "00:0001", "Bonjour Cristal !", "00:9999",
+            )
+            try:
+                result = subprocess.run(
+                    [luajit, str(DIALOGUE_GATE_SCRIPT), str(ENGINE_ROOT), str(mod_dir), str(expectation_path)],
+                    capture_output=True, text=True,
+                )
+            finally:
+                expectation_path.unlink(missing_ok=True)
+        self.assertEqual(
+            result.returncode, 0,
+            f"gate_gs_dialogue.lua failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}",
+        )
+        self.assertIn("text[00:0001] is the expected Crystal translation", result.stdout)
+        self.assertIn("text[00:0001] does not leak into gold", result.stdout)
+        self.assertIn("text[00:0001] does not leak into silver", result.stdout)
+        self.assertIn("all gs dialogue gate checks passed", result.stdout)
+
 
 class GsRegistriesGateTests(unittest.TestCase):
     """tools/gate_gs_registries.lua: pokemon/moves/items/trainer-class
