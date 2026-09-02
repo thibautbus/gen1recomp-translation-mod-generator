@@ -231,7 +231,7 @@ gen1recomp `fix/text-extractor-underscore-requirement` (merged upstream as PR #1
 
 So the real blocker is that the *committed* `tools/rom_manifest.json` is stale relative to `text_metadata()`'s current code, not a source bug. Verified live: running `text_metadata()` today against a real pokered checkout returns 2595 labels including everything below; the committed manifest only has 2585. Cross-checked against a real built French `dialogue.lua`/`dialogue_yellow.lua` to see exactly what's actually missing from a shipped build today:
 
-- **Confirmed missing** (10 labels): both of Viridian City's second Youngster's lines, `TMNotebookText`, the SS Anne kitchen cook's three dish lines, the Viridian fisher's pre-gift line, and three never-previously-documented lines at Silph Co. 9F's nurse (`SilphCo9FNurseDontGiveUpText`/`ThankYouText`/`YouLookTiredText`).
+- **Confirmed missing at the time** (10 labels): both of Viridian City's second Youngster's lines, `TMNotebookText`, the SS Anne kitchen cook's three dish lines, the Viridian fisher's pre-gift line, and three never-previously-documented lines at Silph Co. 9F's nurse (`SilphCo9FNurseDontGiveUpText`/`ThankYouText`/`YouLookTiredText`). **Since resolved for 7 of the 10**, re-verified against the current v0.2.51 pin's own committed manifest (now 2595 labels, matching `text_metadata()`'s live output) and a real built French `dialogue.lua`: the Youngster's two lines, `TMNotebookText`, the three SS Anne dish lines and the Viridian fisher's line all carry real French text today. Only Silph Co. 9F's nurse (3 lines) is still genuinely blocked -- see "Required upstream capabilities" below for why the manifest regeneration alone doesn't reach it.
 - **Confirmed already fine** (9 labels): `SilphCo2FSilphWorkerFPleaseTakeThisText` (likely hand-fixed for issue #393 without a full manifest regeneration) and all eight of Yellow's Melanie's House labels (see "Verified working, not a gap" above -- `YELLOW_EXTRA_TEXT_LABELS` already covers that one, it was never actually broken).
 
 `tools/extract/text.py`'s regex was relaxed anyway, for consistency with `text_metadata()` -- harmless since nothing calls it, but no reason to leave a dead copy of the same scanner out of sync. Four of gen1recomp's own hand-ported scripts were carrying the confirmed-missing labels' English text as inline literals (no `game.data.text` lookup at all) and got fixed to read the real label first, same `t[label] or fallback` pattern used everywhere else -- ready to pick up the real text as soon as someone with ROM access regenerates the manifest, which this contribution can't do itself:
@@ -661,12 +661,12 @@ buckets:
 Still genuinely out of reach: no hook, no catalog entry can fix these
 from the translation mod without gen1recomp itself changing.
 
-- **ROM labels missing from the manifest (Silph Co. 9F's nurse):** was
-  "not fixable from this project without gen1recomp vendoring the real,
+- **Silph Co. 9F's nurse, the one label the manifest regeneration didn't close:**
+  was "not fixable from this project without gen1recomp vendoring the real,
   unmodified `pokered` ASM source" -- the actual cause turned out to be a
-  stale committed manifest, not a source bug (see the "In progress"
-  section above), and gen1recomp's own regenerating it against a ROM
-  would close every other site this sweep found. Silph Co. 9F's nurse
+  stale committed manifest, not a source bug (see "Fixed upstream: pokered
+  dialogue labels were missing from data/generated/text.lua" above, now
+  resolved for every other site that sweep found). Silph Co. 9F's nurse
   (`SilphCo9FNurseDontGiveUpText`/`ThankYouText`/`YouLookTiredText`,
   found by the same sweep, never previously documented) needs more than
   that regeneration alone: `data/scripts/flavor/silph_co_9f.lua`'s
@@ -879,21 +879,25 @@ detects the missing corpus file and returns an empty catalog instead of
 raising, so a Korean build still succeeds and still declares Crystal
 compatibility, it just leaves Crystal's own dialogue in English.
 
-Deliberately out of scope so far: Crystal's own named catalogs (species/
-moves/items/trainer classes -- likely reusable from Gold/Silver's own
-already-translated values, since it's the same Gen 2 roster, but not yet
-verified or wired up), Crystal-exclusive content (MoveTutor, GenderSelect,
-Battle Tower, Buena's Password -- the 48 keys already catalogued as
-`"crystal-only-feature"` in `config/gsc/engine_scope_exclusions.json`, which
-excludes them from Gold/Silver's own engine-string metric precisely because
-they're Crystal's to translate, not Gold/Silver's), and a release gate for
-Crystal's own dialogue layer (Gold/Silver's existing gates are unaffected
-and still run; nothing yet verifies Crystal's layer the same way before
-packaging). Crystal's own engine strings (the Options/Menu `Strings()`
-catalog) need no separate work at all: `ui/gen2/OptionsMenu.lua`/
-`MainMenu.lua` have no edition branches, so Gold/Silver's own
-`overrides/<lang>/gsc/engine.json` (302 keys, 100% translated) already
-applies unchanged on a Crystal save.
+Since resolved: Crystal's own named catalogs (species/moves/items/trainer
+classes) reuse Gold/Silver's own already-translated values for the shared
+roster, verified against real builds, plus a dedicated
+`pipeline/crystal_registries.py` for the handful of records genuinely
+Crystal-exclusive (item names, trainer class names, a landmarks subset).
+Crystal-exclusive content (MoveTutor, GenderSelect, Battle Tower, Buena's
+Password -- the 48 keys catalogued as `"crystal-only-feature"` in
+`config/gsc/engine_scope_exclusions.json`, excluded from Gold/Silver's own
+engine-string metric precisely because they're Crystal's to translate, not
+Gold/Silver's) is now translated for fr/de/es/it (48/48) and ja-Hrkt (47/48);
+`ko` has no Crystal corpus and stays untranslated. A dedicated release gate
+(`tools/gate_gs_dialogue.lua`'s `hasCrystal` path) now verifies Crystal's own
+dialogue and registries are selected only under a Crystal save and never
+leak onto Gold or Silver, alongside Gold/Silver's existing gates. Crystal's
+own engine strings (the Options/Menu `Strings()` catalog) need no separate
+work at all: `ui/gen2/OptionsMenu.lua`/`MainMenu.lua` have no edition
+branches, so Gold/Silver's own `overrides/<lang>/gsc/engine.json` (937 keys,
+the Gold/Silver-related subset of the shared engine catalog) already applies
+unchanged on a Crystal save.
 
 ### Fixed: rows already reachable through an existing public hook
 
@@ -943,7 +947,7 @@ game."`, `"Could not save."`, `"YES"`, `"NO"`) -- a translation covering
 `SaveMenu.lua`'s screen needs no `PcMenu`-specific fork for any of those.
 The confirm prompt itself gets one new key, `"#MON BOX, data\nwill be
 saved. OK?"` (see the truncation note below). Live as of gen1recomp
-v0.2.24 (`aea38240`, this project's pipeline pin as of this writing):
+v0.2.24 (`aea38240`), well within the project's current pin:
 this project's own `overrides/{fr,de,es,it,ja-Hrkt,ko}/gold/engine.json`
 already carry the new confirm-prompt key (merged to `main` as PR #40).
 
@@ -1123,7 +1127,8 @@ hardcoded local table or a `self:say(...)`/`:drawBottomLines(...)` call, so
 they must not be implemented by reaching into private UI classes.
 
 Underlying most of the bullets below: RBY's `romText()`/`data.text[label]`
-pairing -- the mechanism the "In progress" section above used to close 21
+pairing -- the mechanism "Fixed upstream: more battle/overworld/menu
+messages now routed through the real ROM text" above used to close 21
 RBY gaps by pointing an existing `Strings()` compromise at its real ROM
 label instead -- has **no Gold equivalent at all**. Confirmed directly:
 nothing under `src/*/gen2/` (~110 files, 80k lines) calls
@@ -1136,26 +1141,46 @@ principle. This is why Gold's remaining gaps below are not a small mirror
 of the RBY fixes: introducing the pattern for Gold is new engine work, not
 a matter of wiring a few missed callsites.
 
-- **PC and storage dialogue:** `CenterPcMenu:buildEntries()` -- the
-  "which PC" list (`BILL's PC`, `PROF.OAK's PC`, the player name's own
-  `<name>'s PC`, `HALL OF FAME`, and this menu's own `TURN OFF` row) -- is
-  built and stored to `self.entries` directly with no `Runtime.call` at all,
-  unlike `PcMenu`/`ItemPcMenu`'s row lists (so `ItemPcMenu`'s own
-  `TURN OFF`/`LOG OFF` rows, reached through `ui.pc.items`, *are* already
-  translated; only `CenterPcMenu`'s copy of `TURN OFF` is not). The same
-  file's free-form prompts (`What?`, `Access whose PC?`,
-  `<name>'s PC accessed.`, `Want to get your Pokédex rated?`, the
-  link-closed message, and its `YES`/`NO` confirmation box) are drawn with
-  direct `self:say(...)`/`Chrome.print(...)` calls, also with no hook.
-  `BoxMenu`'s `Choose a Pokémon`/`Cancel`/`Party Pokémon`/`Which box?` rows
-  are the same: drawn directly, no hook. Box names (`BOX1`, `BOX2`, …) are a
-  different case again -- not a menu string at all, but save data written
-  once by `SetDefaultBoxNames` when a new save is created
-  (`core/gen2/Boxes.lua`'s `save.boxNames`), so they would need a save-init
-  hook, not a menu-list one.
-- **Battle messages and action menu:** the `Fight`/`Pack`/`Run` action menu
-  is a hardcoded local table in `BattleState.lua` with no hook at all, and
-  still needs one.
+- **PC and storage dialogue -- fixed upstream, not attempted yet in a prior
+  version of this doc.** `CenterPcMenu:buildEntries()` used to build its
+  "which PC" list and free-form prompts directly, with no hook at all. Not
+  true anymore: re-checked directly against the v0.2.51 checkout,
+  `CenterPcMenu.lua` now wraps every one of these in `Strings()`/
+  `Strings.source()` -- `BILL's PC`, `PROF.OAK's PC`, `HALL OF FAME`, the
+  player-name template `%s's PC`, `TURN OFF`, `Access whose PC?`,
+  `Want to get your\n#DEX rated?`, the link-closed messages and the
+  `BILL's PC\naccessed....`/`PROF.OAK's PC\naccessed....` openings all now
+  reach `mod.content.strings:override`, the same general hook every other
+  engine string uses -- no `ui.pc.items`/`literal_handlers.json` special
+  case needed. Confirmed live: a real French build's `lang/strings.lua`
+  carries all of them translated (`"PC DE LEO"`, `"PC DE CHEN"`,
+  `"CELEBRITE"`, `"PC DE %s"`, `"DECONNEXION"`, ...), most resolved fully
+  automatically by the existing corpus matcher, same as any other engine
+  key. `BoxMenu.lua` is the same story: also fully `Strings()`-wrapped now,
+  and most of its rows already auto-translate (`Choose a <PK><MN>.`,
+  `CANCEL`, `PARTY <PK><MN>`, `MOVE`, `DEPOSIT`, `What's up?`,
+  `Move to where?`), but not all of them -- `Choose a BOX.`, `STATS`,
+  `WITHDRAW` and `RELEASE` remain unresolved gen2 engine keys as of this
+  writing, worth a dedicated pass. Box names (`BOX1`, `BOX2`, …) are still a
+  different case, unaffected by any of this: not a menu string at all, but
+  save data written once by `SetDefaultBoxNames` when a new save is created
+  (`core/gen2/Boxes.lua`'s `save.boxNames`), so they would still need a
+  save-init hook, not a menu-list one.
+- **Battle action menu -- fixed upstream.** The `FIGHT`/`<PK><MN>`/`PACK`/
+  `RUN` 2x2 grid used to be a hardcoded local table in `ui/gen2/BattleState.lua`
+  with no hook at all. Re-checked directly against v0.2.51: the table
+  (`local MENU = { Strings.source("FIGHT"), ... }`) is now built from
+  `Strings.source()`, and rendered through a real `Strings(MENU[i])` call
+  (`ui/gen2/BattleState.lua:4179-4184`) -- the same general `strings`
+  override hook as everything else. `PACK` was already auto-matching by the
+  time this was checked; `FIGHT` and `RUN` needed a manual pick because the
+  corpus packs all four labels into one segmented row
+  (`gs.menu.BattleMenuHeader.Text`, `@`-joined) rather than one row per
+  label -- closed this session by picking segment 0/3 directly (safe across
+  all six languages: only the interior `<PK><MN>`/`PACK` segment order
+  differs between languages, not the FIGHT/RUN endpoints), verified against
+  a real build (`fr`: `"ATTAQ"`/`"FUITE"`). `overrides/<lang>/gsc/
+  engine.json`'s `"FIGHT"`/`"RUN"` entries record the pick.
 
   **Corrected from a prior version of this doc:** the rest of this bullet
   used to list `Wild Pokémon appeared!`, `Pokémon's defense rose`,
@@ -1181,9 +1206,12 @@ a matter of wiring a few missed callsites.
   `ItemEffects.STATUS_CLASS` lookups or a hardcoded local table -- none
   reads `hudLabel`/`label` from the merged `statuses` registry the way
   RBY's fix will. Not a small mirror of the RBY fix: it needs all
-  three call sites rewritten, not one lookup swapped in. This project has
-  no `status_labels`-equivalent catalog for Gold yet either, so there is
-  nothing to wire up on this project's side until both exist.
+  three call sites rewritten, not one lookup swapped in. This project's own
+  `status_labels` catalog (`pipeline/gs_mod.py`'s `status_label_catalog()`,
+  patched via `mod.content.statuses:patch(id, { label = value })`, same
+  mechanism as RBY's) already exists and ships translated -- the gap is
+  entirely upstream, waiting on those three Gold call sites to read from the
+  merged registry the way RBY's fixed screens now do.
 - **Gen2 Pokédex screen:** expose the Gen2 Pokédex text and its `START` /
   `SELECT` / `OPTION` / `SEARCH` labels through a public registry. The mod can
   generate species and Pokédex catalogs, but the current screen reads a
@@ -1212,12 +1240,22 @@ a matter of wiring a few missed callsites.
   -- checked directly against poke-corpus (`gs.options_menu.StringOptions`
   and its `Options_*` rows) and they match the ROM's English source
   character-for-character, padding included, so this is official localized
-  phrasing, not a compromise. Live as of gen1recomp v0.2.24
-  (`aea38240`, this project's pipeline pin as of this writing): that
-  release includes PR #1735, so a build from the current pin shows this
-  screen translated (ja-Hrkt/ko not covered yet: their corpus rows use
-  `<NEXT>` instead of `<LF>` and need a closer look before trusting an
-  extracted value).
+  phrasing, not a compromise. Live as of gen1recomp v0.2.24 (`aea38240`):
+  that release includes PR #1735, so a build from the pin shows this screen
+  translated. **Corrected from a prior version of this doc:** ja-Hrkt/ko
+  were listed here as unresolved because their corpus rows supposedly used
+  `<NEXT>` instead of `<LF>`. Re-checked directly: none of the relevant
+  rows use `<NEXT>` at all, and `YOUR NAME?`/`RIVAL'S NAME?`/`MOTHER'S
+  NAME?`/`BOX NAME?` (naming screen, below) and the save-flow prompts all
+  now resolve automatically from real corpus text for both languages, no
+  override needed. `OPTION` is the one exception: without an explicit
+  override, ja-Hrkt/ko's own automatic match picks a different, truncated
+  corpus row (just "settings" as a noun, missing the verb half of the
+  packed CONTINUE/NEW GAME/OPTION/MYSTERY GIFT segment) -- `overrides/
+  {ja-Hrkt,ko}/gsc/engine.json` carry an explicit pick for that one key.
+  ja-Hrkt also needs one for two of the SAVE-screen prompts below: its own
+  automatic match substitutes a spelled-out "POKé" for the ROM's own
+  literal "#" glyph.
 
   **Future architectural note:** every one of these labels and value ladders
   is verbatim cart text, which argues for routing this screen through real
@@ -1285,10 +1323,21 @@ a matter of wiring a few missed callsites.
   screens) through public data or hooks.
 
 The entries in `config/gsc/literal_handlers.json` record known stable corpus
-matches for these screens. They can be activated when the corresponding public
-upstream hooks exist; they are deliberately not a private-class monkey patch.
-This keeps the release manifest permission-free and makes the remaining work
-visible to the engine project.
+matches for menu screens exposed through `ui.pc.items`/`ui.start_menu.items`/
+`ui.title_menu.items`/`ui.options.rows`/`ui.party.submenu` -- deliberately not
+a private-class monkey patch. **Already active, not merely recorded for
+later:** `pipeline/gs_mod.py`'s `_gs_ui_labels()` reads this
+file and ships every entry through the `ui_labels` catalog today, wired into
+those five hooks -- this is not a future activation step. Some of the file's
+entries (`FIGHT`, `PACK`, `RUN`, `BILL's PC`, `PROF.OAK's PC`, `TURN OFF`,
+...) turned out to be redundant duplicates once the screens that actually
+render them (`CenterPcMenu`, `BoxMenu`, the battle action menu) were
+confirmed to route through a plain `Strings()` call instead -- reachable
+through the general `strings`/`engine.json` catalog on its own, with no need
+for the `ui_labels` path at all; see "PC and storage dialogue" and "Battle
+action menu" above. This keeps the release manifest permission-free either
+way and makes any screen still genuinely without a hook (the remaining
+bullets above) visible to the engine project.
 
 ## Engine bugs surfaced by TTF mode (not translation gaps)
 

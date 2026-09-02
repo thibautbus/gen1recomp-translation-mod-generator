@@ -14,7 +14,7 @@ LANGUAGES = ("fr", "de", "es", "it", "ja-Hrkt", "ko")
 # into two separate Strings() calls ("1, 2 and…" plus a new "Poof! %s
 # forgot %s!" carrying the two printf args the combined key used to). Both
 # now stand in for that one original batch slot in
-# config/gsc/new_engine_set_v0241.json, so the frozen count grows by
+# config/gsc/engine_launch_batch.json, so the frozen count grows by
 # exactly the one key this split actually added.
 NEW_ENTRY_COUNT = 551
 # The corpus confirms AM/PM as the English source in these locales.  They are
@@ -29,19 +29,19 @@ NO_OP_ENGINE_KEYS = {"AM", "PM"}
 # callsites, corpus-matched the same way once translated), and deriving the
 # batch from the tag would silently absorb every later addition into what
 # is supposed to be one fixed, already-closed batch.
-NEW_ENGINE_SET_PATH = Path("config") / "gsc" / "new_engine_set_v0241.json"
+ENGINE_LAUNCH_BATCH_PATH = Path("config") / "gsc" / "engine_launch_batch.json"
 
 
-def _load_new_engine_set(path=NEW_ENGINE_SET_PATH):
+def _load_engine_launch_batch(path=ENGINE_LAUNCH_BATCH_PATH):
     data = json.loads(path.read_text(encoding="utf-8"))
     if (not isinstance(data, dict)
-            or data.get("schema") != "gen1recomp-translation-mods/gs-new-engine-set"
+            or data.get("schema") != "gen1recomp-translation-mods/gs-engine-launch-batch"
             or data.get("version") != 1
             or not isinstance(data.get("keys"), list)):
-        raise ValueError("unsupported new-engine-set schema")
+        raise ValueError("unsupported engine-launch-batch schema")
     keys = data["keys"]
     if len(keys) != len(set(keys)) or not all(isinstance(k, str) and k for k in keys):
-        raise ValueError("new-engine-set keys must be a list of unique non-empty strings")
+        raise ValueError("engine-launch-batch keys must be a list of unique non-empty strings")
     return set(keys)
 
 
@@ -59,8 +59,8 @@ class GoldGen2EngineOverrideTests(unittest.TestCase):
         )
         return report["languages"][language].get("no_op_entries", {})
 
-    def test_every_language_carries_the_complete_new_engine_set(self):
-        universe = _load_new_engine_set()
+    def test_every_language_carries_the_complete_engine_launch_batch(self):
+        universe = _load_engine_launch_batch()
         self.assertEqual(len(universe), NEW_ENTRY_COUNT)
         self.assertTrue(NO_OP_ENGINE_KEYS <= universe)
         for language in LANGUAGES:

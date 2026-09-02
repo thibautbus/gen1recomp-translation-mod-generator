@@ -2,6 +2,8 @@
   "schema": "gen1recomp-translation-mods/engine-overrides",
   "version": 1,
   "entries": {
+    "FIGHT": {"override": "ATTAQ", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from poke-corpus GoldSilver gs.menu.BattleMenuHeader.Text; gen1recomp packs FIGHT/<PK><MN>/PACK/RUN into one segmented corpus row, so the corpus's own per-segment wording is picked directly (segment 0 for FIGHT, segment 3 for RUN) rather than matched automatically as a whole-string row."},
+    "RUN": {"override": "FUITE", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from poke-corpus GoldSilver gs.menu.BattleMenuHeader.Text; gen1recomp packs FIGHT/<PK><MN>/PACK/RUN into one segmented corpus row, so the corpus's own per-segment wording is picked directly (segment 0 for FIGHT, segment 3 for RUN) rather than matched automatically as a whole-string row."},
     "1, 2 and…": {"override": "1, 2 et...", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."},
     "Quit and\nbe judged.": {"override": "Quitter.", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."},
     "Poof! %s forgot %s!": {"override": "Tadaa! %s oublie %s !", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from poke-corpus GoldSilver gs.common_3.MoveForgotText; gen1recomp combines the ROM's multi-page name/move sequence into one Strings() template with two %s, so the corpus's own wording is adapted to that single-message shape rather than matched automatically."},

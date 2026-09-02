@@ -4,7 +4,7 @@
   "policy": "fallbacks are tracked but never emitted as runtime overrides",
   "languages": {
     "de": {
-      "total": 214,
+      "total": 213,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -991,11 +991,6 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "Wild %s fainted!": {
-          "override": "Wild %s fainted!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "You have no more POKéMON!": {
           "override": "You have no more POKéMON!",
           "reason": "engine-fallback",
@@ -1182,12 +1177,33 @@
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: AI-generated German translation of the port-added grouped Gen 2 Options label; requires in-game visual validation.",
           "original_reason": "engine-original",
           "original_provenance": "AI-generated German translation of the port-added grouped Gen 2 Options label; requires in-game visual validation."
+        },
+        "BOX NAME?": {
+          "override": "BOX NAME?",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.naming_screen.NamingScreenJumptable.BoxNameString (identical to the English source, 'BOX NAME?'); no German-specific text to adapt.",
+          "original_reason": "engine-contract-gap",
+          "original_provenance": "Corpus-confirmed from gs.naming_screen.NamingScreenJumptable.BoxNameString (identical to the English source, 'BOX NAME?'); no German-specific text to adapt."
+        },
+        "MONO  ": {
+          "override": "MONO  ",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.options_menu.Options_Sound.Mono (identical to the English source, 'MONO'); no German-specific text to adapt.",
+          "original_reason": "engine-contract-gap",
+          "original_provenance": "Corpus-confirmed from gs.options_menu.Options_Sound.Mono (identical to the English source, 'MONO'); no German-specific text to adapt."
+        },
+        "STEREO": {
+          "override": "STEREO",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.options_menu.Options_Sound.Stereo (identical to the English source, 'STEREO'); no German-specific text to adapt.",
+          "original_reason": "engine-contract-gap",
+          "original_provenance": "Corpus-confirmed from gs.options_menu.Options_Sound.Stereo (identical to the English source, 'STEREO'); no German-specific text to adapt."
         }
       },
-      "no_op_total": 13
+      "no_op_total": 16
     },
     "es": {
-      "total": 204,
+      "total": 203,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -2126,11 +2142,6 @@
         },
         "Which BOX?": {
           "override": "Which BOX?",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "Wild %s fainted!": {
-          "override": "Wild %s fainted!",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -3466,12 +3477,26 @@
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: AI-generated French translation of the port-added grouped Gen 2 Options label; requires in-game visual validation.",
           "original_reason": "engine-original",
           "original_provenance": "AI-generated French translation of the port-added grouped Gen 2 Options label; requires in-game visual validation."
+        },
+        "MONO  ": {
+          "override": "MONO  ",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.options_menu.Options_Sound.Mono (identical to the English source, 'MONO'); no French-specific text to adapt.",
+          "original_reason": "engine-contract-gap",
+          "original_provenance": "Corpus-confirmed from gs.options_menu.Options_Sound.Mono (identical to the English source, 'MONO'); no French-specific text to adapt."
+        },
+        "STEREO": {
+          "override": "STEREO",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.options_menu.Options_Sound.Stereo (identical to the English source, 'STEREO'); no French-specific text to adapt.",
+          "original_reason": "engine-contract-gap",
+          "original_provenance": "Corpus-confirmed from gs.options_menu.Options_Sound.Stereo (identical to the English source, 'STEREO'); no French-specific text to adapt."
         }
       },
-      "no_op_total": 13
+      "no_op_total": 15
     },
     "it": {
-      "total": 206,
+      "total": 205,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -4423,11 +4448,6 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "Wild %s fainted!": {
-          "override": "Wild %s fainted!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "Withdrew %d\n%s(S).": {
           "override": "Withdrew %d\n%s(S).",
           "reason": "engine-fallback",
@@ -4584,12 +4604,26 @@
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: AI-generated Italian translation of the port-added grouped Gen 2 Options label; requires in-game visual validation.",
           "original_reason": "engine-original",
           "original_provenance": "AI-generated Italian translation of the port-added grouped Gen 2 Options label; requires in-game visual validation."
+        },
+        "MONO  ": {
+          "override": "MONO  ",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.options_menu.Options_Sound.Mono (identical to the English source, 'MONO'); no Italian-specific text to adapt.",
+          "original_reason": "engine-contract-gap",
+          "original_provenance": "Corpus-confirmed from gs.options_menu.Options_Sound.Mono (identical to the English source, 'MONO'); no Italian-specific text to adapt."
+        },
+        "STEREO": {
+          "override": "STEREO",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.options_menu.Options_Sound.Stereo (identical to the English source, 'STEREO'); no Italian-specific text to adapt.",
+          "original_reason": "engine-contract-gap",
+          "original_provenance": "Corpus-confirmed from gs.options_menu.Options_Sound.Stereo (identical to the English source, 'STEREO'); no Italian-specific text to adapt."
         }
       },
-      "no_op_total": 10
+      "no_op_total": 12
     },
     "ja-Hrkt": {
-      "total": 217,
+      "total": 216,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -5611,11 +5645,6 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "Wild %s fainted!": {
-          "override": "Wild %s fainted!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "Withdrew %d\n%s(S).": {
           "override": "Withdrew %d\n%s(S).",
           "reason": "engine-fallback",
@@ -5742,7 +5771,7 @@
       "no_op_total": 8
     },
     "ko": {
-      "total": 226,
+      "total": 225,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -6786,11 +6815,6 @@
         },
         "Which BOX?": {
           "override": "Which BOX?",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
-        "Wild %s fainted!": {
-          "override": "Wild %s fainted!",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
