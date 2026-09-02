@@ -67,15 +67,17 @@ if expectationPath and expectationPath ~= "" then
     io.stderr:write("registry expectation file is not a JSON object\n")
     os.exit(2)
   end
+  -- strings/oak_speech route through mod API hooks that exist on the pinned
+  -- engine too (pipeline.gs_mod.GS_PINNED_REQUIRED_REGISTRIES requires both
+  -- there for the same reason), so they belong in every profile's required
+  -- set. type_names/status_labels are genuinely upstream-only.
   local required = {
     "species_names", "species_kinds", "species_dex_text", "move_names",
-    "item_names", "trainer_class_names", "landmarks",
+    "item_names", "trainer_class_names", "landmarks", "strings", "oak_speech",
   }
   if engineProfile == "upstream-local" then
-    required[#required + 1] = "strings"
     required[#required + 1] = "type_names"
     required[#required + 1] = "status_labels"
-    required[#required + 1] = "oak_speech"
   end
   -- species_dex_text2 (the #DEX entry's second page) is present only when
   -- the language's corpus actually preserved one: ja-Hrkt/ko's

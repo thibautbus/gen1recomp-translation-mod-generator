@@ -193,9 +193,19 @@ def match_gs_engine_strings(
     # Keep the matcher output (and therefore its coverage counters/details)
     # intact, filtering only at this final runtime-catalogue boundary.
     translated = {key for key, value in values.items() if value}
+    # Crystal-only-feature keys stay in all_keys/overrides (engine_string_keys'
+    # own docstring: a Gold/Silver override "could still target" one), but
+    # since match_crystal_engine_strings() now owns translating them for real
+    # -- applied through a GameVersion=="crystal"-gated hook, not this
+    # catalog's unconditional one -- shipping the same value here too would
+    # apply it on every edition instead of Crystal alone (caught live by
+    # tools/gate_gs_registries.lua's "does not leak into gold/silver" checks
+    # the moment a translator actually filled one in, per this project's own
+    # engine_scope_exclusions.json bookkeeping).
+    crystal_only = load_gs_engine_scope_exclusions()
     shipped = {
         key: value for key, value in values.items()
-        if value and value != key
+        if value and value != key and key not in crystal_only
     }
     report.update({
         "source_revision": revision,
