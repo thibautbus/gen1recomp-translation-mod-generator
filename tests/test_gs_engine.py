@@ -7,6 +7,7 @@ from unittest.mock import patch
 from pipeline.gs_engine import engine_string_keys, load_gs_engine_scope_exclusions, match_gs_engine_strings
 from pipeline.engine import load_engine_overrides
 from pipeline.engine_scope import is_gen2_path, load_manifest
+from pipeline.engine_profile import UPSTREAM_PROFILE
 
 
 
@@ -188,6 +189,48 @@ class GoldEngineCatalogTests(unittest.TestCase):
         ):
             with self.assertRaisesRegex(ValueError, "unknown key"):
                 match_gs_engine_strings([], tmp, "fr")
+
+    def test_rejects_a_fallback_entry_for_an_unknown_engine_key_on_the_upstream_profile(self):
+        # engine_fallbacks.json is audited against the upstream engine; a
+        # stale entry there should be caught the same way a stale override
+        # already is (gen1recomp-translation-mods review, 2026-09-01).
+        manifest = {**load_manifest(), "forced_dynamic_keys": {}, "engine_dynamic_values": {}}
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch("pipeline.gs_engine.load_manifest", return_value=manifest),
+            patch("pipeline.gs_engine.checkout_revision", return_value="local-unversioned"),
+            patch("pipeline.gs_engine.iter_callsites", return_value=CALLSITES),
+            patch("pipeline.gs_engine.load_engine_overrides", return_value={}),
+            patch(
+                "pipeline.gs_engine.load_gs_engine_fallbacks",
+                return_value={"fr": {"Stale fallback": {"override": "X"}}},
+            ),
+        ):
+            (Path(tmp) / "src").mkdir()
+            with self.assertRaisesRegex(ValueError, "unknown key"):
+                match_gs_engine_strings([], tmp, "fr", engine_profile=UPSTREAM_PROFILE)
+
+    def test_pinned_profile_does_not_check_fallback_entries_against_the_pin(self):
+        # engine_fallbacks.json tracks literals from the upstream engine, so
+        # a fallback key absent from the currently pinned revision (not yet
+        # released) must not fail a pinned-profile build.
+        manifest = {**load_manifest(), "forced_dynamic_keys": {}, "engine_dynamic_values": {}}
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch("pipeline.gs_engine.load_manifest", return_value=manifest),
+            patch(
+                "pipeline.gs_engine.verified_source",
+                return_value=(Path(tmp) / "src", Path(tmp), "0" * 40),
+            ),
+            patch("pipeline.gs_engine.iter_callsites", return_value=CALLSITES),
+            patch("pipeline.gs_engine.load_engine_overrides", return_value={}),
+            patch(
+                "pipeline.gs_engine.load_gs_engine_fallbacks",
+                return_value={"fr": {"Not yet pinned": {"override": "X"}}},
+            ),
+        ):
+            values, _report = match_gs_engine_strings([], tmp, "fr")
+            self.assertIsInstance(values, dict)
 
 
 if __name__ == "__main__":

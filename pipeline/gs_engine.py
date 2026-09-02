@@ -165,6 +165,19 @@ def match_gs_engine_strings(
             f"Gold engine overrides contain {len(stale_overrides)} unknown key(s): "
             f"{stale_overrides!r}"
         )
+    # engine_fallbacks.json is audited against the upstream-local engine (the
+    # branch that will eventually become the next pin), so a literal it
+    # tracks may not exist in the CURRENTLY published pin yet -- checking it
+    # against the pinned profile's all_keys would flag every not-yet-released
+    # literal as stale. Only the upstream profile's all_keys is the right
+    # superset to verify the ledger against.
+    if profile == UPSTREAM_PROFILE:
+        stale_fallbacks = sorted(set(fallback_entries) - all_keys)
+        if stale_fallbacks:
+            raise ValueError(
+                f"Gold engine fallback report contains {len(stale_fallbacks)} unknown key(s): "
+                f"{stale_fallbacks!r}"
+            )
     values, report = match_engine_catalog(
         sorted(all_keys),
         _corpus_records(corpus_rows, target_lang),

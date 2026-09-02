@@ -351,8 +351,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "ABRA        200": {
-          "override": "ABRA        200",
+        "ABRA": {
+          "override": "ABRA",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -471,8 +471,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "DRATINI    2100": {
-          "override": "DRATINI    2100",
+        "DRATINI": {
+          "override": "DRATINI",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -491,13 +491,13 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "EEVEE      6666": {
-          "override": "EEVEE      6666",
+        "EEVEE": {
+          "override": "EEVEE",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "EKANS       700": {
-          "override": "EKANS       700",
+        "EKANS": {
+          "override": "EKANS",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -676,8 +676,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "MR.MIME    3333": {
-          "override": "MR.MIME    3333",
+        "MR.MIME": {
+          "override": "MR.MIME",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -776,8 +776,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "PORYGON    9999": {
-          "override": "PORYGON    9999",
+        "PORYGON": {
+          "override": "PORYGON",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -861,8 +861,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "SANDSHREW   700": {
-          "override": "SANDSHREW   700",
+        "SANDSHREW": {
+          "override": "SANDSHREW",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -921,33 +921,33 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM14    5500": {
-          "override": "TM14    5500",
+        "TM14": {
+          "override": "TM14",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM15    7500": {
-          "override": "TM15    7500",
+        "TM15": {
+          "override": "TM15",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM25    5500": {
-          "override": "TM25    5500",
+        "TM25": {
+          "override": "TM25",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM29    3500": {
-          "override": "TM29    3500",
+        "TM29": {
+          "override": "TM29",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM32    1500": {
-          "override": "TM32    1500",
+        "TM32": {
+          "override": "TM32",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM38    5500": {
-          "override": "TM38    5500",
+        "TM38": {
+          "override": "TM38",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -1046,8 +1046,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "You'll need a\nPOKéMON to call\nwith.": {
-          "override": "You'll need a\nPOKéMON to call\nwith.",
+        "You'll need a\nPOKéMON to call\fwith.": {
+          "override": "You'll need a\nPOKéMON to call\fwith.",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -1564,8 +1564,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "ABRA        200": {
-          "override": "ABRA        200",
+        "ABRA": {
+          "override": "ABRA",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -1679,8 +1679,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "DRATINI    2100": {
-          "override": "DRATINI    2100",
+        "DRATINI": {
+          "override": "DRATINI",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -1699,13 +1699,13 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "EEVEE      6666": {
-          "override": "EEVEE      6666",
+        "EEVEE": {
+          "override": "EEVEE",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "EKANS       700": {
-          "override": "EKANS       700",
+        "EKANS": {
+          "override": "EKANS",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -1869,8 +1869,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "MR.MIME    3333": {
-          "override": "MR.MIME    3333",
+        "MR.MIME": {
+          "override": "MR.MIME",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -1969,8 +1969,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "PORYGON    9999": {
-          "override": "PORYGON    9999",
+        "PORYGON": {
+          "override": "PORYGON",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -2054,8 +2054,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "SANDSHREW   700": {
-          "override": "SANDSHREW   700",
+        "SANDSHREW": {
+          "override": "SANDSHREW",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -2109,33 +2109,33 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM14    5500": {
-          "override": "TM14    5500",
+        "TM14": {
+          "override": "TM14",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM15    7500": {
-          "override": "TM15    7500",
+        "TM15": {
+          "override": "TM15",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM25    5500": {
-          "override": "TM25    5500",
+        "TM25": {
+          "override": "TM25",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM29    3500": {
-          "override": "TM29    3500",
+        "TM29": {
+          "override": "TM29",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM32    1500": {
-          "override": "TM32    1500",
+        "TM32": {
+          "override": "TM32",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM38    5500": {
-          "override": "TM38    5500",
+        "TM38": {
+          "override": "TM38",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -2224,8 +2224,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "You'll need a\nPOKéMON to call\nwith.": {
-          "override": "You'll need a\nPOKéMON to call\nwith.",
+        "You'll need a\nPOKéMON to call\fwith.": {
+          "override": "You'll need a\nPOKéMON to call\fwith.",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -2384,7 +2384,7 @@
       "no_op_total": 11
     },
     "fr": {
-      "total": 219,
+      "total": 218,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -2726,8 +2726,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "ABRA        200": {
-          "override": "ABRA        200",
+        "ABRA": {
+          "override": "ABRA",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -2846,8 +2846,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "DRATINI    2100": {
-          "override": "DRATINI    2100",
+        "DRATINI": {
+          "override": "DRATINI",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -2861,13 +2861,13 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "EEVEE      6666": {
-          "override": "EEVEE      6666",
+        "EEVEE": {
+          "override": "EEVEE",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "EKANS       700": {
-          "override": "EKANS       700",
+        "EKANS": {
+          "override": "EKANS",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -3041,8 +3041,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "MR.MIME    3333": {
-          "override": "MR.MIME    3333",
+        "MR.MIME": {
+          "override": "MR.MIME",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -3141,8 +3141,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "PORYGON    9999": {
-          "override": "PORYGON    9999",
+        "PORYGON": {
+          "override": "PORYGON",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -3226,8 +3226,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "SANDSHREW   700": {
-          "override": "SANDSHREW   700",
+        "SANDSHREW": {
+          "override": "SANDSHREW",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -3286,33 +3286,33 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM14    5500": {
-          "override": "TM14    5500",
+        "TM14": {
+          "override": "TM14",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM15    7500": {
-          "override": "TM15    7500",
+        "TM15": {
+          "override": "TM15",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM25    5500": {
-          "override": "TM25    5500",
+        "TM25": {
+          "override": "TM25",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM29    3500": {
-          "override": "TM29    3500",
+        "TM29": {
+          "override": "TM29",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM32    1500": {
-          "override": "TM32    1500",
+        "TM32": {
+          "override": "TM32",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM38    5500": {
-          "override": "TM38    5500",
+        "TM38": {
+          "override": "TM38",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -3386,11 +3386,6 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "Wild %s fainted!": {
-          "override": "Wild %s fainted!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "You have no more POKéMON!": {
           "override": "You have no more POKéMON!",
           "reason": "engine-fallback",
@@ -3401,8 +3396,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "You'll need a\nPOKéMON to call\nwith.": {
-          "override": "You'll need a\nPOKéMON to call\nwith.",
+        "You'll need a\nPOKéMON to call\fwith.": {
+          "override": "You'll need a\nPOKéMON to call\fwith.",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -3928,8 +3923,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "ABRA        200": {
-          "override": "ABRA        200",
+        "ABRA": {
+          "override": "ABRA",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -4043,8 +4038,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "DRATINI    2100": {
-          "override": "DRATINI    2100",
+        "DRATINI": {
+          "override": "DRATINI",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -4073,13 +4068,13 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "EEVEE      6666": {
-          "override": "EEVEE      6666",
+        "EEVEE": {
+          "override": "EEVEE",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "EKANS       700": {
-          "override": "EKANS       700",
+        "EKANS": {
+          "override": "EKANS",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -4243,8 +4238,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "MR.MIME    3333": {
-          "override": "MR.MIME    3333",
+        "MR.MIME": {
+          "override": "MR.MIME",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -4343,8 +4338,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "PORYGON    9999": {
-          "override": "PORYGON    9999",
+        "PORYGON": {
+          "override": "PORYGON",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -4423,8 +4418,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "SANDSHREW   700": {
-          "override": "SANDSHREW   700",
+        "SANDSHREW": {
+          "override": "SANDSHREW",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -4478,33 +4473,33 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM14    5500": {
-          "override": "TM14    5500",
+        "TM14": {
+          "override": "TM14",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM15    7500": {
-          "override": "TM15    7500",
+        "TM15": {
+          "override": "TM15",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM25    5500": {
-          "override": "TM25    5500",
+        "TM25": {
+          "override": "TM25",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM29    3500": {
-          "override": "TM29    3500",
+        "TM29": {
+          "override": "TM29",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM32    1500": {
-          "override": "TM32    1500",
+        "TM32": {
+          "override": "TM32",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM38    5500": {
-          "override": "TM38    5500",
+        "TM38": {
+          "override": "TM38",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -4608,8 +4603,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "You'll need a\nPOKéMON to call\nwith.": {
-          "override": "You'll need a\nPOKéMON to call\nwith.",
+        "You'll need a\nPOKéMON to call\fwith.": {
+          "override": "You'll need a\nPOKéMON to call\fwith.",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -5111,8 +5106,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "ABRA        200": {
-          "override": "ABRA        200",
+        "ABRA": {
+          "override": "ABRA",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -5236,8 +5231,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "DRATINI    2100": {
-          "override": "DRATINI    2100",
+        "DRATINI": {
+          "override": "DRATINI",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -5261,8 +5256,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "EEVEE      6666": {
-          "override": "EEVEE      6666",
+        "EEVEE": {
+          "override": "EEVEE",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -5271,8 +5266,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: ambiguous corpus candidates; no translation invented."
         },
-        "EKANS       700": {
-          "override": "EKANS       700",
+        "EKANS": {
+          "override": "EKANS",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -5451,8 +5446,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "MR.MIME    3333": {
-          "override": "MR.MIME    3333",
+        "MR.MIME": {
+          "override": "MR.MIME",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -5551,8 +5546,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "PORYGON    9999": {
-          "override": "PORYGON    9999",
+        "PORYGON": {
+          "override": "PORYGON",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -5636,8 +5631,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "SANDSHREW   700": {
-          "override": "SANDSHREW   700",
+        "SANDSHREW": {
+          "override": "SANDSHREW",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -5696,33 +5691,33 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM14    5500": {
-          "override": "TM14    5500",
+        "TM14": {
+          "override": "TM14",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM15    7500": {
-          "override": "TM15    7500",
+        "TM15": {
+          "override": "TM15",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM25    5500": {
-          "override": "TM25    5500",
+        "TM25": {
+          "override": "TM25",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM29    3500": {
-          "override": "TM29    3500",
+        "TM29": {
+          "override": "TM29",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM32    1500": {
-          "override": "TM32    1500",
+        "TM32": {
+          "override": "TM32",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM38    5500": {
-          "override": "TM38    5500",
+        "TM38": {
+          "override": "TM38",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -5836,8 +5831,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "You'll need a\nPOKéMON to call\nwith.": {
-          "override": "You'll need a\nPOKéMON to call\nwith.",
+        "You'll need a\nPOKéMON to call\fwith.": {
+          "override": "You'll need a\nPOKéMON to call\fwith.",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -6344,8 +6339,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "ABRA        200": {
-          "override": "ABRA        200",
+        "ABRA": {
+          "override": "ABRA",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -6469,8 +6464,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "DRATINI    2100": {
-          "override": "DRATINI    2100",
+        "DRATINI": {
+          "override": "DRATINI",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -6494,13 +6489,13 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "EEVEE      6666": {
-          "override": "EEVEE      6666",
+        "EEVEE": {
+          "override": "EEVEE",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "EKANS       700": {
-          "override": "EKANS       700",
+        "EKANS": {
+          "override": "EKANS",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -6674,8 +6669,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "MR.MIME    3333": {
-          "override": "MR.MIME    3333",
+        "MR.MIME": {
+          "override": "MR.MIME",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -6774,8 +6769,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "PORYGON    9999": {
-          "override": "PORYGON    9999",
+        "PORYGON": {
+          "override": "PORYGON",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -6859,8 +6854,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "SANDSHREW   700": {
-          "override": "SANDSHREW   700",
+        "SANDSHREW": {
+          "override": "SANDSHREW",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -6919,33 +6914,33 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM14    5500": {
-          "override": "TM14    5500",
+        "TM14": {
+          "override": "TM14",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM15    7500": {
-          "override": "TM15    7500",
+        "TM15": {
+          "override": "TM15",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM25    5500": {
-          "override": "TM25    5500",
+        "TM25": {
+          "override": "TM25",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM29    3500": {
-          "override": "TM29    3500",
+        "TM29": {
+          "override": "TM29",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM32    1500": {
-          "override": "TM32    1500",
+        "TM32": {
+          "override": "TM32",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "TM38    5500": {
-          "override": "TM38    5500",
+        "TM38": {
+          "override": "TM38",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
@@ -7054,8 +7049,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
-        "You'll need a\nPOKéMON to call\nwith.": {
-          "override": "You'll need a\nPOKéMON to call\nwith.",
+        "You'll need a\nPOKéMON to call\fwith.": {
+          "override": "You'll need a\nPOKéMON to call\fwith.",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
