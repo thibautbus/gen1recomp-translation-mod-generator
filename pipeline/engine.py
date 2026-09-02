@@ -1254,7 +1254,8 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
                 source_value += suffix
                 target_value += suffix
         aliases = {str(alias) for alias in anchor.get("source_aliases", []) if isinstance(alias, str)}
-        if source_value not in ({source} | aliases):
+        engine_keys = {str(key) for key in anchor.get("engine_keys", []) if isinstance(key, str)}
+        if source not in engine_keys and source_value not in ({source} | aliases | engine_keys):
             return None, set()
         errors = check_printf_directives(source, target_value)
         if errors:
@@ -1280,6 +1281,8 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
             target_piece = _extract_anchor(target_piece, extraction, target_lang, bare_dynamic_tokens=bare)
             aliases = {str(alias) for alias in anchor.get("source_aliases", []) if isinstance(alias, str)}
             alias_norms = {_normal(alias, bare_dynamic_tokens=bare) for alias in aliases}
+            engine_keys = {str(key) for key in anchor.get("engine_keys", []) if isinstance(key, str)}
+            engine_key_norms = {_normal(key, bare_dynamic_tokens=bare) for key in engine_keys}
             source_matches = (
                 _normal(source_piece, bare_dynamic_tokens=bare) == _normal(source, bare_dynamic_tokens=bare)
                 or _structural_form(source_piece, bare_dynamic_tokens=bare) == _structural_form(source, bare_dynamic_tokens=bare)
@@ -1290,6 +1293,10 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
                 # ``woke up!``); aliases remain explicit and qid-scoped.
                 or _normal(source_piece, bare_dynamic_tokens=bare) in alias_norms
                 or _normal(source, bare_dynamic_tokens=bare) in alias_norms
+                # ``engine_keys`` identify alternate catalogue keys for the
+                # same reviewed anchor (for example a key renamed upstream).
+                or source in engine_keys
+                or _normal(source, bare_dynamic_tokens=bare) in engine_key_norms
             )
             if target_piece is None or not source_matches:
                 semantic_error = True; continue

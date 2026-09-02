@@ -9,13 +9,19 @@ from typing import Callable
 
 from .builder import BuildError, _run
 from .corpus import canonical_language
-from .crystal_mod import join_crystal_dialogue, crystal_text_catalog_from_join
-from .roms import GS_REQUIRED_TSV, import_crystal_rom, import_gs_rom, verify_crystal_rom, verify_gs_rom
+from .crystal_mod import (
+    crystal_feature_catalogs, crystal_text_catalog_from_join, join_crystal_dialogue,
+)
+from .roms import GS_REQUIRED_TSV, gs_required_tsv, import_crystal_rom, import_gs_rom, verify_crystal_rom, verify_gs_rom
 from .generate import lua_string
 from .gs_engine import match_gs_engine_strings
 from .gs_index_join import (
     join_by_index, join_dex_entries, join_dex_entries_pages, join_landmarks,
     parse_indexed_catalog,
+)
+from .gs_localized_registries import (
+    decoration_catalog, phone_contact_catalog, radio_channel_catalog,
+    status_label_catalog, type_name_catalog,
 )
 from .gs_join import (
     GsJoinEntry, GsPlaceholderDecision, audit_join, gs_coverage_report,
@@ -27,12 +33,14 @@ from .tokens import corpus_to_engine
 from .mod import TRANSLATION_MOD_PRIORITY, install_font_assets, ttf_registration, validate_font_profile
 from .project import is_frozen, project_config, project_version, resource_root
 from .specs import game_spec, release_profile
+from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE, normalize_engine_profile, validate_upstream_checkout
 
 MAIN = '''-- Generated Gold translation mod.
 return function(mod)
 __TTF_REGISTRATION__
 __CATALOG_REGISTRATION__
 __CRYSTAL_DIALOGUE_REGISTRATION__
+__CRYSTAL_REGISTRY_REGISTRATION__
 __SILVER_DEX_TEXT_REGISTRATION__
 __CRYSTAL_DEX_TEXT_REGISTRATION__
 end
@@ -104,6 +112,11 @@ GS_CATALOG_HOOKS = {
     "item_names": "mod.content.items:patch(id, { name = value })",
     "trainer_class_names": "mod.content.trainers:patch(id, { name = value })",
     "landmarks": "mod.content.landmarks:patch(id, { name = value })",
+    "type_names": "mod.content.type_chart:patch(id, { name = value })",
+    "status_labels": "mod.content.statuses:patch(id, { label = value })",
+    "phone_contacts": "mod.content.phone_contacts:patch(id, { name = value })",
+    "decorations": "mod.content.decorations:patch(id, { name = value })",
+    "radio_channels": "mod.content.radio_channels:patch(id, { name = value })",
 }
 GS_CATALOG_HOOKS["ui_labels"] = None
 
@@ -227,8 +240,30 @@ assert not (set(GS_CATALOG_HOOKS) & _MODKIT_GENERATED_MODULES), (
 
 GS_REQUIRED_REGISTRIES = (
     "strings", "species_names", "species_kinds", "species_dex_text",
-    "move_names", "item_names", "trainer_class_names", "landmarks", GS_OAK_SPEECH_CATALOG,
+    "move_names", "item_names", "trainer_class_names", "landmarks",
+    "type_names", "status_labels", GS_OAK_SPEECH_CATALOG,
 )
+
+GS_PINNED_REQUIRED_REGISTRIES = (
+    "species_names", "species_kinds", "species_dex_text", "move_names",
+    "item_names", "trainer_class_names", "landmarks",
+)
+
+# These registries are available only on the Gen 2 upstream target.  They are
+# verified when populated, but kept optional for the historical fixture path
+# and for callers that build a minimal synthetic Gold worksheet.
+GS_OPTIONAL_CONTENT_REGISTRIES = ("phone_contacts", "decorations", "radio_channels")
+
+CRYSTAL_CATALOG_HOOKS = {
+    "strings": "mod.content.strings:override(id, value)",
+    # Upstream-dependent: v0.2.41 routes content.text to gen2Text, while
+    # src/core/RomText reads data.text. The dedicated non-routed registry is
+    # the only public API that reaches these seven extracted labels.
+    "rom_text": "mod.content.rom_text:override(id, value)",
+    "item_names": "mod.content.items:patch(id, { name = value })",
+    "trainer_class_names": "mod.content.trainers:patch(id, { name = value })",
+    "landmarks": "mod.content.landmarks:patch(id, { name = value })",
+}
 
 # Present in every language's catalogs dict (build_gs_dialogue_mod always
 # joins it) but not guaranteed non-empty: ja-Hrkt/ko's dex_entries_gold
@@ -259,6 +294,7 @@ def generate_gs_mod(
     text_catalog: dict[str, str] | None = None,
     extra_catalogs: dict[str, dict[str, str]] | None = None,
     crystal_text_catalog: dict[str, str] | None = None,
+    crystal_catalogs: dict[str, dict[str, str]] | None = None,
     silver_dex_text_catalog: dict[str, str] | None = None,
     silver_dex_text2_catalog: dict[str, str] | None = None,
     crystal_dex_text_catalog: dict[str, str] | None = None,
@@ -359,6 +395,49 @@ def generate_gs_mod(
             "    end\n"
             "  end\n"
         )
+    crystal_registry_registration = ""
+    if crystal_catalogs is not None:
+        unknown_crystal = set(crystal_catalogs) - set(CRYSTAL_CATALOG_HOOKS)
+        if unknown_crystal:
+            raise ValueError(f"no Crystal registry hook for catalog(s): {sorted(unknown_crystal)}")
+        active_crystal_catalogs = {
+            name: values for name, values in crystal_catalogs.items() if values
+        }
+        if active_crystal_catalogs:
+            if not lang_dir.is_dir():
+                lang_dir.mkdir(parents=True, exist_ok=True)
+            loops = ""
+            for name, values in active_crystal_catalogs.items():
+                file_name = f"crystal_{name}"
+                lines = [f"-- Generated by the Crystal pipeline ({language}): {name}", "return {"]
+                lines.extend(
+                    f"  [{lua_string(id_)}] = {lua_string(value)},"
+                    for id_, value in sorted(values.items())
+                )
+                lines.append("}")
+                (lang_dir / f"{file_name}.lua").write_text("\n".join(lines) + "\n", encoding="utf-8")
+                loops += (
+                    f'    for id, value in pairs(crystalRegistryCatalog("{file_name}")) do\n'
+                    "      if type(value) == \"string\" and value ~= \"\" then "
+                    + CRYSTAL_CATALOG_HOOKS[name] + " end\n"
+                    "    end\n"
+                )
+            crystal_registry_registration = (
+                "  -- Crystal-only named records, RomText labels and Strings keys.\n"
+                "  -- The edition guard prevents every one from leaking into Gold/Silver.\n"
+                + _CRYSTAL_GUARD
+                + "  if crystal_game_version then\n"
+                "    local function crystalRegistryCatalog(name)\n"
+                '      local body = mod:read("lang/" .. name .. ".lua")\n'
+                "      if not body then return {} end\n"
+                "      local chunk = loadstring(body)\n"
+                "      if not chunk then return {} end\n"
+                "      local ok, value = pcall(chunk)\n"
+                "      return ok and type(value) == \"table\" and value or {}\n"
+                "    end\n"
+                + loops
+                + "  end\n"
+            )
     silver_registration = ""
     silver_dex_text_layers = [
         ("species_dex_text_silver", silver_dex_text_catalog, "text"),
@@ -455,6 +534,7 @@ def generate_gs_mod(
         MAIN.replace("__TTF_REGISTRATION__", ttf_registration(language, font_source, font_profile))
         .replace("__CATALOG_REGISTRATION__", catalog_registration)
         .replace("__CRYSTAL_DIALOGUE_REGISTRATION__", crystal_registration)
+        .replace("__CRYSTAL_REGISTRY_REGISTRATION__", crystal_registry_registration)
         .replace("__SILVER_DEX_TEXT_REGISTRATION__", silver_registration)
         .replace("__CRYSTAL_DEX_TEXT_REGISTRATION__", crystal_dex_registration)
     )
@@ -462,7 +542,8 @@ def generate_gs_mod(
     install_font_assets(destination, language, font_source, font_profile)
 
     games = ["gold", "silver"]
-    if crystal_text_catalog is not None or crystal_dex_text_catalog or crystal_dex_text2_catalog:
+    if (crystal_text_catalog is not None or crystal_catalogs is not None
+            or crystal_dex_text_catalog or crystal_dex_text2_catalog):
         games.append("crystal")
     display_name = target_name or (
         f"{language} translation for Gold, Silver and Crystal" if "crystal" in games
@@ -570,6 +651,8 @@ def _write_gate_expectations(
     mod_dir: Path,
     catalogs: dict[str, dict[str, str]],
     edition_dex_text: dict[str, dict[str, dict[str, str]]] | None = None,
+    crystal_catalogs: dict[str, dict[str, str]] | None = None,
+    engine_profile: str = UPSTREAM_PROFILE,
 ) -> Path:
     """Write a tiny, private expectation file consumed by the registry gate.
 
@@ -583,23 +666,29 @@ def _write_gate_expectations(
     changes on that edition's save, not merely that the base Gold catalog is
     correct.
     """
+    profile = normalize_engine_profile(engine_profile)
+    required_registries = (GS_REQUIRED_REGISTRIES if profile == UPSTREAM_PROFILE
+                           else GS_PINNED_REQUIRED_REGISTRIES)
     optional = {"ui_labels", *GS_OPTIONAL_VERIFIED_REGISTRIES}
-    if not set(catalogs) - optional >= set(GS_REQUIRED_REGISTRIES):
-        missing = sorted(set(GS_REQUIRED_REGISTRIES) - set(catalogs))
+    if profile == UPSTREAM_PROFILE:
+        optional.update(GS_OPTIONAL_CONTENT_REGISTRIES)
+    if not set(catalogs) - optional >= set(required_registries):
+        missing = sorted(set(required_registries) - set(catalogs))
         raise BuildError(
             "Gold registry gate expectations are incomplete"
             + (f"; missing: {', '.join(missing)}" if missing else "")
         )
-    extra = sorted(set(catalogs) - set(GS_REQUIRED_REGISTRIES) - optional)
+    extra = sorted(set(catalogs) - set(required_registries) - optional)
     if extra:
         raise BuildError(
             "Gold registry gate expectations are incomplete"
             + f"; unexpected: {', '.join(extra)}"
         )
     expected: dict[str, dict[str, str]] = {}
-    for name in (*GS_REQUIRED_REGISTRIES, *GS_OPTIONAL_VERIFIED_REGISTRIES):
+    optional_content = GS_OPTIONAL_CONTENT_REGISTRIES if profile == UPSTREAM_PROFILE else ()
+    for name in (*required_registries, *GS_OPTIONAL_VERIFIED_REGISTRIES, *optional_content):
         values = catalogs.get(name)
-        if name in GS_OPTIONAL_VERIFIED_REGISTRIES and not values:
+        if name in (*GS_OPTIONAL_VERIFIED_REGISTRIES, *GS_OPTIONAL_CONTENT_REGISTRIES) and not values:
             continue
         if not isinstance(values, dict) or not values:
             raise BuildError(f"Gold registry gate expectation is empty: {name}")
@@ -618,6 +707,20 @@ def _write_gate_expectations(
             value = values[key]
             if isinstance(key, str) and isinstance(value, str) and value:
                 expected[catalog_name] = {"id": key, "value": value}
+    unknown_crystal = set(crystal_catalogs or {}) - set(CRYSTAL_CATALOG_HOOKS)
+    if unknown_crystal:
+        raise BuildError(
+            "Crystal registry gate expectations contain unknown catalogs: "
+            + ", ".join(sorted(unknown_crystal))
+        )
+    for name, values in (crystal_catalogs or {}).items():
+        if not values:
+            continue
+        key = sorted(values)[0]
+        value = values[key]
+        if not isinstance(key, str) or not isinstance(value, str) or not value:
+            raise BuildError(f"Crystal registry gate expectation is malformed: {name}")
+        expected[f"crystal_{name}"] = {"id": key, "value": value}
     path = mod_dir.parent / f".{mod_dir.name}.registry-gate.json"
     path.write_text(json.dumps(expected, ensure_ascii=False, sort_keys=True), encoding="utf-8")
     return path
@@ -661,8 +764,10 @@ def run_gs_release_gates(
     *,
     catalogs: dict[str, dict[str, str]] | None = None,
     edition_dex_text: dict[str, dict[str, dict[str, str]]] | None = None,
+    crystal_catalogs: dict[str, dict[str, str]] | None = None,
     coverage: dict | None = None,
     placeholder_decisions: dict[str, GsPlaceholderDecision] | None = None,
+    engine_profile: str = UPSTREAM_PROFILE,
     log_fn: Callable[[str], None] | None = None,
 ) -> dict:
     """Run every technical Gold gate before publishing the candidate.
@@ -677,6 +782,7 @@ def run_gs_release_gates(
     problems = audit_join(entries, placeholder_decisions)
     if problems:
         raise BuildError("Gold join audit failed:\n" + "\n".join(problems))
+    profile = normalize_engine_profile(engine_profile)
     gen1recomp = Path(gen1recomp).resolve()
     coverage = coverage or gs_coverage_report(entries)
 
@@ -704,12 +810,19 @@ def run_gs_release_gates(
               str(dialogue_expectation_path)], log_fn=log_fn)
     finally:
         dialogue_expectation_path.unlink(missing_ok=True)
-    expectation_path = _write_gate_expectations(mod_dir, catalogs or {}, edition_dex_text)
+    expectation_path = _write_gate_expectations(
+        mod_dir, catalogs or {}, edition_dex_text, crystal_catalogs, profile,
+    )
     try:
-        _run([luajit, str(tools / "gate_gs_registries.lua"), str(gen1recomp), str(mod_dir), str(expectation_path)], log_fn=log_fn)
+        command = [luajit, str(tools / "gate_gs_registries.lua"), str(gen1recomp), str(mod_dir), str(expectation_path)]
+        command.append(profile)
+        _run(command, log_fn=log_fn)
     finally:
         expectation_path.unlink(missing_ok=True)
-    engine_revision = str(project_config()["gen1recomp"]["revision"])
+    engine_revision = (
+        str(project_config()["gen1recomp"]["revision"])
+        if profile == PINNED_PROFILE else "upstream-local"
+    )
 
     def coverage_summary(name: str) -> dict:
         section = coverage[name]
@@ -721,6 +834,7 @@ def run_gs_release_gates(
     validation = {
         "schema": 1,
         "policy": "english-fallback",
+        "engine_profile": profile,
         "coverage": {
             **coverage["rom"],
             "ambiguous": len(coverage["ambiguous"]),
@@ -728,6 +842,7 @@ def run_gs_release_gates(
             "ignored_markup_only": coverage["ignored_markup_only"],
             **({"engine": coverage_summary("engine")} if "engine" in coverage else {}),
             **({"engine_gen2": coverage_summary("engine_gen2")} if "engine_gen2" in coverage else {}),
+            **({"crystal": coverage["crystal"]} if "crystal" in coverage else {}),
         },
         "checks": [
             {
@@ -793,16 +908,16 @@ def build_gs_dialogue_mod(
     engine_source: str | Path | None = None,
     crystal_text_catalog: dict[str, str] | None = None,
     crystal_corpus_dir: str | Path | None = None,
+    crystal_catalogs: dict[str, dict[str, str]] | None = None,
+    crystal_coverage: dict | None = None,
+    engine_profile: str | None = None,
 ) -> tuple[Path, list[GsJoinEntry], dict]:
     """Join extracted Gold catalogs to the corpus and generate the mod.
 
-    ``crystal_text_catalog`` is passed straight through to generate_gs_mod()
-    -- the Crystal ROM's own extraction and corpus join happen separately in
-    build_gs() (pipeline.crystal_mod.join_crystal_dialogue()), since Crystal
-    needs none of this function's Gold/Silver-specific catalogs (species/
-    moves/items/trainer classes, Oak speech, engine strings -- Crystal saves
-    already get the engine-string catalog for free, it's the same shared
-    Strings() Lua code as Gold/Silver).
+    ``crystal_text_catalog`` and ``crystal_catalogs`` are passed through to
+    generate_gs_mod(); their Crystal ROM extraction and corpus joins happen
+    separately in build_gs().  The latter contains only edition-exclusive
+    names, RomText labels and Strings keys, never shared Gold/Silver rows.
 
     ``crystal_corpus_dir``, when given, is poke-corpus's own Crystal/
     collection: used here (not in crystal_mod.py, unlike the dialogue join)
@@ -815,10 +930,18 @@ def build_gs_dialogue_mod(
     GoldSilver's) degrades to empty catalogs, same as
     crystal_mod.join_crystal_dialogue()'s own graceful degradation.
     """
+    # A local checkout is never a profile selector by itself.  In particular,
+    # accidentally passing the workspace's ``src`` directory to a pinned
+    # build must not make it consume upstream-only catalogs or contracts.
+    profile = normalize_engine_profile(engine_profile)
+    if engine_source is not None and profile != UPSTREAM_PROFILE:
+        raise ValueError(
+            "engine_source requires the explicit 'upstream-local' engine profile"
+        )
     gold_out_dir = Path(gold_out_dir)
     language = canonical_language(language)
     missing_or_empty = []
-    for filename in GS_REQUIRED_TSV:
+    for filename in gs_required_tsv(profile):
         path = gold_out_dir / filename
         if not path.is_file() or not any(line.strip() for line in path.read_text(encoding="utf-8").splitlines()):
             missing_or_empty.append(filename)
@@ -838,12 +961,28 @@ def build_gs_dialogue_mod(
 
     extra_catalogs: dict[str, dict[str, str]] = {}
     oak_speech = gs_oak_speech_catalog_from_join(entries)
-    if oak_speech:
+    if profile == UPSTREAM_PROFILE and oak_speech:
         missing_oak = sorted(GS_OAK_SPEECH_KEYS - set(oak_speech))
         if missing_oak:
             raise ValueError("Gold Oak speech catalog is incomplete: " + ", ".join(missing_oak))
         extra_catalogs[GS_OAK_SPEECH_CATALOG] = oak_speech
     index_stats: dict[str, dict] = {}
+    if profile == UPSTREAM_PROFILE:
+        type_names, type_stats = type_name_catalog(gold_out_dir / "gs_types.tsv", corpus_rows)
+        status_labels, status_stats = status_label_catalog(corpus_rows)
+        phone_contacts, phone_stats = phone_contact_catalog(corpus_rows)
+        decorations, decoration_stats = decoration_catalog(corpus_rows)
+        radio_channels, radio_stats = radio_channel_catalog(corpus_rows)
+        extra_catalogs["type_names"] = type_names
+        extra_catalogs["status_labels"] = status_labels
+        extra_catalogs["phone_contacts"] = phone_contacts
+        extra_catalogs["decorations"] = decorations
+        extra_catalogs["radio_channels"] = radio_channels
+        index_stats["type_names"] = type_stats
+        index_stats["status_labels"] = status_stats
+        index_stats["phone_contacts"] = phone_stats
+        index_stats["decorations"] = decoration_stats
+        index_stats["radio_channels"] = radio_stats
     species_path = gold_out_dir / "gs_species.tsv"
     species = parse_indexed_catalog(species_path)
     if not species:
@@ -912,14 +1051,16 @@ def build_gs_dialogue_mod(
     landmark_translations, landmark_stats = join_landmarks(landmarks, corpus_rows)
     extra_catalogs["landmarks"] = landmark_translations
     index_stats["landmarks"] = landmark_stats
-    if engine_source is not None:
+    if profile == UPSTREAM_PROFILE and engine_source is not None:
         engine_values, engine_coverage = match_gs_engine_strings(
-            corpus_rows, engine_source, language,
+            corpus_rows, engine_source, language, engine_profile=profile,
         )
         extra_catalogs["strings"] = engine_values
         stats.update(engine_coverage)
-    extra_catalogs["ui_labels"] = _gs_ui_labels(corpus_rows)
+    if profile == UPSTREAM_PROFILE:
+        extra_catalogs["ui_labels"] = _gs_ui_labels(corpus_rows)
     stats["index_catalogs"] = index_stats
+    stats["engine_profile"] = profile
     pointer_coverage = gs_coverage_report(entries)
     registry_translated = sum(int(item["translated"]) for item in index_stats.values())
     registry_total = sum(int(item["total"]) for item in index_stats.values())
@@ -943,6 +1084,8 @@ def build_gs_dialogue_mod(
     for key in ("engine", "engine_gen2"):
         if key in stats:
             stats["coverage"][key] = stats[key]
+    if crystal_coverage is not None:
+        stats["coverage"]["crystal"] = crystal_coverage
     # Kept in-memory for the pre-publication registry gate; callers that
     # serialize stats can omit this private payload.
     stats["_gate_catalogs"] = extra_catalogs
@@ -955,6 +1098,7 @@ def build_gs_dialogue_mod(
         "silver": {"text": silver_text, "text2": silver_text2},
         "crystal": {"text": crystal_text, "text2": crystal_text2},
     }
+    stats["_gate_crystal_catalogs"] = crystal_catalogs or {}
     stats["_placeholder_decisions"] = load_gs_placeholder_decisions(language)
 
     mod_dir = generate_gs_mod(
@@ -963,6 +1107,7 @@ def build_gs_dialogue_mod(
         text_catalog=gs_text_catalog_from_join(entries),
         extra_catalogs=extra_catalogs,
         crystal_text_catalog=crystal_text_catalog,
+        crystal_catalogs=crystal_catalogs,
         silver_dex_text_catalog=silver_text,
         silver_dex_text2_catalog=silver_text2,
         crystal_dex_text_catalog=crystal_text,
@@ -982,6 +1127,8 @@ def build_gs(
     log_fn: Callable[[str], None] | None = None,
     status_fn: Callable[[str], None] | None = None,
     font_profile: str = "fusion",
+    engine_profile: str = PINNED_PROFILE,
+    engine_source: str | Path | None = None,
 ) -> Path:
     """Run Gold's private extraction, join, validation, and packaging flow.
 
@@ -1000,6 +1147,7 @@ def build_gs(
             log_fn(message)
 
     language = canonical_language(language)
+    engine_profile = normalize_engine_profile(engine_profile)
     profile = release_profile("gsc")
     spec = game_spec("gs")
     if spec.corpus_collection not in profile.corpus_collections:
@@ -1019,20 +1167,39 @@ def build_gs(
 
     status("Preparing dependencies")
     gen1recomp, corpus, font_source = context.gen1recomp, context.corpus, context.font_source
+    if engine_profile == UPSTREAM_PROFILE:
+        if engine_source is None:
+            raise BuildError(
+                "the upstream-local engine profile requires an explicit --engine-source checkout"
+            )
+        gen1recomp = validate_upstream_checkout(engine_source)
     corpus_gold_silver = corpus / "corpus" / "GoldSilver"
     corpus_crystal = corpus / "corpus" / "Crystal"
 
     log("\nExtracting private Gold ROM data...")
     status("Extracting private Gold ROM data")
     gold_out = workspace / "gold" / "extracted"
-    import_gs_rom(gold_rom, gen1recomp, gold_out, log_fn=log_fn)
+    import_gs_rom(gold_rom, gen1recomp, gold_out, log_fn=log_fn, engine_profile=engine_profile)
 
     log("\nExtracting private Crystal ROM data...")
     status("Extracting private Crystal ROM data")
     crystal_out = workspace / "crystal" / "extracted"
-    import_crystal_rom(crystal_rom, gen1recomp, crystal_out, log_fn=log_fn)
+    import_crystal_rom(crystal_rom, gen1recomp, crystal_out, log_fn=log_fn, engine_profile=engine_profile)
     crystal_entries, crystal_stats = join_crystal_dialogue(crystal_out, corpus_crystal, language)
     crystal_text_catalog = crystal_text_catalog_from_join(crystal_entries)
+    crystal_catalogs, crystal_feature_stats = crystal_feature_catalogs(
+        crystal_out, corpus_crystal, language, engine_profile=engine_profile,
+    )
+    crystal_dialogue_coverage = {
+        "translated": len(crystal_text_catalog),
+        "total": crystal_stats["total"],
+        "percent": round(100.0 * len(crystal_text_catalog) / crystal_stats["total"], 2)
+        if crystal_stats["total"] else 100.0,
+        "unresolved": crystal_stats["unresolved"],
+        "no_match": crystal_stats["no_match"],
+        "policy": "english-fallback",
+    }
+    crystal_coverage = {"dialogue": crystal_dialogue_coverage, **crystal_feature_stats}
     if crystal_stats["total"]:
         # len(crystal_text_catalog), not a hand-picked sum of stats
         # categories: join_gs_pointers() may grow new resolution categories
@@ -1054,8 +1221,10 @@ def build_gs(
     mod_dir, entries, stats = build_gs_dialogue_mod(
         gold_out, corpus_gold_silver, mod_dir, mod_id=mod_id, language=language,
         target_name=f"{language_name} translation for Gold, Silver and Crystal", font_source=font_source, font_profile=font_profile,
-        engine_source=gen1recomp, crystal_text_catalog=crystal_text_catalog,
+        engine_source=gen1recomp if engine_profile == UPSTREAM_PROFILE else None,
+        engine_profile=engine_profile, crystal_text_catalog=crystal_text_catalog,
         crystal_corpus_dir=corpus_crystal,
+        crystal_catalogs=crystal_catalogs, crystal_coverage=crystal_coverage,
         overrides=load_gs_dialogue_overrides(language),
     )
     log(
@@ -1068,8 +1237,10 @@ def build_gs(
         mod_dir, entries, gen1recomp, luajit,
         catalogs=stats.get("_gate_catalogs", {}),
         edition_dex_text=stats.get("_gate_edition_dex_text", {}),
+        crystal_catalogs=stats.get("_gate_crystal_catalogs", {}),
         coverage=stats["coverage"],
         placeholder_decisions=stats.get("_placeholder_decisions", {}),
+        engine_profile=engine_profile,
         log_fn=log_fn,
     )
     attach_gs_validation(mod_dir, gate_report["validation"])

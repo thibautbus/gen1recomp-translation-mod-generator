@@ -39,6 +39,7 @@ from .subprocess_run import run_streamed
 from .rom_paths import configured_path, load_rom_paths
 from .specs import game_spec, languages_for_collection, release_profile, release_profile_for_generation
 from .specs import BuildRequest
+from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE, normalize_engine_profile
 
 
 def languages_for_generation(generation: int) -> tuple[tuple[str, str], ...]:
@@ -180,7 +181,7 @@ def _ensure_dependency(config: dict, destination: Path, *, selective_prefix: str
                     "for standalone mode instead of subtree extraction."
                 )
             single = prefixes[0] if prefixes else None
-            return fetch_archive(url, digest, destination, revision=str(config.get("revision", "")), selective_prefix=single, immutable_prefixes=("src",), trusted_tree_sha256=str(config.get("archive_tree_sha256", "")))
+            return fetch_archive(url, digest, destination, revision=str(config.get("revision", "")), selective_prefix=single, immutable_prefixes=("src", "tools"), trusted_tree_sha256=str(config.get("archive_tree_sha256", "")))
         except DependencyError as error:
             raise BuildError(f"Unable to download pinned dependency: {error}") from error
     ensure_checkout(config["source"], config["revision"], destination, sparse_paths=prefixes)
@@ -239,12 +240,29 @@ def prepare_dependencies(
     corpus_collection: str | tuple[str, ...],
     font_profile: str,
     language: str,
+    engine_source: str | Path | None = None,
 ) -> tuple[Path, Path, Path]:
     """Prepare the common engine/corpus/font inputs for any release profile."""
     dependency_root = workspace / "dependencies"
-    gen1recomp = dependency_root / "gen1recomp"
+    if engine_source is None:
+        gen1recomp = dependency_root / "gen1recomp"
+    else:
+        from .engine_profile import validate_upstream_checkout
+        try:
+            gen1recomp = validate_upstream_checkout(engine_source)
+        except (OSError, ValueError) as error:
+            raise BuildError(f"Unable to validate upstream Gen1Recomp checkout: {error}") from error
     corpus = dependency_root / "poke-corpus"
-    _ensure_dependency(config["gen1recomp"], gen1recomp)
+    if engine_source is None:
+        _ensure_dependency(config["gen1recomp"], gen1recomp)
+        # The next phases execute both src-owned extractors and tools/modkit.
+        # Do this immediately after checkout/cache publication so neither can
+        # run against a dirty or tampered engine checkout.
+        from .engine_scope import load_manifest, verified_source
+        try:
+            verified_source(gen1recomp, load_manifest())
+        except (OSError, ValueError) as error:
+            raise BuildError(f"Unable to verify prepared Gen1Recomp dependency: {error}") from error
     # A profile declares its collection; callers cannot accidentally fetch a
     # second generation's corpus just because the other flow did so first.
     collections = (corpus_collection,) if isinstance(corpus_collection, str) else corpus_collection
@@ -403,6 +421,29 @@ def _corpus_overrides_path(language: str) -> Path | None:
 
 def _engine_overrides_path(language: str) -> Path | None:
     return _language_override_path(language, "rby", "engine.json")
+
+
+def _rby_engine_override_paths(
+    language: str, engine_profile: str | None = None,
+) -> tuple[Path, ...]:
+    """Return RBY override layers for one explicit engine profile.
+
+    The ordinary ``engine.json`` is the v0.2.41 contract.  Strings introduced
+    by the local upstream work live in a separate opt-in layer so a pinned
+    build neither loads nor validates those keys.  We deliberately do not
+    filter unknown keys here: once a profile has selected its layers,
+    ``generate_mod`` still rejects genuine stale entries.
+    """
+    profile = normalize_engine_profile(engine_profile)
+    paths = []
+    base = _engine_overrides_path(language)
+    if base is not None:
+        paths.append(base)
+    if profile == UPSTREAM_PROFILE:
+        upstream = _language_override_path(language, "rby", "engine_upstream.json")
+        if upstream is not None:
+            paths.append(upstream)
+    return tuple(paths)
 
 
 def _yellow_engine_overrides_path(language: str) -> Path | None:
@@ -835,6 +876,8 @@ def build(
     status_fn: Callable[[str], None] | None = None,
     font_profile: str = "fusion",
     yellow_rom: Path | None = None,
+    engine_profile: str = PINNED_PROFILE,
+    engine_source: str | Path | None = None,
 ) -> Path:
     """Execute the complete private extraction, translation, and pack flow.
 
@@ -856,6 +899,16 @@ def build(
             log_fn(message)
 
     language = canonical_language(language)
+    engine_profile = normalize_engine_profile(engine_profile)
+    if engine_profile == UPSTREAM_PROFILE:
+        if engine_source is None:
+            raise BuildError(
+                "the upstream-local engine profile requires an explicit --engine-source checkout"
+            )
+    elif engine_source is not None:
+        raise BuildError(
+            "engine_source requires the explicit 'upstream-local' engine profile"
+        )
     profile = release_profile("rby")
     if not profile.corpus_collections:
         raise BuildError("RBY release profile has no supported corpus collection")
@@ -869,6 +922,7 @@ def build(
     context = prepare_build_context(
         workspace_root, output_dir, profile=profile, language=language,
         font_profile=font_profile,
+        engine_source=engine_source,
     )
     workspace = context.workspace
     destination = context.destination
@@ -1080,14 +1134,15 @@ def build(
         modkit_worksheet=worksheet,
         report_path=coverage,
         engine_overrides=_merge_engine_overrides(
-            _engine_overrides_path(language),
+            *_rby_engine_override_paths(language, engine_profile),
             destination_dir=workspace / "tmp",
             name=f"merged_engine_overrides_{language}.json",
         ),
         semantic_anchors=resource_root() / "config" / "rby" / "semantic_anchors.json",
         semantic_anchor_decisions=resource_root() / "config" / "rby" / "semantic_anchor_decisions.json",
         strict_engine=True,
-        engine_source=gen1recomp / "src",
+        engine_source=gen1recomp,
+        engine_profile=engine_profile,
         engine_scope=resource_root() / "config" / "rby" / "engine_scope.json",
         font_source=font_source,
         font_profile=font_profile,

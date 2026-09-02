@@ -13,7 +13,7 @@
 -- only real LÖVE-coupled module). A translation mod needs neither, so
 -- nothing touches the filesystem outside <out_dir>.
 --
--- Usage: luajit gs_extract.lua <gen1recomp_root> <rom_path> <out_dir> <edition>
+-- Usage: luajit gs_extract.lua <gen1recomp_root> <rom_path> <out_dir> <edition> [engine_profile]
 --
 -- <edition> is "gold", "silver", or "crystal" -- gen1recomp-translation-mods'
 -- own pipeline/roms.py:verify_gs_rom()/verify_crystal_rom() already computed
@@ -25,19 +25,26 @@
 -- same manifest gen1recomp's own RomExtractorGen2 would read this ROM
 -- through at runtime (RomExtractorGen2.lua's own edition branches already
 -- cover "crystal" alongside "gold"/"silver").
+-- The optional engine_profile is "pinned" (default, currently backed by
+-- gen1recomp v0.2.41) or "upstream-local".
 --
 -- Writes, in <out_dir>:
 --   gs_text.tsv     pointer -> text, from the "scripts" stage (required)
 --   gs_labels.tsv    resolved NAMED_TEXT label -> pointer (required)
 --   gs_stages.tsv    stage name -> ok|FAIL and, on failure, the error
---   gs_species.tsv, gs_moves.tsv, gs_items.tsv,
+--   gs_rom_text.tsv  label -> decoded engine text (required)
+--   gs_species.tsv, gs_moves.tsv, gs_items.tsv, gs_types.tsv,
 --   gs_trainer_classes.tsv, gs_landmarks.tsv
 
-local root, romPath, outDir, edition = ...
+local root, romPath, outDir, edition, engineProfile = ...
 assert(root and romPath and outDir, "usage: <gen1recomp_root> <rom> <out_dir> <edition>")
 edition = edition or "gold"
 assert(edition == "gold" or edition == "silver" or edition == "crystal",
   "edition must be \"gold\", \"silver\", or \"crystal\", got " .. tostring(edition))
+engineProfile = engineProfile or "pinned"
+assert(engineProfile == "pinned" or engineProfile == "upstream-local",
+  "engine profile must be \"pinned\" or \"upstream-local\", got " .. tostring(engineProfile))
+local upstreamProfile = engineProfile == "upstream-local"
 
 package.path = table.concat({
   root .. "/?.lua",
@@ -68,7 +75,8 @@ local manifestName = manifestNames[edition]
 local manifest = Json.decode(readFile(root .. "/tools/" .. manifestName))
 
 local extractor = RomExtractorGen2.new(romData, manifest)
-extractor.write = function() end
+local written = {}
+extractor.write = function(_, name, value) written[name] = value end
 extractor.save = function() end
 
 -- name -> whether this project's translation pipeline needs the stage's
@@ -76,7 +84,7 @@ extractor.save = function() end
 -- measurement) but a failure there does not fail the gate: nothing in the
 -- pipeline reads their result yet.
 local REQUIRED = {
-  constants = true, maps = true, stdScripts = true, scripts = true,
+  constants = true, maps = true, stdScripts = true, scripts = true, text = true,
   pokemon = true, moves = true, items = true, trainers = true,
   landmarks = true, oakSpeech = true,
 }
@@ -110,6 +118,18 @@ stage("stdScripts", function() return extractor:extractStdScripts() end)
 stage("scripts", function()
   return extractor:extractScriptsAndText(results.maps, results.stdScripts)
 end)
+if upstreamProfile then
+  stage("text", function()
+    assert(type(extractor.extractText) == "function", "upstream profile requires RomExtractorGen2:extractText")
+    return extractor:extractText()
+  end)
+else
+  -- RomExtractorGen2:extractText() and its public data.text output were
+  -- introduced after the v0.2.41 API.  Script text remains available through
+  -- extractScriptsAndText and is sufficient for the pinned release.
+  report[#report + 1] = { name = "text", ok = true, skipped = true,
+    err = "not supported by pinned v0.2.41 API" }
+end
 stage("pokemon", function() return extractor:extractPokemon() end)
 stage("moves", function() return extractor:extractMoves() end)
 stage("items", function() return extractor:extractItems() end)
@@ -217,6 +237,17 @@ for _, row in ipairs(report) do
 end
 stagesOut:close()
 
+if upstreamProfile then
+  local romTextOut = assert(io.open(outDir .. "/gs_rom_text.tsv", "w"))
+  local romTextLabels = {}
+  for label, _ in pairs(results.text or {}) do romTextLabels[#romTextLabels + 1] = label end
+  table.sort(romTextLabels)
+  for _, label in ipairs(romTextLabels) do
+    romTextOut:write(label, "\t", escape(results.text[label]), "\n")
+  end
+  romTextOut:close()
+end
+
 -- Index-keyed catalogs: the corpus joins these by index (dex number,
 -- move/item index, class index), not by normalised English -- a
 -- different, simpler mechanic than the pointer join above. One TSV per
@@ -247,6 +278,7 @@ end
 dumpIndexed("gs_species.tsv", "dex", results.pokemon)
 dumpIndexed("gs_moves.tsv", "index", results.moves)
 dumpIndexed("gs_items.tsv", "index", results.items)
+dumpIndexed("gs_types.tsv", "index", written.type_chart and written.type_chart.types)
 dumpIndexed("gs_trainer_classes.tsv", "index", results.trainers and results.trainers.classes)
 -- landmarks (data.gen2Landmarks.landmarks -- Schemas.GEN2 routes the
 -- `landmarks` registry there): the per-id records sit one level under
@@ -260,6 +292,7 @@ io.write(("resolved labels : %d\n"):format(#labels))
 local okCount = 0
 for _, row in ipairs(report) do if row.ok then okCount = okCount + 1 end end
 io.write(("stages ok       : %d/%d\n"):format(okCount, #report))
-io.write("wrote gs_text.tsv, gs_labels.tsv, gs_stages.tsv, gs_species.tsv,\n"
-  .. "      gs_moves.tsv, gs_items.tsv, gs_trainer_classes.tsv,\n"
+io.write("wrote gs_text.tsv, gs_labels.tsv, gs_stages.tsv, gs_rom_text.tsv,\n"
+  .. "      gs_species.tsv, gs_moves.tsv, gs_items.tsv, gs_types.tsv,\n"
+  .. "      gs_trainer_classes.tsv,\n"
   .. "      gs_landmarks.tsv\n")

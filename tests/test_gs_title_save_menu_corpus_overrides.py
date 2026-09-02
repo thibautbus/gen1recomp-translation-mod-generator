@@ -1,7 +1,17 @@
+import json
 import unittest
 from pathlib import Path
 
 from pipeline.engine import load_engine_overrides
+
+
+def load_engine_no_op_entries(language):
+    report = json.loads(
+        (Path(__file__).resolve().parents[1] / "config" / "gsc" / "engine_fallbacks.json").read_text(
+            encoding="utf-8",
+        ),
+    )
+    return report["languages"][language].get("no_op_entries", {})
 
 
 # gs.main_menu.MainMenu.Strings, gs.intro_menu.Continue_LoadMenuHeader.
@@ -75,11 +85,8 @@ ENGINE_CONTRACT_GAP = {
 
 # POKéDEX (#DEX) and AM/PM are identical to the English source in every
 # language poke-corpus covers here, so they carry no override at all.
-# fr's BADGES and es/it's NO are also identical to their English source
-# (unlike German/Spanish/Italian's own real BADGES text -- ORDEN/MEDALLAS/
-# MEDAGLIE -- or Spanish/Italian's own accented "SÍ"/"SÌ"), but carry an
-# explicit "identical to source" override instead -- see ENGINE_ORIGINAL
-# above -- so the coverage report doesn't misreport them as untranslated.
+# Identical runtime values such as fr's BADGES and es/it's NO are tracked in
+# engine_fallbacks.json's no-op policy rather than emitted as overrides.
 NO_OP_KEYS = {
     "fr": {"POKéDEX", "AM", "PM"},
     "de": {"POKéDEX", "AM", "PM"},
@@ -93,12 +100,17 @@ class GoldTitleSaveMenuCorpusOverrideTests(unittest.TestCase):
         for language, expected in ENGINE_ORIGINAL.items():
             path = Path("overrides") / language / "gsc" / "engine.json"
             overrides = load_engine_overrides(path)
+            no_op = load_engine_no_op_entries(language)
             for source, override in expected.items():
-                self.assertIn(source, overrides, (language, source))
-                row = overrides[source]
+                row = overrides.get(source, no_op.get(source))
+                self.assertIsNotNone(row, (language, source))
                 self.assertEqual(row["override"], override, (language, source))
-                self.assertEqual(row["reason"], "engine-original", (language, source))
-                self.assertIn("Corpus-confirmed", row["provenance"], (language, source))
+                if source in overrides:
+                    self.assertEqual(row["reason"], "engine-original", (language, source))
+                    self.assertIn("Corpus-confirmed", row["provenance"], (language, source))
+                else:
+                    self.assertEqual(row["reason"], "engine-fallback", (language, source))
+                    self.assertIn("Corpus-confirmed", row["original_provenance"], (language, source))
 
     def test_engine_contract_gap_languages_have_the_expected_values(self):
         for language, expected in ENGINE_CONTRACT_GAP.items():
@@ -114,8 +126,12 @@ class GoldTitleSaveMenuCorpusOverrideTests(unittest.TestCase):
         for language, keys in NO_OP_KEYS.items():
             path = Path("overrides") / language / "gsc" / "engine.json"
             overrides = load_engine_overrides(path)
+            no_op = load_engine_no_op_entries(language)
             for key in keys:
                 self.assertNotIn(key, overrides, (language, key))
+                if key in no_op:
+                    self.assertEqual(no_op[key]["override"], key, (language, key))
+                    self.assertTrue(no_op[key]["original_provenance"], (language, key))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,111 @@
+{
+  "schema": "gen1recomp-translation-mods/engine-overrides",
+  "version": 1,
+  "entries": {
+    "%s's PC": {
+      "override": "PC DI %s",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY engine-string localization; source introduced by gen1recomp d633cb4d; preserves the player-name placeholder."
+    },
+    "BILL'S PC": {
+      "override": "PC DI BILL",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY engine-string localization; source introduced by gen1recomp d633cb4d."
+    },
+    "Congrats! This": {
+      "override": "Congratulazioni! Questo",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY Diploma line localization; source introduced by gen1recomp d633cb4d."
+    },
+    "DEPOSIT": {
+      "override": "DEPOSITA",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY engine-string localization; source introduced by gen1recomp d633cb4d."
+    },
+    "HEAL": {
+      "override": "CURA",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY engine-string localization; source introduced by gen1recomp d633cb4d."
+    },
+    "ITEMS": {
+      "override": "OGGETTI",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY engine-string localization; source introduced by gen1recomp d633cb4d."
+    },
+    "MONEY/¥%d": {
+      "override": "SOLDI/¥%d",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY Trainer Card localization; source introduced by gen1recomp d633cb4d; preserves the numeric placeholder."
+    },
+    "POKéDEX.": {
+      "override": "POKéDEX.",
+      "reason": "engine-original",
+      "provenance": "RBY terminology retained for the Diploma line; source introduced by gen1recomp d633cb4d."
+    },
+    "POKéMON BLUE": {
+      "override": "POKéMON BLU",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY title localization; source introduced by gen1recomp d633cb4d."
+    },
+    "POKéMON YELLOW": {
+      "override": "POKéMON GIALLO",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY title localization; source introduced by gen1recomp d633cb4d."
+    },
+    "TIME/%3d:%02d": {
+      "override": "TEMPO/%3d:%02d",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY Trainer Card localization; source introduced by gen1recomp d633cb4d; preserves both numeric placeholders."
+    },
+    "The party is full!": {
+      "override": "LA SQUADRA È\nPIENA!",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY storage-message localization; source introduced by gen1recomp d633cb4d."
+    },
+    "To %s": {
+      "override": "A %s",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY Town Map composition localization; source introduced by gen1recomp d633cb4d; preserves the destination placeholder; review remains required for fly-banner layout."
+    },
+    "Which move?": {
+      "override": "Quale mossa?",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY item-use localization; source introduced by gen1recomp d633cb4d."
+    },
+    "%s's NEST": {
+      "override": "NIDO DI %s",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY Town Map localization; source introduced by gen1recomp d633cb4d; preserves the species placeholder; review remains required for layout."
+    },
+    "AREA UNKNOWN": {
+      "override": "AREA SCONOSCIUTA",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY Town Map localization; source introduced by gen1recomp d633cb4d; review remains required for layout."
+    },
+    "FLY TO?": {
+      "override": "VOLA A?",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY Fly Menu localization; source introduced by gen1recomp d633cb4d; review remains required for layout."
+    },
+    "PIKACHU'S BEACH": {
+      "override": "SPIAGGIA DI PIKACHU",
+      "reason": "engine-original",
+      "provenance": "AI-generated Yellow Surfing Minigame localization; source introduced by gen1recomp d633cb4d; review remains required for layout."
+    },
+    "completed your": {
+      "override": "completato il tuo",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY Diploma line localization; source introduced by gen1recomp d633cb4d."
+    },
+    "diploma certifies": {
+      "override": "diploma certifica",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY Diploma line localization; source introduced by gen1recomp d633cb4d."
+    },
+    "that you have": {
+      "override": "che hai",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY Diploma line localization; source introduced by gen1recomp d633cb4d."
+    }
+  }
+}

@@ -41,6 +41,13 @@ local EDITION_DEX_TEXT_KEYS = {
 -- useful focused regression test while making the release gate check the
 -- actual language/output instead of hard-coded French sample strings.
 local expectationPath = arg[3]
+-- Keep the historical no-profile invocation compatible with the complete
+-- upstream fixture; release builds always pass the profile explicitly.
+local engineProfile = arg[4] or "upstream-local"
+if engineProfile ~= "pinned" and engineProfile ~= "upstream-local" then
+  io.stderr:write("unsupported engine profile: " .. tostring(engineProfile) .. "\n")
+  os.exit(2)
+end
 local expectations = nil
 if expectationPath and expectationPath ~= "" then
   local jsonOk, Json = pcall(require, "src.link.Json")
@@ -61,9 +68,15 @@ if expectationPath and expectationPath ~= "" then
     os.exit(2)
   end
   local required = {
-    "strings", "species_names", "species_kinds", "species_dex_text", "move_names",
-    "item_names", "trainer_class_names", "landmarks", "oak_speech",
+    "species_names", "species_kinds", "species_dex_text", "move_names",
+    "item_names", "trainer_class_names", "landmarks",
   }
+  if engineProfile == "upstream-local" then
+    required[#required + 1] = "strings"
+    required[#required + 1] = "type_names"
+    required[#required + 1] = "status_labels"
+    required[#required + 1] = "oak_speech"
+  end
   -- species_dex_text2 (the #DEX entry's second page) is present only when
   -- the language's corpus actually preserved one: ja-Hrkt/ko's
   -- dex_entries_gold rows never do (verified against poke-corpus), so the
@@ -79,8 +92,13 @@ if expectationPath and expectationPath ~= "" then
   -- species_dex_text2 is (a missing/empty per-edition catalog -- e.g. no
   -- Crystal corpus supplied -- degrades to omitting the key, not a
   -- BuildError; see pipeline.gs_mod._write_gate_expectations).
-  local optional = { species_dex_text2 = true }
+  local optional = { species_dex_text2 = true,
+    phone_contacts = true, decorations = true, radio_channels = true }
   for name, _ in pairs(EDITION_DEX_TEXT_KEYS) do optional[name] = true end
+  for _, name in ipairs({
+    "crystal_strings", "crystal_rom_text", "crystal_item_names",
+    "crystal_trainer_class_names", "crystal_landmarks",
+  }) do optional[name] = true end
   for _, name in ipairs(required) do
     local value = expectations[name]
     if type(value) ~= "table" or type(value.id) ~= "string" or value.id == ""
@@ -120,6 +138,8 @@ end
 -- breaks on Windows).
 local modParent, modName = modDir:match("^(.*)[/\\]([^/\\]*)$")
 if not modParent then modParent, modName = ".", modDir end
+local GameVersion = require("src.core.GameVersion")
+GameVersion.set("gold")
 local result = T.sdk.loadMod(modName, { generation = 2, root = modParent })
 
 check(#result.errors == 0, "the mod loads with no errors")
@@ -138,18 +158,32 @@ if expectations then
     item_names = function(id) return data.items and data.items[id] end,
     trainer_class_names = function(id) return data.gen2Trainers and data.gen2Trainers.classes and data.gen2Trainers.classes[id] end,
     landmarks = function(id) return data.gen2Landmarks and data.gen2Landmarks.landmarks and data.gen2Landmarks.landmarks[id] end,
+    type_names = function(id) return data.type_chart and data.type_chart.types and data.type_chart.types[id] end,
+    status_labels = function(id) return data.gen2Statuses and data.gen2Statuses[id] end,
+    phone_contacts = function(id) return data.gen2PhoneContacts and data.gen2PhoneContacts[id] end,
+    decorations = function(id) return data.gen2Decorations and data.gen2Decorations[id] end,
+    radio_channels = function(id) return data.gen2RadioChannels and data.gen2RadioChannels[id] end,
   }
   local fields = {
     strings = "value",
     species_names = "name", species_kinds = "kind", species_dex_text = "text",
     species_dex_text2 = "text2",
     move_names = "name", item_names = "name", trainer_class_names = "name", landmarks = "name",
+    type_names = "name", status_labels = "label",
+    phone_contacts = "name", decorations = "name", radio_channels = "name",
   }
   -- Verified separately below, each under its own edition's GameVersion --
   -- these only ever patch data.pokemon on a Silver/Crystal save, so
   -- checking them against this (default-edition) load's data would either
   -- find the guard never ran (false pass) or nothing at all.
-  local editionSpecific = EDITION_DEX_TEXT_KEYS
+  local editionSpecific = {}
+  for name in pairs(EDITION_DEX_TEXT_KEYS) do
+    editionSpecific[name] = true
+  end
+  for _, name in ipairs({
+    "crystal_strings", "crystal_rom_text", "crystal_item_names",
+    "crystal_trainer_class_names", "crystal_landmarks",
+  }) do editionSpecific[name] = true end
   for name, expected in pairs(expectations) do
     local target = targets[name]
     local field = fields[name]
@@ -187,7 +221,7 @@ if expectations then
   -- in for the real ROM-extracted English #DEX text Game2:load() would have
   -- loaded from disk), to prove this translation's dexEntry actually reaches
   -- the same table the #DEX screen reads.
-  if expectations.species_dex_text then
+  if engineProfile == "upstream-local" and expectations.species_dex_text then
     local PokedexText = require("src.core.gen2.PokedexText")
     local dexId = expectations.species_dex_text.id
     data.gen2Pokedex = data.gen2Pokedex or {}
@@ -223,8 +257,7 @@ if expectations then
   }
   local anyEditionExpectation = expectations.species_dex_text_silver or expectations.species_dex_text_crystal
   if anyEditionExpectation then
-    local okGameVersion, GameVersion = pcall(require, "src.core.GameVersion")
-    local gameVersionUsable = okGameVersion and type(GameVersion) == "table" and type(GameVersion.set) == "function"
+    local gameVersionUsable = type(GameVersion) == "table" and type(GameVersion.set) == "function"
     check(gameVersionUsable,
       "src.core.GameVersion is loadable and exposes set() for the edition-specific #DEX checks")
     if gameVersionUsable then
@@ -247,6 +280,53 @@ if expectations then
           editionResult.release()
         end
       end
+    end
+  end
+
+  local crystalTargets = {
+    crystal_strings = function(d, id) return d.strings and d.strings[id] end,
+    crystal_rom_text = function(d, id) return d.text and d.text[id] end,
+    crystal_item_names = function(d, id)
+      return d.items and d.items[id] and d.items[id].name
+    end,
+    crystal_trainer_class_names = function(d, id)
+      return d.gen2Trainers and d.gen2Trainers.classes
+        and d.gen2Trainers.classes[id] and d.gen2Trainers.classes[id].name
+    end,
+    crystal_landmarks = function(d, id)
+      return d.gen2Landmarks and d.gen2Landmarks.landmarks
+        and d.gen2Landmarks.landmarks[id] and d.gen2Landmarks.landmarks[id].name
+    end,
+  }
+  local hasCrystal = false
+  for name, _ in pairs(crystalTargets) do
+    if expectations[name] then hasCrystal = true break end
+  end
+  if hasCrystal then
+    for _, edition in ipairs({ "gold", "silver", "crystal" }) do
+      GameVersion.set(edition)
+      local editionResult = T.sdk.loadMod(modName, { generation = 2, root = modParent })
+      check(#editionResult.errors == 0,
+        "the mod loads under GameVersion=" .. edition .. " for Crystal catalog checks")
+      for name, target in pairs(crystalTargets) do
+        local expected = expectations[name]
+        if expected then
+          local actual = target(editionResult.data, expected.id)
+          if edition == "crystal" then
+            eq(actual, expected.value,
+              name .. "[" .. expected.id .. "] is selected by Crystal")
+            if name == "crystal_rom_text" then
+              local RomText = require("src.core.RomText")
+              eq(RomText(editionResult.data, expected.id, "ROMTEXT FALLBACK"), expected.value,
+                "RomText reads crystal_rom_text[" .. expected.id .. "] from data.text")
+            end
+          else
+            check(actual ~= expected.value,
+              name .. "[" .. expected.id .. "] does not leak into " .. edition)
+          end
+        end
+      end
+      editionResult.release()
     end
   end
 

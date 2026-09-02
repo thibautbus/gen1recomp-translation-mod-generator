@@ -11,8 +11,43 @@ from .engine_scope import (
     verified_source,
 )
 from .model import CorpusRecord
+from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE, checkout_revision, normalize_engine_profile
 
 GS_ENGINE_SCOPE_EXCLUSIONS_SCHEMA = "gen1recomp-translation-mods/gs-engine-scope-exclusions"
+GS_ENGINE_FALLBACK_REPORT_SCHEMA = "gen1recomp-translation-mods/engine-fallback-report"
+
+
+def load_gs_engine_fallbacks(
+    language: str | None = None, path: str | Path | None = None,
+) -> dict[str, dict]:
+    """Load the audited English fallbacks kept outside runtime overrides."""
+    if path is None:
+        path = Path(__file__).resolve().parents[1] / "config" / "gsc" / "engine_fallbacks.json"
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    if (not isinstance(data, dict)
+            or data.get("schema") != GS_ENGINE_FALLBACK_REPORT_SCHEMA
+            or data.get("version") != 1
+            or not isinstance(data.get("languages"), dict)):
+        raise ValueError("unsupported Gen 2 engine fallback report")
+    selected = data["languages"] if language is None else {language: data["languages"].get(language)}
+    if language is not None and selected[language] is None:
+        raise ValueError(f"engine fallback report has no language {language!r}")
+    result: dict[str, dict] = {}
+    for lang, section in selected.items():
+        if not isinstance(section, dict) or not isinstance(section.get("entries"), dict):
+            raise ValueError(f"invalid engine fallback report section for {lang!r}")
+        entries = section["entries"]
+        if section.get("total") != len(entries):
+            raise ValueError(f"engine fallback report count mismatch for {lang!r}")
+        for source, row in entries.items():
+            if (not isinstance(source, str) or not isinstance(row, dict)
+                    or row.get("reason") != "engine-fallback"
+                    or row.get("override") != source
+                    or not isinstance(row.get("provenance"), str)
+                    or "Explicit English fallback" not in row["provenance"]):
+                raise ValueError(f"invalid English fallback entry {lang!r}/{source!r}")
+        result[lang] = entries
+    return result
 
 
 def load_gs_engine_scope_exclusions(path: str | Path | None = None) -> set[str]:
@@ -38,8 +73,14 @@ def load_gs_engine_scope_exclusions(path: str | Path | None = None) -> set[str]:
         raise ValueError(f"invalid Gold/Silver engine scope exclusions JSON: {path}") from exc
     if not isinstance(data, dict) or data.get("schema") != GS_ENGINE_SCOPE_EXCLUSIONS_SCHEMA:
         raise ValueError("unsupported Gold/Silver engine scope exclusions schema")
-    if data.get("version") != 1 or not isinstance(data.get("excluded_keys"), dict):
-        raise ValueError("Gold/Silver engine scope exclusions require version 1 excluded_keys")
+    if data.get("version") != 2 or not isinstance(data.get("excluded_keys"), dict):
+        raise ValueError("Gold/Silver engine scope exclusions require version 2 excluded_keys")
+    expected_revision = load_manifest()["gen1recomp_revision"]
+    if data.get("source_revision") != expected_revision:
+        raise ValueError(
+            "Gold/Silver engine scope exclusions source_revision does not match "
+            "the pinned Gen1Recomp manifest"
+        )
     result: set[str] = set()
     for key, row in data["excluded_keys"].items():
         if (not isinstance(row, dict) or not isinstance(row.get("reason"), str) or
@@ -93,16 +134,31 @@ def match_gs_engine_strings(
     corpus_rows: Iterable[tuple[str, str, str]],
     gen1recomp: str | Path,
     target_lang: str,
+    engine_profile: str = PINNED_PROFILE,
 ) -> tuple[dict[str, str], dict[str, dict]]:
-    """Match and scope the pinned engine's complete Strings callsite catalog."""
+    """Match the selected engine catalog without mixing compatibility layers."""
+    profile = normalize_engine_profile(engine_profile)
     manifest = load_manifest()
-    source, _root, revision = verified_source(gen1recomp, manifest)
+    if profile == UPSTREAM_PROFILE:
+        source = Path(gen1recomp).resolve() / "src"
+        if not source.is_dir():
+            raise ValueError(f"upstream engine source has no src directory: {gen1recomp}")
+        revision = checkout_revision(gen1recomp)
+    else:
+        source, _root, revision = verified_source(gen1recomp, manifest)
     callsites = iter_callsites(source)
     all_keys, gen2_keys = engine_string_keys(callsites, manifest)
     root = Path(__file__).resolve().parents[1]
     overrides = load_engine_overrides(
         root / "overrides" / target_lang / "gsc" / "engine.json",
     )
+    fallback_entries = load_gs_engine_fallbacks(target_lang)[target_lang]
+    overlap = sorted(set(overrides) & set(fallback_entries))
+    if overlap:
+        raise ValueError(
+            "Gold engine runtime overrides re-emit fallback entries: "
+            f"{overlap!r}"
+        )
     stale_overrides = sorted(set(overrides) - all_keys)
     if stale_overrides:
         raise ValueError(
@@ -116,15 +172,28 @@ def match_gs_engine_strings(
         semantic_anchors=root / "config" / "gsc" / "semantic_anchors.json",
         target_lang=target_lang,
     )
+    # ``match_engine_catalog`` deliberately reports an exact corpus match even
+    # when the localized value is byte-for-byte identical to the English
+    # source.  That is useful for coverage accounting and audit provenance,
+    # but an identity row is a runtime no-op and must not be regenerated in
+    # the shipped catalogue after it has been removed from the overrides.
+    # Keep the matcher output (and therefore its coverage counters/details)
+    # intact, filtering only at this final runtime-catalogue boundary.
     translated = {key for key, value in values.items() if value}
-    shipped = {key: value for key, value in values.items() if value}
+    shipped = {
+        key: value for key, value in values.items()
+        if value and value != key
+    }
     report.update({
         "source_revision": revision,
+        "engine_profile": profile,
+        "fallback_english": len(fallback_entries),
         "catalog_kind": "Strings and Strings.source callsites",
     })
     gen2_translated = len(translated & gen2_keys)
     gen2_report = {
         "source_revision": revision,
+        "engine_profile": profile,
         "scope": "at least one callsite in a gen2 source subtree",
         "translated": gen2_translated,
         "total": len(gen2_keys),

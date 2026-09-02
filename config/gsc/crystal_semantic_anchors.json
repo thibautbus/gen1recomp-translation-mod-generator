@@ -1,0 +1,53 @@
+{
+  "schema": "gen1recomp-translation-mods/semantic-anchors",
+  "version": 1,
+  "description": "Crystal-only engine strings resolved from the official Crystal corpus. Anchors select corpus rows and segments; they contain no translated prose.",
+  "anchors": {
+    "#MON Talk": {
+      "qid": "c.buenas_passwords.BuenasPasswordTable.RadioStations",
+      "extraction": {"kind": "segment", "index": 0}
+    },
+    "%s is\nnot compatible\u000bwith %s.": {
+      "qid": "c.common_2.TMHMNotCompatibleText",
+      "extraction": {"kind": "parts", "parts": [0, 1, 2], "separators": ["\n", "\u000b"]}
+    },
+    "Cancel your BATTLE\nROOM challenge?": {
+      "qid": "c.mobile_46.Text_CancelBattleRoomChallenge",
+      "extraction": {"kind": "full"}
+    },
+    "Challenge": {
+      "qid": "c.mobile_5f.MenuData_ChallengeExplanationCancel",
+      "extraction": {"kind": "segment", "index": 0}
+    },
+    "Explanation": {
+      "qid": "c.mobile_5f.MenuData_ChallengeExplanationCancel",
+      "extraction": {"kind": "segment", "index": 1}
+    },
+    "Here you go!": {
+      "qid": "c.common_3.BuenaHereYouGoText",
+      "extraction": {"kind": "full"}
+    },
+    "Incidentally…\fI'm impressed by\nyour dedication.\fIt's been a long\ntime since I've\fseen a #MON as\nmighty as this\u000b%s.\fI'm sure that\nseeing %s\fin battle would\nexcite anyone.": {
+      "qid": "c.common_3.SeerImpressedText",
+      "extraction": {"kind": "full"}
+    },
+    "Morning": {
+      "qid": "c.timeset.GetTimeOfDayString.morn_string",
+      "extraction": {"kind": "full"},
+      "source_aliases": ["MORN"]
+    },
+    "Night": {
+      "qid": "c.timeset.GetTimeOfDayString.nite_string",
+      "extraction": {"kind": "full"},
+      "source_aliases": ["NITE"]
+    },
+    "Which prize would\nyou like?": {
+      "qid": "c.common_3.BuenaAskWhichPrizeText",
+      "extraction": {"kind": "full"}
+    },
+    "You have no room\nfor it.": {
+      "qid": "c.common_3.BuenaNoRoomText",
+      "extraction": {"kind": "full"}
+    }
+  }
+}

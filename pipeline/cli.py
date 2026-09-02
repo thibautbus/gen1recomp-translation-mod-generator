@@ -13,6 +13,7 @@ from .roms import catalog_roms, import_rom, import_all, import_gs_rom
 from .mod import font_profile_warning, generate_mod
 from .disassembly_audit import run_audit
 from .engine_backlog import MATRIX_LANGUAGES, run_backlog, run_backlog_matrix
+from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE
 
 
 def main(argv=None) -> int:
@@ -32,6 +33,7 @@ def main(argv=None) -> int:
     )
     imp_gs.add_argument("rom")
     imp_gs.add_argument("--gen1recomp", required=True)
+    imp_gs.add_argument("--engine-profile", choices=(PINNED_PROFILE, UPSTREAM_PROFILE), default=PINNED_PROFILE)
     imp_gs.add_argument("--out", required=True)
     build_gs = sub.add_parser(
         "build-gs",
@@ -46,6 +48,7 @@ def main(argv=None) -> int:
     build_gs.add_argument("--mod-id")
     build_gs.add_argument("--font-source")
     build_gs.add_argument("--gen1recomp", help="pinned checkout used to generate engine-string coverage")
+    build_gs.add_argument("--engine-profile", choices=(PINNED_PROFILE, UPSTREAM_PROFILE), default=PINNED_PROFILE)
     build_gs.add_argument("--font-profile", choices=("fusion", "pokemon"), default="fusion")
     sub.add_parser("audit-disassemblies", help="developer-only private localized disassembly audit")
     backlog = sub.add_parser("engine-backlog", help="developer-only private unresolved engine-string backlog")
@@ -76,13 +79,14 @@ def main(argv=None) -> int:
             roms["yellow"] = args.yellow
         import_all(roms, args.gen1recomp, args.cache_root); return 0
     if args.command == "import-gs":
-        import_gs_rom(args.rom, args.gen1recomp, args.out); return 0
+        import_gs_rom(args.rom, args.gen1recomp, args.out, engine_profile=args.engine_profile); return 0
     if args.command == "build-gs":
         from .gs_mod import build_gs_dialogue_mod
         mod_dir, entries, stats = build_gs_dialogue_mod(
             args.gs_out, args.corpus, args.output, mod_id=args.mod_id, language=args.target_lang,
             font_source=args.font_source, font_profile=args.font_profile,
             engine_source=args.gen1recomp,
+            engine_profile=args.engine_profile,
         )
         public_stats = {key: value for key, value in stats.items() if not key.startswith("_")}
         print(json.dumps({"mod": str(mod_dir), "stats": public_stats}, ensure_ascii=False, indent=2))

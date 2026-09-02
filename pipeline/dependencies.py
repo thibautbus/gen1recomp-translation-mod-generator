@@ -62,13 +62,24 @@ def _assert_https_response(response) -> None:
 def _tree_digest(root: Path, prefixes: tuple[str, ...] = ()) -> str:
     base = root / prefixes[0] if len(prefixes) == 1 and (root / prefixes[0]).is_dir() else root
     digest = hashlib.sha256()
-    files = (p for p in base.rglob("*") if p.is_file() and p.name != ".archive-marker.json")
+    files = (p for p in base.rglob("*")
+             if (p.is_symlink() or p.is_file()) and p.name != ".archive-marker.json")
     # Sort relative path components explicitly.  Path ordering is
     # case-insensitive on Windows but case-sensitive on POSIX, while the
     # component-wise ordering preserves the historical POSIX digest.
     for path in sorted(files, key=lambda item: item.relative_to(base).parts):
         relative = path.relative_to(base).as_posix()
         if path.name == ".verified-archive.zip" or (prefixes and base == root and not any(relative == p or relative.startswith(p + "/") for p in prefixes)):
+            continue
+        if path.is_symlink():
+            # Archives intentionally omit symlink entries, but a symlink added
+            # to a published cache must still invalidate its marker. Include
+            # only the link spelling, never the target contents (which could
+            # point outside the cache).
+            digest.update(b"symlink:")
+            digest.update(relative.encode())
+            digest.update(b"=")
+            digest.update(os.readlink(path).encode())
             continue
         digest.update(relative.encode())
         digest.update(hashlib.sha256(path.read_bytes()).digest())

@@ -16,6 +16,7 @@ from pipeline.project import project_version
 from pipeline.rom_paths import load_rom_paths
 from pipeline.gui import available_font_profiles, coverage_lines, font_profile_label, language_code, validate_inputs
 from pipeline.specs import BuildRequest, ReleaseProfile, release_profile
+from pipeline.engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE
 
 
 class BuilderTests(unittest.TestCase):
@@ -555,6 +556,15 @@ class BuilderTests(unittest.TestCase):
         self.assertTrue(builder._corpus_overrides_path("fr").is_file())
         self.assertTrue(builder._engine_overrides_path("it").is_file())
 
+    def test_rby_override_layers_are_selected_only_by_explicit_profile(self):
+        pinned = builder._rby_engine_override_paths("fr", PINNED_PROFILE)
+        upstream = builder._rby_engine_override_paths("fr", UPSTREAM_PROFILE)
+        self.assertEqual(pinned, (builder._engine_overrides_path("fr"),))
+        self.assertEqual(len(upstream), 2)
+        self.assertTrue(upstream[0].name == "engine.json")
+        self.assertTrue(upstream[1].name == "engine_upstream.json")
+        self.assertNotEqual(pinned, upstream)
+
     def test_confirmation_defaults_to_yes(self):
         self.assertTrue(builder._confirm(lambda _: ""))
         self.assertTrue(builder._confirm(lambda _: "YES"))
@@ -603,6 +613,60 @@ class BuilderTests(unittest.TestCase):
                 runner=lambda command, **kwargs: calls.append(command),
             )
         self.assertEqual([command[1] for command in calls], ["fetch", "checkout"])
+
+    def test_prepare_dependencies_verifies_engine_before_other_dependencies(self):
+        calls = []
+
+        def fake_ensure(config, destination, **kwargs):
+            calls.append(destination.name)
+            return destination
+
+        def fake_verify(*args):
+            calls.append("verify-engine")
+            return args[0] / "src", args[0], "revision"
+
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(builder, "_ensure_dependency", side_effect=fake_ensure), \
+                patch.object(builder, "_font_source", side_effect=lambda *args, **kwargs: calls.append("font") or Path(directory) / "font"), \
+                patch("pipeline.engine_scope.verified_source", side_effect=fake_verify):
+            builder.prepare_dependencies(
+                Path(directory), builder.project_config(),
+                corpus_collection="RedBlue", font_profile="fusion", language="fr",
+            )
+        self.assertEqual(calls[:3], ["gen1recomp", "verify-engine", "poke-corpus"])
+        self.assertEqual(calls[3], "font")
+
+    def test_prepare_dependencies_uses_explicit_upstream_checkout(self):
+        calls = []
+
+        def fake_ensure(config, destination, **kwargs):
+            calls.append(destination.name)
+            return destination
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            engine = root / "upstream"
+            (engine / "src").mkdir(parents=True)
+            (engine / "tools").mkdir()
+            (engine / "tools" / "modkit.py").write_text("", encoding="utf-8")
+            with patch.object(builder, "_ensure_dependency", side_effect=fake_ensure), \
+                    patch.object(builder, "_font_source", return_value=root / "font"), \
+                    patch("pipeline.engine_scope.verified_source") as verify:
+                prepared, _, _ = builder.prepare_dependencies(
+                    root / "workspace", builder.project_config(),
+                    corpus_collection="RedBlue", font_profile="fusion", language="fr",
+                    engine_source=engine,
+                )
+            self.assertEqual(prepared, engine.resolve())
+            self.assertEqual(calls, ["poke-corpus"])
+            verify.assert_not_called()
+
+    def test_rby_upstream_profile_requires_an_explicit_checkout(self):
+        with self.assertRaisesRegex(builder.BuildError, "upstream-local.*engine-source.*checkout"):
+            builder.build(
+                Path("missing-red.gb"), "fr", "French", "luajit",
+                engine_profile=UPSTREAM_PROFILE,
+            )
 
     def test_sparse_checkout_fetches_only_requested_blobs(self):
         calls = []
@@ -1098,6 +1162,7 @@ class BuilderTests(unittest.TestCase):
                     selective_prefix=["corpus/RedBlue"],
                 )
             self.assertEqual(fetch.call_args.kwargs["selective_prefix"], "corpus/RedBlue")
+            self.assertEqual(fetch.call_args.kwargs["immutable_prefixes"], ("src", "tools"))
 
 
 if __name__ == "__main__":

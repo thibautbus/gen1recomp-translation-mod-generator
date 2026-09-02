@@ -9,12 +9,15 @@ from unittest.mock import patch
 from pipeline.engine_backlog import (
     analyze_engine_backlog,
     analyze_engine_backlog_matrix,
+    iter_dynamic_strings_callsites,
     iter_literal_strings_callsites,
+    iter_romtext_callsites,
     iter_romtext_fallback_callsites,
     run_backlog,
     run_backlog_matrix,
 )
 from pipeline.cli import main as cli_main
+from pipeline.engine_scope import load_manifest
 
 
 class EngineBacklogTests(unittest.TestCase):
@@ -33,6 +36,7 @@ class EngineBacklogTests(unittest.TestCase):
             '--[=[ Strings("long comment ignored") ]=]\n'
             'local fake = "Strings(\\"fake\\")"\n'
             'local long = Strings([=[\nLong literal]=])\n'
+            'local dynamic = Strings(labels[id])\n'
             'local a = Strings("%s woke!")\n'
             'local b = Strings.source("%s woke!")\n', encoding="utf-8"
         )
@@ -45,6 +49,7 @@ class EngineBacklogTests(unittest.TestCase):
         coverage = root / "coverage.json"
         coverage.write_text(json.dumps({
             "engine": {
+                "source_revision": load_manifest()["gen1recomp_revision"],
                 "total": 3,
                 "unmatched": ["%s woke!", "Link only", "UI only"],
                 "ambiguous": {"%s woke!": ["réveillé", "s'est réveillé"]},
@@ -67,7 +72,7 @@ class EngineBacklogTests(unittest.TestCase):
             self.assertEqual([item["source"] for item in calls], ["%s woke!", "%s woke!", "Link only", "Long literal", "UI only"])
             self.assertEqual([item["kind"] for item in calls[:2]], ["call", "source"])
             self.assertEqual(calls[0]["path"], "src/battle/Battle.lua")
-            self.assertEqual(calls[0]["line"], 7)
+            self.assertEqual(calls[0]["line"], 8)
         finally:
             tmp.cleanup()
 
@@ -83,7 +88,7 @@ class EngineBacklogTests(unittest.TestCase):
             self.assertEqual([call["source"] for call in calls], ["Hello world!"])
 
 
-    def test_romtext_fallback_callsites_only_collect_rendered(self):
+    def test_romtext_inventory_collects_every_spelling_without_allowlist(self):
         tmp = tempfile.TemporaryDirectory()
         root = Path(tmp.name)
         checkout = root / "src"
@@ -101,14 +106,41 @@ class EngineBacklogTests(unittest.TestCase):
         try:
             calls = iter_romtext_fallback_callsites(root)
             sources = [item["source"] for item in calls]
-            self.assertEqual(sources, ["%s\nis refusing!", "%s\nused %s!", "The enemy's weak!\nGet'm! %s!"])
-            # fallback non rendu (label 1 slot / 1 arg -> dialogue) non collecté
-            self.assertNotIn("%s\nis confused!", sources)
+            self.assertEqual(sources, ["%s\nis confused!", "%s\nis refusing!", "%s\nused %s!", "The enemy's weak!\nGet'm! %s!"])
             # premier argument variable (data) : label lu au 2e argument
             item = next(item for item in calls if item["source"] == "%s\nis refusing!")
             self.assertEqual(item["path"], "src/inventory/ItemEffects.lua")
         finally:
             tmp.cleanup()
+
+    def test_romtext_inventory_handles_capital_method_quotes_and_dynamic_domains(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); (root / "src").mkdir()
+            (root / "src" / "calls.lua").write_text(
+                "function State:romText(label, fallback, ...) return fallback end\n"
+                "local a = RomText(data, '_Capital', 'capital fallback')\n"
+                "local b = state:romText(\"_Method\", \"method fallback\")\n"
+                "local c = RomText(data, labels[id], FALLBACKS[id] or labels[id])\n",
+                encoding="utf-8",
+            )
+            calls = iter_romtext_callsites(root)
+            self.assertEqual(len(calls), 3)
+            self.assertEqual({row.get("source") for row in calls}, {None, "capital fallback", "method fallback"})
+            dynamic = next(row for row in calls if "source" not in row)
+            self.assertEqual(dynamic["label_expression"], "labels[id]")
+            self.assertEqual(dynamic["fallback_expression"], "FALLBACKS[id] or labels[id]")
+
+    def test_dynamic_strings_inventory_reports_nonliteral_expressions(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); (root / "src").mkdir()
+            (root / "src" / "calls.lua").write_text(
+                'local literal = Strings("seen")\nlocal dynamic = Strings(labels[id])\n',
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                [row["expression"] for row in iter_dynamic_strings_callsites(root)],
+                ["labels[id]"],
+            )
 
     def test_report_is_conservative_and_placeholder_compatible(self):
         tmp, root, checkout, corpus, coverage, catalog = self._fixture()
@@ -126,27 +158,30 @@ class EngineBacklogTests(unittest.TestCase):
             self.assertIn("game", wake["qid_candidates"][0])
             self.assertFalse(by_key["Link only"]["rby_eligible"])
             self.assertIsNone(by_key["UI only"]["rby_eligible"])
+            self.assertEqual(report["stats"]["dynamic_strings_callsites"], 1)
+            self.assertEqual(report["stats"]["unmanifested_dynamic_strings_callsites"], 1)
+            self.assertFalse(report["source_inventory"]["dynamic_strings"][0]["manifested"])
         finally:
             tmp.cleanup()
 
-    def test_forced_dynamic_backlog_entry_keeps_top_level_provenance(self):
+    def test_engine_dynamic_backlog_entry_keeps_top_level_provenance(self):
         tmp, root, checkout, corpus, coverage, catalog = self._fixture()
         try:
-            dynamic = ("NAME", "ATTACK", "DEFENSE", "SPEED", "SPECIAL")
-            catalog.write_text("return {\n" + "".join(f'  ["{key}"] = "",\n' for key in ("%s woke!", "Link only", "UI only", *dynamic)) + "}\n", encoding="utf-8")
-            keys = ["%s woke!", "Link only", "UI only", *dynamic]
+            dynamic = "STRONG"
+            catalog.write_text("return {\n" + "".join(f'  ["{key}"] = "",\n' for key in ("%s woke!", "Link only", "UI only", dynamic)) + "}\n", encoding="utf-8")
+            keys = ["%s woke!", "Link only", "UI only", dynamic]
             coverage.write_text(json.dumps({"engine": {
-                "total": len(keys), "unmatched": ["NAME"], "ambiguous": {},
+                "source_revision": load_manifest()["gen1recomp_revision"],
+                "total": len(keys), "unmatched": [dynamic], "ambiguous": {},
                 "details": {key: "english_fallback" for key in keys},
-                "provenance": {"NAME": {"method": "english_fallback"}},
+                "provenance": {dynamic: {"method": "english_fallback"}},
             }}), encoding="utf-8")
             report = analyze_engine_backlog("fr", root=root, checkout=checkout, corpus_root=corpus,
                                             coverage_path=coverage, engine_catalog=catalog)
-            entry = next(item for item in report["entries"] if item["key"] == "NAME")
-            self.assertEqual(entry["provenance"], "forced_dynamic")
-            self.assertEqual(entry["provenance_kind"], "forced_dynamic")
-            self.assertEqual(entry["coverage_provenance"]["qid"], "rb.start_sub_menus.TrainerInfo_NameMoneyTimeText")
-            self.assertIn("SummaryMenu.lua", entry["coverage_provenance"]["callsite"])
+            entry = next(item for item in report["entries"] if item["key"] == dynamic)
+            self.assertEqual(entry["provenance"], "engine_dynamic")
+            self.assertEqual(entry["provenance_kind"], "engine_dynamic")
+            self.assertIn("TouchControls.hapticLabel", entry["coverage_provenance"]["callsite"])
         finally:
             tmp.cleanup()
 
@@ -162,8 +197,25 @@ class EngineBacklogTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "total"):
                 analyze_engine_backlog("fr", root=root, checkout=checkout, corpus_root=corpus,
                                        coverage_path=coverage, engine_catalog=catalog)
-            coverage.write_text(json.dumps({"engine": {"total": 3, "unmatched": [], "ambiguous": {}}}), encoding="utf-8")
+            coverage.write_text(json.dumps({"engine": {"source_revision": load_manifest()["gen1recomp_revision"], "total": 3, "unmatched": [], "ambiguous": {}}}), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "key universe"):
+                analyze_engine_backlog("fr", root=root, checkout=checkout, corpus_root=corpus,
+                                       coverage_path=coverage, engine_catalog=catalog)
+        finally:
+            tmp.cleanup()
+
+    def test_snapshot_revision_is_required_and_must_match_manifest(self):
+        tmp, root, checkout, corpus, coverage, catalog = self._fixture()
+        try:
+            data = json.loads(coverage.read_text())
+            data["engine"].pop("source_revision")
+            coverage.write_text(json.dumps(data), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "source_revision"):
+                analyze_engine_backlog("fr", root=root, checkout=checkout, corpus_root=corpus,
+                                       coverage_path=coverage, engine_catalog=catalog)
+            data["engine"]["source_revision"] = "0" * 40
+            coverage.write_text(json.dumps(data), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "source_revision"):
                 analyze_engine_backlog("fr", root=root, checkout=checkout, corpus_root=corpus,
                                        coverage_path=coverage, engine_catalog=catalog)
         finally:

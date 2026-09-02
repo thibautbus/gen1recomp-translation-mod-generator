@@ -1,57 +1,16 @@
 {
   "schema": "gen1recomp-translation-mods/engine-manifest",
   "version": 1,
-  "gen1recomp_revision": "fc56b9b05f01c559610c71f801355abfa4ae920f",
+  "gen1recomp_revision": "3d3a9ba4b66832b8c70ac26e1e88dbae612efcd0",
   "source_subdir": "src",
-  "forced_dynamic_keys": {
-    "NAME": {
-      "category": "rby",
-      "eligibility": "eligible",
-      "reason": "engine-contract-gap",
-      "provenance": "forced_dynamic",
-      "callsite": "src/ui/SummaryMenu.lua:156 (runtime table; compatibility/engine-contract workaround; no literal callsite)",
-      "qid": "rb.start_sub_menus.TrainerInfo_NameMoneyTimeText"
-    },
-    "ATTACK": {
-      "category": "rby",
-      "eligibility": "eligible",
-      "reason": "engine-contract-gap",
-      "provenance": "forced_dynamic",
-      "callsite": "src/ui/SummaryMenu.lua:150-157 (runtime table; literal scanner cannot see s[1])",
-      "qid": "rb.stat_names.VitaminStats.2"
-    },
-    "DEFENSE": {
-      "category": "rby",
-      "eligibility": "eligible",
-      "reason": "engine-contract-gap",
-      "provenance": "forced_dynamic",
-      "callsite": "src/ui/SummaryMenu.lua:150-157 (runtime table; literal scanner cannot see s[1])",
-      "qid": "rb.stat_names.VitaminStats.3"
-    },
-    "SPEED": {
-      "category": "rby",
-      "eligibility": "eligible",
-      "reason": "engine-contract-gap",
-      "provenance": "forced_dynamic",
-      "callsite": "src/ui/SummaryMenu.lua:150-157 (runtime table; literal scanner cannot see s[1])",
-      "qid": "rb.stat_names.VitaminStats.4"
-    },
-    "SPECIAL": {
-      "category": "rby",
-      "eligibility": "eligible",
-      "reason": "engine-contract-gap",
-      "provenance": "forced_dynamic",
-      "callsite": "src/ui/SummaryMenu.lua:150-157 (runtime table; literal scanner cannot see s[1])",
-      "qid": "rb.stat_names.VitaminStats.5"
-    }
-  },
+  "forced_dynamic_keys": {},
   "engine_dynamic_values": {
     "OG RED": {
       "category": "modern",
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:341-343 and src/import/LauncherSettings.lua:242 (PaletteFX.modeLabel raw value)",
       "qid": ""
     },
     "OG BLUE": {
@@ -59,7 +18,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:341-343 and src/import/LauncherSettings.lua:242 (PaletteFX.modeLabel raw value)",
       "qid": ""
     },
     "OG YELLOW": {
@@ -67,7 +26,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:341-343 and src/import/LauncherSettings.lua:242 (PaletteFX.modeLabel raw value)",
       "qid": ""
     },
     "SGB": {
@@ -75,7 +34,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:341-343 and src/import/LauncherSettings.lua:242 (PaletteFX.modeLabel raw value)",
       "qid": ""
     },
     "ADVANCED": {
@@ -83,7 +42,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:341-343 and src/import/LauncherSettings.lua:242 (PaletteFX.modeLabel raw value)",
       "qid": ""
     },
     "OG INV": {
@@ -91,7 +50,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:341-343 and src/import/LauncherSettings.lua:242 (PaletteFX.modeLabel raw value)",
       "qid": ""
     },
     "SGB INV": {
@@ -99,7 +58,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:341-343 and src/import/LauncherSettings.lua:242 (PaletteFX.modeLabel raw value)",
       "qid": ""
     },
     "CLASSIC": {
@@ -107,7 +66,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:341-343 and src/import/LauncherSettings.lua:242 (PaletteFX.modeLabel raw value)",
       "qid": ""
     },
     "GBC": {
@@ -115,7 +74,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:276 and src/import/LauncherSettings.lua:118 (PaletteFX.modeLabel raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:341-343 and src/import/LauncherSettings.lua:242 (PaletteFX.modeLabel raw value)",
       "qid": ""
     },
     "WINDOWED": {
@@ -123,7 +82,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:346 and src/import/LauncherSettings.lua:169 (VideoMode.modeLabel raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:426 and src/import/LauncherSettings.lua:291 (VideoMode.modeLabel raw value)",
       "qid": ""
     },
     "BORDERLESS": {
@@ -131,7 +90,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:346 and src/import/LauncherSettings.lua:169 (VideoMode.modeLabel raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:426 and src/import/LauncherSettings.lua:291 (VideoMode.modeLabel raw value)",
       "qid": ""
     },
     "TREES": {
@@ -139,7 +98,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:330 and src/import/LauncherSettings.lua:154 (TileRenderer.voidFillLabel raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:410 and src/import/LauncherSettings.lua:276 (TileRenderer.voidFillLabel raw value)",
       "qid": ""
     },
     "WATER": {
@@ -147,7 +106,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:330 and src/import/LauncherSettings.lua:154 (TileRenderer.voidFillLabel raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:410 and src/import/LauncherSettings.lua:276 (TileRenderer.voidFillLabel raw value)",
       "qid": ""
     },
     "OFF": {
@@ -155,7 +114,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:251 and src/import/LauncherSettings.lua:99 (raw FILTERS/FaithfulRes value)",
+      "callsite": "src/ui/OptionsMenu.lua:314 and src/import/LauncherSettings.lua:223 (FILTERS raw value)",
       "qid": ""
     },
     "1X": {
@@ -163,7 +122,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:251 and src/import/LauncherSettings.lua:60 (FILTERS/FaithfulRes raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:314 and src/import/LauncherSettings.lua:223 (FILTERS raw value)",
       "qid": ""
     },
     "2X": {
@@ -171,7 +130,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:251 and src/import/LauncherSettings.lua:60 (FILTERS/FaithfulRes raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:314 and src/import/LauncherSettings.lua:223 (FILTERS raw value)",
       "qid": ""
     },
     "3X": {
@@ -179,7 +138,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:251 and src/import/LauncherSettings.lua:60 (FILTERS/FaithfulRes raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:314 and src/import/LauncherSettings.lua:223 (FILTERS raw value)",
       "qid": ""
     },
     "NORMAL": {
@@ -187,7 +146,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:398 and src/import/LauncherSettings.lua:218 (GameSpeed.levelLabel raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:510; src/ui/OptionsMenu.lua:519; src/ui/OptionsMenu.lua:528; src/ui/gen2/OptionsMenu.lua:197; src/import/LauncherSettings.lua:350; src/import/LauncherSettings.lua:356; src/import/LauncherSettings.lua:362; src/import/LauncherSettings.lua:622 (GameSpeed.levelLabel raw value)",
       "qid": ""
     },
     "FAST": {
@@ -195,7 +154,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:126 (SPEEDS table; dynamic Strings lookup)",
+      "callsite": "src/ui/OptionsMenu.lua:49; src/ui/OptionsMenu.lua:165; src/import/LauncherSettings.lua:64; src/import/LauncherSettings.lua:155 (SPEEDS table; dynamic Strings lookup)",
       "qid": "rb.main_menu.TextSpeedOptionText"
     },
     "MEDIUM": {
@@ -203,7 +162,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:126 (SPEEDS table; dynamic Strings lookup)",
+      "callsite": "src/ui/OptionsMenu.lua:49; src/ui/OptionsMenu.lua:165; src/import/LauncherSettings.lua:64; src/import/LauncherSettings.lua:155 (SPEEDS table; dynamic Strings lookup)",
       "qid": "rb.main_menu.TextSpeedOptionText"
     },
     "SLOW": {
@@ -211,7 +170,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:126 (SPEEDS table; dynamic Strings lookup)",
+      "callsite": "src/ui/OptionsMenu.lua:49; src/ui/OptionsMenu.lua:165; src/import/LauncherSettings.lua:64; src/import/LauncherSettings.lua:155 (SPEEDS table; dynamic Strings lookup)",
       "qid": "rb.main_menu.TextSpeedOptionText"
     },
     "low": {
@@ -219,7 +178,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:264 (Performance.label; dynamic Strings lookup)",
+      "callsite": "src/ui/OptionsMenu.lua:329 and src/import/LauncherSettings.lua:232 (Performance.label; dynamic Strings lookup)",
       "qid": ""
     },
     "balanced": {
@@ -227,7 +186,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:264 (Performance.label; dynamic Strings lookup)",
+      "callsite": "src/ui/OptionsMenu.lua:329 and src/import/LauncherSettings.lua:232 (Performance.label; dynamic Strings lookup)",
       "qid": ""
     },
     "high": {
@@ -235,7 +194,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:264 (Performance.label; dynamic Strings lookup)",
+      "callsite": "src/ui/OptionsMenu.lua:329 and src/import/LauncherSettings.lua:232 (Performance.label; dynamic Strings lookup)",
       "qid": ""
     },
     "auto": {
@@ -243,7 +202,15 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:264 (Performance.label; dynamic Strings lookup)",
+      "callsite": "src/ui/OptionsMenu.lua:329 and src/import/LauncherSettings.lua:232 (Performance.label; dynamic Strings lookup)",
+      "qid": ""
+    },
+    "ADAPTIVE": {
+      "category": "modern",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:490 and src/ui/gen2/OptionsMenu.lua:364 (VSync.label; dynamic Strings lookup)",
       "qid": ""
     },
     "AUTO": {
@@ -251,7 +218,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:357 (Orientation.modeLabel; dynamic Strings lookup)",
+      "callsite": "src/ui/OptionsMenu.lua:439 and src/import/LauncherSettings.lua:305 (Orientation.modeLabel; dynamic Strings lookup)",
       "qid": ""
     },
     "PORTRAIT": {
@@ -259,7 +226,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:357 (Orientation.modeLabel; dynamic Strings lookup)",
+      "callsite": "src/ui/OptionsMenu.lua:439 and src/import/LauncherSettings.lua:305 (Orientation.modeLabel; dynamic Strings lookup)",
       "qid": ""
     },
     "LANDSCAPE": {
@@ -267,7 +234,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:357 (Orientation.modeLabel; dynamic Strings lookup)",
+      "callsite": "src/ui/OptionsMenu.lua:439 and src/import/LauncherSettings.lua:305 (Orientation.modeLabel; dynamic Strings lookup)",
       "qid": ""
     },
     "REVERSE LANDSCAPE": {
@@ -275,7 +242,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:357 (Orientation.modeLabel; dynamic Strings lookup)",
+      "callsite": "src/ui/OptionsMenu.lua:439 and src/import/LauncherSettings.lua:305 (Orientation.modeLabel; dynamic Strings lookup)",
       "qid": ""
     },
     "LIGHT": {
@@ -283,15 +250,127 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:447 and src/import/LauncherSettings.lua:250 (TouchControls.hapticLabel; dynamic Strings lookup)",
+      "callsite": "src/ui/OptionsMenu.lua:595 and src/ui/gen2/OptionsMenu.lua:321 and src/import/LauncherSettings.lua:102 (TouchControls.hapticLabel; dynamic Strings lookup)",
       "qid": ""
     },
-    "HEAVY": {
+    "STRONG": {
       "category": "modern",
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:447 and src/import/LauncherSettings.lua:250 (TouchControls.hapticLabel; dynamic Strings lookup)",
+      "callsite": "src/ui/OptionsMenu.lua:595 and src/ui/gen2/OptionsMenu.lua:321 and src/import/LauncherSettings.lua:102 (TouchControls.hapticLabel; dynamic Strings lookup)",
+      "qid": ""
+    },
+    "PALETTE": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:375 and src/ui/gen2/OptionsMenu.lua:257 (Strings dynamic lookup)",
+      "qid": ""
+    },
+    "SKIN": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:463 and src/ui/gen2/OptionsMenu.lua:300 and src/import/LauncherSettings.lua:327 (Strings dynamic lookup)",
+      "qid": ""
+    },
+    "CENTER": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:463 and src/ui/gen2/OptionsMenu.lua:300 and src/import/LauncherSettings.lua:327 (Strings dynamic lookup)",
+      "qid": ""
+    },
+    "UPPER": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:463 and src/ui/gen2/OptionsMenu.lua:300 and src/import/LauncherSettings.lua:327 (Strings dynamic lookup)",
+      "qid": ""
+    },
+    "TOP": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:463 and src/ui/gen2/OptionsMenu.lua:300 and src/import/LauncherSettings.lua:327 (Strings dynamic lookup)",
+      "qid": ""
+    },
+    "AM": {
+      "category": "gen2",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/gen2/MainMenu.lua:174 and src/ui/gen2/Pokegear.lua:1993 and src/ui/gen2/Pokegear.lua:2410 (Strings dynamic time-format lookup)",
+      "qid": ""
+    },
+    "PM": {
+      "category": "gen2",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/gen2/MainMenu.lua:174 and src/ui/gen2/Pokegear.lua:1993 and src/ui/gen2/Pokegear.lua:2410 (Strings dynamic time-format lookup)",
+      "qid": ""
+    },
+    "FILL ": {
+      "category": "gen2",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/gen2/OptionsMenu.lua:704 (Strings dynamic display domain)",
+      "qid": ""
+    },
+    "DEVICE": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:553 and src/ui/OptionsMenu.lua:562 (Strings dynamic date/time format domain)",
+      "qid": ""
+    },
+    "DD-MM-YYYY": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:553 (Strings dynamic date-format domain)",
+      "qid": ""
+    },
+    "MM-DD-YYYY": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:553 (Strings dynamic date-format domain)",
+      "qid": ""
+    },
+    "YYYY-MM-DD": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:553 (Strings dynamic date-format domain)",
+      "qid": ""
+    },
+    "24 HOUR": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:562 (Strings dynamic time-format domain)",
+      "qid": ""
+    },
+    "12 HOUR": {
+      "category": "mixed",
+      "eligibility": "ineligible",
+      "reason": "engine-contract-gap",
+      "provenance": "engine_dynamic",
+      "callsite": "src/ui/OptionsMenu.lua:562 (Strings dynamic time-format domain)",
       "qid": ""
     }
   }

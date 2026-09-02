@@ -407,6 +407,44 @@ class DependencyTests(unittest.TestCase):
             self.assertEqual((destination / "src/main.lua").read_bytes(), b"ok")
             self.assertEqual(list(root.glob("dependency-*.zip")), [])
 
+    def test_archive_refetches_when_tools_or_tools_symlink_is_mutated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); archive = root / "source.zip"
+            with zipfile.ZipFile(archive, "w") as z:
+                z.writestr("repo/src/main.lua", b"ok")
+                z.writestr("repo/tools/run.py", b"tool")
+            digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+            calls = []
+            opener = lambda url: (calls.append(url) or _Response(archive.read_bytes()))
+            destination = fetch_archive(
+                "https://example/repo.zip", digest, root / "repo", revision="abc",
+                immutable_prefixes=("src", "tools"), opener=opener,
+            )
+
+            (destination / "tools/run.py").write_bytes(b"tampered")
+            fetch_archive(
+                "https://example/repo.zip", digest, destination, revision="abc",
+                immutable_prefixes=("src", "tools"), opener=opener,
+            )
+            self.assertEqual(len(calls), 2)
+
+            # A symlink to an outside file with identical bytes must not be
+            # mistaken for the original regular file by the tree digest.
+            outside = root / "link-target"
+            outside.write_bytes(b"tool")
+            (destination / "tools/run.py").unlink()
+            try:
+                os.symlink("../link-target", destination / "tools/run.py")
+            except (AttributeError, OSError):
+                self.skipTest("symlinks are unavailable")
+            fetch_archive(
+                "https://example/repo.zip", digest, destination, revision="abc",
+                immutable_prefixes=("src", "tools"), opener=opener,
+            )
+            self.assertEqual(len(calls), 3)
+            self.assertFalse((destination / "tools/run.py").is_symlink())
+            self.assertEqual((destination / "tools/run.py").read_bytes(), b"tool")
+
     def test_flat_archive_extracts_font_files_at_root_and_reuses_marker(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); archive = root / "fonts.zip"

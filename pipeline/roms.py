@@ -13,6 +13,7 @@ from types import MappingProxyType
 from typing import Any, Callable
 
 from .project import is_frozen, project_config, resource_root, which_luajit
+from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE, normalize_engine_profile
 from .subprocess_run import run_streamed
 
 
@@ -179,10 +180,24 @@ SILVER_SHA1 = CANONICAL.get("silver")
 # downstream builders import the same constant rather than maintaining a
 # second, potentially divergent list.
 GS_REQUIRED_TSV = (
-    "gs_text.tsv", "gs_labels.tsv", "gs_stages.tsv", "gs_species.tsv",
-    "gs_moves.tsv", "gs_items.tsv",
+    "gs_text.tsv", "gs_labels.tsv", "gs_stages.tsv", "gs_rom_text.tsv",
+    "gs_species.tsv", "gs_moves.tsv", "gs_items.tsv", "gs_types.tsv",
     "gs_trainer_classes.tsv", "gs_landmarks.tsv",
 )
+
+# v0.2.41 has neither the public RomText registry nor the type-search
+# registry.  Keep both artifacts in the complete extractor contract for the
+# opt-in upstream overlay, while the published profile accepts the ordinary
+# Gold/Silver/Crystal extraction without requiring either upstream-only TSV.
+GS_PINNED_REQUIRED_TSV = tuple(
+    name for name in GS_REQUIRED_TSV
+    if name not in {"gs_rom_text.tsv", "gs_types.tsv"}
+)
+
+
+def gs_required_tsv(engine_profile: str | None = None) -> tuple[str, ...]:
+    profile = normalize_engine_profile(engine_profile)
+    return GS_REQUIRED_TSV if profile == UPSTREAM_PROFILE else GS_PINNED_REQUIRED_TSV
 
 
 def verify_gs_rom(path: str | Path) -> dict[str, Any]:
@@ -205,7 +220,11 @@ def verify_gs_rom(path: str | Path) -> dict[str, Any]:
     return {"version": version, "path": str(path.resolve()), "sha1": actual, "size": path.stat().st_size}
 
 
-def import_gs_rom(rom: str | Path, gen1recomp: str | Path, out: str | Path, log_fn: Callable[[str], None] | None = None) -> None:
+def import_gs_rom(
+    rom: str | Path, gen1recomp: str | Path, out: str | Path,
+    log_fn: Callable[[str], None] | None = None,
+    engine_profile: str = PINNED_PROFILE,
+) -> None:
     """Extract and atomically publish the Gold/Silver required TSV catalogs.
 
     Accepts either edition's ROM. verify_gs_rom() (above) is the one place
@@ -216,6 +235,7 @@ def import_gs_rom(rom: str | Path, gen1recomp: str | Path, out: str | Path, log_
     doesn't recompute the SHA-1 itself: love.data.hash isn't available under
     the headless tests/love_stub.lua this script runs under.)
     """
+    profile = normalize_engine_profile(engine_profile)
     info = verify_gs_rom(rom)
     root = Path(gen1recomp).resolve()
     rom = Path(rom).resolve()
@@ -227,11 +247,13 @@ def import_gs_rom(rom: str | Path, gen1recomp: str | Path, out: str | Path, log_
     script = resource_root() / "tools" / "gs_extract.lua"
     temporary = Path(tempfile.mkdtemp(prefix=f".{out.name}-", dir=out.parent))
     command = [luajit, str(script), str(root), str(rom), str(temporary), info["version"]]
+    if profile == UPSTREAM_PROFILE:
+        command.append(profile)
     try:
         run_streamed(command, log_fn=log_fn)
 
         missing = [
-            name for name in GS_REQUIRED_TSV
+            name for name in gs_required_tsv(profile)
             if not (temporary / name).is_file()
             or not (temporary / name).read_text(encoding="utf-8").strip()
         ]
@@ -282,7 +304,11 @@ def verify_crystal_rom(path: str | Path) -> dict[str, Any]:
     return {"version": "crystal", "path": str(path.resolve()), "sha1": actual, "size": path.stat().st_size}
 
 
-def import_crystal_rom(rom: str | Path, gen1recomp: str | Path, out: str | Path, log_fn: Callable[[str], None] | None = None) -> None:
+def import_crystal_rom(
+    rom: str | Path, gen1recomp: str | Path, out: str | Path,
+    log_fn: Callable[[str], None] | None = None,
+    engine_profile: str = PINNED_PROFILE,
+) -> None:
     """Extract and atomically publish Crystal's required TSV catalogs.
 
     Mirrors import_gs_rom(): same tools/gs_extract.lua script and the same
@@ -291,6 +317,7 @@ def import_crystal_rom(rom: str | Path, gen1recomp: str | Path, out: str | Path,
     just against verify_crystal_rom()'s single fixed fingerprint instead of
     Gold/Silver's either-of-two.
     """
+    profile = normalize_engine_profile(engine_profile)
     verify_crystal_rom(rom)
     root = Path(gen1recomp).resolve()
     rom = Path(rom).resolve()
@@ -302,11 +329,13 @@ def import_crystal_rom(rom: str | Path, gen1recomp: str | Path, out: str | Path,
     script = resource_root() / "tools" / "gs_extract.lua"
     temporary = Path(tempfile.mkdtemp(prefix=f".{out.name}-", dir=out.parent))
     command = [luajit, str(script), str(root), str(rom), str(temporary), "crystal"]
+    if profile == UPSTREAM_PROFILE:
+        command.append(profile)
     try:
         run_streamed(command, log_fn=log_fn)
 
         missing = [
-            name for name in GS_REQUIRED_TSV
+            name for name in gs_required_tsv(profile)
             if not (temporary / name).is_file()
             or not (temporary / name).read_text(encoding="utf-8").strip()
         ]

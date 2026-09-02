@@ -6,6 +6,10 @@ from pipeline.gs_index_join import (
     IndexedEntry, join_by_index, join_dex_entries, join_dex_entries_pages,
     join_landmarks, parse_indexed_catalog,
 )
+from pipeline.gs_localized_registries import (
+    decoration_catalog, phone_contact_catalog, radio_channel_catalog,
+    status_label_catalog, type_name_catalog,
+)
 
 
 class ParseIndexedCatalogTests(unittest.TestCase):
@@ -22,6 +26,100 @@ class ParseIndexedCatalogTests(unittest.TestCase):
             path.write_text("REAL\t5\tREAL\nUNUSED\tnil\tUNUSED\n", encoding="utf-8")
             entries = parse_indexed_catalog(path)
             self.assertEqual(entries, [IndexedEntry("REAL", 5, "REAL")])
+
+
+class LocalizedRegistryTests(unittest.TestCase):
+    def test_type_names_use_audited_search_indices_and_fallback_for_internal_types(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "gs_types.tsv"
+            path.write_text("FIRE\t20\tFIRE\nBIRD\t6\tBIRD\nCURSE_TYPE\t19\t???\n", encoding="utf-8")
+            catalog, stats = type_name_catalog(path, [
+                ("gs.search_strings.PokedexTypeSearchStrings.2", "FIRE@", "FEU@"),
+            ])
+            self.assertEqual(catalog, {"FIRE": "FEU"})
+            self.assertEqual(stats["total"], 3)
+            self.assertEqual(stats["fallback_english"], 2)
+
+    def test_status_labels_are_qid_anchored_and_toxic_reuses_poison_label(self):
+        catalog, stats = status_label_catalog([
+            ("gs.mon_stats.SlpString", "SLP@", "SOM@"),
+            ("gs.mon_stats.PsnString", "PSN@", "PSN@"),
+            ("gs.mon_stats.ParString", "PAR@", "PAR@"),
+            ("gs.mon_stats.BrnString", "BRN@", "BRU@"),
+            ("gs.mon_stats.FrzString", "FRZ@", "GEL@"),
+        ])
+        self.assertEqual(catalog["sleep"], "SOM")
+        self.assertEqual(catalog["poison"], "PSN")
+        self.assertEqual(catalog["toxic"], "PSN")
+        self.assertEqual(stats["translated"], 6)
+        self.assertEqual(stats["fallback_english"], 0)
+
+    def test_phone_contacts_only_patch_non_trainer_names(self):
+        catalog, stats = phone_contact_catalog([
+            ("gs.non_trainer_names.NonTrainerCallerNames.mom", "MOM@", "MAMAN@"),
+            ("gs.non_trainer_names.NonTrainerCallerNames.bill", "BILL@", "LEO@"),
+            ("gs.non_trainer_names.NonTrainerCallerNames.elm", "PROF.ELM@", "PROF.ORME@"),
+            ("gs.non_trainer_names.NonTrainerCallerNames.bikeshop", "BIKE SHOP@", "CYCLES@"),
+        ])
+        self.assertEqual(catalog["PHONE_MOM"], "MAMAN")
+        self.assertEqual(catalog["PHONE_OAK"], "CYCLES")
+        self.assertEqual(stats["total"], 33)
+        self.assertEqual(stats["translated"], 4)
+        self.assertEqual(stats["fallback_english"], 29)
+        self.assertEqual(stats["fallback_ids"], [])
+
+    def test_phone_contact_missing_corpus_row_is_backlog_only(self):
+        catalog, stats = phone_contact_catalog([
+            ("gs.non_trainer_names.NonTrainerCallerNames.mom", "MOM@", "MAMAN@"),
+        ])
+        self.assertEqual(catalog, {"PHONE_MOM": "MAMAN"})
+        self.assertEqual(set(stats["fallback_ids"]), {"PHONE_OAK", "PHONE_BILL", "PHONE_ELM"})
+        self.assertEqual(len(stats["backlog"]), 3)
+
+    def test_radio_channels_preserve_aliases_and_fallbacks(self):
+        catalog, stats = radio_channel_catalog([
+            ("gs.pokegear.OaksPKMNTalkName", "OAK's <PK><MN> Talk@", "CHRONIQUE<PKMN> CHEN@"),
+            ("gs.pokegear.LetsAllSingName", "Let's All Sing!@", "CHANTONS@"),
+        ])
+        self.assertEqual(catalog["OAKS_POKEMON_TALK"], "CHRONIQUEPOKéMON CHEN")
+        self.assertEqual(catalog["ROCKET_RADIO"], "CHANTONS")
+        self.assertNotIn("UNOWN_RADIO", catalog)
+        self.assertEqual(stats["total"], 10)
+        self.assertEqual(stats["fallback_english"], 7)
+        self.assertIn("UNOWN_RADIO", stats["fallback_ids"])
+        self.assertTrue(any(row["id"] == "UNOWN_RADIO" for row in stats["backlog"]))
+
+    def test_radio_fallbacks_match_engine_station_names(self):
+        catalog, stats = radio_channel_catalog([])
+        self.assertEqual(catalog, {})
+        self.assertEqual(stats["fallback_english"], 10)
+        self.assertEqual(len(stats["backlog"]), 10)
+
+    def test_decorations_map_authored_rows_to_deco_ids(self):
+        catalog, stats = decoration_catalog([
+            ("gs.names.DecorationNames.1", "CANCEL@", "RETOUR@"),
+            ("gs.names.DecorationNames.2", "PUT IT AWAY@", "RANGER@"),
+            ("gs.names.DecorationNames.19", "FEATHERY@", "A PLUMES@"),
+            ("gs.names.DecorationNames.21", "PINK@", ":ROSE@"),
+        ])
+        self.assertEqual(catalog["deco:0"], "RETOUR")
+        self.assertEqual(catalog["deco:1"], "RANGER")
+        self.assertEqual(catalog["deco:2"], "A PLUMES")
+        self.assertNotIn("deco:52", catalog)
+        self.assertEqual(len(stats["omitted_species_ids"]), 25)
+        self.assertTrue(set(stats["omitted_species_ids"]).isdisjoint(catalog))
+        # Species-backed rows must be resolved by the Pokémon registry;
+        # authored labels such as the trophy remain in this catalog.
+        self.assertTrue(all(key not in catalog for key in stats["omitted_species_ids"]))
+        self.assertEqual(stats["total"], 53)
+        self.assertGreater(stats["fallback_english"], 0)
+
+    def test_decoration_missing_corpus_rows_are_not_identity_patches(self):
+        catalog, stats = decoration_catalog([])
+        self.assertEqual(catalog, {})
+        self.assertNotIn("deco:0", catalog)
+        self.assertIn("deco:0", stats["fallback_ids"])
+        self.assertTrue(any(row["id"] == "deco:0" for row in stats["backlog"]))
 
 
 class JoinByIndexTests(unittest.TestCase):

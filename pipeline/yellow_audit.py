@@ -13,7 +13,7 @@ Red/Blue engine audit uses:
 - yellow-only: label absent from Red (Yellow layer only);
 - unmatched: no Yellow corpus translation (English fallback in Yellow);
 - deferred-engine: engine-authored Yellow-only strings (Surfing Pikachu
-  minigame, ``%s is refusing!``) not reachable through the dialogue layer;
+  minigame, ``%s\nis refusing!``) not reachable through the dialogue layer;
   their corpus qids are listed so a later engine-strings layer can wire them.
 
 No metric is folded into the Red/Blue engine coverage: Yellow counts stay
@@ -33,7 +33,7 @@ from .yellow import parse_text_catalog, yellow_dialogue_layer
 # overrides/<language>/rby/yellow_engine.json and the refusing message
 # is covered through the _RefusingText dialogue label.
 DEFERRED_ENGINE_STRINGS = [
-    {"engine_key": "%s is refusing!", "corpus_qid": "y.text_9.RefusingText", "status": "covered-by-dialogue-layer", "note": "romText fallback; _RefusingText label ships in dialogue_yellow.lua"},
+    {"engine_key": "%s\nis refusing!", "corpus_qid": "y.text_9.RefusingText", "status": "covered-by-dialogue-layer", "note": "RomText fallback; _RefusingText label ships in dialogue_yellow.lua"},
     {"engine_key": "%s looks\nunhappy about it!", "corpus_qid": "y.text_3.PikachuUnhappyText", "status": "manual-translation", "note": "rby/yellow_engine.json"},
     {"engine_key": "There isn't any\nresponse...", "corpus_qid": "y.text_3.SleepingPikachuText1", "status": "manual-translation", "note": "rby/yellow_engine.json"},
     {"engine_key": "PIKACHU looks\ncontent.", "corpus_qid": "y.text_7.LooksContentText", "status": "manual-translation", "note": "rby/yellow_engine.json; related row wording differs from the shorter engine text"},

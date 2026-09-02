@@ -2099,8 +2099,10 @@
       "decision_type": "composition",
       "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. The English naming-screen fragments compose YOUR NAME?; French, Spanish, and Italian YourTextString already contain the localized name label, while German and Japanese require NameTextString as a second target fragment.",
       "callsites": [
-        "src/ui/NamingScreen.lua:68",
-        "src/ui/OakSpeech.lua:151"
+        "src/ui/NamingScreen.lua:74",
+        "src/ui/OakSpeech.lua:190",
+        "src/ui/OakSpeech.lua:456",
+        "src/ui/gen2/NamingScreen.lua:92"
       ],
       "languages": [
         "fr",
@@ -2116,10 +2118,10 @@
       "trace_status": "reviewed",
       "languages_verified": true
     },
-    "HIS NAME?": {
+    "RIVAL's NAME?": {
       "anchor": {
-        "source_aliases": [
-          "RIVAL's NAME?"
+        "engine_keys": [
+          "HIS NAME?"
         ],
         "parts": [
           {
@@ -2144,9 +2146,10 @@
         "placeholders": {}
       },
       "decision_type": "composition",
-      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. The English corpus composes RIVAL's NAME?, which is declared as a source alias for the HIS NAME? engine key; French, Spanish, and Italian RivalsTextString already contain the localized name label, while German and Japanese require NameTextString as a second target fragment.",
+      "rationale": "Reviewed in fr, de, es, it, and ja-Hrkt. The English corpus composes RIVAL's NAME?, matching gen1recomp v0.2.41's renamed engine key; French, Spanish, and Italian RivalsTextString already contain the localized name label, while German and Japanese require NameTextString as a second target fragment.",
       "callsites": [
-        "src/ui/OakSpeech.lua:165"
+        "src/ui/OakSpeech.lua:220",
+        "src/ui/OakSpeech.lua:455"
       ],
       "languages": [
         "fr",

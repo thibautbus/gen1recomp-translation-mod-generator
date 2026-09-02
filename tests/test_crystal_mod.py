@@ -2,11 +2,16 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from pipeline.crystal_mod import (
-    crystal_text_catalog_from_join, join_crystal_dialogue,
+    crystal_feature_catalogs, crystal_text_catalog_from_join, join_crystal_dialogue,
+    join_crystal_rom_text, load_crystal_rom_text_anchors, parse_rom_text_catalog,
     load_crystal_dialogue_overrides, load_crystal_pointer_decisions,
 )
+from pipeline.crystal_registries import crystal_registry_catalogs
+from pipeline.crystal_strings import match_crystal_engine_strings
+from pipeline.engine_profile import PINNED_PROFILE
 from pipeline.gs_join import REVIEWED_QID, join_gs_pointers
 from pipeline.gs_text import GsTextRecord
 
@@ -73,12 +78,163 @@ class JoinCrystalDialogueTests(unittest.TestCase):
                 ("c.SiteA.HereYouGo", "Here you go!", "Tenez!"),
                 ("c.SiteB.HereYouGo", "Here you go!", "Voila!"),
             ])
-            from unittest.mock import patch
             with patch("pipeline.crystal_mod.load_crystal_pointer_decisions", return_value={"00:0001": "c.SiteA.HereYouGo"}):
                 entries, stats = join_crystal_dialogue(root / "extracted", root / "corpus", "fr")
             self.assertEqual(stats["reviewed_qid"], 1)
             self.assertEqual(entries[0].provenance, REVIEWED_QID)
             self.assertEqual(crystal_text_catalog_from_join(entries), {"00:0001": "Tenez!"})
+
+
+class CrystalFeatureCatalogTests(unittest.TestCase):
+    @staticmethod
+    def write_corpus(root: Path, rows: list[tuple[str, str, str]], language: str = "fr") -> None:
+        root.mkdir(parents=True, exist_ok=True)
+        (root / "qid_msg.txt").write_text("\n".join(row[0] for row in rows) + "\n", encoding="utf-8")
+        (root / "en_msg.txt").write_text("\n".join(row[1] for row in rows) + "\n", encoding="utf-8")
+        (root / f"{language}_msg.txt").write_text("\n".join(row[2] for row in rows) + "\n", encoding="utf-8")
+
+    def test_rom_text_parser_decodes_only_the_extractor_escape_contract(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "gs_rom_text.tsv"
+            path.write_text("_One\tLine\\nTwo\\tX\\\\Y\n", encoding="utf-8")
+            self.assertEqual(parse_rom_text_catalog(path), {"_One": "Line\nTwo\tX\\Y"})
+            path.write_text("_One\tbad\\q\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "invalid escape"):
+                parse_rom_text_catalog(path)
+
+    def test_joins_all_seven_crystal_rom_text_labels_by_reviewed_qid(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            labels = load_crystal_rom_text_anchors()
+            rows = []
+            extracted = []
+            for index, (label, qid) in enumerate(labels.items()):
+                source = f"Unique Crystal ROM text {index}."
+                target = f"Texte Cristal unique {index}."
+                extracted.append(f"{label}\t{source}")
+                rows.append((qid, source, target))
+            (root / "extracted").mkdir()
+            (root / "extracted" / "gs_rom_text.tsv").write_text(
+                "\n".join(extracted) + "\n", encoding="utf-8",
+            )
+            self.write_corpus(root / "corpus", rows)
+            catalog, stats = join_crystal_rom_text(root / "extracted", root / "corpus", "fr")
+            self.assertEqual(set(catalog), set(labels))
+            self.assertEqual(stats["translated"], 7)
+            self.assertEqual(stats["fallback_english"], 0)
+
+    def test_crystal_registry_catalog_is_exactly_four_items_one_class_one_landmark(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            extracted = root / "extracted"
+            extracted.mkdir()
+            (extracted / "gs_items.tsv").write_text(
+                "BLUE_CARD\t1\tBLUE CARD\nCLEAR_BELL\t2\tCLEAR BELL\n"
+                "EGG_TICKET\t3\tEGG TICKET\nGS_BALL\t4\tGS BALL\nPOTION\t5\tPOTION\n",
+                encoding="utf-8",
+            )
+            (extracted / "gs_trainer_classes.tsv").write_text(
+                "MYSTICALMAN\t1\tMYSTICALMAN\nBEAUTY\t2\tBEAUTY\n", encoding="utf-8",
+            )
+            (extracted / "gs_landmarks.tsv").write_text(
+                "LANDMARK_BATTLE_TOWER\t1\tBATTLE TOWER\nLANDMARK_AZALEA_TOWN\t2\tAZALEA TOWN\n",
+                encoding="utf-8",
+            )
+            self.write_corpus(root / "corpus", [
+                (f"c.names.ItemNames.{index}", english, target)
+                for index, english, target in (
+                    (1, "BLUE CARD", "CARTE BLEUE"), (2, "CLEAR BELL", "GLAS TRANSPARENT"),
+                    (3, "EGG TICKET", "TICKET OEUF"), (4, "GS BALL", "GS BALL"),
+                )
+            ] + [
+                ("c.class_names.TrainerClassNames.1", "MYSTICALMAN", "MYSTIQUE"),
+                ("c.landmarks.BattleTowerName", "BATTLE TOWER", "TOUR DE COMBAT"),
+            ])
+            catalogs, stats = crystal_registry_catalogs(extracted, root / "corpus", "fr")
+            self.assertEqual(set(catalogs["item_names"]), {"BLUE_CARD", "CLEAR_BELL", "EGG_TICKET", "GS_BALL"})
+            self.assertEqual(catalogs["trainer_class_names"], {"MYSTICALMAN": "MYSTIQUE"})
+            self.assertEqual(catalogs["landmarks"], {"LANDMARK_BATTLE_TOWER": "TOUR DE COMBAT"})
+            self.assertEqual(sum(section["translated"] for section in stats.values()), 6)
+
+    def test_absent_crystal_language_is_an_explicit_english_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            catalog, stats = match_crystal_engine_strings(Path(tmp), "ko")
+            self.assertEqual(catalog, {})
+            self.assertEqual(stats["total"], 48)
+            self.assertEqual(stats["fallback_english"], 48)
+            self.assertEqual(stats["policy"], "english-fallback")
+
+    def test_scanner_overrides_complete_the_specialized_crystal_match(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            corpus = Path(tmp)
+            self.write_corpus(corpus, [("c.fixture.Row", "A", "Traduit A")])
+            base_report = {
+                "translated": 1, "total": 2, "override": 0,
+                "details": {"A": "unique"}, "provenance": {},
+                "ambiguous": {}, "unmatched": ["B"],
+            }
+            with (
+                patch("pipeline.crystal_strings.load_gs_engine_scope_exclusions", return_value={"A", "B"}),
+                patch("pipeline.crystal_strings.load_engine_overrides", return_value={
+                    "B": {"override": "Traduit B", "reason": "engine-contract-gap", "provenance": "fixture"},
+                    "Gold only": {"override": "Hors périmètre", "reason": "fixture", "provenance": "fixture"},
+                }),
+                patch("pipeline.crystal_strings.match_engine_catalog") as matcher,
+                patch("pipeline.crystal_strings._load_selectors", return_value={}),
+            ):
+                matcher.return_value = ({"A": "Traduit A", "B": "Traduit B"}, base_report)
+                catalog, stats = match_crystal_engine_strings(corpus, "fr")
+            self.assertEqual(catalog, {"A": "Traduit A", "B": "Traduit B"})
+            self.assertEqual(matcher.call_args.kwargs["overrides"], {
+                "B": {"override": "Traduit B", "reason": "engine-contract-gap", "provenance": "fixture"},
+            })
+            self.assertEqual(stats["translated"], 2)
+            self.assertEqual(stats["catalog_kind"], "Crystal-exclusive Strings callsites")
+
+    def test_feature_metrics_keep_upstream_rom_text_out_of_the_54_entry_aggregate(self):
+        named_stats = {
+            "item_names": {"translated": 4, "total": 4},
+            "trainer_class_names": {"translated": 1, "total": 1},
+            "landmarks": {"translated": 1, "total": 1},
+        }
+        with (
+            patch("pipeline.crystal_mod.crystal_registry_catalogs", return_value=({}, named_stats)),
+            patch("pipeline.crystal_mod.join_crystal_rom_text", return_value=({}, {"translated": 7, "total": 7})),
+            patch("pipeline.crystal_mod.match_crystal_engine_strings", return_value=({}, {"translated": 48, "total": 48})),
+        ):
+            _catalogs, stats = crystal_feature_catalogs("unused", "unused", "fr")
+        self.assertEqual(stats["aggregate"], {
+            "translated": 54, "total": 54, "percent": 100.0,
+            "policy": "english-fallback",
+        })
+        self.assertEqual(stats["named_registries"], named_stats)
+        self.assertEqual(stats["engine_crystal"]["translated"], 48)
+        self.assertEqual(stats["rom_text"]["runtime_dependency"], "mod.content.rom_text")
+
+    def test_pinned_profile_keeps_the_54_autonomous_crystal_catalogs(self):
+        named = {
+            "item_names": {"BLUE_CARD": "CARTE"},
+            "trainer_class_names": {"MYSTICALMAN": "MYSTIQUE"},
+            "landmarks": {"LANDMARK_BATTLE_TOWER": "TOUR"},
+        }
+        named_stats = {
+            "item_names": {"translated": 4, "total": 4},
+            "trainer_class_names": {"translated": 1, "total": 1},
+            "landmarks": {"translated": 1, "total": 1},
+        }
+        strings = {f"Crystal {index}": f"Cristal {index}" for index in range(48)}
+        string_stats = {"translated": 48, "total": 48}
+        with (
+            patch("pipeline.crystal_mod.crystal_registry_catalogs", return_value=(named, named_stats)),
+            patch("pipeline.crystal_mod.match_crystal_engine_strings", return_value=(strings, string_stats)),
+        ):
+            catalogs, stats = crystal_feature_catalogs(
+                "unused", "unused", "fr", engine_profile=PINNED_PROFILE,
+            )
+        self.assertEqual(set(catalogs), {"item_names", "trainer_class_names", "landmarks", "strings"})
+        self.assertEqual(stats["aggregate"]["total"], 54)
+        self.assertNotIn("rom_text", catalogs)
+        self.assertEqual(stats["rom_text"]["runtime_dependency"], "not available in v0.2.41")
 
 
 class LoadCrystalPointerDecisionsTests(unittest.TestCase):
@@ -184,7 +340,6 @@ class LoadCrystalDialogueOverridesTests(unittest.TestCase):
             JoinCrystalDialogueTests.write_corpus(
                 root / "corpus", "fr", [("c.text.Other", "Something else.", "Autre chose.")],
             )
-            from unittest.mock import patch
             with patch(
                 "pipeline.crystal_mod.load_crystal_dialogue_overrides",
                 return_value={"18:6674": "Texte traduit sans corpus."},

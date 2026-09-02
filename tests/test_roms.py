@@ -9,11 +9,17 @@ from unittest.mock import patch
 from pipeline.project import project_config
 from pipeline.roms import (
     CANONICAL, CRYSTAL_SHA1, GS_REQUIRED_TSV, GOLD_SHA1, SILVER_SHA1, import_crystal_rom,
-    import_gs_rom, import_rom, verify_crystal_rom, verify_gs_rom, verify_rb_rom, verify_rom,
+    GS_PINNED_REQUIRED_TSV, import_gs_rom, import_rom, verify_crystal_rom,
+    verify_gs_rom, verify_rb_rom, verify_rom,
 )
+from pipeline.engine_profile import UPSTREAM_PROFILE
 
 
 class RomConfigTests(unittest.TestCase):
+    def test_gen2_import_contract_includes_rom_text_and_type_catalogs(self):
+        self.assertIn("gs_rom_text.tsv", GS_REQUIRED_TSV)
+        self.assertIn("gs_types.tsv", GS_REQUIRED_TSV)
+
     @staticmethod
     def write_config(
         root: Path,
@@ -264,6 +270,57 @@ class GsImportTests(unittest.TestCase):
         destination.mkdir(parents=True, exist_ok=True)
         for name in GS_REQUIRED_TSV:
             (destination / name).write_text("fixture\n", encoding="utf-8")
+
+    def test_pinned_gold_and_silver_imports_do_not_require_upstream_only_tsv(self):
+        self.assertNotIn("gs_rom_text.tsv", GS_PINNED_REQUIRED_TSV)
+        self.assertNotIn("gs_types.tsv", GS_PINNED_REQUIRED_TSV)
+        for import_function, verifier, version in (
+            (import_gs_rom, "verify_gs_rom", "gold"),
+            (import_gs_rom, "verify_gs_rom", "silver"),
+            (import_crystal_rom, "verify_crystal_rom", "crystal"),
+        ):
+            with self.subTest(version=version):
+                with tempfile.TemporaryDirectory() as tmp:
+                    root = Path(tmp)
+                    rom = root / f"{version}.gbc"
+                    out = root / "out"
+                    rom.write_bytes(b"fixture")
+                    def write_pinned_outputs(command, **_):
+                        destination = Path(command[-2])
+                        destination.mkdir(parents=True, exist_ok=True)
+                        for name in GS_PINNED_REQUIRED_TSV:
+                            (destination / name).write_text("fixture\n", encoding="utf-8")
+                    with (
+                        patch(f"pipeline.roms.{verifier}", return_value={"version": version}),
+                        patch("pipeline.roms.which_luajit", return_value="/usr/bin/luajit"),
+                        patch("pipeline.roms.resource_root", return_value=root),
+                        patch("pipeline.roms.subprocess.run", side_effect=write_pinned_outputs),
+                    ):
+                        if version == "crystal":
+                            import_function(rom, root / "engine", out)
+                        else:
+                            import_function(rom, root / "engine", out)
+                    self.assertTrue(out.is_dir())
+
+    def test_upstream_gold_import_still_requires_both_upstream_only_tsv(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            out = root / "out"
+            def write_outputs(command, **_):
+                destination = Path(command[-3])
+                destination.mkdir(parents=True, exist_ok=True)
+                for name in GS_REQUIRED_TSV:
+                    if name in {"gs_rom_text.tsv", "gs_types.tsv"}:
+                        continue
+                    (destination / name).write_text("fixture\n", encoding="utf-8")
+            with (
+                patch("pipeline.roms.verify_gs_rom", return_value={"version": "gold"}),
+                patch("pipeline.roms.which_luajit", return_value="/usr/bin/luajit"),
+                patch("pipeline.roms.resource_root", return_value=root),
+                patch("pipeline.roms.subprocess.run", side_effect=write_outputs),
+                self.assertRaisesRegex(RuntimeError, "gs_rom_text.tsv, gs_types.tsv"),
+            ):
+                import_gs_rom(root / "gold.gbc", root / "engine", out, engine_profile=UPSTREAM_PROFILE)
 
     def test_verify_gs_rom_accepts_the_canonical_gold_fingerprint(self):
         with tempfile.TemporaryDirectory() as tmp:
