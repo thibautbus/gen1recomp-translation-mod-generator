@@ -2,6 +2,9 @@
   "schema": "gen1recomp-translation-mods/engine-overrides",
   "version": 1,
   "entries": {
+    "1, 2 and…": {"override": "1, 2 et...", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."},
+    "Quit and\nbe judged.": {"override": "Quitter.", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."},
+    "Poof! %s forgot %s!": {"override": "Tadaa! %s oublie %s !", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from poke-corpus GoldSilver gs.common_3.MoveForgotText; gen1recomp combines the ROM's multi-page name/move sequence into one Strings() template with two %s, so the corpus's own wording is adapted to that single-message shape rather than matched automatically."},
     "#MON Music": {"override": "Musique POKéMON", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."},
     "%s is\nnot compatible\u000bwith %s.": {"override": "%s n'est\npas compatible\u000bavec %s.", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."},
     "%s knows\n%s.": {"override": "%s connaît\n%s.", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."},

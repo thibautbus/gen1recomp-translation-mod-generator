@@ -2,6 +2,9 @@
   "schema": "gen1recomp-translation-mods/engine-overrides",
   "version": 1,
   "entries": {
+    "1, 2 and…": {"override": "１　２の　……", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."},
+    "Quit and\nbe judged.": {"override": "いまの　じょうたいで\nひょうしょう　される", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."},
+    "Poof! %s forgot %s!": {"override": "ポカン！%sは%sを\nわすれた！", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from poke-corpus GoldSilver gs.common_3.MoveForgotText; gen1recomp combines the ROM's multi-page name/move sequence into one Strings() template with two %s, so the corpus's own wording is adapted to that single-message shape rather than matched automatically."},
     "#MON Music": {"override": "POKéミュージック", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."},
     "%s knows\n%s.": {"override": "%sは　すでに\n%sを　おぼえています", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."},
     "%s may go\nonly to BATTLE\nROOMS that are\nLv.70 or higher.": {"override": "%sは　レベル７０　いじょうの\nバトルルームにしか　さんかできません", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."},

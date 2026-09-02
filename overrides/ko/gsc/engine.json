@@ -2,6 +2,9 @@
   "schema": "gen1recomp-translation-mods/engine-overrides",
   "version": 1,
   "entries": {
+    "1, 2 and…": {"override": "1 2 ……", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."},
+    "Quit and\nbe judged.": {"override": "지금의 상태로\n표시하게 한다", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."},
+    "Poof! %s forgot %s!": {"override": "짠! %s는(은) %s를(을)\n잊었다!", "reason": "engine-contract-gap", "provenance": "Corpus-inspired from poke-corpus GoldSilver gs.common_3.MoveForgotText; gen1recomp combines the ROM's multi-page name/move sequence into one Strings() template with two %s, so the corpus's own wording is adapted to that single-message shape rather than matched automatically."},
     "Go! %s!": {"override": "가랏! %s!", "reason": "engine-contract-gap", "provenance": "Corpus automatic-adjacent from poke-corpus GoldSilver gs.common_1.GoMonText (real Gold ROM text); adapted to the engine's single combined %s template, matching the FR sibling entry's approach for this same string."},
     "%s gained %d EXP. Points!": {"override": "%s는(은) %d 경험치를 얻었다!", "reason": "engine-contract-gap", "provenance": "Composed from two poke-corpus GoldSilver fragments: gs.common_1.Text_Gained and gs.common_1.ExpPointsText, matching the FR sibling entry's approach for this same string."},
     "%s gained a boosted %d EXP. Points!": {"override": "%s는(은) 많은 양의 %d 경험치를 얻었다!", "reason": "engine-contract-gap", "provenance": "Composed from two poke-corpus GoldSilver fragments: gs.common_1.Text_Gained and gs.common_1.BoostedExpPointsText, matching the FR sibling entry's approach for this same string."},

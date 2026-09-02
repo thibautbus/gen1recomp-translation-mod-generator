@@ -9,7 +9,14 @@ from pipeline.gs_engine import load_gs_engine_fallbacks
 
 
 LANGUAGES = ("fr", "de", "es", "it", "ja-Hrkt", "ko")
-NEW_ENTRY_COUNT = 550
+# 550 at the batch's own genesis, +1: a later, unrelated upstream commit
+# (v0.2.51) split "1, 2 and… %s forgot %s!" -- one of the original 550 --
+# into two separate Strings() calls ("1, 2 and…" plus a new "Poof! %s
+# forgot %s!" carrying the two printf args the combined key used to). Both
+# now stand in for that one original batch slot in
+# config/gsc/new_engine_set_v0241.json, so the frozen count grows by
+# exactly the one key this split actually added.
+NEW_ENTRY_COUNT = 551
 # The corpus confirms AM/PM as the English source in these locales.  They are
 # intentionally omitted from those override tables so the runtime does not
 # carry a pointless identity override; the complete-set check accounts for

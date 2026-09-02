@@ -4,7 +4,7 @@
   "policy": "fallbacks are tracked but never emitted as runtime overrides",
   "languages": {
     "de": {
-      "total": 215,
+      "total": 214,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -265,11 +265,6 @@
           "override": "%s.",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: ambiguous corpus candidates; no translation invented."
-        },
-        "1, 2 and… %s forgot %s!": {
-          "override": "1, 2 and… %s forgot %s!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
         "1X": {
           "override": "1X",
@@ -1192,7 +1187,7 @@
       "no_op_total": 13
     },
     "es": {
-      "total": 205,
+      "total": 204,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -1443,11 +1438,6 @@
           "override": "%s.",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: ambiguous corpus candidates; no translation invented."
-        },
-        "1, 2 and… %s forgot %s!": {
-          "override": "1, 2 and… %s forgot %s!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
         "1X": {
           "override": "1X",
@@ -2314,7 +2304,7 @@
       "no_op_total": 11
     },
     "fr": {
-      "total": 211,
+      "total": 210,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -2570,11 +2560,6 @@
           "override": "%s.",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: ambiguous corpus candidates; no translation invented."
-        },
-        "1, 2 and… %s forgot %s!": {
-          "override": "1, 2 and… %s forgot %s!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
         "1X": {
           "override": "1X",
@@ -3486,7 +3471,7 @@
       "no_op_total": 13
     },
     "it": {
-      "total": 207,
+      "total": 206,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -3732,11 +3717,6 @@
           "override": "%s.",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: ambiguous corpus candidates; no translation invented."
-        },
-        "1, 2 and… %s forgot %s!": {
-          "override": "1, 2 and… %s forgot %s!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
         "1X": {
           "override": "1X",
@@ -4609,7 +4589,7 @@
       "no_op_total": 10
     },
     "ja-Hrkt": {
-      "total": 218,
+      "total": 217,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -4880,11 +4860,6 @@
           "override": "%s.",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: ambiguous corpus candidates; no translation invented."
-        },
-        "1, 2 and… %s forgot %s!": {
-          "override": "1, 2 and… %s forgot %s!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
         "1X": {
           "override": "1X",
@@ -5767,7 +5742,7 @@
       "no_op_total": 8
     },
     "ko": {
-      "total": 227,
+      "total": 226,
       "entries": {
         "    lined up!\nWon %d coins!": {
           "override": "    lined up!\nWon %d coins!",
@@ -6078,11 +6053,6 @@
           "override": "%s.",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: ambiguous corpus candidates; no translation invented."
-        },
-        "1, 2 and… %s forgot %s!": {
-          "override": "1, 2 and… %s forgot %s!",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
         "1X": {
           "override": "1X",
