@@ -1164,6 +1164,44 @@ class BuilderTests(unittest.TestCase):
             self.assertEqual(fetch.call_args.kwargs["selective_prefix"], "corpus/RedBlue")
             self.assertEqual(fetch.call_args.kwargs["immutable_prefixes"], ("src", "tools"))
 
+    def test_merge_engine_overrides_rejects_a_key_present_in_more_than_one_layer(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = root / "engine.json"
+            upstream = root / "engine_upstream.json"
+            base.write_text(json.dumps({
+                "schema": "gen1recomp-translation-mods/engine-overrides", "version": 1,
+                "entries": {"HELLO": {"override": "Bonjour", "reason": "engine-corpus", "provenance": "x"}},
+            }), encoding="utf-8")
+            upstream.write_text(json.dumps({
+                "schema": "gen1recomp-translation-mods/engine-overrides", "version": 1,
+                "entries": {"HELLO": {"override": "Salut", "reason": "engine-corpus", "provenance": "y"}},
+            }), encoding="utf-8")
+            with self.assertRaisesRegex(builder.BuildError, "HELLO"):
+                builder._merge_engine_overrides(base, upstream, destination_dir=root, strict=True)
+            # Non-strict (the default, used for the shared/Yellow layering)
+            # keeps its own deliberate later-wins contract instead.
+            destination = builder._merge_engine_overrides(base, upstream, destination_dir=root)
+            merged = json.loads(destination.read_text(encoding="utf-8"))
+            self.assertEqual(merged["entries"]["HELLO"]["override"], "Salut")
+
+    def test_merge_engine_overrides_combines_disjoint_layers(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = root / "engine.json"
+            upstream = root / "engine_upstream.json"
+            base.write_text(json.dumps({
+                "schema": "gen1recomp-translation-mods/engine-overrides", "version": 1,
+                "entries": {"HELLO": {"override": "Bonjour", "reason": "engine-corpus", "provenance": "x"}},
+            }), encoding="utf-8")
+            upstream.write_text(json.dumps({
+                "schema": "gen1recomp-translation-mods/engine-overrides", "version": 1,
+                "entries": {"GOODBYE": {"override": "Au revoir", "reason": "engine-corpus", "provenance": "y"}},
+            }), encoding="utf-8")
+            destination = builder._merge_engine_overrides(base, upstream, destination_dir=root)
+            merged = json.loads(destination.read_text(encoding="utf-8"))
+            self.assertEqual(set(merged["entries"]), {"HELLO", "GOODBYE"})
+
 
 if __name__ == "__main__":
     unittest.main()

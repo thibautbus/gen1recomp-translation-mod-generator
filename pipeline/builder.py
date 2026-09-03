@@ -452,14 +452,39 @@ def _yellow_engine_overrides_path(language: str) -> Path | None:
     return _language_override_path(language, "rby", "yellow_engine.json")
 
 
-def _merge_engine_overrides(*paths: Path | None, destination_dir: Path | None = None, name: str = "merged_engine_overrides.json") -> Path | None:
-    """Merge shared engine override files into one temporary JSON."""
+def _merge_engine_overrides(
+    *paths: Path | None, destination_dir: Path | None = None,
+    name: str = "merged_engine_overrides.json", strict: bool = False,
+) -> Path | None:
+    """Merge shared engine override files into one temporary JSON.
+
+    Later layers win over earlier ones by default -- this is the shared/
+    Yellow-specific layering's own deliberate contract (a Yellow-only
+    wording legitimately shadows the shared default for the same key).
+
+    ``strict=True`` instead rejects any key present in more than one layer:
+    for the RBY engine.json/engine_upstream.json pairing, a key present in
+    both is not a deliberate override, it is a real authoring mistake (e.g.
+    a translator fixing engine.json's wording while a stale copy lingers in
+    engine_upstream.json) that would otherwise resolve silently by file
+    order -- the same class of overlap gs_engine.py's
+    match_gs_engine_strings() already rejects between overrides and
+    fallback_entries.
+    """
     from .engine import ENGINE_SCHEMA, load_engine_overrides
     merged: dict = {}
     for path in paths:
         if path is None:
             continue
-        merged.update(load_engine_overrides(path))
+        layer = load_engine_overrides(path)
+        if strict:
+            overlap = sorted(set(merged) & set(layer))
+            if overlap:
+                raise BuildError(
+                    f"engine override layers disagree on {len(overlap)} key(s), present in more "
+                    f"than one of {[str(p) for p in paths if p is not None]}: {overlap!r}"
+                )
+        merged.update(layer)
     if not merged:
         return None
     destination = (destination_dir or resource_root() / ".cache" / "tmp") / name
@@ -1133,6 +1158,7 @@ def build(
             *_rby_engine_override_paths(language, engine_profile),
             destination_dir=workspace / "tmp",
             name=f"merged_engine_overrides_{language}.json",
+            strict=True,
         ),
         semantic_anchors=resource_root() / "config" / "rby" / "semantic_anchors.json",
         semantic_anchor_decisions=resource_root() / "config" / "rby" / "semantic_anchor_decisions.json",
