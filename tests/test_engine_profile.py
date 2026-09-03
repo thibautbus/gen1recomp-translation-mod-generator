@@ -2,6 +2,7 @@ import unittest
 
 from pipeline.engine_profile import (
     PINNED_PROFILE, UPSTREAM_PROFILE, normalize_engine_profile, profile_for,
+    validate_engine_profile_and_source,
 )
 from pipeline.roms import GS_REQUIRED_TSV, gs_required_tsv
 
@@ -34,6 +35,18 @@ class EngineProfileTests(unittest.TestCase):
         self.assertTrue(profile_for(PINNED_PROFILE).supports_engine_strings)
         self.assertTrue(profile_for(UPSTREAM_PROFILE).supports_engine_strings)
         self.assertIn("gs_rom_text.tsv", GS_REQUIRED_TSV)
+
+    def test_validate_engine_profile_and_source_rejects_both_mismatches(self):
+        # Shared by builder.build() and gs_mod.build_gs(), which each catch
+        # this ValueError and re-raise it as their own BuildError.
+        with self.assertRaisesRegex(ValueError, "upstream-local.*engine-source.*checkout"):
+            validate_engine_profile_and_source(UPSTREAM_PROFILE, None)
+        with self.assertRaisesRegex(ValueError, "engine_source.*upstream-local"):
+            validate_engine_profile_and_source(PINNED_PROFILE, "/some/checkout")
+        self.assertEqual(validate_engine_profile_and_source(PINNED_PROFILE, None), PINNED_PROFILE)
+        self.assertEqual(
+            validate_engine_profile_and_source(UPSTREAM_PROFILE, "/some/checkout"), UPSTREAM_PROFILE,
+        )
 
 
 if __name__ == "__main__":

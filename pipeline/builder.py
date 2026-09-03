@@ -39,7 +39,9 @@ from .subprocess_run import run_streamed
 from .rom_paths import configured_path, load_rom_paths
 from .specs import game_spec, languages_for_collection, release_profile, release_profile_for_generation
 from .specs import BuildRequest
-from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE, normalize_engine_profile
+from .engine_profile import (
+    PINNED_PROFILE, UPSTREAM_PROFILE, normalize_engine_profile, validate_engine_profile_and_source,
+)
 
 
 def languages_for_generation(generation: int) -> tuple[tuple[str, str], ...]:
@@ -899,16 +901,10 @@ def build(
             log_fn(message)
 
     language = canonical_language(language)
-    engine_profile = normalize_engine_profile(engine_profile)
-    if engine_profile == UPSTREAM_PROFILE:
-        if engine_source is None:
-            raise BuildError(
-                "the upstream-local engine profile requires an explicit --engine-source checkout"
-            )
-    elif engine_source is not None:
-        raise BuildError(
-            "engine_source requires the explicit 'upstream-local' engine profile"
-        )
+    try:
+        engine_profile = validate_engine_profile_and_source(engine_profile, engine_source)
+    except ValueError as exc:
+        raise BuildError(str(exc)) from exc
     profile = release_profile("rby")
     if not profile.corpus_collections:
         raise BuildError("RBY release profile has no supported corpus collection")

@@ -49,6 +49,27 @@ def profile_for(value: str | None) -> EngineProfile:
     return PROFILES[normalize_engine_profile(value)]
 
 
+def validate_engine_profile_and_source(engine_profile: str, engine_source: str | Path | None) -> str:
+    """Validate the engine_profile/engine_source pairing every build entry
+    point (builder.build(), gs_mod.build_gs()) requires identically.
+
+    Raises ValueError -- callers that need a BuildError (the CLI-facing
+    ones) catch it and re-raise with the same message, keeping this helper
+    free of a dependency on builder.py's BuildError.
+    """
+    profile = normalize_engine_profile(engine_profile)
+    if profile == UPSTREAM_PROFILE:
+        if engine_source is None:
+            raise ValueError(
+                "the upstream-local engine profile requires an explicit --engine-source checkout"
+            )
+    elif engine_source is not None:
+        raise ValueError(
+            "engine_source requires the explicit 'upstream-local' engine profile"
+        )
+    return profile
+
+
 def validate_upstream_checkout(path: str | Path) -> Path:
     """Validate a local developer checkout without turning it into a pin."""
     root = Path(path).resolve()

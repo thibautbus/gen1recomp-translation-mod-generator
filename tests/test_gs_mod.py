@@ -7,10 +7,10 @@ import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
-from pipeline.builder import _which_luajit
+from pipeline.builder import BuildError, _which_luajit
 from pipeline.gs_join import GsJoinEntry, NO_MATCH, UNIQUE
 from pipeline.gs_mod import (
-    attach_gs_validation, build_gs_dialogue_mod, gs_archive_name,
+    attach_gs_validation, build_gs, build_gs_dialogue_mod, gs_archive_name,
     gs_mod_id, gs_oak_speech_catalog_from_join,
     gs_text_catalog_from_join, generate_gs_mod, package_gs_mod,
     run_gs_release_gates,
@@ -998,6 +998,44 @@ class GsUiLabelsTests(unittest.TestCase):
         labels = _gs_ui_labels(corpus_rows)
         self.assertEqual(labels["POKéMON\ndatabase"], "Index\nPOKéMON")
         self.assertEqual(labels["Contains\nitems"], "Contient\nobjets")
+
+
+class BuildGsEngineSourceTests(unittest.TestCase):
+    """build_gs() must mirror builder.build()'s engine_source/engine_profile
+    contract: both directions of the mismatch are rejected, and a supplied
+    checkout actually reaches prepare_build_context() instead of being
+    silently dropped in favor of the pinned dependency."""
+
+    def _call(self, **kwargs):
+        return build_gs(
+            Path("missing-gold.gbc"), Path("missing-crystal.gbc"), "fr", "French", "luajit",
+            **kwargs,
+        )
+
+    def test_upstream_profile_requires_an_explicit_checkout(self):
+        with self.assertRaisesRegex(BuildError, "upstream-local.*engine-source.*checkout"):
+            self._call(engine_profile=UPSTREAM_PROFILE)
+
+    def test_engine_source_requires_the_upstream_profile(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(BuildError, "engine_source.*upstream-local"):
+                self._call(engine_source=Path(directory))
+
+    def test_engine_source_reaches_prepare_build_context(self):
+        captured = {}
+
+        def fake_prepare_build_context(*args, **kwargs):
+            captured.update(kwargs)
+            raise RuntimeError("stop after capturing prepare_build_context's arguments")
+
+        with tempfile.TemporaryDirectory() as directory:
+            engine = Path(directory)
+            with patch("pipeline.orchestration.prepare_build_context", side_effect=fake_prepare_build_context), \
+                    patch("pipeline.gs_mod.verify_gs_rom"), \
+                    patch("pipeline.gs_mod.verify_crystal_rom"):
+                with self.assertRaisesRegex(RuntimeError, "stop after capturing"):
+                    self._call(engine_profile=UPSTREAM_PROFILE, engine_source=engine)
+        self.assertEqual(captured.get("engine_source"), engine)
 
 
 if __name__ == "__main__":

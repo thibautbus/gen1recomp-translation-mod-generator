@@ -33,7 +33,10 @@ from .tokens import corpus_to_engine
 from .mod import TRANSLATION_MOD_PRIORITY, install_font_assets, ttf_registration, validate_font_profile
 from .project import is_frozen, project_config, project_version, resource_root
 from .specs import game_spec, release_profile
-from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE, normalize_engine_profile, profile_for, validate_upstream_checkout
+from .engine_profile import (
+    PINNED_PROFILE, UPSTREAM_PROFILE, normalize_engine_profile, profile_for,
+    validate_engine_profile_and_source,
+)
 
 MAIN = '''-- Generated Gold translation mod.
 return function(mod)
@@ -1193,7 +1196,10 @@ def build_gs(
             log_fn(message)
 
     language = canonical_language(language)
-    engine_profile = normalize_engine_profile(engine_profile)
+    try:
+        engine_profile = validate_engine_profile_and_source(engine_profile, engine_source)
+    except ValueError as exc:
+        raise BuildError(str(exc)) from exc
     profile = release_profile("gsc")
     spec = game_spec("gs")
     if spec.corpus_collection not in profile.corpus_collections:
@@ -1207,18 +1213,13 @@ def build_gs(
     context = prepare_build_context(
         workspace_root, output_dir, profile=profile, language=language,
         font_profile=font_profile,
+        engine_source=engine_source,
     )
     workspace = context.workspace
     destination = context.destination
 
     status("Preparing dependencies")
     gen1recomp, corpus, font_source = context.gen1recomp, context.corpus, context.font_source
-    if engine_profile == UPSTREAM_PROFILE:
-        if engine_source is None:
-            raise BuildError(
-                "the upstream-local engine profile requires an explicit --engine-source checkout"
-            )
-        gen1recomp = validate_upstream_checkout(engine_source)
     corpus_gold_silver = corpus / "corpus" / "GoldSilver"
     corpus_crystal = corpus / "corpus" / "Crystal"
 
