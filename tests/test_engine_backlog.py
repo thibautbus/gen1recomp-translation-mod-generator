@@ -243,6 +243,16 @@ class EngineBacklogTests(unittest.TestCase):
         finally:
             tmp.cleanup()
 
+    def test_romtext_two_argument_shorthand_with_a_dynamic_label(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); (root / "src").mkdir()
+            (root / "src" / "calls.lua").write_text(
+                'local x = RomText(labels[i], "fallback text")\n',
+                encoding="utf-8",
+            )
+            calls = iter_romtext_fallback_callsites(root)
+            self.assertEqual([item["source"] for item in calls], ["fallback text"])
+
     def test_missing_coverage_is_an_english_error(self):
         tmp, root, checkout, corpus, coverage, catalog = self._fixture()
         try:

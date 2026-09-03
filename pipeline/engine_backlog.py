@@ -312,13 +312,27 @@ def iter_romtext_callsites(checkout: str | Path) -> list[dict[str, Any]]:
                 continue
             arguments, end = parsed
             callee = match.group("callee")
-            # Method calls receive self implicitly.  Function calls normally
-            # receive data first, but the two-argument shorthand is useful in
-            # fixtures and remains compatible with RomText's contract.
-            label_index = 0 if ":" in callee else (
-                0 if arguments and _literal_argument(raw, cleaned, arguments[0]) is not None
-                else 1
-            )
+            # Method calls receive self implicitly: arguments[0] is the label.
+            if ":" in callee:
+                label_index = 0
+            # Function calls normally receive data first
+            # (data, label, fallback, ...), and either form may carry
+            # trailing varargs, so 3+ arguments is genuinely ambiguous
+            # between "shorthand plus varargs" and "full form" -- guess from
+            # whether the first argument is a literal, same as before.
+            elif len(arguments) != 2:
+                label_index = 0 if arguments and _literal_argument(raw, cleaned, arguments[0]) is not None else 1
+            # Exactly two arguments is not ambiguous, though: the full form
+            # needs at least three, so two arguments can only be the
+            # (label, fallback) shorthand, regardless of whether label
+            # happens to be a literal. The previous version kept using the
+            # literal guess even here, so a dynamic label
+            # (RomText(labels[i], "fallback")) read the real fallback as the
+            # label, found no third argument, and silently dropped the row
+            # -- exactly what this function's docstring says a RomText
+            # callsite must never do.
+            else:
+                label_index = 0
             fallback_index = label_index + 1
             if fallback_index >= len(arguments):
                 continue
