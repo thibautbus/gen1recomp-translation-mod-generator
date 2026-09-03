@@ -1294,7 +1294,18 @@ def match_engine_catalog(catalog: Iterable[EngineEntry | str], records: Iterable
                 or _normal(source_piece, bare_dynamic_tokens=bare) in alias_norms
                 or _normal(source, bare_dynamic_tokens=bare) in alias_norms
                 # ``engine_keys`` identify alternate catalogue keys for the
-                # same reviewed anchor (for example a key renamed upstream).
+                # same reviewed anchor (for example a key renamed upstream,
+                # where the old and new spellings share no text similarity
+                # at all -- RIVAL's NAME?/HIS NAME? is a real example). This
+                # is deliberately a bypass of the text-similarity checks
+                # above, not an additional one: anchor_for() (this function's
+                # only caller) already requires ``source`` to be a member of
+                # this exact anchor's engine_keys/context_keys before ever
+                # reaching here, so this restates that membership rather than
+                # independently re-verifying content. There is intentionally
+                # no re-check against corpus drift once an engine_keys alias
+                # is reviewed; that trust is the same one source_aliases and
+                # every other human-reviewed anchor already carries.
                 or source in engine_keys
                 or _normal(source, bare_dynamic_tokens=bare) in engine_key_norms
             )
