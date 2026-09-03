@@ -221,6 +221,28 @@ class EngineBacklogTests(unittest.TestCase):
         finally:
             tmp.cleanup()
 
+    def test_upstream_local_profile_accepts_the_checkouts_own_revision(self):
+        tmp, root, checkout, corpus, coverage, catalog = self._fixture()
+        try:
+            data = json.loads(coverage.read_text())
+            data["engine"]["source_revision"] = "local-unversioned"
+            coverage.write_text(json.dumps(data), encoding="utf-8")
+            # The pinned profile (the default) still expects the pin's own
+            # revision, so this same snapshot is correctly rejected there.
+            with self.assertRaisesRegex(ValueError, "source_revision"):
+                analyze_engine_backlog("fr", root=root, checkout=checkout, corpus_root=corpus,
+                                       coverage_path=coverage, engine_catalog=catalog)
+            # Under the upstream-local profile, a snapshot stamped with the
+            # checkout's own (here unversioned) revision is expected, not the
+            # pin -- this is the workflow engine_fallbacks.json/
+            # engine_launch_batch.json exist to support.
+            report = analyze_engine_backlog("fr", root=root, checkout=checkout, corpus_root=corpus,
+                                            coverage_path=coverage, engine_catalog=catalog,
+                                            engine_profile="upstream-local")
+            self.assertEqual(report["language"], "fr")
+        finally:
+            tmp.cleanup()
+
     def test_missing_coverage_is_an_english_error(self):
         tmp, root, checkout, corpus, coverage, catalog = self._fixture()
         try:
@@ -351,6 +373,27 @@ class EngineBacklogTests(unittest.TestCase):
             matrix = analyze_engine_backlog_matrix(languages=["de", "fr"], coverage_paths={"de": "d", "fr": "f"}, engine_catalog_paths={"de": "d", "fr": "f"})
         self.assertEqual(matrix["entries"][0]["triage"], "rby-review")
         self.assertEqual(matrix["stats"]["triage"]["common-rby"], 0)
+
+    def test_cli_exposes_engine_profile_for_backlog_and_matrix(self):
+        captured = {}
+
+        def fake_backlog(language, **kwargs):
+            captured["single"] = kwargs.get("engine_profile")
+            return {"language": language or "fr", "stats": {}}
+
+        def fake_matrix(**kwargs):
+            captured["matrix"] = kwargs.get("engine_profile")
+            return {"languages": [], "stats": {}}
+
+        with patch("pipeline.cli.run_backlog", side_effect=fake_backlog):
+            status = cli_main(["engine-backlog", "--engine-profile", "upstream-local"])
+        self.assertEqual(status, 0)
+        self.assertEqual(captured["single"], "upstream-local")
+
+        with patch("pipeline.cli.run_backlog_matrix", side_effect=fake_matrix):
+            status = cli_main(["engine-backlog-matrix", "--languages", "fr", "--engine-profile", "upstream-local"])
+        self.assertEqual(status, 0)
+        self.assertEqual(captured["matrix"], "upstream-local")
 
     def test_matrix_cli_rejects_duplicate_aliases_and_dir_mapping_conflicts(self):
         cases = [

@@ -1,7 +1,10 @@
+import tempfile
 import unittest
 
+from unittest.mock import patch
+
 from pipeline.engine_profile import (
-    PINNED_PROFILE, UPSTREAM_PROFILE, normalize_engine_profile, profile_for,
+    PINNED_PROFILE, UPSTREAM_PROFILE, checkout_revision, normalize_engine_profile, profile_for,
     validate_engine_profile_and_source,
 )
 from pipeline.roms import GS_REQUIRED_TSV, gs_required_tsv
@@ -35,6 +38,20 @@ class EngineProfileTests(unittest.TestCase):
         self.assertTrue(profile_for(PINNED_PROFILE).supports_engine_strings)
         self.assertTrue(profile_for(UPSTREAM_PROFILE).supports_engine_strings)
         self.assertIn("gs_rom_text.tsv", GS_REQUIRED_TSV)
+
+    def test_checkout_revision_is_memoized_per_resolved_path(self):
+        # A multilingual matrix run calls this once per language against the
+        # same checkout; it must not spawn a redundant git subprocess each
+        # time for a value that cannot change within one run. A fresh temp
+        # directory keeps this test's cache key from colliding with any
+        # other test's (the cache is process-wide, keyed by resolved path).
+        with tempfile.TemporaryDirectory() as directory:
+            with patch("subprocess.check_output", return_value="deadbeef\n") as run:
+                first = checkout_revision(directory)
+                second = checkout_revision(directory)
+            self.assertEqual(first, "deadbeef")
+            self.assertEqual(second, "deadbeef")
+            run.assert_called_once()
 
     def test_validate_engine_profile_and_source_rejects_both_mismatches(self):
         # Shared by builder.build() and gs_mod.build_gs(), which each catch

@@ -30,6 +30,7 @@ from .engine import (
 )
 from .project import ROOT, project_config
 from .tokens import corpus_to_engine
+from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE, checkout_revision, normalize_engine_profile
 from .engine_scope import classify_catalog, engine_dynamic_values, forced_dynamic_keys, load_scope, coverage_metadata
 from .join import ENGINE_CATALOG_EXTRA_KEYS
 
@@ -555,6 +556,7 @@ def analyze_engine_backlog(
     corpus_root: str | Path | None = None,
     coverage_path: str | Path | None = None,
     engine_catalog: str | Path | None = None,
+    engine_profile: str = PINNED_PROFILE,
 ) -> dict[str, Any]:
     """Build a deterministic in-memory backlog report for one language."""
     root = Path(root)
@@ -600,12 +602,21 @@ def analyze_engine_backlog(
     ):
         raise ValueError(f"engine coverage report has no engine section: {coverage_path}")
     engine_report = coverage.get("engine") if isinstance(coverage.get("engine"), dict) else coverage
-    expected_revision = scope.get("gen1recomp_revision")
+    # An upstream-local coverage snapshot is legitimately stamped with its
+    # checkout's own local git HEAD (match_gs_engine_strings via
+    # checkout_revision()), not the pinned manifest revision -- comparing it
+    # against the pin unconditionally would block the exact upstream-local
+    # audit workflow this function exists to support.
+    if normalize_engine_profile(engine_profile) == UPSTREAM_PROFILE:
+        expected_revision = checkout_revision(checkout)
+    else:
+        expected_revision = scope.get("gen1recomp_revision")
     snapshot_revision = engine_report.get("source_revision") if isinstance(engine_report, dict) else None
     if snapshot_revision != expected_revision:
         raise ValueError(
-            "engine coverage snapshot source_revision does not match the pinned "
-            f"Gen1Recomp revision: expected {expected_revision}, got {snapshot_revision}"
+            "engine coverage snapshot source_revision does not match the "
+            f"expected revision for the {engine_profile!r} profile: "
+            f"expected {expected_revision}, got {snapshot_revision}"
         )
     unmatched = engine_report.get("unmatched", []) if isinstance(engine_report, dict) else []
     ambiguous = engine_report.get("ambiguous", {}) if isinstance(engine_report, dict) else {}
@@ -872,6 +883,7 @@ def analyze_engine_backlog_matrix(
     engine_catalog_paths: Mapping[str, str | Path] | str | Path | None = None,
     coverage_dir: str | Path | None = None,
     engine_catalog_dir: str | Path | None = None,
+    engine_profile: str = PINNED_PROFILE,
 ) -> dict[str, Any]:
     """Analyze the canonical language backlogs and join them by engine key.
 
@@ -901,6 +913,7 @@ def analyze_engine_backlog_matrix(
             corpus_root=corpus_root,
             coverage_path=coverage_path,
             engine_catalog=catalog_path,
+            engine_profile=engine_profile,
         )
 
     by_language = {

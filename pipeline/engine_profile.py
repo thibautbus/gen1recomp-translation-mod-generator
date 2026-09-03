@@ -8,6 +8,7 @@ be present in the workspace.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 import subprocess
 
@@ -80,13 +81,26 @@ def validate_upstream_checkout(path: str | Path) -> Path:
     return root
 
 
-def checkout_revision(path: str | Path) -> str:
-    """Return an informational local revision, never written to project config."""
+@lru_cache(maxsize=32)
+def _checkout_revision_cached(resolved_path: str) -> str:
     try:
         value = subprocess.check_output(
-            ["git", "-C", str(Path(path).resolve()), "rev-parse", "HEAD"],
+            ["git", "-C", resolved_path, "rev-parse", "HEAD"],
             text=True, stderr=subprocess.DEVNULL,
         ).strip()
     except (OSError, subprocess.CalledProcessError):
         return "local-unversioned"
     return value or "local-unversioned"
+
+
+def checkout_revision(path: str | Path) -> str:
+    """Return an informational local revision, never written to project config.
+
+    Memoized per resolved path: a multilingual matrix run
+    (analyze_engine_backlog_matrix) otherwise calls this once per language
+    against the identical checkout, spawning a redundant ``git`` subprocess
+    each time for a value that cannot change within one run. Safe to cache,
+    unlike verified_source(): this is a plain informational HEAD read with
+    no integrity/tampering check to keep fresh across calls.
+    """
+    return _checkout_revision_cached(str(Path(path).resolve()))
