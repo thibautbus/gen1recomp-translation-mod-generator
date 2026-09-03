@@ -15,18 +15,19 @@ entrypoint = ROOT / ("build_translation_gui.py" if variant == "gui" else "build_
 runtime = ROOT / "packaging" / "runtime" / "luajit"
 datas = []
 binaries = []
-for relative in (
-    "config/pipeline.toml", "config/shared/engine_manifest.json", "config/rby/engine_scope.json",
-    "config/rby/terminology_anchors.json", "config/rby/semantic_anchors.json", "config/rby/semantic_anchor_decisions.json",
-    "config/rby/literal_handlers.json", "config/rby/yellow_coverage_exceptions.json",
-    "config/gsc/semantic_anchors.json", "config/gsc/pointer_decisions.json",
-    "config/gsc/literal_handlers.json", "config/gsc/placeholder_decisions.json",
-    "config/gsc/silver_pointer_aliases.json",
-    "config/rom_paths.example.toml",
-    "pyproject.toml",
-):
+for relative in ("pyproject.toml",):
     source = ROOT / relative
     datas.append((str(source), str(Path(relative).parent)))
+# Naming every config/{rby,gsc,shared} file individually has already fallen
+# out of sync with real releases more than once as new engine/Crystal config
+# files landed. Bundle the whole config/ tree instead -- except
+# config/rom_paths.toml, the gitignored file holding the packager's own
+# private local ROM paths -- so a future addition here does not silently
+# repeat the same gap, the same reasoning already applied to overrides/ and
+# tools/ below.
+for source in (ROOT / "config").rglob("*"):
+    if source.is_file() and source.name != "rom_paths.toml":
+        datas.append((str(source), str(source.parent.relative_to(ROOT))))
 for source in (ROOT / "overrides").rglob("*"):
     if source.is_file() and source.name != "rom_paths.toml":
         datas.append((str(source), str(source.parent.relative_to(ROOT))))
