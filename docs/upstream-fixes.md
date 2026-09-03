@@ -221,6 +221,23 @@ Two things this same sweep confirmed should **not** change:
   order or stop fragmenting the sentence, not just a `romText()` label
   swap, so they stay as compromise entries until a template-level upstream
   fix is worth doing.
+- **Swept for the same reversed-argument bug class found in GSC's
+  `overrides/<language>/gsc/engine.json`** (see "Stat-change and item/
+  move status messages" below): every `Strings()`/`S()` call outside
+  `gen2`/`link` with two or more `printf` directives was checked against
+  its real callsite argument order and poke-corpus RedBlue/Yellow text
+  in fr/de/es/it/ja-Hrkt (real build output,
+  `.cache/interactive/<language>/mod/lang/strings.lua`, not just this
+  file's ~1 explicit override -- most of RBY's translated content
+  resolves automatically through the semantic-anchor/corpus-match
+  mechanism rather than a manually-curated override, unlike GSC's
+  hand-curated compromise entries). Found clean: `"%s learned\n%s!"`,
+  `"%s is\nabout to use\v%s!"`, and the stat-rise/fall family above are
+  all already POKéMON/TRAINER-first in every language, matching their
+  callsite argument order. `"%s\nwas afflicted\nby %s!"` and the two
+  `"%s received..."` messages resolve to nothing in every language
+  checked (an untranslated coverage gap, not a wrong-order bug) --
+  out of scope for this sweep.
 
 ### Fixed upstream: pokered dialogue labels were missing from data/generated/text.lua
 
@@ -1119,6 +1136,173 @@ existing two fixed lines. That is a real interaction-flow change (an extra
 button press, for every language including English), materially bigger and
 riskier than `fix/translate-gold-title-and-save-menus`'s Strings()-wrapping
 scope, so it was deliberately left out of that branch. Not attempted yet.
+
+**Stat-change and item/move status messages (10 entries, `overrides/<language>/gsc/engine.json`
+for fr/es/it; 6 of the 10 also affected de) -- POKéMON name forced first by
+the engine, not by the corpus:** `Effects.stageMessage()` and
+`Battle:changeStage()`/`Battle.lua`'s disabled/activated/PP-reduction
+messages all call `Strings(source, name, label)` with the POKéMON's own
+name as the *first* `printf` argument, always -- but the real ROM's
+fr/es/it localizations put the stat/move/item name *first* instead, joined
+to the POKéMON name with "de"/"di" (`"<STAT> de <POKéMON> diminue !"`,
+confirmed against poke-corpus GoldSilver directly, e.g.
+`gs.common_2.BattleStatFellText`/`gs.battle.DisabledMoveText`). Lua's
+`string.format` (the implementation behind `Strings.get()`,
+`src/core/Strings.lua`) binds each `%s` to the *next* vararg in call order,
+not by where it's written in the template, so that word order can never be
+reproduced from a `Strings(source, name, label)` callsite -- only a
+`Strings(source, label, name)` callsite (an upstream engine change) could.
+
+An earlier revision of these entries assumed the wrong thing: that the
+corpus simply had no match at all, and that name-then-stat was this
+message's "own" argument order, matching engine siblings like `"%s's %s was
+reduced by %d!"`. Direct verification against the real corpus found the
+opposite: a real, validated match *does* exist, it's just unreachable given
+the engine's fixed argument order -- and the previously-shipped `"%s's %s
+won't rise anymore!"`/`"%s's %s won't drop anymore!"` entries (tagged
+`engine-corpus`, i.e. claimed validated) had silently inherited the same
+reversed word order from an automatic corpus match that only checks
+placeholder *count*, not which runtime argument each placeholder is
+semantically bound to -- shipping "POKéMON de STAT" instead of the corpus's
+real "STAT de POKéMON". Found via a player report of `"HERICENDRE de
+DEFENSE diminue!"` in a real French Gold/Silver build. All ten entries
+below were rephrased to keep the engine's forced POKéMON-first order while
+staying natural in each language, the same technique already used for
+`"%s's %s\nrose!"` in the RBY table above.
+
+German needed the smaller fix of the six: its real corpus phrasing for
+plain fell/rose already puts the POKéMON name first via an attached
+genitive `-s` (`"<POKéMON>s <STAT> sinkt!"`, matching the engine's argument
+order exactly and already used correctly by this file's own
+`"activated!"`/`"is DISABLED!"` entries) -- only `won't rise/drop anymore!`
+used a reversed `"von"` construction and needed the same genitive-s
+treatment. Japanese and Korean were never affected: their possessive
+grammar (`の`/`의`) is head-first, so the corpus's own word order already
+matches the engine's forced argument order.
+
+For the plain fell/sharply fell/rose/sharply rose entries specifically,
+checking RBY's own equivalent messages
+(`MoveEffects.lua`'s `changeStage`, `rb.text_3.RoseText`/`FellText`/
+`GreatlyRoseText`/`GreatlyFellText`) paid off differently per language:
+
+- **fr**: RBY's real official corpus phrasing for this exact same
+  semantic event is already POKéMON-first (`"<POKéMON>\ngagne <STAT>!"`/
+  `"...perd <STAT>!"`) -- reused verbatim instead of the invented
+  "voit sa ... diminuer/augmenter" phrasing from an earlier revision of
+  this entry, since real official text beats an authored compromise
+  whenever the two are compatible. Confirmed this project's own RBY build
+  already ships exactly this text (`.cache/interactive/fr/mod/lang/strings.lua`).
+- **es/it**: checked RBY's own es/it corpus for the same messages and
+  found it reverses the exact same way GoldSilver's does (`"<STAT>
+  de/di <POKéMON>..."`) -- so there is no compatible official phrasing to
+  borrow here either. Aligned instead with this project's own existing
+  editorial-compromise wording for the equivalent RBY messages
+  (`overrides/es/rby/engine.json`'s `"¡%s\nsu %s subió/bajó!"`,
+  `overrides/it/rby/engine.json`'s `"%s\n%s sale/cala!"`) rather than
+  inventing a third, inconsistent phrasing for the same underlying event.
+- **de**: unaffected by this reconsideration, already fixed above.
+
+| Source | fr override | it/es/de equivalent | Why |
+|---|---|---|---|
+| `%s's %s fell!` | `%s\nperd %s!` | it: `%s\n%s cala!` / es: `¡%s\nsu %s bajó!` / de: `%ss\n%s\x0bsinkt!` | fr/de: real official corpus phrasing for this event, already POKéMON-first (RBY's for fr, GSC's own for de); es/it: RBY's own corpus reverses the same way GSC's does, so aligned with this project's existing RBY editorial compromise instead |
+| `%s's %s sharply fell!` | `%s\nperd %s\nà fond!` | it: `%s\n%s\ncala molto!` / es: `¡%s\nsu %s\nbajó mucho!` / de: `%ss\n%s\x0bsinkt stark!` | Same as above |
+| `%s's %s rose!` | `%s\ngagne %s!` | it: `%s\n%s sale!` / es: `¡%s\nsu %s subió!` / de: `%ss\n%s\x0bsteigt!` | Same as above |
+| `%s's %s sharply rose!` | `%s\ngagne %s\nà fond!` | it: `%s\n%s\nsale molto!` / es: `¡%s\nsu %s\nsubió mucho!` / de: `%ss\n%s\x0bsteigt stark!` | Same as above |
+| `%s's %s won't rise anymore!` | `%s voit sa\n%s\x0bne plus augmenter!` | it: `%s non può più\nfar salire %s!` / es: `¡%s no puede subir\nmás su %s!` / de: `%ss\n%s\x0bsteigt nicht mehr!` | No RBY equivalent (Gen1 has no "won't rise/drop anymore" message); corpus puts the stat first, de's own corpus phrasing also reverses (`"von"`), unlike its plain fell/rose |
+| `%s's %s won't drop anymore!` | `%s voit sa\n%s\x0bne plus diminuer!` | it: `%s non può più\nfar calare %s!` / es: `¡%s no puede bajar\nmás su %s!` / de: `%ss\n%s\x0bsinkt nicht mehr!` | Same as above |
+| `%s's %s activated!` | `%s\nvoit %s\x0bs'activer!` | it: `%s vede\n%s attivarsi!` / es: `¡%s ve activarse\nsu %s!` | No RBY equivalent (item-activation message is Gen2-only); corpus puts the item first (`ITEM de/di POKéMON: activé!`); de already had the correct genitive-s order, unchanged |
+| `%s's %s is DISABLED!` | `%s ne peut plus\nutiliser %s:\x0bENTRAVE!` | it: `%s non può più\nusare %s:\nBLOCCATO!` / es: `¡%s ya no puede\nusar %s:\nBLOQUEADO!` | No RBY equivalent (move-disable message is Gen2-only); corpus puts the move first; de already had the correct genitive-s order, unchanged |
+| `%s's %s was disabled!` | (same as `is DISABLED!`) | (same as `is DISABLED!`) | Same as above |
+| `%s's %s was reduced by %d!` | `%s voit les PP de\n%s\x0bbaisser de %d!` | it: `%s perde PP di\n%s: -%d!` / es: `¡%s pierde PP de\n%s: -%d!` | No RBY equivalent (PP-reduction via Spite is Gen2-only); corpus puts the move first; de already had the correct order (`"%s's\n%s..."`), unchanged |
+
+Fixed on `fix/gsc-stat-message-word-order`.
+
+**A wider follow-up audit turned up five more instances of the same
+underlying bug class**, this time in messages whose two dynamic entities
+are attacker/target (not POKéMON/stat) -- confirming the automatic
+matcher's blind spot (checks placeholder count, not which runtime
+argument each one is semantically bound to) is not limited to the
+POKéMON's-name-forced-first shape:
+
+- **`"%s's hurt by %s!"`** (`Battle.lua:5126`, `Strings(source, monName,
+  moveName)`, POKéMON first): de and it's real corpus reverses (`"<MOVE>
+  schadet/ha effetto su <POKéMON>!"`, move first) -- previously shipped
+  literally, reading "POKéMON schadet MOVE!"/"POKéMON ha effetto su
+  MOVE!" (POKéMON hurts the move, backwards). Fixed to `de: "%s\nleidet
+  unter\x0b%s!"` / `it: "%s\nsubisce\x0b%s!"` (fr/es/ja-Hrkt/ko were
+  already POKéMON-first and correct).
+- **`"%s used BIND on %s!"`** (`Battle.lua:2659`, `Strings(source, user,
+  target)`, user first): de's real corpus reverses (`"<TARGET> erleidet
+  Schaden durch <USER>s KLAMMERGRIFF!"`, target first) -- previously
+  shipped literally, reading "<USER> erleidet Schaden durch <TARGET>s
+  KLAMMERGRIFF!" (implying the user, not the target, is the one being
+  bound). Fixed to `"%s\nhält %s\nmit KLAMMERGRIFF fest!"`.
+- **`"%s was WRAPPED by %s!"`/`"%s was CLAMPED by %s!"`**
+  (`Battle.lua:2662`/`2665`, `Strings(source, target, user)`, target
+  first): it's real corpus uses active voice with the user first
+  (`"<USER> ha usato AVVOLGIBOTTA/TENAGLIA su <TARGET>!"`) -- previously
+  shipped literally, reading "<TARGET> ha usato .../su <USER>!" (implying
+  the target, not the user, is doing the wrapping/clamping). Fixed to a
+  passive construction that keeps the target first, matching this
+  project's own fr/es/de overrides for the same messages:
+  `"%s\nè avvolto da\x0b%s!"` / `"%s\nè stretto da\x0b%s!"`.
+- **The Crystal PokéSeer trade-origin flavor line**
+  (`"Hm… %s\ncame from %s\x0bin a trade?\x0c%s\nwas where %s\x0bmet
+  %s!"`, `crystal_extras.lua:424`, `Strings(source, name, ot, place, ot,
+  name)`, five arguments in a fixed `nickname, OT, location, OT,
+  nickname` order): this is the worst instance found -- de/es/it's real
+  Crystal corpus text reorders all five dynamic segments differently
+  from English/fr (moving the location to the very end instead of the
+  middle, and doubling up the OT/nickname mentions in a different
+  sequence), so the previous overrides, which just quoted that reordered
+  text positionally, produced genuinely incoherent output: wrong names
+  and the wrong location in most of the five slots once substituted
+  through the engine's fixed argument order. No compatible official
+  phrasing existed to reuse (unlike the RBY-borrowing case above), so new
+  sentences were composed for de/es/it using the same
+  `nickname, OT, location, OT, nickname` order as English/fr:
+  `de: "Hm… %s\nkam von %s\x0cim Tausch?\x0c%s\nwar, wo %s\x0c%s
+  traf!"`, `es: "Hm… %s\nvino de %s\x0cen un intercambio?\x0c%s\nfue
+  donde %s\x0cconoció a %s!"`, `it: "Hm… %s\nè arrivato da %s\x0ccon uno
+  scambio?\x0c%s\nè dove %s\x0cha incontrato %s!"`.
+
+The rest of `overrides/<language>/gsc/engine.json`'s ~40 remaining
+two-or-more-argument entries were checked against poke-corpus GoldSilver/
+Crystal too (sequential-narration shapes like `"%s sent out %s!"`, `"%s
+identified %s!"`, `"%s TRANSFORMED into %s!"`, the PokéSeer's other
+lines, and currency/number-only shapes like `"%s got %s%d for
+winning!"`) and found already correctly ordered in every language --
+these are messages where the two entities appear in the same relative
+order across languages (an active-voice sentence with two different
+POKéMON, or a name next to a plain number), so there was nothing to
+translate incompatibly with the engine's fixed argument order in the
+first place.
+
+**A second pass extended the same corpus cross-referencing to
+ja-Hrkt/ko** (only spot-checked for the first batch, on the theory that
+their head-first possessive grammar makes them structurally immune --
+true for every POKéMON/stat and POKéMON/item message, but not for
+`"%s used BIND on %s!"`): both languages' real corpus phrasing for this
+move is the same target-topic-first passive construction used for the
+sibling WRAPPED/CLAMPED entries (`"<TARGET>は/는(은) <USER>に/에게
+しめつけられた/조이기를 당했다!"`), which happens to match WRAPPED/
+CLAMPED's `(target, user)` call order but not BIND's own `(user,
+target)` call order (`Battle.lua:2659`) -- so both previously shipped
+the attacker and the one being bound swapped, the same mistake as de's
+BIND entry above. Rewritten as active-voice sentences that keep the
+user first: `ja-Hrkt: "%sが %sに\nしめつけた！"`, `ko: "%s이(가)
+%s를(을)\n조였다!"`.
+
+Also checked (and found already correct) while this was open:
+ja-Hrkt's existing five-argument PokéSeer trade-line override, which
+turned out to already correctly adapt to the engine's `(nickname, OT,
+location, OT, nickname)` call order (`"ふむ……\nこの%sは %sと\x0cこう
+かんした POKéMONじゃな？\x0c%sで\n%sが %sと\x0bであった！"`,
+provenance already recorded this as a deliberate adaptation) -- ko has
+no override for that key at all yet (untranslated, a coverage gap
+rather than a wrong-order bug, left alone).
+
+Fixed on `fix/gsc-stat-message-word-order`.
 
 ### Required upstream capabilities
 
