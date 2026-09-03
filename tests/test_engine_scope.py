@@ -88,8 +88,17 @@ class EngineScopeTests(unittest.TestCase):
         checkout = Path(".cache/dependencies/gen1recomp")
         if not checkout.is_dir():
             self.skipTest("pinned Gen1Recomp checkout is unavailable")
-        source_keys = {row.get("source") for row in iter_callsites(checkout)}
-        self.assertEqual({"NAME", "ATTACK", "DEFENSE", "SPEED", "SPECIAL"} <= source_keys, True)
+        callsites = list(iter_callsites(checkout))
+        source_keys = {row.get("source") for row in callsites}
+        stat_keys = {"NAME", "ATTACK", "DEFENSE", "SPEED", "SPECIAL"}
+        self.assertEqual(stat_keys <= source_keys, True)
+        # A future engine_scope.json/classify_catalog change that misclassifies
+        # these five stat-name keys would otherwise ship undetected: literal
+        # discovery alone doesn't prove they're still eligible for translation.
+        classified = classify_catalog(stat_keys, callsites, scope)
+        for key in stat_keys:
+            self.assertEqual(classified[key]["eligibility"], "eligible", key)
+            self.assertNotEqual(classified[key].get("provenance"), "forced_dynamic", key)
 
     def test_engine_dynamic_values_keep_their_scope(self):
         result = classify_catalog(["FAST", "balanced", "ADAPTIVE"], [], load_scope())
