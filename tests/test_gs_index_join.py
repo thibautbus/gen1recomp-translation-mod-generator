@@ -1,3 +1,4 @@
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -7,8 +8,8 @@ from pipeline.gs_index_join import (
     join_landmarks, parse_indexed_catalog,
 )
 from pipeline.gs_localized_registries import (
-    decoration_catalog, phone_contact_catalog, radio_channel_catalog,
-    status_label_catalog, type_name_catalog,
+    DECORATION_ATTR_NAMES, decoration_catalog, phone_contact_catalog,
+    radio_channel_catalog, status_label_catalog, type_name_catalog,
 )
 
 
@@ -395,6 +396,34 @@ class JoinLandmarksTests(unittest.TestCase):
         ]
         with self.assertRaisesRegex(ValueError, "conflicting landmark translations"):
             join_landmarks(landmarks, rows)
+
+
+class DecorationAttrNamesMatchTheLiveEngineTests(unittest.TestCase):
+    """DECORATION_NAME_QIDS/DECORATION_ATTR_NAMES (gs_localized_registries.py)
+    are a hand-transcribed, position-indexed snapshot of the upstream
+    engine's own src/core/gen2/Decorations.lua ATTRIBUTES table, with no
+    extractor and no other runtime check against the live engine source
+    (unlike gs_species.tsv/gs_items.tsv/gs_types.tsv, which have real
+    extractors). If a future gen1recomp revision reorders, inserts, or
+    removes a row there, decoration_catalog() would keep mapping deco_id to
+    stale qid/English text with no build-time error -- this test is that
+    error, re-parsing the real pinned checkout's own source directly."""
+
+    def test_decoration_attr_names_matches_the_pinned_checkouts_attributes_table(self):
+        checkout = Path(".cache/dependencies/gen1recomp")
+        source = checkout / "src" / "core" / "gen2" / "Decorations.lua"
+        if not source.is_file():
+            self.skipTest("pinned Gen1Recomp checkout is unavailable")
+        text = source.read_text(encoding="utf-8")
+        match = re.search(r"local ATTRIBUTES = \{(.*?)\n\}", text, re.DOTALL)
+        self.assertIsNotNone(match, "Decorations.lua's ATTRIBUTES table shape has changed")
+        names = re.findall(r'deco\([A-Z]+,\s*"([^"]*)"', match.group(1))
+        self.assertEqual(
+            names, list(DECORATION_ATTR_NAMES),
+            "gs_localized_registries.DECORATION_ATTR_NAMES is out of sync with the "
+            "pinned engine's own Decorations.lua ATTRIBUTES table; update the hardcoded "
+            "snapshot (and DECORATION_NAME_QIDS/DECORATION_NAME_ENGLISH alongside it).",
+        )
 
 
 if __name__ == "__main__":
