@@ -1,0 +1,24 @@
+{
+  "schema": "gen1recomp-translation-mods/gs-type-search-indices",
+  "version": 1,
+  "description": "Gen 2 type ids mapped to the official Pokédex type-search corpus row index. BIRD and CURSE_TYPE are intentionally absent: they have no player-facing type-search row and retain the extracted English fallback.",
+  "types": {
+    "NORMAL": 1,
+    "FIRE": 2,
+    "WATER": 3,
+    "GRASS": 4,
+    "ELECTRIC": 5,
+    "ICE": 6,
+    "FIGHTING": 7,
+    "POISON": 8,
+    "GROUND": 9,
+    "FLYING": 10,
+    "PSYCHIC_TYPE": 11,
+    "BUG": 12,
+    "ROCK": 13,
+    "GHOST": 14,
+    "DRAGON": 15,
+    "DARK": 16,
+    "STEEL": 17
+  }
+}

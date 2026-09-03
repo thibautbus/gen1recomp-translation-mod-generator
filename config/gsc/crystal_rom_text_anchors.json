@@ -1,0 +1,14 @@
+{
+  "schema": "gen1recomp-translation-mods/crystal-rom-text-anchors",
+  "version": 1,
+  "description": "Crystal-only RomText labels and their authoritative PokeCorpus rows. This file contains selectors only, never translated prose.",
+  "labels": {
+    "_AreYouABoyOrAreYouAGirlText": "c.common_2.AreYouABoyOrAreYouAGirlText",
+    "_BattleTowerReturnWhenReadyText": "c.common_3.BattleTowerReturnWhenReadyText",
+    "_ExcuseMeYoureNotReadyText": "c.common_3.ExcuseMeYoureNotReadyText",
+    "_OnlyThreeMonMayBeEnteredText": "c.common_3.OnlyThreeMonMayBeEnteredText",
+    "_TheMonMustAllBeDifferentKindsText": "c.common_3.TheMonMustAllBeDifferentKindsText",
+    "_TheMonMustNotHoldTheSameItemsText": "c.common_3.TheMonMustNotHoldTheSameItemsText",
+    "_YouCantTakeAnEggText": "c.common_3.YouCantTakeAnEggText"
+  }
+}

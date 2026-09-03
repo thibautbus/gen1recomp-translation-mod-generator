@@ -207,7 +207,17 @@ def verified_source(checkout: str | Path, scope: Mapping[str, Any] | None = None
         if not src.is_dir():
             raise ValueError(f"engine archive has no {scope.get('source_subdir', 'src')}/ directory: {root}")
         from .dependencies import _tree_digest
-        if _tree_digest(src) != expected_tree:
+        configured_prefixes = metadata.get("immutable_prefixes")
+        if configured_prefixes is None:
+            # Markers written before immutable-prefix metadata was added used
+            # the selected source subtree as their trust boundary.
+            immutable_prefixes = (str(scope.get("source_subdir", "src")),)
+        elif (not isinstance(configured_prefixes, list) or
+              not all(isinstance(prefix, str) and prefix for prefix in configured_prefixes)):
+            raise ValueError("Gen1Recomp archive marker has invalid immutable prefixes")
+        else:
+            immutable_prefixes = tuple(configured_prefixes)
+        if _tree_digest(archive_root, immutable_prefixes) != expected_tree:
             raise ValueError("Gen1Recomp archive source tree was modified")
         return src, archive_root, revision
     src = source_root(checkout, scope)
@@ -219,8 +229,9 @@ def verified_source(checkout: str | Path, scope: Mapping[str, Any] | None = None
     if revision != scope["gen1recomp_revision"]:
         raise ValueError(f"Gen1Recomp revision mismatch: expected {scope['gen1recomp_revision']}, got {revision}")
     try:
+        integrity_paths = [str(scope["source_subdir"]), "tools"]
         dirty = subprocess.check_output(
-            ["git", "-C", str(git_root), "status", "--porcelain", "--untracked-files=all", "--", str(scope["source_subdir"])],
+            ["git", "-C", str(git_root), "status", "--porcelain", "--untracked-files=all", "--", *integrity_paths],
             text=True,
             stderr=subprocess.STDOUT,
         )
@@ -232,7 +243,7 @@ def verified_source(checkout: str | Path, scope: Mapping[str, Any] | None = None
 
 
 def iter_callsites(checkout: str | Path) -> list[dict[str, Any]]:
-    """Collect production ``Strings`` callsites and rendered romText fallbacks."""
+    """Collect production literal ``Strings`` and all literal RomText fallbacks."""
     # Imported lazily to keep this module independent of backlog analysis.
     from .engine_backlog import iter_literal_strings_callsites, iter_romtext_fallback_callsites
     src = source_root(checkout)

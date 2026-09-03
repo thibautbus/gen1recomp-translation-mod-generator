@@ -7,16 +7,17 @@ import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
-from pipeline.builder import _which_luajit
+from pipeline.builder import BuildError, _which_luajit
 from pipeline.gs_join import GsJoinEntry, NO_MATCH, UNIQUE
 from pipeline.gs_mod import (
-    attach_gs_validation, build_gs_dialogue_mod, gs_archive_name,
+    attach_gs_validation, build_gs, build_gs_dialogue_mod, gs_archive_name,
     gs_mod_id, gs_oak_speech_catalog_from_join,
     gs_text_catalog_from_join, generate_gs_mod, package_gs_mod,
     run_gs_release_gates,
 )
 from pipeline.gs_mod import _gs_ui_labels, _write_dialogue_gate_expectation, _write_gate_expectations
 from pipeline.project import project_version
+from pipeline.engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE
 
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE_ROOT = ROOT / ".cache" / "dependencies" / "gen1recomp"
@@ -110,6 +111,29 @@ class GenerateGsModTests(unittest.TestCase):
             manifest = json.loads((mod_dir / "manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["games"], ["gold", "silver", "crystal"])
             self.assertFalse((mod_dir / "lang" / "dialogue_crystal.lua").exists())
+
+    def test_crystal_feature_catalogs_are_written_behind_the_crystal_guard(self):
+        crystal_catalogs = {
+            "strings": {"Crystal only": "Cristal seulement"},
+            "rom_text": {"_CrystalOnlyText": "Texte Cristal"},
+            "item_names": {"BLUE_CARD": "CARTE BLEUE"},
+            "trainer_class_names": {"MYSTICALMAN": "MYSTIQUE"},
+            "landmarks": {"LANDMARK_BATTLE_TOWER": "TOUR DE COMBAT"},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            mod_dir = generate_gs_mod(
+                Path(tmp) / "mod", language="fr", crystal_catalogs=crystal_catalogs,
+            )
+            manifest = json.loads((mod_dir / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["games"], ["gold", "silver", "crystal"])
+            for name in crystal_catalogs:
+                self.assertTrue((mod_dir / "lang" / f"crystal_{name}.lua").is_file())
+            main = (mod_dir / "main.lua").read_text(encoding="utf-8")
+            self.assertIn('GameVersion.get() == "crystal"', main)
+            self.assertIn("mod.content.rom_text:override(id, value)", main)
+            self.assertIn("mod.content.items:patch(id, { name = value })", main)
+            self.assertIn("mod.content.trainers:patch(id, { name = value })", main)
+            self.assertIn("mod.content.landmarks:patch(id, { name = value })", main)
 
     def test_silver_dex_text_writes_a_conditional_layer_over_golds(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -205,7 +229,8 @@ class GsReleaseGateFlowTests(unittest.TestCase):
                 _write_gate_expectations(Path(tmp) / "mod", {})
             catalogs = {name: {"ID": "VALUE"} for name in (
                 "strings", "species_names", "species_kinds", "species_dex_text", "species_dex_text2", "move_names",
-                "item_names", "trainer_class_names", "landmarks", "oak_speech",
+                "item_names", "trainer_class_names", "landmarks", "type_names",
+                "status_labels", "oak_speech",
             )}
             catalogs["landmarks"] = {}
             with self.assertRaisesRegex(RuntimeError, "empty"):
@@ -231,7 +256,8 @@ class GsReleaseGateFlowTests(unittest.TestCase):
                     mod, entries, engine, sys.executable,
                     catalogs={name: {"ID": "X"} for name in (
                         "strings", "species_names", "species_kinds", "species_dex_text", "species_dex_text2", "move_names",
-                        "item_names", "trainer_class_names", "landmarks", "oak_speech",
+                        "item_names", "trainer_class_names", "landmarks", "type_names",
+                        "status_labels", "oak_speech",
                     )},
                     log_fn=log_fn,
                 )
@@ -270,10 +296,18 @@ class GsReleaseGateFlowTests(unittest.TestCase):
                     "translated": 1, "total": 2, "percent": 50.0,
                     "source_revision": "abc", "scope": "gen2",
                 },
+                "crystal": {
+                    "engine_crystal": {
+                        "translated": 48, "total": 48, "percent": 100.0,
+                        "policy": "english-fallback",
+                    },
+                    "aggregate": {"translated": 54, "total": 54, "percent": 100.0},
+                },
             }
             catalogs = {name: {"ID": "X"} for name in (
                 "strings", "species_names", "species_kinds", "species_dex_text", "species_dex_text2", "move_names",
-                "item_names", "trainer_class_names", "landmarks", "oak_speech",
+                "item_names", "trainer_class_names", "landmarks", "type_names",
+                "status_labels", "oak_speech",
             )}
             with patch("pipeline.gs_mod._run"):
                 # See the same-shaped call above: _run is mocked, so this
@@ -289,6 +323,8 @@ class GsReleaseGateFlowTests(unittest.TestCase):
             "translated": 2, "total": 4, "percent": 50.0, "source_revision": "abc",
         })
         self.assertNotIn("details", manifest_coverage["engine"])
+        self.assertEqual(manifest_coverage["crystal"]["engine_crystal"]["translated"], 48)
+        self.assertEqual(manifest_coverage["crystal"]["aggregate"]["total"], 54)
 
     def test_validation_provenance_is_attached_deterministically(self):
         validation = {
@@ -321,12 +357,25 @@ class GsReleaseGateFlowTests(unittest.TestCase):
             "item_names": {"AMULET_COIN": "PIECE RUNE"},
             "trainer_class_names": {"BEAUTY": "CANON"},
             "landmarks": {"LANDMARK_AZALEA_TOWN": "ECORCIA"},
+            "type_names": {"FIRE": "FEU"},
+            "status_labels": {"sleep": "SOM"},
             "oak_speech": {"_OakText1": "Bienvenue dans le monde des POKéMON !"},
+        }
+        crystal_catalogs = {
+            "strings": {"Crystal only": "Cristal seulement"},
+            "item_names": {"BLUE_CARD": "CARTE BLEUE"},
+            "trainer_class_names": {"MYSTICALMAN": "MYSTIQUE"},
+            "landmarks": {"LANDMARK_BATTLE_TOWER": "TOUR DE COMBAT"},
         }
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            mod = generate_gs_mod(root / "mod", language="fr", extra_catalogs=catalogs)
-            expectations = _write_gate_expectations(mod, catalogs)
+            mod = generate_gs_mod(
+                root / "mod", language="fr", extra_catalogs=catalogs,
+                crystal_catalogs=crystal_catalogs,
+            )
+            expectations = _write_gate_expectations(
+                mod, catalogs, crystal_catalogs=crystal_catalogs,
+            )
             result = subprocess.run(
                 [luajit, str(REGISTRIES_GATE_SCRIPT), str(ENGINE_ROOT), str(mod), str(expectations)],
                 capture_output=True, text=True,
@@ -334,6 +383,51 @@ class GsReleaseGateFlowTests(unittest.TestCase):
             expectations.unlink(missing_ok=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("all gs registries gate checks passed", result.stdout)
+
+    def test_crystal_rom_text_gate_uses_data_text_and_the_real_rom_text_consumer(self):
+        luajit = _which_luajit()
+        if luajit is None:
+            self.skipTest("LuaJIT unavailable")
+        engine = None
+        for candidate in (ENGINE_ROOT, ROOT.parent / "gen1recomp"):
+            schema = candidate / "src" / "mods" / "Schemas.lua"
+            if schema.is_file() and "R.rom_text" in schema.read_text(encoding="utf-8"):
+                engine = candidate
+                break
+        if engine is None:
+            self.skipTest("upstream mod.content.rom_text registry is unavailable")
+        catalogs = {
+            "strings": {"But nothing happened.": "Mais rien ne se passe."},
+            "species_names": {"BULBASAUR": "BULBIZARRE"},
+            "species_kinds": {"BULBASAUR": "GRAINE"},
+            "species_dex_text": {"BULBASAUR": "Une graine."},
+            "move_names": {"ABSORB": "VOL-VIE"},
+            "item_names": {"AMULET_COIN": "PIECE RUNE"},
+            "trainer_class_names": {"BEAUTY": "CANON"},
+            "landmarks": {"LANDMARK_AZALEA_TOWN": "ECORCIA"},
+            "type_names": {"FIRE": "FEU"},
+            "status_labels": {"sleep": "SOM"},
+            "oak_speech": {"_OakText1": "Bienvenue dans le monde des POKéMON !"},
+        }
+        crystal = {
+            "rom_text": {"_AreYouABoyOrAreYouAGirlText": "Es-tu un garçon ou une fille ?"},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            mod = generate_gs_mod(
+                root / "mod", language="fr", extra_catalogs=catalogs,
+                crystal_catalogs=crystal,
+            )
+            expectations = _write_gate_expectations(
+                mod, catalogs, crystal_catalogs=crystal,
+            )
+            result = subprocess.run(
+                [luajit, str(REGISTRIES_GATE_SCRIPT), str(engine), str(mod), str(expectations)],
+                capture_output=True, text=True,
+            )
+            expectations.unlink(missing_ok=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("RomText reads crystal_rom_text", result.stdout)
 
     def test_registry_expectations_gate_rejects_empty_file(self):
         luajit = _which_luajit()
@@ -540,9 +634,11 @@ class BuildGsDialogueModTests(unittest.TestCase):
         )
         (gold_out / "gs_labels.tsv").write_text("Greeting\t55:0001\n", encoding="utf-8")
         (gold_out / "gs_stages.tsv").write_text("text\tok\n", encoding="utf-8")
+        (gold_out / "gs_rom_text.tsv").write_text("_FixtureText\tFixture text.\n", encoding="utf-8")
         (gold_out / "gs_species.tsv").write_text("BULBASAUR\t1\tBULBASAUR\n", encoding="utf-8")
         (gold_out / "gs_moves.tsv").write_text("ABSORB\t71\tABSORB\n", encoding="utf-8")
         (gold_out / "gs_items.tsv").write_text("AMULET_COIN\t91\tAMULET COIN\n", encoding="utf-8")
+        (gold_out / "gs_types.tsv").write_text("NORMAL\t0\tNORMAL\n", encoding="utf-8")
         (gold_out / "gs_trainer_classes.tsv").write_text("BEAUTY\t29\tBEAUTY\n", encoding="utf-8")
         (gold_out / "gs_landmarks.tsv").write_text("LANDMARK_TEST\t1\tTEST\n", encoding="utf-8")
         corpus = root / "corpus"
@@ -578,17 +674,19 @@ class BuildGsDialogueModTests(unittest.TestCase):
             ) as match:
                 mod_dir, _entries, stats = build_gs_dialogue_mod(
                     gold_out, corpus, root / "mod", language="fr", engine_source=root / "engine",
+                    engine_profile=UPSTREAM_PROFILE,
                 )
             match.assert_called_once()
             self.assertEqual(stats["coverage"]["engine_gen2"]["total"], 2)
             self.assertEqual(stats["coverage"]["rom"], {
-                "translated": 1, "total": 12, "percent": 8.33,
+                "translated": 1, "total": 115, "percent": 0.87,
             })
             self.assertEqual(stats["coverage"]["rom_dialogue"]["total"], 2)
-            # 10, not 7: species_dex_text2 and Silver's own
+            # 113: the existing named/dex rows plus one extracted type,
+            # six status labels, and the phone/decorations/radio registries.
             # species_dex_text_silver/species_dex_text2_silver are each
             # their own index_stats entry alongside species_dex_text now.
-            self.assertEqual(stats["coverage"]["rom_catalogs"]["total"], 10)
+            self.assertEqual(stats["coverage"]["rom_catalogs"]["total"], 113)
             self.assertEqual(stats["_gate_catalogs"]["strings"], {"Hello!": "Bonjour!"})
             self.assertIn(
                 '["Hello!"] = "Bonjour!"',
@@ -712,6 +810,27 @@ class BuildGsDialogueModTests(unittest.TestCase):
             main = (mod_dir / "main.lua").read_text(encoding="utf-8")
             self.assertNotIn("crystal_dex_game_version", main)
 
+    def test_engine_source_works_with_the_pinned_profile(self):
+        # A local checkout is not a profile selector by itself: the pinned
+        # profile is the default and match_gs_engine_strings() verifies the
+        # checkout against the pin itself, so passing --gen1recomp without
+        # also picking upstream-local must keep working (gen1recomp#1642-
+        # adjacent: this used to be the CLI's own documented usage).
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            gold_out, corpus = self._write_fixture(root)
+            with patch(
+                "pipeline.gs_mod.match_gs_engine_strings",
+                return_value=({"Hello!": "Bonjour!"}, {"engine": {}, "engine_gen2": {}}),
+            ) as match:
+                mod_dir, _entries, stats = build_gs_dialogue_mod(
+                    gold_out, corpus, root / "mod", language="fr", engine_source=root / "engine",
+                )
+            match.assert_called_once()
+            self.assertEqual(match.call_args.kwargs["engine_profile"], PINNED_PROFILE)
+            self.assertEqual(stats["_gate_catalogs"]["strings"], {"Hello!": "Bonjour!"})
+            self.assertEqual(stats["engine_profile"], PINNED_PROFILE)
+
 
 class GsDialogueGateTests(unittest.TestCase):
     """tools/gate_gs_dialogue.lua: a resolved pointer's translation is
@@ -750,6 +869,43 @@ class GsDialogueGateTests(unittest.TestCase):
             result.returncode, 0,
             f"gate_gs_dialogue.lua failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}",
         )
+        self.assertIn("all gs dialogue gate checks passed", result.stdout)
+
+    def test_crystal_translation_is_selected_only_under_crystal_and_does_not_leak(self):
+        # Crystal's own dialogue layer: resolved under GameVersion=="crystal",
+        # absent (English fallback) for its own unresolved pointer, and never
+        # showing up under Gold or Silver -- the same three properties the
+        # test above already proves for the ungated Gold/Silver layer, plus
+        # the leak check that layer does not need since it always applies.
+        luajit = _which_luajit()
+        if luajit is None:
+            self.skipTest("luajit is unavailable")
+        if not (ENGINE_ROOT / "src").is_dir():
+            self.skipTest("cached Gen1Recomp checkout is unavailable")
+        with tempfile.TemporaryDirectory() as tmp:
+            mod_dir = generate_gs_mod(
+                Path(tmp) / "translation-fr-gen2", language="fr",
+                text_catalog={"55:0001": "Bonjour !"},
+                crystal_text_catalog={"00:0001": "Bonjour Cristal !"},
+            )
+            expectation_path = _write_dialogue_gate_expectation(
+                mod_dir, "55:0001", "Bonjour !", "55:9999",
+                "00:0001", "Bonjour Cristal !", "00:9999",
+            )
+            try:
+                result = subprocess.run(
+                    [luajit, str(DIALOGUE_GATE_SCRIPT), str(ENGINE_ROOT), str(mod_dir), str(expectation_path)],
+                    capture_output=True, text=True,
+                )
+            finally:
+                expectation_path.unlink(missing_ok=True)
+        self.assertEqual(
+            result.returncode, 0,
+            f"gate_gs_dialogue.lua failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}",
+        )
+        self.assertIn("text[00:0001] is the expected Crystal translation", result.stdout)
+        self.assertIn("text[00:0001] does not leak into gold", result.stdout)
+        self.assertIn("text[00:0001] does not leak into silver", result.stdout)
         self.assertIn("all gs dialogue gate checks passed", result.stdout)
 
 
@@ -842,6 +998,44 @@ class GsUiLabelsTests(unittest.TestCase):
         labels = _gs_ui_labels(corpus_rows)
         self.assertEqual(labels["POKéMON\ndatabase"], "Index\nPOKéMON")
         self.assertEqual(labels["Contains\nitems"], "Contient\nobjets")
+
+
+class BuildGsEngineSourceTests(unittest.TestCase):
+    """build_gs() must mirror builder.build()'s engine_source/engine_profile
+    contract: both directions of the mismatch are rejected, and a supplied
+    checkout actually reaches prepare_build_context() instead of being
+    silently dropped in favor of the pinned dependency."""
+
+    def _call(self, **kwargs):
+        return build_gs(
+            Path("missing-gold.gbc"), Path("missing-crystal.gbc"), "fr", "French", "luajit",
+            **kwargs,
+        )
+
+    def test_upstream_profile_requires_an_explicit_checkout(self):
+        with self.assertRaisesRegex(BuildError, "upstream-local.*engine-source.*checkout"):
+            self._call(engine_profile=UPSTREAM_PROFILE)
+
+    def test_engine_source_requires_the_upstream_profile(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(BuildError, "engine_source.*upstream-local"):
+                self._call(engine_source=Path(directory))
+
+    def test_engine_source_reaches_prepare_build_context(self):
+        captured = {}
+
+        def fake_prepare_build_context(*args, **kwargs):
+            captured.update(kwargs)
+            raise RuntimeError("stop after capturing prepare_build_context's arguments")
+
+        with tempfile.TemporaryDirectory() as directory:
+            engine = Path(directory)
+            with patch("pipeline.orchestration.prepare_build_context", side_effect=fake_prepare_build_context), \
+                    patch("pipeline.gs_mod.verify_gs_rom"), \
+                    patch("pipeline.gs_mod.verify_crystal_rom"):
+                with self.assertRaisesRegex(RuntimeError, "stop after capturing"):
+                    self._call(engine_profile=UPSTREAM_PROFILE, engine_source=engine)
+        self.assertEqual(captured.get("engine_source"), engine)
 
 
 if __name__ == "__main__":

@@ -53,6 +53,20 @@ local resolvedPointer = expectation.resolved_pointer
 local expectedTranslation = expectation.expected_translation
 local unresolvedPointer = expectation.unresolved_pointer
 
+-- Crystal's own dialogue layer is optional the same way its registries
+-- already are in tools/gate_gs_registries.lua (a language with no Crystal
+-- corpus, or nothing resolved, ships no crystal_* fields at all).
+local crystalResolvedPointer = expectation.crystal_resolved_pointer
+local crystalExpectedTranslation = expectation.crystal_expected_translation
+local crystalUnresolvedPointer = expectation.crystal_unresolved_pointer
+local hasCrystal = type(crystalResolvedPointer) == "string" and crystalResolvedPointer ~= ""
+  and type(crystalExpectedTranslation) == "string" and crystalExpectedTranslation ~= ""
+  and type(crystalUnresolvedPointer) == "string" and crystalUnresolvedPointer ~= ""
+if (crystalResolvedPointer or crystalExpectedTranslation or crystalUnresolvedPointer) and not hasCrystal then
+  io.stderr:write("dialogue expectation file has partial crystal_* fields\n")
+  os.exit(2)
+end
+
 local failures = 0
 local function check(condition, message)
   if condition then
@@ -81,6 +95,38 @@ check(text[unresolvedPointer] == nil,
   ("gen2Text[%s] stays absent (English fallback), not overridden with a guess"):format(unresolvedPointer))
 
 result.release()
+
+-- Crystal's own dialogue layer: its own pointer space (mostly disjoint from
+-- Gold/Silver's own, see pipeline.crystal_mod's own docstring), merged into
+-- the SAME data.gen2Text as the Gold/Silver check above -- src/mods/
+-- Schemas.lua's GEN2 table routes the "text" registry to gen2Text, not
+-- data.text (that is "rom_text"'s target instead) -- but only registered
+-- under GameVersion=="crystal" (pipeline.gs_mod._CRYSTAL_GUARD/
+-- dialogue_crystal.lua). Proven the same way tools/gate_gs_registries.lua
+-- already proves its Crystal registries: selected under Crystal, absent
+-- (English fallback) for an unresolved pointer, and never leaking onto a
+-- Gold or Silver save.
+if hasCrystal then
+  local GameVersion = require("src.core.GameVersion")
+  for _, edition in ipairs({ "gold", "silver", "crystal" }) do
+    GameVersion.set(edition)
+    local editionResult = T.sdk.loadMod(modName, { generation = 2, root = modParent })
+    check(#editionResult.errors == 0,
+      "the dialogue mod loads under GameVersion=" .. edition .. " for Crystal checks")
+    local editionText = editionResult.data.gen2Text or {}
+    if edition == "crystal" then
+      check(editionText[crystalResolvedPointer] == crystalExpectedTranslation,
+        ("text[%s] is the expected Crystal translation (got %q)"):format(
+          crystalResolvedPointer, tostring(editionText[crystalResolvedPointer])))
+      check(editionText[crystalUnresolvedPointer] == nil,
+        ("text[%s] stays absent (English fallback), not overridden with a guess"):format(crystalUnresolvedPointer))
+    else
+      check(editionText[crystalResolvedPointer] ~= crystalExpectedTranslation,
+        ("text[%s] does not leak into %s"):format(crystalResolvedPointer, edition))
+    end
+    editionResult.release()
+  end
+end
 
 if failures > 0 then
   io.stderr:write(failures .. " gs dialogue gate check(s) failed\n")

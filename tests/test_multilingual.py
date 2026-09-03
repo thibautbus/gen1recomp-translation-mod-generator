@@ -15,6 +15,28 @@ from pipeline.tokens import corpus_to_engine
 
 
 class MultilingualTests(unittest.TestCase):
+    @staticmethod
+    def _partial_fixture_overrides(language, engine_catalog, destination):
+        """Scope the full override manifest to an intentionally partial fixture.
+
+        These integration tests use cached, historical strings.lua scaffolds to
+        exercise corpus joins.  Strict generation must still reject stale
+        overrides for a complete engine catalog, so the fixture explicitly
+        carries only the entries that its partial catalog can validate.
+        """
+        source = Path("overrides") / language / "rby" / "engine.json"
+        payload = json.loads(source.read_text(encoding="utf-8"))
+        entries = payload.get("entries", payload)
+        known = read_engine_catalog(engine_catalog)
+        scoped = {key: row for key, row in entries.items() if key in known}
+        output = Path(destination) / "rby-engine-overrides.json"
+        output.write_text(json.dumps({
+            "schema": "gen1recomp-translation-mods/engine-overrides",
+            "version": 1,
+            "entries": scoped,
+        }, ensure_ascii=False), encoding="utf-8")
+        return output
+
     def test_commands_show_text_collision_guard_is_narrow_and_pre_format(self):
         with self.assertRaisesRegex(ValueError, "double lookup.*upstream Commands.show_text API limitation"):
             validate_commands_show_text_collisions(
@@ -51,7 +73,7 @@ class MultilingualTests(unittest.TestCase):
                 self.skipTest(f"cached {language} worksheet unavailable")
             rows = align(parse_redblue(corpus_root, language), target_lang=language)
             with TemporaryDirectory() as tmp:
-                mod = generate_mod(rows, Path(tmp) / "mod", language=language, modkit_worksheet=worksheet, engine_catalog=worksheet / "strings.lua", engine_overrides=Path("overrides") / language / "rby" / "engine.json", strict_engine=True)
+                mod = generate_mod(rows, Path(tmp) / "mod", language=language, modkit_worksheet=worksheet, engine_catalog=worksheet / "strings.lua", engine_overrides=self._partial_fixture_overrides(language, worksheet / "strings.lua", tmp), strict_engine=True)
                 strings = (mod / "lang/strings.lua").read_text(encoding="utf-8")
                 for key in ("NAME", "ATTACK", "DEFENSE", "SPEED", "SPECIAL"):
                     self.assertIn(f'  ["{key}"] = ', strings, language)
@@ -71,7 +93,7 @@ class MultilingualTests(unittest.TestCase):
             rows = align(parse_redblue(corpus_root, language), target_lang=language)
             from tempfile import TemporaryDirectory
             with TemporaryDirectory() as tmp:
-                mod = generate_mod(rows, Path(tmp) / "mod", language=language, modkit_worksheet=worksheet, engine_catalog=worksheet / "strings.lua", engine_overrides=Path("overrides") / language / "rby" / "engine.json", strict_engine=True)
+                mod = generate_mod(rows, Path(tmp) / "mod", language=language, modkit_worksheet=worksheet, engine_catalog=worksheet / "strings.lua", engine_overrides=self._partial_fixture_overrides(language, worksheet / "strings.lua", tmp), strict_engine=True)
                 body = (mod / "lang/type_names.lua").read_text(encoding="utf-8")
                 for type_id in runtime_ids:
                     self.assertIn(f'  ["{type_id}"] = ', body, (language, type_id))
@@ -136,7 +158,7 @@ class MultilingualTests(unittest.TestCase):
             self.skipTest("pinned Gen1Recomp checkout is unavailable")
         oak_runtime = oak_source.read_text(encoding="utf-8")
         self.assertIn('Strings.source("This world is\\ninhabited by\\vcreatures called\\vPOKéMON!")', oak_runtime)
-        self.assertIn('self:say(Strings("_OakSpeechText2A")', oak_runtime)
+        self.assertIn('self:say("_OakSpeechText2A", function() self:advance() end)', oak_runtime)
         for language, target in translations.items():
             with tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp)
@@ -747,7 +769,7 @@ class MultilingualTests(unittest.TestCase):
                     language=language,
                     modkit_worksheet=worksheet,
                     engine_catalog=worksheet / "strings.lua",
-                    engine_overrides=Path("overrides") / language / "rby" / "engine.json",
+                    engine_overrides=self._partial_fixture_overrides(language, worksheet / "strings.lua", tmp),
                     strict_engine=True,
                 )
                 dialogue = (mod / "lang/dialogue.lua").read_text(encoding="utf-8")
@@ -895,8 +917,13 @@ class MultilingualTests(unittest.TestCase):
         checkout = Path(".cache/dependencies/gen1recomp")
         if not checkout.is_dir():
             self.skipTest("cached Gen1Recomp checkout is unavailable")
+        # gen1recomp's v0.2.49 Gen 2 UI localization pass wrapped its own
+        # hardcoded "USE" label in Strings.source() (ui/gen2/PackMenu.lua),
+        # so the RBY key now has a real Gen 2 callsite too -- mixed, like
+        # BATTLE ANIMATION, rather than an RBY exclusive.
+        mixed_keys = {"BATTLE ANIMATION", "USE"}
         keys = {
-            "USE": {"ui/BagMenu.lua"},
+            "USE": {"ui/BagMenu.lua", "ui/gen2/PackMenu.lua"},
             "You can't carry\nany more items.": {"ui/PlayerPC.lua", "ui/ShopMenu.lua"},
             "SEEN %3d  OWN %3d": {"ui/PokedexMenu.lua"},
             "%s is out of\nuseable POKéMON!": {"battle/BattleState.lua"},
@@ -910,9 +937,10 @@ class MultilingualTests(unittest.TestCase):
             self.assertIn(key, catalog)
             row = catalog[key]
             self.assertEqual(row["eligibility"], "eligible", key)
-            self.assertEqual(row["category"], "rby" if key != "BATTLE ANIMATION" else "mixed", key)
+            self.assertEqual(row["category"], "mixed" if key in mixed_keys else "rby", key)
             self.assertEqual({call["path"] for call in row["callsites"]}, paths, key)
-            self.assertTrue(all("Strings(" in call["context"] for call in row["callsites"]), key)
+            self.assertTrue(all("Strings(" in call["context"] or "Strings.source(" in call["context"]
+                                 for call in row["callsites"]), key)
 
     def test_real_corpus_battle_charge_anchor_batch_all_languages(self):
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")

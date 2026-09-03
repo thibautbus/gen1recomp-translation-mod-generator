@@ -1,0 +1,13 @@
+{
+  "schema": "gen1recomp-translation-mods/gs-status-anchors",
+  "version": 1,
+  "description": "Gen 2 status registry ids and their official Gold/Silver corpus labels.",
+  "statuses": {
+    "sleep": "gs.mon_stats.SlpString",
+    "poison": "gs.mon_stats.PsnString",
+    "toxic": "gs.mon_stats.PsnString",
+    "paralyze": "gs.mon_stats.ParString",
+    "burn": "gs.mon_stats.BrnString",
+    "freeze": "gs.mon_stats.FrzString"
+  }
+}

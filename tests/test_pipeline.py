@@ -12,6 +12,7 @@ from pipeline.corpus import load_corpus
 from pipeline.generate import generate_lua, lua_string
 from pipeline.model import Alignment, CorpusRecord
 from pipeline.mod import catalog_for, generate_mod
+from pipeline.engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE
 from pipeline.join import (
     ENGINE_CATALOG_EXTRA_KEYS,
     SENDOUT_ENGINE_KEYS,
@@ -33,6 +34,25 @@ from pipeline.worksheet import dump, load
 
 
 class PipelineTests(unittest.TestCase):
+    def test_cli_gen2_profile_defaults_to_pinned_and_rejects_versioned_names(self):
+        with patch("pipeline.cli.import_gs_rom") as import_gs:
+            self.assertEqual(cli_main([
+                "import-gs", "gold.gbc", "--gen1recomp", "engine", "--out", "out",
+            ]), 0)
+            self.assertEqual(import_gs.call_args.kwargs["engine_profile"], PINNED_PROFILE)
+
+            self.assertEqual(cli_main([
+                "import-gs", "gold.gbc", "--gen1recomp", "engine", "--out", "out",
+                "--engine-profile", UPSTREAM_PROFILE,
+            ]), 0)
+            self.assertEqual(import_gs.call_args.kwargs["engine_profile"], UPSTREAM_PROFILE)
+
+        with self.assertRaises(SystemExit):
+            cli_main([
+                "import-gs", "gold.gbc", "--gen1recomp", "engine", "--out", "out",
+                "--engine-profile", "v0.2.41",
+            ])
+
     def test_species_kind_prefers_canonical_row_over_empty_scoped_placeholder(self):
         rows = align([
             CorpusRecord("rb.dex_entries.PorygonDexEntry^RG.Species", "en", "[NULL]"),

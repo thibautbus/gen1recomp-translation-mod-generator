@@ -31,6 +31,7 @@ def prepare_build_context(
     profile: ReleaseProfile,
     language: str,
     font_profile: str,
+    engine_source: str | Path | None = None,
 ) -> BuildContext:
     """Resolve paths and prepare exactly the collections in ``profile``."""
     from .builder import prepare_dependencies
@@ -44,6 +45,7 @@ def prepare_build_context(
     gen1recomp, corpus, font_source = prepare_dependencies(
         workspace.resolve(), project_config(), corpus_collection=collections,
         font_profile=font_profile, language=language,
+        engine_source=engine_source,
     )
     return BuildContext(workspace.resolve(), destination.resolve(), gen1recomp, corpus, font_source, profile)
 

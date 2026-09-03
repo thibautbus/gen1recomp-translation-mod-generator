@@ -30,6 +30,7 @@ from .engine import (
 )
 from .project import ROOT, project_config
 from .tokens import corpus_to_engine
+from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE, checkout_revision, normalize_engine_profile
 from .engine_scope import classify_catalog, engine_dynamic_values, forced_dynamic_keys, load_scope, coverage_metadata
 from .join import ENGINE_CATALOG_EXTRA_KEYS
 
@@ -40,7 +41,9 @@ MATRIX_SCHEMA = "gen1recomp-translation-mods/engine-backlog-matrix"
 MATRIX_VERSION = 1
 MATRIX_LANGUAGES = ("fr", "de", "es", "it", "ja-Hrkt")
 _CALL_RE = re.compile(r"\bStrings(?:\.source)?\s*\(")
-_ROMTEXT_CALL_RE = re.compile(r"\bromText\s*\(")
+_ROMTEXT_CALL_RE = re.compile(
+    r"(?P<callee>\b(?:[Rr]omText|[A-Za-z_][A-Za-z0-9_.]*:romText))\s*\("
+)
 _LANGUAGE_CODES = {"fr", "de", "es", "it", "ja-Hrkt"}
 
 
@@ -182,6 +185,60 @@ def _read_concatenated_lua_literal(raw: str, cleaned: str, start: int) -> tuple[
     return "".join(parts), end
 
 
+def _lua_call_arguments(raw: str, cleaned: str, start: int) -> tuple[list[tuple[int, int]], int] | None:
+    """Return top-level argument spans for the call opened before ``start``.
+
+    ``cleaned`` has comments and literal bodies masked by
+    :func:`_strip_lua_comments`, while retaining their delimiters and byte
+    positions.  That lets this small scanner balance nested calls/tables and
+    split on commas without trying to implement Lua's grammar.
+    """
+    spans: list[tuple[int, int]] = []
+    begin = start
+    parens = brackets = braces = 0
+    index = start
+    while index < len(cleaned):
+        char = cleaned[index]
+        if char == "(":
+            parens += 1
+        elif char == ")":
+            if parens == 0 and brackets == 0 and braces == 0:
+                spans.append((begin, index))
+                return spans, index + 1
+            parens -= 1
+        elif char == "[":
+            brackets += 1
+        elif char == "]" and brackets:
+            brackets -= 1
+        elif char == "{":
+            braces += 1
+        elif char == "}" and braces:
+            braces -= 1
+        elif char == "," and parens == 0 and brackets == 0 and braces == 0:
+            spans.append((begin, index))
+            begin = index + 1
+        index += 1
+    return None
+
+
+def _literal_argument(raw: str, cleaned: str, span: tuple[int, int]) -> str | None:
+    start, end = span
+    while start < end and cleaned[start].isspace():
+        start += 1
+    while end > start and cleaned[end - 1].isspace():
+        end -= 1
+    token = _read_concatenated_lua_literal(raw, cleaned, start)
+    if token is None:
+        return None
+    value, consumed = token
+    return value if not cleaned[consumed:end].strip() else None
+
+
+def _argument_expression(raw: str, span: tuple[int, int]) -> str:
+    start, end = span
+    return " ".join(raw[start:end].strip().split())[:300]
+
+
 def iter_literal_strings_callsites(checkout: str | Path) -> list[dict[str, Any]]:
     """Collect every literal ``Strings(...)``/``Strings.source(...)`` use.
 
@@ -223,23 +280,17 @@ def iter_literal_strings_callsites(checkout: str | Path) -> list[dict[str, Any]]
     return sorted(result, key=lambda item: (item["source"], item["path"], item["line"], item["kind"], item["context"]))
 
 
-def iter_romtext_fallback_callsites(checkout: str | Path) -> list[dict[str, Any]]:
-    """Collect ``romText(label, fallback, ...)`` fallbacks actually rendered.
+def iter_romtext_callsites(checkout: str | Path) -> list[dict[str, Any]]:
+    """Inventory every production RomText call, including dynamic arguments.
 
-    RomText falls back to ``Strings(fallback, ...)`` when the pokered label
-    carries fewer slots than the call's format directives (or the label is
-    absent from the import).  Statically identified per key — the other 37
-    romText fallbacks resolve to their dialogue labels and are covered by
-    the dialogue catalog, so they are not engine callsites:
+    Gen1Recomp uses all three spellings ``romText(...)``, ``RomText(...)`` and
+    ``state:romText(...)``.  Every literal fallback can reach
+    ``Strings(fallback, ...)`` when imported ROM text is missing or has an
+    incompatible slot shape, so the translation universe must not be defined
+    by a hand-maintained allowlist.  Dynamic labels/fallbacks are retained as
+    expressions in this audit inventory so a new upstream domain is visible
+    instead of silently disappearing.
     """
-    RENDERED_ROMTEXT_FALLBACKS = {
-        "%s\nused %s!",                  # _ItemUseText001: 1 slot, 2 args
-        "%s used\n%s!",                  # _ItemUseText001: same label, ItemEffects.lua's own
-                                          # item-use line and BattleState.lua's held-item line
-                                          # (gen1recomp v0.2.26) render this phrasing instead
-        "The enemy's weak!\nGet'm! %s!", # _EnemysWeakText: 0 slots, 1 arg
-        "%s\nis refusing!",              # _RefusingText: Yellow-only, absent from RB import
-    }
     root = Path(checkout)
     if not root.is_dir():
         raise FileNotFoundError(f"Gen1Recomp checkout missing: {root}")
@@ -250,39 +301,130 @@ def iter_romtext_fallback_callsites(checkout: str | Path) -> list[dict[str, Any]
         cleaned = _strip_lua_comments(raw)
         lines = raw.splitlines()
         for match in _ROMTEXT_CALL_RE.finditer(cleaned):
-            # Read the label and fallback literals from the raw text at the
-            # cleaned positions (the comment stripper masks literal content).
-            # The first argument is a variable in some calls
-            # (romText(data, "_RefusingText", ...)), so skip to the first
-            # string literal — the engine's romText label is always literal.
-            index = match.end()
-            while index < len(cleaned) and cleaned[index] != '"':
-                index += 1
-            label = _read_lua_literal(raw, index)
-            if label is None:
+            # ``function BattleState:romText(label, fallback, ...)`` declares
+            # the helper; it is not a callsite and cannot render its formal
+            # parameter names.
+            prefix = cleaned[max(0, match.start() - 32):match.start()]
+            if re.search(r"\bfunction\s+$", prefix):
                 continue
-            _, end_label = label
-            index = end_label
-            while index < len(cleaned) and cleaned[index] in " \t\r\n,":
-                index += 1
-            fallback = _read_lua_literal(raw, index)
-            if fallback is None:
+            parsed = _lua_call_arguments(raw, cleaned, match.end())
+            if parsed is None:
                 continue
-            quoted_fallback, _ = fallback
-            source = _decode_lua_string(quoted_fallback)
-            if source not in RENDERED_ROMTEXT_FALLBACKS:
+            arguments, end = parsed
+            callee = match.group("callee")
+            # Method calls receive self implicitly: arguments[0] is the label.
+            if ":" in callee:
+                label_index = 0
+            # Function calls normally receive data first
+            # (data, label, fallback, ...), and either form may carry
+            # trailing varargs, so 3+ arguments is genuinely ambiguous
+            # between "shorthand plus varargs" and "full form" -- guess from
+            # whether the first argument is a literal, same as before.
+            elif len(arguments) != 2:
+                label_index = 0 if arguments and _literal_argument(raw, cleaned, arguments[0]) is not None else 1
+            # Exactly two arguments is not ambiguous, though: the full form
+            # needs at least three, so two arguments can only be the
+            # (label, fallback) shorthand, regardless of whether label
+            # happens to be a literal. The previous version kept using the
+            # literal guess even here, so a dynamic label
+            # (RomText(labels[i], "fallback")) read the real fallback as the
+            # label, found no third argument, and silently dropped the row
+            # -- exactly what this function's docstring says a RomText
+            # callsite must never do.
+            else:
+                label_index = 0
+            fallback_index = label_index + 1
+            if fallback_index >= len(arguments):
                 continue
+            label = _literal_argument(raw, cleaned, arguments[label_index])
+            fallback = _literal_argument(raw, cleaned, arguments[fallback_index])
             line = cleaned.count("\n", 0, match.start()) + 1
-            context = " ".join(item.strip() for item in lines[line - 1:line + 1] if item.strip())
+            end_line = cleaned.count("\n", 0, end) + 1
+            context = " ".join(item.strip() for item in lines[line - 1:end_line] if item.strip())
             rel = path.relative_to(root).as_posix()
-            result.append({
+            row: dict[str, Any] = {
                 "path": rel,
                 "line": line,
                 "context": context[:300],
-                "source": source,
+                "callee": callee,
+                "label": label,
+                "label_expression": _argument_expression(raw, arguments[label_index]),
+                "fallback_expression": _argument_expression(raw, arguments[fallback_index]),
                 "kind": "romtext-fallback",
+            }
+            if fallback is not None:
+                row["source"] = fallback
+            result.append(row)
+    return sorted(result, key=lambda item: (
+        str(item.get("source", "")), item["path"], item["line"], item["callee"],
+    ))
+
+
+def iter_romtext_fallback_callsites(checkout: str | Path) -> list[dict[str, Any]]:
+    """Return all literal RomText fallbacks that can reach ``Strings``."""
+    return [row for row in iter_romtext_callsites(checkout) if "source" in row]
+
+
+def iter_dynamic_strings_callsites(checkout: str | Path) -> list[dict[str, Any]]:
+    """Inventory ``Strings`` calls whose first argument is not a literal.
+
+    These expressions cannot safely be added to the key universe.  The report
+    is deliberately source-oriented: finite domains belong in the pinned
+    manifest, while open-ended/runtime expressions remain explicit audit
+    findings.
+    """
+    root = Path(checkout)
+    if not root.is_dir():
+        raise FileNotFoundError(f"Gen1Recomp checkout missing: {root}")
+    scan_root = root / "src" if (root / "src").is_dir() else root
+    result: list[dict[str, Any]] = []
+    for path in sorted(p for p in scan_root.rglob("*.lua") if ".git" not in p.parts):
+        raw = path.read_text(encoding="utf-8", errors="replace")
+        cleaned = _strip_lua_comments(raw)
+        lines = raw.splitlines()
+        for match in _CALL_RE.finditer(cleaned):
+            parsed = _lua_call_arguments(raw, cleaned, match.end())
+            if parsed is None or not parsed[0]:
+                continue
+            arguments, end = parsed
+            if _literal_argument(raw, cleaned, arguments[0]) is not None:
+                continue
+            line = cleaned.count("\n", 0, match.start()) + 1
+            end_line = cleaned.count("\n", 0, end) + 1
+            result.append({
+                "path": path.relative_to(root).as_posix(),
+                "line": line,
+                "kind": "dynamic-source" if ".source" in match.group(0) else "dynamic-call",
+                "expression": _argument_expression(raw, arguments[0]),
+                "context": " ".join(
+                    item.strip() for item in lines[line - 1:end_line] if item.strip()
+                )[:300],
             })
-    return sorted(result, key=lambda item: (item["source"], item["path"], item["line"]))
+    return sorted(result, key=lambda item: (
+        item["path"], item["line"], item["kind"], item["expression"],
+    ))
+
+
+def _annotate_dynamic_manifest(
+    callsites: Iterable[Mapping[str, Any]], manifest: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    """Mark dynamic callsites covered by a revision-pinned finite domain."""
+    locations: list[tuple[str, int, int, str]] = []
+    for key, entry in manifest.get("engine_dynamic_values", {}).items():
+        for path, first, last in re.findall(
+            r"(src/[^ :()]+\.lua):(\d+)(?:-(\d+))?", str(entry.get("callsite", "")),
+        ):
+            locations.append((path, int(first), int(last or first), str(key)))
+    result: list[dict[str, Any]] = []
+    for item in callsites:
+        row = dict(item)
+        row["manifested_keys"] = sorted({
+            key for path, first, last, key in locations
+            if path == row.get("path") and first <= int(row.get("line", 0)) <= last
+        })
+        row["manifested"] = bool(row["manifested_keys"])
+        result.append(row)
+    return result
 
 
 def _classify_path(path: str) -> tuple[str, str]:
@@ -428,6 +570,7 @@ def analyze_engine_backlog(
     corpus_root: str | Path | None = None,
     coverage_path: str | Path | None = None,
     engine_catalog: str | Path | None = None,
+    engine_profile: str = PINNED_PROFILE,
 ) -> dict[str, Any]:
     """Build a deterministic in-memory backlog report for one language."""
     root = Path(root)
@@ -473,6 +616,22 @@ def analyze_engine_backlog(
     ):
         raise ValueError(f"engine coverage report has no engine section: {coverage_path}")
     engine_report = coverage.get("engine") if isinstance(coverage.get("engine"), dict) else coverage
+    # An upstream-local coverage snapshot is legitimately stamped with its
+    # checkout's own local git HEAD (match_gs_engine_strings via
+    # checkout_revision()), not the pinned manifest revision -- comparing it
+    # against the pin unconditionally would block the exact upstream-local
+    # audit workflow this function exists to support.
+    if normalize_engine_profile(engine_profile) == UPSTREAM_PROFILE:
+        expected_revision = checkout_revision(checkout)
+    else:
+        expected_revision = scope.get("gen1recomp_revision")
+    snapshot_revision = engine_report.get("source_revision") if isinstance(engine_report, dict) else None
+    if snapshot_revision != expected_revision:
+        raise ValueError(
+            "engine coverage snapshot source_revision does not match the "
+            f"expected revision for the {engine_profile!r} profile: "
+            f"expected {expected_revision}, got {snapshot_revision}"
+        )
     unmatched = engine_report.get("unmatched", []) if isinstance(engine_report, dict) else []
     ambiguous = engine_report.get("ambiguous", {}) if isinstance(engine_report, dict) else {}
     snapshot_details = engine_report.get("details", {}) if isinstance(engine_report, dict) else {}
@@ -504,7 +663,13 @@ def analyze_engine_backlog(
     unmatched_set = {str(key) for key in (unmatched if isinstance(unmatched, list) else unmatched.keys() if isinstance(unmatched, dict) else [])}
     ambiguous_map = {str(key): value for key, value in ambiguous.items()} if isinstance(ambiguous, dict) else {}
     keys = sorted(set(catalog) & (unmatched_set | set(ambiguous_map)) or (unmatched_set | set(ambiguous_map)))
-    callsite_rows = iter_literal_strings_callsites(checkout) + iter_romtext_fallback_callsites(checkout)
+    romtext_inventory = iter_romtext_callsites(checkout)
+    callsite_rows = iter_literal_strings_callsites(checkout) + [
+        row for row in romtext_inventory if "source" in row
+    ]
+    dynamic_strings = _annotate_dynamic_manifest(
+        iter_dynamic_strings_callsites(checkout), scope,
+    )
     classified = classify_catalog(catalog, callsite_rows, scope)
     callsites = defaultdict(list)
     for key, info in classified.items():
@@ -566,6 +731,13 @@ def analyze_engine_backlog(
         "callsites": sum(len(item["callsites"]) for item in entries),
         "keys_with_callsites": sum(bool(item["callsites"]) for item in entries),
         "rby_eligible": sum(item["rby_eligible"] is True for item in entries),
+        "romtext_callsites": len(romtext_inventory),
+        "romtext_dynamic_labels": sum(item.get("label") is None for item in romtext_inventory),
+        "romtext_dynamic_fallbacks": sum("source" not in item for item in romtext_inventory),
+        "dynamic_strings_callsites": len(dynamic_strings),
+        "unmanifested_dynamic_strings_callsites": sum(
+            not item["manifested"] for item in dynamic_strings
+        ),
     }
     return {
         "schema": SCHEMA,
@@ -573,10 +745,15 @@ def analyze_engine_backlog(
         "language": language,
         "sources": {"checkout": str(checkout), "corpus": str(corpus_root), "coverage": str(coverage_path), "engine_catalog": str(engine_catalog)},
         "coverage_snapshot": {
+            "source_revision": snapshot_revision,
             "total": snapshot_total,
             "translated": engine_report.get("translated") if isinstance(engine_report, dict) else None,
             "unmatched": len(unmatched_set),
             "ambiguous": len(ambiguous_map),
+        },
+        "source_inventory": {
+            "romtext": romtext_inventory,
+            "dynamic_strings": dynamic_strings,
         },
         "limitations": [
             "Fuzzy qid suggestions are advisory and never marked eligible.",
@@ -720,6 +897,7 @@ def analyze_engine_backlog_matrix(
     engine_catalog_paths: Mapping[str, str | Path] | str | Path | None = None,
     coverage_dir: str | Path | None = None,
     engine_catalog_dir: str | Path | None = None,
+    engine_profile: str = PINNED_PROFILE,
 ) -> dict[str, Any]:
     """Analyze the canonical language backlogs and join them by engine key.
 
@@ -749,6 +927,7 @@ def analyze_engine_backlog_matrix(
             corpus_root=corpus_root,
             coverage_path=coverage_path,
             engine_catalog=catalog_path,
+            engine_profile=engine_profile,
         )
 
     by_language = {

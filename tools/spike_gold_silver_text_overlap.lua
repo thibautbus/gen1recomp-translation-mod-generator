@@ -4,8 +4,7 @@
 --
 -- This is the real question a Gold-authored dialogue.lua mod needs
 -- answered before declaring itself Silver-compatible by manifest alone
--- (see docs/upstream-fixes.md's "Silver: supported by declaration" and
--- the plan at /home/thibaut/.claude/plans/compressed-juggling-mochi.md):
+-- (see docs/upstream-fixes.md's "Silver: supported by declaration"):
 -- gen1recomp's own tools/make_silver_manifest.py only guarantees the
 -- *named symbols* mostly match (818/2057 differ, all sprites/Pokedex/
 -- graphics, zero Text/Script symbols); the actual per-pointer dialogue

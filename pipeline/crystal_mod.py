@@ -22,21 +22,23 @@ pipeline/mod.py's RBY build uses for Yellow's own dialogue_yellow.lua layer,
 just without a large pointer-identical "free" majority to lean on (unlike
 Yellow vs Red/Blue).
 
-Scope: dialogue text only. No named catalogs (species/moves/items/trainer
-classes -- likely reusable from Gold/Silver's own translated values, since
-the roster is the same generation, but not yet verified or wired up), no
-engine-string catalog (the Options/Menu `Strings()` catalog is literally the
-same shared Lua code across gold/silver/crystal, so Crystal saves already
-get it for free from Gold/Silver's own `overrides/<lang>/gsc/engine.json` --
-nothing Crystal-specific needed there), and no release gates.
+Besides dialogue pointers, the module builds the Crystal-only named records,
+RomText labels and Strings keys that do not exist in Gold/Silver.  Every
+value remains corpus-backed and is emitted through a Crystal-edition guard;
+missing localized corpus data deliberately keeps the engine's English value.
 """
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
+from .crystal_registries import crystal_registry_catalogs
+from .crystal_strings import match_crystal_engine_strings
+from .engine import match_engine_catalog
+from .gs_engine import _corpus_records
 from .gs_join import GsJoinEntry, join_gs_pointers, read_corpus_rows
-from .gs_text import GS_POINTER_RE, parse_gs_text_catalog
+from .gs_text import GS_POINTER_RE, parse_gs_text_catalog, split_lines
+from .engine_profile import UPSTREAM_PROFILE, normalize_engine_profile, profile_for
 
 CRYSTAL_POINTER_DECISIONS_SCHEMA = "gen1recomp-translation-mods/crystal-pointer-decisions"
 _POINTER = GS_POINTER_RE
@@ -190,3 +192,153 @@ def join_crystal_dialogue(
 def crystal_text_catalog_from_join(entries: list[GsJoinEntry]) -> dict[str, str]:
     """{pointer: translation} for entries the join actually resolved."""
     return {entry.pointer: entry.translation for entry in entries if entry.translation}
+
+
+CRYSTAL_ROM_TEXT_ANCHORS_SCHEMA = "gen1recomp-translation-mods/crystal-rom-text-anchors"
+
+
+def parse_rom_text_catalog(path: str | Path) -> dict[str, str]:
+    """Parse ``label<TAB>escaped text`` emitted by ``tools/gs_extract.lua``."""
+    result: dict[str, str] = {}
+    for line in split_lines(Path(path).read_text(encoding="utf-8")):
+        if not line:
+            continue
+        fields = line.split("\t", 1)
+        if len(fields) != 2 or not fields[0] or fields[0] in result:
+            raise ValueError(f"malformed Crystal ROM-text catalog row: {line!r}")
+        escaped = fields[1]
+        out: list[str] = []
+        index = 0
+        while index < len(escaped):
+            if escaped[index] != "\\":
+                out.append(escaped[index])
+                index += 1
+                continue
+            if index + 1 >= len(escaped) or escaped[index + 1] not in {"\\", "n", "r", "t"}:
+                raise ValueError(f"invalid escape in Crystal ROM-text row for {fields[0]!r}")
+            out.append({"\\": "\\", "n": "\n", "r": "\r", "t": "\t"}[escaped[index + 1]])
+            index += 2
+        result[fields[0]] = "".join(out)
+    return result
+
+
+def load_crystal_rom_text_anchors(path: str | Path | None = None) -> dict[str, str]:
+    if path is None:
+        path = Path(__file__).resolve().parents[1] / "config" / "gsc" / "crystal_rom_text_anchors.json"
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    if data.get("schema") != CRYSTAL_ROM_TEXT_ANCHORS_SCHEMA or data.get("version") != 1:
+        raise ValueError("unsupported Crystal ROM-text anchors schema")
+    labels = data.get("labels")
+    if not isinstance(labels, dict) or not labels:
+        raise ValueError("Crystal ROM-text anchors require a non-empty labels object")
+    for label, qid in labels.items():
+        if (not isinstance(label, str) or not label.startswith("_")
+                or not isinstance(qid, str) or not qid.startswith("c.")):
+            raise ValueError(f"invalid Crystal ROM-text anchor for {label!r}")
+    return labels
+
+
+def join_crystal_rom_text(
+    crystal_out_dir: str | Path, corpus_dir: str | Path, language: str,
+    corpus_rows: list[tuple[str, str, str]] | None = None,
+) -> tuple[dict[str, str], dict]:
+    """Translate the seven Crystal ``RomText`` labels missed by script walk.
+
+    ``corpus_rows``, when given, is read_corpus_rows()'s own output for this
+    corpus_dir/language, same as crystal_registry_catalogs() above.
+    """
+    labels = load_crystal_rom_text_anchors()
+    extracted = parse_rom_text_catalog(Path(crystal_out_dir) / "gs_rom_text.tsv")
+    missing_labels = sorted(set(labels) - set(extracted))
+    if missing_labels:
+        raise ValueError("Crystal ROM-text extraction is incomplete: " + ", ".join(missing_labels))
+    total = len(labels)
+    corpus_dir = Path(corpus_dir)
+    if corpus_rows is not None:
+        rows = corpus_rows
+    elif not (corpus_dir / f"{language}_msg.txt").is_file():
+        return {}, {
+            "translated": 0, "total": total, "percent": 0.0,
+            "fallback_english": total, "unmatched": sorted(labels),
+            "policy": "english-fallback",
+        }
+    else:
+        rows = read_corpus_rows(corpus_dir, target_lang=language)
+    source_to_label = {extracted[label]: label for label in labels}
+    if len(source_to_label) != total:
+        raise ValueError("Crystal ROM-text labels do not have unique extracted source strings")
+    anchors = {
+        extracted[label]: {"qid": qid, "extraction": {"kind": "full"}}
+        for label, qid in labels.items()
+    }
+    values, report = match_engine_catalog(
+        sorted(source_to_label), _corpus_records(rows, language),
+        semantic_anchors=anchors, target_lang=language,
+    )
+    catalog = {
+        source_to_label[source]: value for source, value in values.items() if value
+    }
+    report["translated"] = len(catalog)
+    report["fallback_english"] = total - len(catalog)
+    report["percent"] = round(100.0 * len(catalog) / total, 2) if total else 100.0
+    report["policy"] = "english-fallback"
+    return catalog, report
+
+
+def crystal_feature_catalogs(
+    crystal_out_dir: str | Path, corpus_dir: str | Path, language: str,
+    engine_profile: str = UPSTREAM_PROFILE,
+) -> tuple[dict[str, dict[str, str]], dict]:
+    """Build every Crystal-only non-dialogue catalog and structured metrics."""
+    profile = normalize_engine_profile(engine_profile)
+    corpus_dir = Path(corpus_dir)
+    # Read once and hand the same rows to every joiner below instead of each
+    # of the three re-opening and re-parsing qid/en/<lang>_msg.txt on its own
+    # (a language absent from the Crystal collection, currently Korean,
+    # keeps degrading to English -- an absent corpus_rows still lets each
+    # joiner take its own missing-file fallback path).
+    corpus_rows = (
+        read_corpus_rows(corpus_dir, target_lang=language)
+        if (corpus_dir / f"{language}_msg.txt").is_file() else None
+    )
+    # The v0.2.41 runtime can consume the ordinary named-record and Strings
+    # overlays on both profiles; only RomText needs the upstream `rom_text`
+    # registry (the public `text` registry is routed to gen2Text and cannot
+    # reach data.text on v0.2.41), so it alone is reported beside the
+    # aggregate rather than folded into it, and stays a disabled placeholder
+    # under the pinned profile.
+    named, named_stats = crystal_registry_catalogs(crystal_out_dir, corpus_dir, language, corpus_rows)
+    strings, engine_crystal_stats = match_crystal_engine_strings(corpus_dir, language, corpus_rows)
+    translated = sum(
+        section["translated"] for section in (*named_stats.values(), engine_crystal_stats)
+    )
+    total = sum(
+        section["total"] for section in (*named_stats.values(), engine_crystal_stats)
+    )
+    aggregate = {
+        "translated": translated,
+        "total": total,
+        "percent": round(100.0 * translated / total, 2) if total else 100.0,
+        "policy": "english-fallback",
+    }
+    if profile_for(profile).supports_rom_text:
+        rom_text, rom_text_stats = join_crystal_rom_text(crystal_out_dir, corpus_dir, language, corpus_rows)
+        catalogs = {**named, "rom_text": rom_text, "strings": strings}
+        rom_text_report = {
+            **rom_text_stats,
+            "runtime_dependency": "mod.content.rom_text",
+            "scope": "upstream-dependent; excluded from aggregate",
+        }
+    else:
+        catalogs = {**named, "strings": strings}
+        rom_text_report = {
+            "translated": 0, "total": 0, "fallback_english": 0,
+            "runtime_dependency": "not available in v0.2.41",
+            "scope": "upstream-dependent; disabled by pinned profile",
+        }
+    return catalogs, {
+        "named_registries": named_stats,
+        "rom_text": rom_text_report,
+        "engine_crystal": engine_crystal_stats,
+        "aggregate": aggregate,
+    }

@@ -1,7 +1,17 @@
+import json
 import unittest
 from pathlib import Path
 
 from pipeline.engine import load_engine_overrides
+
+
+def load_engine_no_op_entries(language):
+    report = json.loads(
+        (Path(__file__).resolve().parents[1] / "config" / "gsc" / "engine_fallbacks.json").read_text(
+            encoding="utf-8",
+        ),
+    )
+    return report["languages"][language].get("no_op_entries", {})
 
 
 # gs.options_menu.StringOptions (the OPTION screen's combined label text) and
@@ -70,10 +80,8 @@ VALUES = {
 
 # MONO  /STEREO are identical to the English source in fr/de/it, so they
 # carry no override at all -- Strings() already falls through to the source
-# with no catalog entry needed. (fr's ":TYPE" and de's "SOUND" are also
-# identical to the English source, but carry an explicit "identical to
-# source" override instead -- see LABELS above -- so the coverage report
-# doesn't misreport them as untranslated.)
+# with no catalog entry needed. Identical corpus values such as fr's ":TYPE"
+# and de's "SOUND" are tracked in engine_fallbacks.json's no-op policy.
 NO_OP_KEYS = {
     "fr": {"MONO  ", "STEREO"},
     "de": {"MONO  ", "STEREO"},
@@ -87,23 +95,33 @@ class GoldOptionsMenuCorpusOverrideTests(unittest.TestCase):
         for language in LABELS:
             path = Path("overrides") / language / "gsc" / "engine.json"
             overrides = load_engine_overrides(path)
+            no_op = load_engine_no_op_entries(language)
             expected = {**LABELS[language], **VALUES[language]}
             for source, override in expected.items():
-                self.assertIn(source, overrides, (language, source))
-                row = overrides[source]
+                row = overrides.get(source, no_op.get(source))
+                self.assertIsNotNone(row, (language, source))
                 self.assertEqual(row["override"], override, (language, source))
-                self.assertEqual(row["reason"], "engine-original", (language, source))
-                self.assertIn("Corpus-confirmed", row["provenance"], (language, source))
-                self.assertIn(
-                    "gs.options_menu", row["provenance"], (language, source),
-                )
+                if source in overrides:
+                    self.assertEqual(row["reason"], "engine-original", (language, source))
+                    self.assertIn("Corpus-confirmed", row["provenance"], (language, source))
+                    self.assertIn(
+                        "gs.options_menu", row["provenance"], (language, source),
+                    )
+                else:
+                    self.assertEqual(row["reason"], "engine-fallback", (language, source))
+                    self.assertIn("Corpus-confirmed", row["original_provenance"], (language, source))
+                    self.assertIn("gs.options_menu", row["original_provenance"], (language, source))
 
     def test_identical_to_source_values_carry_no_pointless_override(self):
         for language, keys in NO_OP_KEYS.items():
             path = Path("overrides") / language / "gsc" / "engine.json"
             overrides = load_engine_overrides(path)
+            no_op = load_engine_no_op_entries(language)
             for key in keys:
                 self.assertNotIn(key, overrides, (language, key))
+                if key in no_op:
+                    self.assertEqual(no_op[key]["override"], key, (language, key))
+                    self.assertTrue(no_op[key]["original_provenance"], (language, key))
 
 
 if __name__ == "__main__":

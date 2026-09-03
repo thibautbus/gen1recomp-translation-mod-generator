@@ -1,10 +1,23 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 from pipeline.gs_engine import engine_string_keys, load_gs_engine_scope_exclusions, match_gs_engine_strings
+from pipeline.engine import load_engine_overrides
 from pipeline.engine_scope import is_gen2_path, load_manifest
+from pipeline.engine_profile import UPSTREAM_PROFILE
+
+
+
+def load_engine_no_op_entries(language):
+    report = json.loads(
+        (Path(__file__).resolve().parents[1] / "config" / "gsc" / "engine_fallbacks.json").read_text(
+            encoding="utf-8",
+        ),
+    )
+    return report["languages"][language].get("no_op_entries", {})
 
 
 CALLSITES = [
@@ -48,6 +61,38 @@ class GoldEngineCatalogTests(unittest.TestCase):
         self.assertIn("#MON Talk", exclusions)
         self.assertGreaterEqual(len(exclusions), 40)
 
+    def test_all_languages_translate_new_gen2_options_and_crystal_talk_label(self):
+        keys = {
+            "AUDIO", "BACK", "BATTLE OPTIONS", "BATTLE SIZE", "EXTRAS",
+            "GRAPHICS", "KEY BAR", "UI LETTERBOX", "UNAVAILABLE", "VIDEO",
+            "VSYNC", "#MON Talk",
+        }
+        root = Path(__file__).resolve().parents[1]
+        for language in ("fr", "de", "es", "it", "ja-Hrkt", "ko"):
+            overrides = load_engine_overrides(root / "overrides" / language / "gsc" / "engine.json")
+            no_op = load_engine_no_op_entries(language)
+            available = {**no_op, **overrides}
+            self.assertEqual(keys <= set(available), True, language)
+            for key in keys:
+                self.assertTrue(available[key]["override"].strip(), f"{language}: {key}")
+                self.assertTrue(available[key]["provenance"].strip(), f"{language}: {key}")
+
+    def test_japanese_crystal_shape_gaps_have_explicit_overrides(self):
+        root = Path(__file__).resolve().parents[1]
+        overrides = load_engine_overrides(root / "overrides" / "ja-Hrkt" / "gsc" / "engine.json")
+        no_op = load_engine_no_op_entries("ja-Hrkt")
+        available = {**no_op, **overrides}
+        keys = {
+            "%s is\nnot compatible\vwith %s.",
+            "???",
+            "Day",
+            "Hm… %s\ncame from %s\vin a trade?\f%s\nwas where %s\vmet %s!",
+        }
+        self.assertEqual(keys <= set(available), True)
+        for key in keys:
+            self.assertTrue(available[key]["override"])
+            self.assertIn("Crystal", available[key]["provenance"])
+
     def test_load_gs_engine_scope_exclusions_rejects_malformed_input(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "exclusions.json"
@@ -56,10 +101,18 @@ class GoldEngineCatalogTests(unittest.TestCase):
                 load_gs_engine_scope_exclusions(path)
             path.write_text(
                 '{"schema": "gen1recomp-translation-mods/gs-engine-scope-exclusions", '
-                '"version": 1, "excluded_keys": {"X": {"reason": ""}}}',
+                '"version": 2, "source_revision": "6afeca1aebdebbd2f5bed422848c00ec7ec05dae", '
+                '"excluded_keys": {"X": {"reason": ""}}}',
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "invalid"):
+                load_gs_engine_scope_exclusions(path)
+            path.write_text(
+                '{"schema": "gen1recomp-translation-mods/gs-engine-scope-exclusions", '
+                '"version": 2, "source_revision": "0000000000000000000000000000000000000000", '
+                '"excluded_keys": {}}', encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "source_revision"):
                 load_gs_engine_scope_exclusions(path)
 
     def test_load_gs_engine_scope_exclusions_missing_file_is_empty(self):
@@ -90,6 +143,38 @@ class GoldEngineCatalogTests(unittest.TestCase):
         self.assertEqual(coverage["engine_gen2"]["total"], 1)
         self.assertEqual(coverage["engine"]["source_revision"], "0" * 40)
 
+    def test_runtime_catalogue_drops_identity_matches_for_every_language(self):
+        rows = [
+            ("gs.identity", "SAME", "SAME"),
+            ("gs.translated", "Hello!", "Bonjour!"),
+        ]
+        manifest = {**load_manifest(), "forced_dynamic_keys": {}, "engine_dynamic_values": {}}
+        callsites = [
+            {"source": "SAME", "path": "world/gen2/World.lua", "kind": "call"},
+            {"source": "Hello!", "path": "world/gen2/World.lua", "kind": "call"},
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            for language in ("fr", "de", "es", "it", "ja-Hrkt", "ko"):
+                with (
+                    patch("pipeline.gs_engine.load_manifest", return_value=manifest),
+                    patch(
+                        "pipeline.gs_engine.verified_source",
+                        return_value=(Path(tmp) / "src", Path(tmp), "0" * 40),
+                    ),
+                    patch("pipeline.gs_engine.iter_callsites", return_value=callsites),
+                    patch("pipeline.gs_engine.load_engine_overrides", return_value={}),
+                ):
+                    values, coverage = match_gs_engine_strings(rows, tmp, language)
+                self.assertEqual(values, {"Hello!": "Bonjour!"}, language)
+                self.assertFalse(any(key == value for key, value in values.items()), language)
+                # The identity remains counted and traceable by the matcher;
+                # only the runtime catalogue is filtered.
+                self.assertEqual(coverage["engine"]["translated"], 2, language)
+                self.assertEqual(coverage["engine"]["total"], 2, language)
+                self.assertEqual(coverage["engine"]["percent"], 100.0, language)
+                self.assertEqual(coverage["engine_gen2"]["translated"], 2, language)
+                self.assertEqual(coverage["engine_gen2"]["total"], 2, language)
+
     def test_rejects_a_gold_override_for_an_unknown_engine_key(self):
         manifest = {**load_manifest(), "forced_dynamic_keys": {}, "engine_dynamic_values": {}}
         with (
@@ -104,6 +189,48 @@ class GoldEngineCatalogTests(unittest.TestCase):
         ):
             with self.assertRaisesRegex(ValueError, "unknown key"):
                 match_gs_engine_strings([], tmp, "fr")
+
+    def test_rejects_a_fallback_entry_for_an_unknown_engine_key_on_the_upstream_profile(self):
+        # engine_fallbacks.json is audited against the upstream engine; a
+        # stale entry there should be caught the same way a stale override
+        # already is (gen1recomp-translation-mods review, 2026-09-01).
+        manifest = {**load_manifest(), "forced_dynamic_keys": {}, "engine_dynamic_values": {}}
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch("pipeline.gs_engine.load_manifest", return_value=manifest),
+            patch("pipeline.gs_engine.checkout_revision", return_value="local-unversioned"),
+            patch("pipeline.gs_engine.iter_callsites", return_value=CALLSITES),
+            patch("pipeline.gs_engine.load_engine_overrides", return_value={}),
+            patch(
+                "pipeline.gs_engine.load_gs_engine_fallbacks",
+                return_value={"fr": {"Stale fallback": {"override": "X"}}},
+            ),
+        ):
+            (Path(tmp) / "src").mkdir()
+            with self.assertRaisesRegex(ValueError, "unknown key"):
+                match_gs_engine_strings([], tmp, "fr", engine_profile=UPSTREAM_PROFILE)
+
+    def test_pinned_profile_does_not_check_fallback_entries_against_the_pin(self):
+        # engine_fallbacks.json tracks literals from the upstream engine, so
+        # a fallback key absent from the currently pinned revision (not yet
+        # released) must not fail a pinned-profile build.
+        manifest = {**load_manifest(), "forced_dynamic_keys": {}, "engine_dynamic_values": {}}
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch("pipeline.gs_engine.load_manifest", return_value=manifest),
+            patch(
+                "pipeline.gs_engine.verified_source",
+                return_value=(Path(tmp) / "src", Path(tmp), "0" * 40),
+            ),
+            patch("pipeline.gs_engine.iter_callsites", return_value=CALLSITES),
+            patch("pipeline.gs_engine.load_engine_overrides", return_value={}),
+            patch(
+                "pipeline.gs_engine.load_gs_engine_fallbacks",
+                return_value={"fr": {"Not yet pinned": {"override": "X"}}},
+            ),
+        ):
+            values, _report = match_gs_engine_strings([], tmp, "fr")
+            self.assertIsInstance(values, dict)
 
 
 if __name__ == "__main__":

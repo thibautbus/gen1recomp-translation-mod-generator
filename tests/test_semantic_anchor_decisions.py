@@ -380,14 +380,35 @@ class SemanticAnchorDecisionTests(unittest.TestCase):
                 for qid, source, value in zip(qids, english, target)
             ]
             output, report = match_engine_catalog(
-                {"YOUR NAME?": "", "HIS NAME?": ""},
+                {"YOUR NAME?": "", "RIVAL's NAME?": "", "HIS NAME?": ""},
                 rows,
                 semantic_anchors=anchors,
                 target_lang=language,
             )
             self.assertEqual(output["YOUR NAME?"], target[0] + (target[2] if language in {"de", "ja-Hrkt"} else ""), language)
-            self.assertEqual(output["HIS NAME?"], target[1] + (target[2] if language in {"de", "ja-Hrkt"} else ""), language)
-            self.assertEqual(report["provenance"]["HIS NAME?"]["decision_type"], "composition", language)
+            self.assertEqual(output["RIVAL's NAME?"], target[1] + (target[2] if language in {"de", "ja-Hrkt"} else ""), language)
+            self.assertEqual(output["HIS NAME?"], output["RIVAL's NAME?"], language)
+            self.assertEqual(report["provenance"]["RIVAL's NAME?"]["decision_type"], "composition", language)
+
+    def test_v0241_naming_decisions_list_all_engine_callsites_and_legacy_key(self):
+        decisions = load_semantic_anchor_decisions(ROOT / "config/rby/semantic_anchor_decisions.json")
+        your = decisions["YOUR NAME?"]
+        rival = decisions["RIVAL's NAME?"]
+        self.assertEqual(
+            your["callsites"],
+            [
+                "src/ui/NamingScreen.lua:74",
+                "src/ui/OakSpeech.lua:190",
+                "src/ui/OakSpeech.lua:456",
+                "src/ui/gen2/NamingScreen.lua:92",
+            ],
+        )
+        self.assertEqual(
+            rival["callsites"],
+            ["src/ui/OakSpeech.lua:220", "src/ui/OakSpeech.lua:455"],
+        )
+        self.assertEqual(rival["anchor"]["engine_keys"], ["HIS NAME?"])
+        self.assertNotIn("source_aliases", rival["anchor"])
 
     def test_naming_parts_target_languages_are_strict(self):
         base = {

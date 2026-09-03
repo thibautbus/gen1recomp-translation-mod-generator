@@ -13,6 +13,7 @@ from .roms import catalog_roms, import_rom, import_all, import_gs_rom
 from .mod import font_profile_warning, generate_mod
 from .disassembly_audit import run_audit
 from .engine_backlog import MATRIX_LANGUAGES, run_backlog, run_backlog_matrix
+from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE
 
 
 def main(argv=None) -> int:
@@ -32,6 +33,7 @@ def main(argv=None) -> int:
     )
     imp_gs.add_argument("rom")
     imp_gs.add_argument("--gen1recomp", required=True)
+    imp_gs.add_argument("--engine-profile", choices=(PINNED_PROFILE, UPSTREAM_PROFILE), default=PINNED_PROFILE)
     imp_gs.add_argument("--out", required=True)
     build_gs = sub.add_parser(
         "build-gs",
@@ -46,6 +48,7 @@ def main(argv=None) -> int:
     build_gs.add_argument("--mod-id")
     build_gs.add_argument("--font-source")
     build_gs.add_argument("--gen1recomp", help="pinned checkout used to generate engine-string coverage")
+    build_gs.add_argument("--engine-profile", choices=(PINNED_PROFILE, UPSTREAM_PROFILE), default=PINNED_PROFILE)
     build_gs.add_argument("--font-profile", choices=("fusion", "pokemon"), default="fusion")
     sub.add_parser("audit-disassemblies", help="developer-only private localized disassembly audit")
     backlog = sub.add_parser("engine-backlog", help="developer-only private unresolved engine-string backlog")
@@ -54,6 +57,7 @@ def main(argv=None) -> int:
     backlog.add_argument("--corpus-root", help="private PokeCorpus checkout")
     backlog.add_argument("--coverage", dest="coverage_path", help="cached coverage JSON")
     backlog.add_argument("--engine-catalog", help="cached strings.lua scaffold")
+    backlog.add_argument("--engine-profile", choices=(PINNED_PROFILE, UPSTREAM_PROFILE), default=PINNED_PROFILE)
     matrix = sub.add_parser("engine-backlog-matrix", help="developer-only private multilingual engine backlog matrix")
     matrix.add_argument("--languages", default="fr,de,es,it,ja-Hrkt", help="comma-separated canonical languages")
     matrix.add_argument("--checkout", help="private Gen1Recomp checkout (defaults to .cache/dependencies/gen1recomp)")
@@ -62,6 +66,7 @@ def main(argv=None) -> int:
     matrix.add_argument("--engine-catalog-dir", help="directory/template for per-language strings.lua scaffolds")
     matrix.add_argument("--coverage", action="append", metavar="LANG=PATH", help="explicit per-language coverage snapshot (repeatable)")
     matrix.add_argument("--engine-catalog", action="append", metavar="LANG=PATH", help="explicit per-language strings.lua scaffold (repeatable)")
+    matrix.add_argument("--engine-profile", choices=(PINNED_PROFILE, UPSTREAM_PROFILE), default=PINNED_PROFILE)
     args = p.parse_args(argv)
     if args.command == "catalog":
         roms = {"red": args.red, "blue": args.blue}
@@ -76,13 +81,14 @@ def main(argv=None) -> int:
             roms["yellow"] = args.yellow
         import_all(roms, args.gen1recomp, args.cache_root); return 0
     if args.command == "import-gs":
-        import_gs_rom(args.rom, args.gen1recomp, args.out); return 0
+        import_gs_rom(args.rom, args.gen1recomp, args.out, engine_profile=args.engine_profile); return 0
     if args.command == "build-gs":
         from .gs_mod import build_gs_dialogue_mod
         mod_dir, entries, stats = build_gs_dialogue_mod(
             args.gs_out, args.corpus, args.output, mod_id=args.mod_id, language=args.target_lang,
             font_source=args.font_source, font_profile=args.font_profile,
             engine_source=args.gen1recomp,
+            engine_profile=args.engine_profile,
         )
         public_stats = {key: value for key, value in stats.items() if not key.startswith("_")}
         print(json.dumps({"mod": str(mod_dir), "stats": public_stats}, ensure_ascii=False, indent=2))
@@ -98,6 +104,7 @@ def main(argv=None) -> int:
                 corpus_root=args.corpus_root,
                 coverage_path=args.coverage_path,
                 engine_catalog=args.engine_catalog,
+                engine_profile=args.engine_profile,
             )
         except (FileNotFoundError, ValueError, OSError) as exc:
             print(f"engine-backlog: {exc}", file=sys.stderr)
@@ -135,6 +142,7 @@ def main(argv=None) -> int:
                 engine_catalog_paths=catalog_paths,
                 coverage_dir=args.coverage_dir,
                 engine_catalog_dir=args.engine_catalog_dir,
+                engine_profile=args.engine_profile,
             )
         except (FileNotFoundError, ValueError, OSError) as exc:
             print(f"engine-backlog-matrix: {exc}", file=sys.stderr)

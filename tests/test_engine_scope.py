@@ -1,13 +1,14 @@
 import tempfile
 import subprocess
 import json
+import re
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 from pipeline.engine_scope import (
     MANIFEST_PATH, SCOPE_PATH, classify_callsites, classify_catalog,
-    forced_dynamic_keys, load_manifest, load_scope, validate_catalog_universe,
+    forced_dynamic_keys, iter_callsites, load_manifest, load_scope, validate_catalog_universe,
     verified_source,
 )
 from pipeline.dependencies import _tree_digest
@@ -47,11 +48,10 @@ class EngineScopeTests(unittest.TestCase):
     def test_manifest_rejects_invalid_dynamic_entries(self):
         mutations = (
             lambda d: d.update(forced_dynamic_keys=[]),
-            lambda d: d["forced_dynamic_keys"]["NAME"].update(category="modern"),
-            lambda d: d["forced_dynamic_keys"]["NAME"].update(extra=True),
+            lambda d: d.update(forced_dynamic_keys={"NAME": {}}),
             lambda d: d.update(engine_dynamic_values=[]),
             lambda d: d["engine_dynamic_values"]["FAST"].update(provenance="wrong"),
-            lambda d: d["engine_dynamic_values"].update(NAME=d["forced_dynamic_keys"]["NAME"]),
+            lambda d: d["engine_dynamic_values"]["FAST"].update(extra=True),
         )
         for mutate in mutations:
             self._load_mutated_manifest(mutate)
@@ -59,9 +59,7 @@ class EngineScopeTests(unittest.TestCase):
     def test_scope_overrides_are_versioned_and_strict(self):
         scope = load_scope()
         self.assertEqual(scope["classifier_version"], 4)
-        self.assertEqual(forced_dynamic_keys(scope), {"NAME", "ATTACK", "DEFENSE", "SPEED", "SPECIAL"})
-        self.assertEqual(scope["forced_dynamic_keys"]["DEFENSE"]["qid"], "rb.stat_names.VitaminStats.3")
-        self.assertEqual(scope["forced_dynamic_keys"]["SPECIAL"]["qid"], "rb.stat_names.VitaminStats.5")
+        self.assertEqual(forced_dynamic_keys(scope), set())
         self.assertIn("_OakSpeechText2A", scope["key_scope_overrides"])
         self.assertEqual(
             scope["key_scope_overrides"]["_OakSpeechText2A"],
@@ -84,23 +82,46 @@ class EngineScopeTests(unittest.TestCase):
         ):
             self._load_mutated_scope(mutate)
 
-    def test_forced_dynamic_keys_are_rby_eligible_with_provenance(self):
-        result = classify_catalog([], [], load_scope())
-        self.assertEqual(result["NAME"]["provenance"], "forced_dynamic")
-        self.assertEqual(result["NAME"]["eligibility"], "eligible")
-        self.assertIn("compatibility/engine-contract workaround", result["NAME"]["callsite"])
+    def test_obsolete_forced_keys_are_now_discovered_as_literals(self):
+        scope = load_scope()
+        self.assertEqual(forced_dynamic_keys(scope), set())
+        checkout = Path(".cache/dependencies/gen1recomp")
+        if not checkout.is_dir():
+            self.skipTest("pinned Gen1Recomp checkout is unavailable")
+        callsites = list(iter_callsites(checkout))
+        source_keys = {row.get("source") for row in callsites}
+        stat_keys = {"NAME", "ATTACK", "DEFENSE", "SPEED", "SPECIAL"}
+        self.assertEqual(stat_keys <= source_keys, True)
+        # A future engine_scope.json/classify_catalog change that misclassifies
+        # these five stat-name keys would otherwise ship undetected: literal
+        # discovery alone doesn't prove they're still eligible for translation.
+        classified = classify_catalog(stat_keys, callsites, scope)
+        for key in stat_keys:
+            self.assertEqual(classified[key]["eligibility"], "eligible", key)
+            self.assertNotEqual(classified[key].get("provenance"), "forced_dynamic", key)
 
     def test_engine_dynamic_values_keep_their_scope(self):
-        result = classify_catalog(["FAST", "balanced"], [], load_scope())
+        result = classify_catalog(["FAST", "balanced", "ADAPTIVE"], [], load_scope())
         self.assertEqual(result["FAST"]["provenance"], "engine_dynamic")
         self.assertEqual(result["FAST"]["eligibility"], "ineligible")
         self.assertEqual(result["balanced"]["category"], "mixed")
+        self.assertEqual(result["ADAPTIVE"]["category"], "modern")
+        self.assertEqual(result["ADAPTIVE"]["eligibility"], "ineligible")
+        self.assertEqual(result["ADAPTIVE"]["provenance"], "engine_dynamic")
+        self.assertIn("src/ui/OptionsMenu.lua:507", result["ADAPTIVE"]["callsite"])
+        self.assertIn("src/ui/gen2/OptionsMenu.lua:411", result["ADAPTIVE"]["callsite"])
 
-    def test_haptic_option_values_are_engine_dynamic(self):
+    def test_finite_dynamic_option_and_time_domains_are_manifested(self):
         scope = load_scope()
-        self.assertEqual({"LIGHT", "HEAVY"} <= set(scope["engine_dynamic_values"]), True)
-        result = classify_catalog(["LIGHT", "HEAVY"], [], scope)
-        for key in ("LIGHT", "HEAVY"):
+        expected = {
+            "LIGHT", "NORMAL", "STRONG", "PALETTE", "SKIN", "CENTER", "UPPER", "TOP",
+            "AM", "PM", "FILL ", "DEVICE", "DD-MM-YYYY", "MM-DD-YYYY", "YYYY-MM-DD",
+            "24 HOUR", "12 HOUR",
+        }
+        self.assertEqual(expected <= set(scope["engine_dynamic_values"]), True)
+        self.assertNotIn("HEAVY", scope["engine_dynamic_values"])
+        result = classify_catalog(expected, [], scope)
+        for key in expected:
             self.assertEqual(result[key]["provenance"], "engine_dynamic")
             self.assertEqual(result[key]["eligibility"], "ineligible")
 
@@ -143,10 +164,12 @@ class EngineScopeTests(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory(); root = Path(tmp.name)
         (root / "src" / "battle").mkdir(parents=True)
         (root / "src" / "battle" / "One.lua").write_text('Strings("one")', encoding="utf-8")
+        (root / "tools").mkdir()
+        (root / "tools" / "extract.lua").write_text("return true\n", encoding="utf-8")
         subprocess.run(["git", "init", "-q", str(root)], check=True)
         subprocess.run(["git", "-C", str(root), "config", "user.email", "test@example.invalid"], check=True)
         subprocess.run(["git", "-C", str(root), "config", "user.name", "Test"], check=True)
-        subprocess.run(["git", "-C", str(root), "add", "src"], check=True)
+        subprocess.run(["git", "-C", str(root), "add", "src", "tools"], check=True)
         subprocess.run(["git", "-C", str(root), "commit", "-qm", "fixture"], check=True)
         revision = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
         scope = load_scope(); scope["gen1recomp_revision"] = revision
@@ -160,6 +183,16 @@ class EngineScopeTests(unittest.TestCase):
             (root / "src" / "battle" / "Dirty.lua").write_text('Strings("dirty")', encoding="utf-8")
             with self.assertRaises(ValueError): verified_source(root, scope)
         finally: tmp.cleanup()
+
+    def test_verified_source_rejects_dirty_tools_used_by_the_builder(self):
+        tmp, root, scope = self._git_fixture()
+        try:
+            self.assertEqual(verified_source(root, scope)[0], root / "src")
+            (root / "tools" / "extract.lua").write_text("return false\n", encoding="utf-8")
+            with self.assertRaises(ValueError):
+                verified_source(root, scope)
+        finally:
+            tmp.cleanup()
 
     def test_verified_source_accepts_archive_root_and_src_and_rejects_spoofed_tree_pin(self):
         scope = load_scope()
@@ -200,7 +233,7 @@ class EngineScopeTests(unittest.TestCase):
 
     def test_manifest_and_lua_suffix_rules(self):
         scope = load_scope()
-        self.assertEqual(scope["gen1recomp_revision"], "fc56b9b05f01c559610c71f801355abfa4ae920f")
+        self.assertEqual(scope["gen1recomp_revision"], "6afeca1aebdebbd2f5bed422848c00ec7ec05dae")
         self.assertEqual(
             classify_callsites([{"source": "x", "path": "ui/BagMenu.lua", "line": 1}])["x"]["eligibility"],
             "eligible",
@@ -209,6 +242,32 @@ class EngineScopeTests(unittest.TestCase):
             classify_callsites([{"source": "x", "path": "ui/BagMenu", "line": 1}])["x"]["eligibility"],
             "review",
         )
+
+    def test_v0241_manifest_callsites_exist_in_pinned_checkout(self):
+        manifest = load_manifest()
+        checkout = Path(".cache/dependencies/gen1recomp")
+        if not checkout.is_dir():
+            self.skipTest("pinned Gen1Recomp checkout is unavailable")
+        for group in ("forced_dynamic_keys", "engine_dynamic_values"):
+            for key, entry in manifest[group].items():
+                references = re.findall(r"(src/[^ :()]+\.lua):(\d+)(?:-(\d+))?", entry["callsite"])
+                self.assertTrue(references, key)
+                for relative, first, last in references:
+                    source = checkout / relative
+                    self.assertTrue(source.is_file(), f"{key}: {relative}")
+                    lines = source.read_text(encoding="utf-8").splitlines()
+                    start, end = int(first), int(last or first)
+                    self.assertGreaterEqual(start, 1, key)
+                    self.assertLessEqual(start, len(lines), f"{key}: {relative}:{start}")
+                    self.assertLessEqual(end, len(lines), f"{key}: {relative}:{end}")
+                    context = "\n".join(lines[start - 1:end])
+                    description = entry["callsite"].rsplit("(", 1)[-1]
+                    marker = description.split()[0].split(".")[0]
+                    if marker in {"runtime", "literal"}:
+                        marker = key
+                    if marker == "TouchControls":
+                        marker = "hapticLabel"
+                    self.assertIn(marker, context, f"{key}: stale callsite {relative}:{first}")
 
     def test_new_ui_module_scope_classification(self):
         result = classify_callsites([
@@ -236,7 +295,7 @@ class EngineScopeTests(unittest.TestCase):
         try:
             with self.assertRaises(ValueError): validate_catalog_universe({"other"}, root)
             report = validate_catalog_universe({"one", *forced_dynamic_keys(scope)}, root, scope)
-            self.assertEqual(report["forced_dynamic"], 5)
+            self.assertEqual(report["forced_dynamic"], 0)
         finally: tmp.cleanup()
 
     def test_universe_extra_and_missing(self):

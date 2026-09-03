@@ -1,0 +1,30 @@
+{
+  "schema": "gen1recomp-translation-mods/crystal-string-selectors",
+  "version": 1,
+  "description": "Selectors for official Crystal corpus rows whose list boundaries or localized placeholder count cannot be represented by the shared semantic-anchor grammar. Contains no translated prose.",
+  "selectors": {
+    "#MON Talk": {
+      "qid": "c.buenas_passwords.BuenasPasswordTable.RadioStations",
+      "kind": "at_segment",
+      "index": 0
+    },
+    "Challenge": {
+      "qid": "c.mobile_5f.MenuData_ChallengeExplanationCancel",
+      "kind": "at_segment",
+      "index": 0
+    },
+    "Explanation": {
+      "qid": "c.mobile_5f.MenuData_ChallengeExplanationCancel",
+      "kind": "at_segment",
+      "index": 1
+    },
+    "Incidentally…\fI'm impressed by\nyour dedication.\fIt's been a long\ntime since I've\fseen a #MON as\nmighty as this\u000b%s.\fI'm sure that\nseeing %s\fin battle would\nexcite anyone.": {
+      "qid": "c.common_3.SeerImpressedText",
+      "kind": "full",
+      "printf_indexes": {
+        "default": [0, 1],
+        "fr": [0]
+      }
+    }
+  }
+}

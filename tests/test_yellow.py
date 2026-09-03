@@ -274,7 +274,7 @@ class YellowAuditTests(unittest.TestCase):
             self.assertEqual(audit["statuses"]["versioned-required"], 1)
             self.assertEqual(audit["statuses"]["yellow-only"], 1)
             self.assertEqual(audit["versioned"][0]["translated"], True)
-            self.assertTrue(any(item["engine_key"] == "%s is refusing!" for item in audit["deferred_engine_strings"]))
+            self.assertTrue(any(item["engine_key"] == "%s\nis refusing!" for item in audit["deferred_engine_strings"]))
 
 
 class UniversalBuildTests(unittest.TestCase):
