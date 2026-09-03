@@ -223,7 +223,7 @@ if expectations then
   -- in for the real ROM-extracted English #DEX text Game2:load() would have
   -- loaded from disk), to prove this translation's dexEntry actually reaches
   -- the same table the #DEX screen reads.
-  if engineProfile == "upstream-local" and expectations.species_dex_text then
+  if expectations.species_dex_text then
     local PokedexText = require("src.core.gen2.PokedexText")
     local dexId = expectations.species_dex_text.id
     data.gen2Pokedex = data.gen2Pokedex or {}
