@@ -79,7 +79,7 @@
     "%s passed the baton!",
     "%s protected itself!",
     "%s regained health!",
-    "%s sent out %s!",
+    "%s\nsent out\u000b%s!",
     "%s thawed out!",
     "%s took aim!",
     "%s took in sunlight!",
