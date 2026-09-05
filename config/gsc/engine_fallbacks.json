@@ -780,7 +780,7 @@
         "MINERAL": {
           "override": "MINERAL",
           "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
+          "provenance": "Explicit English fallback: this Johto badge name is already spelled identically to the English source in this language, confirmed from poke-corpus GoldSilver's badge-award dialogue (\"...recibió la MEDALLA MINERAL.\")."
         },
         "MOVE <PK><MN> W/O MAIL": {
           "override": "MOVE <PK><MN> W/O MAIL",
@@ -1179,7 +1179,7 @@
         "CASCADE": {
           "override": "CASCADE",
           "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
+          "provenance": "Explicit English fallback: this Kanto badge name is already spelled identically to the English source in this language, confirmed from poke-corpus GoldSilver's badge-award dialogue (\"...V'là le BADGECASCADE.\")."
         },
         "CYAN": {
           "override": "CYAN",
@@ -1199,7 +1199,7 @@
         "GLACIER": {
           "override": "GLACIER",
           "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
+          "provenance": "Explicit English fallback: this Johto badge name is already spelled identically to the English source in this language, confirmed from poke-corpus GoldSilver's badge-award dialogue (\"...reçoit le BADGEGLACIER.\")."
         },
         "GREEN": {
           "override": "GREEN",
@@ -1244,7 +1244,7 @@
         "MINERAL": {
           "override": "MINERAL",
           "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
+          "provenance": "Explicit English fallback: this Johto badge name is already spelled identically to the English source in this language, confirmed from poke-corpus GoldSilver's badge-award dialogue (\"...reçoit le BADGEMINERAL.\")."
         },
         "MOVE <PK><MN> W/O MAIL": {
           "override": "MOVE <PK><MN> W/O MAIL",
@@ -1374,7 +1374,7 @@
         "ZEPHYR": {
           "override": "ZEPHYR",
           "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
+          "provenance": "Explicit English fallback: this Johto badge name is already spelled identically to the English source in this language, confirmed from poke-corpus GoldSilver's badge-award dialogue (\"C'est le BADGE ZEPHYR officiel de la LIGUE #MON.\")."
         },
         "<PK><MN>": {
           "override": "<PK><MN>",
