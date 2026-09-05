@@ -1,7 +1,7 @@
 {
   "schema": "gen1recomp-translation-mods/engine-manifest",
   "version": 1,
-  "gen1recomp_revision": "ca142860c67f351ed5232436f40c88a8a5e3a47d",
+  "gen1recomp_revision": "babac97526c4e95445f8710f397da9f0dfd10e16",
   "source_subdir": "src",
   "forced_dynamic_keys": {},
   "engine_dynamic_values": {
@@ -322,7 +322,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/gen2/OptionsMenu.lua:767 (Strings dynamic display domain)",
+      "callsite": "src/ui/gen2/OptionsMenu.lua:773 (Strings dynamic display domain)",
       "qid": ""
     },
     "DEVICE": {

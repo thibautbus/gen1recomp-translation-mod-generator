@@ -11,7 +11,6 @@ KEYS = (
     "No good! It's not\neven near water.",
     "PP",
     "PRNT",
-    "Data unknown.",
     "The boulder fell\nthrough the hole!",
     "BOX%2d",
 )
@@ -20,31 +19,26 @@ EXPECTED = {
     "fr": [
         ":N%d", ":N%d No.%03d", "Vide.",
         "Pas bon! Même pas\nprès de l'eau.", "PP", "PRNT",
-        "Données inconnues.",
         "Le rocher est tombé\ndans le trou!", "BOITE%2d",
     ],
     "de": [
         ":L%d", ":L%d Nr.%03d", "Leer.",
         "Schade! Nicht mal\nin Wassernähe.", "PP", "PRNT",
-        "Daten unbekannt.",
         "Der Felsen fiel\ndurch das Loch!", "BOX%2d",
     ],
     "es": [
         ":N%d", ":N%d Nº%03d", "Vacía.",
         "¡Qué mal! No estás\nni cerca del agua.", "PP", "PRNT",
-        "Datos desconocidos.",
         "¡La roca cayó\npor el agujero!", "CAJA%2d",
     ],
     "it": [
         ":L%d", ":L%d Nº%03d", "Vuoto.",
         "Niente da fare!\nLontano dall'acqua.", "PP", "PRNT",
-        "Dati sconosciuti.",
         "Il masso è caduto\nnel buco!", "BOX%2d",
     ],
     "ja-Hrkt": [
         ":L%d", ":L%d No.%03d", "からっぽ。",
         "だめだ！\nみずの　そばじゃ　ない！", "PP", "PRNT",
-        "データ　ふめい。",
         "いわが　あなに\nおちた！", "ボックス%2d",
     ],
 }
@@ -53,7 +47,6 @@ CONTRACT_GAP_KEYS = (
     "%s's %s\nrose!",
     "Once released,\n%s is\ngone forever. OK?",
     "BADGES",
-    "HT %d′%02d″", "WT %.1flb",
     "%s\nfainted!",
     "POKéDEX",
 )

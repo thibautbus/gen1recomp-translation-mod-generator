@@ -233,7 +233,7 @@ class EngineScopeTests(unittest.TestCase):
 
     def test_manifest_and_lua_suffix_rules(self):
         scope = load_scope()
-        self.assertEqual(scope["gen1recomp_revision"], "ca142860c67f351ed5232436f40c88a8a5e3a47d")
+        self.assertEqual(scope["gen1recomp_revision"], "babac97526c4e95445f8710f397da9f0dfd10e16")
         self.assertEqual(
             classify_callsites([{"source": "x", "path": "ui/BagMenu.lua", "line": 1}])["x"]["eligibility"],
             "eligible",

@@ -188,11 +188,11 @@ engine's English fallback.
 
 | Target | Red Blue ROM aggregate | Yellow ROM aggregate | RBY-related engine strings |
 | --- | ---: | ---: | ---: |
-| `fr` | 3286/3286 (100%) | 3400/3400 (100%) | 409/418 (97.85%) |
-| `de` | 3286/3286 (100%) | 3400/3400 (100%) | 409/418 (97.85%) |
-| `es` | 3286/3286 (100%) | 3400/3400 (100%) | 409/418 (97.85%) |
-| `it` | 3286/3286 (100%) | 3400/3400 (100%) | 409/418 (97.85%) |
-| `ja-Hrkt` | 3286/3286 (100%) | 3400/3400 (100%) | 409/418 (97.85%) |
+| `fr` | 3286/3286 (100%) | 3400/3400 (100%) | 412/420 (98.10%) |
+| `de` | 3286/3286 (100%) | 3400/3400 (100%) | 412/420 (98.10%) |
+| `es` | 3286/3286 (100%) | 3400/3400 (100%) | 412/420 (98.10%) |
+| `it` | 3286/3286 (100%) | 3400/3400 (100%) | 412/420 (98.10%) |
+| `ja-Hrkt` | 3286/3286 (100%) | 3400/3400 (100%) | 412/420 (98.10%) |
 
 The ROM aggregates exclude extracted labels that do not render visible text.
 Reviewed exceptions are recorded in
@@ -211,7 +211,7 @@ actual Crystal save:
   catalogs. Its denominator excludes 14 markup-only records with no visible
   prose. `ja-Hrkt` and `ko` fall short of 100% here: this is a genuine, known
   gap in those languages' dialogue/catalog corpora, not a formatting artifact.
-- `Gold and Silver-related engine strings` covers the 937 engine keys used by
+- `Gold and Silver-related engine strings` covers the 940 engine keys used by
   at least one production Gen 2 callsite. 48 keys reachable only from a
   Crystal-exclusive feature (Move Tutor, gender selection, the "PokeSeer"/
   Buena's Password radio special, Battle Tower) are excluded from this
@@ -244,37 +244,37 @@ provenance. Future unresolved entries will keep their original English text.
 
 | Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings | Crystal dialogue coverage |
 | --- | ---: | ---: | ---: |
-| `fr` | 5707/5707 (100%) | 865/937 (92.32%) | 3994/4010 (99.6%) |
-| `de` | 5707/5707 (100%) | 863/937 (92.10%) | 3994/4010 (99.6%) |
-| `es` | 5707/5707 (100%) | 880/937 (93.92%) | 3994/4010 (99.6%) |
-| `it` | 5707/5707 (100%) | 872/937 (93.06%) | 3994/4010 (99.6%) |
-| `ja-Hrkt` | 4954/5707 (86.81%) | 876/937 (93.49%) | 3994/4010 (99.6%) |
-| `ko` | 4703/5707 (82.41%) | 877/937 (93.60%) | 0/4010 (0%) |
+| `fr` | 5707/5707 (100%) | 868/940 (92.34%) | 3994/4010 (99.6%) |
+| `de` | 5707/5707 (100%) | 866/940 (92.13%) | 3994/4010 (99.6%) |
+| `es` | 5707/5707 (100%) | 883/940 (93.94%) | 3994/4010 (99.6%) |
+| `it` | 5707/5707 (100%) | 875/940 (93.09%) | 3994/4010 (99.6%) |
+| `ja-Hrkt` | 4954/5707 (86.81%) | 879/940 (93.51%) | 3994/4010 (99.6%) |
+| `ko` | 4703/5707 (82.41%) | 880/940 (93.62%) | 0/4010 (0%) |
 
 ### Other engine strings
 
 The remaining engine keys are reported separately below. They are keys used by
 neither RBY nor Gold and Silver, so their denominator is the residual scope:
-`2174 - (418 + 937 - 83) = 902`. The numerator counts keys translated in at
+`2174 - (420 + 940 - 86) = 900`. The numerator counts keys translated in at
 least one of the two artifacts; this is a project-level metric, not a claim
 that every key is present in both games.
 
 | Target | Other engine strings |
 | --- | ---: |
-| `fr` | 78/902 (8.65%) |
-| `de` | 84/902 (9.31%) |
-| `es` | 83/902 (9.2%) |
-| `it` | 84/902 (9.31%) |
-| `ja-Hrkt` | 85/902 (9.42%) |
-| `ko` | 3/902 (0.33%) |
+| `fr` | 78/900 (8.67%) |
+| `de` | 84/900 (9.33%) |
+| `es` | 83/900 (9.22%) |
+| `it` | 84/900 (9.33%) |
+| `ja-Hrkt` | 85/900 (9.44%) |
+| `ko` | 3/900 (0.33%) |
 
 The denominator is calculated as follows: `2174` total engine keys, minus the
-`418` RBY-related keys and the `937` Gold and Silver-related keys, plus back the `83` keys
+`420` RBY-related keys and the `940` Gold and Silver-related keys, plus back the `86` keys
 shared by both scopes so they are subtracted only once. The resulting residual
-scope is `902` keys.
+scope is `900` keys.
 
 These values use the pinned ROMs, corpus snapshots and Gen1Recomp revision
-`ca142860` (v0.2.55); regenerate them whenever one of those inputs changes.
+`babac975` (v0.2.56); regenerate them whenever one of those inputs changes.
 
 ## Translation provenance
 
