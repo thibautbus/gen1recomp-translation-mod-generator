@@ -9,7 +9,10 @@ from pipeline.crystal_mod import (
     join_crystal_rom_text, load_crystal_rom_text_anchors, parse_rom_text_catalog,
     load_crystal_dialogue_overrides, load_crystal_pointer_decisions,
 )
-from pipeline.crystal_registries import crystal_registry_catalogs
+from pipeline.crystal_registries import (
+    CRYSTAL_ONLY_ITEMS, CRYSTAL_ONLY_LANDMARKS, CRYSTAL_ONLY_TRAINER_CLASSES,
+    crystal_registry_catalogs, load_crystal_registry_overrides,
+)
 from pipeline.crystal_strings import match_crystal_engine_strings
 from pipeline.engine_profile import PINNED_PROFILE
 from pipeline.gs_join import REVIEWED_QID, join_gs_pointers
@@ -54,12 +57,30 @@ class JoinCrystalDialogueTests(unittest.TestCase):
             # fr exists, ko doesn't -- mirrors the real Crystal/ collection.
             self.write_corpus(root / "corpus", "fr", [("c.text.Hello", "Hello!", "Bonjour!")])
             entries, stats = join_crystal_dialogue(root / "extracted", root / "corpus", "ko")
-            self.assertEqual(entries, [])
+            self.assertEqual([entry.provenance for entry in entries], ["no_match", "no_match"])
             self.assertEqual(stats["total"], 2)
             self.assertEqual(stats["no_match"], 2)
             self.assertEqual(stats["unique"], 0)
             catalog = crystal_text_catalog_from_join(entries)
             self.assertEqual(catalog, {})
+
+    def test_missing_language_corpus_still_applies_a_hand_composed_dialogue_override(self):
+        # Korean has no Crystal corpus row for this pointer, but a
+        # translator composing one anyway (overrides/ko/gsc/
+        # crystal_dialogue.json, this catalog's own documented escape hatch
+        # for prose with no corpus row at all) must still reach the join --
+        # the corpus being empty is not a reason to discard overrides.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write_text_catalog(root / "extracted", [("00:0001", "Hello!")])
+            self.write_corpus(root / "corpus", "fr", [("c.text.Hello", "Hello!", "Bonjour!")])
+            with patch(
+                "pipeline.crystal_mod.load_crystal_dialogue_overrides",
+                return_value={"00:0001": "안녕!"},
+            ):
+                entries, stats = join_crystal_dialogue(root / "extracted", root / "corpus", "ko")
+            self.assertEqual(stats["override"], 1)
+            self.assertEqual(crystal_text_catalog_from_join(entries), {"00:0001": "안녕!"})
 
     def test_unmatched_english_stays_untranslated(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -156,12 +177,87 @@ class CrystalFeatureCatalogTests(unittest.TestCase):
             self.assertEqual(catalogs["landmarks"], {"LANDMARK_BATTLE_TOWER": "TOUR DE COMBAT"})
             self.assertEqual(sum(section["translated"] for section in stats.values()), 6)
 
-    def test_absent_crystal_language_is_an_explicit_english_fallback(self):
+    def test_registry_catalog_absent_crystal_language_with_no_overrides_is_an_explicit_english_fallback(self):
         with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            extracted = root / "extracted"
+            extracted.mkdir()
+            (extracted / "gs_items.tsv").write_text(
+                "BLUE_CARD\t1\tBLUE CARD\nCLEAR_BELL\t2\tCLEAR BELL\n"
+                "EGG_TICKET\t3\tEGG TICKET\nGS_BALL\t4\tGS BALL\n", encoding="utf-8",
+            )
+            (extracted / "gs_trainer_classes.tsv").write_text("MYSTICALMAN\t1\tMYSTICALMAN\n", encoding="utf-8")
+            (extracted / "gs_landmarks.tsv").write_text(
+                "LANDMARK_BATTLE_TOWER\t1\tBATTLE TOWER\n", encoding="utf-8",
+            )
+            with patch("pipeline.crystal_registries.load_crystal_registry_overrides", return_value={}):
+                catalogs, stats = crystal_registry_catalogs(extracted, root / "corpus", "ko")
+            self.assertEqual(catalogs, {"item_names": {}, "trainer_class_names": {}, "landmarks": {}})
+            self.assertEqual(stats["item_names"]["fallback_english"], 4)
+            self.assertEqual(stats["trainer_class_names"]["fallback_english"], 1)
+            self.assertEqual(stats["landmarks"]["fallback_english"], 1)
+
+    def test_registry_catalog_absent_crystal_language_still_ships_hand_composed_overrides(self):
+        # Korean has no Crystal corpus row for any of these six records, but
+        # a translator composing one anyway (overrides/ko/gsc/
+        # crystal_registries.json, this catalog's own documented way to
+        # cover that gap) must still reach the shipped catalogue.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            extracted = root / "extracted"
+            extracted.mkdir()
+            (extracted / "gs_items.tsv").write_text("BLUE_CARD\t1\tBLUE CARD\n", encoding="utf-8")
+            (extracted / "gs_trainer_classes.tsv").write_text("MYSTICALMAN\t1\tMYSTICALMAN\n", encoding="utf-8")
+            (extracted / "gs_landmarks.tsv").write_text(
+                "LANDMARK_BATTLE_TOWER\t1\tBATTLE TOWER\n", encoding="utf-8",
+            )
+            overrides = {
+                "BLUE_CARD": "블루카드", "MYSTICALMAN": "신비한 남자", "LANDMARK_BATTLE_TOWER": "배틀타워",
+            }
+            with (
+                patch("pipeline.crystal_registries.CRYSTAL_ONLY_ITEMS", frozenset({"BLUE_CARD"})),
+                patch("pipeline.crystal_registries.load_crystal_registry_overrides", return_value=overrides),
+            ):
+                catalogs, stats = crystal_registry_catalogs(extracted, root / "corpus", "ko")
+            self.assertEqual(catalogs["item_names"], {"BLUE_CARD": "블루카드"})
+            self.assertEqual(catalogs["trainer_class_names"], {"MYSTICALMAN": "신비한 남자"})
+            self.assertEqual(catalogs["landmarks"], {"LANDMARK_BATTLE_TOWER": "배틀타워"})
+            self.assertEqual(stats["item_names"]["translated"], 1)
+            self.assertEqual(stats["item_names"]["fallback_english"], 0)
+
+    def test_absent_crystal_language_with_no_overrides_is_an_explicit_english_fallback(self):
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch("pipeline.crystal_strings.load_gs_engine_scope_exclusions", return_value={"A", "B"}),
+            patch("pipeline.crystal_strings.load_engine_overrides", return_value={}),
+            patch("pipeline.crystal_strings._load_selectors", return_value={}),
+        ):
             catalog, stats = match_crystal_engine_strings(Path(tmp), "ko")
             self.assertEqual(catalog, {})
-            self.assertEqual(stats["total"], 48)
-            self.assertEqual(stats["fallback_english"], 48)
+            self.assertEqual(stats["total"], 2)
+            self.assertEqual(stats["fallback_english"], 2)
+            self.assertEqual(stats["policy"], "english-fallback")
+
+    def test_absent_crystal_language_still_ships_a_hand_composed_override(self):
+        # Korean has no Crystal corpus row for any of these 48 keys, but a
+        # translator composing one anyway (this catalog's own documented way
+        # to cover that gap, see match_crystal_engine_strings' docstring)
+        # must still reach the shipped catalogue -- the corpus being empty
+        # is not a reason to silently discard overrides/ko/gsc/engine.json.
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch("pipeline.crystal_strings.load_gs_engine_scope_exclusions", return_value={"A", "B"}),
+            patch("pipeline.crystal_strings.load_engine_overrides", return_value={
+                "A": {"override": "Traduit A", "reason": "engine-original", "provenance": "fixture"},
+            }),
+            patch("pipeline.crystal_strings._load_selectors", return_value={}),
+        ):
+            catalog, stats = match_crystal_engine_strings(Path(tmp), "ko")
+            self.assertEqual(catalog, {"A": "Traduit A"})
+            self.assertEqual(stats["total"], 2)
+            self.assertEqual(stats["translated"], 1)
+            self.assertEqual(stats["fallback_english"], 1)
+            self.assertEqual(stats["unmatched"], ["B"])
             self.assertEqual(stats["policy"], "english-fallback")
 
     def test_scanner_overrides_complete_the_specialized_crystal_match(self):
@@ -363,6 +459,41 @@ class LoadCrystalDialogueOverridesTests(unittest.TestCase):
                 entries, stats = join_crystal_dialogue(root / "extracted", root / "corpus", "fr")
             self.assertEqual(stats["override"], 1)
             self.assertEqual(crystal_text_catalog_from_join(entries), {"18:6674": "Texte traduit sans corpus."})
+
+
+class LoadCrystalRegistryOverridesTests(unittest.TestCase):
+    def test_missing_file_is_empty(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(load_crystal_registry_overrides("fr", root=Path(tmp)), {})
+
+    def test_rejects_wrong_schema(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "overrides" / "ko" / "gsc" / "crystal_registries.json"
+            path.parent.mkdir(parents=True)
+            path.write_text(json.dumps({"schema": "wrong", "version": 1, "entries": {}}), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                load_crystal_registry_overrides("ko", root=root)
+
+    def test_rejects_an_empty_override(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "overrides" / "ko" / "gsc" / "crystal_registries.json"
+            path.parent.mkdir(parents=True)
+            path.write_text(json.dumps({
+                "schema": "gen1recomp-translation-mods/crystal-registry-overrides",
+                "version": 1,
+                "entries": {"BLUE_CARD": {"override": "  "}},
+            }), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                load_crystal_registry_overrides("ko", root=root)
+
+    def test_repository_korean_overrides_are_valid_and_cover_all_six_records(self):
+        overrides = load_crystal_registry_overrides("ko")
+        expected_ids = CRYSTAL_ONLY_ITEMS | CRYSTAL_ONLY_TRAINER_CLASSES | CRYSTAL_ONLY_LANDMARKS
+        self.assertEqual(set(overrides), expected_ids)
+        for entry_id, text in overrides.items():
+            self.assertTrue(text.strip(), entry_id)
 
 
 if __name__ == "__main__":

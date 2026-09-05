@@ -162,30 +162,32 @@ def join_crystal_dialogue(
 
     Returns entries and their raw join stats (see pipeline.gs_join.join_gs_pointers).
     If poke-corpus has no Crystal corpus for ``language`` (Korean: Crystal has
-    no ko_msg.txt, unlike GoldSilver), returns an empty entry list and
-    all-zero stats rather than raising -- Crystal dialogue simply stays in
-    English for that language; the caller (build_gs()) still requires and
-    extracts the Crystal ROM (for the shared engine-string catalog and
-    consistency with the mandatory-Crystal-ROM policy), it just has nothing
-    corpus-backed to translate for Crystal specifically.
+    no ko_msg.txt, unlike GoldSilver), there are no corpus rows to join
+    against -- Crystal dialogue simply stays in English for that language,
+    same as before -- but a hand-composed overrides/<language>/gsc/
+    crystal_dialogue.json entry (this catalog's own escape hatch for prose
+    with no corpus row at all, see load_crystal_dialogue_overrides()) is
+    still applied per pointer; join_gs_pointers() already treats overrides
+    as the higher-priority path regardless of what corpus rows are given,
+    so an empty corpus row list does not need its own early return here.
+    ``qid_decisions`` is skipped in that case: it only disambiguates among
+    a language's own corpus candidates, so it would just fail every lookup
+    against an empty corpus_by_qid instead of silently doing nothing.
+    The caller (build_gs()) still requires and extracts the Crystal ROM
+    (for the shared engine-string catalog and consistency with the
+    mandatory-Crystal-ROM policy) regardless.
     """
     crystal_out_dir = Path(crystal_out_dir)
     corpus_dir = Path(corpus_dir)
     records = parse_gs_text_catalog(
         crystal_out_dir / "gs_text.tsv", crystal_out_dir / "gs_labels.tsv",
     )
-    if not (corpus_dir / f"{language}_msg.txt").is_file():
-        stats = {
-            "total": len(records), "unique": 0, "harmless_ambiguous": 0,
-            "override": 0, "reviewed_qid": 0, "unresolved": 0, "no_match": len(records),
-            "markup_only": 0,
-        }
-        return [], stats
-    corpus_rows = read_corpus_rows(corpus_dir, target_lang=language)
+    has_corpus = (corpus_dir / f"{language}_msg.txt").is_file()
+    corpus_rows = read_corpus_rows(corpus_dir, target_lang=language) if has_corpus else []
     return join_gs_pointers(
         records, corpus_rows,
         overrides=load_crystal_dialogue_overrides(language),
-        qid_decisions=load_crystal_pointer_decisions(),
+        qid_decisions=load_crystal_pointer_decisions() if has_corpus else None,
     )
 
 

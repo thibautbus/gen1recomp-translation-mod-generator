@@ -227,7 +227,11 @@ actual Crystal save:
   named catalogs (the Crystal-exclusive item names, trainer class names and
   landmarks subset) and its 48 Crystal-exclusive engine strings are also
   translated (fr/de/es/it: 48/48 engine strings and 6/6 named registries;
-  ja-Hrkt: 47/48 and 6/6; `ko` has no Crystal corpus and stays untranslated).
+  ja-Hrkt: 47/48 and 6/6; `ko` has no Crystal corpus, but both its 47/48
+  engine strings and all 6/6 named registries -- the Crystal-exclusive
+  item/trainer-class/landmark names -- are hand-composed anyway. The
+  missing 48th engine string, "???", is a genuine English-identical
+  no-op).
   The shared `Gold and Silver-related engine strings` catalog and the shared
   named ROM catalogs (species/moves/items/trainer classes) also apply
   unchanged on a Crystal save, same shared code, no separate work needed

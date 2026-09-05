@@ -90,11 +90,17 @@ def match_crystal_engine_strings(
 ) -> tuple[dict[str, str], dict]:
     """Resolve the 48 known Crystal-only ``Strings`` keys from PokeCorpus.
 
-    A language absent from the Crystal collection (currently Korean) is an
-    explicit English fallback: no override is emitted and the structured
-    report accounts for every key as ``fallback_english``. ``corpus_rows``,
-    when given, is read_corpus_rows()'s own output for this corpus_dir/
-    language, same as crystal_registry_catalogs()/join_crystal_rom_text().
+    A language absent from the Crystal collection (currently Korean) has no
+    corpus rows to match against, but a hand-composed
+    overrides/<language>/gsc/engine.json entry for one of these keys is
+    still shipped -- composing Korean text for a Crystal-exclusive feature
+    is exactly how this catalog covers that gap (there being no Crystal
+    corpus row is the reason the translation has to be composed, not a
+    reason to discard it). Keys neither in the corpus nor in overrides stay
+    an explicit English fallback, same as everywhere else in this catalog.
+    ``corpus_rows``, when given, is read_corpus_rows()'s own output for this
+    corpus_dir/language, same as crystal_registry_catalogs()/
+    join_crystal_rom_text().
     """
     keys = sorted(load_gs_engine_scope_exclusions())
     corpus_dir = Path(corpus_dir)
@@ -102,16 +108,7 @@ def match_crystal_engine_strings(
     if corpus_rows is not None:
         rows = corpus_rows
     elif not target.is_file():
-        return {}, {
-            "translated": 0,
-            "total": len(keys),
-            "percent": 0.0 if keys else 100.0,
-            "fallback_english": len(keys),
-            "unmatched": keys,
-            "policy": "english-fallback",
-            "catalog_kind": "Crystal-exclusive Strings callsites",
-            "scope": "Crystal-only keys excluded from the Gold/Silver engine metric",
-        }
+        rows = []
     else:
         rows = read_corpus_rows(corpus_dir, target_lang=language)
     all_overrides = load_engine_overrides(
