@@ -26,9 +26,12 @@ def load_engine_no_op_entries(language):
 # either a port-added row with no cart equivalent at all (EXIT GAME, NO
 # SAVE FILE, Could not save.) or an adaptation this port's own call-site
 # shape forces (PLAYER %s folds the name into one Chrome.print call rather
-# than drawing it separately like the real cart does; the overwrite prompt
-# is truncated to the two lines this port's fixed layout has room for,
-# matching its own English source's identical truncation).
+# than drawing it separately like the real cart does; the overwrite prompt's
+# English source itself is the real cart's full three-line text as of
+# v0.2.55 (no longer truncated), so fr/es carry the full quote too -- de/it
+# still drop the real quote's opening clause and keep only its last three
+# lines, since their own cart text runs one line longer than the engine's
+# fixed three-line budget allows).
 ENGINE_ORIGINAL = {
     "fr": {
         "CONTINUE": "CONTINUER", "NEW GAME": "NOUVEAU JEU", "OPTION": "OPTIONS",
@@ -63,22 +66,22 @@ ENGINE_ORIGINAL = {
 ENGINE_CONTRACT_GAP = {
     "fr": {
         "EXIT GAME": "QUITTER", "PLAYER %s": "JOUEUR %s", "NO SAVE FILE": "PAS DE SAUVEGARDE",
-        "There is already a\nsave file. Is it": "Il y a déjà une\nsauvegarde. La",
+        "There is already a\nsave file. Is it\x0bOK to overwrite?": "Il y a déjà une\nsauvegarde. La\x0bremplacer?",
         "Could not save.": "Sauvegarde impossible.",
     },
     "de": {
         "EXIT GAME": "SPIEL BEENDEN", "PLAYER %s": "SPIELER %s", "NO SAVE FILE": "KEIN SPIELSTAND",
-        "There is already a\nsave file. Is it": "Es gibt bereits\neinen Spielstand.",
+        "There is already a\nsave file. Is it\x0bOK to overwrite?": "einen Spielstand.\nSpielstand\x0büberschreiben?",
         "Could not save.": "Speichern fehlgeschlagen.",
     },
     "es": {
         "EXIT GAME": "SALIR", "PLAYER %s": "JUGADOR %s", "NO SAVE FILE": "SIN GUARDAR",
-        "There is already a\nsave file. Is it": "Ya existe un\narchivo guardado.",
+        "There is already a\nsave file. Is it\x0bOK to overwrite?": "Ya existe un\narchivo guardado.\x0b¿Sobreescribirlo?",
         "Could not save.": "No se pudo guardar.",
     },
     "it": {
         "EXIT GAME": "ESCI", "PLAYER %s": "GIOCA %s", "NO SAVE FILE": "NESSUN SALVATAGGIO",
-        "There is already a\nsave file. Is it": "C'è già un gioco\nsalvato in",
+        "There is already a\nsave file. Is it\x0bOK to overwrite?": "salvato in\nmemoria. Vuoi\x0bsostituirlo?",
         "Could not save.": "Salvataggio fallito.",
     },
 }

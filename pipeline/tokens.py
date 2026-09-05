@@ -53,6 +53,18 @@ _CORPUS_EXPANSIONS = {
     "<DONE>": "",
     "<PROMPT>": "",
     "<NULL>": "",
+    # gen1recomp v0.2.56's build_rom_data.py text decoder started appending
+    # an explicit terminator to a handful of dynamic-substitution fragments
+    # (_UsedMove1Text, _ActorNameText and friends) that previously ended
+    # bare -- home/text.asm:186/221's own end-of-text and prompt-button
+    # commands, spelled in curly braces since they come from the decoder's
+    # own out-of-band insertion, not a charmap byte (the angle-bracket
+    # <DONE>/<PROMPT> above are poke-corpus's own pret-syntax spelling of
+    # the same concept). Mapped to "" the same way, for the same reason:
+    # verified these fragments still match their real poke-corpus row once
+    # the trailing token is normalised away on both sides.
+    "{DONE}": "",
+    "{PROMPT}": "",
     "@": "",
     # Gold-only, verified against RomExtractorGen2.lua:decodeGen2Text's own
     # TEXT_NO_GLYPH table (its comment: "TX_LOW / TX_SCROLL / TX_PAUSE /
