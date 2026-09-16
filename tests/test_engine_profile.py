@@ -38,6 +38,12 @@ class EngineProfileTests(unittest.TestCase):
         self.assertTrue(profile_for(PINNED_PROFILE).supports_engine_strings)
         self.assertTrue(profile_for(UPSTREAM_PROFILE).supports_engine_strings)
         self.assertIn("gs_rom_text.tsv", GS_REQUIRED_TSV)
+        # type_names/status_labels stay upstream-only; the phone, decoration
+        # and radio content registries are read by the pinned engine too.
+        self.assertFalse(profile_for(PINNED_PROFILE).supports_gen2_registries)
+        self.assertTrue(profile_for(UPSTREAM_PROFILE).supports_gen2_registries)
+        self.assertTrue(profile_for(PINNED_PROFILE).supports_gen2_content_registries)
+        self.assertTrue(profile_for(UPSTREAM_PROFILE).supports_gen2_content_registries)
 
     def test_checkout_revision_is_memoized_per_resolved_path(self):
         # A multilingual matrix run calls this once per language against the

@@ -253,9 +253,9 @@ GS_PINNED_REQUIRED_REGISTRIES = (
     GS_OAK_SPEECH_CATALOG,
 )
 
-# These registries are available only on the Gen 2 upstream target.  They are
-# verified when populated, but kept optional for the historical fixture path
-# and for callers that build a minimal synthetic Gold worksheet.
+# Content registries the pinned engine consumes too (see engine_profile.py).
+# They are verified when populated, but kept optional for the historical
+# fixture path and for callers that build a minimal synthetic Gold worksheet.
 GS_OPTIONAL_CONTENT_REGISTRIES = ("phone_contacts", "decorations", "radio_channels")
 
 CRYSTAL_CATALOG_HOOKS = {
@@ -674,7 +674,7 @@ def _write_gate_expectations(
     required_registries = (GS_REQUIRED_REGISTRIES if profile == UPSTREAM_PROFILE
                            else GS_PINNED_REQUIRED_REGISTRIES)
     optional = {"ui_labels", *GS_OPTIONAL_VERIFIED_REGISTRIES}
-    if profile == UPSTREAM_PROFILE:
+    if profile_for(profile).supports_gen2_content_registries:
         optional.update(GS_OPTIONAL_CONTENT_REGISTRIES)
     if not set(catalogs) - optional >= set(required_registries):
         missing = sorted(set(required_registries) - set(catalogs))
@@ -689,7 +689,8 @@ def _write_gate_expectations(
             + f"; unexpected: {', '.join(extra)}"
         )
     expected: dict[str, dict[str, str]] = {}
-    optional_content = GS_OPTIONAL_CONTENT_REGISTRIES if profile == UPSTREAM_PROFILE else ()
+    optional_content = (GS_OPTIONAL_CONTENT_REGISTRIES
+                        if profile_for(profile).supports_gen2_content_registries else ())
     for name in (*required_registries, *GS_OPTIONAL_VERIFIED_REGISTRIES, *optional_content):
         values = catalogs.get(name)
         if name in (*GS_OPTIONAL_VERIFIED_REGISTRIES, *GS_OPTIONAL_CONTENT_REGISTRIES) and not values:
@@ -1004,24 +1005,27 @@ def build_gs_dialogue_mod(
             raise ValueError("Gold Oak speech catalog is incomplete: " + ", ".join(missing_oak))
         extra_catalogs[GS_OAK_SPEECH_CATALOG] = oak_speech
     index_stats: dict[str, dict] = {}
-    if profile_for(profile).supports_gen2_registries:
+    engine = profile_for(profile)
+    if engine.supports_gen2_registries or engine.supports_gen2_content_registries:
         # Built once and threaded through instead of each of the four qid-
         # exact-match catalogs below rescanning the whole GS corpus on its
         # own (the same class of redundant read this diff already fixed for
         # crystal_mod.py's joiners).
         corpus_index = _index_corpus(corpus_rows)
+    if engine.supports_gen2_registries:
         type_names, type_stats = type_name_catalog(gold_out_dir / "gs_types.tsv", corpus_rows)
         status_labels, status_stats = status_label_catalog(corpus_rows, corpus_index=corpus_index)
+        extra_catalogs["type_names"] = type_names
+        extra_catalogs["status_labels"] = status_labels
+        index_stats["type_names"] = type_stats
+        index_stats["status_labels"] = status_stats
+    if engine.supports_gen2_content_registries:
         phone_contacts, phone_stats = phone_contact_catalog(corpus_rows, corpus_index)
         decorations, decoration_stats = decoration_catalog(corpus_rows, corpus_index)
         radio_channels, radio_stats = radio_channel_catalog(corpus_rows, corpus_index)
-        extra_catalogs["type_names"] = type_names
-        extra_catalogs["status_labels"] = status_labels
         extra_catalogs["phone_contacts"] = phone_contacts
         extra_catalogs["decorations"] = decorations
         extra_catalogs["radio_channels"] = radio_channels
-        index_stats["type_names"] = type_stats
-        index_stats["status_labels"] = status_stats
         index_stats["phone_contacts"] = phone_stats
         index_stats["decorations"] = decoration_stats
         index_stats["radio_channels"] = radio_stats

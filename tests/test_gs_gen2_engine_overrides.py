@@ -66,11 +66,14 @@ class GoldGen2EngineOverrideTests(unittest.TestCase):
         for language in LANGUAGES:
             entries = self._entries(language)
             fallback = load_gs_engine_fallbacks(language)[language]
+            no_op = self._no_op_entries(language)
             resolved = {
                 key for key in universe - NO_OP_ENGINE_KEYS
                 if key not in fallback and entries.get(key, {}).get("override") not in (None, key)
             }
-            missing = universe - NO_OP_ENGINE_KEYS - resolved - set(fallback)
+            # A reviewed per-language identity (e.g. French TYPE1) lives in
+            # no_op_entries rather than as a runtime row.
+            missing = universe - NO_OP_ENGINE_KEYS - resolved - set(fallback) - set(no_op)
             self.assertFalse(missing, (language, sorted(missing)))
             self.assertTrue(resolved.isdisjoint(fallback), language)
 

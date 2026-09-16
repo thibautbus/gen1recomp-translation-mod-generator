@@ -9,6 +9,7 @@ from pipeline.engine import (
     load_semantic_anchors,
     load_engine_overrides,
     match_engine_catalog,
+    _decode_lua_string,
     _extract_anchor,
     printf_directives,
     read_engine_catalog,
@@ -23,6 +24,14 @@ def row(source, french):
 
 
 class EngineTests(unittest.TestCase):
+    def test_lua_byte_escapes_reassemble_utf8_characters(self):
+        # PrizeMenu.lua and BattleState.lua spell ¥ and × as UTF-8 byte escapes.
+        self.assertEqual(_decode_lua_string(r'" 50 :  \xc2\xa51000"'), " 50 :  ¥1000")
+        self.assertEqual(_decode_lua_string(r'"PARKBALL\xc3\x97%02d"'), "PARKBALL×%02d")
+        self.assertEqual(_decode_lua_string(r'"a\x0bb\12c"'), "a\vb\fc")
+        self.assertEqual(_decode_lua_string('"POKéMON"'), "POKéMON")
+        self.assertIsNone(_decode_lua_string(r'"\xff"'))
+
     def test_multi_qid_parts_anchor_composes_bicycle_off_with_one_printf(self):
         rows = [
             Alignment("off1", "both", CorpusRecord("off1", "en", "{text_start}<PLAYER> got off@@"), CorpusRecord("off1", "fr", "{text_start}<PLAYER> descend@@"), "qid"),
