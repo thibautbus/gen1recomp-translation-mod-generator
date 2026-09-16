@@ -953,6 +953,7 @@
     "The cards\nshuffled.": {"override": "Die Karten\nwurden gemischt.", "reason": "engine-contract-gap", "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_3.CardFlipShuffledText); the cart's own Card Flip text."},
     "Threw away\n%s(S).": {"override": "%s\nweggeworfen.", "reason": "engine-contract-gap", "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_2.ThrewAwayText); this call site passes only the item name, so German drops the cart's quantity."},
     "Throw away %d\n%s(S)?": {"override": "Wegwerfen\n%d x %s?", "reason": "engine-contract-gap", "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_2.AskQuantityThrowAwayText); PackMenu/ItemPcMenu pass quantity then name and Strings() cannot reorder them, so Japanese/Korean put the quantity first; Italian uses this row rather than ItemsThrowAwayText, whose name-first order would print the two values swapped."},
-    "Which BOX?": {"override": "Welche BOX?", "reason": "engine-original", "provenance": "AI-generated German translation; no cart row; uses this catalog's own BOX wording (CHANGE BOX); requires in-game visual validation."}
+    "Which BOX?": {"override": "Welche BOX?", "reason": "engine-original", "provenance": "AI-generated German translation; no cart row; uses this catalog's own BOX wording (CHANGE BOX); requires in-game visual validation."},
+    "PARKBALL×%02d": {"override": "BALL×%02d", "reason": "engine-contract-gap", "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.menu.ContestBattleMenuHeader.Text); the cart's own third contest battle-menu segment, with the two blank tiles its PrintNum overlays (PRINTNUM_LEADINGZEROS, two digits) replaced by the %02d BattleState.lua formats itself."}
   }
 }

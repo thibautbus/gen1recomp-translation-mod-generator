@@ -4,10 +4,10 @@
   "policy": "fallbacks are tracked but never emitted as runtime overrides",
   "languages": {
     "de": {
-      "total": 43,
+      "total": 42,
       "entries": {
-        " 50 :  Â¥1000": {
-          "override": " 50 :  Â¥1000",
+        " 50 :  ¥1000": {
+          "override": " 50 :  ¥1000",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.std_scripts.CoinVendor_IntroScript.MenuData's first segment is spelled identically to the English source in this language (same ¥-before-amount order); no divergence to translate."
         },
@@ -36,8 +36,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
-        "500 : Â¥10000": {
-          "override": "500 : Â¥10000",
+        "500 : ¥10000": {
+          "override": "500 : ¥10000",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.std_scripts.CoinVendor_IntroScript.MenuData's second segment is spelled identically to the English source in this language; no divergence to translate."
         },
@@ -90,11 +90,6 @@
           "override": "PALETTE",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: \"palette\" is already a common word identical to the English source in this language."
-        },
-        "PARKBALLÃ%02d": {
-          "override": "PARKBALLÃ%02d",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
         "PORYGON": {
           "override": "PORYGON",
@@ -405,7 +400,7 @@
       "no_op_total": 20
     },
     "es": {
-      "total": 30,
+      "total": 29,
       "entries": {
         "%dX": {
           "override": "%dX",
@@ -481,11 +476,6 @@
           "override": "MR.MIME",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.122 spells this identically to the English source in this language."
-        },
-        "PARKBALLÃ%02d": {
-          "override": "PARKBALLÃ%02d",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
         "PORYGON": {
           "override": "PORYGON",
@@ -683,7 +673,7 @@
       "no_op_total": 13
     },
     "fr": {
-      "total": 42,
+      "total": 41,
       "entries": {
         "%dX": {
           "override": "%dX",
@@ -774,11 +764,6 @@
           "override": "PALETTE",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: \"palette\" is already a common word identical to the English source in this language."
-        },
-        "PARKBALLÃ%02d": {
-          "override": "PARKBALLÃ%02d",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
         "PORYGON": {
           "override": "PORYGON",
@@ -1081,10 +1066,10 @@
       "no_op_total": 19
     },
     "it": {
-      "total": 34,
+      "total": 33,
       "entries": {
-        " 50 :  Â¥1000": {
-          "override": " 50 :  Â¥1000",
+        " 50 :  ¥1000": {
+          "override": " 50 :  ¥1000",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.std_scripts.CoinVendor_IntroScript.MenuData's first segment is spelled identically to the English source in this language (same ¥-before-amount order); no divergence to translate."
         },
@@ -1113,8 +1098,8 @@
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
-        "500 : Â¥10000": {
-          "override": "500 : Â¥10000",
+        "500 : ¥10000": {
+          "override": "500 : ¥10000",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.std_scripts.CoinVendor_IntroScript.MenuData's second segment is spelled identically to the English source in this language; no divergence to translate."
         },
@@ -1172,11 +1157,6 @@
           "override": "PALETTE",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: \"palette\" is already a common word identical to the English source in this language."
-        },
-        "PARKBALLÃ%02d": {
-          "override": "PARKBALLÃ%02d",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
         "PORYGON": {
           "override": "PORYGON",
@@ -1405,7 +1385,7 @@
       "no_op_total": 16
     },
     "ja-Hrkt": {
-      "total": 12,
+      "total": 11,
       "entries": {
         " PAGE AREA CRY PRNT": {
           "override": " PAGE AREA CRY PRNT",
@@ -1446,11 +1426,6 @@
           "override": "GEN 2",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: a version/generation label for one of the built-in colour-palette themes, kept identical in every language (matching DMG)."
-        },
-        "PARKBALLÃ%02d": {
-          "override": "PARKBALLÃ%02d",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
         "……": {
           "override": "……",
@@ -1543,7 +1518,7 @@
       "no_op_total": 9
     },
     "ko": {
-      "total": 12,
+      "total": 11,
       "entries": {
         " PAGE AREA CRY PRNT": {
           "override": " PAGE AREA CRY PRNT",
@@ -1584,11 +1559,6 @@
           "override": "GEN 2",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: a version/generation label for one of the built-in colour-palette themes, kept identical in every language (matching DMG)."
-        },
-        "PARKBALLÃ%02d": {
-          "override": "PARKBALLÃ%02d",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
         "<PK><MN>": {
           "override": "<PK><MN>",

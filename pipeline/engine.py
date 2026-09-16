@@ -58,20 +58,25 @@ class SemanticAnchorCatalog(dict):
 
 
 def _decode_lua_string(token: str) -> str | None:
-    """Decode Lua strings without treating decimal escapes as Python octal."""
+    """Decode Lua strings without treating decimal escapes as Python octal.
+
+    Lua strings are byte strings: ``\\xNN`` and ``\\ddd`` escapes are bytes,
+    so a UTF-8 character written as escapes (PrizeMenu's ``\\xc2\\xa5`` for
+    ¥) must be reassembled into that one character, not read as two Latin-1
+    code points, or the emitted key never matches at runtime."""
     if len(token) < 2 or token[0] not in {"'", '"'} or token[-1] != token[0]:
         return None
     body = token[1:-1]
-    values: list[str] = []
+    values = bytearray()
     escapes = {
-        "a": "\a", "b": "\b", "f": "\f", "n": "\n",
-        "r": "\r", "t": "\t", "v": "\v",
+        "a": b"\a", "b": b"\b", "f": b"\f", "n": b"\n",
+        "r": b"\r", "t": b"\t", "v": b"\v",
     }
     index = 0
     while index < len(body):
         char = body[index]
         if char != "\\":
-            values.append(char)
+            values += char.encode("utf-8")
             index += 1
             continue
         if index + 1 >= len(body):
@@ -79,9 +84,9 @@ def _decode_lua_string(token: str) -> str | None:
         index += 1
         escaped = body[index]
         if escaped in escapes:
-            values.append(escapes[escaped])
+            values += escapes[escaped]
         elif escaped in {"\\", "'", '"'}:
-            values.append(escaped)
+            values += escaped.encode("ascii")
         elif escaped == "z":
             index += 1
             while index < len(body) and body[index].isspace():
@@ -91,7 +96,7 @@ def _decode_lua_string(token: str) -> str | None:
             digits = body[index + 1:index + 3]
             if len(digits) != 2 or not re.fullmatch(r"[0-9A-Fa-f]{2}", digits):
                 return None
-            values.append(chr(int(digits, 16)))
+            values.append(int(digits, 16))
             index += 2
         elif escaped.isdigit():
             match = re.match(r"[0-9]{1,3}", body[index:])
@@ -99,12 +104,15 @@ def _decode_lua_string(token: str) -> str | None:
             codepoint = int(match.group(0), 10)
             if codepoint > 255:
                 return None
-            values.append(chr(codepoint))
+            values.append(codepoint)
             index += len(match.group(0)) - 1
         else:
             return None
         index += 1
-    return "".join(values)
+    try:
+        return values.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
 
 
 
