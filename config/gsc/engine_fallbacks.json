@@ -595,6 +595,13 @@
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Kept as-is (proper noun, no translation), matching this catalog's own user-validated RBY MODS entry.",
           "original_reason": "engine-original",
           "original_provenance": "Kept as-is (proper noun, no translation), matching this catalog's own user-validated RBY MODS entry."
+        },
+        "STANDARD": {
+          "override": "STANDARD",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: AI-generated German translation of the port-added BATTLE HUD Options row value (the default, and the only one the OG layout allows), new in gen1recomp v0.2.61 (ui/OptionsMenu.lua, ui/gen2/OptionsMenu.lua and the launcher settings row); follows this catalog's own BATTLE LAYOUT wording for the sibling row (\"KAMPF-LAYOUT\"), keeping HUD as-is like the English label; requires in-game visual validation.",
+          "original_reason": "engine-original",
+          "original_provenance": "AI-generated German translation of the port-added BATTLE HUD Options row value (the default, and the only one the OG layout allows), new in gen1recomp v0.2.61 (ui/OptionsMenu.lua, ui/gen2/OptionsMenu.lua and the launcher settings row); follows this catalog's own BATTLE LAYOUT wording for the sibling row (\"KAMPF-LAYOUT\"), keeping HUD as-is like the English label; requires in-game visual validation."
         }
       },
       "no_op_total": 16
@@ -1624,6 +1631,13 @@
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."
+        },
+        "STANDARD": {
+          "override": "STANDARD",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: AI-generated French translation of the port-added BATTLE HUD Options row value (the default, and the only one the OG layout allows), new in gen1recomp v0.2.61 (ui/OptionsMenu.lua, ui/gen2/OptionsMenu.lua and the launcher settings row); follows this catalog's own BATTLE LAYOUT wording for the sibling row (\"DISPO. COMBAT\"), keeping HUD as-is like the English label; requires in-game visual validation.",
+          "original_reason": "engine-original",
+          "original_provenance": "AI-generated French translation of the port-added BATTLE HUD Options row value (the default, and the only one the OG layout allows), new in gen1recomp v0.2.61 (ui/OptionsMenu.lua, ui/gen2/OptionsMenu.lua and the launcher settings row); follows this catalog's own BATTLE LAYOUT wording for the sibling row (\"DISPO. COMBAT\"), keeping HUD as-is like the English label; requires in-game visual validation."
         }
       },
       "no_op_total": 15
@@ -2123,6 +2137,13 @@
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Kept as-is (proper noun, no translation), matching this catalog's own user-validated RBY MODS entry.",
           "original_reason": "engine-original",
           "original_provenance": "Kept as-is (proper noun, no translation), matching this catalog's own user-validated RBY MODS entry."
+        },
+        "STANDARD": {
+          "override": "STANDARD",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: AI-generated Italian translation of the port-added BATTLE HUD Options row value (the default, and the only one the OG layout allows), new in gen1recomp v0.2.61 (ui/OptionsMenu.lua, ui/gen2/OptionsMenu.lua and the launcher settings row); follows this catalog's own BATTLE LAYOUT wording for the sibling row (\"LAYOUT LOTTA\"), keeping HUD as-is like the English label; requires in-game visual validation.",
+          "original_reason": "engine-original",
+          "original_provenance": "AI-generated Italian translation of the port-added BATTLE HUD Options row value (the default, and the only one the OG layout allows), new in gen1recomp v0.2.61 (ui/OptionsMenu.lua, ui/gen2/OptionsMenu.lua and the launcher settings row); follows this catalog's own BATTLE LAYOUT wording for the sibling row (\"LAYOUT LOTTA\"), keeping HUD as-is like the English label; requires in-game visual validation."
         }
       },
       "no_op_total": 12
