@@ -430,9 +430,10 @@ def _rby_engine_override_paths(
 ) -> tuple[Path, ...]:
     """Return RBY override layers for one explicit engine profile.
 
-    The ordinary ``engine.json`` is the v0.2.41 contract.  Strings introduced
-    by the local upstream work live in a separate opt-in layer so a pinned
-    build neither loads nor validates those keys.  We deliberately do not
+    The ordinary ``engine.json`` is the pinned revision's contract.  Strings
+    that only exist on a local upstream checkout live in a separate opt-in
+    layer so a pinned build neither loads nor validates those keys; move them
+    into ``engine.json`` once a pin bump makes them real.  We deliberately do not
     filter unknown keys here: once a profile has selected its layers,
     ``generate_mod`` still rejects genuine stale entries.
     """
