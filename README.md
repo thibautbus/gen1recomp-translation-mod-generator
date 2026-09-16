@@ -209,7 +209,13 @@ actual Crystal save:
 
 - `Gold and Silver ROM aggregate` combines dialogue, Pokédex entries and the named ROM
   catalogs. Its denominator excludes 14 markup-only records with no visible
-  prose. `ja-Hrkt` and `ko` fall short of 100% here: this is a genuine, known
+  prose. It also counts every id of the phone contact, decoration and radio
+  station registries, including 54 rows this project deliberately never
+  patches: 29 trainer phone contacts, whose names come from the translated
+  trainer registry, and 25 species-backed decorations, whose names are
+  composed from the translated species names and the `%s DOLL`/`%s POSTER`
+  engine strings. Those rows are what keeps `fr`/`de`/`es`/`it` just under
+  100%. `ja-Hrkt` and `ko` fall further short: this is a genuine, known
   gap in those languages' dialogue/catalog corpora, not a formatting artifact.
 - `Gold and Silver-related engine strings` covers the 940 engine keys used by
   at least one production Gen 2 callsite. 48 keys reachable only from a
@@ -244,12 +250,12 @@ provenance. Future unresolved entries will keep their original English text.
 
 | Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings | Crystal dialogue coverage |
 | --- | ---: | ---: | ---: |
-| `fr` | 5707/5707 (100%) | 904/943 (95.86%) | 3994/4010 (99.6%) |
-| `de` | 5707/5707 (100%) | 906/943 (96.08%) | 3994/4010 (99.6%) |
-| `es` | 5707/5707 (100%) | 917/943 (97.24%) | 3994/4010 (99.6%) |
-| `it` | 5707/5707 (100%) | 911/943 (96.61%) | 3994/4010 (99.6%) |
-| `ja-Hrkt` | 4954/5707 (86.81%) | 924/943 (97.99%) | 3994/4010 (99.6%) |
-| `ko` | 4703/5707 (82.41%) | 924/943 (97.99%) | 0/4010 (0%) |
+| `fr` | 5749/5803 (99.07%) | 904/943 (95.86%) | 3994/4010 (99.6%) |
+| `de` | 5749/5803 (99.07%) | 906/943 (96.08%) | 3994/4010 (99.6%) |
+| `es` | 5749/5803 (99.07%) | 917/943 (97.24%) | 3994/4010 (99.6%) |
+| `it` | 5749/5803 (99.07%) | 911/943 (96.61%) | 3994/4010 (99.6%) |
+| `ja-Hrkt` | 4996/5803 (86.09%) | 924/943 (97.99%) | 3994/4010 (99.6%) |
+| `ko` | 4745/5803 (81.77%) | 924/943 (97.99%) | 0/4010 (0%) |
 
 ### Other engine strings
 

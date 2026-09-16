@@ -1,9 +1,9 @@
 """Explicit engine compatibility profiles for the Gen 2 pipeline.
 
 The published pipeline uses the stable ``pinned`` profile, whose dependency
-is currently gen1recomp v0.2.41.  New Gen 2 registries are an opt-in developer
-overlay and must never be selected merely because a newer checkout happens to
-be present in the workspace.
+is config/pipeline.toml's ``[gen1recomp]`` revision.  Registries the pin does
+not consume yet are an opt-in developer overlay and must never be selected
+merely because a newer checkout happens to be present in the workspace.
 """
 from __future__ import annotations
 
@@ -24,6 +24,7 @@ class EngineProfile:
     supports_engine_strings: bool
     supports_rom_text: bool
     supports_gen2_registries: bool
+    supports_gen2_content_registries: bool
 
 
 PROFILES = {
@@ -31,8 +32,13 @@ PROFILES = {
     # callsites (match_gs_engine_strings verifies the checkout against the
     # pin itself instead of trusting it outright) -- only the genuinely new
     # Gen 2 registries and RomText support are upstream-local exclusives.
-    PINNED_PROFILE: EngineProfile(PINNED_PROFILE, True, False, False),
-    UPSTREAM_PROFILE: EngineProfile(UPSTREAM_PROFILE, True, True, True),
+    # supports_gen2_registries covers type_names/status_labels, whose Gen 2
+    # screens still derive their labels without reading the merged registry;
+    # the phone_contacts/decorations/radio_channels content registries are
+    # read by the pinned engine's own Phone, Decorations and Pokegear/MapRadio
+    # modules, so both profiles ship them.
+    PINNED_PROFILE: EngineProfile(PINNED_PROFILE, True, False, False, True),
+    UPSTREAM_PROFILE: EngineProfile(UPSTREAM_PROFILE, True, True, True, True),
 }
 
 
