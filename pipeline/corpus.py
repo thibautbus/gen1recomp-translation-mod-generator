@@ -19,6 +19,14 @@ _QID_KEYS = ("qid", "q_id", "id", "key", "label", "pointer", "address")
 _LANG_RE = re.compile(r"(?:^|[-_.])(en|eng|fr|fra|french|english|de|deu|german|es|spa|spanish|it|ita|italian|ja|ja-hrkt|jpn|japanese|ko|kor|korean)(?:$|[-_.])", re.I)
 _GAME_RE = re.compile(r"(?:^|[-_.])(red|blue|yellow|redblue)(?:$|[-_.])", re.I)
 _VERSION_SUFFIX = re.compile(r"\^(RG|R|G|B)(?=\.|$)")
+# poke-corpus fills a line it has no text for with this literal marker.  It is
+# never game text: shipping it printed "[NULL]" in-game, so a target line
+# holding it is read as empty, the pipeline's existing "untranslated" value.
+CORPUS_NULL = "[NULL]"
+
+
+def corpus_target_text(text: str) -> str:
+    return "" if text == CORPUS_NULL else text
 
 
 def canonical_language(value: Any, default: str = "en") -> str:
@@ -163,7 +171,7 @@ def read_parallel_game(directory: str | Path, target_lang: str = "fr", game: str
         # English is retained on the target-language record to make exact
         # fallback auditable even when a qid is absent in future corpus
         # revisions.
-        result.append(CorpusRecord(qid, target_lang, translation, scope, str(paths[target_file_lang]), english=english, metadata=metadata.copy()))
+        result.append(CorpusRecord(qid, target_lang, corpus_target_text(translation), scope, str(paths[target_file_lang]), english=english, metadata=metadata.copy()))
     return result
 
 

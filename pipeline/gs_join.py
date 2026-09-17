@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping
 
+from .corpus import corpus_target_text
 from .gs_text import GS_POINTER_RE, GsTextRecord, normalise, split_lines
 from .tokens import DYNAMIC_TOKEN_RE, TOKEN_RE, check_placeholders, corpus_to_engine, known_literal_tokens
 
@@ -250,7 +251,7 @@ def read_corpus_rows(corpus_dir: str | Path, target_lang: str = "fr") -> list[tu
     targets = split_lines((corpus_dir / f"{target_lang}_msg.txt").read_text(encoding="utf-8"))
     if not (len(qids) == len(ens) == len(targets)):
         raise ValueError("corpus files are not parallel (qid/en/target line counts differ)")
-    return list(zip(qids, ens, targets))
+    return [(qid, en, corpus_target_text(target)) for qid, en, target in zip(qids, ens, targets)]
 
 
 def join_gs_pointers(
