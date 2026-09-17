@@ -30,6 +30,7 @@ from .gs_join import (
 )
 from .gs_text import parse_gs_text_catalog
 from .gs_trainer_names import parse_trainer_names, trainer_name_catalog
+from .leak_audit import audit_generated_catalogs
 from .tokens import corpus_to_engine
 from .mod import TRANSLATION_MOD_PRIORITY, install_font_assets, ttf_registration, validate_font_profile
 from .project import is_frozen, project_config, project_version, resource_root
@@ -900,6 +901,9 @@ def run_gs_release_gates(
     problems = audit_join(entries, placeholder_decisions)
     if problems:
         raise BuildError("Gold join audit failed:\n" + "\n".join(problems))
+    leaks = audit_generated_catalogs(mod_dir)
+    if leaks:
+        raise BuildError("generated catalogs leak corpus markup:\n" + "\n".join(leaks))
     profile = normalize_engine_profile(engine_profile)
     gen1recomp = Path(gen1recomp).resolve()
     coverage = coverage or gs_coverage_report(entries)

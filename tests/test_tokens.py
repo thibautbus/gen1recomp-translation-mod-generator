@@ -28,9 +28,13 @@ class GoldTokenExpansionTests(unittest.TestCase):
     def test_poke_compression_byte_expands_like_the_shared_hash_token(self):
         self.assertEqual(corpus_to_engine("<POKE>GEAR"), "POKéGEAR")
 
-    def test_bsp_and_wbr_render_as_a_plain_space(self):
+    def test_bsp_is_a_space_and_word_breaks_are_skipped(self):
+        # pret's charmap.asm: <BSP> is a breakable space, <WBR> a word-break
+        # opportunity that prints nothing off the Town Map; poke-corpus's
+        # <SHY> soft hyphen likewise.
         self.assertEqual(corpus_to_engine("NEW BARK<BSP>TOWN"), "NEW BARK TOWN")
-        self.assertEqual(corpus_to_engine("DOUBLON<WBR>VILLE"), "DOUBLON VILLE")
+        self.assertEqual(corpus_to_engine("DOUBLON<WBR>VILLE"), "DOUBLONVILLE")
+        self.assertEqual(corpus_to_engine("FIORPESCO<SHY>POLI"), "FIORPESCOPOLI")
 
     def test_lf_renders_as_a_newline(self):
         self.assertEqual(corpus_to_engine("TEXT SPEED<LF>BATTLE SCENE"), "TEXT SPEED\nBATTLE SCENE")

@@ -65,11 +65,17 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(report["translated"], 1)
         self.assertEqual(report["unmatched"], [])
 
-    def test_corpus_override_skeletons_have_explicit_schema_and_are_empty(self):
+    def test_corpus_override_files_have_explicit_schema_and_justified_entries(self):
         for language in ("fr", "de", "es", "it", "ja-Hrkt"):
             with self.subTest(language=language):
                 body = json.loads((Path("overrides") / language / "rby" / "corpus.json").read_text(encoding="utf-8"))
-                self.assertEqual(body, {"schema": CORPUS_OVERRIDES_SCHEMA, "version": 1, "entries": {}})
+                self.assertEqual(body["schema"], CORPUS_OVERRIDES_SCHEMA)
+                self.assertEqual(body["version"], 1)
+                self.assertEqual(set(body), {"schema", "version", "entries"})
+                for qid, row in body["entries"].items():
+                    self.assertRegex(qid, r"^(rb|y)\.")
+                    for field in ("override", "reason", "provenance"):
+                        self.assertTrue(isinstance(row.get(field), str) and row[field].strip(), (qid, field))
 
     def test_corpus_overrides_are_qid_scoped_and_empty_file_is_noop(self):
         rows = align([
