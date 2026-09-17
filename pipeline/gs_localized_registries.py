@@ -241,7 +241,13 @@ def decoration_catalog(
         qid = f"gs.names.DecorationNames.{qid_number}"
         english = DECORATION_NAME_ENGLISH[qid_number].replace("@", "").strip()
         value, found_by_id[deco_id] = _corpus_value_info(rows, qid, english)
+        # The French carts spell the five colour names ":ROSE", ":ROUGE"...
+        # (byte $9C before the word, Gold/Silver and Crystal alike) and their
+        # GetDecoName copies it verbatim; this port composes the name through
+        # its own "%s BED"/"%s CARPET" engine strings, where the colon would
+        # print as "LIT :ROSE".
         if found_by_id[deco_id]:
+            value = value.lstrip(":")
             result[f"deco:{deco_id}"] = value
             translated += 1
             if value == english:
