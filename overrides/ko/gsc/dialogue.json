@@ -1,0 +1,11 @@
+{
+  "schema": "gen1recomp-translation-mods/gs-dialogue-overrides",
+  "version": 1,
+  "entries": {
+    "60:5857": {
+      "override": "지금은<LINE>서머타임입니까?",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of the Daylight Saving Time question (gs.PlayersHouse1F.IsItDSTText); poke-corpus's Korean GoldSilver row is the [NULL] no-text marker, since Korean carts have no Daylight Saving Time; requires in-game visual validation."
+    }
+  }
+}

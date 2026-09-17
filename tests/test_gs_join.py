@@ -264,7 +264,7 @@ class GsDialogueOverridesConfigTests(unittest.TestCase):
         self.assertEqual(overrides["21:66db"], "Maître Célébrité!")
 
     def test_missing_language_file_is_empty(self):
-        self.assertEqual(load_gs_dialogue_overrides("ko"), {})
+        self.assertEqual(load_gs_dialogue_overrides("es"), {})
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(
                 load_gs_dialogue_overrides("fr", Path(tmp) / "absent.json"), {},
