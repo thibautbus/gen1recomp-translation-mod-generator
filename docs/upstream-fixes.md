@@ -870,11 +870,12 @@ structure is checked to match the English source's own `<LINE>`/`<PARA>`/
 necessarily the same word-for-word segment boundaries) before being
 accepted.
 
-**Crystal dialogue resolution is 3994/4010 (99.60%) for all five
-translated languages (fr/de/es/it/ja-Hrkt), i.e. 100% of the 3994
-pointers that carry any real, visible text** -- the only 16 left in every
-language are markup-only entries with nothing to translate at all, the
-same category Gold/Silver's own 100%-covered catalog also carries.
+**Crystal dialogue resolution is 3994/3994 (100%) for all five
+translated languages (fr/de/es/it/ja-Hrkt)**: every pointer that carries
+any real, visible text. The 16 remaining pointers of the 4010 are
+markup-only entries ("…" alone, empty boxes) with nothing to translate,
+left out of the denominator the same way Gold/Silver's own coverage
+leaves out its markup-only records.
 For ja-Hrkt, 30 of those pointers are international-only texts (the EON
 MAIL and ODD EGG events, the international BATTLE TOWER, a few rewritten
 lines) whose Japanese corpus row is poke-corpus's `[NULL]` no-text marker;

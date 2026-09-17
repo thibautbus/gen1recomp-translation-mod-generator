@@ -273,12 +273,10 @@ CRYSTAL_CATALOG_HOOKS = {
 }
 
 # Present in every language's catalogs dict (build_gs_dialogue_mod always
-# joins it) but not guaranteed non-empty: ja-Hrkt/ko's dex_entries_gold
-# corpus rows never preserved a second #DEX description page (verified
-# directly against poke-corpus -- ja-Hrkt has no "@" page marker at all, ko
-# has only the row's own terminator), so species_dex_text2 is {} for those
-# languages rather than a BuildError. Verified by the release gate like any
-# required registry when it does have content (en/fr/de/es/it today).
+# joins it) but not guaranteed non-empty: a language whose corpus has no
+# #DEX rows at all leaves it {} rather than raising a BuildError.  ja-Hrkt/ko
+# rows are single-page and ship a blank second page (BLANK_DEX_PAGE).
+# Verified by the release gate like any required registry when non-empty.
 GS_OPTIONAL_VERIFIED_REGISTRIES = ("species_dex_text2",)
 
 def gs_mod_id(language: str) -> str:
@@ -1415,11 +1413,16 @@ def build_gs(
     crystal_catalogs, crystal_feature_stats = crystal_feature_catalogs(
         crystal_out, corpus_crystal, language, engine_profile=engine_profile,
     )
+    # Same convention as Gold/Silver's pointer coverage (gs_coverage_report):
+    # markup-only records ("…" alone, empty boxes) have no prose to translate
+    # and are left out of the denominator.
+    crystal_content_total = crystal_stats["total"] - crystal_stats["markup_only"]
     crystal_dialogue_coverage = {
         "translated": len(crystal_text_catalog),
-        "total": crystal_stats["total"],
-        "percent": round(100.0 * len(crystal_text_catalog) / crystal_stats["total"], 2)
-        if crystal_stats["total"] else 100.0,
+        "total": crystal_content_total,
+        "percent": round(100.0 * len(crystal_text_catalog) / crystal_content_total, 2)
+        if crystal_content_total else 100.0,
+        "ignored_markup_only": crystal_stats["markup_only"],
         "unresolved": crystal_stats["unresolved"],
         "no_match": crystal_stats["no_match"],
         "policy": "english-fallback",
@@ -1433,7 +1436,7 @@ def build_gs(
         # omitting reviewed_qid then override).
         crystal_resolved = len(crystal_text_catalog)
         log(
-            f"  crystal dialogue: {crystal_resolved}/{crystal_stats['total']} pointers"
+            f"  crystal dialogue: {crystal_resolved}/{crystal_content_total} pointers"
             f" ({crystal_stats['unresolved']} unresolved, {crystal_stats['no_match']} no-match,"
             " left in English)"
         )

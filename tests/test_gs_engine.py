@@ -45,21 +45,20 @@ class GoldEngineCatalogTests(unittest.TestCase):
             self.assertTrue(is_reviewed_identity(load_gs_engine_fallbacks("fr", path)["fr"]["PP"]))
 
     def test_only_unresolved_fallbacks_are_counted_as_gaps(self):
-        # Every other fallback row documents why the English spelling is this
-        # language's own; the Pokedex entry bar Japanese/Korean carts draw as
-        # tiles is the one row still waiting for a translation.
+        # Every fallback row documents why the English spelling is this
+        # language's own; none is still waiting for a translation.
         gaps = {
             (language, source)
             for language, entries in load_gs_engine_fallbacks().items()
             for source, row in entries.items()
             if not is_reviewed_identity(row)
         }
-        self.assertEqual(gaps, {("ja-Hrkt", " PAGE AREA CRY PRNT"), ("ko", " PAGE AREA CRY PRNT")})
+        self.assertEqual(gaps, set())
         for language in ("fr", "de", "es", "it"):
             identities = load_gs_engine_reviewed_identities(language)
             self.assertIn("PP", identities)
             self.assertIn("♂", identities)
-        self.assertNotIn(" PAGE AREA CRY PRNT", load_gs_engine_reviewed_identities("ja-Hrkt"))
+        self.assertNotIn(" PAGE AREA CRY PRNT", load_gs_engine_reviewed_identities("ko"))
 
     def test_gen2_scope_excludes_cross_generation_surfaces(self):
         self.assertTrue(is_gen2_path("src/world/gen2/World.lua"))

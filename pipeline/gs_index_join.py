@@ -175,6 +175,11 @@ def _convert_dex_page(raw: str, category: str, key: str, page_number: int) -> st
     return converted.replace(_NEXT_PLACEHOLDER, "<NEXT>")
 
 
+# A page with nothing on it.  The mod's catalog loader skips empty values,
+# so a single space is what clears the English second page.
+BLANK_DEX_PAGE = " "
+
+
 def _dex_entry_pages_by_species_name(
     corpus_rows: list[tuple[str, str, str]], category: str,
 ) -> dict[str, tuple[str, str | None]]:
@@ -185,8 +190,9 @@ def _dex_entry_pages_by_species_name(
     against poke-corpus's GoldSilver collection, every ja-Hrkt row has no
     "@" at all (it ends on "<DEXEND>" instead) and every ko row has exactly
     one (a single page, still "@"-terminated) -- only en/fr/de/es/it split
-    cleanly into two. A row with fewer pages ships whatever it has (page2 is
-    None rather than the species being dropped entirely); a row claiming
+    cleanly into two. A single-page row gets BLANK_DEX_PAGE as its second
+    page (the description is complete, and the English second page must not
+    show through); a row claiming
     more than two real pages raises, since silently truncating extra
     content would be a worse failure than a loud one.
     """
@@ -209,7 +215,13 @@ def _dex_entry_pages_by_species_name(
         ]
         if not converted[0]:
             continue
-        pages = (converted[0], converted[1] if len(converted) == 2 and converted[1] else None)
+        if len(converted) == 1:
+            # The whole description fits one page (every ja-Hrkt and ko row):
+            # the cart has no second page, but PokedexMenu always offers one
+            # and would print the English ROM's own page 2 there.
+            pages = (converted[0], BLANK_DEX_PAGE)
+        else:
+            pages = (converted[0], converted[1] or None)
         if key in by_name and by_name[key] != pages:
             raise ValueError(
                 f"conflicting {category!r} translations for normalised species {key!r}"
@@ -225,9 +237,9 @@ def join_dex_entries_pages(
 
     Returns (page1, page2, page1_stats, page2_stats): page1/page2 are
     {species_id: text}. page2 only covers species whose corpus row actually
-    preserved a second page (see _dex_entry_pages_by_species_name) -- for a
-    language whose corpus never does (ja-Hrkt, ko), page2 and page2_stats
-    end up empty rather than the whole category failing.
+    has a second page; a single-page row (every ja-Hrkt and ko row) gets
+    BLANK_DEX_PAGE, since its description is already complete (see
+    _dex_entry_pages_by_species_name).
     """
     by_name = _dex_entry_pages_by_species_name(corpus_rows, category)
     page1: dict[str, str] = {}
