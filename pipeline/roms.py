@@ -182,7 +182,7 @@ SILVER_SHA1 = CANONICAL.get("silver")
 GS_REQUIRED_TSV = (
     "gs_text.tsv", "gs_labels.tsv", "gs_stages.tsv", "gs_rom_text.tsv",
     "gs_species.tsv", "gs_moves.tsv", "gs_items.tsv", "gs_types.tsv",
-    "gs_trainer_classes.tsv", "gs_landmarks.tsv",
+    "gs_trainer_classes.tsv", "gs_trainer_names.tsv", "gs_landmarks.tsv",
 )
 
 # v0.2.41 has neither the public RomText registry nor the type-search

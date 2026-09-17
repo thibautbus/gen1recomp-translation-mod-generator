@@ -95,7 +95,8 @@ if expectationPath and expectationPath ~= "" then
   -- Crystal corpus supplied -- degrades to omitting the key, not a
   -- BuildError; see pipeline.gs_mod._write_gate_expectations).
   local optional = { species_dex_text2 = true,
-    phone_contacts = true, decorations = true, radio_channels = true }
+    phone_contacts = true, decorations = true, radio_channels = true,
+    trainer_names = true, trainer_names_crystal = true }
   for name, _ in pairs(EDITION_DEX_TEXT_KEYS) do optional[name] = true end
   for _, name in ipairs({
     "crystal_strings", "crystal_rom_text", "crystal_item_names",
@@ -185,6 +186,7 @@ if expectations then
   for _, name in ipairs({
     "crystal_strings", "crystal_rom_text", "crystal_item_names",
     "crystal_trainer_class_names", "crystal_landmarks",
+    "trainer_names", "trainer_names_crystal",
   }) do editionSpecific[name] = true end
   for name, expected in pairs(expectations) do
     local target = targets[name]
@@ -329,6 +331,54 @@ if expectations then
         end
       end
       editionResult.release()
+    end
+  end
+
+  -- Trainer names rename rows inside each class record's roster, which the
+  -- SDK fixture does not carry, so each check builds the class it needs:
+  -- the expected member under its English name, a filler row before it, and
+  -- a row after it whose name differs from the English one and so must stay.
+  local function trainerNameData(id)
+    local class, member, english = id:match("^(.-)#(%d+)#(.*)$")
+    member = tonumber(member)
+    local fixtureData = require("tests.modkit.fixtures").fresh()
+    local species = require("tests.modkit.fixtures").ids.species[1]
+    local roster = {}
+    for index = 1, member + 1 do
+      roster[index] = { name = index == member and english or ("FILLER" .. index),
+        party = { { level = 5, species = species } } }
+    end
+    fixtureData.gen2Trainers = fixtureData.gen2Trainers or {}
+    fixtureData.gen2Trainers.classes = fixtureData.gen2Trainers.classes or {}
+    fixtureData.gen2Trainers.classes[class] = { id = class, name = class, index = 1, trainers = roster }
+    fixtureData.trainers = fixtureData.gen2Trainers
+    return fixtureData, class, member, english
+  end
+  local trainerChecks = {
+    { name = "trainer_names", editions = { gold = true, silver = true } },
+    { name = "trainer_names_crystal", editions = { crystal = true } },
+  }
+  for _, spec in ipairs(trainerChecks) do
+    local expected = expectations[spec.name]
+    if expected then
+      for _, edition in ipairs({ "gold", "silver", "crystal" }) do
+        GameVersion.set(edition)
+        local trainerData, class, member, english = trainerNameData(expected.id)
+        local trainerResult = T.sdk.loadMod(modName, { generation = 2, root = modParent, data = trainerData })
+        local roster = trainerResult.data.gen2Trainers.classes[class].trainers
+        local actual = roster[member] and roster[member].name
+        if spec.editions[edition] then
+          eq(actual, expected.value, spec.name .. "[" .. expected.id .. "] renames the roster row under GameVersion=" .. edition)
+          eq(roster[member + 1] and roster[member + 1].name, "FILLER" .. (member + 1),
+            spec.name .. " leaves a row whose name is not the catalog's English one untouched")
+          check(roster[member] and roster[member].party and #roster[member].party == 1,
+            spec.name .. " keeps the renamed trainer's party")
+        elseif spec.name == "trainer_names_crystal" then
+          check(actual ~= expected.value,
+            spec.name .. "[" .. expected.id .. "] does not leak into " .. edition)
+        end
+        trainerResult.release()
+      end
     end
   end
 

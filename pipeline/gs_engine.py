@@ -50,6 +50,40 @@ def load_gs_engine_fallbacks(
     return result
 
 
+# A fallback ledger row is a gap only while its provenance says no translation
+# was found.  Every other row records why the English spelling already is
+# this language's (a shared loanword, an invariant symbol, the cart's own
+# identical label), which is a reviewed translation that happens to be
+# identical and therefore ships nothing at runtime.
+_UNRESOLVED_FALLBACK_PREFIXES = (
+    "Explicit English fallback: no unique corpus match",
+    "Explicit English fallback: ambiguous corpus candidates",
+    "Explicit English fallback: no PokeCorpus row for this language",
+)
+
+
+def is_reviewed_identity(row: dict) -> bool:
+    return not str(row.get("provenance", "")).startswith(_UNRESOLVED_FALLBACK_PREFIXES)
+
+
+def load_gs_engine_reviewed_identities(language: str, path: str | Path | None = None) -> set[str]:
+    """Keys whose English spelling was reviewed as this language's own.
+
+    The ledger's ``no_op_entries`` (identity rows retired from the runtime
+    overrides) plus every fallback entry that is not an unresolved gap.
+    """
+    if path is None:
+        path = Path(__file__).resolve().parents[1] / "config" / "gsc" / "engine_fallbacks.json"
+    entries = load_gs_engine_fallbacks(language, path)[language]
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    no_op = data["languages"][language].get("no_op_entries", {})
+    if not isinstance(no_op, dict) or any(
+        not isinstance(row, dict) or row.get("override") != source for source, row in no_op.items()
+    ):
+        raise ValueError(f"invalid engine no-op entries for {language!r}")
+    return set(no_op) | {source for source, row in entries.items() if is_reviewed_identity(row)}
+
+
 def load_gs_engine_scope_exclusions(path: str | Path | None = None) -> set[str]:
     """Load the Strings() keys reachable only from a Crystal-only feature.
 
@@ -213,12 +247,16 @@ def match_gs_engine_strings(
         "fallback_english": len(fallback_entries),
         "catalog_kind": "Strings and Strings.source callsites",
     })
-    gen2_translated = len(translated & gen2_keys)
+    # A reviewed identity counts the same as a corpus match that happens to
+    # be identical (match_engine_catalog already reports those as translated).
+    reviewed_identities = (load_gs_engine_reviewed_identities(target_lang) - translated) & gen2_keys
+    gen2_translated = len(translated & gen2_keys) + len(reviewed_identities)
     gen2_report = {
         "source_revision": revision,
         "engine_profile": profile,
         "scope": "at least one callsite in a gen2 source subtree",
         "translated": gen2_translated,
+        "reviewed_identity": len(reviewed_identities),
         "total": len(gen2_keys),
         "percent": round(100.0 * gen2_translated / len(gen2_keys), 2) if gen2_keys else 100.0,
     }
