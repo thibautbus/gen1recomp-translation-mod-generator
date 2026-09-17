@@ -2,6 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from pipeline.corpus import read_parallel_game
 from pipeline.gs_text import GsTextRecord
 from pipeline.gs_join import (
     GsPlaceholderDecision, HARMLESS_AMBIGUOUS, MARKUP_ONLY, NO_MATCH, OVERRIDE, REVIEWED_QID,
@@ -21,6 +22,35 @@ class ReadCorpusRowsTests(unittest.TestCase):
             (root / "fr_msg.txt").write_text("Bonjour\nMonde\n", encoding="utf-8")
             rows = read_corpus_rows(root)
             self.assertEqual(rows, [("gs.a.One", "Hello", "Bonjour"), ("gs.b.Two", "World", "Monde")])
+
+    def test_corpus_null_marker_reads_as_untranslated(self):
+        # poke-corpus writes "[NULL]" where a language has no text; it shipped
+        # in-game verbatim before both loaders treated it as empty.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "qid_msg.txt").write_text("gs.a.One\ngs.b.Two\n", encoding="utf-8")
+            (root / "en_msg.txt").write_text("Now saving...\nWorld\n", encoding="utf-8")
+            (root / "ja-Hrkt_msg.txt").write_text("[NULL]\nせかい\n", encoding="utf-8")
+            rows = read_corpus_rows(root, target_lang="ja-Hrkt")
+            self.assertEqual(rows, [("gs.a.One", "Now saving...", ""), ("gs.b.Two", "World", "せかい")])
+            records = read_parallel_game(root, target_lang="ja-Hrkt", game="yellow")
+            targets = [r.text for r in records if r.language == "ja-Hrkt"]
+            self.assertEqual(targets, ["", "せかい"])
+
+    def test_target_literals_come_from_the_collection_own_rows(self):
+        # <TRAINER>, # and friends print differently per language; the
+        # collection's own *CharText rows say how.  English is left alone.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "qid_msg.txt").write_text(
+                "gs.text.TrainerCharText\ngs.text.PlacePOKeText\ngs.a.One\ngs.b.Two\n", encoding="utf-8")
+            (root / "en_msg.txt").write_text("TRAINER@\nPOKé@\n<TRAINER> and #\n#MON LIST@\n", encoding="utf-8")
+            (root / "ja-Hrkt_msg.txt").write_text("トレーナー@\nポケモン@\n<TRAINER>と　#\n#MON LIST@\n", encoding="utf-8")
+            rows = read_corpus_rows(root, target_lang="ja-Hrkt")
+            self.assertEqual(rows[2], ("gs.a.One", "<TRAINER> and #", "トレーナーと　ポケモン"))
+            self.assertEqual(rows[3], ("gs.b.Two", "#MON LIST@", "#MON LIST@"))
+            records = read_parallel_game(root, target_lang="ja-Hrkt", game="yellow")
+            self.assertEqual([r.text for r in records if r.language == "ja-Hrkt"][2], "トレーナーと　ポケモン")
 
     def test_rejects_non_parallel_files(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -249,7 +279,7 @@ class GsDialogueOverridesConfigTests(unittest.TestCase):
         self.assertEqual(overrides["21:66db"], "Maître Célébrité!")
 
     def test_missing_language_file_is_empty(self):
-        self.assertEqual(load_gs_dialogue_overrides("ko"), {})
+        self.assertEqual(load_gs_dialogue_overrides("es"), {})
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(
                 load_gs_dialogue_overrides("fr", Path(tmp) / "absent.json"), {},

@@ -875,6 +875,12 @@ translated languages (fr/de/es/it/ja-Hrkt), i.e. 100% of the 3994
 pointers that carry any real, visible text** -- the only 16 left in every
 language are markup-only entries with nothing to translate at all, the
 same category Gold/Silver's own 100%-covered catalog also carries.
+For ja-Hrkt, 30 of those pointers are international-only texts (the EON
+MAIL and ODD EGG events, the international BATTLE TOWER, a few rewritten
+lines) whose Japanese corpus row is poke-corpus's `[NULL]` no-text marker;
+they are covered by `overrides/ja-Hrkt/gsc/crystal_dialogue.json`, from the
+official Gold/Silver Japanese line where the English is identical and
+composed otherwise.
 Korean stays at 0/3994 (no Crystal corpus exists for it at all, see
 below).
 

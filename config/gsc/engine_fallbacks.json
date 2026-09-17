@@ -1385,7 +1385,7 @@
       "no_op_total": 16
     },
     "ja-Hrkt": {
-      "total": 11,
+      "total": 10,
       "entries": {
         " PAGE AREA CRY PRNT": {
           "override": " PAGE AREA CRY PRNT",
@@ -1431,11 +1431,6 @@
           "override": "……",
           "reason": "engine-fallback",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.text.SixDotsCharText is the identical six-dot glyph string in all six languages."
-        },
-        "POKéMON": {
-          "override": "POKéMON",
-          "reason": "engine-fallback",
-          "provenance": "Explicit English fallback: this catalog's own established POKéMON spelling is kept identical to the English source in every existing translation for this language; no divergence to translate."
         },
         "PP": {
           "override": "PP",

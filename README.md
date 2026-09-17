@@ -192,7 +192,7 @@ engine's English fallback.
 | `de` | 3286/3286 (100%) | 3400/3400 (100%) | 421/421 (100%) |
 | `es` | 3286/3286 (100%) | 3400/3400 (100%) | 421/421 (100%) |
 | `it` | 3286/3286 (100%) | 3400/3400 (100%) | 421/421 (100%) |
-| `ja-Hrkt` | 3286/3286 (100%) | 3400/3400 (100%) | 421/421 (100%) |
+| `ja-Hrkt` | 3286/3286 (100%) | 3397/3400 (99.91%) | 421/421 (100%) |
 
 The ROM aggregates exclude extracted labels that do not render visible text.
 Reviewed exceptions are recorded in

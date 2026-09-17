@@ -412,7 +412,9 @@ class LoadCrystalDialogueOverridesTests(unittest.TestCase):
 
     def test_repository_japanese_overrides_are_valid_and_cover_the_mobile_adapter_gap(self):
         overrides = load_crystal_dialogue_overrides("ja-Hrkt")
-        self.assertEqual(len(overrides), 17)
+        # 17 Mobile Adapter GB texts plus 30 international-only texts whose
+        # Japanese corpus row is poke-corpus's [NULL] no-text marker.
+        self.assertEqual(len(overrides), 47)
         for pointer, text in overrides.items():
             self.assertRegex(pointer, r"^[0-7][0-9a-f]:[0-7][0-9a-f]{3}$")
             self.assertTrue(text.strip())
