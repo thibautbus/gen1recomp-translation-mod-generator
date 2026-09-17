@@ -43,6 +43,7 @@ def load_gs_engine_fallbacks(
             if (not isinstance(source, str) or not isinstance(row, dict)
                     or row.get("reason") != "engine-fallback"
                     or row.get("override") != source
+                    or row.get("status") not in GS_ENGINE_FALLBACK_STATUSES
                     or not isinstance(row.get("provenance"), str)
                     or "Explicit English fallback" not in row["provenance"]):
                 raise ValueError(f"invalid English fallback entry {lang!r}/{source!r}")
@@ -50,20 +51,15 @@ def load_gs_engine_fallbacks(
     return result
 
 
-# A fallback ledger row is a gap only while its provenance says no translation
-# was found.  Every other row records why the English spelling already is
-# this language's (a shared loanword, an invariant symbol, the cart's own
-# identical label), which is a reviewed translation that happens to be
-# identical and therefore ships nothing at runtime.
-_UNRESOLVED_FALLBACK_PREFIXES = (
-    "Explicit English fallback: no unique corpus match",
-    "Explicit English fallback: ambiguous corpus candidates",
-    "Explicit English fallback: no PokeCorpus row for this language",
-)
+# Each fallback ledger row records whether its English spelling was reviewed
+# as this language's own ("reviewed-identity": a shared loanword, an invariant
+# symbol, the cart's own identical label) or is a gap still waiting for a
+# translation ("unresolved").  A reviewed identity ships nothing at runtime.
+GS_ENGINE_FALLBACK_STATUSES = frozenset({"reviewed-identity", "unresolved"})
 
 
 def is_reviewed_identity(row: dict) -> bool:
-    return not str(row.get("provenance", "")).startswith(_UNRESOLVED_FALLBACK_PREFIXES)
+    return row.get("status") == "reviewed-identity"
 
 
 def load_gs_engine_reviewed_identities(language: str, path: str | Path | None = None) -> set[str]:

@@ -31,6 +31,19 @@ CALLSITES = [
 
 
 class GoldEngineCatalogTests(unittest.TestCase):
+    def test_fallback_rows_must_declare_their_status(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "fallbacks.json"
+            row = {"override": "PP", "reason": "engine-fallback", "provenance": "Explicit English fallback: shared."}
+            report = {"schema": "gen1recomp-translation-mods/engine-fallback-report", "version": 1,
+                      "languages": {"fr": {"total": 1, "entries": {"PP": row}}}}
+            path.write_text(json.dumps(report), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "invalid English fallback entry"):
+                load_gs_engine_fallbacks("fr", path)
+            row["status"] = "reviewed-identity"
+            path.write_text(json.dumps(report), encoding="utf-8")
+            self.assertTrue(is_reviewed_identity(load_gs_engine_fallbacks("fr", path)["fr"]["PP"]))
+
     def test_only_unresolved_fallbacks_are_counted_as_gaps(self):
         # Every other fallback row documents why the English spelling is this
         # language's own; the Pokedex entry bar Japanese/Korean carts draw as

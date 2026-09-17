@@ -212,10 +212,10 @@ actual Crystal save:
   prose. The named catalogs include each trainer's own name (JOEY is GASPARD
   in French), joined per class and member number against the corpus: 495
   Gold/Silver trainers and 541 Crystal ones, applied on their own edition's
-  save since Crystal's rosters differ. The phone contact and decoration
-  registries deliberately leave 29 trainer contacts and 25 species-backed
-  decorations to the trainer and species names, so those rows count as
-  covered once the registry they rely on is complete. `ja-Hrkt` and `ko`
+  save since Crystal's rosters differ. The phone contact registry leaves its
+  29 trainer contacts to those trainer names, so they count as covered once
+  every trainer name is; the 25 species-backed decorations (CLEFAIRY POSTER)
+  are patched with the translated species name. `ja-Hrkt` and `ko`
   fall short of 100%: this is a genuine, known gap in those languages'
   dialogue/catalog corpora (and `ko` has no Crystal corpus for the Crystal
   trainer names), not a formatting artifact.

@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from pipeline.gs_mod import generate_gs_mod
+from pipeline.gs_mod import _complete_delegated_registries, generate_gs_mod
 from pipeline.gs_trainer_names import parse_trainer_names, trainer_name_catalog
 
 
@@ -75,6 +75,37 @@ class TrainerNameCatalogTests(unittest.TestCase):
             )
             self.assertNotIn("trainer_names", (mod_dir / "main.lua").read_text(encoding="utf-8"))
             self.assertFalse((mod_dir / "lang" / "trainer_names.lua").exists())
+
+
+class DelegatedRegistryCoverageTests(unittest.TestCase):
+    def _stats(self, trainer_translated):
+        return {
+            "phone_contacts": {"total": 3, "translated": 1, "no_corpus_entry": 2, "fallback_english": 2,
+                               "omitted_registry_ids": ["PHONE_00", "PHONE_YOUNGSTER_JOEY"]},
+            "trainer_names": {"total": 2, "translated": trainer_translated},
+            "decorations": {"total": 3, "translated": 1, "no_corpus_entry": 2, "fallback_english": 2,
+                            "fallback_ids": ["deco:18", "deco:19"],
+                            "omitted_species_ids": ["deco:18", "deco:19"]},
+        }
+
+    def test_species_decorations_get_the_translated_species_name(self):
+        # Decorations.name prints the row's own name ("CLEFAIRY POSTER"); no
+        # caller translates the species, so the patch must carry it.
+        stats = self._stats(2)
+        catalogs = {"decorations": {"deco:0": "RETOUR"}, "species_names": {"CLEFAIRY": "MELOFEE"}}
+        _complete_delegated_registries(catalogs, stats)
+        self.assertEqual(catalogs["decorations"], {"deco:0": "RETOUR", "deco:18": "MELOFEE"})
+        self.assertEqual(stats["decorations"]["translated"], 2)
+        self.assertEqual(stats["decorations"]["fallback_ids"], ["deco:19"])
+
+    def test_phone_trainer_contacts_count_only_once_every_trainer_name_is_translated(self):
+        stats = self._stats(1)
+        _complete_delegated_registries({"decorations": {}, "species_names": {}}, stats)
+        self.assertEqual(stats["phone_contacts"]["translated"], 1)
+        stats = self._stats(2)
+        _complete_delegated_registries({"decorations": {}, "species_names": {}}, stats)
+        self.assertEqual(stats["phone_contacts"]["translated"], 3)
+        self.assertEqual(stats["phone_contacts"]["no_corpus_entry"], 0)
 
 
 if __name__ == "__main__":

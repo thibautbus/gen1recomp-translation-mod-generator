@@ -20,7 +20,7 @@ from .gs_index_join import (
     parse_indexed_catalog,
 )
 from .gs_localized_registries import (
-    _index_corpus, decoration_catalog, phone_contact_catalog, radio_channel_catalog,
+    DECORATION_ATTR_NAMES, _index_corpus, decoration_catalog, phone_contact_catalog, radio_channel_catalog,
     status_label_catalog, type_name_catalog,
 )
 from .gs_join import (
@@ -820,7 +820,9 @@ def _write_gate_expectations(
     if crystal_names:
         distinct = sorted(k for k, v in crystal_names.items() if gold_names.get(k) != v)
         key = (distinct or sorted(crystal_names))[0]
-        expected["trainer_names_crystal"] = {"id": key, "value": crystal_names[key]}
+        expected["trainer_names_crystal"] = {
+            "id": key, "value": crystal_names[key], "distinct": bool(distinct),
+        }
     path = mod_dir.parent / f".{mod_dir.name}.registry-gate.json"
     path.write_text(json.dumps(expected, ensure_ascii=False, sort_keys=True), encoding="utf-8")
     return path
@@ -1025,6 +1027,51 @@ _INDEX_CATALOG_QID_PREFIXES = {
 }
 
 
+def _complete_delegated_registries(
+    catalogs: dict[str, dict[str, str]], index_stats: dict[str, dict],
+) -> None:
+    """Cover the phone and decoration rows those registries leave to others.
+
+    Trainer phone contacts carry no name of their own: Phone.contactName reads
+    the trainer's name from the merged trainer rosters, so they are covered
+    once every trainer name is.  PHONE_00 is the empty slot, printed as
+    NON_TRAINER_NAMES[0]'s row of dashes in every language.
+
+    Species-backed decorations do need a patch: Decorations.name builds
+    "CLEFAIRY POSTER" from the row's own name, and neither DecorationMenu nor
+    World passes the species resolver that would translate it.  Their name is
+    the species id, so the translated species name is written into the row.
+    """
+    phone_stats = index_stats.get("phone_contacts")
+    trainer_stats = index_stats.get("trainer_names")
+    if phone_stats and trainer_stats and trainer_stats["translated"] == trainer_stats["total"]:
+        delegated = len(phone_stats.get("omitted_registry_ids", []))
+        phone_stats["delegated_translated"] = delegated
+        phone_stats["delegated_to"] = "trainer_names (PHONE_00: language-neutral dashes)"
+        phone_stats["translated"] += delegated
+        phone_stats["no_corpus_entry"] -= delegated
+        phone_stats["fallback_english"] -= delegated
+    decoration_stats = index_stats.get("decorations")
+    decorations = catalogs.get("decorations")
+    species_names = catalogs.get("species_names") or {}
+    if decoration_stats is None or decorations is None:
+        return
+    filled = 0
+    for deco_id in decoration_stats.get("omitted_species_ids", []):
+        species = DECORATION_ATTR_NAMES[int(deco_id.split(":", 1)[1])]
+        value = species_names.get(species)
+        if value:
+            decorations[deco_id] = value
+            filled += 1
+    decoration_stats["species_names_translated"] = filled
+    decoration_stats["translated"] += filled
+    decoration_stats["no_corpus_entry"] -= filled
+    decoration_stats["fallback_english"] -= filled
+    decoration_stats["fallback_ids"] = [
+        deco_id for deco_id in decoration_stats.get("fallback_ids", []) if deco_id not in decorations
+    ]
+
+
 def build_gs_dialogue_mod(
     gold_out_dir: str | Path,
     corpus_dir: str | Path,
@@ -1209,30 +1256,7 @@ def build_gs_dialogue_mod(
                 )
             else:
                 _unused, index_stats["trainer_names_crystal"] = trainer_name_catalog(crystal_rows, [])
-    # The phone registry deliberately leaves trainer contacts' names to the
-    # trainer rosters, and the decoration registry leaves species-backed rows
-    # to the species names (see gs_localized_registries.py).  Those rows are
-    # covered once the registry they are delegated to is complete.  PHONE_00
-    # is the empty slot, printed as NON_TRAINER_NAMES[0]'s row of dashes in
-    # every language.
-    phone_stats = index_stats.get("phone_contacts")
-    trainer_stats = index_stats.get("trainer_names")
-    if phone_stats and trainer_stats and trainer_stats["translated"] == trainer_stats["total"]:
-        delegated = len(phone_stats.get("omitted_registry_ids", []))
-        phone_stats["delegated_translated"] = delegated
-        phone_stats["delegated_to"] = "trainer_names (PHONE_00: language-neutral dashes)"
-        phone_stats["translated"] += delegated
-        phone_stats["no_corpus_entry"] -= delegated
-        phone_stats["fallback_english"] -= delegated
-    decoration_stats = index_stats.get("decorations")
-    species_stats = index_stats.get("species_names")
-    if decoration_stats and species_stats and species_stats["translated"] == species_stats["total"]:
-        delegated = len(decoration_stats.get("omitted_species_ids", []))
-        decoration_stats["delegated_translated"] = delegated
-        decoration_stats["delegated_to"] = "species_names"
-        decoration_stats["translated"] += delegated
-        decoration_stats["no_corpus_entry"] -= delegated
-        decoration_stats["fallback_english"] -= delegated
+    _complete_delegated_registries(extra_catalogs, index_stats)
     landmarks_path = gold_out_dir / "gs_landmarks.tsv"
     landmarks = parse_indexed_catalog(landmarks_path)
     if not landmarks:

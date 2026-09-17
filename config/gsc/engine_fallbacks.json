@@ -9,141 +9,169 @@
         " 50 :  ¥1000": {
           "override": " 50 :  ¥1000",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.std_scripts.CoinVendor_IntroScript.MenuData's first segment is spelled identically to the English source in this language (same ¥-before-amount order); no divergence to translate."
         },
         "%dX": {
           "override": "%dX",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language (matching 1X/2X/3X)."
         },
         "%s.": {
           "override": "%s.",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus's own name-then-period convention keeps a bare ASCII period after a name token in every language (including ja-Hrkt/ko, which otherwise favour the full-width \"。\"); no divergence to translate."
         },
         "1X": {
           "override": "1X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "2X": {
           "override": "2X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "3X": {
           "override": "3X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "500 : ¥10000": {
           "override": "500 : ¥10000",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.std_scripts.CoinVendor_IntroScript.MenuData's second segment is spelled identically to the English source in this language; no divergence to translate."
         },
         "ABRA": {
           "override": "ABRA",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.63 spells this identically to the English source in this language; no divergence to translate."
         },
         "AUTO": {
           "override": "AUTO",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"AUTO\" is already a common abbreviation identical to the English source in this language."
         },
         "CYAN": {
           "override": "CYAN",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this colour-palette theme name is already spelled identically to the English source in this language."
         },
         "DMG": {
           "override": "DMG",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: the official Nintendo model name for the original Game Boy, a technical/brand term kept identical in every language."
         },
         "DRATINI": {
           "override": "DRATINI",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.147 spells this identically to the English source in this language."
         },
         "GEN 2": {
           "override": "GEN 2",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a version/generation label for one of the built-in colour-palette themes, kept identical in every language (matching DMG)."
         },
         "INDIGO": {
           "override": "INDIGO",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this colour-palette theme name is already spelled identically to the English source in this language."
         },
         "MAGENTA": {
           "override": "MAGENTA",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this colour-palette theme name is already spelled identically to the English source in this language."
         },
         "ORANGE": {
           "override": "ORANGE",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this colour-palette theme name is already spelled identically to the English source in this language."
         },
         "PALETTE": {
           "override": "PALETTE",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"palette\" is already a common word identical to the English source in this language."
         },
         "PORYGON": {
           "override": "PORYGON",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.137 spells this identically to the English source in this language; no divergence to translate."
         },
         "RADIO": {
           "override": "RADIO",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"radio\" is a shared loanword spelled identically to the English source in this language; no divergence to translate."
         },
         "SAND": {
           "override": "SAND",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this colour-palette theme name is already spelled identically to the English source in this language."
         },
         "SKIN": {
           "override": "SKIN",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"skin\" is already a common gaming loanword identical to the English source in this language."
         },
         "TM14": {
           "override": "TM14",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.ItemNames.205 spells this identically to the English source in this language."
         },
         "TM15": {
           "override": "TM15",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.ItemNames.206 spells this identically to the English source in this language."
         },
         "TM25": {
           "override": "TM25",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.ItemNames.216 spells this identically to the English source in this language."
         },
         "TM29": {
           "override": "TM29",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.ItemNames.221 spells this identically to the English source in this language."
         },
         "TM32": {
           "override": "TM32",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.ItemNames.224 spells this identically to the English source in this language."
         },
         "TM38": {
           "override": "TM38",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.ItemNames.230 spells this identically to the English source in this language."
         },
         "<PK><MN>": {
           "override": "<PK><MN>",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -151,6 +179,7 @@
         "NORMAL": {
           "override": "NORMAL",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -158,6 +187,7 @@
         "PAR": {
           "override": "PAR",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -165,6 +195,7 @@
         "POKéRUS": {
           "override": "POKéRUS",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -172,6 +203,7 @@
         "Start!": {
           "override": "Start!",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -179,51 +211,61 @@
         "……": {
           "override": "……",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.text.SixDotsCharText is the identical six-dot glyph string in all six languages."
         },
         "BOX%d": {
           "override": "BOX%d",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver's German BOX-number labels already render this word identically to the English source (no divergence to translate)."
         },
         "POKéMON": {
           "override": "POKéMON",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this catalog's own established POKéMON spelling is kept identical to the English source in every existing translation for this language; no divergence to translate."
         },
         "POKéDEX": {
           "override": "POKéDEX",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: the real cart's own POKéDEX label is spelled identically to the English source in this language (matching the ja-Hrkt POKéDEX entry's own established reasoning)."
         },
         "ZOOM": {
           "override": "ZOOM",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"Zoom\" is already a common word identical to the English source in this language."
         },
         "PP": {
           "override": "PP",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"PP\" (Power Points) is a universal Pokémon abbreviation kept identical in every language; no compatible standalone PokeCorpus row found."
         },
         "ITEM": {
           "override": "ITEM",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.mon_menu.MonMenuOptionStrings.3 spells this identically to the English source in German."
         },
         "LEVEL UP": {
           "override": "LEVEL UP",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.stats_screen.LoadPinkPage.LevelUpStr spells this identically to the English source in German."
         },
         "OK": {
           "override": "OK",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.stats_screen.LoadPinkPage.OK_str spells this identically to the English source in German."
         },
         "STATUS/": {
           "override": "STATUS/",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.stats_screen.LoadPinkPage.Status_Type spells this identically to the English source in German."
         }
       },
@@ -405,101 +447,121 @@
         "%dX": {
           "override": "%dX",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language (matching 1X/2X/3X)."
         },
         "%s.": {
           "override": "%s.",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus's own name-then-period convention keeps a bare ASCII period after a name token in every language (including ja-Hrkt/ko, which otherwise favour the full-width \"。\"); no divergence to translate."
         },
         "1X": {
           "override": "1X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "2X": {
           "override": "2X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "3X": {
           "override": "3X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "ABRA": {
           "override": "ABRA",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.63 spells this identically to the English source in this language; no divergence to translate."
         },
         "AUTO": {
           "override": "AUTO",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"AUTO\" is already a common abbreviation identical to the English source in this language."
         },
         "DMG": {
           "override": "DMG",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: the official Nintendo model name for the original Game Boy, a technical/brand term kept identical in every language."
         },
         "DRATINI": {
           "override": "DRATINI",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.147 spells this identically to the English source in this language."
         },
         "EEVEE": {
           "override": "EEVEE",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.133 spells this identically to the English source in this language."
         },
         "EKANS": {
           "override": "EKANS",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.23 spells this identically to the English source in this language."
         },
         "GEN 2": {
           "override": "GEN 2",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a version/generation label for one of the built-in colour-palette themes, kept identical in every language (matching DMG)."
         },
         "MAGENTA": {
           "override": "MAGENTA",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this colour-palette theme name is already spelled identically to the English source in this language."
         },
         "MINERAL": {
           "override": "MINERAL",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this Johto badge name is already spelled identically to the English source in this language, confirmed from poke-corpus GoldSilver's badge-award dialogue (\"...recibió la MEDALLA MINERAL.\")."
         },
         "MR.MIME": {
           "override": "MR.MIME",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.122 spells this identically to the English source in this language."
         },
         "PORYGON": {
           "override": "PORYGON",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.137 spells this identically to the English source in this language; no divergence to translate."
         },
         "RADIO": {
           "override": "RADIO",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"radio\" is a shared loanword spelled identically to the English source in this language; no divergence to translate."
         },
         "SANDSHREW": {
           "override": "SANDSHREW",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.27 spells this identically to the English source in this language."
         },
         "SKIN": {
           "override": "SKIN",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"skin\" is already a common gaming loanword identical to the English source in this language."
         },
         "<PK><MN>": {
           "override": "<PK><MN>",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -507,6 +569,7 @@
         "NORMAL": {
           "override": "NORMAL",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -514,6 +577,7 @@
         "PAR": {
           "override": "PAR",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -521,6 +585,7 @@
         "POKéRUS": {
           "override": "POKéRUS",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -528,31 +593,37 @@
         "……": {
           "override": "……",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.text.SixDotsCharText is the identical six-dot glyph string in all six languages."
         },
         "POKéMON": {
           "override": "POKéMON",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this catalog's own established POKéMON spelling is kept identical to the English source in every existing translation for this language; no divergence to translate."
         },
         "POKéDEX": {
           "override": "POKéDEX",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: the real cart's own POKéDEX label is spelled identically to the English source in this language (matching the ja-Hrkt POKéDEX entry's own established reasoning)."
         },
         "ZOOM": {
           "override": "ZOOM",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"zoom\" is already a common word identical to the English source in this language."
         },
         "PP": {
           "override": "PP",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"PP\" (Power Points) is a universal Pokémon abbreviation kept identical in every language; no compatible standalone PokeCorpus row found."
         },
         "OK": {
           "override": "OK",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.stats_screen.LoadPinkPage.OK_str spells this identically to the English source in Spanish."
         }
       },
@@ -678,121 +749,145 @@
         "%dX": {
           "override": "%dX",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language (matching 1X/2X/3X)."
         },
         "%s.": {
           "override": "%s.",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus's own name-then-period convention keeps a bare ASCII period after a name token in every language (including ja-Hrkt/ko, which otherwise favour the full-width \"。\"); no divergence to translate."
         },
         "1X": {
           "override": "1X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "2X": {
           "override": "2X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "3X": {
           "override": "3X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "ABRA": {
           "override": "ABRA",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.63 spells this identically to the English source in this language; no divergence to translate."
         },
         "AUTO": {
           "override": "AUTO",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"AUTO\" is already a common abbreviation identical to the English source in this language."
         },
         "CASCADE": {
           "override": "CASCADE",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this Kanto badge name is already spelled identically to the English source in this language, confirmed from poke-corpus GoldSilver's badge-award dialogue (\"...V'là le BADGECASCADE.\")."
         },
         "CYAN": {
           "override": "CYAN",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this colour-palette theme name is already spelled identically to the English source in this language."
         },
         "DMG": {
           "override": "DMG",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: the official Nintendo model name for the original Game Boy, a technical/brand term kept identical in every language."
         },
         "GEN 2": {
           "override": "GEN 2",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a version/generation label for one of the built-in colour-palette themes, kept identical in every language (matching DMG)."
         },
         "GLACIER": {
           "override": "GLACIER",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this Johto badge name is already spelled identically to the English source in this language, confirmed from poke-corpus GoldSilver's badge-award dialogue (\"...reçoit le BADGEGLACIER.\")."
         },
         "INDIGO": {
           "override": "INDIGO",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this colour-palette theme name is already spelled identically to the English source in this language."
         },
         "MAGENTA": {
           "override": "MAGENTA",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this colour-palette theme name is already spelled identically to the English source in this language."
         },
         "MINERAL": {
           "override": "MINERAL",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this Johto badge name is already spelled identically to the English source in this language, confirmed from poke-corpus GoldSilver's badge-award dialogue (\"...reçoit le BADGEMINERAL.\")."
         },
         "OLIVE": {
           "override": "OLIVE",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this colour-palette theme name is already spelled identically to the English source in this language."
         },
         "ORANGE": {
           "override": "ORANGE",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this colour-palette theme name is already spelled identically to the English source in this language."
         },
         "PALETTE": {
           "override": "PALETTE",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"palette\" is already a common word identical to the English source in this language."
         },
         "PORYGON": {
           "override": "PORYGON",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.137 spells this identically to the English source in this language; no divergence to translate."
         },
         "RADIO": {
           "override": "RADIO",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"radio\" is a shared loanword spelled identically to the English source in this language; no divergence to translate."
         },
         "ROSE": {
           "override": "ROSE",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this colour-palette theme name is already spelled identically to the English source in this language."
         },
         "SKIN": {
           "override": "SKIN",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"skin\" is already a common gaming loanword identical to the English source in this language."
         },
         "ZEPHYR": {
           "override": "ZEPHYR",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this Johto badge name is already spelled identically to the English source in this language, confirmed from poke-corpus GoldSilver's badge-award dialogue (\"C'est le BADGE ZEPHYR officiel de la LIGUE #MON.\")."
         },
         "<PK><MN>": {
           "override": "<PK><MN>",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -800,6 +895,7 @@
         "DECORATION": {
           "override": "DECORATION",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -807,6 +903,7 @@
         "NORMAL": {
           "override": "NORMAL",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -814,6 +911,7 @@
         "PAR": {
           "override": "PAR",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -821,6 +919,7 @@
         "POKéRUS": {
           "override": "POKéRUS",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -828,6 +927,7 @@
         "PSN": {
           "override": "PSN",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -835,61 +935,73 @@
         "……": {
           "override": "……",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.text.SixDotsCharText is the identical six-dot glyph string in all six languages."
         },
         "STATS": {
           "override": "STATS",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver's French menu rows already render this word identically to the English source (no divergence to translate)."
         },
         "POKéMON": {
           "override": "POKéMON",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this catalog's own established POKéMON spelling is kept identical to the English source in every existing translation for this language; no divergence to translate."
         },
         "POKéDEX": {
           "override": "POKéDEX",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: the real cart's own POKéDEX label is spelled identically to the English source in this language (matching the ja-Hrkt POKéDEX entry's own established reasoning)."
         },
         "ZOOM": {
           "override": "ZOOM",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"zoom\" is already a common word identical to the English source in this language."
         },
         "DEFENSE": {
           "override": "DEFENSE",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.item_effects.StatStrings spells this identically to the English source in French."
         },
         "SPECIAL": {
           "override": "SPECIAL",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.item_effects.StatStrings spells this identically to the English source in French."
         },
         "Whoa!\n%d min.?": {
           "override": "Whoa!\n%d min.?",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.common_1.OakTimeWhoaMinutesText spells the \"Whoa!\" fragment identically to the English source in French."
         },
         "Challenge": {
           "override": "Challenge",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus Crystal c.mobile_5f.MenuData_ChallengeExplanationCancel spells this identically to the English source in French."
         },
         "PP": {
           "override": "PP",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"PP\" (Power Points) is a universal Pokémon abbreviation kept identical in every language; no compatible standalone PokeCorpus row found."
         },
         "TYPE/": {
           "override": "TYPE/",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.core.MoveInfoBox.Type spells this identically to the English source in French."
         },
         "OK": {
           "override": "OK",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.stats_screen.LoadPinkPage.OK_str spells this identically to the English source in French."
         }
       },
@@ -1071,116 +1183,139 @@
         " 50 :  ¥1000": {
           "override": " 50 :  ¥1000",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.std_scripts.CoinVendor_IntroScript.MenuData's first segment is spelled identically to the English source in this language (same ¥-before-amount order); no divergence to translate."
         },
         "%dX": {
           "override": "%dX",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language (matching 1X/2X/3X)."
         },
         "%s.": {
           "override": "%s.",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus's own name-then-period convention keeps a bare ASCII period after a name token in every language (including ja-Hrkt/ko, which otherwise favour the full-width \"。\"); no divergence to translate."
         },
         "1X": {
           "override": "1X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "2X": {
           "override": "2X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "3X": {
           "override": "3X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "500 : ¥10000": {
           "override": "500 : ¥10000",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.std_scripts.CoinVendor_IntroScript.MenuData's second segment is spelled identically to the English source in this language; no divergence to translate."
         },
         "ABRA": {
           "override": "ABRA",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.63 spells this identically to the English source in this language; no divergence to translate."
         },
         "AUTO": {
           "override": "AUTO",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"AUTO\" is already a common abbreviation identical to the English source in this language."
         },
         "DMG": {
           "override": "DMG",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: the official Nintendo model name for the original Game Boy, a technical/brand term kept identical in every language."
         },
         "DRATINI": {
           "override": "DRATINI",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.147 spells this identically to the English source in this language."
         },
         "EEVEE": {
           "override": "EEVEE",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.133 spells this identically to the English source in this language."
         },
         "EKANS": {
           "override": "EKANS",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.23 spells this identically to the English source in this language."
         },
         "GEN 2": {
           "override": "GEN 2",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a version/generation label for one of the built-in colour-palette themes, kept identical in every language (matching DMG)."
         },
         "LIME": {
           "override": "LIME",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this colour-palette theme name is already spelled identically to the English source in this language."
         },
         "MAGENTA": {
           "override": "MAGENTA",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this colour-palette theme name is already spelled identically to the English source in this language."
         },
         "MR.MIME": {
           "override": "MR.MIME",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.122 spells this identically to the English source in this language."
         },
         "PALETTE": {
           "override": "PALETTE",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"palette\" is already a common word identical to the English source in this language."
         },
         "PORYGON": {
           "override": "PORYGON",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.137 spells this identically to the English source in this language; no divergence to translate."
         },
         "RADIO": {
           "override": "RADIO",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"radio\" is a shared loanword spelled identically to the English source in this language; no divergence to translate."
         },
         "SANDSHREW": {
           "override": "SANDSHREW",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.names.PokemonNames.27 spells this identically to the English source in this language."
         },
         "SKIN": {
           "override": "SKIN",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"skin\" is already a common gaming loanword identical to the English source in this language."
         },
         "<PK><MN>": {
           "override": "<PK><MN>",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -1188,6 +1323,7 @@
         "PAR": {
           "override": "PAR",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -1195,6 +1331,7 @@
         "POKéRUS": {
           "override": "POKéRUS",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -1202,41 +1339,49 @@
         "……": {
           "override": "……",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.text.SixDotsCharText is the identical six-dot glyph string in all six languages."
         },
         "SEL": {
           "override": "SEL",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver's Italian menu rows never diverge from \"SEL\" for this word (already identical to the English source), so no translation is invented."
         },
         "BOX%d": {
           "override": "BOX%d",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver's Italian BOX-number labels already render this word identically to the English source (no divergence to translate)."
         },
         "POKéMON": {
           "override": "POKéMON",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: this catalog's own established POKéMON spelling is kept identical to the English source in every existing translation for this language; no divergence to translate."
         },
         "POKéDEX": {
           "override": "POKéDEX",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: the real cart's own POKéDEX label is spelled identically to the English source in this language (matching the ja-Hrkt POKéDEX entry's own established reasoning)."
         },
         "ZOOM": {
           "override": "ZOOM",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"zoom\" is already a common word identical to the English source in this language."
         },
         "PP": {
           "override": "PP",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"PP\" (Power Points) is a universal Pokémon abbreviation kept identical in every language; no compatible standalone PokeCorpus row found."
         },
         "OK": {
           "override": "OK",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.stats_screen.LoadPinkPage.OK_str spells this identically to the English source in Italian."
         }
       },
@@ -1390,51 +1535,61 @@
         " PAGE AREA CRY PRNT": {
           "override": " PAGE AREA CRY PRNT",
           "reason": "engine-fallback",
+          "status": "unresolved",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
         "%dX": {
           "override": "%dX",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language (matching 1X/2X/3X)."
         },
         "%s.": {
           "override": "%s.",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus's own name-then-period convention keeps a bare ASCII period after a name token in every language (including ja-Hrkt/ko, which otherwise favour the full-width \"。\"); no divergence to translate."
         },
         "1X": {
           "override": "1X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "2X": {
           "override": "2X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "3X": {
           "override": "3X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "DMG": {
           "override": "DMG",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: the official Nintendo model name for the original Game Boy, a technical/brand term kept identical in every language."
         },
         "GEN 2": {
           "override": "GEN 2",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a version/generation label for one of the built-in colour-palette themes, kept identical in every language (matching DMG)."
         },
         "……": {
           "override": "……",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.text.SixDotsCharText is the identical six-dot glyph string in all six languages."
         },
         "PP": {
           "override": "PP",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"PP\" (Power Points) is a universal Pokémon abbreviation kept identical in every language; no compatible standalone PokeCorpus row found."
         }
       },
@@ -1518,46 +1673,55 @@
         " PAGE AREA CRY PRNT": {
           "override": " PAGE AREA CRY PRNT",
           "reason": "engine-fallback",
+          "status": "unresolved",
           "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
         },
         "%dX": {
           "override": "%dX",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language (matching 1X/2X/3X)."
         },
         "%s.": {
           "override": "%s.",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus's own name-then-period convention keeps a bare ASCII period after a name token in every language (including ja-Hrkt/ko, which otherwise favour the full-width \"。\"); no divergence to translate."
         },
         "1X": {
           "override": "1X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "2X": {
           "override": "2X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "3X": {
           "override": "3X",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language."
         },
         "DMG": {
           "override": "DMG",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: the official Nintendo model name for the original Game Boy, a technical/brand term kept identical in every language."
         },
         "GEN 2": {
           "override": "GEN 2",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a version/generation label for one of the built-in colour-palette themes, kept identical in every language (matching DMG)."
         },
         "<PK><MN>": {
           "override": "<PK><MN>",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
           "original_reason": "engine-corpus",
           "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
@@ -1565,11 +1729,13 @@
         "……": {
           "override": "……",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: poke-corpus GoldSilver gs.text.SixDotsCharText is the identical six-dot glyph string in all six languages."
         },
         "PP": {
           "override": "PP",
           "reason": "engine-fallback",
+          "status": "reviewed-identity",
           "provenance": "Explicit English fallback: \"PP\" (Power Points) is a universal Pokémon abbreviation kept identical in every language; no compatible standalone PokeCorpus row found."
         }
       },
