@@ -29,6 +29,46 @@ def corpus_target_text(text: str) -> str:
     return "" if text == CORPUS_NULL else text
 
 
+# Each Gen 1/2 collection defines its own special characters as ordinary rows
+# (rb.text.TMCharText, gs.text.TrainerCharText, ...): the text the cart prints
+# for <TM>, <TRAINER>, <PC>, <ROCKET> and # in that language.  tokens.py's
+# _CORPUS_EXPANSIONS spells them the English way for every language, so a
+# target line is localized from its own collection's rows first: Japanese
+# prints ポケモン/トレーナー/パソコン/ロケットだん/わざマシン, French CT and
+# DRES./DRESSEUR, and so on.
+_LITERAL_ROWS = {
+    "TMCharText": "<TM>",
+    "TrainerCharText": "<TRAINER>",
+    "PCCharText": "<PC>",
+    "RocketCharText": "<ROCKET>",
+    "PlacePOKeText": "#",
+}
+
+
+def corpus_literals(qids: Iterable[str], targets: Iterable[str]) -> dict[str, str]:
+    """{token: text} for one language, read from its collection's literal rows."""
+    literals: dict[str, str] = {}
+    for qid, target in zip(qids, targets):
+        parts = qid.split(".")
+        if len(parts) != 3 or parts[1] != "text" or parts[2] not in _LITERAL_ROWS:
+            continue
+        value = corpus_target_text(target).replace("@", "")
+        if value:
+            literals[_LITERAL_ROWS[parts[2]]] = value
+    return literals
+
+
+def localize_literals(text: str, literals: dict[str, str]) -> str:
+    for token, value in literals.items():
+        if token == "#":
+            # "#MON" is the POKéMON spelling (a Korean row keeps it untranslated),
+            # not the standalone POKé character; the shared table expands it.
+            text = re.sub(r"#(?!MON)", lambda _match: value, text)
+        else:
+            text = text.replace(token, value)
+    return text
+
+
 def canonical_language(value: Any, default: str = "en") -> str:
     value = str(value or "").lower()
     if value in {"fr", "fra", "french", "français", "francais"}:
@@ -153,6 +193,7 @@ def read_parallel_game(directory: str | Path, target_lang: str = "fr", game: str
     counts = {name: len(values) for name, values in lines.items()}
     if len(set(counts.values())) != 1:
         raise ValueError(f"{game} parallel files have different line counts: {counts}")
+    literals = corpus_literals(lines["qid"], lines[target_file_lang])
     result: list[CorpusRecord] = []
     for index, (qid, english, translation) in enumerate(zip(lines["qid"], lines["en"], lines[target_file_lang])):
         if game == "yellow":
@@ -171,7 +212,7 @@ def read_parallel_game(directory: str | Path, target_lang: str = "fr", game: str
         # English is retained on the target-language record to make exact
         # fallback auditable even when a qid is absent in future corpus
         # revisions.
-        result.append(CorpusRecord(qid, target_lang, corpus_target_text(translation), scope, str(paths[target_file_lang]), english=english, metadata=metadata.copy()))
+        result.append(CorpusRecord(qid, target_lang, localize_literals(corpus_target_text(translation), literals), scope, str(paths[target_file_lang]), english=english, metadata=metadata.copy()))
     return result
 
 

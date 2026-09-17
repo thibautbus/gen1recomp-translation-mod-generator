@@ -37,6 +37,21 @@ class ReadCorpusRowsTests(unittest.TestCase):
             targets = [r.text for r in records if r.language == "ja-Hrkt"]
             self.assertEqual(targets, ["", "せかい"])
 
+    def test_target_literals_come_from_the_collection_own_rows(self):
+        # <TRAINER>, # and friends print differently per language; the
+        # collection's own *CharText rows say how.  English is left alone.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "qid_msg.txt").write_text(
+                "gs.text.TrainerCharText\ngs.text.PlacePOKeText\ngs.a.One\ngs.b.Two\n", encoding="utf-8")
+            (root / "en_msg.txt").write_text("TRAINER@\nPOKé@\n<TRAINER> and #\n#MON LIST@\n", encoding="utf-8")
+            (root / "ja-Hrkt_msg.txt").write_text("トレーナー@\nポケモン@\n<TRAINER>と　#\n#MON LIST@\n", encoding="utf-8")
+            rows = read_corpus_rows(root, target_lang="ja-Hrkt")
+            self.assertEqual(rows[2], ("gs.a.One", "<TRAINER> and #", "トレーナーと　ポケモン"))
+            self.assertEqual(rows[3], ("gs.b.Two", "#MON LIST@", "#MON LIST@"))
+            records = read_parallel_game(root, target_lang="ja-Hrkt", game="yellow")
+            self.assertEqual([r.text for r in records if r.language == "ja-Hrkt"][2], "トレーナーと　ポケモン")
+
     def test_rejects_non_parallel_files(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

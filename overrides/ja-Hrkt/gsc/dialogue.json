@@ -8,7 +8,7 @@
       "provenance": "AI-generated Japanese translation of the Daylight Saving Time question (gs.PlayersHouse1F.IsItDSTText); poke-corpus's Japanese GoldSilver row is the [NULL] no-text marker, since Japanese carts have no Daylight Saving Time; requires in-game visual validation."
     },
     "55:4067": {
-      "override": "マサキの<PC>　つかうと<LINE>１つ<NO>ボックス<NI>２０ぴきまで<CONT>#　あずけられるぞ！<DONE>",
+      "override": "マサキのパソコン　つかうと<LINE>１つ<NO>ボックス<NI>２０ぴきまで<CONT>ポケモン　あずけられるぞ！<DONE>",
       "reason": "corpus-defect",
       "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.AzaleaPokecenter1F.AzaleaPokecenter1FFishingGuruText), with the Japanese carts' own box capacity (３０ぴき) changed to ２０ぴき: this engine runs the international save format, whose boxes hold 20, as the English line and the Korean row both say."
     }

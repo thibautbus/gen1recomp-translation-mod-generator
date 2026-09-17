@@ -320,7 +320,7 @@ class MultilingualTests(unittest.TestCase):
             "de": ["TYP", "TYP1", "TYP2", "OT", "LEVEL", "BALL×", "STEIN", "STATUS", "TAUSCH", "BOX WECHSELN", "TSCHÜSS!", "ITEM AUFNEHMEN", "ITEM ABLEGEN", "ITEM WEGWERFEN", "Du hast nicht\ngenug Geld.", "KAMPFANIMATION", "Vor einem Wechsel\nder POKéMON-BOX\x0bwird das Spiel\x0bgesichert!\x0cEinverstanden?"],
             "es": ["TIPO", "TIPO1", "TIPO2", "EO", "NIVEL", "BALL×", "LANZA ROCA", "ESTAD.", "CAMBIO", "CAMBIA CAJA", "¡NOS VEMOS!", "SACAR OBJETO", "DEJAR OBJETO", "TIRAR OBJETO", "No tienes\ntanto dinero.", "ANIMACIÓN BATALLA", "Si cambias una\nCAJA de POKéMON,\x0bsus datos serán\x0bguardados.\x0c¿Estás de\nacuerdo?"],
             "it": ["TIPO", "TIPO1", "TIPO2", "AO", "LIVELLO", "BALL×", "TIRA SASSO", "STAT.", "ORDINA", "CAMBIA BOX", "CIAO!", "RITIRA STRUM.", "DEPOSITA STRUM.", "BUTTA STRUM.", "Non hai\nabbastanza soldi.", "ANIMAZIONE LOTTA", "Al cambio del\nPOKéMON BOX\x0bil gioco verrà\x0bsalvato!\x0cD'accordo?"],
-            "ja-Hrkt": ["わざタイプ", "タイプ１", "タイプ２", "おや", "レベル", "サファリボール×", "いしをなげる", "つよさをみる", "ならびかえ", "ボックスを　かえる", "さようなら", "どうぐを　ひきだす", "どうぐを　あずける", "どうぐを　すてる", "おかねが　たりないようですね", "せんとう　アニメーション", "POKé　ボックスを　かえると\nどうじに　レポートが　かかれます\x0c……　それでも　いいですか？"],
+            "ja-Hrkt": ["わざタイプ", "タイプ１", "タイプ２", "おや", "レベル", "サファリボール×", "いしをなげる", "つよさをみる", "ならびかえ", "ボックスを　かえる", "さようなら", "どうぐを　ひきだす", "どうぐを　あずける", "どうぐを　すてる", "おかねが　たりないようですね", "せんとう　アニメーション", "ポケモン　ボックスを　かえると\nどうじに　レポートが　かかれます\x0c……　それでも　いいですか？"],
         }
         anchors = load_semantic_anchors()
         for key in keys:
@@ -710,7 +710,7 @@ class MultilingualTests(unittest.TestCase):
                 keys[1]: "%s è\ncrollato!",
             },
             "ja-Hrkt": {
-                keys[0]: "%sの　てもとには\nたたかえる　POKéが　いない！",
+                keys[0]: "%sの　てもとには\nたたかえる　ポケモンが　いない！",
                 keys[1]: "%sは\nめのまえが　まっくらに　なった！",
             },
         }
