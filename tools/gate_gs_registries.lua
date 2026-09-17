@@ -79,12 +79,9 @@ if expectationPath and expectationPath ~= "" then
     required[#required + 1] = "type_names"
     required[#required + 1] = "status_labels"
   end
-  -- species_dex_text2 (the #DEX entry's second page) is present only when
-  -- the language's corpus actually preserved one: ja-Hrkt/ko's
-  -- dex_entries_gold rows never do (verified against poke-corpus), so the
-  -- Python side omits the key entirely for those rather than shipping an
-  -- empty expectation. Still verified below like any other expectation
-  -- when it IS present.
+  -- species_dex_text2 (the #DEX entry's second page) is optional: a language
+  -- with no #DEX corpus rows omits the key. ja-Hrkt/ko single-page rows ship
+  -- a blank second page, verified below like any other expectation.
   --
   -- species_dex_text_{silver,crystal}/species_dex_text2_{silver,crystal}
   -- are Silver's/Crystal's OWN #DEX flavor text (see generate_gs_mod's

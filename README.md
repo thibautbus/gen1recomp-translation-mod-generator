@@ -215,10 +215,11 @@ actual Crystal save:
   save since Crystal's rosters differ. The phone contact registry leaves its
   29 trainer contacts to those trainer names, so they count as covered once
   every trainer name is; the 25 species-backed decorations (CLEFAIRY POSTER)
-  are patched with the translated species name. `ja-Hrkt` and `ko`
-  fall short of 100%: this is a genuine, known gap in those languages'
-  dialogue/catalog corpora (and `ko` has no Crystal corpus for the Crystal
-  trainer names), not a formatting artifact.
+  are patched with the translated species name. `ja-Hrkt` and `ko` carts
+  fit each #DEX description on one page, so their second page is shipped
+  blank rather than left to the English ROM's own. `ko` falls short of 100%
+  because poke-corpus has no Korean Crystal collection (Crystal's own #DEX
+  text and trainer names).
 - `Gold and Silver-related engine strings` covers the 940 engine keys used by
   at least one production Gen 2 callsite. 48 keys reachable only from a
   Crystal-exclusive feature (Move Tutor, gender selection, the "PokeSeer"/
@@ -231,8 +232,10 @@ actual Crystal save:
   `♂`, a badge or palette name the cart spells identically) counts as
   translated, like an identical corpus match does; only
   [`config/gsc/engine_fallbacks.json`](config/gsc/engine_fallbacks.json) rows
-  still recorded as having no corpus match are gaps (today, the Pokédex
-  entry bar `ja-Hrkt`/`ko` carts draw as tiles).
+  still recorded as having no corpus match are gaps (none today; the
+  Pokédex entry bar the Japanese and Korean carts draw as tiles is laid out
+  to the pixel in each language's bundled font so every word sits between
+  the bar's arrows).
 - `Crystal dialogue coverage` is Crystal's own dialogue pointers, joined
   separately against poke-corpus's own `Crystal/` collection (different
   `bank:address` values from Gold/Silver almost throughout, so this is not
@@ -258,12 +261,12 @@ provenance. Future unresolved entries will keep their original English text.
 
 | Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings | Crystal dialogue coverage |
 | --- | ---: | ---: | ---: |
-| `fr` | 6839/6839 (100%) | 943/943 (100%) | 3994/4010 (99.6%) |
-| `de` | 6839/6839 (100%) | 943/943 (100%) | 3994/4010 (99.6%) |
-| `es` | 6839/6839 (100%) | 943/943 (100%) | 3994/4010 (99.6%) |
-| `it` | 6839/6839 (100%) | 943/943 (100%) | 3994/4010 (99.6%) |
-| `ja-Hrkt` | 6086/6839 (88.99%) | 942/943 (99.89%) | 3994/4010 (99.6%) |
-| `ko` | 5294/6839 (77.41%) | 942/943 (99.89%) | 0/4010 (0%) |
+| `fr` | 6839/6839 (100%) | 943/943 (100%) | 3994/3994 (100%) |
+| `de` | 6839/6839 (100%) | 943/943 (100%) | 3994/3994 (100%) |
+| `es` | 6839/6839 (100%) | 943/943 (100%) | 3994/3994 (100%) |
+| `it` | 6839/6839 (100%) | 943/943 (100%) | 3994/3994 (100%) |
+| `ja-Hrkt` | 6839/6839 (100%) | 943/943 (100%) | 3994/3994 (100%) |
+| `ko` | 5796/6839 (84.75%) | 943/943 (100%) | 0/3994 (0%) |
 
 ### Other engine strings
 

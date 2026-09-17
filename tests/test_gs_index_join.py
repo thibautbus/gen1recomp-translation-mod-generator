@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 
 from pipeline.gs_index_join import (
+    BLANK_DEX_PAGE,
     IndexedEntry, join_by_index, join_dex_entries, join_dex_entries_pages,
     join_landmarks, parse_indexed_catalog,
 )
@@ -280,17 +281,17 @@ class JoinDexEntriesPagesTests(unittest.TestCase):
         # ja-Hrkt's real GoldSilver dex_entries_gold rows are shaped exactly
         # like this: no "@" anywhere (they end on "<DEXEND>" instead), so
         # the corpus never preserved a second page for that language.
-        # Before this fix the whole species was dropped; page1 is real
-        # content and must still ship, just without a page2.
+        # page1 is the whole description; page2 is blank so the English
+        # ROM's own second page does not show through on the PAGE action.
         species = [IndexedEntry("BULBASAUR", 1, "BULBASAUR")]
         rows = [("gs.dex_entries_gold.BulbasaurPokedexEntry", "A seed.", "Une graine.<DEXEND>")]
         page1, page2, stats1, stats2 = join_dex_entries_pages(species, rows, "dex_entries_gold")
         # <DEXEND> is a box/timing control corpus_to_engine already strips
         # for every other category (pipeline/tokens.py); dropped here too.
         self.assertEqual(page1, {"BULBASAUR": "Une graine."})
-        self.assertEqual(page2, {})
+        self.assertEqual(page2, {"BULBASAUR": BLANK_DEX_PAGE})
         self.assertEqual(stats1["translated"], 1)
-        self.assertEqual(stats2["no_corpus_entry"], 1)
+        self.assertEqual(stats2["translated"], 1)
 
     def test_a_row_with_only_the_terminator_at_still_ships_page_one(self):
         # ko's real GoldSilver dex_entries_gold rows are shaped exactly like
@@ -300,9 +301,9 @@ class JoinDexEntriesPagesTests(unittest.TestCase):
         rows = [("gs.dex_entries_gold.BulbasaurPokedexEntry", "A seed.", "Une graine.@")]
         page1, page2, stats1, stats2 = join_dex_entries_pages(species, rows, "dex_entries_gold")
         self.assertEqual(page1, {"BULBASAUR": "Une graine."})
-        self.assertEqual(page2, {})
+        self.assertEqual(page2, {"BULBASAUR": BLANK_DEX_PAGE})
         self.assertEqual(stats1["translated"], 1)
-        self.assertEqual(stats2["no_corpus_entry"], 1)
+        self.assertEqual(stats2["translated"], 1)
 
     def test_more_than_two_pages_raises_instead_of_silently_truncating(self):
         species = [IndexedEntry("BULBASAUR", 1, "BULBASAUR")]

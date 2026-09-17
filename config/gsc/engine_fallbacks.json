@@ -1530,14 +1530,8 @@
       "no_op_total": 16
     },
     "ja-Hrkt": {
-      "total": 10,
+      "total": 9,
       "entries": {
-        " PAGE AREA CRY PRNT": {
-          "override": " PAGE AREA CRY PRNT",
-          "reason": "engine-fallback",
-          "status": "unresolved",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "%dX": {
           "override": "%dX",
           "reason": "engine-fallback",
@@ -1668,14 +1662,8 @@
       "no_op_total": 9
     },
     "ko": {
-      "total": 11,
+      "total": 10,
       "entries": {
-        " PAGE AREA CRY PRNT": {
-          "override": " PAGE AREA CRY PRNT",
-          "reason": "engine-fallback",
-          "status": "unresolved",
-          "provenance": "Explicit English fallback: no unique corpus match; no translation invented."
-        },
         "%dX": {
           "override": "%dX",
           "reason": "engine-fallback",
