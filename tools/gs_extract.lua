@@ -280,6 +280,27 @@ dumpIndexed("gs_moves.tsv", "index", results.moves)
 dumpIndexed("gs_items.tsv", "index", results.items)
 dumpIndexed("gs_types.tsv", "index", written.type_chart and written.type_chart.types)
 dumpIndexed("gs_trainer_classes.tsv", "index", results.trainers and results.trainers.classes)
+-- Each class's named trainers, in the order Trainers.lookup indexes them
+-- (entry.trainers[member]): class id \t member number \t the trainer's own
+-- name.  Joined against poke-corpus's <Class>Group._<member> rows.
+do
+  local classes = results.trainers and results.trainers.classes
+  if classes then
+    local ids = {}
+    for id, entry in pairs(classes) do
+      if type(entry) == "table" and type(entry.trainers) == "table" then ids[#ids + 1] = id end
+    end
+    table.sort(ids)
+    local out = assert(io.open(outDir .. "/gs_trainer_names.tsv", "w"))
+    for _, id in ipairs(ids) do
+      for member, row in ipairs(classes[id].trainers) do
+        out:write(id, "\t", tostring(member), "\t", escape(row.name or ""), "\n")
+      end
+    end
+    out:close()
+  end
+end
+
 -- landmarks (data.gen2Landmarks.landmarks -- Schemas.GEN2 routes the
 -- `landmarks` registry there): the per-id records sit one level under
 -- the stage's own return value, unlike pokemon/moves/items/trainers.
@@ -294,5 +315,5 @@ for _, row in ipairs(report) do if row.ok then okCount = okCount + 1 end end
 io.write(("stages ok       : %d/%d\n"):format(okCount, #report))
 io.write("wrote gs_text.tsv, gs_labels.tsv, gs_stages.tsv, gs_rom_text.tsv,\n"
   .. "      gs_species.tsv, gs_moves.tsv, gs_items.tsv, gs_types.tsv,\n"
-  .. "      gs_trainer_classes.tsv,\n"
+  .. "      gs_trainer_classes.tsv, gs_trainer_names.tsv,\n"
   .. "      gs_landmarks.tsv\n")

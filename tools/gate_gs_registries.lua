@@ -95,7 +95,8 @@ if expectationPath and expectationPath ~= "" then
   -- Crystal corpus supplied -- degrades to omitting the key, not a
   -- BuildError; see pipeline.gs_mod._write_gate_expectations).
   local optional = { species_dex_text2 = true,
-    phone_contacts = true, decorations = true, radio_channels = true }
+    phone_contacts = true, decorations = true, radio_channels = true,
+    trainer_names = true, trainer_names_crystal = true }
   for name, _ in pairs(EDITION_DEX_TEXT_KEYS) do optional[name] = true end
   for _, name in ipairs({
     "crystal_strings", "crystal_rom_text", "crystal_item_names",
@@ -185,6 +186,7 @@ if expectations then
   for _, name in ipairs({
     "crystal_strings", "crystal_rom_text", "crystal_item_names",
     "crystal_trainer_class_names", "crystal_landmarks",
+    "trainer_names", "trainer_names_crystal",
   }) do editionSpecific[name] = true end
   for name, expected in pairs(expectations) do
     local target = targets[name]
@@ -329,6 +331,84 @@ if expectations then
         end
       end
       editionResult.release()
+    end
+  end
+
+  -- Trainer names rename rows inside each class record's roster, which the
+  -- SDK fixture does not carry, so each check builds the class it needs.  The
+  -- rename patches the whole class record, and the loader then re-validates
+  -- every reference in it, so the class is shaped like an extracted one
+  -- (encounter music, AI items, a party row with an item and moves) and the
+  -- load must report no error at all.
+  local function trainerNameData(id, renameExpectedRow)
+    local class, member, english = id:match("^(.-)#(%d+)#(.*)$")
+    member = tonumber(member)
+    local Fixtures = require("tests.modkit.fixtures")
+    local fixtureData = Fixtures.fresh()
+    local species = Fixtures.ids.species[1]
+    local move = Fixtures.ids.moves[1]
+    local item
+    for itemId in pairs(fixtureData.items or {}) do
+      if type(itemId) == "string" and (item == nil or itemId < item) then item = itemId end
+    end
+    fixtureData.audio = fixtureData.audio or {}
+    fixtureData.audio.songs = fixtureData.audio.songs or {}
+    fixtureData.audio.songs.Music_GateTrainerEncounter = { address = 0, bank = 0 }
+    local roster = {}
+    for index = 1, member + 1 do
+      local name = "FILLER" .. index
+      if index == member then name = renameExpectedRow and english or ("NOT" .. english) end
+      roster[index] = { name = name, index = index, trainerType = "TRAINERTYPE_ITEM_MOVES",
+        party = { { level = 5, species = species, item = item, moves = { move } } } }
+    end
+    fixtureData.gen2Trainers = fixtureData.gen2Trainers or {}
+    fixtureData.gen2Trainers.classes = fixtureData.gen2Trainers.classes or {}
+    fixtureData.gen2Trainers.classes[class] = { id = class, name = class, index = 1,
+      baseMoney = 10, items = { item }, encounterMusic = "Music_GateTrainerEncounter",
+      trainers = roster }
+    fixtureData.trainers = fixtureData.gen2Trainers
+    return fixtureData, class, member, english
+  end
+  local function loadTrainerNames(edition, id, renameExpectedRow)
+    GameVersion.set(edition)
+    local trainerData, class, member, english = trainerNameData(id, renameExpectedRow)
+    local trainerResult = T.sdk.loadMod(modName, { generation = 2, root = modParent, data = trainerData })
+    for _, err in ipairs(trainerResult.errors) do
+      io.stderr:write("trainer name load error: " .. tostring(err.message or err) .. "\n")
+    end
+    check(#trainerResult.errors == 0,
+      "the trainer roster rename loads with no errors under GameVersion=" .. edition)
+    return trainerResult, trainerResult.data.gen2Trainers.classes[class].trainers, member, english
+  end
+  local trainerChecks = {
+    { name = "trainer_names", editions = { gold = true, silver = true,
+      -- a language with no Crystal catalog (Korean) keeps Gold/Silver's names
+      crystal = not expectations.trainer_names_crystal } },
+    { name = "trainer_names_crystal", editions = { crystal = true } },
+  }
+  for _, spec in ipairs(trainerChecks) do
+    local expected = expectations[spec.name]
+    if expected then
+      for _, edition in ipairs({ "gold", "silver", "crystal" }) do
+        local trainerResult, roster, member = loadTrainerNames(edition, expected.id, true)
+        local actual = roster[member] and roster[member].name
+        if spec.editions[edition] then
+          eq(actual, expected.value, spec.name .. "[" .. expected.id .. "] renames the roster row under GameVersion=" .. edition)
+          check(roster[member] and roster[member].party and #roster[member].party == 1
+              and roster[member].party[1].item ~= nil,
+            spec.name .. " keeps the renamed trainer's party under GameVersion=" .. edition)
+        elseif spec.name == "trainer_names_crystal" and expected.distinct then
+          check(actual ~= expected.value,
+            spec.name .. "[" .. expected.id .. "] does not leak into " .. edition)
+        end
+        trainerResult.release()
+        if spec.editions[edition] then
+          local guardResult, guardRoster, guardMember, english = loadTrainerNames(edition, expected.id, false)
+          eq(guardRoster[guardMember] and guardRoster[guardMember].name, "NOT" .. english,
+            spec.name .. "[" .. expected.id .. "] leaves the row alone once its name is not the English one")
+          guardResult.release()
+        end
+      end
     end
   end
 

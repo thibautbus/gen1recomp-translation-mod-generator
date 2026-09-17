@@ -640,6 +640,7 @@ class BuildGsDialogueModTests(unittest.TestCase):
         (gold_out / "gs_items.tsv").write_text("AMULET_COIN\t91\tAMULET COIN\n", encoding="utf-8")
         (gold_out / "gs_types.tsv").write_text("NORMAL\t0\tNORMAL\n", encoding="utf-8")
         (gold_out / "gs_trainer_classes.tsv").write_text("BEAUTY\t29\tBEAUTY\n", encoding="utf-8")
+        (gold_out / "gs_trainer_names.tsv").write_text("BEAUTY\t1\tVICTORIA\n", encoding="utf-8")
         (gold_out / "gs_landmarks.tsv").write_text("LANDMARK_TEST\t1\tTEST\n", encoding="utf-8")
         corpus = root / "corpus"
         corpus.mkdir()
@@ -679,14 +680,15 @@ class BuildGsDialogueModTests(unittest.TestCase):
             match.assert_called_once()
             self.assertEqual(stats["coverage"]["engine_gen2"]["total"], 2)
             self.assertEqual(stats["coverage"]["rom"], {
-                "translated": 1, "total": 115, "percent": 0.87,
+                "translated": 1, "total": 116, "percent": 0.86,
             })
             self.assertEqual(stats["coverage"]["rom_dialogue"]["total"], 2)
-            # 113: the existing named/dex rows plus one extracted type,
-            # six status labels, and the phone/decorations/radio registries.
+            # 114: the existing named/dex rows plus one extracted type,
+            # six status labels, the phone/decorations/radio registries and
+            # one named trainer.
             # species_dex_text_silver/species_dex_text2_silver are each
             # their own index_stats entry alongside species_dex_text now.
-            self.assertEqual(stats["coverage"]["rom_catalogs"]["total"], 113)
+            self.assertEqual(stats["coverage"]["rom_catalogs"]["total"], 114)
             self.assertEqual(stats["_gate_catalogs"]["strings"], {"Hello!": "Bonjour!"})
             self.assertIn(
                 '["Hello!"] = "Bonjour!"',

@@ -4,7 +4,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from pipeline.gs_engine import engine_string_keys, load_gs_engine_scope_exclusions, match_gs_engine_strings
+from pipeline.gs_engine import (
+    engine_string_keys, is_reviewed_identity, load_gs_engine_fallbacks,
+    load_gs_engine_reviewed_identities, load_gs_engine_scope_exclusions, match_gs_engine_strings,
+)
 from pipeline.engine import load_engine_overrides
 from pipeline.engine_scope import is_gen2_path, load_manifest
 from pipeline.engine_profile import UPSTREAM_PROFILE
@@ -28,6 +31,36 @@ CALLSITES = [
 
 
 class GoldEngineCatalogTests(unittest.TestCase):
+    def test_fallback_rows_must_declare_their_status(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "fallbacks.json"
+            row = {"override": "PP", "reason": "engine-fallback", "provenance": "Explicit English fallback: shared."}
+            report = {"schema": "gen1recomp-translation-mods/engine-fallback-report", "version": 1,
+                      "languages": {"fr": {"total": 1, "entries": {"PP": row}}}}
+            path.write_text(json.dumps(report), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "invalid English fallback entry"):
+                load_gs_engine_fallbacks("fr", path)
+            row["status"] = "reviewed-identity"
+            path.write_text(json.dumps(report), encoding="utf-8")
+            self.assertTrue(is_reviewed_identity(load_gs_engine_fallbacks("fr", path)["fr"]["PP"]))
+
+    def test_only_unresolved_fallbacks_are_counted_as_gaps(self):
+        # Every other fallback row documents why the English spelling is this
+        # language's own; the Pokedex entry bar Japanese/Korean carts draw as
+        # tiles is the one row still waiting for a translation.
+        gaps = {
+            (language, source)
+            for language, entries in load_gs_engine_fallbacks().items()
+            for source, row in entries.items()
+            if not is_reviewed_identity(row)
+        }
+        self.assertEqual(gaps, {("ja-Hrkt", " PAGE AREA CRY PRNT"), ("ko", " PAGE AREA CRY PRNT")})
+        for language in ("fr", "de", "es", "it"):
+            identities = load_gs_engine_reviewed_identities(language)
+            self.assertIn("PP", identities)
+            self.assertIn("♂", identities)
+        self.assertNotIn(" PAGE AREA CRY PRNT", load_gs_engine_reviewed_identities("ja-Hrkt"))
+
     def test_gen2_scope_excludes_cross_generation_surfaces(self):
         self.assertTrue(is_gen2_path("src/world/gen2/World.lua"))
         for path in (

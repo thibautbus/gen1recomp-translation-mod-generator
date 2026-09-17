@@ -1,5 +1,11 @@
 {
   "schema": "gen1recomp-translation-mods/corpus-overrides",
   "version": 1,
-  "entries": {}
+  "entries": {
+    "rb.PewterCity.PewterCityTrainerTipsText": {
+      "override": "{text_start}TIPS FÜR TRAINER<PARA>Unabhängig von<LINE>der Dauer seines<CONT>Einsatzes erhält<CONT>jedes #MON<CONT>für die Teilnahme<CONT>an einem Kampf<CONT>Erfahrungspunkte, <CONT>EP! <DONE>",
+      "reason": "corpus-defect",
+      "provenance": "poke-corpus's German Red/Blue row carries an undecodable byte (\\x30) where the identical Yellow row (y.PewterCity.PewterCityTrainerTipsText) has a space; the Yellow spacing is used."
+    }
+  }
 }

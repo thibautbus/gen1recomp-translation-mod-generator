@@ -98,12 +98,16 @@ _CORPUS_EXPANSIONS = {
     # <POKE> is a full "POKé" compression byte, same idea as RBY's "#"
     # (verified: corpus has "<POKE>GEAR@" for the POKéGEAR item name).
     "<POKE>": "POKé",
-    # <BSP>/<WBR> are narrow-display line-break points inside compound
-    # place names, not glyphs (verified: "NEW BARK<BSP>TOWN@",
-    # "DOUBLON<WBR>VILLE@" in the French Goldenrod-area map names) -- a
-    # plain space renders the same names correctly at normal widths.
+    # <BSP>/<WBR>/<SHY> are the Town Map's line-break points inside place
+    # names, and this port prints every place name on one line.  pret's
+    # charmap.asm: <BSP> is a breakable space (" "), <WBR> a word-break
+    # opportunity that is skipped ("DOUBLON<WBR>VILLE@" is DOUBLONVILLE,
+    # "ZINNOBER-<WBR>INSEL@" ZINNOBER-INSEL); poke-corpus's <SHY> (byte $1E,
+    # localized Crystal and Italian Gold) is a soft hyphen, skipped the same
+    # way ("FIORPESCO<SHY>POLI@" is FIORPESCOPOLI).
     "<BSP>": " ",
-    "<WBR>": " ",
+    "<WBR>": "",
+    "<SHY>": "",
     "<LF>": "\n",
     # Japanese Gold uses single-byte abbreviations for common words and
     # particles. These expansions mirror pret/pokecrystal's charmap.asm;
@@ -213,6 +217,8 @@ def corpus_to_engine(text: str, *, bare_dynamic_tokens: bool = False) -> str:
         text = re.sub(r"\{text_ram\s+([^}]+)\}", r"{RAM:\1}", text)
         text = re.sub(r"\{text_(?:decimal|bcd)\s+([^}]+)\}", r"{NUM:\1}", text)
     text = text.replace("{text_start}", "")
+    # {text_dots N} prints N ellipsis characters, pausing between them.
+    text = re.sub(r"\{text_dots\s+(\d+)\}", lambda match: "…" * int(match.group(1)), text)
     # Longest tokens first prevents partial expansion.
     for token in sorted(_CORPUS_EXPANSIONS, key=len, reverse=True):
         text = text.replace(token, _CORPUS_EXPANSIONS[token])

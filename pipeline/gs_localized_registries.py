@@ -187,8 +187,8 @@ def radio_channel_catalog(
 
 # DecorationNames is a compact 26-row table, while Decorations.ATTRIBUTES is
 # the 53-row runtime table.  The mapping below is audited against the latter:
-# category headers and authored names use DecorationNames; species names are
-# intentionally left to data.pokemon at runtime.
+# category headers and authored names use DecorationNames; species-backed rows
+# are filled from the translated species names by gs_mod.
 DECORATION_NAME_QIDS = {
     0: 1, 1: 2, 2: 19, 3: 21, 4: 22, 5: 20, 6: 2,
     7: 23, 8: 24, 9: 25, 10: 26, 11: 2, 12: 3, 13: 4,
@@ -231,16 +231,23 @@ def decoration_catalog(
     for deco_id in range(len(DECORATION_ATTR_NAMES)):
         qid_number = DECORATION_NAME_QIDS.get(deco_id)
         if qid_number is None:
-            # These rows are species-backed dolls.  Emitting their English
-            # spelling would override the translated Pokémon registry and is
-            # therefore deliberately forbidden; the engine resolves the
-            # display name from data.pokemon at runtime.
+            # These rows are species-backed dolls and posters, named by the
+            # species id.  No corpus row names them, so emitting anything here
+            # would be their English spelling; gs_mod fills them from the
+            # translated species names instead (Decorations.name prints the
+            # row's own name: no caller passes its species resolver).
             found_by_id[deco_id] = False
             continue
         qid = f"gs.names.DecorationNames.{qid_number}"
         english = DECORATION_NAME_ENGLISH[qid_number].replace("@", "").strip()
         value, found_by_id[deco_id] = _corpus_value_info(rows, qid, english)
+        # The French carts spell the five colour names ":ROSE", ":ROUGE"...
+        # (byte $9C before the word, Gold/Silver and Crystal alike) and their
+        # GetDecoName copies it verbatim; this port composes the name through
+        # its own "%s BED"/"%s CARPET" engine strings, where the colon would
+        # print as "LIT :ROSE".
         if found_by_id[deco_id]:
+            value = value.lstrip(":")
             result[f"deco:{deco_id}"] = value
             translated += 1
             if value == english:

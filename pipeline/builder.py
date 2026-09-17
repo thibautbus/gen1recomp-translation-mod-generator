@@ -35,6 +35,7 @@ from .project import (
 )
 from .dependencies import DependencyError, fetch_archive, fetch_files
 from .roms import import_rom, verify_crystal_rom, verify_gs_rom, verify_rb_rom, verify_rom
+from .leak_audit import audit_generated_catalogs
 from .subprocess_run import run_streamed
 from .rom_paths import configured_path, load_rom_paths
 from .specs import game_spec, languages_for_collection, release_profile, release_profile_for_generation
@@ -1176,6 +1177,9 @@ def build(
         precomputed_join=(red_joined, red_join_report) if red_joined is not None else None,
     )
     preserve_scaffold_support(scaffold, mod, language, font_source, font_profile)
+    leaks = audit_generated_catalogs(mod)
+    if leaks:
+        raise BuildError("generated catalogs leak corpus markup:\n" + "\n".join(leaks))
 
     version = project_version()
     destination.mkdir(parents=True, exist_ok=True)

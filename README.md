@@ -209,14 +209,16 @@ actual Crystal save:
 
 - `Gold and Silver ROM aggregate` combines dialogue, Pokédex entries and the named ROM
   catalogs. Its denominator excludes 14 markup-only records with no visible
-  prose. It also counts every id of the phone contact, decoration and radio
-  station registries, including 54 rows this project deliberately never
-  patches: 29 trainer phone contacts, whose names come from the translated
-  trainer registry, and 25 species-backed decorations, whose names are
-  composed from the translated species names and the `%s DOLL`/`%s POSTER`
-  engine strings. Those rows are what keeps `fr`/`de`/`es`/`it` just under
-  100%. `ja-Hrkt` and `ko` fall further short: this is a genuine, known
-  gap in those languages' dialogue/catalog corpora, not a formatting artifact.
+  prose. The named catalogs include each trainer's own name (JOEY is GASPARD
+  in French), joined per class and member number against the corpus: 495
+  Gold/Silver trainers and 541 Crystal ones, applied on their own edition's
+  save since Crystal's rosters differ. The phone contact registry leaves its
+  29 trainer contacts to those trainer names, so they count as covered once
+  every trainer name is; the 25 species-backed decorations (CLEFAIRY POSTER)
+  are patched with the translated species name. `ja-Hrkt` and `ko`
+  fall short of 100%: this is a genuine, known gap in those languages'
+  dialogue/catalog corpora (and `ko` has no Crystal corpus for the Crystal
+  trainer names), not a formatting artifact.
 - `Gold and Silver-related engine strings` covers the 940 engine keys used by
   at least one production Gen 2 callsite. 48 keys reachable only from a
   Crystal-exclusive feature (Move Tutor, gender selection, the "PokeSeer"/
@@ -225,6 +227,12 @@ actual Crystal save:
   they are translated and shipped, tracked separately under Crystal's own
   `engine_crystal` metric below; see
   [`config/gsc/engine_scope_exclusions.json`](config/gsc/engine_scope_exclusions.json).
+  A key whose English spelling was reviewed as this language's own (`PP`,
+  `♂`, a badge or palette name the cart spells identically) counts as
+  translated, like an identical corpus match does; only
+  [`config/gsc/engine_fallbacks.json`](config/gsc/engine_fallbacks.json) rows
+  still recorded as having no corpus match are gaps (today, the Pokédex
+  entry bar `ja-Hrkt`/`ko` carts draw as tiles).
 - `Crystal dialogue coverage` is Crystal's own dialogue pointers, joined
   separately against poke-corpus's own `Crystal/` collection (different
   `bank:address` values from Gold/Silver almost throughout, so this is not
@@ -250,12 +258,12 @@ provenance. Future unresolved entries will keep their original English text.
 
 | Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings | Crystal dialogue coverage |
 | --- | ---: | ---: | ---: |
-| `fr` | 5749/5803 (99.07%) | 904/943 (95.86%) | 3994/4010 (99.6%) |
-| `de` | 5749/5803 (99.07%) | 906/943 (96.08%) | 3994/4010 (99.6%) |
-| `es` | 5749/5803 (99.07%) | 917/943 (97.24%) | 3994/4010 (99.6%) |
-| `it` | 5749/5803 (99.07%) | 911/943 (96.61%) | 3994/4010 (99.6%) |
-| `ja-Hrkt` | 4996/5803 (86.09%) | 924/943 (97.99%) | 3994/4010 (99.6%) |
-| `ko` | 4745/5803 (81.77%) | 924/943 (97.99%) | 0/4010 (0%) |
+| `fr` | 6839/6839 (100%) | 943/943 (100%) | 3994/4010 (99.6%) |
+| `de` | 6839/6839 (100%) | 943/943 (100%) | 3994/4010 (99.6%) |
+| `es` | 6839/6839 (100%) | 943/943 (100%) | 3994/4010 (99.6%) |
+| `it` | 6839/6839 (100%) | 943/943 (100%) | 3994/4010 (99.6%) |
+| `ja-Hrkt` | 6086/6839 (88.99%) | 942/943 (99.89%) | 3994/4010 (99.6%) |
+| `ko` | 5294/6839 (77.41%) | 942/943 (99.89%) | 0/4010 (0%) |
 
 ### Other engine strings
 

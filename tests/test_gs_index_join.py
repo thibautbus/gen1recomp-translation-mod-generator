@@ -106,11 +106,13 @@ class LocalizedRegistryTests(unittest.TestCase):
         self.assertEqual(catalog["deco:0"], "RETOUR")
         self.assertEqual(catalog["deco:1"], "RANGER")
         self.assertEqual(catalog["deco:2"], "A PLUMES")
+        # The French carts' colour marker would print as "LIT :ROSE".
+        self.assertEqual(catalog["deco:3"], "ROSE")
         self.assertNotIn("deco:52", catalog)
         self.assertEqual(len(stats["omitted_species_ids"]), 25)
         self.assertTrue(set(stats["omitted_species_ids"]).isdisjoint(catalog))
-        # Species-backed rows must be resolved by the Pokémon registry;
-        # authored labels such as the trophy remain in this catalog.
+        # Species-backed rows are filled from the translated species names
+        # by gs_mod; authored labels such as the trophy remain in this catalog.
         self.assertTrue(all(key not in catalog for key in stats["omitted_species_ids"]))
         self.assertEqual(stats["total"], 53)
         self.assertGreater(stats["fallback_english"], 0)

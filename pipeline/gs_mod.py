@@ -20,7 +20,7 @@ from .gs_index_join import (
     parse_indexed_catalog,
 )
 from .gs_localized_registries import (
-    _index_corpus, decoration_catalog, phone_contact_catalog, radio_channel_catalog,
+    DECORATION_ATTR_NAMES, _index_corpus, decoration_catalog, phone_contact_catalog, radio_channel_catalog,
     status_label_catalog, type_name_catalog,
 )
 from .gs_join import (
@@ -29,6 +29,8 @@ from .gs_join import (
     load_gs_pointer_decisions, load_gold_silver_pointer_aliases, read_corpus_rows,
 )
 from .gs_text import parse_gs_text_catalog
+from .gs_trainer_names import parse_trainer_names, trainer_name_catalog
+from .leak_audit import audit_generated_catalogs
 from .tokens import corpus_to_engine
 from .mod import TRANSLATION_MOD_PRIORITY, install_font_assets, ttf_registration, validate_font_profile
 from .project import is_frozen, project_config, project_version, resource_root
@@ -44,6 +46,7 @@ __TTF_REGISTRATION__
 __CATALOG_REGISTRATION__
 __CRYSTAL_DIALOGUE_REGISTRATION__
 __CRYSTAL_REGISTRY_REGISTRATION__
+__TRAINER_NAME_REGISTRATION__
 __SILVER_DEX_TEXT_REGISTRATION__
 __CRYSTAL_DEX_TEXT_REGISTRATION__
 end
@@ -287,6 +290,59 @@ def gs_archive_name(language: str, version: str) -> str:
     return f"translation-{canonical_language(language).lower()}-gen2-{version}.zip"
 
 
+# Each trainer's own name lives in its class record's `trainers` list, and a
+# record patch replaces a list wholesale (src/mods/Merge.lua), so the roster
+# is read back through mod.content.trainers:get(), renamed row by row, and
+# patched as a whole.  A row is renamed only while its name is still the
+# English one the catalog id carries.  Crystal's rosters differ from
+# Gold/Silver's, so a Crystal save reads its own catalog when it has one.
+_TRAINER_NAME_REGISTRATION = '''  do
+    local okTrainerGame, TrainerGameVersion = pcall(require, "src.core.GameVersion")
+    local trainerCatalogName = "trainer_names"
+    if okTrainerGame and type(TrainerGameVersion) == "table"
+        and type(TrainerGameVersion.get) == "function"
+        and TrainerGameVersion.get() == "crystal"
+        and mod:read("lang/trainer_names_crystal.lua") then
+      trainerCatalogName = "trainer_names_crystal"
+    end
+    local body = mod:read("lang/" .. trainerCatalogName .. ".lua")
+    local chunk = body and loadstring(body)
+    local ok, names = false, nil
+    if chunk then ok, names = pcall(chunk) end
+    local byClass = {}
+    if ok and type(names) == "table" then
+      for id, value in pairs(names) do
+        if type(id) == "string" and type(value) == "string" and value ~= "" then
+          local class, member, english = id:match("^(.-)#(%d+)#(.*)$")
+          if class then
+            byClass[class] = byClass[class] or {}
+            byClass[class][tonumber(member)] = { english = english, name = value }
+          end
+        end
+      end
+    end
+    for class, members in pairs(byClass) do
+      local record = mod.content.trainers:get(class)
+      local roster = type(record) == "table" and record.trainers
+      if type(roster) == "table" then
+        local renamed, changed = {}, false
+        for index, row in ipairs(roster) do
+          local copy = {}
+          for key, value in pairs(row) do copy[key] = value end
+          local entry = members[index]
+          if entry and row.name == entry.english then
+            copy.name = entry.name
+            changed = true
+          end
+          renamed[index] = copy
+        end
+        if changed then mod.content.trainers:patch(class, { trainers = renamed }) end
+      end
+    end
+  end
+'''
+
+
 def generate_gs_mod(
     destination: str | Path,
     mod_id: str | None = None,
@@ -303,8 +359,14 @@ def generate_gs_mod(
     silver_dex_text2_catalog: dict[str, str] | None = None,
     crystal_dex_text_catalog: dict[str, str] | None = None,
     crystal_dex_text2_catalog: dict[str, str] | None = None,
+    trainer_name_catalog: dict[str, str] | None = None,
+    crystal_trainer_name_catalog: dict[str, str] | None = None,
 ) -> Path:
     """Write a deterministic Gold manifest, entry point, and catalogs.
+
+    ``trainer_name_catalog``/``crystal_trainer_name_catalog`` rename each
+    class's named trainers (pipeline.gs_trainer_names ids); see
+    _TRAINER_NAME_REGISTRATION for why they are not ordinary record patches.
 
     ``crystal_text_catalog``, when not None, declares this mod compatible
     with Crystal too (mandatory companion ROM, see build_gs()): its own
@@ -534,11 +596,30 @@ def generate_gs_mod(
             + crystal_dex_loops
             + "  end\n"
         )
+    trainer_name_registration = ""
+    trainer_name_layers = [
+        ("trainer_names", trainer_name_catalog),
+        ("trainer_names_crystal", crystal_trainer_name_catalog),
+    ]
+    if any(values for _name, values in trainer_name_layers):
+        if not lang_dir.is_dir():
+            lang_dir.mkdir(parents=True, exist_ok=True)
+        for name, values in trainer_name_layers:
+            if not values:
+                continue
+            lines = [f"-- Generated by the Gold pipeline ({language}): {name}", "return {"]
+            lines.extend(
+                f"  [{lua_string(id_)}] = {lua_string(value)}," for id_, value in sorted(values.items())
+            )
+            lines.append("}")
+            (lang_dir / f"{name}.lua").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        trainer_name_registration = _TRAINER_NAME_REGISTRATION
     main_body = (
         MAIN.replace("__TTF_REGISTRATION__", ttf_registration(language, font_source, font_profile))
         .replace("__CATALOG_REGISTRATION__", catalog_registration)
         .replace("__CRYSTAL_DIALOGUE_REGISTRATION__", crystal_registration)
         .replace("__CRYSTAL_REGISTRY_REGISTRATION__", crystal_registry_registration)
+        .replace("__TRAINER_NAME_REGISTRATION__", trainer_name_registration)
         .replace("__SILVER_DEX_TEXT_REGISTRATION__", silver_registration)
         .replace("__CRYSTAL_DEX_TEXT_REGISTRATION__", crystal_dex_registration)
     )
@@ -657,8 +738,14 @@ def _write_gate_expectations(
     edition_dex_text: dict[str, dict[str, dict[str, str]]] | None = None,
     crystal_catalogs: dict[str, dict[str, str]] | None = None,
     engine_profile: str = UPSTREAM_PROFILE,
+    trainer_names: dict[str, dict[str, str]] | None = None,
 ) -> Path:
     """Write a tiny, private expectation file consumed by the registry gate.
+
+    ``trainer_names`` ({"gold": catalog, "crystal": catalog}) yields one
+    expectation per edition.  The Crystal one prefers an id whose value
+    differs from Gold's, so the gate can also prove Gold's catalog is not
+    what renamed it.
 
     ``edition_dex_text`` (optional) carries Silver's/Crystal's own #DEX
     flavor text -- e.g. ``{"silver": {"text": {...}, "text2": {...}}}`` --
@@ -726,6 +813,17 @@ def _write_gate_expectations(
         if not isinstance(key, str) or not isinstance(value, str) or not value:
             raise BuildError(f"Crystal registry gate expectation is malformed: {name}")
         expected[f"crystal_{name}"] = {"id": key, "value": value}
+    gold_names = (trainer_names or {}).get("gold") or {}
+    crystal_names = (trainer_names or {}).get("crystal") or {}
+    if gold_names:
+        key = sorted(gold_names)[0]
+        expected["trainer_names"] = {"id": key, "value": gold_names[key]}
+    if crystal_names:
+        distinct = sorted(k for k, v in crystal_names.items() if gold_names.get(k) != v)
+        key = (distinct or sorted(crystal_names))[0]
+        expected["trainer_names_crystal"] = {
+            "id": key, "value": crystal_names[key], "distinct": bool(distinct),
+        }
     path = mod_dir.parent / f".{mod_dir.name}.registry-gate.json"
     path.write_text(json.dumps(expected, ensure_ascii=False, sort_keys=True), encoding="utf-8")
     return path
@@ -789,6 +887,7 @@ def run_gs_release_gates(
     placeholder_decisions: dict[str, GsPlaceholderDecision] | None = None,
     engine_profile: str = UPSTREAM_PROFILE,
     log_fn: Callable[[str], None] | None = None,
+    trainer_names: dict[str, dict[str, str]] | None = None,
 ) -> dict:
     """Run every technical Gold gate before publishing the candidate.
 
@@ -802,6 +901,9 @@ def run_gs_release_gates(
     problems = audit_join(entries, placeholder_decisions)
     if problems:
         raise BuildError("Gold join audit failed:\n" + "\n".join(problems))
+    leaks = audit_generated_catalogs(mod_dir)
+    if leaks:
+        raise BuildError("generated catalogs leak corpus markup:\n" + "\n".join(leaks))
     profile = normalize_engine_profile(engine_profile)
     gen1recomp = Path(gen1recomp).resolve()
     coverage = coverage or gs_coverage_report(entries)
@@ -846,6 +948,7 @@ def run_gs_release_gates(
         dialogue_expectation_path.unlink(missing_ok=True)
     expectation_path = _write_gate_expectations(
         mod_dir, catalogs or {}, edition_dex_text, crystal_catalogs, profile,
+        trainer_names=trainer_names,
     )
     try:
         command = [luajit, str(tools / "gate_gs_registries.lua"), str(gen1recomp), str(mod_dir), str(expectation_path)]
@@ -928,6 +1031,51 @@ _INDEX_CATALOG_QID_PREFIXES = {
 }
 
 
+def _complete_delegated_registries(
+    catalogs: dict[str, dict[str, str]], index_stats: dict[str, dict],
+) -> None:
+    """Cover the phone and decoration rows those registries leave to others.
+
+    Trainer phone contacts carry no name of their own: Phone.contactName reads
+    the trainer's name from the merged trainer rosters, so they are covered
+    once every trainer name is.  PHONE_00 is the empty slot, printed as
+    NON_TRAINER_NAMES[0]'s row of dashes in every language.
+
+    Species-backed decorations do need a patch: Decorations.name builds
+    "CLEFAIRY POSTER" from the row's own name, and neither DecorationMenu nor
+    World passes the species resolver that would translate it.  Their name is
+    the species id, so the translated species name is written into the row.
+    """
+    phone_stats = index_stats.get("phone_contacts")
+    trainer_stats = index_stats.get("trainer_names")
+    if phone_stats and trainer_stats and trainer_stats["translated"] == trainer_stats["total"]:
+        delegated = len(phone_stats.get("omitted_registry_ids", []))
+        phone_stats["delegated_translated"] = delegated
+        phone_stats["delegated_to"] = "trainer_names (PHONE_00: language-neutral dashes)"
+        phone_stats["translated"] += delegated
+        phone_stats["no_corpus_entry"] -= delegated
+        phone_stats["fallback_english"] -= delegated
+    decoration_stats = index_stats.get("decorations")
+    decorations = catalogs.get("decorations")
+    species_names = catalogs.get("species_names") or {}
+    if decoration_stats is None or decorations is None:
+        return
+    filled = 0
+    for deco_id in decoration_stats.get("omitted_species_ids", []):
+        species = DECORATION_ATTR_NAMES[int(deco_id.split(":", 1)[1])]
+        value = species_names.get(species)
+        if value:
+            decorations[deco_id] = value
+            filled += 1
+    decoration_stats["species_names_translated"] = filled
+    decoration_stats["translated"] += filled
+    decoration_stats["no_corpus_entry"] -= filled
+    decoration_stats["fallback_english"] -= filled
+    decoration_stats["fallback_ids"] = [
+        deco_id for deco_id in decoration_stats.get("fallback_ids", []) if deco_id not in decorations
+    ]
+
+
 def build_gs_dialogue_mod(
     gold_out_dir: str | Path,
     corpus_dir: str | Path,
@@ -945,8 +1093,13 @@ def build_gs_dialogue_mod(
     crystal_catalogs: dict[str, dict[str, str]] | None = None,
     crystal_coverage: dict | None = None,
     engine_profile: str | None = None,
+    crystal_out_dir: str | Path | None = None,
 ) -> tuple[Path, list[GsJoinEntry], dict]:
     """Join extracted Gold catalogs to the corpus and generate the mod.
+
+    ``crystal_out_dir`` is Crystal's own extraction, whose trainer rosters
+    (gs_trainer_names.tsv) differ from Gold/Silver's and are joined against
+    ``crystal_corpus_dir``.
 
     ``crystal_text_catalog`` and ``crystal_catalogs`` are passed through to
     generate_gs_mod(); their Crystal ROM extraction and corpus joins happen
@@ -1090,6 +1243,24 @@ def build_gs_dialogue_mod(
             }
         index_stats["species_dex_text_crystal"] = crystal_text_stats
         index_stats["species_dex_text2_crystal"] = crystal_text2_stats
+    trainer_names: dict[str, str] = {}
+    crystal_trainer_names: dict[str, str] = {}
+    trainer_names_path = gold_out_dir / "gs_trainer_names.tsv"
+    if trainer_names_path.is_file():
+        trainer_names, index_stats["trainer_names"] = trainer_name_catalog(
+            parse_trainer_names(trainer_names_path), corpus_rows,
+        )
+    if crystal_corpus_dir is not None and crystal_out_dir is not None:
+        crystal_names_path = Path(crystal_out_dir) / "gs_trainer_names.tsv"
+        if crystal_names_path.is_file():
+            crystal_rows = parse_trainer_names(crystal_names_path)
+            if (Path(crystal_corpus_dir) / f"{language}_msg.txt").is_file():
+                crystal_trainer_names, index_stats["trainer_names_crystal"] = trainer_name_catalog(
+                    crystal_rows, read_corpus_rows(crystal_corpus_dir, target_lang=language),
+                )
+            else:
+                _unused, index_stats["trainer_names_crystal"] = trainer_name_catalog(crystal_rows, [])
+    _complete_delegated_registries(extra_catalogs, index_stats)
     landmarks_path = gold_out_dir / "gs_landmarks.tsv"
     landmarks = parse_indexed_catalog(landmarks_path)
     if not landmarks:
@@ -1152,6 +1323,7 @@ def build_gs_dialogue_mod(
         "crystal": {"text": crystal_text, "text2": crystal_text2},
     }
     stats["_gate_crystal_catalogs"] = crystal_catalogs or {}
+    stats["_gate_trainer_names"] = {"gold": trainer_names, "crystal": crystal_trainer_names}
     stats["_placeholder_decisions"] = load_gs_placeholder_decisions(language)
 
     mod_dir = generate_gs_mod(
@@ -1165,6 +1337,8 @@ def build_gs_dialogue_mod(
         silver_dex_text2_catalog=silver_text2,
         crystal_dex_text_catalog=crystal_text,
         crystal_dex_text2_catalog=crystal_text2,
+        trainer_name_catalog=trainer_names,
+        crystal_trainer_name_catalog=crystal_trainer_names,
     )
     return mod_dir, entries, stats
 
@@ -1277,6 +1451,7 @@ def build_gs(
         crystal_corpus_dir=corpus_crystal,
         crystal_catalogs=crystal_catalogs, crystal_coverage=crystal_coverage,
         overrides=load_gs_dialogue_overrides(language),
+        crystal_out_dir=crystal_out,
     )
     log(
         f"  text: {stats['unique'] + stats['harmless_ambiguous'] + stats['override'] + stats['reviewed_qid']}/{stats['total']} pointers"
@@ -1294,6 +1469,7 @@ def build_gs(
         placeholder_decisions=stats.get("_placeholder_decisions", {}),
         engine_profile=engine_profile,
         log_fn=log_fn,
+        trainer_names=stats.get("_gate_trainer_names"),
     )
     attach_gs_validation(mod_dir, gate_report["validation"])
     coverage_path = build_root / "coverage.json"
