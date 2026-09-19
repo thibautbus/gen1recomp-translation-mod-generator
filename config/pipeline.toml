@@ -5,7 +5,7 @@ source = "https://github.com/abcboy101/poke-corpus.git"
 revision = "aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
 # Standalone mode downloads only these exact files from the pinned commit.
 archive_base_url = "https://raw.githubusercontent.com/abcboy101/poke-corpus/aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
-format = "corpus/{RedBlue,Yellow,GoldSilver,Crystal}/{qid,en,<target_lang>}_msg.txt (UTF-8 parallel lines)"
+format = "corpus/{RedBlue,Yellow,GoldSilver,Crystal,FireRedLeafGreen}/{qid,en,<target_lang>}_msg.txt (UTF-8 parallel lines)"
 target_lang = "fr"
 
 [corpus.archive_files]
@@ -39,16 +39,45 @@ target_lang = "fr"
 "corpus/Crystal/es_msg.txt" = "940c2664ea592c4803fe16f3f3c721b9d8955b60c44021e2a6899a9e580e0e21"
 "corpus/Crystal/it_msg.txt" = "3f9f2b61cfdd7c98b1dc42d75654c59d64d70e7c1ff6dd185c9a6540c12931de"
 "corpus/Crystal/ja-Hrkt_msg.txt" = "7edbaf78018c1d8967acbff32e7d9ba8450fb37f52d8bc4ae947e637dc7dd23b"
+# FireRedLeafGreen has no Korean corpus: Gen 3 had no Korean release.
+"corpus/FireRedLeafGreen/qid_msg.txt" = "b793ce5b7980db847a6143803c888b15d8451d6acf6d3b9a7721f1eaa6e324ba"
+"corpus/FireRedLeafGreen/en_msg.txt" = "85568801447c1e1d4d871c6dcf30b6a0d8d601875101a7589b7ab642ef4e3ac1"
+"corpus/FireRedLeafGreen/fr_msg.txt" = "1dcf3d0cc93d30d6269e9b0948fc3ab6e45c31c0f618b30344e2bb5266d693ca"
+"corpus/FireRedLeafGreen/de_msg.txt" = "61f477bb676e7d58864a61f679ec80b82b2139e203c8f9d2858bdf827052587e"
+"corpus/FireRedLeafGreen/es_msg.txt" = "18009bc336531bf0e4db55fec672272e66218593a872c7d2a07baf2b311a35e6"
+"corpus/FireRedLeafGreen/it_msg.txt" = "3ce905edc8f27a86b98675118670a1acc95baaffd06245d3899edf4ffa392166"
+"corpus/FireRedLeafGreen/ja-Hrkt_msg.txt" = "0ae96fca59e05315de5d0b5964775d443199f4e529a6938b397dc86cf8412c5c"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
-# Pinned at v0.2.61, the upstream release used to validate and package the
+# Pinned at v0.2.64, the upstream release used to validate and package the
 # RBY, Gold/Silver and Crystal translation mods.
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "f6657891e706c5a7820ba71f5c8a7cdee524aa68"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/f6657891e706c5a7820ba71f5c8a7cdee524aa68"
-archive_sha256 = "fc8a17c65b101e53c32defe318d908257c55bab1d1bd29d1b433cc46742089c1"
-archive_tree_sha256 = "cce60356bd4ca94d041b26e0c361bd52fde6d645e13499b7fe595bbd391fcc41"
+revision = "2c0f3ac04b3f25c46b32c5e82599c2f8b74934c4"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/2c0f3ac04b3f25c46b32c5e82599c2f8b74934c4"
+archive_sha256 = "823c1bd79034e849eed95a47116c2115e5f71d6bbf40bdcbe2ce234f4d3f881b"
+archive_tree_sha256 = "f17a54625e75ffeb8f33a7135640186af6626ccf3b551124d49be27cdd148da7"
+
+# pret's FireRed decompilation data the FireRed release joins through (never
+# code, never game text): the symbol table names every ROM address the game3
+# extractor keys dialogue by, and the charmap is the cart's text encoding.
+# The symbols are the pret "symbols" branch build of FireRed (US) v1.0, the
+# ROM fingerprinted under [rom.firered].
+[pret.symbols]
+source = "https://github.com/pret/pokefirered.git"
+revision = "3b401eaf14f193946899eb7c056d5ac02a470126"
+archive_base_url = "https://raw.githubusercontent.com/pret/pokefirered/3b401eaf14f193946899eb7c056d5ac02a470126"
+
+[pret.symbols.archive_files]
+"pokefirered.sym" = "6f9d2929b78d0b723180653082c9a115b4b876657af8ab1c0493b4d14151f7b0"
+
+[pret.charmap]
+source = "https://github.com/pret/pokefirered.git"
+revision = "c75f352304d529f6ba92d4f74b9cf8b5c3810788"
+archive_base_url = "https://raw.githubusercontent.com/pret/pokefirered/c75f352304d529f6ba92d4f74b9cf8b5c3810788"
+
+[pret.charmap.archive_files]
+"charmap.txt" = "4da662317b3b5109a52064f9012d85b644d1dbf0f3f24243374aeef4cf25f061"
 
 [fonts.pokemon]
 revision = "81b60805150c75ebfdfcec6d8352c67e491f8a6c"
@@ -113,6 +142,9 @@ sha1 = "49b163f7e57702bc939d642a18f591de55d92dae"
 
 [rom.crystal]
 sha1 = "f4cd194bdee0d04ca4eac29e09b8e4e9d818c133"
+
+[rom.firered]
+sha1 = "41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc"
 
 [output]
 language_dir = "lang"

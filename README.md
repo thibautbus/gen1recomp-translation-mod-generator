@@ -3,12 +3,13 @@
 [![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
 
 This repository reproducibly generates multilingual `Gen1Recomp` translation
-mods without storing a ROM or ROM extract. It currently produces two separate
+mods without storing a ROM or ROM extract. It currently produces three separate
 artifacts per language:
 
 - a universal Pokémon Red, Blue and Yellow mod, with a runtime-selected Yellow
   layer;
-- a Pokémon Gold and Silver mod for Gen1Recomp's generation-2 runtime.
+- a Pokémon Gold, Silver and Crystal mod for Gen1Recomp's generation-2 runtime;
+- a Pokémon FireRed mod for Gen1Recomp's generation-3 (game3) runtime.
 
 The artifacts have distinct mod IDs and filenames, so they can be installed
 side by side.
@@ -27,7 +28,7 @@ then select the target games and the corresponding ROM dumps:
 
 ![Gen1Recomp translation mod generator GUI](docs/gui.png)
 
-1. Red, Blue and Yellow, or Gold and Silver;
+1. Red, Blue and Yellow, Gold and Silver, or FireRed;
 2. your own canonical US ROM dumps for the selected games;
 3. the target language and output directory.
 
@@ -60,8 +61,9 @@ verifies the ROM fingerprints, asks before downloading pinned dependencies,
 then extracts, translates, validates and packages the selected release in a
 private ignored workspace.
 
-The final file is `dist/translation-<lang>-<version>.zip` for RBY or
-`dist/translation-<lang>-gen2-<version>.zip` for Gold and Silver; the command prints its
+The final file is `dist/translation-<lang>-<version>.zip` for RBY,
+`dist/translation-<lang>-gen2-<version>.zip` for Gold and Silver, or
+`dist/translation-<lang>-gen3-<version>.zip` for FireRed; the command prints its
 absolute path.
 
 ### Optional local path configuration
@@ -76,11 +78,14 @@ blue = "/absolute/path/to/PokemonBlue.gb"
 yellow = "/absolute/path/to/PokemonYellow.gb"
 gold = "/absolute/path/to/PokemonGold.gbc"
 silver = "/absolute/path/to/PokemonSilver.gbc"
+crystal = "/absolute/path/to/PokemonCrystal.gbc"
+firered = "/absolute/path/to/PokemonFireRed.gba"
 ```
 
 The three RBY entries are required for the universal build; `gold`/`silver` are
 required only for the Gold and Silver build, and either one alone is enough (the
-prompt accepts a Gold or a Silver ROM interchangeably). Relative paths resolve from this file and `~` expands, although
+prompt accepts a Gold or a Silver ROM interchangeably), and `firered` only for the
+FireRed build. Relative paths resolve from this file and `~` expands, although
 absolute paths are recommended. On Windows, use forward slashes or TOML
 single-quoted paths such as `red = 'C:\Games\PokemonRed.gb'`. Configured files
 are still checked for existence and SHA-1; declining one returns to the normal
@@ -134,6 +139,39 @@ and registries are selected under a Crystal save and never leak onto a Gold
 or Silver one. These checks do not replace an in-game smoke test before
 release.
 
+## Pokémon FireRed support
+
+FireRed (US, v1.0) is published as `translation-<lang>-gen3` for `fr`, `de`,
+`es` and `it`, built from a real FireRed ROM. gen1recomp runs it on its own
+generation-3 runtime, so the mod uses that runtime's content registries:
+dialogue through `mod.content.text`, species, move and item names, item
+descriptions, trainer names and class names through their record registries,
+the start menu through the public `ui.start_menu.items` hook, and the handful
+of game3 interface strings that go through `Strings()`.
+
+Dialogue is joined differently from the two older releases: the game3
+extractor keys each message by its ROM address, pret's published
+`pokefirered.sym` names that address with the same label the PokeCorpus
+`FireRedLeafGreen` qid ends with, so every message maps to exactly one corpus
+row. Each translation is shipped as the runtime's own text IR (so the player
+name, `STR_VAR` buffers and page breaks survive), encoded through pret's
+`charmap.txt`, and only after the corpus English has reproduced the ROM's own
+text exactly. The pinned symbol table and charmap are downloaded like the
+corpus; they carry addresses and an encoding table, no game text.
+
+Before packaging, `tools/gate_frlg.lua` loads the mod through gen1recomp's
+real generation-3 loader over the extracted game3 data and checks that each
+catalog lands where the FireRed screens read it. It also measures runtime
+limits the mod cannot fix itself, and the build prints them. Today the most
+visible one is that FireRed's font lookup only knows the US cart's letters, so
+accented letters (à, ç, ü, ñ, ¡…) render blank until gen1recomp maps them to
+the glyphs the ROM font already has. Species and move names also revert to
+English on entering the field, and much of the interface (battle messages,
+most menus, Pokédex text, location names) is still hardcoded English. Every
+one of these is tracked in the FireRed section of
+[docs/upstream-fixes.md](docs/upstream-fixes.md). Japanese is not offered:
+the game3 runtime has no way to draw kana yet.
+
 ## Legal inputs and privacy
 
 Use dumps from your own original US cartridges:
@@ -146,6 +184,7 @@ Use dumps from your own original US cartridges:
 | Gold | `d8b8a3600a465308c9953dfa04f0081c05bdcb94` |
 | Silver | `49b163f7e57702bc939d642a18f591de55d92dae` |
 | Crystal | `f4cd194bdee0d04ca4eac29e09b8e4e9d818c133` |
+| FireRed | `41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc` |
 
 The pipeline verifies these fingerprints and never downloads, provides or
 redistributes ROMs, patches or copyrighted text extracts. Generated data,
@@ -159,7 +198,7 @@ font profiles are:
 
 | Target languages | Releases | Default font | Optional font |
 | --- | --- | --- | --- |
-| `fr`, `de`, `es`, `it` | RBY, Gold/Silver/Crystal | Fusion Pixel Latin, 10px | Pokemon Font, 8px |
+| `fr`, `de`, `es`, `it` | RBY, Gold/Silver/Crystal, FireRed | Fusion Pixel Latin, 10px (RBY, GSC); the cart's own font (FireRed) | Pokemon Font, 8px (RBY, GSC) |
 | `ja-Hrkt` | RBY, Gold/Silver/Crystal | Fusion Pixel Japanese, 8px | — |
 | `ko` | Gold/Silver/Crystal only (Crystal's own dialogue stays in English) | Fusion Pixel Hangul, 10px | — |
 
@@ -268,30 +307,61 @@ provenance. Future unresolved entries will keep their original English text.
 | `ja-Hrkt` | 6839/6839 (100%) | 943/943 (100%) | 3994/3994 (100%) |
 | `ko` | 5796/6839 (84.75%) | 943/943 (100%) | 0/3994 (0%) |
 
+### FireRed
+
+- `FireRed ROM aggregate` combines the dialogue messages with the named
+  catalogs (species, move and item names, item descriptions, trainer names
+  and class names, start menu labels). The 39 braille messages stay in
+  English (the runtime cannot draw braille in any language), as do the
+  `POKéBLOCK CASE` item whose name the extractor already loses in English,
+  and the eight trainer classes whose English name gen1recomp compares
+  (RIVAL, LEADER, ELITE FOUR and CHAMPION, two classes each): translating
+  them would lose the rival's chosen name and misfile gym, Elite Four and
+  champion wins in the quest log.
+- `FireRed engine strings` covers the 86 `Strings()` keys reachable from the
+  game3 runtime (literal callsites and every text value the Options screen
+  passes to `Strings()`), listed with their callsites in
+  [`config/frlg/engine_scope.json`](config/frlg/engine_scope.json). A test
+  derives the same set from the pinned engine, so a new key cannot slip
+  out of the metric.
+
+| Target | FireRed ROM aggregate | FireRed engine strings |
+| --- | ---: | ---: |
+| `fr` | 5631/5680 (99.14%) | 86/86 (100%) |
+| `de` | 5631/5680 (99.14%) | 86/86 (100%) |
+| `es` | 5631/5680 (99.14%) | 86/86 (100%) |
+| `it` | 5631/5680 (99.14%) | 86/86 (100%) |
+
+These measure what the mod ships, not what the current runtime displays; see
+"Pokémon FireRed support" above for the runtime limits.
+
 ### Other engine strings
 
 The remaining engine keys are reported separately below. They are keys used by
 neither RBY nor Gold and Silver, so their denominator is the residual scope:
-`2177 - (421 + 943 - 85) = 898`. The numerator counts keys translated in at
-least one of the two artifacts; this is a project-level metric, not a claim
-that every key is present in both games.
+`2192 - (421 + 943 - 85) = 913`. The numerator counts keys translated in at
+least one of the RBY and Gold/Silver/Crystal artifacts; this is a
+project-level metric, not a claim that every key is present in both games.
+The FireRed-reachable keys are measured separately above ("FireRed engine
+strings"), so this residual scope and its numerators leave the FireRed
+artifact out.
 
 | Target | Other engine strings |
 | --- | ---: |
-| `fr` | 78/898 (8.69%) |
-| `de` | 84/898 (9.35%) |
-| `es` | 83/898 (9.24%) |
-| `it` | 84/898 (9.35%) |
-| `ja-Hrkt` | 85/898 (9.47%) |
-| `ko` | 3/898 (0.33%) |
+| `fr` | 78/913 (8.54%) |
+| `de` | 84/913 (9.20%) |
+| `es` | 83/913 (9.09%) |
+| `it` | 84/913 (9.20%) |
+| `ja-Hrkt` | 85/913 (9.31%) |
+| `ko` | 3/913 (0.33%) |
 
-The denominator is calculated as follows: `2177` total engine keys, minus the
+The denominator is calculated as follows: `2192` total engine keys, minus the
 `421` RBY-related keys and the `943` Gold and Silver-related keys, plus back the `85` keys
 shared by both scopes so they are subtracted only once. The resulting residual
-scope is `898` keys.
+scope is `913` keys.
 
 These values use the pinned ROMs, corpus snapshots and Gen1Recomp revision
-`f6657891` (v0.2.61); regenerate them whenever one of those inputs changes.
+`2c0f3ac0` (v0.2.64); regenerate them whenever one of those inputs changes.
 
 ## Translation provenance
 
@@ -304,11 +374,14 @@ Every translated engine string remains traceable:
 | Human-reviewed RBY anchor | Contextual or language-specific extraction reviewed by a maintainer; text still comes from PokeCorpus. | `config/rby/semantic_anchor_decisions.json` |
 | Human-reviewed Gold pointer | Ambiguous ROM pointer resolved to a reviewed PokeCorpus qid. | `config/gsc/pointer_decisions.json` |
 | Human-reviewed Crystal pointer | Ambiguous Crystal ROM pointer resolved to a reviewed PokeCorpus qid. | `config/gsc/crystal_pointer_decisions.json` |
+| Exact FireRed dialogue join | ROM address -> pret symbol -> PokeCorpus qid label, English verified against the ROM text. | Generation report |
+| Reviewed FireRed dialogue decision | A standard-script line gen1recomp reworded itself, joined to the cart's row carrying the same message. | `config/frlg/dialogue_decisions.json` |
+| Reviewed FireRed engine anchor | The cart's own row for an original FireRed menu string. | `config/frlg/engine_scope.json` |
 | Reviewed Crystal engine selector | Crystal corpus row whose list boundaries or placeholder count don't fit the shared anchor grammar, resolved to a specific qid/segment. | `config/gsc/crystal_string_selectors.json` |
 | Reviewed placeholder exception | Official localized wording legitimately adds or omits a runtime value such as the player name or an item quantity. This records no translated text and does not disable the audit; each exception is scoped to a language, ROM pointer, corpus QID, and exact audit message. | `config/gsc/placeholder_decisions.json` |
 | Manual corpus correction | A maintainer corrects one selected-language corpus translation without changing the upstream corpus. Entries are indexed by qid. | `overrides/<language>/rby/corpus.json` |
-| Manual translation — engine contract gap | PokeCorpus has the text, but Gen1Recomp merges contexts or hides required parameters. | `overrides/<language>/{rby,gsc}/engine.json`, `reason: "engine-contract-gap"` |
-| Manual translation — engine original | Engine-specific text with no compatible ROM source. | `overrides/<language>/{rby,gsc}/engine.json`, `reason: "engine-original"` |
+| Manual translation — engine contract gap | PokeCorpus has the text, but Gen1Recomp merges contexts or hides required parameters. | `overrides/<language>/{rby,gsc,frlg}/engine.json`, `overrides/<language>/frlg/dialogue.json`, `reason: "engine-contract-gap"` |
+| Manual translation — engine original | Engine-specific text with no compatible ROM source. | `overrides/<language>/{rby,gsc,frlg}/engine.json`, `reason: "engine-original"` |
 | Editorial correction | Deliberately preferred engine formulation. | `overrides/<language>/rby/engine.json`, `reason: "editorial-correction"` |
 | Manual translation — Yellow-only engine text | Engine-authored, Yellow-exclusive text (Surfing Pikachu minigame HUD) with no PokeCorpus source; applied only when `GameVersion.isYellow()`. | `overrides/<language>/rby/yellow_engine.json`, `reason: "yellow-only-engine-text"` |
 | Known limitation | Active anchor/override knowingly imperfect in a context or language; a status, not an origin. | Anchor metadata or override provenance |
@@ -357,7 +430,7 @@ explicit override > semantic anchor > exact > normalized
 > structural placeholder match > empty entry (runtime English fallback)
 ```
 
-Game-specific configuration lives under `config/rby/` and `config/gsc/`;
+Game-specific configuration lives under `config/rby/`, `config/gsc/` and `config/frlg/`;
 language overrides follow the same split under `overrides/<language>/`.
 
 | Configuration | Purpose |
@@ -381,6 +454,8 @@ language overrides follow the same split under `overrides/<language>/`.
 | `config/gsc/crystal_pointer_decisions.json` | Human-reviewed picks for ambiguous Crystal dialogue pointers. |
 | `config/gsc/crystal_rom_text_anchors.json` | Crystal-only RomText labels mapped to their PokeCorpus rows -- a labeled fallback path alongside Crystal's own pointer-based dialogue join. |
 | `config/gsc/crystal_semantic_anchors.json` | Evidence for Crystal engine-string corpus matches. |
+| `config/frlg/dialogue_decisions.json` | Reviewed corpus rows for FireRed standard-script lines gen1recomp reworded. |
+| `config/frlg/engine_scope.json` | FireRed-reachable `Strings()` keys, their callsites and reviewed cart rows. |
 | `config/gsc/crystal_string_selectors.json` | Reviewed qid/segment picks for Crystal corpus rows whose list boundaries or placeholder count don't fit the shared semantic-anchor grammar. |
 
 The semantic anchors and reviewed decisions are described in the
@@ -400,6 +475,7 @@ fully translated.
 | Corpus model | `corpus.py`, `model.py`, `align.py`, `worksheet.py`, `tokens.py` | Parse parallel corpora, align qids and preserve control-token contracts. |
 | RBY generation | `join.py`, `generate.py`, `literals.py`, `yellow.py`, `yellow_audit.py`, `mod.py` | Join Red/Blue catalogs, build the Yellow layer and emit the universal mod. |
 | Gold and Silver generation | `gs_text.py`, `gs_join.py`, `gs_index_join.py`, `gs_engine.py`, `gs_mod.py` | Join GoldSilver to pointer/index catalogs, engine strings and the Gen 2 artifact. |
+| FireRed generation | `frlg_text.py`, `frlg_join.py`, `frlg_mod.py` | pret charmap/symbols, the game3 text IR, the address-to-label join and the Gen 3 artifact. |
 | Engine strings | `engine.py`, `engine_scope.py` | Match the versioned engine catalog and classify production callsites. |
 | Validation and audits | `validate.py`, `disassembly_audit.py`, `engine_backlog.py` | Enforce release gates and produce private diagnostic reports. |
 
@@ -469,13 +545,17 @@ archive before upload.
   identical to an English type name is translated too.
 - The desktop launcher uses a separate renderer and is outside the content
   mod's translation hooks.
-- RBY- and Gold and Silver-specific upstream engine gaps are tracked in
+- FireRed renders accented letters blank, reverts species and move names on
+  entering the field and keeps much of its interface in English until the
+  upstream fixes listed in the FireRed section of the document below land.
+- RBY-, Gold and Silver- and FireRed-specific upstream engine gaps are tracked in
   [docs/upstream-fixes.md](docs/upstream-fixes.md).
 
 ## Credits
 
 - [Gen1Recomp](https://github.com/bryanthaboi/gen1recomp) by [bryanthaboi](https://github.com/bryanthaboi), the native Lua / LÖVE2D recreation.
 - [PokéCorpus](https://github.com/abcboy101/poke-corpus) by [abcboy101](https://github.com/abcboy101), the multilingual translation corpus.
+- [pokefirered](https://github.com/pret/pokefirered) by [pret](https://github.com/pret), whose symbol table and charmap the FireRed join is keyed by.
 - [pokemon-font](https://github.com/cooljeanius/pokemon-font) v1.8.2, the Pokemon Font clone by Superpencil, sourced from the fork maintained by [cooljeanius](https://github.com/cooljeanius), available as the optional Latin profile.
 - [Fusion Pixel Font](https://github.com/TakWolf/fusion-pixel-font) by [TakWolf](https://github.com/TakWolf), used by the recommended Latin profile, the Japanese profile, and the Korean profile (Gold and Silver only).
 

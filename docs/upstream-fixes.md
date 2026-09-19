@@ -1,6 +1,6 @@
 # Translation: upstream engine gaps
 
-Both mods use only the public `gen1recomp` content and hook APIs. Each game's section (RBY, then Gold) tracks these kinds of entries:
+All three mods use only the public `gen1recomp` content and hook APIs. Each game's section (RBY, then Gold, then FireRed) tracks these kinds of entries:
 
 - **Required upstream capabilities**: strings that render in English with no
   override reaching them at all -- no hook, no catalog entry can fix these
@@ -1529,6 +1529,234 @@ for the `ui_labels` path at all; see "PC and storage dialogue" and "Battle
 action menu" above. This keeps the release manifest permission-free either
 way and makes any screen still genuinely without a hook (the remaining
 bullets above) visible to the engine project.
+
+## FireRed
+
+FireRed (US, v1.0) is gen1recomp's first generation-3 game: a separate `game3` runtime (`src/core/game3`, `src/ui/game3`) with its own mod surface (`src/mods/Gen3Compat.lua`, `Schemas.GEN3` in `src/mods/Schemas.lua`). Everything below was checked against the pinned revision `2c0f3ac0` (v0.2.64); file:line citations refer to that tree. The translation mod (`translation-<lang>-gen3`, fr/de/es/it) uses only the public generation-3 registries and one public hook, and `tools/gate_frlg.lua` loads it through the real generation-3 loader on top of the game3 data modules built from a private FireRed extract, so every "lands"/"does not land" statement here is measured, not inferred.
+
+Summary of what a translation mod can and cannot reach today:
+
+| Surface | Reachable | Mechanism |
+| --- | --- | --- |
+| Script dialogue (3,571 messages, NPCs, signs, trainers' battle lines, item pickups) | Yes | `mod.content.text:override(key, ir)` |
+| Species, move, item names; item descriptions | Yes, but see "Name patches are reverted on entering the field" | `pokemon`/`moves`/`items` patches |
+| Trainer names and class names | Yes (except RIVAL, LEADER, ELITE FOUR and CHAMPION, see below) | `trainers` patches |
+| Start menu labels | Yes | `ui.start_menu.items` hook |
+| 86 `Strings()` keys (Options rows and values, save warnings, exit prompt, nurse choice) | Registry yes; resolution see "Game3 never loads the merged Strings catalog" | `strings` registry |
+| Accented letters on screen | **No**: drawn blank | glyph lookup, see first entry below |
+| Japanese | **No** | no glyphs, font registry gated |
+| Pokédex categories and descriptions, abilities, move descriptions, location names, battle messages, most menus, help system, quest log, Oak's speech | **No** | hardcoded or no registry |
+
+### Verified working, not a gap
+
+- **Dialogue overrides keep placeholders and page breaks.** `Schemas.GEN3` routes `text` to `data.gen3Text`, which `Game3:_exposeModData` (`src/core/Game3.lua:207`) binds to the live `Space.bundle.text` before mods load; `ExtractScripts.loadBundle` only ever builds that bundle once, so overrides persist. A plain string override would lose the player name, `STR_VAR_n` buffers and scroll/paragraph breaks (`G3.textIr` only splits on `\n`), but the registry also accepts the IR segment list itself (`gen3Value = f.union{ f.str, f.list(f.any) }`), which is what the mod ships. The gate reads the override back from `data.gen3Text` and renders it through `TextIR.toTextBox`, the call `src/ui/game3/message.lua:128` uses.
+- **Dialogue keys can be joined exactly.** The extractor keys messages by ROM pointer (`Opcodes.key`, `g3:%08x`); pret's published symbol table (`pokefirered.sym`, `symbols` branch) names every one of those addresses with the label the PokeCorpus qid ends with. 3,559/3,559 pointer keys resolve to exactly one corpus row, and for every non-braille row the corpus English, encoded through pret's charmap and decoded by a port of `TextIR.decode`, reproduces the extracted IR exactly (same segments, texts and codes). No upstream change is needed for dialogue keys.
+- **Trainer patches preserve parties.** A `trainers` patch rewrites the whole row through `G3.trainerRecord`/`G3.trainerWrite` (species, held items and moves converted to ids and back). The gate compares all 743 parties before and after the mod loads: none changes.
+- **The start menu is hookable.** `src/ui/game3/start_menu.lua:62-66` hands its entry list to `ui.start_menu.items` before printing the labels, so the mod relabels POKéDEX/POKéMON/BAG/SAVE/OPTION/EXIT from the cart's `gText_Menu*` rows. This is the only public `ui.*` hook game3 raises.
+- **Standard scripts gen1recomp rewrote itself are still joinable.** Seven label-keyed lines of `src/core/game3/scripting/stdscripts.lua` (nurse greeting, "OK." vs "Okay,", item pickup, PC unavailable, TOWN MAP sign) are the same messages as cart rows with different English wording. They are joined through reviewed decisions (`config/frlg/dialogue_decisions.json`); not a gap.
+
+### Required upstream capabilities
+
+Ordered by impact on a translated playthrough.
+
+#### 1. Accented letters are drawn blank (blocks readable fr/de/es/it)
+
+`FrlgFont.glyphId` (`src/ui/game3/frlg_font.lua:633-642`) maps a UTF-8 character to a glyph through `buildRev` (`:414`), which is built from `TextIR.CHARMAP` (`src/core/game3/scripting/text_ir.lua:8-33`). That table only lists what US FireRed prints: `é` and `É` are its only accented letters. Every other character falls through to glyph `0x00`, a blank. The ROM font the extractor bakes (`chrome/fonts/latin_normal_fg.rgba`, 512 glyphs in charmap order) does contain the whole European set -- checked pixel by pixel on both extracted sheets: `À Á Â Ç È Ê Ë Ì Í Î Ï Ò Ó Ô Œ Ù Ú Û Ñ ß à á â ç è ê ë ì í î ï ò ó ô œ ù ú û ñ º ª ; ¿ ¡ Ä Ö Ü ä ö ü` are all non-empty at their pret charmap positions.
+
+The mod already ships the correct characters; the gate counts the characters of the shipped dialogue that `glyphId` turns into a blank: **fr 2,249** (à 680, è 412, ç 322, ê 303, î 165…), **de 3,040** (ä 967, ü 935, ö 573, ß 328…), **es 8,159** (¡ 3,654, í 1,068, á 1,022, ¿ 949, ó 561, ñ 273…), **it 1,803** (è 694, à 261, ò 243, ù 204, È 198…). Names, descriptions and `Strings()` values are affected the same way: counted over every catalog the mod ships, the totals are fr 2,402, de 3,619, es 8,684 and it 1,919.
+
+Fix: extend `TextIR.CHARMAP` with pret's Latin glyphs (`charmap.txt` lines 1-156: `0x01`–`0x2B`, `0x36` `;`, `0x51` `¿`, `0x52` `¡`, `0x5A` `Í`, `0x68` `â`, `0x6F` `í`, `0xF1`–`0xF6` `ÄÖÜäöü`), or build `buildRev` from a dedicated render table so `TextIR.decode`'s English behaviour is untouched. The small font (`latin_small`, party/summary names) is CHARMAP-ordered too and needs the same entries. Nothing changes on this project's side: the gate's `blank_glyphs` metric drops to 0.
+
+**In progress:** implemented on the gen1recomp branch `fix/frlg-latin-glyphs` (`FrlgFont.LATIN_GLYPHS`, render-only, `TextIR.CHARMAP` untouched, with `tests/game3_latin_glyphs_test.lua`), not yet merged upstream. Running `tools/gate_frlg.lua` against that branch brings `blank_glyphs` to 0 for fr, de, es and it; the pinned v0.2.64 still draws the blanks until the pin catches up.
+
+#### 2. Name patches are reverted on entering the field
+
+`Game3:load` hydrates the dataset (`Dataset.hydrate`, which calls `Pokemon.install`, `src/core/game3/dataset.lua:307`) and then loads mods, whose `pokemon` and `moves` patches write into the species pack's `_names`/`_moveNames` tables. Starting or continuing a game then runs `Runtime.start`, which calls `Pokemon.install(cache)` again (`src/core/game3/runtime.lua:115`): the pack is reloaded from the cache and every name reverts to English. `Gen3Compat.applyMerged` registers a `Pokemon.onReload` callback (`src/mods/Gen3Compat.lua:2179-2186`), but it only reseeds sprite overrides. The `moves` registry write (`G3.moveWrite`) does re-run through `Moves.onReload(reapplyMoves)` (`:2169-2172`), but that fires when the move pack reloads, not the species pack -- and move names are stored in the species pack (`Pokemon._moveNames`, read by `Pokemon.moveName`).
+
+Measured by the gate: `BULBIZARRE`/`BISASAM` and `ECRAS'FACE`/`PFUND`/`DESTRUCTOR`/`BOTTA` read back correctly after the mod loads and revert to `BULBASAUR`/`POUND` after the second `Pokemon.install`. Items and trainers are unaffected (their packs are loaded once).
+
+Fix: make the `Pokemon.onReload` callback re-apply the merged `pokemon` and `moves` registries (`spec.write` for both, exactly as `reapplyMoves` does for `Moves`), or skip `Pokemon.install` in `Runtime.start` when the pack is already installed from the same cache.
+
+#### 3. Game3 never loads the merged Strings catalog
+
+`Game:load` and `Game2` both hand the merged data to `Strings.load` after the mod merge (`src/core/Game.lua:91`, `src/core/Game2.lua:1178`). `Game3:_loadMods` (`src/core/Game3.lua:211-231`) does not, so a mod's `strings` overrides reach `data.strings` (the gate checks it) but `Strings()` never consults them. The only thing that fills the catalog on a FireRed boot is the launcher's pre-boot preload (`main.lua:449`/`:747`, `LauncherMods.translationStrings`), which reads the `lang/strings.lua` file of every enabled mod whatever game it targets: it happens to pick up this mod's file, but also any enabled Red/Blue or Gold/Silver translation's, with no defined precedence, and never a mod that registers strings from code.
+
+Fix: `require("src.core.Strings").load(self.data)` right after `mods:load` in `Game3:_loadMods`, like the other two games. The gate's `strings_live` measurement then turns true.
+
+#### 4. Japanese cannot be rendered
+
+game3 draws every string with the cart's Latin font (`FrlgFont`), which has no kana, and `Schemas.GEN3` gates the `font` registry (`font = false`, `src/mods/Schemas.lua:658`), so a mod cannot register the TTF the Red/Blue and Gold/Silver Japanese mods use. The FireRedLeafGreen corpus has a complete `ja-Hrkt` column; the pipeline does not offer it (`pipeline/specs.py`) because every line would print blank.
+
+Fix: route the `font` registry on generation 3 and let `FrlgFont.draw`/`measure` fall back to a registered TTF for characters with no ROM glyph (or for the whole string when the mod asks for it). Project side: add `ja-Hrkt` to the collection's languages and give the decoder the charmap's Japanese block as its glyph table.
+
+#### 5. Pokédex categories and descriptions have no reachable registry
+
+The Pokédex screen builds its entries from the `pokedex/entries.lua` pack through `PokedexData` (`src/core/game3/pokedex_data.lua:63`, category and both description pages at `:225-236`). The `pokemon` registry's `dexEntry` writes the species pack's `_dex` table instead, which only the damage formula reads in game (for weight, `src/core/game3/battle/damage.lua:169`; `Gen3Compat.lua:552` also hands it to Gen 1-style compat mods), and `gen3Fields.dexEntry` has no text field at all. A `dexEntry = { kind = ... }` patch therefore loads fine and is never displayed; the pipeline stopped shipping it for that reason.
+
+Fix: route the merged `dexEntry` (kind, and new `text`/`text2` fields) into `PokedexData._entries`, the way Gen 2's `PokedexText.apply` bridges the Gold registry into the #DEX screen. Corpus side everything is ready: `frlg.common.pokedex_entries.gPokedexEntries.N` (387 categories, by National Dex number) and `frlg.common.pokedex_text_fr.*` (FireRed's own descriptions; LeafGreen's are separate).
+
+#### 6. Battle messages are hardcoded English
+
+Roughly 350 English literals across `src/core/game3/battle/**` are concatenated into battle text: `engine.lua` (63), `effects/*.lua` (secondary 33, hit 29, setup 27, healing 13, status 12, stats 12, special 9, volatiles 7, screens 5, weather 4), `held_items.lua` (76, berry flavour lines), `residual_handlers.lua` (33), `abilities.lua` (20), `init.lua` (18), `catch_seq.lua` (17), `commands.lua` (17), `items.lua` (35), `switch_seq.lua` (8), `status.lua` (6), `learn_move.lua` (4), `intro_seq.lua` (4, GHOST/SILPH SCOPE). The trainer challenge lines are built the same way in `Trainers.introStrings` (`src/core/game3/scripting/trainers.lua:303-304`, "would like to battle!", "sent out"). Counts come from a literal scan and are upper bounds; the complete per-file list is the inventory at the end of this section.
+
+The cart keeps all of them in `gBattleStringsTable`, and the corpus has that table keyed by pret label (`frlg.common.battle_message`, 529 rows, 448 of them `sText_*` messages). Fix: decode `gBattleStringsTable` from the ROM and look messages up by label through a registry (the Gen 2 `rom_text` pattern), substituting the `B_*` placeholders at runtime; a mod could then be joined by label exactly like dialogue. Routing each literal through `Strings()` would also work but splits sentences around names, which is the Red/Blue `engine-contract-gap` situation this project has spent the most effort compensating for.
+
+#### 7. Menus and interface text are hardcoded English
+
+No `Strings()`, no registry, no hook (approximate literal counts): `src/ui/game3/pokedex.lua` (75: mode names, list headers, AREA/SIZE pages), `pc_menu.lua` (55: ITEM STORAGE, WITHDRAW/DEPOSIT, descriptions; its one `Strings.source("Go back to the\nprevious menu.")` at `:43` is never resolved, `draw_status_lines` at `:128` prints it raw), `src/core/game3/item_use.lua` (51), `items_data.lua` (49, bag pocket names) and `scripting/adapters.lua` (14, pocket names again), `field_moves.lua` (35), `party_menu.lua` (25), `shop_menu.lua` (20), `summary_menu.lua` (17, page titles and labels), `summary_data.lua` (12, egg descriptions), `box_storage_ui.lua` (11), `trainer_card.lua` (10), `hall_of_fame.lua` (10), `berry_pouch.lua` (9), `boot.lua` (NEW GAME/CONTINUE), `save_menu.lua` (6, including a "PALLET TOWN" fallback), `bag_menu.lua`, `tm_case.lua`, `region_map.lua` (button hints), `evolution_scene.lua`, `stat_growth.lua`, `vs_seeker.lua`, `step_events.lua` (whiteout, REPEL), `storage.lua` ("BOX %d"), `scripting/natives.lua` (nickname prompt), `naming.lua` (keyboard layout and prompts). The corpus has the cart's own row for nearly every one (`frlg.common.strings.*`, 1,358 rows). The inventory at the end of this section lists every file, including screens this summary leaves out: the YES/NO choice box (`src/ui/game3/choice.lua`) behind every yes/no question, the battle action menu (FIGHT/BAG/POKéMON/RUN, `battle/commands.lua`), nature names, PC wallpaper names, badge labels, the MONEY box and the party screen's OK/CANCEL.
+
+Fix: wrap each display literal in `Strings()` (the pipeline's `config/frlg/engine_scope.json` already maps keys to reviewed `frlg.common.strings` qids and picks new keys up automatically) or, better where the cart has the text, read it from the ROM by label. Screens that build lists (`items_data` pockets, PC/party actions) could alternatively raise `ui.*` hooks like `ui.start_menu.items`.
+
+#### 8. Option values are printed without Strings()
+
+`option_rows.lua`'s `cartLabel` (`src/ui/game3/option_rows.lua:20-23`) returns the raw value for TEXT SPEED (SLOW/MID/FAST), BATTLE SCENE (ON/OFF), BATTLE STYLE (SHIFT/SET), SOUND (MONO/STEREO) and BUTTON MODE (HELP/LR/L=A); the row labels themselves are translated. The cart's own values are in the corpus (`gText_TextSpeedSlow`, `gText_BattleSceneOff`, `gText_BattleStyleShift`, `gText_SoundMono`, `gText_ButtonTypeHelp`...). A bare `Strings("OFF")` would share one key with the volume and music-filter `OFF`. In fr/de/es/it both happen to read the same (the cart's `gText_BattleSceneOff`), but a global key is fragile: `UPPER` and `LIGHT` already needed FireRed-specific values because the Red/Blue/Gold wording of the same key means something else there. `Strings.get` already supports a context argument (`Strings(value, "option.battleScene")`, looked up as `context|source`), which keeps each row's wording independent.
+
+#### 9. Abilities and move descriptions
+
+Ability names come from the species pack (`Pokemon._abilityNames`, used by `Abilities.name`, `src/core/game3/battle/abilities.lua:10`); ability and move descriptions shown on the summary screen come from a hardcoded table (`src/core/game3/summary_descriptions.lua`). There is no `abilities` registry on generation 3 and `gen3Fields` of `moves` has no description. Corpus: `frlg.common.abilities.*` (78 names, 78 descriptions), `frlg.common.move_descriptions.*` (354). Fix: an `abilities` registry (name, description) and a `description` field on `moves`, read by the summary screen and the battle ability messages.
+
+#### 10. Location names
+
+`Schemas.GEN3` gates `landmarks` (`src/mods/Schemas.lua:661`), and the map-name popup and region map read the ROM's map-section names straight from `MapSectionsExtract` (`src/ui/game3/map_name_popup.lua:6,78`). Corpus: `frlg.common.region_map_entry_strings.sMapsecName_*` (109 rows, by label). Fix: route `landmarks` (keyed by map-section constant) into the table both screens read.
+
+#### 11. Help system, quest log and Oak's speech
+
+- The help system and the "Previously on your quest…" log are extracted packs installed straight into their UI modules (`Help.install`/`QuestLog.install`, `src/core/Game3.lua:101-102`), with no registry. Corpus: `frlg.script.help_system.*` (369 rows) and `frlg.common.quest_log.*` (125), both keyed by pret label.
+- The new-game intro prints local tables (`CONTROLS_TEXT`, `PIKA_TEXT`, `OAK_TEXT`, `src/ui/game3/new_game_scene.lua:85,100,106`). `intro.oak_speech.started`/`.step` events are emitted, but with a copy of the text (`:397-400`), so a handler cannot change what is printed. Gen 2 exposes `intro.oak_speech.build` with a mutable `speech.texts` table for exactly this; an equivalent on game3 would let the pipeline apply `frlg.script.new_game_intro.*` (65 rows).
+
+Fix: a text registry (or the dialogue `text` registry itself) consulted by both packs, keyed by their pret labels, and a build hook for the intro tables.
+
+#### 12. Trainers are recognised by their English class name
+
+Two places compare the display class name a mod patches:
+
+- `Trainers.info` substitutes the player's chosen rival name only when `info.className == "RIVAL"` (`src/core/game3/scripting/trainers.lua:277`). German and Italian translate that class (`RIVALE`), and the rival would then battle as the ROM's placeholder `TERRY`.
+- The quest log records a win as a gym-leader, Elite Four or champion event from `class == "LEADER"`, `"ELITE FOUR"` and `"CHAMPION"` (`src/core/game3/quest_log_recorder.lua:94-100`, fed by `battle/init.lua:439`'s `trainerClassName`). With translated classes, every such win falls back to the generic trainer event, and in French, where LEADER reads CHAMPION, every gym win would be recorded as a champion battle.
+
+The pipeline keeps these class names in English (`ENGINE_KEYED_CLASS_NAMES` in `pipeline/frlg_mod.py`: classes 81/89, 24/84, 23/87, 30/90), a test scans the pinned engine's game3 sources for any other class-name comparison, and the gate checks trainer 326 keeps the rival name it is given. Fix: compare class ids (`TRAINER_CLASS_RIVAL_EARLY`/`_LATE`, `TRAINER_CLASS_[RS_]LEADER`, `_ELITE_FOUR`, `_CHAMPION`) instead of display names; the pipeline can then drop the exception.
+
+#### 13. Braille and keypad icons print as "?" in every language
+
+- Braille messages (`braillemessage`, 39 lines: Dotted Hole, Ruin Valley and Mt. Ember's Ruby Path) are decoded with the Latin charmap like any message (`src/import/gba/extract_scripts.lua:178` → `TextIR.decode`), so English already prints noise such as `?é?`. The corpus has every braille line per language (Unicode braille); translating them needs the runtime to draw braille cells (the cart's `FONT_BRAILLE`) first, and a braille encoding on the pipeline side.
+- Keypad-icon and extra-symbol escapes (`F8 xx`/`F9 xx`: A_BUTTON, DPAD_*, the ones help and minigame texts use) have no case in `TextIR.decode` and fall through to `"?"` (`text_ir.lua:172`), followed by the argument byte as a glyph. The pipeline mirrors that exactly so a translation never prints worse than English, but the icons are missing in every language. Fix: decode them to a tag and draw the already-extracted `chrome/fonts/keypad_icons.rgba`.
+
+#### 14. Minor extraction inconsistencies
+
+- The `PK`/`MN` ligature pair (`53 54`) decodes to `"POKé"` in `TextIR.decode` (`text_ir.lua:161-165`) but to `"POKéMON"` in the trainer extractor (`src/import/gba/trainer_extract.lua:148`); the pipeline follows each one where it applies.
+- The items extractor drops the `POKEBLOCK` glyph run (`55`–`59`), so item 273 reads `" CASE"` and its description `"A case for holding S made…"` in English too; it stays untranslated (and is not obtainable in FireRed).
+- Type badges and some chrome are ROM graphics with English text baked in; they are out of reach of any text mod.
+
+#### 15. Cart text the extractor never reaches
+
+Joining the other way round -- every `frlg.script.*` corpus row whose pret label has an address in `pokefirered.sym` but no key in the extracted text table -- finds 1,078 FireRed lines the game3 text registry cannot carry, because the script BFS (`src/import/gba/extract_scripts.lua`) never reads them. Part of it is dead content in FireRed, the rest is shown in game from Lua literals or by a native that bypasses the table:
+
+| Corpus namespace | Rows | In game |
+| --- | ---: | --- |
+| `help_system` | 369 | Help menu (entry 11) |
+| `fame_checker` | 320 | FAME CHECKER key item |
+| `new_game_intro` | 65 | Oak's speech (entry 11) |
+| `safari_zone` | 31 | Safari Zone gate, ball count, time-up |
+| `event_scripts`, `cable_club` | 56 | Link-cable and record-mixing counters |
+| `pokedude` | 20 | Viridian City Pokédude battle tutorial |
+| `pokedex_rating` | 17 | Prof. Oak's rating through a PC |
+| `field_moves`, `surf` | 13 | Waterfall/Surf prompts |
+| `obtain_item`, `white_out`, `save`, `pc`, `day_care`, `itemfinder`, VS Seeker (`trainers`) | 35 | Coin pickups, blacking out, save prompts, PC access, Day-Care, Itemfinder, VS Seeker |
+| rival and trainer lines on individual maps (`SilphCo_7F`, `Route22`, `SSAnne_2F_Corridor`, `Route21_North`, …) | 62 | Rival win lines and a few map scripts the BFS does not reach |
+| `berries`, `competitive_brothers`, `eon_ticket`, `mystery_event_msg`, `test`, `*JP*`/`JPText_*` lines | 90 | Ruby/Sapphire leftovers, Japanese-only and debug text: not shown in FireRed |
+
+game3 has code for each feature in the "in game" column (`grep` over `src/core/game3` and `src/ui/game3`: Safari 20 files, white-out 8, Waterfall 7, cable club 4, Pokédex rating 4, Fame Checker, Pokédude and Itemfinder 2 each), with its text written as English literals (entries 6-7) or read from the ROM into packs outside the text table (entry 11). Trainer battle lines are not affected: 913 of the 919 trainer dialog strings carry a text key the table holds, and `trainerbattle` resolves them through it (`src/core/game3/scripting/ops_a.lua:910-913`); only the pack's plain-string fallback (`battle/init.lua:774`) stays English.
+
+Fix: seed the script BFS from the same labels the cart uses for these features (or extract those text tables alongside the scripts), and have the Lua screens look their messages up in the text table by that key. Because every row above is keyed by a pret label with a known address, the pipeline joins them without any new work: they land in `lang/dialogue.lua` as soon as the extractor emits their keys.
+
+#### Inventory: every game3 file with hardcoded player-visible text
+
+Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg_audit.py`) at the pinned revision: every string literal under `src/{core,ui,battle,world}/game3` that looks like text and is not a `Strings()` argument, minus the files reviewed as never reaching the screen (`NON_DISPLAY_FILES`: mod-API errors, log lines, identifiers, asset paths, each with its reason). 74 files hold 2,028 such literals; a count is an upper bound, since a file can mix messages with a few internal identifiers. `tests/test_frlg.py` fails if the scan finds a player-visible file this table does not list, so the inventory stays complete across pin bumps. "Entry" points to the capability above that would make the text reachable.
+
+| File | Literals | What the player sees | Entry |
+| --- | ---: | --- | --- |
+| `src/core/game3/battle/abilities.lua` | 46 | Ability activation messages (DRIZZLE, INTIMIDATE, TRACE…) | 6, 9 |
+| `src/core/game3/battle/adapter.lua` | 43 | Shared battle messages ("But it failed!") and status abbreviations | 6 |
+| `src/core/game3/battle/catch_seq.lua` | 22 | Ball throw and capture messages ("Gotcha!", dodged ball) | 6 |
+| `src/core/game3/battle/commands.lua` | 26 | Action menu (FIGHT/BAG/POKéMON/RUN) and move-restriction messages (DISABLE, TAUNT, TORMENT) | 6 |
+| `src/core/game3/battle/effects/damaging.lua` | 1 | BRICK BREAK wall message | 6 |
+| `src/core/game3/battle/effects/hazards.lua` | 2 | SPIKES message | 6 |
+| `src/core/game3/battle/effects/healing.lua` | 19 | Healing, INGRAIN, REST messages | 6 |
+| `src/core/game3/battle/effects/hit.lua` | 38 | Type effectiveness, SUBSTITUTE, ENDURE, critical hits | 6 |
+| `src/core/game3/battle/effects/screens.lua` | 8 | REFLECT/LIGHT SCREEN/SAFEGUARD messages | 6 |
+| `src/core/game3/battle/effects/secondary.lua` | 57 | Stat names and stat-change messages ("sharply rose!") | 6 |
+| `src/core/game3/battle/effects/setup.lua` | 35 | Trapping, evasion, LEECH SEED, charge-turn messages | 6 |
+| `src/core/game3/battle/effects/special.lua` | 19 | Send-out lines ("Go!", "sent out") and special-move messages | 6 |
+| `src/core/game3/battle/effects/stats.lua` | 13 | Stat ceiling/floor and miss messages | 6 |
+| `src/core/game3/battle/effects/status.lua` | 22 | Status infliction and immunity messages | 6 |
+| `src/core/game3/battle/effects/volatiles.lua` | 9 | PROTECT, ENCORE, PERISH SONG, ATTRACT messages | 6 |
+| `src/core/game3/battle/effects/weather.lua` | 8 | Weather start messages | 6 |
+| `src/core/game3/battle/engine.lua` | 102 | Core battle flow: effectiveness, misses, fainting, recoil, confusion… | 6 |
+| `src/core/game3/battle/evo_seq.lua` | 5 | Post-battle evolution messages | 6 |
+| `src/core/game3/battle/exp_seq.lua` | 3 | EXP. Points and level-up messages | 6 |
+| `src/core/game3/battle/held_items.lua` | 100 | Held item and berry messages (flavour dislikes, LEFTOVERS…) | 6 |
+| `src/core/game3/battle/init.lua` | 48 | Wild/trainer encounter lines ("Wild … appeared!"), blackout, trainer send-out | 6 |
+| `src/core/game3/battle/intro_seq.lua` | 11 | GHOST/SILPH SCOPE encounter messages | 6 |
+| `src/core/game3/battle/items.lua` | 60 | Item use in battle ("It won't have any effect.", ball and medicine messages) | 6 |
+| `src/core/game3/battle/learn_move.lua` | 22 | Move-learning dialogue ("is trying to learn", "forgot") | 6 |
+| `src/core/game3/battle/prize.lua` | 5 | Prize money and PAY DAY messages | 6 |
+| `src/core/game3/battle/residual_handlers.lua` | 53 | End-of-turn messages (weather, screens wearing off, poison…) | 6 |
+| `src/core/game3/battle/residuals.lua` | 1 | Faint message | 6 |
+| `src/core/game3/battle/rules.lua` | 9 | Trapping-move templates (WRAP, FIRE SPIN…) | 6 |
+| `src/core/game3/battle/status.lua` | 9 | Poison/burn damage and status messages | 6 |
+| `src/core/game3/battle/switch_seq.lua` | 20 | Recall lines ("that's enough! Come back!"), SPIKES on entry | 6 |
+| `src/core/game3/battle/ui.lua` | 9 | "What will … do?", PP display, empty bag | 6, 7 |
+| `src/core/game3/field_moves.lua` | 64 | Field move prompts and refusals (CUT, SURF, STRENGTH, FLASH, badge required) | 7 |
+| `src/core/game3/item_use.lua` | 68 | Overworld item use messages | 7 |
+| `src/core/game3/items_data.lua` | 113 | Bag pocket names and item fallbacks | 7 |
+| `src/core/game3/pokedex_data.lua` | 9 | Unknown-species Pokédex entry | 5, 7 |
+| `src/core/game3/pokemon.lua` | 19 | Fallback species/ability/move names shown when a pack entry is missing | 7 |
+| `src/core/game3/scripting/adapters.lua` | 26 | Pocket names in item-pickup messages, nurse HEAL/CANCEL fallbacks | 7 |
+| `src/core/game3/scripting/multichoice.lua` | 1 | Placeholder multichoice labels when the extract has none | 7 |
+| `src/core/game3/scripting/natives.lua` | 44 | Nicknaming prompt ("NAME?", "'s nickname?") and other natives | 7 |
+| `src/core/game3/scripting/trainers.lua` | 17 | Fallback rival battle lines and the trainer challenge lines ("would like to battle!") | 6, 12 |
+| `src/core/game3/step_events.lua` | 5 | Blacking out, poison fainting, REPEL wearing off | 7, 15 |
+| `src/core/game3/storage.lua` | 30 | Default box names (BOX n) and PC wallpaper names | 7 |
+| `src/core/game3/summary_data.lua` | 41 | Nature names, egg status descriptions, "No data" | 7, 9 |
+| `src/core/game3/summary_descriptions.lua` | 78 | Ability and move descriptions on the summary screen | 9 |
+| `src/core/game3/vs_seeker.lua` | 8 | VS Seeker messages | 7, 15 |
+| `src/ui/game3/bag_menu.lua` | 38 | Bag actions (USE/TOSS/GIVE) and messages | 7 |
+| `src/ui/game3/berry_pouch.lua` | 16 | Berry Pouch actions and messages | 7 |
+| `src/ui/game3/boot.lua` | 14 | Title menu (NEW GAME/CONTINUE) and save-state screens | 7 |
+| `src/ui/game3/box_storage_ui.lua` | 35 | PC box actions and messages | 7 |
+| `src/ui/game3/choice.lua` | 4 | The YES/NO choice box used by every yes/no question | 7 |
+| `src/ui/game3/evolution_scene.lua` | 8 | Evolution scene messages | 7 |
+| `src/ui/game3/hall_of_fame.lua` | 15 | Hall of Fame labels | 7 |
+| `src/ui/game3/help_system.lua` | 10 | Help menu button hints | 7, 11 |
+| `src/ui/game3/money_box.lua` | 1 | MONEY label | 7 |
+| `src/ui/game3/naming.lua` | 28 | Naming screen keyboard pages and prompts | 7 |
+| `src/ui/game3/new_game_scene.lua` | 80 | Controls tutorial and Oak's speech | 11 |
+| `src/ui/game3/option_menu.lua` | 4 | Options button hints and title | 7, 8 |
+| `src/ui/game3/option_rows.lua` | 28 | Option values printed without Strings() (SLOW/MID/FAST, ON/OFF, SHIFT/SET…) | 8 |
+| `src/ui/game3/party_chrome.lua` | 2 | Party screen OK/CANCEL buttons | 7 |
+| `src/ui/game3/party_menu.lua` | 52 | Party actions (SUMMARY/SWITCH/ITEM, field moves) and messages | 7 |
+| `src/ui/game3/pc_chrome.lua` | 4 | Box header and level labels | 7 |
+| `src/ui/game3/pc_menu.lua` | 65 | PC menus, descriptions and messages | 7 |
+| `src/ui/game3/pokedex.lua` | 110 | Pokédex modes, lists, AREA/SIZE pages | 7 |
+| `src/ui/game3/pokedex_chrome.lua` | 2 | Pokédex entry labels | 7 |
+| `src/ui/game3/quest_log.lua` | 4 | Quest log button hints | 7, 11 |
+| `src/ui/game3/region_map.lua` | 7 | Town map button hints and "No data available." | 7, 10 |
+| `src/ui/game3/release_seq.lua` | 6 | Release confirmation and farewell | 7 |
+| `src/ui/game3/save_menu.lua` | 12 | Save prompts and save-info box | 7 |
+| `src/ui/game3/shop_menu.lua` | 30 | Mart menu and clerk messages | 7 |
+| `src/ui/game3/start_menu.lua` | 7 | Start menu labels -- translated through the `ui.start_menu.items` hook | translated |
+| `src/ui/game3/stat_growth.lua` | 6 | Level-up stat names | 7 |
+| `src/ui/game3/summary_menu.lua` | 52 | Summary page titles and labels | 7 |
+| `src/ui/game3/tm_case.lua` | 19 | TM Case actions and messages | 7 |
+| `src/ui/game3/trainer_card.lua` | 21 | Trainer card labels | 7 |
+
+### Translated via a compromise (`engine-contract-gap`)
+
+- **TM/HM pickup** (`Text_FoundTMHMContainsMove`): gen1recomp's item-ball script buffers only the TM's name and prints `"[PLAYER] found\n[STR_VAR_2]!"`, while the cart's line also names the move from `STR_VAR_1`. Each language keeps the first clause of its own cart row (`overrides/<lang>/frlg/dialogue.json`); German, whose cart line names only the move, is reworded around the TM name.
+- **Corrupted-save warning**: `src/ui/game3/boot.lua:225-228` prints the cart's `gText_SaveFileCorrupted` as two `Strings()` pages. The official translation is split at its sentence (Italian: paragraph) boundary.
+- **Shared `OFF`/`NORMAL` keys**: `Strings("OFF")` serves both the volume and music-filter rows, and the project's existing Red/Blue/Gold wording is reused for it.
+- **Named glyph runs**: the cart's superscript ordinals (`[SUPER_E]`/`[SUPER_ER]`/`[SUPER_RE]`, French "1er"/"2e", Spanish "1.er") and the `[POKEBLOCK]` glyph run have no single character FrlgFont can map, so translations spell them out as plain letters ("er", "POKéBLOCK").
+- **Context-dependent shared keys**: `UPPER` (screen position) and `LIGHT` (vibration strength) reuse the Red/Blue/Gold keys, whose wording there is the naming keyboard's upper case and the light/lamp sense; FireRed overrides give them the Options meaning.
+- **Port-added Options rows** (group labels, OVERWORLD/BATTLE/MENU SPEED, RETURN TO MAIN MENU?) have no cart text; they are AI-composed per language following the project's existing wording (`overrides/<lang>/frlg/engine.json`, `reason: "engine-original"`).
 
 ## Engine bugs surfaced by TTF mode (not translation gaps)
 

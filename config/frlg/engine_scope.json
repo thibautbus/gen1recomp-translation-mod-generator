@@ -1,0 +1,363 @@
+{
+  "schema": "gen1recomp-translation-mods/frlg-engine-scope",
+  "version": 1,
+  "source_revision": "2c0f3ac04b3f25c46b32c5e82599c2f8b74934c4",
+  "description": "Strings() keys reachable from gen1recomp's game3 (FireRed) runtime: every literal Strings() callsite under src/{core,ui,battle,world}/game3, plus every text value option_rows.lua passes to Strings() through a variable (group and speed-row labels, and what the Letterbox, VideoMode, Orientation, ScreenPosition, FrameCap, VSync, Performance, Zoom, VoidFill and TouchControls label functions return). Language-neutral values those functions also return are left out: numbers and multipliers (FPS caps, tilt angles, 4X-6X FAITHFUL RATIO levels, 59.73HZ/60HZ, FrameCap's \"N (NHZ)\" form). A qid names the FireRed cart's own row for a menu the cart has; the rest are port-added rows. Values that option_rows.lua returns without Strings() (cartLabel: SLOW/MID/FAST, ON/OFF, SHIFT/SET, MONO/STEREO, HELP/LR/L=A) are not reachable and are tracked in docs/upstream-fixes.md. \"Go back to the\\nprevious menu.\" is excluded although the Strings scanner sees it: src/ui/game3/pc_menu.lua wraps it in Strings.source(), which returns the English text, and draw_status_lines prints it without a Strings() lookup.",
+  "keys": {
+    "%d OPTIONS": {
+      "callsite": "src/ui/game3/option_rows.lua:413 (option group row value)",
+      "kind": "literal"
+    },
+    "%dX": {
+      "callsite": "src/ui/game3/option_rows.lua:40 (game speed value)",
+      "kind": "literal"
+    },
+    "1X": {
+      "callsite": "src/ui/game3/option_rows.lua:110 (FILTERS value via Strings)",
+      "kind": "dynamic"
+    },
+    "2X": {
+      "callsite": "src/ui/game3/option_rows.lua:110 (FILTERS value via Strings)",
+      "kind": "dynamic"
+    },
+    "3X": {
+      "callsite": "src/ui/game3/option_rows.lua:110 (FILTERS value via Strings)",
+      "kind": "dynamic"
+    },
+    "ADAPTIVE": {
+      "callsite": "src/ui/game3/option_rows.lua:234 (VSync.label; also ON/OFF)",
+      "kind": "dynamic"
+    },
+    "AUDIO": {
+      "callsite": "src/ui/game3/option_rows.lua:412 (Rows.GROUPS label via Strings(g.label))",
+      "kind": "dynamic"
+    },
+    "AUTO": {
+      "callsite": "src/ui/game3/option_rows.lua:154 (Letterbox.label)",
+      "kind": "dynamic"
+    },
+    "BALANCED": {
+      "callsite": "src/ui/game3/option_rows.lua:260 (Performance.label; also AUTO)",
+      "kind": "dynamic"
+    },
+    "BATTLE OPTIONS": {
+      "callsite": "src/ui/game3/option_rows.lua:412 (Rows.GROUPS label via Strings(g.label))",
+      "kind": "dynamic"
+    },
+    "BATTLE SCENE": {
+      "callsite": "src/ui/game3/option_rows.lua:69",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_BattleScene"
+    },
+    "BATTLE SPEED": {
+      "callsite": "src/ui/game3/option_rows.lua:45 (speedRow label via Strings(label))",
+      "kind": "dynamic"
+    },
+    "BATTLE STYLE": {
+      "callsite": "src/ui/game3/option_rows.lua:74",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_BattleStyle"
+    },
+    "BLACK": {
+      "callsite": "src/ui/game3/option_rows.lua:154 (Letterbox.label)",
+      "kind": "dynamic"
+    },
+    "BORDERLESS": {
+      "callsite": "src/ui/game3/option_rows.lua:167 (VideoMode.modeLabel)",
+      "kind": "dynamic"
+    },
+    "BUTTON MODE": {
+      "callsite": "src/ui/game3/option_rows.lua:121",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_ButtonMode"
+    },
+    "CANCEL": {
+      "callsite": "src/core/game3/scripting/adapters.lua:466 (nurse HEAL/CANCEL choice)",
+      "kind": "literal"
+    },
+    "CENTER": {
+      "callsite": "src/ui/game3/option_rows.lua:206 (ScreenPosition.label)",
+      "kind": "dynamic"
+    },
+    "CENTERED": {
+      "callsite": "src/ui/game3/option_rows.lua:143 (UI layout value)",
+      "kind": "literal"
+    },
+    "DISPLAY": {
+      "callsite": "src/ui/game3/option_rows.lua:221 (FrameCap.label)",
+      "kind": "dynamic"
+    },
+    "DYNAMIC": {
+      "callsite": "src/ui/game3/option_rows.lua:143 (UI layout value)",
+      "kind": "literal"
+    },
+    "EXTRAS": {
+      "callsite": "src/ui/game3/option_rows.lua:412 (Rows.GROUPS label via Strings(g.label))",
+      "kind": "dynamic"
+    },
+    "FAITHFUL RATIO": {
+      "callsite": "src/ui/game3/option_rows.lua:190",
+      "kind": "literal"
+    },
+    "FIT": {
+      "callsite": "src/ui/game3/option_rows.lua:289 (Zoom.offsetLabel)",
+      "kind": "dynamic"
+    },
+    "FRAME": {
+      "callsite": "src/ui/game3/option_rows.lua:126",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_Frame"
+    },
+    "GRAPHICS": {
+      "callsite": "src/ui/game3/option_rows.lua:412 (Rows.GROUPS label via Strings(g.label))",
+      "kind": "dynamic"
+    },
+    "HEAL": {
+      "callsite": "src/core/game3/scripting/adapters.lua:466 (nurse HEAL/CANCEL choice)",
+      "kind": "literal"
+    },
+    "HIGH": {
+      "callsite": "src/ui/game3/option_rows.lua:260 (Performance.label; also AUTO)",
+      "kind": "dynamic"
+    },
+    "HM moves can't be\nforgotten now.": {
+      "callsite": "src/ui/game3/summary_menu.lua:627",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_PokeSum_HmMovesCantBeForgotten"
+    },
+    "IN1": {
+      "callsite": "src/ui/game3/option_rows.lua:289 (Zoom.offsetLabel)",
+      "kind": "dynamic"
+    },
+    "IN2": {
+      "callsite": "src/ui/game3/option_rows.lua:289 (Zoom.offsetLabel)",
+      "kind": "dynamic"
+    },
+    "IN3": {
+      "callsite": "src/ui/game3/option_rows.lua:289 (Zoom.offsetLabel)",
+      "kind": "dynamic"
+    },
+    "IN4": {
+      "callsite": "src/ui/game3/option_rows.lua:289 (Zoom.offsetLabel)",
+      "kind": "dynamic"
+    },
+    "KEY BAR": {
+      "callsite": "src/ui/game3/option_rows.lua:345",
+      "kind": "literal"
+    },
+    "LANDSCAPE": {
+      "callsite": "src/ui/game3/option_rows.lua:180 (Orientation.modeLabel; also AUTO)",
+      "kind": "dynamic"
+    },
+    "LIGHT": {
+      "callsite": "src/ui/game3/option_rows.lua:334 (TouchControls.hapticLabel; also OFF)",
+      "kind": "dynamic"
+    },
+    "LOGIC CLOCK": {
+      "callsite": "src/ui/game3/option_rows.lua:244",
+      "kind": "literal"
+    },
+    "LOW": {
+      "callsite": "src/ui/game3/option_rows.lua:260 (Performance.label; also AUTO)",
+      "kind": "dynamic"
+    },
+    "MAP": {
+      "callsite": "src/ui/game3/option_rows.lua:302 (src/core/game3/void_fill.lua VoidFill.label; also BLACK)",
+      "kind": "dynamic"
+    },
+    "MAX FPS": {
+      "callsite": "src/ui/game3/option_rows.lua:218",
+      "kind": "literal"
+    },
+    "MENU SPEED": {
+      "callsite": "src/ui/game3/option_rows.lua:45 (speedRow label via Strings(label))",
+      "kind": "dynamic"
+    },
+    "MUSIC FILTER": {
+      "callsite": "src/ui/game3/option_rows.lua:108",
+      "kind": "literal"
+    },
+    "MUSIC VOL": {
+      "callsite": "src/ui/game3/option_rows.lua:90",
+      "kind": "literal"
+    },
+    "NO": {
+      "callsite": "src/ui/game3/start_menu.lua:205 (return-to-main-menu prompt)",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_No"
+    },
+    "NORMAL": {
+      "callsite": "src/ui/game3/option_rows.lua:39 (game speed 1X)",
+      "kind": "literal"
+    },
+    "OFF": {
+      "callsite": "src/ui/game3/option_rows.lua:27 and :110 (volume 0, music filter off)",
+      "kind": "literal"
+    },
+    "ON": {
+      "callsite": "src/ui/game3/option_rows.lua:318 and :346 (touch pad, key bar)",
+      "kind": "literal"
+    },
+    "ORIENTATION": {
+      "callsite": "src/ui/game3/option_rows.lua:177",
+      "kind": "literal"
+    },
+    "OUT1": {
+      "callsite": "src/ui/game3/option_rows.lua:289 (Zoom.offsetLabel)",
+      "kind": "dynamic"
+    },
+    "OUT2": {
+      "callsite": "src/ui/game3/option_rows.lua:289 (Zoom.offsetLabel)",
+      "kind": "dynamic"
+    },
+    "OUT3": {
+      "callsite": "src/ui/game3/option_rows.lua:289 (Zoom.offsetLabel)",
+      "kind": "dynamic"
+    },
+    "OUT4": {
+      "callsite": "src/ui/game3/option_rows.lua:289 (Zoom.offsetLabel)",
+      "kind": "dynamic"
+    },
+    "OVERWORLD SPEED": {
+      "callsite": "src/ui/game3/option_rows.lua:45 (speedRow label via Strings(label))",
+      "kind": "dynamic"
+    },
+    "PALETTE": {
+      "callsite": "src/ui/game3/option_rows.lua:154 (Letterbox.label)",
+      "kind": "dynamic"
+    },
+    "PERFORMANCE": {
+      "callsite": "src/ui/game3/option_rows.lua:257",
+      "kind": "literal"
+    },
+    "PORTRAIT": {
+      "callsite": "src/ui/game3/option_rows.lua:180 (Orientation.modeLabel; also AUTO)",
+      "kind": "dynamic"
+    },
+    "RETURN TO MAIN\nMENU?": {
+      "callsite": "src/ui/game3/start_menu.lua:191",
+      "kind": "literal"
+    },
+    "REVERSE LANDSCAPE": {
+      "callsite": "src/ui/game3/option_rows.lua:180 (Orientation.modeLabel; also AUTO)",
+      "kind": "dynamic"
+    },
+    "SCREEN POS": {
+      "callsite": "src/ui/game3/option_rows.lua:203",
+      "kind": "literal"
+    },
+    "SFX VOL": {
+      "callsite": "src/ui/game3/option_rows.lua:99",
+      "kind": "literal"
+    },
+    "SKIN": {
+      "callsite": "src/ui/game3/option_rows.lua:206 (ScreenPosition.label)",
+      "kind": "dynamic"
+    },
+    "SOUND": {
+      "callsite": "src/ui/game3/option_rows.lua:80",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_Sound"
+    },
+    "SPEED": {
+      "callsite": "src/ui/game3/option_rows.lua:412 (Rows.GROUPS label via Strings(g.label))",
+      "kind": "dynamic"
+    },
+    "STRONG": {
+      "callsite": "src/ui/game3/option_rows.lua:334 (TouchControls.hapticLabel; also OFF)",
+      "kind": "dynamic"
+    },
+    "TEXT SPEED": {
+      "callsite": "src/ui/game3/option_rows.lua:60",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_TextSpeed"
+    },
+    "TILT": {
+      "callsite": "src/ui/game3/option_rows.lua:271",
+      "kind": "literal"
+    },
+    "TOP": {
+      "callsite": "src/ui/game3/option_rows.lua:206 (ScreenPosition.label)",
+      "kind": "dynamic"
+    },
+    "TOUCH PAD": {
+      "callsite": "src/ui/game3/option_rows.lua:314",
+      "kind": "literal"
+    },
+    "TREES": {
+      "callsite": "src/ui/game3/option_rows.lua:302 (src/core/game3/void_fill.lua VoidFill.label; also BLACK)",
+      "kind": "dynamic"
+    },
+    "TYPE": {
+      "callsite": "src/ui/game3/option_rows.lua:128 (frame type prefix)",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_FrameType"
+    },
+    "The previous save file will be\nloaded.": {
+      "callsite": "src/ui/game3/boot.lua:227 (second page of gText_SaveFileCorrupted)",
+      "kind": "literal"
+    },
+    "The save file has been\ndeleted...": {
+      "callsite": "src/ui/game3/boot.lua:223",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_SaveFileHasBeenDeleted"
+    },
+    "The save file is corrupted.": {
+      "callsite": "src/ui/game3/boot.lua:226 (first page of gText_SaveFileCorrupted)",
+      "kind": "literal"
+    },
+    "UI LAYOUT": {
+      "callsite": "src/ui/game3/option_rows.lua:141",
+      "kind": "literal"
+    },
+    "UI LETTERBOX": {
+      "callsite": "src/ui/game3/option_rows.lua:151",
+      "kind": "literal"
+    },
+    "UPPER": {
+      "callsite": "src/ui/game3/option_rows.lua:206 (ScreenPosition.label)",
+      "kind": "dynamic"
+    },
+    "VIBRATION": {
+      "callsite": "src/ui/game3/option_rows.lua:331",
+      "kind": "literal"
+    },
+    "VIDEO": {
+      "callsite": "src/ui/game3/option_rows.lua:412 (Rows.GROUPS label via Strings(g.label))",
+      "kind": "dynamic"
+    },
+    "VIDEO MODE": {
+      "callsite": "src/ui/game3/option_rows.lua:164",
+      "kind": "literal"
+    },
+    "VOID FILL": {
+      "callsite": "src/ui/game3/option_rows.lua:299",
+      "kind": "literal"
+    },
+    "VSYNC": {
+      "callsite": "src/ui/game3/option_rows.lua:231",
+      "kind": "literal"
+    },
+    "WATER": {
+      "callsite": "src/ui/game3/option_rows.lua:302 (src/core/game3/void_fill.lua VoidFill.label; also BLACK)",
+      "kind": "dynamic"
+    },
+    "WHITE": {
+      "callsite": "src/ui/game3/option_rows.lua:154 (Letterbox.label)",
+      "kind": "dynamic"
+    },
+    "WINDOWED": {
+      "callsite": "src/ui/game3/option_rows.lua:167 (VideoMode.modeLabel)",
+      "kind": "dynamic"
+    },
+    "YES": {
+      "callsite": "src/ui/game3/start_menu.lua:204 (return-to-main-menu prompt)",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_Yes"
+    },
+    "ZOOM": {
+      "callsite": "src/ui/game3/option_rows.lua:286",
+      "kind": "literal"
+    }
+  }
+}
