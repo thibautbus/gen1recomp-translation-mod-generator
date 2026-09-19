@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 from pipeline import frlg_join, frlg_text
@@ -418,6 +419,89 @@ class FrlgEngineStringTests(unittest.TestCase):
         path.write_text(json.dumps({"entries": {"VSYNC": {"override": "⠁"}}}), encoding="utf-8")
         with self.assertRaises(ValueError):
             join_frlg_engine_strings({"VSYNC": {"callsite": "x"}}, self.corpus, self.charmap, root=self.base)
+
+
+class FrlgEngineTemplateTests(unittest.TestCase):
+    """engine_template against pret's charmap (the placeholders need it)."""
+
+    def setUp(self):
+        path = ROOT / ".cache" / "dependencies" / "pret" / "charmap" / "charmap.txt"
+        if not path.is_file():
+            self.skipTest("pinned pret charmap unavailable")
+        self.charmap = load_charmap(path)
+
+    def template(self, key, english, target, **kw):
+        return frlg_join.engine_template(key, english, target, self.charmap, "fr", **kw)
+
+    def test_same_order_keeps_plain_directives(self):
+        self.assertEqual(self.template("%s\nfell asleep!", "[B_EFF_NAME_WITH_PREFIX]\\nfell asleep!",
+                                       "[B_EFF_NAME_WITH_PREFIX]\\ns'endort!", battle=True),
+                         ("%s\ns'endort!", "exact"))
+
+    def test_reordered_values_are_numbered(self):
+        value, _ = self.template(
+            "%s knocked off\n%s's %s!",
+            "[B_ATK_NAME_WITH_PREFIX] knocked off\\n[B_DEF_NAME_WITH_PREFIX]'s [B_LAST_ITEM]!",
+            "[B_ATK_NAME_WITH_PREFIX] fait tomber\\n[B_LAST_ITEM]\\ndu [B_DEF_NAME_WITH_PREFIX]!", battle=True)
+        self.assertEqual(value, "%1$s fait tomber\n%3$s\ndu %2$s!")
+
+    def test_directive_flags_follow_their_value(self):
+        value, _ = self.template("%s gave %03d", "[STR_VAR_1] gave [STR_VAR_2]", "[STR_VAR_2] de [STR_VAR_1]")
+        self.assertEqual(value, "%2$03d de %1$s")
+
+    def test_line_breaks_may_differ(self):
+        value, how = self.template("%s fainted!", "[B_EFF_NAME_WITH_PREFIX]\\nfainted!\\p",
+                                   "[B_EFF_NAME_WITH_PREFIX]\\nest KO!", battle=True)
+        self.assertEqual((value, how), ("%s\nest KO!", "loose"))
+
+    def test_a_trailing_page_mark_of_the_key_is_kept(self):
+        value, _ = self.template("This world…\f", "This world…", "Ce monde…")
+        self.assertEqual(value, "Ce monde…\f")
+
+    def test_spelled_out_buffers_and_keypad_icons_stay_tokens(self):
+        self.assertEqual(self.template("{STR_VAR_1} used SURF!", "[STR_VAR_1] used SURF!", "[STR_VAR_1] utilise SURF!")[0],
+                         "{STR_VAR_1} utilise SURF!")
+        self.assertEqual(self.template("{A_BUTTON}OK", "[A_BUTTON]OK", "[A_BUTTON]VALE")[0], "{A_BUTTON}VALE")
+
+    def test_rows_that_cannot_stand_for_the_key_are_refused(self):
+        with self.assertRaises(ValueError):  # the English says something else
+            self.template("%s fled!", "[B_ATK_NAME_WITH_PREFIX] fainted!", "x", battle=True)
+        with self.assertRaises(ValueError):  # the translation drops a value
+            self.template("%s used %s!", "[STR_VAR_1] used [STR_VAR_2]!", "[STR_VAR_1] attaque!")
+        with self.assertRaises(ValueError):  # a repeated value cannot be renumbered
+            self.template("%s, %s and %s", "[STR_VAR_1], [STR_VAR_2] and [STR_VAR_1]",
+                          "[STR_VAR_2], [STR_VAR_1] et [STR_VAR_1]")
+
+    def test_cart_padding_is_trimmed(self):
+        self.assertEqual(self.template("NAME:", "NAME: ", "NOM / ")[0], "NOM /")
+
+    def test_values_strings_would_reject_are_refused(self):
+        check = frlg_join.check_engine_directives
+        check("%s's %s\nrose!", "%2$s de\n%1$s monte!")
+        check("%s is\nabout to use %s.", "%2$s arrive.")  # an argument may be left out
+        for bad in ("%s de\n%s %s", "%2$s de %s", "%3$s x", "%1$d x"):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                check("%s's %s\nrose!", bad)
+
+    def test_join_applies_fills_and_contexts(self):
+        from pipeline.frlg_join import FrlgCorpus
+        rows = [("q.rain", "[B_SCR_ACTIVE_NAME_WITH_PREFIX]'s [B_SCR_ACTIVE_ABILITY]\\nmade it rain!",
+                 "[B_SCR_ACTIVE_ABILITY] du\\n[B_SCR_ACTIVE_NAME_WITH_PREFIX] fait pleuvoir!"),
+                ("q.drizzle", "DRIZZLE", "CRACHIN"),
+                ("q.shift", "SHIFT", "CHOIX")]
+        corpus = FrlgCorpus("fr", tuple(r[0] for r in rows), tuple(r[1] for r in rows),
+                            tuple(r[2] for r in rows), {r[0]: i for i, r in enumerate(rows)}, {})
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp)
+        scope = {
+            "%s's DRIZZLE\nmade it rain!": {"callsite": "x", "qid": "q.rain", "fill": {"[B_SCR_ACTIVE_ABILITY]": "q.drizzle"}},
+            "option.battleStyle|SHIFT": {"callsite": "x", "qid": "q.shift"},
+        }
+        with unittest.mock.patch.object(frlg_join, "is_battle_qid", lambda qid: qid == "q.rain"):
+            values, stats = join_frlg_engine_strings(scope, corpus, self.charmap, root=tmp)
+        self.assertEqual(values, {"%s's DRIZZLE\nmade it rain!": "CRACHIN du\n%s fait pleuvoir!",
+                                  "option.battleStyle|SHIFT": "CHOIX"})
+        self.assertEqual(stats["fallback_english"], [])
 
 
 class FrlgModTests(unittest.TestCase):

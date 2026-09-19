@@ -568,12 +568,189 @@ def _engine_value(text: str, charmap: PretCharmap, language: str) -> str:
     return "".join(parts)
 
 
+# A Strings() directive (``%s``, ``%03d``, ``%-5s``, numbered ``%2$s``);
+# ``%%`` is a literal.
+_ENGINE_DIRECTIVE = re.compile(r"%(%|(?:\d+\$)?[-+ #0]*\d*(?:\.\d+)?[A-Za-z])")
+_DYNAMIC = frozenset({"strvar", "ph"})
+_KEYPAD = re.compile(r"\[((?:A|B|L|R|START|SELECT)_BUTTON|DPAD_[A-Z]+)\]")
+
+
+def _key_parts(key: str) -> tuple[list[str], list[str]]:
+    """Literal chunks around a key's directives, and the directives."""
+    chunks, directives, start = [], [], 0
+    literal = ""
+    for match in _ENGINE_DIRECTIVE.finditer(key):
+        literal += key[start:match.start()]
+        start = match.end()
+        if match.group(1) == "%":
+            literal += "%"
+            continue
+        chunks.append(literal)
+        directives.append(match.group(1))
+        literal = ""
+    chunks.append(literal + key[start:])
+    return chunks, directives
+
+
+def _corpus_parts(text: str, charmap: PretCharmap, language: str, *, battle: bool = False,
+                  literal_buffers: bool = False, paragraph: str = "\n") -> tuple[list[str], list[tuple]]:
+    """Literal chunks around a corpus row's runtime values, and those values.
+
+    Field text keeps the player's and rival's names as the ``{PLAYER}`` and
+    ``{RIVAL}`` tokens the game3 runtime substitutes itself, and so are the
+    ``{STR_VAR_n}`` buffers when the key spells them out (``literal_buffers``);
+    other buffers become directive slots.  Battle text (``battle``) uses
+    another placeholder table, which the field decoder reads as names and
+    buffers: there, every placeholder is a slot, identified by its code.
+    A paragraph becomes ``paragraph`` and a trailing one is dropped; text
+    effects (sound waits, colours) are dropped too.
+    """
+    chunks, values, current = [], [], []
+    segments = []
+    # Keypad icons ([A_BUTTON]) are the {A_BUTTON} tokens FrlgFont draws; the
+    # field decoder has no glyph for them.
+    for index, piece in enumerate(_KEYPAD.split(text)):
+        if index % 2:
+            segments.append({"t": "text", "s": "{%s}" % piece})
+        elif piece:
+            segments += [segment for segment in corpus_ir(piece, charmap, language=language)
+                         if segment["t"] != "eos"]
+    while segments and segments[-1]["t"] in {"para", "nl", "scroll"}:
+        segments.pop()
+    for segment in segments:
+        kind = segment["t"]
+        if kind == "text":
+            current.append(segment["s"])
+        elif kind in {"nl", "scroll"}:
+            current.append("\n")
+        elif kind == "para":
+            current.append(paragraph)
+        elif battle and kind in {"player", "rival", "strvar", "ph"}:
+            chunks.append("".join(current))
+            current = []
+            values.append((kind, segment.get("n"), segment.get("code")))
+        elif kind == "player":
+            current.append("{PLAYER}")
+        elif kind == "rival":
+            current.append("{RIVAL}")
+        elif kind == "strvar" and literal_buffers:
+            current.append("{STR_VAR_%d}" % segment["n"])
+        elif kind in _DYNAMIC:
+            chunks.append("".join(current))
+            current = []
+            values.append((kind, segment.get("n"), segment.get("code")))
+    chunks.append("".join(current))
+    return chunks, values
+
+
+def _loose(text: str) -> str:
+    """Line breaks and paragraph marks count as spaces."""
+    return re.sub(r"(?:\\p|[\s\f])+", " ", text).strip()
+
+
+def _paragraph_mark(key: str) -> str:
+    """How ``key`` separates paragraphs, for the value to do the same."""
+    for mark in ("\f", "\\p", "\n\n"):
+        if mark in key:
+            return mark
+    return "\n"
+
+
+def engine_context_source(key: str) -> str:
+    """A context key ("option.battleStyle|SHIFT") reads as its English source."""
+    return key.split("|", 1)[1] if re.match(r"[a-z][\w.]*\|", key) else key
+
+
+def is_battle_qid(qid: str) -> bool:
+    return ".battle_message." in qid
+
+
+def apply_fills(text: str, fills: Mapping[str, str]) -> str:
+    """Put a corpus row's text in place of a placeholder the engine spells out."""
+    for placeholder, value in fills.items():
+        text = text.replace(placeholder, value)
+    return text
+
+
+def engine_template(key: str, english: str, target: str, charmap: PretCharmap,
+                    language: str, *, battle: bool = False) -> tuple[str, str]:
+    """A corpus row's translation as the Strings() value for ``key``.
+
+    The English row must read as the key, runtime values standing where the
+    key has directives; ``loose`` when only line breaks and paragraph marks
+    differ (the value then keeps the translation's own breaks).  Each
+    translated value keeps the directive of the English value it stands for.
+    When the translation orders them differently the directives are
+    numbered (``%2$s``), which Strings() maps back to its arguments.  Raises
+    ValueError when the row cannot stand for the key.
+    """
+    options = {"battle": battle, "literal_buffers": "{STR_VAR_" in key,
+               "paragraph": _paragraph_mark(key)}
+    key_chunks, directives = _key_parts(key)
+    en_chunks, en_values = _corpus_parts(english, charmap, "en", **options)
+    if len(en_values) != len(directives):
+        raise ValueError(f"{len(en_values)} runtime value(s) for {len(directives)} directive(s)")
+    if en_chunks == key_chunks:
+        how = "exact"
+    elif [_loose(c) for c in en_chunks] == [_loose(c) for c in key_chunks]:
+        how = "loose"
+    else:
+        raise ValueError("the English row does not read as the key")
+    chunks, values = _corpus_parts(target, charmap, language, **options)
+    if sorted(values, key=repr) != sorted(en_values, key=repr):
+        raise ValueError("the translation prints other runtime values than the English")
+    if values == en_values:
+        slots = [f"%{directive}" for directive in directives]
+    elif len(set(en_values)) != len(en_values):
+        raise ValueError("a repeated runtime value cannot be renumbered")
+    else:
+        positions = [en_values.index(value) for value in values]
+        slots = [f"%{index + 1}${directives[index]}" for index in positions]
+    parts = [chunks[0].replace("%", "%%")]
+    for slot, chunk in zip(slots, chunks[1:]):
+        parts.append(slot)
+        parts.append(chunk.replace("%", "%%"))
+    value = "".join(parts)
+    # Spaces the cart pads a label with ("NAME: ") are the key's to decide.
+    if not key.endswith(" "):
+        value = value.rstrip(" ")
+    if not key.startswith(" "):
+        value = value.lstrip(" ")
+    # A trailing page or line mark in the key is a pause the runtime acts on
+    # (Oak's "\f" waits for A); the corpus row's own trailing mark is dropped.
+    return value + re.search(r"(?:\f|\\p|\n)*$", key).group(0), how
+
+
+def check_engine_directives(key: str, value: str, language: str = "") -> None:
+    """Refuse a value Strings() would reject for ``key`` (src/core/Strings.lua):
+    numbered directives all or none, each naming one of the key's arguments,
+    and otherwise the key's directives in order."""
+    wanted = [d for d in (m.group(1) for m in _ENGINE_DIRECTIVE.finditer(key)) if d != "%"]
+    given = [d for d in (m.group(1) for m in _ENGINE_DIRECTIVE.finditer(value)) if d != "%"]
+    numbered = [d for d in given if re.match(r"\d+\$", d)]
+    where = f"FireRed engine string {key!r} ({language})"
+    if numbered:
+        if len(numbered) != len(given):
+            raise ValueError(f"{where}: mixes numbered and plain directives")
+        for directive in given:
+            index, spec = directive.split("$", 1)
+            if not 1 <= int(index) <= len(wanted) or spec[-1] != wanted[int(index) - 1][-1]:
+                raise ValueError(f"{where}: %{directive} does not name an argument of the key")
+    elif [d[-1] for d in given] != [d[-1] for d in wanted]:
+        raise ValueError(f"{where}: directives {given} for {wanted}")
+
+
 def _check_engine_glyphs(key: str, value: str, charmap: PretCharmap, language: str) -> None:
     """A Strings() value is drawn by FrlgFont too: refuse what it cannot print."""
     folds = {**LANGUAGE_FOLDS["*"], **LANGUAGE_FOLDS.get(language, {})}
     drawable = set(charmap.translation_glyphs.values())
-    for char in value:
-        if char == "\n":
+    # Directives are filled in at runtime ("%%" prints a percent sign), and
+    # {PLAYER}/{A_BUTTON}-style tokens are names or icons the runtime draws.
+    printed = _ENGINE_DIRECTIVE.sub(lambda m: "%" if m.group(1) == "%" else "", value)
+    printed = re.sub(r"\{[A-Z0-9_]+\}|\\p", "", printed)
+    for char in printed:
+        # the key's own characters are drawn in English already (↑↓ icons)
+        if char in "\n\f" or char in key:
             continue
         if folds.get(char, char) not in drawable:
             raise ValueError(f"FireRed engine string {key!r} ({language}): {char!r} has no FireRed glyph")
@@ -610,16 +787,35 @@ def join_frlg_engine_strings(
             if pair is None:
                 raise ValueError(f"FireRed engine scope row {key!r}: unknown qid {row['qid']}")
             english, target = pair
-            if _engine_value(english, charmap, "en") != key:
+            fills = row.get("fill") or {}
+            if fills:
+                rows = {placeholder: corpus.row(qid) for placeholder, qid in fills.items()}
+                if any(pair is None for pair in rows.values()):
+                    raise ValueError(f"FireRed engine scope row {key!r}: unknown fill qid")
+                english = apply_fills(english, {p: pair[0] for p, pair in rows.items()})
+                target = apply_fills(target, {p: pair[1] for p, pair in rows.items()}) if target else target
+                if any(not pair[1] for pair in rows.values()):
+                    target = ""
+            battle = is_battle_qid(row["qid"])
+            source = engine_context_source(key)
+            try:
+                engine_template(source, english, english, charmap, "en", battle=battle)
+            except ValueError as error:
                 raise ValueError(
-                    f"FireRed engine scope row {key!r}: {row['qid']} reads {english!r}")
+                    f"FireRed engine scope row {key!r}: {row['qid']} reads {english!r} ({error})") from None
             if target:
-                value, origin = _engine_value(target, charmap, language), "corpus"
-        elif key in shared:
-            value, origin = shared[key], "shared_override"
+                try:
+                    value, _how = engine_template(source, english, target, charmap, language, battle=battle)
+                    origin = "corpus"
+                except ValueError:
+                    value = None
+        if value is None and key in shared:
+            # Gold's text engine marks a scrolled line break with \v.
+            value, origin = shared[key].replace("\v", "\n"), "shared_override"
         if value is None:
             details[key] = "fallback_english"
             continue
+        check_engine_directives(engine_context_source(key), value, language)
         _check_engine_glyphs(key, value, charmap, language)
         details[key] = origin if value != key else "same_as_english"
         if value != key:
