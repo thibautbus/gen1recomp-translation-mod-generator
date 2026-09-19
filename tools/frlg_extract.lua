@@ -119,10 +119,9 @@ rom:clearCache()
 imports:_close()
 
 -- The text table exactly as a game3 boot builds it
--- (ExtractScripts.loadBundle): the BFS text, then the object-interaction
--- pack's own text on top.  Standard-script text (the curated nurse/PC
--- labels) is left out: it is engine-authored, not ROM text, and keyed by
--- label rather than by pointer.
+-- (ExtractScripts.loadBundle): the BFS text, which already carries the
+-- label-keyed standard-script text (merge_std_text in extract_scripts.lua),
+-- then the object-interaction pack's own text on top.
 stage("export_text", function()
   local text = assert(loadCached("scripts/text.lua"), "scripts/text.lua missing")
   local objects = loadCached("objects/pack.lua")

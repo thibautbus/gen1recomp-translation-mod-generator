@@ -73,6 +73,14 @@ LANGUAGE_FOLDS: Mapping[str, Mapping[str, str]] = {
     "de": {"„": "“", "“": "”", "‚": "‘", "‘": "’"},
 }
 
+# Named glyph runs the runtime cannot draw (no single character maps to them,
+# so FrlgFont has no way to reach the glyph): translations spell them out.
+# English rows keep the raw bytes, since they must reproduce the ROM's IR.
+TRANSLATION_TOKEN_TEXT: Mapping[str, str] = {
+    "SUPER_E": "e", "SUPER_ER": "er", "SUPER_RE": "re",
+    "POKEBLOCK": "POKéBLOCK",
+}
+
 # FC 0B (PLAY_BGM) and FC 10 (PLAY_SE) take a 16-bit song id.
 _SONG_COMMANDS = frozenset({b"\xfc\x0b", b"\xfc\x10"})
 
@@ -164,7 +172,15 @@ def encode(text: str, charmap: PretCharmap, *, language: str = "en") -> bytes:
     for match in _TOKEN_RE.finditer(text):
         token, escape, char = match.groups()
         if token is not None:
-            out += _encode_token(token, charmap)
+            if language != "en" and token in TRANSLATION_TOKEN_TEXT:
+                out += encode(TRANSLATION_TOKEN_TEXT[token], charmap, language=language)
+                continue
+            value = _encode_token(token, charmap)
+            if language != "en" and value[0] < 0xF7 and value != b"\x53\x54":
+                glyphs = charmap.translation_glyphs
+                if any(byte not in glyphs for byte in value):
+                    raise EncodeError(f"[{token}] has no glyph FireRed can draw")
+            out += value
         elif escape is not None:
             key = _CORPUS_ESCAPES.get(escape)
             if key is None:
@@ -254,14 +270,18 @@ def decode(data: bytes, glyphs: Mapping[int, str] = RUNTIME_CHARMAP) -> list[dic
                 skip = 5
             out.append({"t": "ext", "cmd": cmd})
             i += skip
-        elif c in (0xF8, 0xF9) and i + 1 < n:
+        elif c in (0xF8, 0xF9):
             # Keypad icon / extra symbol escapes: the runtime has no case for
-            # them, so it prints "?" and then the argument byte as a glyph of
-            # its own table.  Mirror that exactly: the translation glyph table
-            # would otherwise turn the argument into an accented letter.
+            # them, so it prints "?" and reads the argument byte as an
+            # ordinary byte of its own table.  Mirror that exactly: the
+            # translation glyph table would otherwise turn the argument into
+            # an accented letter.  A control byte or the PK ligature is left
+            # to the main loop, as the runtime does.
             buf.append("?")
-            buf.append(RUNTIME_CHARMAP.get(data[i + 1], "?"))
-            i += 2
+            i += 1
+            if i < n and data[i] < 0xF7 and data[i] != 0x53:
+                buf.append(RUNTIME_CHARMAP.get(data[i], "?"))
+                i += 1
         else:
             glyph = glyphs.get(c)
             if glyph is not None:

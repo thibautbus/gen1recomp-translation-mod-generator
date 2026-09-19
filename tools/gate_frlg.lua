@@ -17,7 +17,7 @@
 --   * persistence: whether the name patches survive the second
 --     Pokemon.install(cache) that Runtime.start performs on entering the
 --     field;
---   * glyphs: how many characters of the shipped dialogue FrlgFont.glyphId
+--   * glyphs: how many characters of the shipped catalogs FrlgFont.glyphId
 --     maps to glyph 0 (a blank) although the ROM font has them;
 --   * strings: whether Strings() answers from the merged catalog at all.
 --
@@ -236,21 +236,31 @@ for key, value in pairs(before) do
                        survives = value == after[key] }
 end
 
--- Characters the shipped dialogue uses that FrlgFont draws as glyph 0.
+-- Characters of every shipped catalog that FrlgFont draws as glyph 0: the
+-- dialogue IR's text segments and every string value of the other catalogs
+-- (names, descriptions, start menu, Strings() values).
 local FrlgFont = require("src.ui.game3.frlg_font")
-local blank = {}
+local blank, blankByCatalog = {}, {}
 local blankTotal = 0
-local body = readFile(modDir .. "/lang/dialogue.lua")
-local chunk = body and loadstring(body)
-local catalog = chunk and chunk() or {}
-for _, ir in pairs(catalog) do
-  for _, segment in ipairs(ir) do
-    if segment.t == "text" then
-      for char in segment.s:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
-        if char ~= " " and FrlgFont.glyphId(char) == 0 then
-          blank[char] = (blank[char] or 0) + 1
-          blankTotal = blankTotal + 1
-        end
+local function countBlanks(catalogName, text)
+  for char in text:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
+    if char ~= " " and char ~= "\n" and FrlgFont.glyphId(char) == 0 then
+      blank[char] = (blank[char] or 0) + 1
+      blankByCatalog[catalogName] = (blankByCatalog[catalogName] or 0) + 1
+      blankTotal = blankTotal + 1
+    end
+  end
+end
+for _, catalogName in ipairs({ "dialogue", "species_names", "move_names", "item_names",
+    "item_descriptions", "trainer_names", "trainer_class_names", "start_menu", "strings" }) do
+  local body = readFile(modDir .. "/lang/" .. catalogName .. ".lua")
+  local chunk = body and loadstring(body)
+  for _, value in pairs(chunk and chunk() or {}) do
+    if type(value) == "string" then
+      countBlanks(catalogName, value)
+    elseif type(value) == "table" then
+      for _, segment in ipairs(value) do
+        if segment.t == "text" then countBlanks(catalogName, segment.s) end
       end
     end
   end
@@ -259,7 +269,7 @@ end
 local report = {
   failures = failures,
   persistence = persistence,
-  blank_glyphs = { total = blankTotal, characters = blank },
+  blank_glyphs = { total = blankTotal, characters = blank, by_catalog = blankByCatalog },
   strings_live = stringsLive,
 }
 local out = assert(io.open(reportPath, "wb"))

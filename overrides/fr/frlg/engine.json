@@ -42,6 +42,31 @@
       "reason": "engine-original",
       "provenance": "Options group label added by gen1recomp; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
     },
+    "IN1": {
+      "override": "IN1",
+      "reason": "engine-original",
+      "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
+    },
+    "IN2": {
+      "override": "IN2",
+      "reason": "engine-original",
+      "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
+    },
+    "IN3": {
+      "override": "IN3",
+      "reason": "engine-original",
+      "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
+    },
+    "IN4": {
+      "override": "IN4",
+      "reason": "engine-original",
+      "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
+    },
+    "LIGHT": {
+      "override": "LÉGÈRE",
+      "reason": "engine-original",
+      "provenance": "VIBRATION strength value; overrides the shared LIGHT key, whose Red/Blue/Gold wording LUMIERE translates the light/lamp sense."
+    },
     "MENU SPEED": {
       "override": "VIT. MENUS",
       "reason": "engine-original",
@@ -52,15 +77,45 @@
       "reason": "engine-original",
       "provenance": "Game speed 1X value; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
     },
+    "OUT1": {
+      "override": "OUT1",
+      "reason": "engine-original",
+      "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
+    },
+    "OUT2": {
+      "override": "OUT2",
+      "reason": "engine-original",
+      "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
+    },
+    "OUT3": {
+      "override": "OUT3",
+      "reason": "engine-original",
+      "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
+    },
+    "OUT4": {
+      "override": "OUT4",
+      "reason": "engine-original",
+      "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
+    },
     "OVERWORLD SPEED": {
       "override": "VIT. EXPLORATION",
       "reason": "engine-original",
       "provenance": "Options row added by gen1recomp; abbreviated like the cart's VIT. TEXTE."
     },
+    "PALETTE": {
+      "override": "PALETTE",
+      "reason": "engine-original",
+      "provenance": "Letterbox fill value added by gen1recomp; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    },
     "RETURN TO MAIN\nMENU?": {
       "override": "RETOURNER AU MENU\nPRINCIPAL?",
       "reason": "engine-original",
       "provenance": "Start-menu exit prompt added by gen1recomp (src/ui/game3/start_menu.lua); AI-composed, kept to the English two-line layout."
+    },
+    "SKIN": {
+      "override": "SKIN",
+      "reason": "engine-original",
+      "provenance": "Screen-position value shown while a device skin is active; same word as the Options row itself in every language."
     },
     "The previous save file will be\nloaded.": {
       "override": "Le fichier précédent sera\nchargé.",
@@ -71,6 +126,11 @@
       "override": "Fichier de sauvegarde corrompu.",
       "reason": "engine-contract-gap",
       "provenance": "First sentence of frlg.common.strings.gText_SaveFileCorrupted; src/ui/game3/boot.lua prints the cart's message as two Strings() pages, so the official translation is split at its sentence boundary."
+    },
+    "UPPER": {
+      "override": "HAUT",
+      "reason": "engine-original",
+      "provenance": "SCREEN POS value (the screen sits higher); overrides the shared UPPER key, whose Red/Blue/Gold wording MAJ is the naming keyboard's upper case."
     },
     "VIDEO": {
       "override": "VIDEO",

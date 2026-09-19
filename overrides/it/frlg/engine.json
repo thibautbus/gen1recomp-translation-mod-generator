@@ -37,20 +37,75 @@
       "reason": "engine-original",
       "provenance": "Options row added by gen1recomp; abbreviated like the project's VELOC. TESTO (overrides/it/gsc/engine.json), LOTTA as in OPZIONI LOTTA."
     },
+    "IN1": {
+      "override": "IN1",
+      "reason": "engine-original",
+      "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
+    },
+    "IN2": {
+      "override": "IN2",
+      "reason": "engine-original",
+      "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
+    },
+    "IN3": {
+      "override": "IN3",
+      "reason": "engine-original",
+      "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
+    },
+    "IN4": {
+      "override": "IN4",
+      "reason": "engine-original",
+      "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
+    },
+    "LIGHT": {
+      "override": "LEGGERA",
+      "reason": "engine-original",
+      "provenance": "VIBRATION strength value; overrides the shared LIGHT key, whose Red/Blue/Gold wording LUCE translates the light/lamp sense."
+    },
     "MENU SPEED": {
       "override": "VEL. MENU",
       "reason": "engine-original",
       "provenance": "Options row added by gen1recomp; abbreviated like the project's VELOC. TESTO."
+    },
+    "OUT1": {
+      "override": "OUT1",
+      "reason": "engine-original",
+      "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
+    },
+    "OUT2": {
+      "override": "OUT2",
+      "reason": "engine-original",
+      "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
+    },
+    "OUT3": {
+      "override": "OUT3",
+      "reason": "engine-original",
+      "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
+    },
+    "OUT4": {
+      "override": "OUT4",
+      "reason": "engine-original",
+      "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
     },
     "OVERWORLD SPEED": {
       "override": "VEL. ESPLORAZIONE",
       "reason": "engine-original",
       "provenance": "Options row added by gen1recomp; abbreviated like the project's VELOC. TESTO."
     },
+    "PALETTE": {
+      "override": "PALETTA",
+      "reason": "engine-original",
+      "provenance": "Letterbox fill value added by gen1recomp; AI-composed."
+    },
     "RETURN TO MAIN\nMENU?": {
       "override": "TORNARE AL MENU\nPRINCIPALE?",
       "reason": "engine-original",
       "provenance": "Start-menu exit prompt added by gen1recomp (src/ui/game3/start_menu.lua); AI-composed, kept to the English two-line layout."
+    },
+    "SKIN": {
+      "override": "SKIN",
+      "reason": "engine-original",
+      "provenance": "Screen-position value shown while a device skin is active; same word as the Options row itself in every language."
     },
     "The previous save file will be\nloaded.": {
       "override": "Saranno caricati i dati\nprecedenti.",
@@ -61,6 +116,11 @@
       "override": "Dati di gioco danneggiati.",
       "reason": "engine-contract-gap",
       "provenance": "First paragraph of frlg.common.strings.gText_SaveFileCorrupted; src/ui/game3/boot.lua prints the cart's message as two Strings() pages, matching the cart's own paragraph break."
+    },
+    "UPPER": {
+      "override": "ALTO",
+      "reason": "engine-original",
+      "provenance": "SCREEN POS value (the screen sits higher); overrides the shared UPPER key, whose Red/Blue/Gold wording MAIUS is the naming keyboard's upper case."
     },
     "VIDEO": {
       "override": "VIDEO",

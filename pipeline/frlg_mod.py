@@ -281,12 +281,16 @@ def join_frlg(
     }
 
 
-# Class names game3 compares as English strings: Trainers.info
-# (src/core/game3/scripting/trainers.lua:277) only substitutes the player's
-# chosen rival name when className == "RIVAL", so translating it (de/it
-# RIVALE) would print the ROM's placeholder name TERRY instead.  Kept in
-# English until the engine compares class ids (docs/upstream-fixes.md).
-ENGINE_KEYED_CLASS_NAMES = frozenset({"RIVAL"})
+# Class names game3 compares as English strings, kept in English until the
+# engine compares class ids (docs/upstream-fixes.md, FireRed):
+# - Trainers.info (src/core/game3/scripting/trainers.lua:277) only
+#   substitutes the player's chosen rival name when className == "RIVAL"
+#   (de/it RIVALE would print the ROM's placeholder name TERRY);
+# - the quest log (src/core/game3/quest_log_recorder.lua:94-100) records gym
+#   leader, Elite Four and champion wins from className == "LEADER",
+#   "ELITE FOUR" and "CHAMPION" (French LEADER reads CHAMPION, so every gym
+#   win would be logged as a champion win).
+ENGINE_KEYED_CLASS_NAMES = frozenset({"RIVAL", "LEADER", "ELITE FOUR", "CHAMPION"})
 
 
 def _trainer_class_names(trainers, trainer_ids, corpus, charmap) -> CatalogResult:
@@ -513,7 +517,7 @@ def build_frlg(
         log(f"  {label}: {section['translated']}/{section['total']} ({section['percent']:.2f}%)")
     blank = gate.get("blank_glyphs", {})
     if blank.get("total"):
-        log(f"  runtime limit: {blank['total']} dialogue characters have no glyph in FrlgFont yet"
+        log(f"  runtime limit: {blank['total']} shipped characters have no glyph in FrlgFont yet"
             " (docs/upstream-fixes.md, FireRed)")
 
     status("Packaging translation mod")

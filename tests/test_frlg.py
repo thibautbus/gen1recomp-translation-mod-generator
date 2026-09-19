@@ -1,4 +1,5 @@
 import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -145,6 +146,48 @@ class FrlgTextTests(unittest.TestCase):
     def test_decode_handles_names_and_unknown_bytes(self):
         self.assertEqual(decode(b"\xfd\x05\x99\xff"), [{"t": "ph", "code": 5}, text("?"), EOS])
         self.assertEqual(RUNTIME_CHARMAP[0xF0], ":")
+
+    def test_named_glyph_runs_are_spelled_out_or_refused_in_translations(self):
+        self.charmap.names["SUPER_ER"] = b"\x2c"
+        self.charmap.names["LV"] = b"\x34"
+        self.assertEqual(corpus_ir("1[SUPER_ER]", self.charmap, language="es"), [text("1er"), EOS])
+        self.assertEqual(corpus_ir("1[SUPER_ER]", self.charmap), [text("1?"), EOS])
+        with self.assertRaises(EncodeError):
+            encode("[LV]5", self.charmap, language="fr")
+
+    def test_decode_matches_the_runtime_on_random_bytes(self):
+        engine = ROOT / ".cache" / "dependencies" / "gen1recomp"
+        luajit = shutil.which("luajit")
+        if not (engine / "src").is_dir() or not luajit:
+            self.skipTest("pinned gen1recomp checkout or LuaJIT unavailable")
+        import random
+        rng = random.Random(3)
+        pool = [0x00, 0x1B, 0x16, 0x53, 0x54, 0xBB, 0xD5, 0xF0, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB,
+                0xFC, 0xFD, 0xFE, 0xFF, 0x01, 0x04, 0x0B, 0x10]
+        samples = [bytes(rng.choice(pool) if rng.random() < 0.7 else rng.randrange(256)
+                         for _ in range(rng.randrange(1, 12))) for _ in range(3000)]
+        probe = r"""
+package.path = "./?.lua;./?/init.lua;" .. package.path
+local TextIR = require("src.core.game3.scripting.text_ir")
+for line in io.lines() do
+  local bytes = {}
+  for hex in line:gmatch("%x%x") do bytes[#bytes + 1] = tonumber(hex, 16) end
+  local parts = {}
+  for _, seg in ipairs(TextIR.decode(bytes)) do
+    parts[#parts + 1] = table.concat({ seg.t, seg.s or "", tostring(seg.n or ""),
+      tostring(seg.code or ""), tostring(seg.cmd or "") }, "\1")
+  end
+  io.write(table.concat(parts, "\2"), "\n")
+end
+"""
+        result = subprocess.run([luajit, "-e", probe], cwd=engine, input="\n".join(s.hex() for s in samples) + "\n",
+                                capture_output=True, text=True, check=True, encoding="utf-8")
+        runtime = result.stdout.split("\n")
+        for sample, expected in zip(samples, runtime):
+            mine = "\2".join("\1".join((seg["t"], seg.get("s", ""), str(seg.get("n", "")),
+                                          str(seg.get("code", "")), str(seg.get("cmd", ""))))
+                             for seg in decode(sample))
+            self.assertEqual(mine, expected, sample.hex())
 
     def test_symbols_and_text_keys(self):
         path = self.tmp / "firered.sym"
@@ -305,6 +348,19 @@ class FrlgCatalogTests(unittest.TestCase):
         self.assertEqual(result.values, {"1": "DRESSEUR"})
         self.assertEqual(result.summary()["fallback_english"], 1)
 
+    def test_every_class_name_the_engine_compares_stays_english(self):
+        source = ROOT / ".cache" / "dependencies" / "gen1recomp" / "src"
+        if not source.is_dir():
+            self.skipTest("pinned gen1recomp checkout unavailable")
+        from pipeline.frlg_mod import ENGINE_KEYED_CLASS_NAMES
+        pattern = re.compile(r"\b(?:className|trainerClassName|class)\s*[=~]=\s*['\"]([^'\"]+)['\"]")
+        compared = set()
+        for root in ("core/game3", "ui/game3", "battle/game3", "world/game3"):
+            for path in (source / root).rglob("*.lua"):
+                compared.update(pattern.findall(path.read_text(encoding="utf-8", errors="replace")))
+        self.assertTrue(compared)
+        self.assertLessEqual(compared, set(ENGINE_KEYED_CLASS_NAMES))
+
     def test_start_menu_labels(self):
         result = join_start_menu(self.corpus, self.charmap)
         self.assertEqual(result.values, {"bag": "SAC"})
@@ -391,6 +447,12 @@ class FrlgModTests(unittest.TestCase):
                                      capture_output=True, text=True, check=True).stdout
                 self.assertEqual(out, 'Dit "oui"\\|player|2|eos')
 
+    def test_gate_counts_glyphs_in_every_generated_catalog(self):
+        gate = (ROOT / "tools" / "gate_frlg.lua").read_text(encoding="utf-8")
+        listed = re.search(r'for _, catalogName in ipairs\(\{(.*?)\}\)', gate, re.S).group(1)
+        names = set(re.findall(r'"([a-z_]+)"', listed))
+        self.assertEqual(names, set(FRLG_CATALOG_HOOKS) | {"dialogue", "start_menu"})
+
     def test_lua_ir_rejects_unknown_values(self):
         with self.assertRaises(TypeError):
             lua_ir([{"t": "text", "s": 1.5}])
@@ -422,6 +484,43 @@ class FrlgConfigTests(unittest.TestCase):
                 for key, row in engine["entries"].items():
                     self.assertIn(key, scope)
                     self.assertTrue(row.get("reason") and row.get("provenance"), key)
+
+    def test_engine_scope_covers_every_game3_strings_key(self):
+        engine = ROOT / ".cache" / "dependencies" / "gen1recomp"
+        luajit = shutil.which("luajit")
+        if not (engine / "src").is_dir() or not luajit:
+            self.skipTest("pinned gen1recomp checkout or LuaJIT unavailable")
+        from pipeline.engine_backlog import iter_literal_strings_callsites
+        scope = load_frlg_engine_scope()
+        # Strings.source() only marks a key; it never translates (pc_menu.lua).
+        literal = {row["source"] for row in iter_literal_strings_callsites(engine / "src")
+                   if "game3" in row.get("path", "") and row.get("kind") != "source"}
+        probe = r"""
+package.path = "./?.lua;./?/init.lua;" .. package.path
+love = require("tests.love_stub")
+local out = {}
+local function add(v) if type(v) == "string" then out[#out + 1] = v end end
+local Rows = require("src.ui.game3.option_rows")
+for _, g in ipairs(Rows.GROUPS) do add(g.label) end
+for _, row in ipairs(Rows.build({ options = {} })) do add(row.label) end
+local L = require("src.render.Letterbox"); for _, m in ipairs(L.MODES) do add(L.label(m)) end
+local V = require("src.core.VideoMode"); for _, m in ipairs({ "windowed", "borderless" }) do add(V.modeLabel(m)) end
+local O = require("src.core.Orientation"); for _, m in ipairs(O.MODES) do add(O.modeLabel(m)) end
+local F = require("src.core.FaithfulRes"); for v = 0, 6 do add(F.label(v)) end
+local S = require("src.core.ScreenPosition"); for _, m in ipairs(S.MODES) do add(S.label(m)) end; add("SKIN")
+local C = require("src.core.FrameCap"); add(C.label(C.DISPLAY))
+local Y = require("src.core.VSync"); for _, m in ipairs(Y.MODES) do add(Y.label(m)) end; add(Y.label("adaptive"))
+local P = require("src.core.Performance"); for _, v in pairs(P.LABELS) do add(v) end
+local Z = require("src.render.Zoom"); for o = -4, 4 do add(Z.offsetLabel(o)) end
+local VF = require("src.core.game3.void_fill"); for _, v in pairs(VF.LABELS) do add(v) end
+local TC = require("src.core.TouchControls"); for _, m in ipairs(TC.HAPTICS) do add(TC.hapticLabel(m)) end
+io.write(table.concat(out, "\0"))
+"""
+        values = subprocess.run([luajit, "-e", probe], cwd=engine, capture_output=True,
+                                text=True, check=True).stdout.split("\0")
+        dynamic = {value for value in values if value and not re.fullmatch(r"[0-9.]+(X|HZ)?", value)}
+        self.assertIn("WINDOWED", dynamic)
+        self.assertEqual(sorted((literal | dynamic) - set(scope)), [])
 
     def test_reviewed_qids_exist_in_the_pinned_corpus(self):
         corpus = ROOT / ".cache" / "dependencies" / "poke-corpus" / "corpus" / "FireRedLeafGreen"

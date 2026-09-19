@@ -571,11 +571,11 @@ def _engine_value(text: str, charmap: PretCharmap, language: str) -> str:
 def _check_engine_glyphs(key: str, value: str, charmap: PretCharmap, language: str) -> None:
     """A Strings() value is drawn by FrlgFont too: refuse what it cannot print."""
     folds = {**LANGUAGE_FOLDS["*"], **LANGUAGE_FOLDS.get(language, {})}
+    drawable = set(charmap.translation_glyphs.values())
     for char in value:
         if char == "\n":
             continue
-        byte = charmap.chars.get(folds.get(char, char))
-        if byte is None or len(byte) != 1:
+        if folds.get(char, char) not in drawable:
             raise ValueError(f"FireRed engine string {key!r} ({language}): {char!r} has no FireRed glyph")
 
 
