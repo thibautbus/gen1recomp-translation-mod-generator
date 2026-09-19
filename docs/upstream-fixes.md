@@ -1646,6 +1646,28 @@ The pipeline keeps these class names in English (`ENGINE_KEYED_CLASS_NAMES` in `
 - The items extractor drops the `POKEBLOCK` glyph run (`55`–`59`), so item 273 reads `" CASE"` and its description `"A case for holding S made…"` in English too; it stays untranslated (and is not obtainable in FireRed).
 - Type badges and some chrome are ROM graphics with English text baked in; they are out of reach of any text mod.
 
+#### 15. Cart text the extractor never reaches
+
+Joining the other way round -- every `frlg.script.*` corpus row whose pret label has an address in `pokefirered.sym` but no key in the extracted text table -- finds 1,078 FireRed lines the game3 text registry cannot carry, because the script BFS (`src/import/gba/extract_scripts.lua`) never reads them. Part of it is dead content in FireRed, the rest is shown in game from Lua literals or by a native that bypasses the table:
+
+| Corpus namespace | Rows | In game |
+| --- | ---: | --- |
+| `help_system` | 369 | Help menu (entry 11) |
+| `fame_checker` | 320 | FAME CHECKER key item |
+| `new_game_intro` | 65 | Oak's speech (entry 11) |
+| `safari_zone` | 31 | Safari Zone gate, ball count, time-up |
+| `event_scripts`, `cable_club` | 56 | Link-cable and record-mixing counters |
+| `pokedude` | 20 | Viridian City Pokédude battle tutorial |
+| `pokedex_rating` | 17 | Prof. Oak's rating through a PC |
+| `field_moves`, `surf` | 13 | Waterfall/Surf prompts |
+| `obtain_item`, `white_out`, `save`, `pc`, `day_care`, `itemfinder`, VS Seeker (`trainers`) | 35 | Coin pickups, blacking out, save prompts, PC access, Day-Care, Itemfinder, VS Seeker |
+| rival and trainer lines on individual maps (`SilphCo_7F`, `Route22`, `SSAnne_2F_Corridor`, `Route21_North`, …) | 62 | Rival win lines and a few map scripts the BFS does not reach |
+| `berries`, `competitive_brothers`, `eon_ticket`, `mystery_event_msg`, `test`, `*JP*`/`JPText_*` lines | 90 | Ruby/Sapphire leftovers, Japanese-only and debug text: not shown in FireRed |
+
+game3 has code for each feature in the "in game" column (`grep` over `src/core/game3` and `src/ui/game3`: Safari 20 files, white-out 8, Waterfall 7, cable club 4, Pokédex rating 4, Fame Checker, Pokédude and Itemfinder 2 each), with its text written as English literals (entries 6-7) or read from the ROM into packs outside the text table (entry 11). Trainer battle lines are not affected: 913 of the 919 trainer dialog strings carry a text key the table holds, and `trainerbattle` resolves them through it (`src/core/game3/scripting/ops_a.lua:910-913`); only the pack's plain-string fallback (`battle/init.lua:774`) stays English.
+
+Fix: seed the script BFS from the same labels the cart uses for these features (or extract those text tables alongside the scripts), and have the Lua screens look their messages up in the text table by that key. Because every row above is keyed by a pret label with a known address, the pipeline joins them without any new work: they land in `lang/dialogue.lua` as soon as the extractor emits their keys.
+
 ### Translated via a compromise (`engine-contract-gap`)
 
 - **TM/HM pickup** (`Text_FoundTMHMContainsMove`): gen1recomp's item-ball script buffers only the TM's name and prints `"[PLAYER] found\n[STR_VAR_2]!"`, while the cart's line also names the move from `STR_VAR_1`. Each language keeps the first clause of its own cart row (`overrides/<lang>/frlg/dialogue.json`); German, whose cart line names only the move, is reworded around the TM name.
