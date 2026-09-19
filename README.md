@@ -314,18 +314,23 @@ provenance. Future unresolved entries will keep their original English text.
   and class names, start menu labels). The 39 braille messages stay in
   English (the runtime cannot draw braille in any language), as do the
   `POKéBLOCK CASE` item whose name the extractor already loses in English,
-  and the two RIVAL trainer classes, whose English name gen1recomp compares
-  to recognise the rival.
-- `FireRed engine strings` covers the 51 `Strings()` keys reachable from the
-  game3 runtime, listed with their callsites in
-  [`config/frlg/engine_scope.json`](config/frlg/engine_scope.json).
+  and the eight trainer classes whose English name gen1recomp compares
+  (RIVAL, LEADER, ELITE FOUR and CHAMPION, two classes each): translating
+  them would lose the rival's chosen name and misfile gym, Elite Four and
+  champion wins in the quest log.
+- `FireRed engine strings` covers the 86 `Strings()` keys reachable from the
+  game3 runtime (literal callsites and every text value the Options screen
+  passes to `Strings()`), listed with their callsites in
+  [`config/frlg/engine_scope.json`](config/frlg/engine_scope.json). A test
+  derives the same set from the pinned engine, so a new key cannot slip
+  out of the metric.
 
 | Target | FireRed ROM aggregate | FireRed engine strings |
 | --- | ---: | ---: |
-| `fr` | 5637/5680 (99.24%) | 51/51 (100%) |
-| `de` | 5637/5680 (99.24%) | 51/51 (100%) |
-| `es` | 5637/5680 (99.24%) | 51/51 (100%) |
-| `it` | 5637/5680 (99.24%) | 51/51 (100%) |
+| `fr` | 5631/5680 (99.14%) | 86/86 (100%) |
+| `de` | 5631/5680 (99.14%) | 86/86 (100%) |
+| `es` | 5631/5680 (99.14%) | 86/86 (100%) |
+| `it` | 5631/5680 (99.14%) | 86/86 (100%) |
 
 These measure what the mod ships, not what the current runtime displays; see
 "Pokémon FireRed support" above for the runtime limits.
@@ -372,9 +377,7 @@ Every translated engine string remains traceable:
 | Exact FireRed dialogue join | ROM address -> pret symbol -> PokeCorpus qid label, English verified against the ROM text. | Generation report |
 | Reviewed FireRed dialogue decision | A standard-script line gen1recomp reworded itself, joined to the cart's row carrying the same message. | `config/frlg/dialogue_decisions.json` |
 | Reviewed FireRed engine anchor | The cart's own row for an original FireRed menu string. | `config/frlg/engine_scope.json` |
-| Reviewed Crystal engine selector | Crystal corpus row whose list boundaries or placeholder count don't fit the shared anchor grammar, resolved to a specific qid/segment. | `config/frlg/dialogue_decisions.json` | Reviewed corpus rows for FireRed standard-script lines gen1recomp reworded. |
-| `config/frlg/engine_scope.json` | FireRed-reachable `Strings()` keys, their callsites and reviewed cart rows. |
-| `config/gsc/crystal_string_selectors.json` |
+| Reviewed Crystal engine selector | Crystal corpus row whose list boundaries or placeholder count don't fit the shared anchor grammar, resolved to a specific qid/segment. | `config/gsc/crystal_string_selectors.json` |
 | Reviewed placeholder exception | Official localized wording legitimately adds or omits a runtime value such as the player name or an item quantity. This records no translated text and does not disable the audit; each exception is scoped to a language, ROM pointer, corpus QID, and exact audit message. | `config/gsc/placeholder_decisions.json` |
 | Manual corpus correction | A maintainer corrects one selected-language corpus translation without changing the upstream corpus. Entries are indexed by qid. | `overrides/<language>/rby/corpus.json` |
 | Manual translation — engine contract gap | PokeCorpus has the text, but Gen1Recomp merges contexts or hides required parameters. | `overrides/<language>/{rby,gsc,frlg}/engine.json`, `overrides/<language>/frlg/dialogue.json`, `reason: "engine-contract-gap"` |
@@ -451,6 +454,8 @@ language overrides follow the same split under `overrides/<language>/`.
 | `config/gsc/crystal_pointer_decisions.json` | Human-reviewed picks for ambiguous Crystal dialogue pointers. |
 | `config/gsc/crystal_rom_text_anchors.json` | Crystal-only RomText labels mapped to their PokeCorpus rows -- a labeled fallback path alongside Crystal's own pointer-based dialogue join. |
 | `config/gsc/crystal_semantic_anchors.json` | Evidence for Crystal engine-string corpus matches. |
+| `config/frlg/dialogue_decisions.json` | Reviewed corpus rows for FireRed standard-script lines gen1recomp reworded. |
+| `config/frlg/engine_scope.json` | FireRed-reachable `Strings()` keys, their callsites and reviewed cart rows. |
 | `config/gsc/crystal_string_selectors.json` | Reviewed qid/segment picks for Crystal corpus rows whose list boundaries or placeholder count don't fit the shared semantic-anchor grammar. |
 
 The semantic anchors and reviewed decisions are described in the
