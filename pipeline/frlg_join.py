@@ -13,8 +13,8 @@ exposes to a content mod:
   table.  The English corpus row must still reproduce the extracted ROM IR
   (pipeline.frlg_text), so a stale symbol or a corpus/ROM mismatch falls
   back to English instead of shipping the wrong line.
-* Named catalogs (species, moves, items, trainers, trainer classes, Pokédex
-  categories) are ROM tables indexed by number, like the corpus rows
+* Named catalogs (species, moves, items, trainers, trainer classes) are ROM
+  tables indexed by number, like the corpus rows
   (``gSpeciesNames.1``); the ROM's own English value must match the corpus
   English value before a translation is used.
 * Item descriptions are separate ROM strings the extractor inlines into the
@@ -368,15 +368,12 @@ def join_indexed_catalog(
     charmap: PretCharmap,
     *,
     multiline: bool = False,
-    index_map: Mapping[int, int] | None = None,
 ) -> CatalogResult:
     """Join ``rom_values[number]`` to ``{qid_prefix}{index}`` corpus rows.
 
     ``ids`` maps each number to the registry id the patch is keyed by; a
     number without an id (unused slots, duplicate names) is skipped, as the
-    runtime could not address it either.  ``index_map`` translates a ROM
-    number into the corpus row index (Pokédex categories are indexed by
-    National Dex number).
+    runtime could not address it either.
     """
     convert = _plain_multiline if multiline else _plain
     result = CatalogResult()
@@ -385,11 +382,10 @@ def join_indexed_catalog(
         if not id_ or not isinstance(english, str) or not english.strip():
             continue
         result.stats["total"] += 1
-        corpus_index = index_map.get(number) if index_map is not None else number
-        row = corpus.row(f"{qid_prefix}{corpus_index}") if corpus_index is not None else None
+        row = corpus.row(f"{qid_prefix}{number}")
         if row is None:
             result.stats["no_corpus_row"] += 1
-            result.issues.append(f"{id_}: no corpus row {qid_prefix}{corpus_index}")
+            result.issues.append(f"{id_}: no corpus row {qid_prefix}{number}")
             continue
         corpus_english, target = row
         try:

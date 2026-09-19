@@ -29,8 +29,6 @@
 --   frlg_items.json     item number -> { name, description }
 --   frlg_trainers.json  trainer number -> { name, className, class }
 --   frlg_trainer_classes.json  trainer class number -> name
---   frlg_national.json  species number -> National Dex number
---   frlg_dex_categories.json  National Dex number -> Pokédex category
 --   frlg_stages.json    stage -> "ok" or the error message
 
 local root, romPath, outDir, sha1 = ...
@@ -142,18 +140,6 @@ end
 
 stage("export_species", function()
   writeJson("frlg_species.json", numbered(assert(loadCached("pokemon/names.lua"))))
-end)
-stage("export_dex", function()
-  local national = assert(loadCached("pokemon/national.lua"))
-  local dex = assert(loadCached("pokemon/dex.lua"))
-  local categories = {}
-  for num, row in pairs(dex) do
-    if type(num) == "number" and type(row) == "table" then
-      categories[tostring(num)] = row.category
-    end
-  end
-  writeJson("frlg_national.json", numbered(national.toNational))
-  writeJson("frlg_dex_categories.json", categories)
 end)
 stage("export_moves", function()
   writeJson("frlg_moves.json", numbered(assert(loadCached("pokemon/move_names.lua"))))

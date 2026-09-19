@@ -374,8 +374,6 @@ FRLG_REQUIRED_JSON = (
     "frlg_items.json",
     "frlg_trainers.json",
     "frlg_trainer_classes.json",
-    "frlg_national.json",
-    "frlg_dex_categories.json",
 )
 
 

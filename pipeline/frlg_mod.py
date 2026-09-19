@@ -6,9 +6,9 @@ content registries (src/mods/Schemas.lua, ``Schemas.GEN3``):
 * ``text``: every dialogue key is overridden with its IR segment list, the
   only value form that keeps the runtime's placeholders and page breaks
   (pipeline.frlg_text);
-* ``pokemon`` (name, Pokédex category), ``moves`` (name), ``items`` (name,
-  description) and ``trainers`` (name, class name), keyed the way
-  ``G3.idOf`` and ``G3.trainerIds`` key them;
+* ``pokemon`` (name), ``moves`` (name), ``items`` (name, description) and
+  ``trainers`` (name, class name), keyed the way ``G3.idOf`` and
+  ``G3.trainerIds`` key them;
 * ``strings`` for the few game3 interface strings that go through
   ``Strings()``.
 
@@ -89,7 +89,6 @@ _START_MENU_REGISTRATION = '''  local startMenu = catalog("start_menu")
 # Catalog name -> the registry call applying one value.
 FRLG_CATALOG_HOOKS: Mapping[str, str] = {
     "species_names": "mod.content.pokemon:patch(id, { name = value })",
-    "dex_categories": "mod.content.pokemon:patch(id, { dexEntry = { kind = value } })",
     "move_names": "mod.content.moves:patch(id, { name = value })",
     "item_names": "mod.content.items:patch(id, { name = value })",
     "item_descriptions": "mod.content.items:patch(id, { description = value })",
@@ -246,21 +245,14 @@ def join_frlg(
     moves = _numbered(extracted / "frlg_moves.json")
     items = _numbered(extracted / "frlg_items.json")
     trainers = _numbered(extracted / "frlg_trainers.json")
-    national = _numbered(extracted / "frlg_national.json")
-    categories = _numbered(extracted / "frlg_dex_categories.json")
 
     species_ids = registry_ids(species)
     item_names = {number: row.get("name") for number, row in items.items()}
     item_ids = registry_ids(item_names)
     trainer_ids = {number: str(number) for number in trainers}
-    species_categories = {number: categories.get(dex) for number, dex in national.items()
-                          if categories.get(dex)}
     results: dict[str, CatalogResult] = {
         "species_names": join_indexed_catalog(
             species, species_ids, corpus, "frlg.common.species_names.gSpeciesNames.", charmap),
-        "dex_categories": join_indexed_catalog(
-            species_categories, species_ids, corpus,
-            "frlg.common.pokedex_entries.gPokedexEntries.", charmap, index_map=national),
         "move_names": join_indexed_catalog(
             moves, registry_ids(moves), corpus, "frlg.common.move_names.gMoveNames.", charmap),
         "item_names": join_indexed_catalog(
@@ -285,8 +277,7 @@ def join_frlg(
         "catalog_stats": {name: result.summary() for name, result in results.items()},
         "catalog_issues": {name: result.issues for name, result in results.items()},
         "engine_stats": engine_stats,
-        "numbers": {"species": species_ids, "items": item_ids, "moves": registry_ids(moves),
-                    "national": national},
+        "numbers": {"species": species_ids, "items": item_ids, "moves": registry_ids(moves)},
     }
 
 
@@ -351,10 +342,6 @@ def write_gate_expectations(path: Path, joined: dict) -> dict:
     sample = _sample(catalogs.get("species_names", {}), "BULBASAUR")
     if sample:
         expectations["species_names"] = {"id": sample[0], "number": number_of("species", sample[0]), "value": sample[1]}
-    sample = _sample(catalogs.get("dex_categories", {}), "BULBASAUR")
-    if sample:
-        number = number_of("species", sample[0])
-        expectations["dex_categories"] = {"id": sample[0], "national": numbers["national"][number], "value": sample[1]}
     sample = _sample(catalogs.get("move_names", {}), "POUND")
     if sample:
         expectations["move_names"] = {"id": sample[0], "number": number_of("moves", sample[0]), "value": sample[1]}

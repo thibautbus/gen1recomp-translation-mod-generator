@@ -7,8 +7,8 @@
 --   * the mod loads with no error under GameVersion "firered";
 --   * dialogue: data.gen3Text (the live Space.bundle.text a game3 boot
 --     exposes) holds the translated IR, and TextIR.toTextBox renders it;
---   * species/move/item/trainer names, item descriptions, trainer class
---     names and Pokédex categories are read back through the same module
+--   * species/move/item/trainer names, item descriptions and trainer class
+--     names are read back through the same module
 --     APIs the game3 UI calls (Pokemon.name, ItemsData.info, Trainers.get...);
 --   * the strings registry holds the translated engine string.
 --
@@ -197,11 +197,6 @@ end
 do
   local rival = Trainers.info(326, { rivalName = "GARY" })
   if rival then eq(rival.name, "GARY", "the rival keeps the player's chosen name") end
-end
-row = expectations.dex_categories
-if row then
-  local dex = Pokemon._dex and Pokemon._dex[row.national]
-  eq(dex and dex.category, row.value, "species " .. row.id .. " Pokédex category")
 end
 -- The strings registry merges into data.strings.  Game3 (unlike Game and
 -- Game2) never hands that table to Strings.load, so Strings() only answers
