@@ -50,13 +50,15 @@ target_lang = "fr"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
-# Pinned at v0.2.64, the upstream release used to validate and package the
-# RBY, Gold/Silver and Crystal translation mods.
-source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "2c0f3ac04b3f25c46b32c5e82599c2f8b74934c4"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/2c0f3ac04b3f25c46b32c5e82599c2f8b74934c4"
-archive_sha256 = "823c1bd79034e849eed95a47116c2115e5f71d6bbf40bdcbe2ce234f4d3f881b"
-archive_tree_sha256 = "f17a54625e75ffeb8f33a7135640186af6626ccf3b551124d49be27cdd148da7"
+# Temporarily pinned to the head of fix/game3-translatable-strings on the
+# thibautbus fork (upstream dev 65a1fcda plus the FireRed Strings() work the
+# FireRed engine catalog needs), until that branch is merged upstream and a
+# release can be pinned again.
+source = "https://github.com/thibautbus/gen1recomp.git"
+revision = "e83fa5306b163048854aec41016ca2cb2eb49be1"
+archive_url = "https://codeload.github.com/thibautbus/gen1recomp/zip/e83fa5306b163048854aec41016ca2cb2eb49be1"
+archive_sha256 = "54ed73db08777e6e2f2345e6c6ba15d909706073dc7999ea9367e2ec4ae4aa50"
+archive_tree_sha256 = "67f1485006136731566e2cd5d1de6d1d3265070301834d471c829ea8c3121c6b"
 
 # pret's FireRed decompilation data the FireRed release joins through (never
 # code, never game text): the symbol table names every ROM address the game3

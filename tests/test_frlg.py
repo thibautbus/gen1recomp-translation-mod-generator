@@ -569,7 +569,8 @@ class FrlgConfigTests(unittest.TestCase):
     def test_checked_in_config_loads(self):
         scope = load_frlg_engine_scope()
         self.assertIn("TEXT SPEED", scope)
-        self.assertNotIn("Go back to the\nprevious menu.", scope)
+        # a Strings.source() table value is translated where it is read
+        self.assertIn("Go back to the\nprevious menu.", scope)
         decisions = load_frlg_dialogue_decisions()
         self.assertIn("Text_TownMap", decisions)
         for language in ("fr", "de", "es", "it"):
@@ -581,42 +582,18 @@ class FrlgConfigTests(unittest.TestCase):
                     self.assertIn(key, scope)
                     self.assertTrue(row.get("reason") and row.get("provenance"), key)
 
-    def test_engine_scope_covers_every_game3_strings_key(self):
+    def test_engine_scope_matches_the_pinned_engine(self):
         engine = ROOT / ".cache" / "dependencies" / "gen1recomp"
-        luajit = shutil.which("luajit")
-        if not (engine / "src").is_dir() or not luajit:
+        extracted = ROOT / ".cache" / "firered" / "extracted" / "cache"
+        if not (engine / "src").is_dir() or not shutil.which("luajit"):
             self.skipTest("pinned gen1recomp checkout or LuaJIT unavailable")
-        from pipeline.engine_backlog import iter_literal_strings_callsites
+        from pipeline.frlg_engine_scope import collect_keys
+        rom = extracted if (extracted / "data").is_dir() else None
+        keys = collect_keys(engine, rom)
         scope = load_frlg_engine_scope()
-        # Strings.source() only marks a key; it never translates (pc_menu.lua).
-        literal = {row["source"] for row in iter_literal_strings_callsites(engine / "src")
-                   if "game3" in row.get("path", "") and row.get("kind") != "source"}
-        probe = r"""
-package.path = "./?.lua;./?/init.lua;" .. package.path
-love = require("tests.love_stub")
-local out = {}
-local function add(v) if type(v) == "string" then out[#out + 1] = v end end
-local Rows = require("src.ui.game3.option_rows")
-for _, g in ipairs(Rows.GROUPS) do add(g.label) end
-for _, row in ipairs(Rows.build({ options = {} })) do add(row.label) end
-local L = require("src.render.Letterbox"); for _, m in ipairs(L.MODES) do add(L.label(m)) end
-local V = require("src.core.VideoMode"); for _, m in ipairs({ "windowed", "borderless" }) do add(V.modeLabel(m)) end
-local O = require("src.core.Orientation"); for _, m in ipairs(O.MODES) do add(O.modeLabel(m)) end
-local F = require("src.core.FaithfulRes"); for v = 0, 6 do add(F.label(v)) end
-local S = require("src.core.ScreenPosition"); for _, m in ipairs(S.MODES) do add(S.label(m)) end; add("SKIN")
-local C = require("src.core.FrameCap"); add(C.label(C.DISPLAY))
-local Y = require("src.core.VSync"); for _, m in ipairs(Y.MODES) do add(Y.label(m)) end; add(Y.label("adaptive"))
-local P = require("src.core.Performance"); for _, v in pairs(P.LABELS) do add(v) end
-local Z = require("src.render.Zoom"); for o = -4, 4 do add(Z.offsetLabel(o)) end
-local VF = require("src.core.game3.void_fill"); for _, v in pairs(VF.LABELS) do add(v) end
-local TC = require("src.core.TouchControls"); for _, m in ipairs(TC.HAPTICS) do add(TC.hapticLabel(m)) end
-io.write(table.concat(out, "\0"))
-"""
-        values = subprocess.run([luajit, "-e", probe], cwd=engine, capture_output=True,
-                                text=True, check=True).stdout.split("\0")
-        dynamic = {value for value in values if value and not re.fullmatch(r"[0-9.]+(X|HZ)?", value)}
-        self.assertIn("WINDOWED", dynamic)
-        self.assertEqual(sorted((literal | dynamic) - set(scope)), [])
+        self.assertEqual(sorted(set(keys) - set(scope)), [], "engine keys missing from the scope")
+        if rom is not None:
+            self.assertEqual(sorted(set(scope) - set(keys)), [], "scope keys the engine no longer has")
 
     def test_upstream_doc_inventories_every_hardcoded_text_file(self):
         engine = ROOT / ".cache" / "dependencies" / "gen1recomp"
