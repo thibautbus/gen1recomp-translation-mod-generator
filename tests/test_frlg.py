@@ -504,6 +504,18 @@ class FrlgEngineTemplateTests(unittest.TestCase):
         self.assertEqual(stats["fallback_english"], [])
 
 
+class FrlgEngineScopeTests(unittest.TestCase):
+    def test_source_readers(self):
+        from pipeline.frlg_engine_scope import _identifier, _line_values, _table_values, context_source
+        text = 'local T = {\n  { id = "quit", label = "SEE YA!", icon = "x" },\n  "A\\nB", -- "no"\n}\n'
+        self.assertEqual(_table_values(text, "T"), ["SEE YA!", "A\nB"])
+        self.assertEqual(_line_values('x = { "USE", "CANCEL" }\ny = "no"', r"x = \{"), ["USE", "CANCEL"])
+        self.assertTrue(_identifier("light_screen") and _identifier("battleStyle"))
+        self.assertFalse(_identifier("CANCEL") or _identifier("Beach"))
+        self.assertEqual(context_source("option.battleStyle|SHIFT"), "SHIFT")
+        self.assertEqual(context_source("A|B"), "A|B")
+
+
 class FrlgModTests(unittest.TestCase):
     def test_generated_mod_targets_firered_with_registry_hooks(self):
         with tempfile.TemporaryDirectory() as directory:
