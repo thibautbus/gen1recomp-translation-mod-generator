@@ -34,7 +34,7 @@ from .project import (
     luajit_install_hint as _luajit_install_hint,
 )
 from .dependencies import DependencyError, fetch_archive, fetch_files
-from .roms import import_rom, verify_crystal_rom, verify_gs_rom, verify_rb_rom, verify_rom
+from .roms import import_rom, verify_crystal_rom, verify_firered_rom, verify_gs_rom, verify_rb_rom, verify_rom
 from .leak_audit import audit_generated_catalogs
 from .subprocess_run import run_streamed
 from .rom_paths import configured_path, load_rom_paths
@@ -241,11 +241,15 @@ def prepare_dependencies(
     config: dict,
     *,
     corpus_collection: str | tuple[str, ...],
-    font_profile: str,
+    font_profile: str | None,
     language: str,
     engine_source: str | Path | None = None,
-) -> tuple[Path, Path, Path]:
-    """Prepare the common engine/corpus/font inputs for any release profile."""
+) -> tuple[Path, Path, Path | None]:
+    """Prepare the common engine/corpus/font inputs for any release profile.
+
+    ``font_profile=None`` skips the font download for a release that cannot
+    register one (FireRed: Schemas.GEN3 gates the ``font`` registry).
+    """
     dependency_root = workspace / "dependencies"
     if engine_source is None:
         gen1recomp = dependency_root / "gen1recomp"
@@ -271,7 +275,7 @@ def prepare_dependencies(
     collections = (corpus_collection,) if isinstance(corpus_collection, str) else corpus_collection
     prefixes = [f"corpus/{collection}" for collection in collections]
     _ensure_dependency(config["corpus"], corpus, selective_prefix=prefixes)
-    font_source = _font_source(workspace, config, font_profile, language)
+    font_source = None if font_profile is None else _font_source(workspace, config, font_profile, language)
     return gen1recomp, corpus, font_source
 
 
@@ -359,11 +363,14 @@ def _prompt_generation(input_fn: Callable[[str], str]) -> int:
     print("\nWhich games do you want to translate?")
     print("  1 - Red, Blue and Yellow      (generation 1)")
     print("  2 - Gold, Silver and Crystal  (generation 2)")
+    print("  3 - FireRed                   (generation 3)")
     raw = input_fn("Games number [1]: ").strip()
     if raw in {"", "1"}:
         return 1
     if raw == "2":
         return 2
+    if raw == "3":
+        return 3
     raise BuildError(f"Invalid games selection: {raw!r}")
 
 
@@ -1205,9 +1212,33 @@ def main(
         rom_paths = load_rom_paths(resource_root() / "config" / "rom_paths.toml")
         if generation is None:
             generation = _prompt_generation(input_fn)
-        elif generation not in (1, 2):
+        elif generation not in (1, 2, 3):
             raise BuildError(f"Invalid games selection: {generation!r}")
-        if generation == 1:
+        if generation == 3:
+            firered_prompt = (
+                "Please specify the location of your Pokemon FireRed ROM "
+                "(full path, e.g. C:\\Games\\PokemonFireRed.gba): "
+            )
+            firered_rom = _prompt_configured_path(
+                firered_prompt, configured_path(rom_paths, "rom", "firered"), input_fn
+            )
+            language, language_name = _prompt_language(input_fn, generation=generation)
+            if font_profile:
+                print("Note: FireRed prints every string with the cart's own font; "
+                      "--font-profile is ignored.")
+            verify_firered_rom(firered_rom)
+            if not _confirm(input_fn):
+                if is_frozen():
+                    print("\nBuild cancelled. No dependency downloads were performed.")
+                else:
+                    print("\nBuild cancelled. No repositories were cloned.")
+                return 0
+            from .orchestration import build_request
+            output = build_request(
+                BuildRequest({"firered": firered_rom}, release_profile("frlg"), language, None),
+                language_name=language_name, luajit=luajit,
+            )
+        elif generation == 1:
             rb_prompt = (
                 "Please specify the location of your Pokemon Red or Blue ROM "
                 "(full path, e.g. C:\\Games\\PokemonRed.gb): "

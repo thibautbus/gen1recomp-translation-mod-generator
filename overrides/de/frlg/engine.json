@@ -1,0 +1,86 @@
+{
+  "schema": "gen1recomp-translation-mods/engine-overrides",
+  "version": 1,
+  "entries": {
+    "%d OPTIONS": {
+      "override": "%d OPTIONEN",
+      "reason": "engine-original",
+      "provenance": "Option-group row value added by gen1recomp (src/ui/game3/option_rows.lua); AI-composed, same noun as the project's KAMPFOPTIONEN (overrides/de/gsc/engine.json)."
+    },
+    "%dX": {
+      "override": "%dX",
+      "reason": "engine-original",
+      "provenance": "Game-speed multiplier value; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    },
+    "1X": {
+      "override": "1X",
+      "reason": "engine-original",
+      "provenance": "Music filter value; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    },
+    "2X": {
+      "override": "2X",
+      "reason": "engine-original",
+      "provenance": "Music filter value; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    },
+    "3X": {
+      "override": "3X",
+      "reason": "engine-original",
+      "provenance": "Music filter value; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    },
+    "AUDIO": {
+      "override": "AUDIO",
+      "reason": "engine-original",
+      "provenance": "Options group label added by gen1recomp; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    },
+    "BATTLE SPEED": {
+      "override": "KAMPFTEMPO",
+      "reason": "engine-original",
+      "provenance": "Options row added by gen1recomp; built like the project's SPIELTEMPO (overrides/de/{rby,gsc}/engine.json)."
+    },
+    "EXTRAS": {
+      "override": "EXTRAS",
+      "reason": "engine-original",
+      "provenance": "Options group label added by gen1recomp; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    },
+    "MENU SPEED": {
+      "override": "MENÜTEMPO",
+      "reason": "engine-original",
+      "provenance": "Options row added by gen1recomp; built like the project's SPIELTEMPO."
+    },
+    "NORMAL": {
+      "override": "NORMAL",
+      "reason": "engine-original",
+      "provenance": "Game speed 1X value; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    },
+    "OVERWORLD SPEED": {
+      "override": "WELTTEMPO",
+      "reason": "engine-original",
+      "provenance": "Options row added by gen1recomp; built like the project's SPIELTEMPO."
+    },
+    "RETURN TO MAIN\nMENU?": {
+      "override": "ZURÜCK ZUM\nHAUPTMENÜ?",
+      "reason": "engine-original",
+      "provenance": "Start-menu exit prompt added by gen1recomp (src/ui/game3/start_menu.lua); AI-composed, kept to the English two-line layout."
+    },
+    "The previous save file will be\nloaded.": {
+      "override": "Vorheriger Spielstand wird\ngeladen.",
+      "reason": "engine-contract-gap",
+      "provenance": "Second sentence of frlg.common.strings.gText_SaveFileCorrupted (see the first page), its hyphenated line break (Vor-/heriger) rejoined and rewrapped onto two lines."
+    },
+    "The save file is corrupted.": {
+      "override": "Spielstand ist beschädigt.",
+      "reason": "engine-contract-gap",
+      "provenance": "First sentence of frlg.common.strings.gText_SaveFileCorrupted; src/ui/game3/boot.lua prints the cart's message as two Strings() pages, so the official translation is split at its sentence boundary."
+    },
+    "VIDEO": {
+      "override": "VIDEO",
+      "reason": "engine-original",
+      "provenance": "Options group label added by gen1recomp; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    },
+    "ZOOM": {
+      "override": "ZOOM",
+      "reason": "engine-original",
+      "provenance": "Options row added by gen1recomp; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    }
+  }
+}

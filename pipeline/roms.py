@@ -20,7 +20,7 @@ from .subprocess_run import run_streamed
 # Product support is intentionally limited to the canonical US games; this
 # allowlist is independent of whatever sections a config may contain.
 SUPPORTED_VERSIONS = frozenset(("red", "blue", "yellow"))
-CONFIGURED_VERSIONS = SUPPORTED_VERSIONS | {"gold", "silver", "crystal"}
+CONFIGURED_VERSIONS = SUPPORTED_VERSIONS | {"gold", "silver", "crystal", "firered"}
 _SHA1 = re.compile(r"[0-9a-f]{40}\Z")
 _MANIFESTS = {
     "red": "rom_manifest.json",
@@ -345,6 +345,91 @@ def import_crystal_rom(
                 + ", ".join(missing)
             )
 
+        backup = temporary.with_name(f"{temporary.name}.old")
+        had_output = out.exists()
+        if had_output:
+            out.replace(backup)
+        try:
+            temporary.replace(out)
+        except Exception:
+            if had_output and backup.exists() and not out.exists():
+                backup.replace(out)
+            raise
+        if backup.exists():
+            shutil.rmtree(backup)
+    finally:
+        if temporary.exists():
+            shutil.rmtree(temporary, ignore_errors=True)
+
+
+# FireRed (US, v1.0) is its own generation-3 release; [rom.firered] is
+# optional in pipeline.toml like the Gen 2 sections.
+FIRERED_SHA1 = CANONICAL.get("firered")
+
+# tools/frlg_extract.lua's outputs the FireRed join cannot do without.
+FRLG_REQUIRED_JSON = (
+    "frlg_text.json",
+    "frlg_species.json",
+    "frlg_moves.json",
+    "frlg_items.json",
+    "frlg_trainers.json",
+    "frlg_trainer_classes.json",
+    "frlg_national.json",
+    "frlg_dex_categories.json",
+)
+
+
+def verify_firered_rom(path: str | Path) -> dict[str, Any]:
+    """Verify a real FireRed (US) ROM against the canonical fingerprint."""
+    if FIRERED_SHA1 is None:
+        raise ValueError(
+            "missing [rom.firered] configuration: FireRed ROM verification "
+            "requires that section in config/pipeline.toml"
+        )
+    path = Path(path)
+    actual = sha1(path)
+    if actual != FIRERED_SHA1:
+        raise ValueError(f"FireRed ROM SHA-1 mismatch: {actual} (expected {FIRERED_SHA1})")
+    return {"version": "firered", "path": str(path.resolve()), "sha1": actual, "size": path.stat().st_size}
+
+
+def import_frlg_rom(
+    rom: str | Path, gen1recomp: str | Path, out: str | Path,
+    log_fn: Callable[[str], None] | None = None,
+) -> None:
+    """Extract and atomically publish the FireRed JSON tables.
+
+    tools/frlg_extract.lua drives gen1recomp's own GBA extractor under the
+    headless LÖVE stub; the extractor's cache (the layout a game3 boot reads)
+    is kept under ``out/cache`` for the release gate.
+    """
+    info = verify_firered_rom(rom)
+    root = Path(gen1recomp).resolve()
+    rom = Path(rom).resolve()
+    out = Path(out).resolve()
+    out.parent.mkdir(parents=True, exist_ok=True)
+    luajit = which_luajit()
+    if luajit is None:
+        raise RuntimeError("LuaJIT is required to import a FireRed ROM; see MODKIT_LUAJIT")
+    script = resource_root() / "tools" / "frlg_extract.lua"
+    temporary = Path(tempfile.mkdtemp(prefix=f".{out.name}-", dir=out.parent))
+    command = [luajit, str(script), str(root), str(rom), str(temporary), info["sha1"]]
+    try:
+        run_streamed(command, log_fn=log_fn)
+        stages = json.loads((temporary / "frlg_stages.json").read_text(encoding="utf-8"))
+        failed = sorted(name for name, state in stages.items() if state != "ok")
+        missing = [
+            name for name in FRLG_REQUIRED_JSON
+            if not (temporary / name).is_file() or (temporary / name).stat().st_size < 3
+        ]
+        if failed or missing:
+            raise RuntimeError(
+                "FireRed extraction did not complete: "
+                + "; ".join(filter(None, (
+                    ("failed stages: " + ", ".join(f"{name} ({stages[name]})" for name in failed)) if failed else "",
+                    ("missing outputs: " + ", ".join(missing)) if missing else "",
+                )))
+            )
         backup = temporary.with_name(f"{temporary.name}.old")
         had_output = out.exists()
         if had_output:

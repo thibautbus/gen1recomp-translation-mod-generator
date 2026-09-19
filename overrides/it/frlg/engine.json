@@ -1,0 +1,76 @@
+{
+  "schema": "gen1recomp-translation-mods/engine-overrides",
+  "version": 1,
+  "entries": {
+    "%d OPTIONS": {
+      "override": "%d OPZIONI",
+      "reason": "engine-original",
+      "provenance": "Option-group row value added by gen1recomp (src/ui/game3/option_rows.lua); AI-composed, same noun as the project's OPZIONI LOTTA (overrides/it/gsc/engine.json)."
+    },
+    "%dX": {
+      "override": "%dX",
+      "reason": "engine-original",
+      "provenance": "Game-speed multiplier value; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    },
+    "1X": {
+      "override": "1X",
+      "reason": "engine-original",
+      "provenance": "Music filter value; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    },
+    "2X": {
+      "override": "2X",
+      "reason": "engine-original",
+      "provenance": "Music filter value; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    },
+    "3X": {
+      "override": "3X",
+      "reason": "engine-original",
+      "provenance": "Music filter value; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    },
+    "AUDIO": {
+      "override": "AUDIO",
+      "reason": "engine-original",
+      "provenance": "Options group label added by gen1recomp; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    },
+    "BATTLE SPEED": {
+      "override": "VEL. LOTTA",
+      "reason": "engine-original",
+      "provenance": "Options row added by gen1recomp; abbreviated like the project's VELOC. TESTO (overrides/it/gsc/engine.json), LOTTA as in OPZIONI LOTTA."
+    },
+    "MENU SPEED": {
+      "override": "VEL. MENU",
+      "reason": "engine-original",
+      "provenance": "Options row added by gen1recomp; abbreviated like the project's VELOC. TESTO."
+    },
+    "OVERWORLD SPEED": {
+      "override": "VEL. ESPLORAZIONE",
+      "reason": "engine-original",
+      "provenance": "Options row added by gen1recomp; abbreviated like the project's VELOC. TESTO."
+    },
+    "RETURN TO MAIN\nMENU?": {
+      "override": "TORNARE AL MENU\nPRINCIPALE?",
+      "reason": "engine-original",
+      "provenance": "Start-menu exit prompt added by gen1recomp (src/ui/game3/start_menu.lua); AI-composed, kept to the English two-line layout."
+    },
+    "The previous save file will be\nloaded.": {
+      "override": "Saranno caricati i dati\nprecedenti.",
+      "reason": "engine-contract-gap",
+      "provenance": "Second paragraph of frlg.common.strings.gText_SaveFileCorrupted, verbatim."
+    },
+    "The save file is corrupted.": {
+      "override": "Dati di gioco danneggiati.",
+      "reason": "engine-contract-gap",
+      "provenance": "First paragraph of frlg.common.strings.gText_SaveFileCorrupted; src/ui/game3/boot.lua prints the cart's message as two Strings() pages, matching the cart's own paragraph break."
+    },
+    "VIDEO": {
+      "override": "VIDEO",
+      "reason": "engine-original",
+      "provenance": "Options group label added by gen1recomp; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    },
+    "ZOOM": {
+      "override": "ZOOM",
+      "reason": "engine-original",
+      "provenance": "Options row added by gen1recomp; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    }
+  }
+}

@@ -1,0 +1,223 @@
+{
+  "schema": "gen1recomp-translation-mods/frlg-engine-scope",
+  "version": 1,
+  "source_revision": "2c0f3ac04b3f25c46b32c5e82599c2f8b74934c4",
+  "description": "Strings() keys reachable from gen1recomp's game3 (FireRed) runtime: every literal Strings() callsite under src/{core,ui,battle,world}/game3, plus the values option_rows.lua passes to Strings() through a variable. A qid names the FireRed cart's own row for a menu the cart has; the rest are port-added rows. Values that option_rows.lua returns without Strings() (cartLabel: SLOW/MID/FAST, ON/OFF, SHIFT/SET, MONO/STEREO, HELP/LR/L=A) are not reachable and are tracked in docs/upstream-fixes.md. \"Go back to the\\nprevious menu.\" is excluded although the Strings scanner sees it: src/ui/game3/pc_menu.lua wraps it in Strings.source(), which returns the English text, and draw_status_lines prints it without a Strings() lookup.",
+  "keys": {
+    "%d OPTIONS": {
+      "callsite": "src/ui/game3/option_rows.lua:413 (option group row value)",
+      "kind": "literal"
+    },
+    "%dX": {
+      "callsite": "src/ui/game3/option_rows.lua:40 (game speed value)",
+      "kind": "literal"
+    },
+    "1X": {
+      "callsite": "src/ui/game3/option_rows.lua:110 (FILTERS value via Strings)",
+      "kind": "dynamic"
+    },
+    "2X": {
+      "callsite": "src/ui/game3/option_rows.lua:110 (FILTERS value via Strings)",
+      "kind": "dynamic"
+    },
+    "3X": {
+      "callsite": "src/ui/game3/option_rows.lua:110 (FILTERS value via Strings)",
+      "kind": "dynamic"
+    },
+    "AUDIO": {
+      "callsite": "src/ui/game3/option_rows.lua:412 (Rows.GROUPS label via Strings(g.label))",
+      "kind": "dynamic"
+    },
+    "BATTLE OPTIONS": {
+      "callsite": "src/ui/game3/option_rows.lua:412 (Rows.GROUPS label via Strings(g.label))",
+      "kind": "dynamic"
+    },
+    "BATTLE SCENE": {
+      "callsite": "src/ui/game3/option_rows.lua:69",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_BattleScene"
+    },
+    "BATTLE SPEED": {
+      "callsite": "src/ui/game3/option_rows.lua:45 (speedRow label via Strings(label))",
+      "kind": "dynamic"
+    },
+    "BATTLE STYLE": {
+      "callsite": "src/ui/game3/option_rows.lua:74",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_BattleStyle"
+    },
+    "BUTTON MODE": {
+      "callsite": "src/ui/game3/option_rows.lua:121",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_ButtonMode"
+    },
+    "CANCEL": {
+      "callsite": "src/core/game3/scripting/adapters.lua:466 (nurse HEAL/CANCEL choice)",
+      "kind": "literal"
+    },
+    "EXTRAS": {
+      "callsite": "src/ui/game3/option_rows.lua:412 (Rows.GROUPS label via Strings(g.label))",
+      "kind": "dynamic"
+    },
+    "FAITHFUL RATIO": {
+      "callsite": "src/ui/game3/option_rows.lua:190",
+      "kind": "literal"
+    },
+    "FRAME": {
+      "callsite": "src/ui/game3/option_rows.lua:126",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_Frame"
+    },
+    "GRAPHICS": {
+      "callsite": "src/ui/game3/option_rows.lua:412 (Rows.GROUPS label via Strings(g.label))",
+      "kind": "dynamic"
+    },
+    "HEAL": {
+      "callsite": "src/core/game3/scripting/adapters.lua:466 (nurse HEAL/CANCEL choice)",
+      "kind": "literal"
+    },
+    "HM moves can't be\nforgotten now.": {
+      "callsite": "src/ui/game3/summary_menu.lua:627",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_PokeSum_HmMovesCantBeForgotten"
+    },
+    "KEY BAR": {
+      "callsite": "src/ui/game3/option_rows.lua:345",
+      "kind": "literal"
+    },
+    "LOGIC CLOCK": {
+      "callsite": "src/ui/game3/option_rows.lua:244",
+      "kind": "literal"
+    },
+    "MAX FPS": {
+      "callsite": "src/ui/game3/option_rows.lua:218",
+      "kind": "literal"
+    },
+    "MENU SPEED": {
+      "callsite": "src/ui/game3/option_rows.lua:45 (speedRow label via Strings(label))",
+      "kind": "dynamic"
+    },
+    "MUSIC FILTER": {
+      "callsite": "src/ui/game3/option_rows.lua:108",
+      "kind": "literal"
+    },
+    "MUSIC VOL": {
+      "callsite": "src/ui/game3/option_rows.lua:90",
+      "kind": "literal"
+    },
+    "NO": {
+      "callsite": "src/ui/game3/start_menu.lua:205 (return-to-main-menu prompt)",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_No"
+    },
+    "NORMAL": {
+      "callsite": "src/ui/game3/option_rows.lua:39 (game speed 1X)",
+      "kind": "literal"
+    },
+    "OFF": {
+      "callsite": "src/ui/game3/option_rows.lua:27 and :110 (volume 0, music filter off)",
+      "kind": "literal"
+    },
+    "ORIENTATION": {
+      "callsite": "src/ui/game3/option_rows.lua:177",
+      "kind": "literal"
+    },
+    "OVERWORLD SPEED": {
+      "callsite": "src/ui/game3/option_rows.lua:45 (speedRow label via Strings(label))",
+      "kind": "dynamic"
+    },
+    "PERFORMANCE": {
+      "callsite": "src/ui/game3/option_rows.lua:257",
+      "kind": "literal"
+    },
+    "RETURN TO MAIN\nMENU?": {
+      "callsite": "src/ui/game3/start_menu.lua:191",
+      "kind": "literal"
+    },
+    "SCREEN POS": {
+      "callsite": "src/ui/game3/option_rows.lua:203",
+      "kind": "literal"
+    },
+    "SFX VOL": {
+      "callsite": "src/ui/game3/option_rows.lua:99",
+      "kind": "literal"
+    },
+    "SOUND": {
+      "callsite": "src/ui/game3/option_rows.lua:80",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_Sound"
+    },
+    "SPEED": {
+      "callsite": "src/ui/game3/option_rows.lua:412 (Rows.GROUPS label via Strings(g.label))",
+      "kind": "dynamic"
+    },
+    "TEXT SPEED": {
+      "callsite": "src/ui/game3/option_rows.lua:60",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_TextSpeed"
+    },
+    "TILT": {
+      "callsite": "src/ui/game3/option_rows.lua:271",
+      "kind": "literal"
+    },
+    "TOUCH PAD": {
+      "callsite": "src/ui/game3/option_rows.lua:314",
+      "kind": "literal"
+    },
+    "TYPE": {
+      "callsite": "src/ui/game3/option_rows.lua:128 (frame type prefix)",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_FrameType"
+    },
+    "The previous save file will be\nloaded.": {
+      "callsite": "src/ui/game3/boot.lua:227 (second page of gText_SaveFileCorrupted)",
+      "kind": "literal"
+    },
+    "The save file has been\ndeleted...": {
+      "callsite": "src/ui/game3/boot.lua:223",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_SaveFileHasBeenDeleted"
+    },
+    "The save file is corrupted.": {
+      "callsite": "src/ui/game3/boot.lua:226 (first page of gText_SaveFileCorrupted)",
+      "kind": "literal"
+    },
+    "UI LAYOUT": {
+      "callsite": "src/ui/game3/option_rows.lua:141",
+      "kind": "literal"
+    },
+    "UI LETTERBOX": {
+      "callsite": "src/ui/game3/option_rows.lua:151",
+      "kind": "literal"
+    },
+    "VIBRATION": {
+      "callsite": "src/ui/game3/option_rows.lua:331",
+      "kind": "literal"
+    },
+    "VIDEO": {
+      "callsite": "src/ui/game3/option_rows.lua:412 (Rows.GROUPS label via Strings(g.label))",
+      "kind": "dynamic"
+    },
+    "VIDEO MODE": {
+      "callsite": "src/ui/game3/option_rows.lua:164",
+      "kind": "literal"
+    },
+    "VOID FILL": {
+      "callsite": "src/ui/game3/option_rows.lua:299",
+      "kind": "literal"
+    },
+    "VSYNC": {
+      "callsite": "src/ui/game3/option_rows.lua:231",
+      "kind": "literal"
+    },
+    "YES": {
+      "callsite": "src/ui/game3/start_menu.lua:204 (return-to-main-menu prompt)",
+      "kind": "literal",
+      "qid": "frlg.common.strings.gText_Yes"
+    },
+    "ZOOM": {
+      "callsite": "src/ui/game3/option_rows.lua:286",
+      "kind": "literal"
+    }
+  }
+}

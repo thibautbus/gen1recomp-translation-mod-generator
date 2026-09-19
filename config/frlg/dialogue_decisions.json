@@ -1,0 +1,34 @@
+{
+  "schema": "gen1recomp-translation-mods/frlg-dialogue-decisions",
+  "version": 1,
+  "entries": {
+    "Text_ObtainedTheX": {
+      "qid": "frlg.script.obtain_item.Text_ObtainedTheX",
+      "reason": "stdscripts.lua prefixes the cart's \"Obtained the [STR_VAR_2]!\" with the player's name; the translation keeps the item buffer the script fills."
+    },
+    "Text_PutItemAway": {
+      "qid": "frlg.script.obtain_item.Text_PutItemAway",
+      "reason": "stdscripts.lua rewords \"put the X in the Y\" as \"put away the X in the Y\"; same message, same two item/pocket buffers."
+    },
+    "Text_RestoredPkmnToFullHealth": {
+      "qid": "frlg.script.event_scripts.Text_RestoredPkmnToFullHealth",
+      "reason": "stdscripts.lua turns the cart's scroll break into a line break; same message and no runtime value."
+    },
+    "Text_TakeYourPkmnForFewSeconds": {
+      "qid": "frlg.script.event_scripts.Text_TakeYourPkmnForFewSeconds",
+      "reason": "stdscripts.lua writes \"OK.\" where the cart writes \"Okay,\"; same message and no runtime value."
+    },
+    "Text_TownMap": {
+      "qid": "frlg.script.flavor_text.Text_ATownMap",
+      "reason": "stdscripts.lua's shared TOWN MAP sign reads \"It's a TOWN MAP.\" where the cart's flavor text reads \"A TOWN MAP.\"; same message and no runtime value."
+    },
+    "Text_UsualPCServicesUnavailable": {
+      "qid": "frlg.script.OneIsland_PokemonCenter_1F.OneIsland_PokemonCenter_1F_Text_UsualPCServicesUnavailable",
+      "reason": "stdscripts.lua's shared PC-unavailable line is One Island's own message with \"right now\" appended; no runtime value."
+    },
+    "Text_WelcomeWantToHealPkmn": {
+      "qid": "frlg.script.event_scripts.Text_WelcomeWantToHealPkmn",
+      "reason": "gen1recomp's standard nurse script (src/core/game3/scripting/stdscripts.lua) words the cart's greeting on one page (\"rest your POKéMON to good health\"); same message and no runtime value."
+    }
+  }
+}
