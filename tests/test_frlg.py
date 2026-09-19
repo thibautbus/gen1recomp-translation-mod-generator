@@ -522,6 +522,21 @@ io.write(table.concat(out, "\0"))
         self.assertIn("WINDOWED", dynamic)
         self.assertEqual(sorted((literal | dynamic) - set(scope)), [])
 
+    def test_upstream_doc_inventories_every_hardcoded_text_file(self):
+        engine = ROOT / ".cache" / "dependencies" / "gen1recomp"
+        if not (engine / "src").is_dir():
+            self.skipTest("pinned gen1recomp checkout unavailable")
+        from pipeline.frlg_audit import NON_DISPLAY_FILES, player_visible_files, scan_hardcoded_literals
+        doc = (ROOT / "docs" / "upstream-fixes.md").read_text(encoding="utf-8")
+        inventory = doc.split("#### Inventory: every game3 file with hardcoded player-visible text", 1)[1]
+        inventory = inventory.split("\n### ", 1)[0]
+        listed = set(re.findall(r"^\| `(src/[^`]+)` \|", inventory, re.M))
+        visible = set(player_visible_files(engine))
+        self.assertEqual(sorted(visible - listed), [], "player-visible files missing from the inventory")
+        self.assertEqual(sorted(listed - visible), [], "inventory rows the scan no longer finds")
+        self.assertEqual(sorted(set(NON_DISPLAY_FILES) - set(scan_hardcoded_literals(engine))), [],
+                         "stale NON_DISPLAY_FILES entries")
+
     def test_reviewed_qids_exist_in_the_pinned_corpus(self):
         corpus = ROOT / ".cache" / "dependencies" / "poke-corpus" / "corpus" / "FireRedLeafGreen"
         charmap_path = ROOT / ".cache" / "dependencies" / "pret" / "charmap" / "charmap.txt"

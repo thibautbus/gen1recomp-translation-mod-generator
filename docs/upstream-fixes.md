@@ -1597,13 +1597,13 @@ Fix: route the merged `dexEntry` (kind, and new `text`/`text2` fields) into `Pok
 
 #### 6. Battle messages are hardcoded English
 
-Roughly 350 English literals across `src/core/game3/battle/**` are concatenated into battle text: `engine.lua` (63), `effects/*.lua` (secondary 33, hit 29, setup 27, healing 13, status 12, stats 12, special 9, volatiles 7, screens 5, weather 4), `held_items.lua` (76, berry flavour lines), `residual_handlers.lua` (33), `abilities.lua` (20), `init.lua` (18), `catch_seq.lua` (17), `commands.lua` (17), `items.lua` (35), `switch_seq.lua` (8), `status.lua` (6), `learn_move.lua` (4), `intro_seq.lua` (4, GHOST/SILPH SCOPE). The trainer challenge lines are built the same way in `Trainers.introStrings` (`src/core/game3/scripting/trainers.lua:303-304`, "would like to battle!", "sent out"). Counts come from a literal scan and are approximate.
+Roughly 350 English literals across `src/core/game3/battle/**` are concatenated into battle text: `engine.lua` (63), `effects/*.lua` (secondary 33, hit 29, setup 27, healing 13, status 12, stats 12, special 9, volatiles 7, screens 5, weather 4), `held_items.lua` (76, berry flavour lines), `residual_handlers.lua` (33), `abilities.lua` (20), `init.lua` (18), `catch_seq.lua` (17), `commands.lua` (17), `items.lua` (35), `switch_seq.lua` (8), `status.lua` (6), `learn_move.lua` (4), `intro_seq.lua` (4, GHOST/SILPH SCOPE). The trainer challenge lines are built the same way in `Trainers.introStrings` (`src/core/game3/scripting/trainers.lua:303-304`, "would like to battle!", "sent out"). Counts come from a literal scan and are upper bounds; the complete per-file list is the inventory at the end of this section.
 
 The cart keeps all of them in `gBattleStringsTable`, and the corpus has that table keyed by pret label (`frlg.common.battle_message`, 529 rows, 448 of them `sText_*` messages). Fix: decode `gBattleStringsTable` from the ROM and look messages up by label through a registry (the Gen 2 `rom_text` pattern), substituting the `B_*` placeholders at runtime; a mod could then be joined by label exactly like dialogue. Routing each literal through `Strings()` would also work but splits sentences around names, which is the Red/Blue `engine-contract-gap` situation this project has spent the most effort compensating for.
 
 #### 7. Menus and interface text are hardcoded English
 
-No `Strings()`, no registry, no hook (approximate literal counts): `src/ui/game3/pokedex.lua` (75: mode names, list headers, AREA/SIZE pages), `pc_menu.lua` (55: ITEM STORAGE, WITHDRAW/DEPOSIT, descriptions; its one `Strings.source("Go back to the\nprevious menu.")` at `:43` is never resolved, `draw_status_lines` at `:128` prints it raw), `src/core/game3/item_use.lua` (51), `items_data.lua` (49, bag pocket names) and `scripting/adapters.lua` (14, pocket names again), `field_moves.lua` (35), `party_menu.lua` (25), `shop_menu.lua` (20), `summary_menu.lua` (17, page titles and labels), `summary_data.lua` (12, egg descriptions), `box_storage_ui.lua` (11), `trainer_card.lua` (10), `hall_of_fame.lua` (10), `berry_pouch.lua` (9), `boot.lua` (NEW GAME/CONTINUE), `save_menu.lua` (6, including a "PALLET TOWN" fallback), `bag_menu.lua`, `tm_case.lua`, `region_map.lua` (button hints), `evolution_scene.lua`, `stat_growth.lua`, `vs_seeker.lua`, `step_events.lua` (whiteout, REPEL), `storage.lua` ("BOX %d"), `scripting/natives.lua` (nickname prompt), `naming.lua` (keyboard layout and prompts). The corpus has the cart's own row for nearly every one (`frlg.common.strings.*`, 1,358 rows).
+No `Strings()`, no registry, no hook (approximate literal counts): `src/ui/game3/pokedex.lua` (75: mode names, list headers, AREA/SIZE pages), `pc_menu.lua` (55: ITEM STORAGE, WITHDRAW/DEPOSIT, descriptions; its one `Strings.source("Go back to the\nprevious menu.")` at `:43` is never resolved, `draw_status_lines` at `:128` prints it raw), `src/core/game3/item_use.lua` (51), `items_data.lua` (49, bag pocket names) and `scripting/adapters.lua` (14, pocket names again), `field_moves.lua` (35), `party_menu.lua` (25), `shop_menu.lua` (20), `summary_menu.lua` (17, page titles and labels), `summary_data.lua` (12, egg descriptions), `box_storage_ui.lua` (11), `trainer_card.lua` (10), `hall_of_fame.lua` (10), `berry_pouch.lua` (9), `boot.lua` (NEW GAME/CONTINUE), `save_menu.lua` (6, including a "PALLET TOWN" fallback), `bag_menu.lua`, `tm_case.lua`, `region_map.lua` (button hints), `evolution_scene.lua`, `stat_growth.lua`, `vs_seeker.lua`, `step_events.lua` (whiteout, REPEL), `storage.lua` ("BOX %d"), `scripting/natives.lua` (nickname prompt), `naming.lua` (keyboard layout and prompts). The corpus has the cart's own row for nearly every one (`frlg.common.strings.*`, 1,358 rows). The inventory at the end of this section lists every file, including screens this summary leaves out: the YES/NO choice box (`src/ui/game3/choice.lua`) behind every yes/no question, the battle action menu (FIGHT/BAG/POKéMON/RUN, `battle/commands.lua`), nature names, PC wallpaper names, badge labels, the MONEY box and the party screen's OK/CANCEL.
 
 Fix: wrap each display literal in `Strings()` (the pipeline's `config/frlg/engine_scope.json` already maps keys to reviewed `frlg.common.strings` qids and picks new keys up automatically) or, better where the cart has the text, read it from the ROM by label. Screens that build lists (`items_data` pockets, PC/party actions) could alternatively raise `ui.*` hooks like `ui.start_menu.items`.
 
@@ -1667,6 +1667,87 @@ Joining the other way round -- every `frlg.script.*` corpus row whose pret label
 game3 has code for each feature in the "in game" column (`grep` over `src/core/game3` and `src/ui/game3`: Safari 20 files, white-out 8, Waterfall 7, cable club 4, Pokédex rating 4, Fame Checker, Pokédude and Itemfinder 2 each), with its text written as English literals (entries 6-7) or read from the ROM into packs outside the text table (entry 11). Trainer battle lines are not affected: 913 of the 919 trainer dialog strings carry a text key the table holds, and `trainerbattle` resolves them through it (`src/core/game3/scripting/ops_a.lua:910-913`); only the pack's plain-string fallback (`battle/init.lua:774`) stays English.
 
 Fix: seed the script BFS from the same labels the cart uses for these features (or extract those text tables alongside the scripts), and have the Lua screens look their messages up in the text table by that key. Because every row above is keyed by a pret label with a known address, the pipeline joins them without any new work: they land in `lang/dialogue.lua` as soon as the extractor emits their keys.
+
+#### Inventory: every game3 file with hardcoded player-visible text
+
+Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg_audit.py`) at the pinned revision: every string literal under `src/{core,ui,battle,world}/game3` that looks like text and is not a `Strings()` argument, minus the files reviewed as never reaching the screen (`NON_DISPLAY_FILES`: mod-API errors, log lines, identifiers, asset paths, each with its reason). 74 files hold 2,028 such literals; a count is an upper bound, since a file can mix messages with a few internal identifiers. `tests/test_frlg.py` fails if the scan finds a player-visible file this table does not list, so the inventory stays complete across pin bumps. "Entry" points to the capability above that would make the text reachable.
+
+| File | Literals | What the player sees | Entry |
+| --- | ---: | --- | --- |
+| `src/core/game3/battle/abilities.lua` | 46 | Ability activation messages (DRIZZLE, INTIMIDATE, TRACE…) | 6, 9 |
+| `src/core/game3/battle/adapter.lua` | 43 | Shared battle messages ("But it failed!") and status abbreviations | 6 |
+| `src/core/game3/battle/catch_seq.lua` | 22 | Ball throw and capture messages ("Gotcha!", dodged ball) | 6 |
+| `src/core/game3/battle/commands.lua` | 26 | Action menu (FIGHT/BAG/POKéMON/RUN) and move-restriction messages (DISABLE, TAUNT, TORMENT) | 6 |
+| `src/core/game3/battle/effects/damaging.lua` | 1 | BRICK BREAK wall message | 6 |
+| `src/core/game3/battle/effects/hazards.lua` | 2 | SPIKES message | 6 |
+| `src/core/game3/battle/effects/healing.lua` | 19 | Healing, INGRAIN, REST messages | 6 |
+| `src/core/game3/battle/effects/hit.lua` | 38 | Type effectiveness, SUBSTITUTE, ENDURE, critical hits | 6 |
+| `src/core/game3/battle/effects/screens.lua` | 8 | REFLECT/LIGHT SCREEN/SAFEGUARD messages | 6 |
+| `src/core/game3/battle/effects/secondary.lua` | 57 | Stat names and stat-change messages ("sharply rose!") | 6 |
+| `src/core/game3/battle/effects/setup.lua` | 35 | Trapping, evasion, LEECH SEED, charge-turn messages | 6 |
+| `src/core/game3/battle/effects/special.lua` | 19 | Send-out lines ("Go!", "sent out") and special-move messages | 6 |
+| `src/core/game3/battle/effects/stats.lua` | 13 | Stat ceiling/floor and miss messages | 6 |
+| `src/core/game3/battle/effects/status.lua` | 22 | Status infliction and immunity messages | 6 |
+| `src/core/game3/battle/effects/volatiles.lua` | 9 | PROTECT, ENCORE, PERISH SONG, ATTRACT messages | 6 |
+| `src/core/game3/battle/effects/weather.lua` | 8 | Weather start messages | 6 |
+| `src/core/game3/battle/engine.lua` | 102 | Core battle flow: effectiveness, misses, fainting, recoil, confusion… | 6 |
+| `src/core/game3/battle/evo_seq.lua` | 5 | Post-battle evolution messages | 6 |
+| `src/core/game3/battle/exp_seq.lua` | 3 | EXP. Points and level-up messages | 6 |
+| `src/core/game3/battle/held_items.lua` | 100 | Held item and berry messages (flavour dislikes, LEFTOVERS…) | 6 |
+| `src/core/game3/battle/init.lua` | 48 | Wild/trainer encounter lines ("Wild … appeared!"), blackout, trainer send-out | 6 |
+| `src/core/game3/battle/intro_seq.lua` | 11 | GHOST/SILPH SCOPE encounter messages | 6 |
+| `src/core/game3/battle/items.lua` | 60 | Item use in battle ("It won't have any effect.", ball and medicine messages) | 6 |
+| `src/core/game3/battle/learn_move.lua` | 22 | Move-learning dialogue ("is trying to learn", "forgot") | 6 |
+| `src/core/game3/battle/prize.lua` | 5 | Prize money and PAY DAY messages | 6 |
+| `src/core/game3/battle/residual_handlers.lua` | 53 | End-of-turn messages (weather, screens wearing off, poison…) | 6 |
+| `src/core/game3/battle/residuals.lua` | 1 | Faint message | 6 |
+| `src/core/game3/battle/rules.lua` | 9 | Trapping-move templates (WRAP, FIRE SPIN…) | 6 |
+| `src/core/game3/battle/status.lua` | 9 | Poison/burn damage and status messages | 6 |
+| `src/core/game3/battle/switch_seq.lua` | 20 | Recall lines ("that's enough! Come back!"), SPIKES on entry | 6 |
+| `src/core/game3/battle/ui.lua` | 9 | "What will … do?", PP display, empty bag | 6, 7 |
+| `src/core/game3/field_moves.lua` | 64 | Field move prompts and refusals (CUT, SURF, STRENGTH, FLASH, badge required) | 7 |
+| `src/core/game3/item_use.lua` | 68 | Overworld item use messages | 7 |
+| `src/core/game3/items_data.lua` | 113 | Bag pocket names and item fallbacks | 7 |
+| `src/core/game3/pokedex_data.lua` | 9 | Unknown-species Pokédex entry | 5, 7 |
+| `src/core/game3/pokemon.lua` | 19 | Fallback species/ability/move names shown when a pack entry is missing | 7 |
+| `src/core/game3/scripting/adapters.lua` | 26 | Pocket names in item-pickup messages, nurse HEAL/CANCEL fallbacks | 7 |
+| `src/core/game3/scripting/multichoice.lua` | 1 | Placeholder multichoice labels when the extract has none | 7 |
+| `src/core/game3/scripting/natives.lua` | 44 | Nicknaming prompt ("NAME?", "'s nickname?") and other natives | 7 |
+| `src/core/game3/scripting/trainers.lua` | 17 | Fallback rival battle lines and the trainer challenge lines ("would like to battle!") | 6, 12 |
+| `src/core/game3/step_events.lua` | 5 | Blacking out, poison fainting, REPEL wearing off | 7, 15 |
+| `src/core/game3/storage.lua` | 30 | Default box names (BOX n) and PC wallpaper names | 7 |
+| `src/core/game3/summary_data.lua` | 41 | Nature names, egg status descriptions, "No data" | 7, 9 |
+| `src/core/game3/summary_descriptions.lua` | 78 | Ability and move descriptions on the summary screen | 9 |
+| `src/core/game3/vs_seeker.lua` | 8 | VS Seeker messages | 7, 15 |
+| `src/ui/game3/bag_menu.lua` | 38 | Bag actions (USE/TOSS/GIVE) and messages | 7 |
+| `src/ui/game3/berry_pouch.lua` | 16 | Berry Pouch actions and messages | 7 |
+| `src/ui/game3/boot.lua` | 14 | Title menu (NEW GAME/CONTINUE) and save-state screens | 7 |
+| `src/ui/game3/box_storage_ui.lua` | 35 | PC box actions and messages | 7 |
+| `src/ui/game3/choice.lua` | 4 | The YES/NO choice box used by every yes/no question | 7 |
+| `src/ui/game3/evolution_scene.lua` | 8 | Evolution scene messages | 7 |
+| `src/ui/game3/hall_of_fame.lua` | 15 | Hall of Fame labels | 7 |
+| `src/ui/game3/help_system.lua` | 10 | Help menu button hints | 7, 11 |
+| `src/ui/game3/money_box.lua` | 1 | MONEY label | 7 |
+| `src/ui/game3/naming.lua` | 28 | Naming screen keyboard pages and prompts | 7 |
+| `src/ui/game3/new_game_scene.lua` | 80 | Controls tutorial and Oak's speech | 11 |
+| `src/ui/game3/option_menu.lua` | 4 | Options button hints and title | 7, 8 |
+| `src/ui/game3/option_rows.lua` | 28 | Option values printed without Strings() (SLOW/MID/FAST, ON/OFF, SHIFT/SET…) | 8 |
+| `src/ui/game3/party_chrome.lua` | 2 | Party screen OK/CANCEL buttons | 7 |
+| `src/ui/game3/party_menu.lua` | 52 | Party actions (SUMMARY/SWITCH/ITEM, field moves) and messages | 7 |
+| `src/ui/game3/pc_chrome.lua` | 4 | Box header and level labels | 7 |
+| `src/ui/game3/pc_menu.lua` | 65 | PC menus, descriptions and messages | 7 |
+| `src/ui/game3/pokedex.lua` | 110 | Pokédex modes, lists, AREA/SIZE pages | 7 |
+| `src/ui/game3/pokedex_chrome.lua` | 2 | Pokédex entry labels | 7 |
+| `src/ui/game3/quest_log.lua` | 4 | Quest log button hints | 7, 11 |
+| `src/ui/game3/region_map.lua` | 7 | Town map button hints and "No data available." | 7, 10 |
+| `src/ui/game3/release_seq.lua` | 6 | Release confirmation and farewell | 7 |
+| `src/ui/game3/save_menu.lua` | 12 | Save prompts and save-info box | 7 |
+| `src/ui/game3/shop_menu.lua` | 30 | Mart menu and clerk messages | 7 |
+| `src/ui/game3/start_menu.lua` | 7 | Start menu labels -- translated through the `ui.start_menu.items` hook | translated |
+| `src/ui/game3/stat_growth.lua` | 6 | Level-up stat names | 7 |
+| `src/ui/game3/summary_menu.lua` | 52 | Summary page titles and labels | 7 |
+| `src/ui/game3/tm_case.lua` | 19 | TM Case actions and messages | 7 |
+| `src/ui/game3/trainer_card.lua` | 21 | Trainer card labels | 7 |
 
 ### Translated via a compromise (`engine-contract-gap`)
 
