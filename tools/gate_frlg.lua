@@ -198,16 +198,19 @@ do
   local rival = Trainers.info(326, { rivalName = "GARY" })
   if rival then eq(rival.name, "GARY", "the rival keeps the player's chosen name") end
 end
--- The strings registry merges into data.strings.  Game3 (unlike Game and
--- Game2) never hands that table to Strings.load, so Strings() only answers
--- when the launcher's pre-boot preload happened to install the same
--- catalog: measured below, not failed on.
+-- The strings registry merges into data.strings.  Strings() answers from it
+-- once Game3:_loadMods hands the merged data to Strings.load, as Game and
+-- Game2 do; engines before that fix never did, so it is measured here from
+-- the pinned engine's own Game3.lua, not failed on.
 local stringsLive
 row = expectations.strings
 if row then
   eq(data.strings and data.strings[row.id], row.value, "strings registry " .. row.id)
   local Strings = require("src.core.Strings")
-  stringsLive = { key = row.id, resolves = Strings(row.id) == row.value }
+  local game3 = readFile(engineRoot .. "/src/core/Game3.lua") or ""
+  local loadsCatalog = game3:find('require%("src%.core%.Strings"%)%.load%(self%.data%)') ~= nil
+  if loadsCatalog then Strings.load(data) end
+  stringsLive = { key = row.id, resolves = Strings(row.id) == row.value, game3_loads_catalog = loadsCatalog }
 end
 
 row = expectations.start_menu
@@ -243,6 +246,9 @@ local FrlgFont = require("src.ui.game3.frlg_font")
 local blank, blankByCatalog = {}, {}
 local blankTotal = 0
 local function countBlanks(catalogName, text)
+  -- Strings() directives, {PLAYER}/{A_BUTTON}-style tokens and page marks
+  -- are replaced or acted on before anything is drawn.
+  text = text:gsub("%%%d*%$?[-+ #0]*%d*%.?%d*[%a%%]", ""):gsub("{[%u%d_]+}", ""):gsub("\\p", ""):gsub("\f", "")
   for char in text:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
     if char ~= " " and char ~= "\n" and FrlgFont.glyphId(char) == 0 then
       blank[char] = (blank[char] or 0) + 1
