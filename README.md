@@ -272,26 +272,26 @@ provenance. Future unresolved entries will keep their original English text.
 
 The remaining engine keys are reported separately below. They are keys used by
 neither RBY nor Gold and Silver, so their denominator is the residual scope:
-`2177 - (421 + 943 - 85) = 898`. The numerator counts keys translated in at
+`2192 - (421 + 943 - 85) = 913`. The numerator counts keys translated in at
 least one of the two artifacts; this is a project-level metric, not a claim
 that every key is present in both games.
 
 | Target | Other engine strings |
 | --- | ---: |
-| `fr` | 78/898 (8.69%) |
-| `de` | 84/898 (9.35%) |
-| `es` | 83/898 (9.24%) |
-| `it` | 84/898 (9.35%) |
-| `ja-Hrkt` | 85/898 (9.47%) |
-| `ko` | 3/898 (0.33%) |
+| `fr` | 78/913 (8.54%) |
+| `de` | 84/913 (9.20%) |
+| `es` | 83/913 (9.09%) |
+| `it` | 84/913 (9.20%) |
+| `ja-Hrkt` | 85/913 (9.31%) |
+| `ko` | 3/913 (0.33%) |
 
-The denominator is calculated as follows: `2177` total engine keys, minus the
+The denominator is calculated as follows: `2192` total engine keys, minus the
 `421` RBY-related keys and the `943` Gold and Silver-related keys, plus back the `85` keys
 shared by both scopes so they are subtracted only once. The resulting residual
-scope is `898` keys.
+scope is `913` keys.
 
 These values use the pinned ROMs, corpus snapshots and Gen1Recomp revision
-`f6657891` (v0.2.61); regenerate them whenever one of those inputs changes.
+`2c0f3ac0` (v0.2.64); regenerate them whenever one of those inputs changes.
 
 ## Translation provenance
 
