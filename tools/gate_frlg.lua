@@ -192,6 +192,12 @@ do
   check(#changed == 0, ("%d trainer parties are unchanged by the renames%s"):format(
     checked, #changed > 0 and (" (changed: " .. table.concat(changed, ", ", 1, math.min(#changed, 10)) .. ")") or ""))
 end
+-- Trainers.info substitutes the player's rival name only while the class
+-- name still reads "RIVAL"; the catalog must leave that class alone.
+do
+  local rival = Trainers.info(326, { rivalName = "GARY" })
+  if rival then eq(rival.name, "GARY", "the rival keeps the player's chosen name") end
+end
 row = expectations.dex_categories
 if row then
   local dex = Pokemon._dex and Pokemon._dex[row.national]
@@ -207,6 +213,21 @@ if row then
   eq(data.strings and data.strings[row.id], row.value, "strings registry " .. row.id)
   local Strings = require("src.core.Strings")
   stringsLive = { key = row.id, resolves = Strings(row.id) == row.value }
+end
+
+row = expectations.start_menu
+if row then
+  local ModRuntime = require("src.mods.Runtime")
+  local items = {}
+  for _, id in ipairs({ "pokedex", "pokemon", "bag", "trainer", "save", "option", "exit" }) do
+    items[#items + 1] = { id = id, label = id == "trainer" and "RED" or id:upper() }
+  end
+  check(ModRuntime.wantsHook("ui.start_menu.items"), "the mod wraps ui.start_menu.items")
+  local shown = ModRuntime.call("ui.start_menu.items", function(_, list) return list end, {}, items)
+  local byId = {}
+  for _, item in ipairs(type(shown) == "table" and shown or {}) do byId[item.id] = item.label end
+  for id, label in pairs(row) do eq(byId[id], label, "start menu " .. id .. " label") end
+  eq(byId.trainer, "RED", "start menu keeps the player's name")
 end
 
 -- Runtime.start (src/core/game3/runtime.lua) installs the species pack again

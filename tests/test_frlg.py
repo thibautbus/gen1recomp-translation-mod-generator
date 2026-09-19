@@ -10,11 +10,13 @@ from pipeline.frlg_join import (
     ENGLISH_MISMATCH, MARKUP_ONLY, NO_MATCH, OVERRIDE, PLACEHOLDER_MISMATCH, REVIEWED,
     SAME_AS_ENGLISH, TRANSLATED, UNENCODABLE, UNRESOLVED,
     join_frlg_dialogue, join_frlg_engine_strings, join_indexed_catalog,
-    join_item_descriptions, load_frlg_corpus, load_frlg_dialogue_decisions,
+    join_item_descriptions, join_start_menu, load_frlg_corpus, load_frlg_dialogue_decisions,
     load_frlg_dialogue_overrides, load_frlg_engine_scope, placeholders_supported,
     registry_id, registry_ids,
 )
-from pipeline.frlg_mod import FRLG_CATALOG_HOOKS, frlg_archive_name, frlg_mod_id, generate_frlg_mod, lua_ir
+from pipeline.frlg_mod import (
+    FRLG_CATALOG_HOOKS, _trainer_class_names, frlg_archive_name, frlg_mod_id, generate_frlg_mod, lua_ir,
+)
 from pipeline.frlg_text import (
     EncodeError, RUNTIME_CHARMAP, corpus_ir, decode, encode, ir_plain, load_charmap, load_symbols,
     text_key_address,
@@ -257,6 +259,9 @@ class FrlgCatalogTests(unittest.TestCase):
             ("frlg.common.species_names.gSpeciesNames.2", "IVYSAUR", "IVYSAUR"),
             ("frlg.common.species_names.gSpeciesNames.3", "VENUSAUR", ""),
             ("frlg.common.trainer_class_names.gTrainerClassNames.1", "[PKMN] TRAINER", "DRESSEUR"),
+            ("frlg.common.trainer_class_names.gTrainerClassNames.81", "RIVAL", "RIVALE"),
+            ("frlg.common.strings.gText_MenuBag", "BAG", "SAC"),
+            ("frlg.common.strings.gText_MenuPokedex", "POKéDEX", "POKéDEX"),
             ("frlg.common.items.gItemDescription_ITEM_BEAD_MAIL", "Mail.", "Lettre perle."),
             ("frlg.common.items.gItemDescription_ITEM_DREAM_MAIL", "Mail.", "Lettre rêve."),
             ("frlg.common.move_descriptions.sRoarDescription", "Roar.", "Hurle."),
@@ -292,6 +297,19 @@ class FrlgCatalogTests(unittest.TestCase):
                                       "frlg.common.species_names.gSpeciesNames.", self.charmap)
         self.assertEqual(result.values, {})
         self.assertEqual(result.stats["english_mismatch"], 1)
+
+    def test_class_names_the_engine_compares_stay_english(self):
+        trainers = {1: {"class": 1, "className": "POKéMON TRAINER", "name": "A"},
+                    2: {"class": 81, "className": "RIVAL", "name": "TERRY"}}
+        result = _trainer_class_names(trainers, {1: "1", 2: "2"}, self.corpus, self.charmap)
+        self.assertEqual(result.values, {"1": "DRESSEUR"})
+        self.assertEqual(result.summary()["fallback_english"], 1)
+
+    def test_start_menu_labels(self):
+        result = join_start_menu(self.corpus, self.charmap)
+        self.assertEqual(result.values, {"bag": "SAC"})
+        self.assertEqual(result.stats["same_as_english"], 1)
+        self.assertEqual(result.stats["no_corpus_row"], 4)
 
     def test_item_descriptions_prefer_the_items_own_row(self):
         items = {1: {"name": "BEAD MAIL", "description": "Mail."},
@@ -352,7 +370,8 @@ class FrlgModTests(unittest.TestCase):
             mod = generate_frlg_mod(
                 Path(directory) / "mod", language="fr", target_name="French translation for FireRed",
                 dialogue={"g3:08000010": [text('Dit "oui"\\'), {"t": "player"}, {"t": "strvar", "n": 2}, EOS]},
-                catalogs={"species_names": {"BULBASAUR": "BULBIZARRE"}, "strings": {"YES": "OUI"}},
+                catalogs={"species_names": {"BULBASAUR": "BULBIZARRE"}, "strings": {"YES": "OUI"},
+                          "start_menu": {"bag": "SAC"}},
             )
             manifest = json.loads((mod / "manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["games"], ["firered"])
@@ -361,6 +380,8 @@ class FrlgModTests(unittest.TestCase):
             self.assertIn(FRLG_CATALOG_HOOKS["species_names"], main)
             self.assertIn(FRLG_CATALOG_HOOKS["strings"], main)
             self.assertNotIn("font", main)
+            self.assertIn('mod.hooks:wrap("ui.start_menu.items"', main)
+            self.assertTrue((mod / "lang" / "start_menu.lua").is_file())
             self.assertFalse((mod / "lang" / "move_names.lua").exists())
             luajit = shutil.which("luajit")
             if luajit:
