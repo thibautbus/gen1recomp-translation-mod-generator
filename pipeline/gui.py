@@ -81,6 +81,13 @@ def language_label(code: str, generation: int = 1) -> str:
     raise builder.BuildError(f"Invalid language selection: {code!r}")
 
 
+# FireRed draws every string with the cart's own font and Schemas.GEN3 gates
+# the `font` registry, so generation 3 has no profile to choose.  The box still
+# shows a value rather than a stale "Fusion Pixel...", which would read as a
+# choice the build silently ignores.
+GEN3_FONT_LABEL = "No font profile: FireRed uses the cart's own font"
+
+
 def font_profile_label(profile: str, language: str = "fr") -> str:
     profile = str(profile).strip().lower()
     if profile == "fusion":
@@ -92,6 +99,10 @@ def font_profile_label(profile: str, language: str = "fr") -> str:
 
 
 def font_profile_code(value: str) -> str:
+    if value == GEN3_FONT_LABEL:
+        # generation 3 ignores the profile; keep the CLI's default so the
+        # value still validates against builder.validate_font_profile.
+        return "fusion"
     raw = value.strip().lower()
     if raw.startswith("fusion pixel"):
         return "fusion"
@@ -411,8 +422,14 @@ class TranslationBuilderApp:
             values=[font_profile_label(profile, language) for profile in profiles],
         )
         # FireRed registers no font (Schemas.GEN3 gates the font registry).
-        locked = len(profiles) == 1 or generation == 3
-        self.font_profile_box.configure(state="disabled" if locked else "readonly")
+        if generation == 3:
+            self.font_profile_box.configure(values=[GEN3_FONT_LABEL])
+            self.font_profile_var.set(GEN3_FONT_LABEL)
+            self.font_profile_box.configure(state="disabled")
+            return
+        if self.font_profile_var.get() == GEN3_FONT_LABEL:
+            self.font_profile_var.set(font_profile_label("fusion", language))
+        self.font_profile_box.configure(state="disabled" if len(profiles) == 1 else "readonly")
 
     def _post(self, callback: Callable[[], None]):
         self._events.put(callback)
