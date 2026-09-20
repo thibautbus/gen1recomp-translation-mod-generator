@@ -14,7 +14,7 @@ from pipeline import builder
 from pipeline import project
 from pipeline.project import project_version
 from pipeline.rom_paths import load_rom_paths
-from pipeline.gui import available_font_profiles, coverage_lines, font_profile_label, language_code, validate_inputs
+from pipeline.gui import GEN3_FONT_LABEL, available_font_profiles, coverage_lines, font_profile_code, font_profile_label, language_code, validate_inputs
 from pipeline.specs import BuildRequest, ReleaseProfile, release_profile
 from pipeline.engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE
 
@@ -183,6 +183,19 @@ class BuilderTests(unittest.TestCase):
             self.assertEqual(inputs.language, "fr")
             self.assertEqual(inputs.font_profile, "fusion")
             self.assertEqual(inputs.rom_paths["yellow"], yellow.resolve())
+
+    def test_gui_font_profile_reads_as_none_for_firered(self):
+        # Generation 3 registers no font (Schemas.GEN3 gates the registry), so
+        # the box must not keep showing a profile the build ignores.
+        self.assertIn("No font profile", GEN3_FONT_LABEL)
+        self.assertEqual(font_profile_code(GEN3_FONT_LABEL), "fusion")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rom = root / "firered.gba"
+            rom.write_bytes(b"firered")
+            with patch.object(builder, "verify_firered_rom"), patch.object(builder, "verify_rom"):
+                inputs = validate_inputs(3, {"firered": rom}, "fr", root / "out", GEN3_FONT_LABEL)
+            self.assertEqual(inputs.font_profile, "fusion")
 
     def test_gui_font_profile_is_fixed_for_japanese(self):
         self.assertIn("recommended", font_profile_label("fusion"))
@@ -519,6 +532,7 @@ class BuilderTests(unittest.TestCase):
             self.assertEqual(builder._prompt_generation(lambda _: ""), 1)
             self.assertEqual(builder._prompt_generation(lambda _: "1"), 1)
             self.assertEqual(builder._prompt_generation(lambda _: "2"), 2)
+            self.assertEqual(builder._prompt_generation(lambda _: "3"), 3)
 
     def test_invalid_generation_menu(self):
         with patch("builtins.print"), self.assertRaises(builder.BuildError):

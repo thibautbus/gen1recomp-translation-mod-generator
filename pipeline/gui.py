@@ -28,9 +28,13 @@ class GuiInputs:
 GENERATIONS = (
     (1, "Red, Blue and Yellow"),
     (2, "Gold, Silver and Crystal"),
+    (3, "FireRed"),
 )
 
-ROMS_BY_GENERATION = {1: ("rb", "yellow"), 2: ("gs", "crystal")}
+ROMS_BY_GENERATION = {1: ("rb", "yellow"), 2: ("gs", "crystal"), 3: ("firered",)}
+
+# Where each release leaves its coverage report (pipeline/*_mod.py).
+BUILD_CACHE_BY_GENERATION = {1: "interactive", 2: "interactive-gs", 3: "interactive-gen3"}
 
 # Fixed wrap width (pixels) for every Hint.TLabel. Without it, hint labels
 # with no wraplength request exactly as much width as their longest line
@@ -77,6 +81,13 @@ def language_label(code: str, generation: int = 1) -> str:
     raise builder.BuildError(f"Invalid language selection: {code!r}")
 
 
+# FireRed draws every string with the cart's own font and Schemas.GEN3 gates
+# the `font` registry, so generation 3 has no profile to choose.  The box still
+# shows a value rather than a stale "Fusion Pixel...", which would read as a
+# choice the build silently ignores.
+GEN3_FONT_LABEL = "No font profile: FireRed uses the cart's own font"
+
+
 def font_profile_label(profile: str, language: str = "fr") -> str:
     profile = str(profile).strip().lower()
     if profile == "fusion":
@@ -88,6 +99,10 @@ def font_profile_label(profile: str, language: str = "fr") -> str:
 
 
 def font_profile_code(value: str) -> str:
+    if value == GEN3_FONT_LABEL:
+        # generation 3 ignores the profile; keep the CLI's default so the
+        # value still validates against builder.validate_font_profile.
+        return "fusion"
     raw = value.strip().lower()
     if raw.startswith("fusion pixel"):
         return "fusion"
@@ -126,7 +141,7 @@ def validate_inputs(
     for game in ROMS_BY_GENERATION[generation]:
         raw = rom_paths.get(game)
         if not raw or not str(raw).strip():
-            display = {"gs": "Gold or Silver", "rb": "Red or Blue"}.get(game, game.capitalize())
+            display = {"gs": "Gold or Silver", "rb": "Red or Blue", "firered": "FireRed"}.get(game, game.capitalize())
             raise builder.BuildError(f"A Pokemon {display} ROM path is required.")
         path = Path(raw).expanduser()
         if not path.is_file():
@@ -137,6 +152,8 @@ def validate_inputs(
             builder.verify_gs_rom(path)
         elif game == "crystal":
             builder.verify_crystal_rom(path)
+        elif game == "firered":
+            builder.verify_firered_rom(path)
         else:
             builder.verify_rom(path, game)
         resolved[game] = path.resolve()
@@ -147,6 +164,16 @@ def coverage_lines(path: str | Path, generation: int = 1) -> list[str]:
     """Return the compact coverage text shown after a successful build."""
     report = json.loads(Path(path).read_text(encoding="utf-8"))
     lines: list[str] = []
+    if generation == 3:
+        # pipeline/frlg_mod.write_frlg_report nests the metrics.
+        coverage = report.get("coverage") or {}
+        for key, label in (("rom", "FireRed ROM aggregate"), ("engine_gen3", "FireRed engine strings")):
+            section = coverage.get(key) or {}
+            lines.append(
+                f"{label}: {int(section.get('translated', 0))}/{int(section.get('total', 0))} "
+                f"({float(section.get('percent', 0.0)):.2f}%)"
+            )
+        return lines
     # ROM aggregates first (broad Red/Blue or Gold/Silver, then narrower
     # Yellow), then engine-authored-text metrics from most to least
     # specific: RBY/Gold's own filtered scope reads before the unfiltered
@@ -240,7 +267,7 @@ class TranslationBuilderApp:
     def _build_widgets(self):
         tk, ttk = self.tk, self.ttk
         self.generation_var = tk.StringVar(value=generation_label(1))
-        self.rom_vars = {game: tk.StringVar() for game in ("rb", "yellow", "gs", "crystal")}
+        self.rom_vars = {game: tk.StringVar() for game in ("rb", "yellow", "gs", "crystal", "firered")}
         self.language_var = tk.StringVar(value=language_label("fr"))
         self.font_profile_var = tk.StringVar(value=font_profile_label("fusion"))
         self.output_var = tk.StringVar()
@@ -267,6 +294,7 @@ class TranslationBuilderApp:
         rom_fields = (
             ("rb", 2, "Required to extract shared Pokémon Red/Blue game text and data. Either ROM works: Red and Blue share identical text.", "Pokemon Red or Blue ROM (US)"),
             ("gs", 2, "Required to extract Pokémon Gold and Silver game text and data. Either ROM works: Gold and Silver share identical text.", "Pokemon Gold or Silver ROM (US)"),
+            ("firered", 2, "Required to extract Pokémon FireRed game text and data.", "Pokemon FireRed ROM (US)"),
             ("crystal", 4, "Required to extract Pokémon Crystal-specific game text and data.", "Pokemon Crystal ROM (US)"),
             ("yellow", 6, "Required to extract Pokémon Yellow-specific game text and data.", "Pokemon Yellow ROM (US)"),
         )
@@ -340,6 +368,12 @@ class TranslationBuilderApp:
                 "two ROMs below (Gold or Silver, whichever you own, plus "
                 "Crystal)."
             )
+        elif generation == 3:
+            self.games_hint_var.set(
+                "Which games do you want to translate?\n"
+                "FireRed prints every string with the cart's own font, so no "
+                "font profile applies."
+            )
         else:
             self.games_hint_var.set("Which games do you want to translate?")
         for game, widgets in self.rom_widgets.items():
@@ -366,7 +400,7 @@ class TranslationBuilderApp:
 
     def _browse_file(self, variable):
         from tkinter import filedialog
-        value = filedialog.askopenfilename(title="Select ROM", filetypes=(("Game Boy ROM", "*.gb *.gbc"), ("All files", "*.*")))
+        value = filedialog.askopenfilename(title="Select ROM", filetypes=(("Game Boy / Game Boy Advance ROM", "*.gb *.gbc *.gba"), ("All files", "*.*")))
         if value:
             variable.set(value)
 
@@ -387,6 +421,14 @@ class TranslationBuilderApp:
         self.font_profile_box.configure(
             values=[font_profile_label(profile, language) for profile in profiles],
         )
+        # FireRed registers no font (Schemas.GEN3 gates the font registry).
+        if generation == 3:
+            self.font_profile_box.configure(values=[GEN3_FONT_LABEL])
+            self.font_profile_var.set(GEN3_FONT_LABEL)
+            self.font_profile_box.configure(state="disabled")
+            return
+        if self.font_profile_var.get() == GEN3_FONT_LABEL:
+            self.font_profile_var.set(font_profile_label("fusion", language))
         self.font_profile_box.configure(state="disabled" if len(profiles) == 1 else "readonly")
 
     def _post(self, callback: Callable[[], None]):
@@ -468,7 +510,7 @@ class TranslationBuilderApp:
                 log_fn=lambda message: self._append_log(message),
                 status_fn=lambda message: self._post(lambda: self.status_var.set(message)),
             )
-            build_cache = "interactive" if inputs.generation == 1 else "interactive-gs"
+            build_cache = BUILD_CACHE_BY_GENERATION[inputs.generation]
             coverage = workspace / build_cache / inputs.language / "coverage.json"
             self._post(lambda: self._complete(output, coverage, inputs.generation))
         except (RuntimeError, ValueError, OSError) as error:
