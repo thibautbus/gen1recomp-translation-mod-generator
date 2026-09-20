@@ -2988,14 +2988,14 @@
       "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_3.CardFlipPlaceYourBetText); the cart's own single-line Card Flip text."
     },
     "Placing second was\n%s,\fwho caught a\n%s!": {
-      "override": "２ばんは　%sさんが\n%sを　つかまえた",
-      "reason": "engine-contract-gap",
-      "provenance": "GoldSilver's own real corpus match for this pointer (gs.common_2.ContestJudging_SecondText) prints the caught species before the contestant's own name, the real cart's own word order for this language -- but script/gen2/Specials.lua's H.BugContestJudging calls Strings(row.page, who, what) with who (the contestant's name) always bound to the first %s and what (the species) to the second, so a translation using the corpus's own species-first order prints the winner's name as the caught species and the species name with a person honorific instead. Reordered to keep the engine's forced name-first order while staying natural; requires in-game visual validation."
+      "override": "２ばんは　%2$sを　つかまえた\n%1$sさん",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores GoldSilver's own wording now that Strings() accepts numbered directives (gen1recomp#2346): gs.common_2.ContestJudging_SecondPlaceText names the POKéMON that was caught before the trainer, while Specials.lua's BugContestJudging passes the trainer first."
     },
     "Placing third was\n%s,\fwho caught a\n%s!": {
-      "override": "３ばんは　%sさんが\n%sを　つかまえた",
-      "reason": "engine-contract-gap",
-      "provenance": "GoldSilver's own real corpus match for this pointer (gs.common_2.ContestJudging_ThirdText) prints the caught species before the contestant's own name, the real cart's own word order for this language -- but script/gen2/Specials.lua's H.BugContestJudging calls Strings(row.page, who, what) with who (the contestant's name) always bound to the first %s and what (the species) to the second, so a translation using the corpus's own species-first order prints the winner's name as the caught species and the species name with a person honorific instead. Reordered to keep the engine's forced name-first order while staying natural; requires in-game visual validation."
+      "override": "３ばんは　%2$sを　つかまえた\n%1$sさん",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores GoldSilver's own wording now that Strings() accepts numbered directives (gen1recomp#2346): gs.common_2.ContestJudging_ThirdPlaceText names the POKéMON that was caught before the trainer, while Specials.lua's BugContestJudging passes the trainer first."
     },
     "Play\nagain?": {
       "override": "もう　１かい\nあそびますか？",
@@ -3838,9 +3838,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_1.NothingToPutAwayText."
     },
     "This Bug-Catching\nContest winner is\f%s,\nwho caught a\n%s!": {
-      "override": "そして！　こんかいの　たいかい\n１ばんの　ゆうしょうしゃは………\f%sさんが\n%sを　つかまえた！",
-      "reason": "engine-contract-gap",
-      "provenance": "GoldSilver's own real corpus match for this pointer (gs.common_2.ContestJudging_FirstText) prints the caught species before the contestant's own name, the real cart's own word order for this language -- but script/gen2/Specials.lua's H.BugContestJudging calls Strings(row.page, who, what) with who (the contestant's name) always bound to the first %s and what (the species) to the second, so a translation using the corpus's own species-first order prints the winner's name as the caught species and the species name with a person honorific instead. Reordered to keep the engine's forced name-first order while staying natural; requires in-game visual validation. The corpus row's {text_dots 3} script command (three ellipsis characters printed with pauses) is written out as ………, since this runtime catalog is shipped verbatim."
+      "override": "そして！　こんかいの　たいかい\n１ばんの　ゆうしょうしゃは………\f%2$sを　つかまえた\n%1$sさん！",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores GoldSilver's own wording now that Strings() accepts numbered directives (gen1recomp#2346): gs.common_2.ContestJudging_FirstPlaceText names the POKéMON that was caught before the trainer, while Specials.lua's BugContestJudging passes the trainer first."
     },
     "This EGG needs a<NEXT>lot more time to<NEXT>hatch.": {
       "override": "この　タマゴは\nうまれるまで　かなり\nかかりそう",

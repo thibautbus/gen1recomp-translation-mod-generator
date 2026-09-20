@@ -2,38 +2,100 @@
   "schema": "gen1recomp-translation-mods/engine-overrides",
   "version": 1,
   "entries": {
-    "OG RED": {"override": "OG ROSSO", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "OG BLUE": {"override": "OG BLU", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "OG YELLOW": {"override": "OG GIALLO", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "SGB": {"override": "SGB", "reason": "engine-contract-gap", "provenance": "Acronym retained; raw PaletteFX.modeLabel value, no compatible PokeCorpus qid."},
-    "ADVANCED": {"override": "AVANZATO", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "OG INV": {"override": "ORIG. INV", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "SGB INV": {"override": "SGB INV", "reason": "engine-contract-gap", "provenance": "Acronym retained; raw PaletteFX.modeLabel value, no compatible PokeCorpus qid."},
-    "CLASSIC": {"override": "CLASSICO", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "GBC": {"override": "GBC", "reason": "engine-contract-gap", "provenance": "Acronym retained; raw PaletteFX.modeLabel fallback value, no compatible PokeCorpus qid."},
-    "WINDOWED": {"override": "FINESTRA", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "BORDERLESS": {"override": "SENZA BORDI", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "TREES": {"override": "ALBERI", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "WATER": {"override": "ACQUA", "reason": "engine-contract-gap", "provenance": "AI-generated engine-original translation; raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."},
-    "%s's\n%s rose!": {
-      "override": "%s\n%s sale!",
-      "reason": "editorial-correction",
-      "provenance": "editorial stat-stage wording; raw English stat label retained"
+    " lined up!\nScored %d coins!": {
+      "override": "tris! Vinci\n%d gettoni!",
+      "reason": "engine-corpus",
+      "provenance": "Corpus automatic unique match from poke-corpus RedBlue rb.text_2.LinedUpText."
     },
-    "%s's\n%s\ngreatly rose!": {
-      "override": "%s\n%s\nsale molto!",
-      "reason": "editorial-correction",
-      "provenance": "editorial stat-stage wording; raw English stat label retained"
+    "%s\nfainted!": {
+      "override": "%s\nè esausto!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated neutral translation (it); shared incompatible contexts are rb.text_2.EnemyMonFaintedText, rb.text_2.PlayerMonFaintedText, and rb.text_4.PokemonFaintedText; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
     },
-    "%s's\n%s fell!": {
-      "override": "%s\n%s cala!",
-      "reason": "editorial-correction",
-      "provenance": "editorial stat-stage wording; raw English stat label retained"
+    "%s\nis refusing!": {
+      "override": "%s\nsi rifiuta!",
+      "reason": "engine-corpus",
+      "provenance": "Corpus automatic unique match from poke-corpus Yellow y.text_9.RefusingText."
+    },
+    "%s\nlearned\n%s!": {
+      "override": "%s impara\n%s!",
+      "reason": "engine-contract-gap",
+      "provenance": "Disambiguated: poke-corpus's automatic matcher found multiple candidate rows for this key and could not pick one on its own; this override selects the closer match by hand."
+    },
+    "%s\nsnapped out of\nconfusion!": {
+      "override": "%s non è\npiù\nconfuso!",
+      "reason": "engine-original",
+      "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- this port's own _ConfusedNoMoreText fallback (\"snapped out of confusion\") reads differently from the cart's own \"confused no more!\" wording)."
+    },
+    "%s ": {
+      "override": "%s",
+      "reason": "engine-contract-gap",
+      "provenance": "Disambiguated: poke-corpus's automatic matcher found multiple candidate rows for this key and could not pick one on its own; this override selects the closer match by hand."
+    },
+    "%s can't\nlearn that move!": {
+      "override": "%s non può\nimparare quella mossa!",
+      "reason": "engine-original",
+      "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- this port simplifies the cart's own two-sentence _MonCannotLearnMachineMoveText (\"X is not compatible with Y. It can't learn Y.\") into one generic line naming neither the TM/HM nor the move by name)."
+    },
+    "%s is out of\nuseable POKéMON!\f%s blacked\nout!": {
+      "override": "%s non ha più\nPOKéMON utili!\f%s è\ncrollato!",
+      "reason": "engine-contract-gap",
+      "provenance": "Disambiguated: poke-corpus's automatic matcher found multiple candidate rows for this key and could not pick one on its own; this override selects the closer match by hand."
+    },
+    "%s looks\nunhappy about it!": {
+      "override": "%s ha\nun'aria triste!",
+      "reason": "engine-corpus",
+      "provenance": "Corpus automatic unique match from poke-corpus Yellow y.text_3.PikachuUnhappyText."
     },
     "%s's\n%s\ngreatly fell!": {
-      "override": "%s\n%s\ncala molto!",
-      "reason": "editorial-correction",
-      "provenance": "editorial stat-stage wording; raw English stat label retained"
+      "override": "Cala %2$s di\n%1$s\nmolto!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores RedBlue's own wording now that Strings() accepts numbered directives (gen1recomp#2346): rb.text_3.MonsStats{Rose,Fell}Text names the stat before the POKéMON (\"Cresce ATTACCO di PIKACHU\"), while the engine passes the POKéMON first. The cart drops \"greatly\" in Italian (rb.text_3.GreatlyRoseText is empty), which would make this key read exactly like its plain sibling; \"molto\" is kept so the engine's two messages stay distinguishable."
+    },
+    "%s's\n%s\ngreatly rose!": {
+      "override": "Cresce %2$s di\n%1$s\nmolto!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores RedBlue's own wording now that Strings() accepts numbered directives (gen1recomp#2346): rb.text_3.MonsStats{Rose,Fell}Text names the stat before the POKéMON (\"Cresce ATTACCO di PIKACHU\"), while the engine passes the POKéMON first. The cart drops \"greatly\" in Italian (rb.text_3.GreatlyRoseText is empty), which would make this key read exactly like its plain sibling; \"molto\" is kept so the engine's two messages stay distinguishable."
+    },
+    "%s's\n%s fell!": {
+      "override": "Cala %2$s di\n%1$s!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores RedBlue's own wording now that Strings() accepts numbered directives (gen1recomp#2346): rb.text_3.MonsStats{Rose,Fell}Text names the stat before the POKéMON (\"Cresce ATTACCO di PIKACHU\"), while the engine passes the POKéMON first. "
+    },
+    "%s's\n%s rose!": {
+      "override": "Cresce %2$s di\n%1$s!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores RedBlue's own wording now that Strings() accepts numbered directives (gen1recomp#2346): rb.text_3.MonsStats{Rose,Fell}Text names the stat before the POKéMON (\"Cresce ATTACCO di PIKACHU\"), while the engine passes the POKéMON first. "
+    },
+    "%s's\nstatus returned\nto normal!": {
+      "override": "Lo stato di %s\nè tornato\nnormale!",
+      "reason": "engine-original",
+      "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- this port's own generic status-cure confirmation (shared across every status-healing item) replaces the cart's own per-status cure messages)."
+    },
+    "%s's %s\nrose!": {
+      "override": "%s fa\nsalire %s!",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is reordered stat arguments at shared callsites; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "%s's HP\nwas restored!": {
+      "override": "I PS di %s\nsono stati ripristinati!",
+      "reason": "engine-original",
+      "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- this port's own _PotionText fallback intentionally drops the cart's own exact recovered-HP number ({wHPBarHPDifference}) in favor of a simple confirmation line)."
+    },
+    "%s's NEST": {
+      "override": "NIDO DI %s",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-backed from poke-corpus RedBlue rb.town_map.MonsNestText: the cart's own label, with the species name placed where that language's cart places it. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
+    "%s's PC": {
+      "override": "PC DI %s",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-backed from poke-corpus RedBlue rb.bills_pc.PlayersPCText: the cart's own label, with the player name placed where that language's cart places it. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
+    "%s's PP\nincreased!": {
+      "override": "PP di %s\naumentati!",
+      "reason": "engine-corpus",
+      "provenance": "Corpus automatic unique match from poke-corpus RedBlue rb.text_6.PPIncreasedText."
     },
     ":L%d": {
       "override": ":L%d",
@@ -45,85 +107,45 @@
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
-    "No.": {
-      "override": "Nº",
+    "<PK><MN>LEAGUE": {
+      "override": "LEGA <PK><MN>",
       "reason": "engine-original",
-      "provenance": "Corpus-inspired engine-original localization; DexEntryMenu.lua:97 Pokédex-number label; rb.bills_pc.BoxNoPCText and rb.save.BoxNoText use Nº in Italian; no standalone compatible PokeCorpus qid; requires in-game visual validation."
+      "provenance": "Corpus-backed from rb.bills_pc.PKMNLeaguePCText ('LEGA <PKMN>@'); does not auto-match because the corpus row spells the glyph as a single <PKMN> token while this engine literal (world/OverworldController.lua's Bill's PC PKMN LEAGUE row, new in gen1recomp #1566) uses the two-token <PK><MN> pair -- converted, order kept as the real cart's own (LEGA first, unlike English's PKMN LEAGUE); requires in-game visual validation."
     },
-    "Empty.": {
-      "override": "Vuoto.",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
-    },
-    "No good! It's not\neven near water.": {
-      "override": "Niente da fare!\nLontano dall'acqua.",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
-    },
-    "PP": {
-      "override": "PP",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
-    },
-    "PRNT": {
-      "override": "PRNT",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
-    },
-    "The boulder fell\nthrough the hole!": {
-      "override": "Il masso è caduto\nnel buco!",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
-    },
-    "%s's %s\nrose!": {
-      "override": "%s fa\nsalire %s!",
+    "ADVANCED": {
+      "override": "AVANZATO",
       "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation; concrete engine contract limitation is reordered stat arguments at shared callsites; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+      "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."
     },
-    "Once released,\n%s is\ngone forever. OK?": {
-      "override": "Una volta liberato,\n%s sarà\nperso per sempre. OK?",
+    "AREA UNKNOWN": {
+      "override": "ZONA IGNOTA",
       "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation; concrete engine contract limitation is reordered release-confirmation context around one argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+      "provenance": "Corpus-backed from poke-corpus RedBlue rb.town_map.AreaUnknownText: the cart's own label without its leading space, since ui/TownMap.lua already prepends one (the automatic corpus match kept it, printing two). Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
+    "AUTO": {
+      "override": "AUTO",
+      "reason": "engine-original",
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+    },
+    "All sleeping\nPOKéMON woke up!": {
+      "override": "Tutti i POKéMON\naddormentati si\u000bsono svegliati!",
+      "reason": "engine-corpus",
+      "provenance": "Corpus automatic unique match from poke-corpus RedBlue rb.text_6.FluteWokeUpText."
     },
     "BADGES": {
       "override": "MEDAGLIE",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary standalone status label; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
     },
-    "BOX%2d": {
-      "override": "BOX%2d",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation. Renamed from \"%sBOX %2d\" -- gen1recomp v0.2.33's src/ui/BoxMenu.lua:changeBoxMenu dropped the leading selection-mark argument and the space before \"BOX\"."
-    },
-    "%s\nfainted!": {
-      "override": "%s\nè esausto!",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated neutral translation (it); shared incompatible contexts are rb.text_2.EnemyMonFaintedText, rb.text_2.PlayerMonFaintedText, and rb.text_4.PokemonFaintedText; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
-    },
-    "POKéDEX": {
-      "override": "POKéDEX",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated neutral translation (it); shared incompatible contexts are src/ui/StartMenu.lua, src/ui/PokedexMenu.lua, src/ui/TitleState.lua, and src/ui/HallOfFame.lua labels, with no single upstream qid; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
-    },
-    "FOE": {
-      "override": "AVVERSARIO",
-      "reason": "engine-original",
-      "provenance": "Link-battle (Colosseum) opponent-name fallback, engine-authored; user-approved per-language value."
-    },
-    "BOX %d is full!": {
-      "override": "SCATOLA %d piena!",
-      "reason": "engine-original",
-      "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
-    },
-    "No POKéMON!": {
-      "override": "NESSUN POKéMON!",
-      "reason": "engine-original",
-      "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
-    },
     "BATTLE BG": {
       "override": "SFONDO LOTTA",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "BATTLE HUD": {
+      "override": "HUD LOTTA",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of the port-added BATTLE HUD Options row label, new in gen1recomp v0.2.61 (ui/OptionsMenu.lua, ui/gen2/OptionsMenu.lua and the launcher settings row); follows this catalog's own BATTLE LAYOUT wording for the sibling row (\"LAYOUT LOTTA\"), keeping HUD as-is like the English label; requires in-game visual validation."
     },
     "BATTLE LAYOUT": {
       "override": "LAYOUT LOTTA",
@@ -135,98 +157,83 @@
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
+    "BLACK": {
+      "override": "NERO",
+      "reason": "engine-original",
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+    },
+    "BORDERLESS": {
+      "override": "SENZA BORDI",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated engine-original translation; raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."
+    },
+    "BOX %d is full!": {
+      "override": "SCATOLA %d piena!",
+      "reason": "engine-original",
+      "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
+    },
+    "BOX%2d": {
+      "override": "BOX%2d",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation. Renamed from \"%sBOX %2d\" -- gen1recomp v0.2.33's src/ui/BoxMenu.lua:changeBoxMenu dropped the leading selection-mark argument and the space before \"BOX\"."
+    },
+    "CENTERED": {
+      "override": "CENTRATO",
+      "reason": "engine-original",
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+    },
+    "CLASSIC": {
+      "override": "CLASSICO",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."
+    },
+    "COLOR": {
+      "override": "COLORE",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."
+    },
     "COLORS": {
       "override": "COLORI",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
+    "CONTROLS": {
+      "override": "CONTROLLI",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."
+    },
+    "Choose a\n<PK><MN> BOX.": {
+      "override": "Scegli un\n<PK><MN> BOX!",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-backed from rb.text_3.ChooseABoxText; does not auto-match because the corpus row spells the glyph as a single <PKMN> token while this engine literal (ui/BoxMenu.lua's fallback for a ROM missing a real _ChooseABoxText label, new in gen1recomp v0.2.56) uses the two-token <PK><MN> pair, the same gap this catalog's own <PK><MN>LEAGUE entry already documents; requires in-game visual validation."
+    },
+    "Coin count:\n%d": {
+      "override": "Numero gettoni:\n%d",
+      "reason": "engine-original",
+      "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- this port's own _CoinCaseNumCoinsText fallback relabels the cart's bare \"Coins\" counter with an explicit \"Coin count:\" prefix)."
+    },
+    "Congrats! This": {
+      "override": "Congratulazioni!",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-backed from poke-corpus RedBlue rb.diploma.DiplomaCongrats: the cart's own line for this row; ui/Diploma.lua draws one fixed English line per row. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
+    "DYNAMIC": {
+      "override": "DINAMICO",
+      "reason": "engine-original",
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+    },
+    "EXTENDED": {
+      "override": "ESTESO",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of the port-added BATTLE HUD Options row value (widescreen-only HUD composition), new in gen1recomp v0.2.61 (ui/OptionsMenu.lua, ui/gen2/OptionsMenu.lua and the launcher settings row); follows this catalog's own BATTLE LAYOUT wording for the sibling row (\"LAYOUT LOTTA\"), keeping HUD as-is like the English label; requires in-game visual validation."
+    },
+    "Empty.": {
+      "override": "Vuoto.",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
+    },
     "FAITHFUL RATIO": {
       "override": "RAPPORTO FEDELE",
-      "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
-    },
-    "GAME SPEED": {
-      "override": "VELOCITÀ",
-      "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
-    },
-    "SHADER FX": {
-      "override": "FX SHADER",
-      "reason": "engine-original",
-      "provenance": "gen1recomp renamed this row from \"GBC FX\" to \"SHADER FX\" on OptionsMenu.lua (LauncherSettings.lua dropped the row entirely rather than renaming it); adapted from the prior user-validated \"GBC FX\"/\"FX GBC\" translation (2026-08-05) by swapping the qualifier, not itself re-validated in-game yet."
-    },
-    "MAX FPS": {
-      "override": "FPS MAX",
-      "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
-    },
-    "MODS": {
-      "override": "MODS",
-      "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05: kept as-is (proper noun, no translation)."
-    },
-    "MUSIC FILTER": {
-      "override": "FILTRO MUSICA",
-      "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
-    },
-    "MUSIC VOL": {
-      "override": "VOL. MUSICA",
-      "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
-    },
-    "ON": {
-      "override": "SI",
-      "reason": "engine-original",
-      "provenance": "Corrected to poke-corpus rb.main_menu.BattleAnimationOptionText value (SI/NO); user-validated 2026-08-05."
-    },
-    "OFF": {
-      "override": "NO",
-      "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
-    },
-    "ORIENTATION": {
-      "override": "ORIENTAMENTO",
-      "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
-    },
-    "PERFORMANCE": {
-      "override": "PRESTAZIONI",
-      "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
-    },
-    "RESET DEFAULTS": {
-      "override": "RIPRISTINA",
-      "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
-    },
-    "SFX VOL": {
-      "override": "VOL. EFFETTI",
-      "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
-    },
-    "TILT": {
-      "override": "INCLINAZIONE",
-      "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
-    },
-    "TOUCH PAD": {
-      "override": "PAD TATTILE",
-      "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
-    },
-    "UI LAYOUT": {
-      "override": "INTERFACCIA",
-      "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
-    },
-    "VIDEO MODE": {
-      "override": "MODALITÀ VIDEO",
-      "reason": "engine-original",
-      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
-    },
-    "VOID FILL": {
-      "override": "RIEMPIMENTO",
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
@@ -234,36 +241,6 @@
       "override": "3",
       "reason": "engine-original",
       "provenance": "Derived from poke-corpus rb.main_menu.TextSpeedOptionText / BattleStyleOptionText values (per-language ROM convention); user-validated 2026-08-05."
-    },
-    "MEDIUM": {
-      "override": "2",
-      "reason": "engine-original",
-      "provenance": "Derived from poke-corpus rb.main_menu.TextSpeedOptionText / BattleStyleOptionText values (per-language ROM convention); user-validated 2026-08-05."
-    },
-    "SLOW": {
-      "override": "1",
-      "reason": "engine-original",
-      "provenance": "Derived from poke-corpus rb.main_menu.TextSpeedOptionText / BattleStyleOptionText values (per-language ROM convention); user-validated 2026-08-05."
-    },
-    "SHIFT": {
-      "override": "SCEGLI",
-      "reason": "engine-original",
-      "provenance": "Derived from poke-corpus rb.main_menu.TextSpeedOptionText / BattleStyleOptionText values (per-language ROM convention); user-validated 2026-08-05."
-    },
-    "SET": {
-      "override": "FISSO",
-      "reason": "engine-original",
-      "provenance": "Derived from poke-corpus rb.main_menu.TextSpeedOptionText / BattleStyleOptionText values (per-language ROM convention); user-validated 2026-08-05."
-    },
-    "OG": {
-      "override": "ORIGINALE",
-      "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
-    },
-    "WIDE": {
-      "override": "LARGO",
-      "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
     "FILL": {
       "override": "PIENO",
@@ -275,33 +252,373 @@
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
-    "BLACK": {
-      "override": "NERO",
+    "FLY TO?": {
+      "override": "VOLA A?",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY Fly Menu localization; source introduced by gen1recomp d633cb4d; review remains required for layout. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
+    "FOE": {
+      "override": "AVVERSARIO",
+      "reason": "engine-original",
+      "provenance": "Link-battle (Colosseum) opponent-name fallback, engine-authored; user-approved per-language value."
+    },
+    "GAME SPEED": {
+      "override": "VELOCITÀ",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "GBC": {
+      "override": "GBC",
+      "reason": "engine-contract-gap",
+      "provenance": "Acronym retained; raw PaletteFX.modeLabel fallback value, no compatible PokeCorpus qid."
+    },
+    "HEAL": {
+      "override": "CURA",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY engine-string localization; source introduced by gen1recomp d633cb4d. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
+    "HP": {
+      "override": "PS",
+      "reason": "engine-contract-gap",
+      "provenance": "Standard Italian Pokémon abbreviation. Already carried by overrides/it/gsc/engine.json for the same Strings.source(\"HP\") literal (inventory/ItemEffects.lua's STAT_LABEL, shared with ui/gen2/PhotoStudio.lua); missing here left RBY's own item-effect messages (vitamins, stat-boosting items) showing the raw English label."
+    },
+    "HT": {
+      "override": "HT",
+      "reason": "engine-contract-gap",
+      "provenance": "Kept identical to the English source: ui/DexEntryMenu.lua's imperial-unit branch (new in gen1recomp v0.2.56, replacing the old combined \"HT %d′%02d″\"/\"WT %.1flb\" templates) draws this label at a fixed pixel column, then draws the ′/″/lb unit glyphs as separate literals at their own fixed columns right after it -- a longer translated label would run into them. Every localized cart's own Pokédex uses metric units instead (poke-corpus RedBlue's own combined \"HT ?′??″<NEXT>WT ???lb\" row translates to metric TAI/GR./AL/h/たかさ ・ PDS/GEW/PE/P/おもさ with m/kg units in every shipped language), so this specific imperial branch has no real cart precedent to translate from in any language; requires in-game visual validation."
+    },
+    "ITEMS": {
+      "override": "OGGETTI",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY engine-string localization; source introduced by gen1recomp d633cb4d. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
+    "It knows that\nmove already!": {
+      "override": "Conosce già\nquella mossa!",
+      "reason": "engine-original",
+      "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- this port simplifies the cart's own _AlreadyKnowsText (\"X knows Y!\", naming the move) into one generic line)."
+    },
+    "LANDSCAPE": {
+      "override": "ORIZZONTALE",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+    },
+    "MAX FPS": {
+      "override": "FPS MAX",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "MEDIUM": {
+      "override": "2",
+      "reason": "engine-original",
+      "provenance": "Derived from poke-corpus rb.main_menu.TextSpeedOptionText / BattleStyleOptionText values (per-language ROM convention); user-validated 2026-08-05."
+    },
+    "MODS": {
+      "override": "MODS",
+      "reason": "engine-original",
+      "provenance": "User-validated 2026-08-05: kept as-is (proper noun, no translation)."
+    },
+    "MONEY/¥%d": {
+      "override": "SOLDI/¥%d",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-backed from poke-corpus RedBlue rb.start_sub_menus.TrainerInfo_NameMoneyTimeText: the cart's own trainer-card label, followed by the engine's amount. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
+    "MUSIC FILTER": {
+      "override": "FILTRO MUSICA",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "MUSIC VOL": {
+      "override": "VOL. MUSICA",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "No POKéMON!": {
+      "override": "NESSUN POKéMON!",
+      "reason": "engine-original",
+      "provenance": "Engine-authored template with no pokered/ROM equivalent (poke-corpus check 2026-08-05); manual per-language translation aligned with corpus conventions; requires in-game validation."
+    },
+    "No good! It's not\neven near water.": {
+      "override": "Niente da fare!\nLontano dall'acqua.",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
+    },
+    "No.": {
+      "override": "Nº",
+      "reason": "engine-original",
+      "provenance": "Corpus-inspired engine-original localization; DexEntryMenu.lua:97 Pokédex-number label; rb.bills_pc.BoxNoPCText and rb.save.BoxNoText use Nº in Italian; no standalone compatible PokeCorpus qid; requires in-game visual validation."
+    },
+    "Nothing here.": {
+      "override": "Niente qua!",
+      "reason": "engine-original",
+      "provenance": "User-validated 2026-08-05; aligned with poke-corpus rb.text_1.NothingHereText phrasing per language; empty-list message (ui/ListMenu.lua:214, direct Strings render, no data.text shadow)."
+    },
+    "OFF": {
+      "override": "NO",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "OG": {
+      "override": "ORIGINALE",
+      "reason": "engine-original",
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+    },
+    "OG BLUE": {
+      "override": "OG BLU",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."
+    },
+    "OG INV": {
+      "override": "ORIG. INV",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."
+    },
+    "OG RED": {
+      "override": "OG ROSSO",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."
+    },
+    "OG YELLOW": {
+      "override": "OG GIALLO",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated engine-original translation; raw PaletteFX.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."
+    },
+    "ON": {
+      "override": "SI",
+      "reason": "engine-original",
+      "provenance": "Corrected to poke-corpus rb.main_menu.BattleAnimationOptionText value (SI/NO); user-validated 2026-08-05."
+    },
+    "ORIENTATION": {
+      "override": "ORIENTAMENTO",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "Once released,\n%s is\ngone forever. OK?": {
+      "override": "Una volta liberato,\n%s sarà\nperso per sempre. OK?",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated translation; concrete engine contract limitation is reordered release-confirmation context around one argument; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "PERFORMANCE": {
+      "override": "PRESTAZIONI",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "PIKACHU looks\ncontent.": {
+      "override": "PIKACHU sembra\ncontento.",
+      "reason": "engine-original",
+      "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- Yellow's own Pikachu-following happiness check has no corresponding PokeCorpus qid)."
+    },
+    "PIKACHU'S BEACH": {
+      "override": "SPIAGGIA DI PIKACHU",
+      "reason": "engine-original",
+      "provenance": "AI-generated Yellow Surfing Minigame localization; source introduced by gen1recomp d633cb4d; review remains required for layout. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
+    "POKéDEX": {
+      "override": "POKéDEX",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated neutral translation (it); shared incompatible contexts are src/ui/StartMenu.lua, src/ui/PokedexMenu.lua, src/ui/TitleState.lua, and src/ui/HallOfFame.lua labels, with no single upstream qid; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+    },
+    "POKéDEX.": {
+      "override": "è completo.",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-backed from poke-corpus RedBlue rb.diploma.DiplomaCongrats: the cart's own line for this row; ui/Diploma.lua draws one fixed English line per row. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
+    "POKéMON BLUE": {
+      "override": "POKéMON BLU",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY title localization; source introduced by gen1recomp d633cb4d. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
+    "POKéMON YELLOW": {
+      "override": "POKéMON GIALLO",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY title localization; source introduced by gen1recomp d633cb4d. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
+    "PORTRAIT": {
+      "override": "VERTICALE",
+      "reason": "engine-original",
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+    },
+    "PP": {
+      "override": "PP",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
+    },
+    "PRINT BOX": {
+      "override": "STAMPA",
+      "reason": "engine-corpus",
+      "provenance": "Corpus automatic unique match from poke-corpus Yellow y.bills_pc.BillsPCMenuText (the Game Boy Printer row; Red/Blue's own corpus BillsPCMenuText has no such row since only Yellow-era carts shipped the Printer feature, but this port shares the same PC menu Strings() call site across all three games)."
+    },
+    "PRNT": {
+      "override": "PRNT",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
+    },
+    "Printed %s's\ndata!\f": {
+      "override": "Dati di %s\nstampati!\f",
+      "reason": "engine-original",
+      "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- the Game Boy Printer's own Pokédex-entry-printed confirmation, composed for this port's printer feature like its sibling \"Printed BOX %d!\f\", no matching cart string)."
+    },
+    "Printed BOX %d!\f": {
+      "override": "BOX %d stampato!\f",
+      "reason": "engine-original",
+      "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- the Game Boy Printer's own BOX-printed confirmation, composed for this port's box number + printer feature, no matching cart string)."
+    },
+    "RESET DEFAULTS": {
+      "override": "RIPRISTINA",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "REVERSE LANDSCAPE": {
+      "override": "ORIZZ. INVERSO",
+      "reason": "engine-original",
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+    },
+    "SCREEN POS": {
+      "override": "POS. SCHERMO",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."
+    },
+    "SET": {
+      "override": "FISSO",
+      "reason": "engine-original",
+      "provenance": "Derived from poke-corpus rb.main_menu.TextSpeedOptionText / BattleStyleOptionText values (per-language ROM convention); user-validated 2026-08-05."
+    },
+    "SFX VOL": {
+      "override": "VOL. EFFETTI",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "SGB": {
+      "override": "SGB",
+      "reason": "engine-contract-gap",
+      "provenance": "Acronym retained; raw PaletteFX.modeLabel value, no compatible PokeCorpus qid."
+    },
+    "SGB INV": {
+      "override": "SGB INV",
+      "reason": "engine-contract-gap",
+      "provenance": "Acronym retained; raw PaletteFX.modeLabel value, no compatible PokeCorpus qid."
+    },
+    "SHADER FX": {
+      "override": "FX SHADER",
+      "reason": "engine-original",
+      "provenance": "gen1recomp renamed this row from \"GBC FX\" to \"SHADER FX\" on OptionsMenu.lua (LauncherSettings.lua dropped the row entirely rather than renaming it); adapted from the prior user-validated \"GBC FX\"/\"FX GBC\" translation (2026-08-05) by swapping the qualifier, not itself re-validated in-game yet."
+    },
+    "SHADER FX 2": {
+      "override": "FX SHADER 2",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."
+    },
+    "SHIFT": {
+      "override": "SCEGLI",
+      "reason": "engine-original",
+      "provenance": "Derived from poke-corpus rb.main_menu.TextSpeedOptionText / BattleStyleOptionText values (per-language ROM convention); user-validated 2026-08-05."
+    },
+    "SLOW": {
+      "override": "1",
+      "reason": "engine-original",
+      "provenance": "Derived from poke-corpus rb.main_menu.TextSpeedOptionText / BattleStyleOptionText values (per-language ROM convention); user-validated 2026-08-05."
+    },
+    "STANDARD": {
+      "override": "STANDARD",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of the port-added BATTLE HUD Options row value (the default, and the only one the OG layout allows), new in gen1recomp v0.2.61 (ui/OptionsMenu.lua, ui/gen2/OptionsMenu.lua and the launcher settings row); follows this catalog's own BATTLE LAYOUT wording for the sibling row (\"LAYOUT LOTTA\"), keeping HUD as-is like the English label; requires in-game visual validation."
+    },
+    "TILT": {
+      "override": "INCLINAZIONE",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "TIME/  %d:%02d": {
+      "override": "TEMPO/  %d:%02d",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-backed from poke-corpus RedBlue rb.start_sub_menus.TrainerInfo_NameMoneyTimeText: the cart's own trainer-card label; the hours keep gen1recomp v0.2.61's two-space print_num padding. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
+    "TOUCH PAD": {
+      "override": "PAD TATTILE",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "TREES": {
+      "override": "ALBERI",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated engine-original translation; raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."
+    },
+    "The boulder fell\nthrough the hole!": {
+      "override": "Il masso è caduto\nnel buco!",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
+    },
+    "The party is full!": {
+      "override": "LA SQUADRA È\nPIENA!",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY storage-message localization; source introduced by gen1recomp d633cb4d. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
+    "There isn't any\nresponse...": {
+      "override": "Nessuna risposta!",
+      "reason": "engine-corpus",
+      "provenance": "Corpus automatic unique match from poke-corpus Yellow y.text_3.SleepingPikachuText1."
+    },
+    "To %s": {
+      "override": "A %s",
+      "reason": "engine-original",
+      "provenance": "AI-generated RBY Town Map composition localization; source introduced by gen1recomp d633cb4d; preserves the destination placeholder; review remains required for fly-banner layout. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
+    "UI LAYOUT": {
+      "override": "INTERFACCIA",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "VIBRATION": {
+      "override": "VIBRAZIONE",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."
+    },
+    "VIDEO MODE": {
+      "override": "MODALITÀ VIDEO",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "VOID FILL": {
+      "override": "RIEMPIMENTO",
+      "reason": "engine-original",
+      "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+    },
+    "WATER": {
+      "override": "ACQUA",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated engine-original translation; raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."
     },
     "WHITE": {
       "override": "BIANCO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
+    "WIDE": {
+      "override": "LARGO",
+      "reason": "engine-original",
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+    },
+    "WINDOWED": {
+      "override": "FINESTRA",
+      "reason": "engine-contract-gap",
+      "provenance": "AI-generated engine-original translation; raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."
+    },
+    "WITHDRAW": {
+      "override": "RITIRA",
+      "reason": "engine-contract-gap",
+      "provenance": "Disambiguated: poke-corpus's automatic matcher found multiple candidate rows for this key and could not pick one on its own; this override selects the closer match by hand (poke-corpus RedBlue's own rb.bills_pc.WithdrawPCText, the Bill's PC box-withdrawal action, not the unrelated \"Withdraw\" battle move wording)."
+    },
     "WORLD": {
       "override": "MONDO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
-    "DYNAMIC": {
-      "override": "DINAMICO",
-      "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+    "WT": {
+      "override": "WT",
+      "reason": "engine-contract-gap",
+      "provenance": "Kept identical to the English source: ui/DexEntryMenu.lua's imperial-unit branch (new in gen1recomp v0.2.56, replacing the old combined \"HT %d′%02d″\"/\"WT %.1flb\" templates) draws this label at a fixed pixel column, then draws the ′/″/lb unit glyphs as separate literals at their own fixed columns right after it -- a longer translated label would run into them. Every localized cart's own Pokédex uses metric units instead (poke-corpus RedBlue's own combined \"HT ?′??″<NEXT>WT ???lb\" row translates to metric TAI/GR./AL/h/たかさ ・ PDS/GEW/PE/P/おもさ with m/kg units in every shipped language), so this specific imperial branch has no real cart precedent to translate from in any language; requires in-game visual validation."
     },
-    "CENTERED": {
-      "override": "CENTRATO",
-      "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
-    },
-    "low": {
-      "override": "BASSO",
+    "auto": {
+      "override": "AUTO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
@@ -310,100 +627,35 @@
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
+    "completed your": {
+      "override": "il tuo POKéDEX",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-backed from poke-corpus RedBlue rb.diploma.DiplomaCongrats: the cart's own line for this row; ui/Diploma.lua draws one fixed English line per row. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
+    "diploma certifies": {
+      "override": "Questo diploma",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-backed from poke-corpus RedBlue rb.diploma.DiplomaCongrats: the cart's own line for this row; ui/Diploma.lua draws one fixed English line per row. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    },
     "high": {
       "override": "ALTO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
-    "auto": {
-      "override": "AUTO",
-      "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
-    },
-    "AUTO": {
-      "override": "AUTO",
-      "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
-    },
-    "PORTRAIT": {
-      "override": "VERTICALE",
-      "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
-    },
-    "LANDSCAPE": {
-      "override": "ORIZZONTALE",
-      "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
-    },
-    "REVERSE LANDSCAPE": {
-      "override": "ORIZZ. INVERSO",
-      "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
-    },
-    "Nothing here.": {
-      "override": "Niente qua!",
-      "reason": "engine-original",
-      "provenance": "User-validated 2026-08-05; aligned with poke-corpus rb.text_1.NothingHereText phrasing per language; empty-list message (ui/ListMenu.lua:214, direct Strings render, no data.text shadow)."
-    },
-    "HP": {
-      "override": "PS",
+    "lb": {
+      "override": "lb",
       "reason": "engine-contract-gap",
-      "provenance": "Standard Italian Pokémon abbreviation. Already carried by overrides/it/gsc/engine.json for the same Strings.source(\"HP\") literal (inventory/ItemEffects.lua's STAT_LABEL, shared with ui/gen2/PhotoStudio.lua); missing here left RBY's own item-effect messages (vitamins, stat-boosting items) showing the raw English label."
+      "provenance": "Kept identical to the English source: ui/DexEntryMenu.lua's imperial-unit branch (new in gen1recomp v0.2.56, replacing the old combined \"HT %d′%02d″\"/\"WT %.1flb\" templates) draws this label at a fixed pixel column, then draws the ′/″/lb unit glyphs as separate literals at their own fixed columns right after it -- a longer translated label would run into them. Every localized cart's own Pokédex uses metric units instead (poke-corpus RedBlue's own combined \"HT ?′??″<NEXT>WT ???lb\" row translates to metric TAI/GR./AL/h/たかさ ・ PDS/GEW/PE/P/おもさ with m/kg units in every shipped language), so this specific imperial branch has no real cart precedent to translate from in any language; requires in-game visual validation."
     },
-    "<PK><MN>LEAGUE": {
-      "override": "LEGA <PK><MN>",
+    "low": {
+      "override": "BASSO",
       "reason": "engine-original",
-      "provenance": "Corpus-backed from rb.bills_pc.PKMNLeaguePCText ('LEGA <PKMN>@'); does not auto-match because the corpus row spells the glyph as a single <PKMN> token while this engine literal (world/OverworldController.lua's Bill's PC PKMN LEAGUE row, new in gen1recomp #1566) uses the two-token <PK><MN> pair -- converted, order kept as the real cart's own (LEGA first, unlike English's PKMN LEAGUE); requires in-game visual validation."
+      "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
-    "COLOR": {"override": "COLORE", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."},
-    "CONTROLS": {"override": "CONTROLLI", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."},
-    "SCREEN POS": {"override": "POS. SCHERMO", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."},
-    "SHADER FX 2": {"override": "FX SHADER 2", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."},
-    "VIBRATION": {"override": "VIBRAZIONE", "reason": "engine-original", "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."},
-    " lined up!\nScored %d coins!": {"override": "tris! Vinci\n%d gettoni!", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus RedBlue rb.text_2.LinedUpText."},
-    "All sleeping\nPOKéMON woke up!": {"override": "Tutti i POKéMON\naddormentati si\u000bsono svegliati!", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus RedBlue rb.text_6.FluteWokeUpText."},
-    "%s's PP\nincreased!": {"override": "PP di %s\naumentati!", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus RedBlue rb.text_6.PPIncreasedText."},
-    "PRINT BOX": {"override": "STAMPA", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus Yellow y.bills_pc.BillsPCMenuText (the Game Boy Printer row; Red/Blue's own corpus BillsPCMenuText has no such row since only Yellow-era carts shipped the Printer feature, but this port shares the same PC menu Strings() call site across all three games)."},
-    "%s\nis refusing!": {"override": "%s\nsi rifiuta!", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus Yellow y.text_9.RefusingText."},
-    "%s looks\nunhappy about it!": {"override": "%s ha\nun'aria triste!", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus Yellow y.text_3.PikachuUnhappyText."},
-    "There isn't any\nresponse...": {"override": "Nessuna risposta!", "reason": "engine-corpus", "provenance": "Corpus automatic unique match from poke-corpus Yellow y.text_3.SleepingPikachuText1."},
-    "%s can't\nlearn that move!": {"override": "%s non può\nimparare quella mossa!", "reason": "engine-original", "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- this port simplifies the cart's own two-sentence _MonCannotLearnMachineMoveText (\"X is not compatible with Y. It can't learn Y.\") into one generic line naming neither the TM/HM nor the move by name)."},
-    "It knows that\nmove already!": {"override": "Conosce già\nquella mossa!", "reason": "engine-original", "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- this port simplifies the cart's own _AlreadyKnowsText (\"X knows Y!\", naming the move) into one generic line)."},
-    "%s's HP\nwas restored!": {"override": "I PS di %s\nsono stati ripristinati!", "reason": "engine-original", "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- this port's own _PotionText fallback intentionally drops the cart's own exact recovered-HP number ({wHPBarHPDifference}) in favor of a simple confirmation line)."},
-    "Coin count:\n%d": {"override": "Numero gettoni:\n%d", "reason": "engine-original", "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- this port's own _CoinCaseNumCoinsText fallback relabels the cart's bare \"Coins\" counter with an explicit \"Coin count:\" prefix)."},
-    "%s\nsnapped out of\nconfusion!": {"override": "%s non è\npiù\nconfuso!", "reason": "engine-original", "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- this port's own _ConfusedNoMoreText fallback (\"snapped out of confusion\") reads differently from the cart's own \"confused no more!\" wording)."},
-    "Printed BOX %d!\f": {"override": "BOX %d stampato!\f", "reason": "engine-original", "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- the Game Boy Printer's own BOX-printed confirmation, composed for this port's box number + printer feature, no matching cart string)."},
-    "PIKACHU looks\ncontent.": {"override": "PIKACHU sembra\ncontento.", "reason": "engine-original", "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- Yellow's own Pikachu-following happiness check has no corresponding PokeCorpus qid)."},
-    "%s's\nstatus returned\nto normal!": {"override": "Lo stato di %s\nè tornato\nnormale!", "reason": "engine-original", "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- this port's own generic status-cure confirmation (shared across every status-healing item) replaces the cart's own per-status cure messages)."},
-    "%s\nlearned\n%s!": {"override": "%s impara\n%s!", "reason": "engine-contract-gap", "provenance": "Disambiguated: poke-corpus's automatic matcher found multiple candidate rows for this key and could not pick one on its own; this override selects the closer match by hand."},
-    "%s ": {"override": "%s", "reason": "engine-contract-gap", "provenance": "Disambiguated: poke-corpus's automatic matcher found multiple candidate rows for this key and could not pick one on its own; this override selects the closer match by hand."},
-    "%s is out of\nuseable POKéMON!\f%s blacked\nout!": {"override": "%s non ha più\nPOKéMON utili!\f%s è\ncrollato!", "reason": "engine-contract-gap", "provenance": "Disambiguated: poke-corpus's automatic matcher found multiple candidate rows for this key and could not pick one on its own; this override selects the closer match by hand."},
-    "WITHDRAW": {"override": "RITIRA", "reason": "engine-contract-gap", "provenance": "Disambiguated: poke-corpus's automatic matcher found multiple candidate rows for this key and could not pick one on its own; this override selects the closer match by hand (poke-corpus RedBlue's own rb.bills_pc.WithdrawPCText, the Bill's PC box-withdrawal action, not the unrelated \"Withdraw\" battle move wording)."},
-    "Printed %s's\ndata!\f": {"override": "Dati di %s\nstampati!\f", "reason": "engine-original", "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- the Game Boy Printer's own Pokédex-entry-printed confirmation, composed for this port's printer feature like its sibling \"Printed BOX %d!\f\", no matching cart string)."},
-    "Choose a\n<PK><MN> BOX.": {"override": "Scegli un\n<PK><MN> BOX!", "reason": "engine-contract-gap", "provenance": "Corpus-backed from rb.text_3.ChooseABoxText; does not auto-match because the corpus row spells the glyph as a single <PKMN> token while this engine literal (ui/BoxMenu.lua's fallback for a ROM missing a real _ChooseABoxText label, new in gen1recomp v0.2.56) uses the two-token <PK><MN> pair, the same gap this catalog's own <PK><MN>LEAGUE entry already documents; requires in-game visual validation."},
-    "HT": {"override": "HT", "reason": "engine-contract-gap", "provenance": "Kept identical to the English source: ui/DexEntryMenu.lua's imperial-unit branch (new in gen1recomp v0.2.56, replacing the old combined \"HT %d′%02d″\"/\"WT %.1flb\" templates) draws this label at a fixed pixel column, then draws the ′/″/lb unit glyphs as separate literals at their own fixed columns right after it -- a longer translated label would run into them. Every localized cart's own Pokédex uses metric units instead (poke-corpus RedBlue's own combined \"HT ?′??″<NEXT>WT ???lb\" row translates to metric TAI/GR./AL/h/たかさ ・ PDS/GEW/PE/P/おもさ with m/kg units in every shipped language), so this specific imperial branch has no real cart precedent to translate from in any language; requires in-game visual validation."},
-    "WT": {"override": "WT", "reason": "engine-contract-gap", "provenance": "Kept identical to the English source: ui/DexEntryMenu.lua's imperial-unit branch (new in gen1recomp v0.2.56, replacing the old combined \"HT %d′%02d″\"/\"WT %.1flb\" templates) draws this label at a fixed pixel column, then draws the ′/″/lb unit glyphs as separate literals at their own fixed columns right after it -- a longer translated label would run into them. Every localized cart's own Pokédex uses metric units instead (poke-corpus RedBlue's own combined \"HT ?′??″<NEXT>WT ???lb\" row translates to metric TAI/GR./AL/h/たかさ ・ PDS/GEW/PE/P/おもさ with m/kg units in every shipped language), so this specific imperial branch has no real cart precedent to translate from in any language; requires in-game visual validation."},
-    "lb": {"override": "lb", "reason": "engine-contract-gap", "provenance": "Kept identical to the English source: ui/DexEntryMenu.lua's imperial-unit branch (new in gen1recomp v0.2.56, replacing the old combined \"HT %d′%02d″\"/\"WT %.1flb\" templates) draws this label at a fixed pixel column, then draws the ′/″/lb unit glyphs as separate literals at their own fixed columns right after it -- a longer translated label would run into them. Every localized cart's own Pokédex uses metric units instead (poke-corpus RedBlue's own combined \"HT ?′??″<NEXT>WT ???lb\" row translates to metric TAI/GR./AL/h/たかさ ・ PDS/GEW/PE/P/おもさ with m/kg units in every shipped language), so this specific imperial branch has no real cart precedent to translate from in any language; requires in-game visual validation."},
-    "BATTLE HUD": {"override": "HUD LOTTA", "reason": "engine-original", "provenance": "AI-generated Italian translation of the port-added BATTLE HUD Options row label, new in gen1recomp v0.2.61 (ui/OptionsMenu.lua, ui/gen2/OptionsMenu.lua and the launcher settings row); follows this catalog's own BATTLE LAYOUT wording for the sibling row (\"LAYOUT LOTTA\"), keeping HUD as-is like the English label; requires in-game visual validation."},
-    "EXTENDED": {"override": "ESTESO", "reason": "engine-original", "provenance": "AI-generated Italian translation of the port-added BATTLE HUD Options row value (widescreen-only HUD composition), new in gen1recomp v0.2.61 (ui/OptionsMenu.lua, ui/gen2/OptionsMenu.lua and the launcher settings row); follows this catalog's own BATTLE LAYOUT wording for the sibling row (\"LAYOUT LOTTA\"), keeping HUD as-is like the English label; requires in-game visual validation."},
-    "STANDARD": {"override": "STANDARD", "reason": "engine-original", "provenance": "AI-generated Italian translation of the port-added BATTLE HUD Options row value (the default, and the only one the OG layout allows), new in gen1recomp v0.2.61 (ui/OptionsMenu.lua, ui/gen2/OptionsMenu.lua and the launcher settings row); follows this catalog's own BATTLE LAYOUT wording for the sibling row (\"LAYOUT LOTTA\"), keeping HUD as-is like the English label; requires in-game visual validation."},
-    "FLY TO?": {"override": "VOLA A?", "reason": "engine-original", "provenance": "AI-generated RBY Fly Menu localization; source introduced by gen1recomp d633cb4d; review remains required for layout. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "HEAL": {"override": "CURA", "reason": "engine-original", "provenance": "AI-generated RBY engine-string localization; source introduced by gen1recomp d633cb4d. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "ITEMS": {"override": "OGGETTI", "reason": "engine-original", "provenance": "AI-generated RBY engine-string localization; source introduced by gen1recomp d633cb4d. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "PIKACHU'S BEACH": {"override": "SPIAGGIA DI PIKACHU", "reason": "engine-original", "provenance": "AI-generated Yellow Surfing Minigame localization; source introduced by gen1recomp d633cb4d; review remains required for layout. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "POKéMON BLUE": {"override": "POKéMON BLU", "reason": "engine-original", "provenance": "AI-generated RBY title localization; source introduced by gen1recomp d633cb4d. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "POKéMON YELLOW": {"override": "POKéMON GIALLO", "reason": "engine-original", "provenance": "AI-generated RBY title localization; source introduced by gen1recomp d633cb4d. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "The party is full!": {"override": "LA SQUADRA È\nPIENA!", "reason": "engine-original", "provenance": "AI-generated RBY storage-message localization; source introduced by gen1recomp d633cb4d. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "To %s": {"override": "A %s", "reason": "engine-original", "provenance": "AI-generated RBY Town Map composition localization; source introduced by gen1recomp d633cb4d; preserves the destination placeholder; review remains required for fly-banner layout. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "MONEY/¥%d": {"override": "SOLDI/¥%d", "reason": "engine-contract-gap", "provenance": "Corpus-backed from poke-corpus RedBlue rb.start_sub_menus.TrainerInfo_NameMoneyTimeText: the cart's own trainer-card label, followed by the engine's amount. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "TIME/  %d:%02d": {"override": "TEMPO/  %d:%02d", "reason": "engine-contract-gap", "provenance": "Corpus-backed from poke-corpus RedBlue rb.start_sub_menus.TrainerInfo_NameMoneyTimeText: the cart's own trainer-card label; the hours keep gen1recomp v0.2.61's two-space print_num padding. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "%s's NEST": {"override": "NIDO DI %s", "reason": "engine-contract-gap", "provenance": "Corpus-backed from poke-corpus RedBlue rb.town_map.MonsNestText: the cart's own label, with the species name placed where that language's cart places it. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "%s's PC": {"override": "PC DI %s", "reason": "engine-contract-gap", "provenance": "Corpus-backed from poke-corpus RedBlue rb.bills_pc.PlayersPCText: the cart's own label, with the player name placed where that language's cart places it. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "AREA UNKNOWN": {"override": "ZONA IGNOTA", "reason": "engine-contract-gap", "provenance": "Corpus-backed from poke-corpus RedBlue rb.town_map.AreaUnknownText: the cart's own label without its leading space, since ui/TownMap.lua already prepends one (the automatic corpus match kept it, printing two). Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "Congrats! This": {"override": "Congratulazioni!", "reason": "engine-contract-gap", "provenance": "Corpus-backed from poke-corpus RedBlue rb.diploma.DiplomaCongrats: the cart's own line for this row; ui/Diploma.lua draws one fixed English line per row. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "diploma certifies": {"override": "Questo diploma", "reason": "engine-contract-gap", "provenance": "Corpus-backed from poke-corpus RedBlue rb.diploma.DiplomaCongrats: the cart's own line for this row; ui/Diploma.lua draws one fixed English line per row. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "that you have": {"override": "certifica che", "reason": "engine-contract-gap", "provenance": "Corpus-backed from poke-corpus RedBlue rb.diploma.DiplomaCongrats: the cart's own line for this row; ui/Diploma.lua draws one fixed English line per row. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "completed your": {"override": "il tuo POKéDEX", "reason": "engine-contract-gap", "provenance": "Corpus-backed from poke-corpus RedBlue rb.diploma.DiplomaCongrats: the cart's own line for this row; ui/Diploma.lua draws one fixed English line per row. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."},
-    "POKéDEX.": {"override": "è completo.", "reason": "engine-contract-gap", "provenance": "Corpus-backed from poke-corpus RedBlue rb.diploma.DiplomaCongrats: the cart's own line for this row; ui/Diploma.lua draws one fixed English line per row. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."}
+    "that you have": {
+      "override": "certifica che",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-backed from poke-corpus RedBlue rb.diploma.DiplomaCongrats: the cart's own line for this row; ui/Diploma.lua draws one fixed English line per row. Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
+    }
   }
 }

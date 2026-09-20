@@ -191,11 +191,26 @@ class MultilingualTests(unittest.TestCase):
                 self.assertIn('  ["_OakSpeechText2A"] = "",', strings, language)
 
     def test_es_it_engine_override_files_load_from_overrides_tree(self):
+        # The four stat-stage messages used to carry an editorial wording,
+        # because RedBlue words them "<STAT> de <MON>" in both languages and
+        # the engine passes the POKéMON first.  Numbered directives express
+        # that order now (gen1recomp#2346), so they carry the cart's own line.
+        stage_keys = {
+            "%s's\n%s rose!", "%s's\n%s fell!",
+            "%s's\n%s\ngreatly rose!", "%s's\n%s\ngreatly fell!",
+        }
         for language in ("es", "it"):
             path = Path("overrides") / language / "rby" / "engine.json"
             self.assertTrue(path.is_file())
             overrides = load_engine_overrides(path)
-            self.assertEqual(sum(entry.get("reason") == "editorial-correction" for entry in overrides.values()), 4)
+            self.assertTrue(stage_keys <= set(overrides), language)
+            for key in stage_keys:
+                entry = overrides[key]
+                self.assertEqual(entry.get("reason"), "engine-corpus-reordered", (language, key))
+                self.assertIn("%2$s", entry["override"], (language, key))
+                self.assertIn("%1$s", entry["override"], (language, key))
+            self.assertEqual(
+                sum(entry.get("reason") == "editorial-correction" for entry in overrides.values()), 0)
             self.assertTrue(all(entry.get("provenance") for entry in overrides.values()))
 
     def test_german_greatly_stage_overrides_cover_empty_corpus_fragments(self):
@@ -1087,12 +1102,14 @@ class MultilingualTests(unittest.TestCase):
                 self.assertIn("ATTACK", rendered, language)
 
     def test_real_corpus_es_it_stat_stage_editorial_overrides_are_language_scoped(self):
-        """Editorial stat strings use the real qid corpus only for the anchor set.
+        """Stat-stage overrides use the real qid corpus only for the anchor set.
 
         The four ES/IT entries are deliberately not qid-derived: overrides win
-        over semantic anchors and report editorial provenance without a qid.
-        Other languages must continue through their normal semantic/fallback
-        paths, proving that the per-language override files do not leak.
+        over semantic anchors and report their provenance without a qid.  They
+        carry RedBlue's own "<STAT> de <MON>" order through numbered
+        directives, which is why their directives read %2$s then %1$s.  Other
+        languages must continue through their normal semantic/fallback paths,
+        proving that the per-language override files do not leak.
         """
         root = Path(".cache/dependencies/poke-corpus/corpus/RedBlue")
         if not (root / "qid_msg.txt").is_file():
@@ -1103,16 +1120,16 @@ class MultilingualTests(unittest.TestCase):
         )
         expected = {
             "es": {
-                keys[0]: "¡%s\nsu %s subió!",
-                keys[1]: "¡%s\nsu %s\nsubió mucho!",
-                keys[2]: "¡%s\nsu %s bajó!",
-                keys[3]: "¡%s\nsu %s\nbajó mucho!",
+                keys[0]: '¡%2$s de\n%1$s\x0bcreció!',
+                keys[1]: '¡%2$s de\n%1$s\x0bmucho creció!',
+                keys[2]: '¡%2$s de\n%1$s\x0bbajó!',
+                keys[3]: '¡%2$s de\n%1$s\x0bmucho bajó!',
             },
             "it": {
-                keys[0]: "%s\n%s sale!",
-                keys[1]: "%s\n%s\nsale molto!",
-                keys[2]: "%s\n%s cala!",
-                keys[3]: "%s\n%s\ncala molto!",
+                keys[0]: 'Cresce %2$s di\n%1$s!',
+                keys[1]: 'Cresce %2$s di\n%1$s\nmolto!',
+                keys[2]: 'Cala %2$s di\n%1$s!',
+                keys[3]: 'Cala %2$s di\n%1$s\nmolto!',
             },
         }
         anchors = load_semantic_anchors()
@@ -1134,9 +1151,8 @@ class MultilingualTests(unittest.TestCase):
                 provenance = report["provenance"][key]
                 self.assertEqual(provenance, {"method": "override", "target_lang": language})
                 self.assertNotIn("qid", provenance)
-                self.assertEqual(printf_directives(output[key]), ["%s", "%s"], (language, key))
-                self.assertEqual(output[key] % ("PIKACHU", "ATTACK"),
-                                 expected[language][key] % ("PIKACHU", "ATTACK"), (language, key))
+                self.assertEqual(printf_directives(output[key]), ["%2$s", "%1$s"], (language, key))
+                self.assertEqual(check_printf_directives(key, output[key]), [], (language, key))
             # Ensure the actual language package scaffold contains the exact
             # source keys consumed by generation, including their line breaks.
             scaffold = Path(".cache/build") / language / "mod-worksheet" / "strings.lua"
