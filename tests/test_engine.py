@@ -446,8 +446,31 @@ class EngineTests(unittest.TestCase):
             ["%s", "%03d", "%.1f", "%02X", "%+05.2f"],
         )
         # LuaJIT's string.format scanner does not support C's dynamic width,
-        # positional arguments, length modifiers, or overlong width fields.
-        self.assertEqual(printf_directives("%*d %1$s %lld %hhd %100d"), [])
+        # length modifiers, or overlong width fields.
+        self.assertEqual(printf_directives("%*d %lld %hhd %100d"), [])
+        # Numbered directives are not string.format's: src/core/Strings.lua
+        # reorders the arguments itself before formatting, so a translation can
+        # word a message in another order than English (gen1recomp#2346).
+        self.assertEqual(printf_directives("%2$s de %1$s"), ["%2$s", "%1$s"])
+
+    def test_numbered_directives_follow_the_engine_rules(self):
+        # src/core/Strings.lua: all or none within a string, each index names
+        # one of the source's arguments, and its conversion is that argument's.
+        self.assertEqual(check_printf_directives("%s's %s rose!", "%2$s de %1$s monte!"), [])
+        self.assertTrue(check_printf_directives("%s %s", "%1$s %s"))
+        self.assertTrue(check_printf_directives("%s", "%2$s"))
+        self.assertTrue(check_printf_directives("%s %d", "%1$d %2$s"))
+        self.assertEqual(check_printf_directives("%s rose!", "%s monte!"), [])
+        # "%%" is a literal percent sign, not an argument: Strings.lua's
+        # specifiers() skips it, so it neither breaks the all-or-none rule nor
+        # counts towards the source's arguments.  The engine catalog really
+        # carries such keys ("Downloading %d%%").
+        self.assertEqual(check_printf_directives("Downloading %d%%", "Lade %1$d%%"), [])
+        self.assertTrue(check_printf_directives("%d%% of %s done", "%3$s: %1$d"))
+        # A "%" that is neither "%%" nor a directive makes positional() give up
+        # on the whole string, so it is refused here rather than falling back
+        # to English in front of the player.
+        self.assertTrue(check_printf_directives("%s %s", "%2$s 50%! %1$s"))
 
     def test_catalog_reader_requires_empty_values(self):
         with tempfile.TemporaryDirectory() as tmp:

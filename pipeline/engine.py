@@ -218,11 +218,18 @@ def _normal(value: str, *, bare_dynamic_tokens: bool = False) -> str:
 # Gen1Recomp ultimately calls LuaJIT's ``string.format``.  Its scanner accepts
 # at most five flags, two width digits, two precision digits, and the listed
 # conversion letters used by player-facing engine strings; it does not accept
-# ``*``, positional arguments, or C length modifiers.  LuaJIT also has an
-# internal ``%q`` extension, but it is not an engine catalogue directive.
-# Keep this grammar conservative so prose such as ``100% ready`` and
-# unsupported ``%q/%r`` are treated as literal text.
-_PRINTF = re.compile(r"%(?:[-+ #0]{0,5}\d{0,2}(?:\.\d{0,2})?([cdisouxXeEfFgG]))")
+# ``*`` or C length modifiers.  LuaJIT also has an internal ``%q`` extension,
+# but it is not an engine catalogue directive.  Keep this grammar conservative
+# so prose such as ``100% ready`` and unsupported ``%q/%r`` are treated as
+# literal text.
+#
+# A translation may also number its directives (``%2$s``, the POSIX form):
+# src/core/Strings.lua fills those in the order the translation asks for, which
+# is how a language that words a message the other way round from English keeps
+# the cart's own phrasing.  The engine's rule is all or none per string, so a
+# numbered directive is parsed here and validated in check_printf_directives.
+_PRINTF = re.compile(r"%(?:(\d+)\$)?(?:[-+ #0]{0,5}\d{0,2}(?:\.\d{0,2})?([cdisouxXeEfFgG]))")
+_PRINTF_INDEX = re.compile(r"%(\d+)\$")
 
 
 def _printf_marker_type(directive: str) -> str:
@@ -398,7 +405,40 @@ def printf_directives(text: str) -> list[str]:
 
 
 def check_printf_directives(source: str, target: str) -> list[str]:
-    left, right = printf_directives(source), printf_directives(target)
+    """Refuse a translation src/core/Strings.lua would refuse to format.
+
+    Plain directives have to match the source's, in order.  Numbered ones
+    (``%2$s``) are the engine's way for a translation to word a message in
+    another order than English: they are all or none within a string, each
+    index has to name one of the source's arguments, and the conversion at
+    that index has to be the one the source passes there.
+
+    ``%%`` is a literal percent sign, not an argument: Strings.lua's
+    specifiers() skips it and positional() lets it through unnumbered, so it
+    is excluded from both the all-or-none rule and the argument count.  A
+    ``%`` that is neither ``%%`` nor a directive makes positional() give up
+    on the whole string, so a numbered target carrying one is refused here
+    rather than falling back to English in front of the player.
+    """
+    left = [d for d in printf_directives(source) if d != "%%"]
+    right = [d for d in printf_directives(target) if d != "%%"]
+    numbered = [d for d in right if _PRINTF_INDEX.match(d)]
+    if numbered:
+        if len(numbered) != len(right):
+            return ["printf directives mix numbered and plain forms: "
+                    f"target={right!r}"]
+        tokens = printf_directives(target)
+        if target.count("%") != sum(token.count("%") for token in tokens):
+            return [f"printf directives leave a stray '%' in target={target!r}"]
+        for directive in right:
+            index = int(_PRINTF_INDEX.match(directive).group(1))
+            if not 1 <= index <= len(left):
+                return [f"printf directive {directive!r} has no argument {index} "
+                        f"in source={left!r}"]
+            if directive[-1] != left[index - 1][-1]:
+                return [f"printf directive {directive!r} does not match "
+                        f"source argument {index} ({left[index - 1]!r})"]
+        return []
     if left == right:
         return []
     return [f"printf directives mismatch: source={left!r} target={right!r}"]
