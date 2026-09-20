@@ -1,0 +1,12 @@
+{
+  "schema": "gen1recomp-translation-mods/frlg-dialogue-overrides",
+  "version": 1,
+  "entries": {
+    "Text_FoundTMHMContainsMove": {
+      "qid": "frlg.script.event_scripts.Text_FoundTMHMContainsMove",
+      "text": "¡[PLAYER] encontró\\nuna [STR_VAR_2]!",
+      "reason": "engine-contract-gap",
+      "provenance": "gen1recomp's standard item-ball script (src/core/game3/scripting/stdscripts.lua) buffers only the TM/HM name (STR_VAR_2) and prints \"[PLAYER] found\\n[STR_VAR_2]!\"; the cart's row \"¡[PLAYER] encontró\\nuna [STR_VAR_2],\\rcontiene [STR_VAR_1]!\" also names the move from STR_VAR_1, which this script never fills, so only its first clause is kept, worded with the TM name."
+    }
+  }
+}

@@ -62,6 +62,7 @@ GAME_SPECS: Mapping[str, GameSpec] = {
     "yellow": GameSpec("yellow", 1, "Yellow"),
     "gs": GameSpec("gs", 2, "GoldSilver"),
     "crystal": GameSpec("crystal", 2, "Crystal"),
+    "firered": GameSpec("firered", 3, "FireRedLeafGreen"),
 }
 
 RELEASE_PROFILES: Mapping[str, ReleaseProfile] = {
@@ -75,6 +76,9 @@ RELEASE_PROFILES: Mapping[str, ReleaseProfile] = {
     # in its games tuple is GAME_SPECS' own Gold/Silver-only entry, matching
     # how "rby"'s games tuple keeps "rb"/"yellow" as separate sub-keys.
     "gsc": ReleaseProfile("gsc", 2, ("gs", "crystal")),
+    # FireRed alone: gen1recomp's game3 runtime only boots FireRed (US),
+    # LeafGreen is not a supported game there.
+    "frlg": ReleaseProfile("frlg", 3, ("firered",)),
 }
 
 # The collection is the source of truth for the UI language domain.  Keeping
@@ -89,6 +93,11 @@ COLLECTION_LANGUAGES: Mapping[str, tuple[tuple[str, str], ...]] = {
     # Crystal has no Korean corpus, unlike GoldSilver.
     "Crystal": (("fr", "French"), ("de", "German"), ("es", "Spanish"),
                 ("it", "Italian"), ("ja-Hrkt", "Japanese")),
+    # The FireRedLeafGreen corpus also has Japanese, but game3 draws every
+    # string with the US cart's Latin ROM font and gates the font registry,
+    # so kana would print as blanks (docs/upstream-fixes.md, FireRed).
+    "FireRedLeafGreen": (("fr", "French"), ("de", "German"), ("es", "Spanish"),
+                         ("it", "Italian")),
 }
 
 
