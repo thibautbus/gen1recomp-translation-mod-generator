@@ -1963,9 +1963,9 @@
       "provenance": "Corpus-derived from poke-corpus GoldSilver gs.battle.PlayerHitTimesText/EnemyHitTimesText (identical wording in both, differing only by which RAM counter they read); Japanese/Korean reorder the number to the front to match their own natural word order."
     },
     "Hm… %s\ncame from %s\u000bin a trade?\f%s\nwas where %s\u000bmet %s!": {
-      "override": "Hm… %s\nvino de %s\fen un intercambio?\f%s\nfue donde %s\fconoció a %s!",
-      "reason": "engine-contract-gap",
-      "provenance": "poke-corpus Crystal's real translated text for this Pokéseer flavor line reorders its five dynamic segments (nickname, original trainer, location, original trainer again, nickname again) differently from English -- Spanish moves the location to the very end, English/fr keep it third. But the callsite (src/script/gen2/specials/crystal_extras.lua:424, Strings(SEER_TEXT.trade, name, ot, place, ot, name)) always binds the five %s to (nickname, OT, location, OT, nickname) in that exact order; the previous override applied Spanish's own reordered corpus text positionally onto this fixed argument order, shipping a garbled sentence with the wrong name in most of the five slots. Composed a new Spanish sentence using the same (nickname, OT, location, OT, nickname) order as English/fr instead, since no compatible official phrasing exists to reuse verbatim."
+      "override": "Mmm… ¿%1$s\nte lo intercambió\u000b%2$s?\f¡%2$s conoció\na %1$s en\u000b%3$s!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores Crystal's own wording now that Strings() accepts numbered directives (gen1recomp#2346): c.common_3.SeerTradeText orders the nickname, the OT and the location differently from crystal_extras.lua's Strings(trade, name, ot, place, ot, name), so the official line was unreachable before. %1$s/%5$s are the nickname, %2$s/%4$s the OT and %3$s the location, matching the cart's own repetitions."
     },
     "Hm… I see you met\n%s here:\u000b%s!": {
       "override": "Mmm… Veo que\nconociste a\f%s aquí:\n¡%s!",

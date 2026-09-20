@@ -573,9 +573,9 @@
       "provenance": "Corpus-inspired from poke-corpus GoldSilver gs.common_2.UsedMove1Text (the ROM's own \"<name>\\nused <move>!\" fragment, concatenated from separate name/verb/move text banks); adapted to the engine's own single combined %s/%s template."
     },
     "%s used BIND on %s!": {
-      "override": "%s\nhält %s\nmit KLAMMERGRIFF fest!",
-      "reason": "engine-contract-gap",
-      "provenance": "GoldSilver's own real corpus match (gs.battle line for this move: \"<TARGET> erleidet Schaden durch <USER>s KLAMMERGRIFF!\", target before user) reverses argument order and is unreachable given Battle.lua's Strings(\"%s used BIND on %s!\", user, target) fixed argument order (user first, target second) -- the previous override silently applied the corpus's target-first phrasing onto the engine's user-first call, shipping the backwards \"<USER> erleidet Schaden durch <TARGET>s KLAMMERGRIFF!\" (implying the user, not the target, is the one being bound). Rephrased to keep the user first and read correctly (\"user holds target with BIND\") while staying natural German."
+      "override": "%2$s\nerleidet Schaden\fdurch\n%1$ss\fKLAMMERGRIFF!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores GoldSilver's own wording now that Strings() accepts numbered directives (gen1recomp#2346): gs.battle.UsedBindText names the target first, while Battle.lua passes the user then the target."
     },
     "%s wants to\nlearn %s!": {
       "override": "%s will\n%s erlernen!",
@@ -888,9 +888,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "%s's hurt by %s!": {
-      "override": "%s\nleidet unter\u000b%s!",
-      "reason": "engine-contract-gap",
-      "provenance": "GoldSilver's own real corpus match (gs.battle.BattleText_UsersHurtByStringBuffer1: \"<MOVE> schadet <USER>!\", move before POKéMON) reverses argument order and is unreachable given Battle.lua's Strings(\"%s's hurt by %s!\", monName, moveName) fixed argument order (POKéMON first, move second) -- the previous override silently applied the corpus's reversed order onto the engine's POKéMON-first call, shipping the backwards \"<POKéMON> schadet <MOVE>!\" instead. Rephrased to keep POKéMON first while staying natural German."
+      "override": "%2$s\nschadet\f%1$s!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores GoldSilver's own wording now that Strings() accepts numbered directives (gen1recomp#2346): gs.battle.BattleText_UsersHurtByStringBuffer1 names the move first, while Battle.lua passes the POKéMON then the move."
     },
     "%s's hurt by the CURSE!": {
       "override": "FLUCH schadet\n%s!",
@@ -1948,9 +1948,9 @@
       "provenance": "Corpus-derived from poke-corpus GoldSilver gs.battle.PlayerHitTimesText/EnemyHitTimesText (identical wording in both, differing only by which RAM counter they read); Japanese/Korean reorder the number to the front to match their own natural word order."
     },
     "Hm… %s\ncame from %s\u000bin a trade?\f%s\nwas where %s\u000bmet %s!": {
-      "override": "Hm… %s\nkam von %s\fim Tausch?\f%s\nwar, wo %s\f%s traf!",
-      "reason": "engine-contract-gap",
-      "provenance": "poke-corpus Crystal's real translated text for this Pokéseer flavor line reorders its five dynamic segments (nickname, original trainer, location, original trainer again, nickname again) differently from English -- German moves the location to the very end, English/fr keep it third. But the callsite (src/script/gen2/specials/crystal_extras.lua:424, Strings(SEER_TEXT.trade, name, ot, place, ot, name)) always binds the five %s to (nickname, OT, location, OT, nickname) in that exact order; the previous override applied German's own reordered corpus text positionally onto this fixed argument order, shipping a garbled sentence with the wrong name in most of the five slots. Composed a new German sentence using the same (nickname, OT, location, OT, nickname) order as English/fr instead, since no compatible official phrasing exists to reuse verbatim."
+      "override": "Hm… hast du\n%1$s mit\f%2$s\ngetauscht?\f%2$s traf\n%1$s hier:\u000b%3$s!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores Crystal's own wording now that Strings() accepts numbered directives (gen1recomp#2346): c.common_3.SeerTradeText orders the nickname, the OT and the location differently from crystal_extras.lua's Strings(trade, name, ot, place, ot, name), so the official line was unreachable before. %1$s/%5$s are the nickname, %2$s/%4$s the OT and %3$s the location, matching the cart's own repetitions."
     },
     "Hm… I see you met\n%s here:\u000b%s!": {
       "override": "Hm… du trafst\n%s hier:\u000b%s!",

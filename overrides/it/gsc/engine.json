@@ -588,14 +588,14 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "%s was CLAMPED by %s!": {
-      "override": "%s\nè stretto da\u000b%s!",
-      "reason": "engine-contract-gap",
-      "provenance": "GoldSilver's own real corpus match (gs.battle line for this move: \"<USER> ha usato TENAGLIA su <TARGET>!\", user before target, active voice) reverses argument order and is unreachable given Battle.lua's Strings(\"%s was CLAMPED by %s!\", target, user) fixed argument order (target first, user second) -- the previous override silently applied the corpus's user-first active-voice phrasing onto the engine's target-first call, shipping the backwards \"<TARGET> ha usato TENAGLIA su <USER>!\" (implying the target, not the user, is the one using CLAMP). Rephrased to a passive construction that keeps the target first, matching this project's own fr/es/de overrides for the same message."
+      "override": "%2$s\nha usato\u000bTENAGLIA su\u000b%1$s!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores GoldSilver's own wording now that Strings() accepts numbered directives (gen1recomp#2346): gs.battle.ClampedByText names the user first, while Battle.lua passes the target then the user."
     },
     "%s was WRAPPED by %s!": {
-      "override": "%s\nè avvolto da\u000b%s!",
-      "reason": "engine-contract-gap",
-      "provenance": "GoldSilver's own real corpus match (gs.battle line for this move: \"<USER> ha usato AVVOLGIBOTTA su <TARGET>!\", user before target, active voice) reverses argument order and is unreachable given Battle.lua's Strings(\"%s was WRAPPED by %s!\", target, user) fixed argument order (target first, user second) -- the previous override silently applied the corpus's user-first active-voice phrasing onto the engine's target-first call, shipping the backwards \"<TARGET> ha usato AVVOLGIBOTTA su <USER>!\" (implying the target, not the user, is the one using WRAP). Rephrased to a passive construction that keeps the target first, matching this project's own fr/es/de overrides for the same message."
+      "override": "%2$s\nha usato\u000bAVVOLGIBOTTA su\u000b%1$s!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores GoldSilver's own wording now that Strings() accepts numbered directives (gen1recomp#2346): gs.battle.WrappedByText names the user first, while Battle.lua passes the target then the user."
     },
     "%s was badly poisoned!": {
       "override": "%s\nè iperavvelenato!",
@@ -888,9 +888,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "%s's hurt by %s!": {
-      "override": "%s\nsubisce\u000b%s!",
-      "reason": "engine-contract-gap",
-      "provenance": "GoldSilver's own real corpus match (gs.battle.BattleText_UsersHurtByStringBuffer1: \"<MOVE> ha effetto su <USER>!\", move before POKéMON) reverses argument order and is unreachable given Battle.lua's Strings(\"%s's hurt by %s!\", monName, moveName) fixed argument order (POKéMON first, move second) -- the previous override silently applied the corpus's reversed order onto the engine's POKéMON-first call, shipping the backwards \"<POKéMON> ha effetto su <MOVE>!\" instead. Rephrased to keep POKéMON first while staying natural Italian."
+      "override": "%2$s\nha effetto su\u000b%1$s!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores GoldSilver's own wording now that Strings() accepts numbered directives (gen1recomp#2346): gs.battle.BattleText_UsersHurtByStringBuffer1 names the move first, while Battle.lua passes the POKéMON then the move."
     },
     "%s's hurt by the CURSE!": {
       "override": "MALEDIZIONE\nagisce su\u000b%s!",
@@ -1948,9 +1948,9 @@
       "provenance": "Corpus-derived from poke-corpus GoldSilver gs.battle.PlayerHitTimesText/EnemyHitTimesText (identical wording in both, differing only by which RAM counter they read); Japanese/Korean reorder the number to the front to match their own natural word order."
     },
     "Hm… %s\ncame from %s\u000bin a trade?\f%s\nwas where %s\u000bmet %s!": {
-      "override": "Hm… %s\nè arrivato da %s\fcon uno scambio?\f%s\nè dove %s\fha incontrato %s!",
-      "reason": "engine-contract-gap",
-      "provenance": "poke-corpus Crystal's real translated text for this Pokéseer flavor line reorders its five dynamic segments (nickname, original trainer, location, original trainer again, nickname again) differently from English -- Italian moves the location to the very end, English/fr keep it third. But the callsite (src/script/gen2/specials/crystal_extras.lua:424, Strings(SEER_TEXT.trade, name, ot, place, ot, name)) always binds the five %s to (nickname, OT, location, OT, nickname) in that exact order; the previous override applied Italian's own reordered corpus text positionally onto this fixed argument order, shipping a garbled sentence with the wrong name in most of the five slots. Composed a new Italian sentence using the same (nickname, OT, location, OT, nickname) order as English/fr instead, since no compatible official phrasing exists to reuse verbatim."
+      "override": "%2$s ti ha\ndato %1$s\u000bin uno scambio?\f%2$s aveva\ntrovato %1$s\u000bqui:\u000b%3$s!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores Crystal's own wording now that Strings() accepts numbered directives (gen1recomp#2346): c.common_3.SeerTradeText orders the nickname, the OT and the location differently from crystal_extras.lua's Strings(trade, name, ot, place, ot, name), so the official line was unreachable before. %1$s/%5$s are the nickname, %2$s/%4$s the OT and %3$s the location, matching the cart's own repetitions."
     },
     "Hm… I see you met\n%s here:\u000b%s!": {
       "override": "Vedo… vedo…\nHai trovato\f%s qui:\n%s!",
@@ -3713,9 +3713,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "Throw away %d\n%s(S)?": {
-      "override": "Buttare %d\n%s?",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_2.AskQuantityThrowAwayText); PackMenu/ItemPcMenu pass quantity then name and Strings() cannot reorder them, so Japanese/Korean put the quantity first; Italian uses this row rather than ItemsThrowAwayText, whose name-first order would print the two values swapped."
+      "override": "%2$s:\nne butti %1$d?",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores GoldSilver's own wording now that Strings() accepts numbered directives (gen1recomp#2346): gs.common_2.ItemsThrowAwayText names the item before the quantity, while ItemPcMenu/PackMenu pass the quantity first."
     },
     "Throw away how\nmany?": {
       "override": "Quantità da\nbuttare?",
