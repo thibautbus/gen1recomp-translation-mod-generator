@@ -739,8 +739,8 @@
     },
     "%s's %s activated!": {
       "override": "%sが　もっていた\n%sが　さどうした！",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.battle.BattleText_UsersStringBuffer1Activated, rendered through the same token expansion the automatic matches use. The cart names the held item before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
     },
     "%s's %s cured its confusion!": {
       "override": "%sの　%sで\nこんらんが　なおった！",
@@ -759,8 +759,8 @@
     },
     "%s's %s is DISABLED!": {
       "override": "%sは　かなしばりで\n%sがだせない！",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.battle.DisabledMoveText, rendered through the same token expansion the automatic matches use. The cart names the move before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
     },
     "%s's %s restored health!": {
       "override": "%sの　%sで\nHPが　かいふくした！",
@@ -784,23 +784,23 @@
     },
     "%s's %s was disabled!": {
       "override": "%sの\n%sを　ふうじこめた！",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.battle.WasDisabledText, rendered through the same token expansion the automatic matches use. The cart names the move before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
     },
     "%s's %s was reduced by %d!": {
       "override": "%sの\n%sを　%dけずった！",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.battle.SpiteEffectText, rendered through the same token expansion the automatic matches use. The cart names the move before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
     },
     "%s's %s won't drop anymore!": {
       "override": "%sの\n%sは　もうさがらない！",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.battle.WontDropAnymoreText, rendered through the same token expansion the automatic matches use. The cart names the stat before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
     },
     "%s's %s won't rise anymore!": {
       "override": "%sの\n%sは　もうあがらない！",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.battle.WontRiseAnymoreText, rendered through the same token expansion the automatic matches use. The cart names the stat before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
     },
     "%s's ATTACK won't rise anymore!": {
       "override": "%sの\nこうげきりょくは　もうあがらない！",
@@ -2013,9 +2013,9 @@
       "provenance": "Corpus-derived from poke-corpus GoldSilver gs.battle.PlayerHitTimesText/EnemyHitTimesText (identical wording in both, differing only by which RAM counter they read); Japanese/Korean reorder the number to the front to match their own natural word order."
     },
     "Hm… %s\ncame from %s\u000bin a trade?\f%s\nwas where %s\u000bmet %s!": {
-      "override": "ふむ……\nこの%sは %sと\u000bこうかんした ポケモンじゃな？\f%sで\n%sが %sと\u000bであった！",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-backed from Crystal c.common_3.SeerTradeText; adapted from the ROM's seven decoded buffers to the engine's five positional arguments."
+      "override": "ふむ……\nこの%1$sは　%2$sと\u000bこうかんした　POKéじゃな？\f%2$sは　この%1$sと\n%3$sで　であった！",
+      "reason": "engine-corpus-reordered",
+      "provenance": "Restores Crystal's own wording now that Strings() accepts numbered directives (gen1recomp#2346): c.common_3.SeerTradeText names the OT before the nickname on its second page, while crystal_extras.lua passes the nickname first. %1$s/%5$s are the nickname, %2$s/%4$s the OT and %3$s the location. The cart's wSeerTimeOfDay has no engine argument and is dropped, as it already was."
     },
     "Hm… I see you met\n%s here:\u000b%s!": {
       "override": "ふむ……\nこの%sとは\u000b%sで　であった！",

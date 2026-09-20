@@ -412,13 +412,24 @@ def check_printf_directives(source: str, target: str) -> list[str]:
     another order than English: they are all or none within a string, each
     index has to name one of the source's arguments, and the conversion at
     that index has to be the one the source passes there.
+
+    ``%%`` is a literal percent sign, not an argument: Strings.lua's
+    specifiers() skips it and positional() lets it through unnumbered, so it
+    is excluded from both the all-or-none rule and the argument count.  A
+    ``%`` that is neither ``%%`` nor a directive makes positional() give up
+    on the whole string, so a numbered target carrying one is refused here
+    rather than falling back to English in front of the player.
     """
-    left, right = printf_directives(source), printf_directives(target)
+    left = [d for d in printf_directives(source) if d != "%%"]
+    right = [d for d in printf_directives(target) if d != "%%"]
     numbered = [d for d in right if _PRINTF_INDEX.match(d)]
     if numbered:
         if len(numbered) != len(right):
             return ["printf directives mix numbered and plain forms: "
                     f"target={right!r}"]
+        tokens = printf_directives(target)
+        if target.count("%") != sum(token.count("%") for token in tokens):
+            return [f"printf directives leave a stray '%' in target={target!r}"]
         for directive in right:
             index = int(_PRINTF_INDEX.match(directive).group(1))
             if not 1 <= index <= len(left):

@@ -733,9 +733,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_1.RidOfParalysisText."
     },
     "%s's %s activated!": {
-      "override": "%s\nvoit %s\u000bs'activer!",
-      "reason": "engine-contract-gap",
-      "provenance": "Real corpus match exists (poke-corpus GoldSilver gs.battle.BattleText_UsersStringBuffer1Activated: \"<ITEM> de <USER>: activé!\", item before POKéMON) but Battle.lua's Strings(\"%s's %s activated!\", monName, itemName) always binds the first %s to the POKéMON name and the second to the item; Lua's string.format binds %s tokens to arguments in call order, not by desired reading order, so the corpus's item-first phrasing cannot be reproduced. Rephrased to keep the engine's forced POKéMON-first order while staying natural French, the same technique already used for \"%s's %s\\nrose!\" in overrides/fr/rby/engine.json; requires in-game visual validation."
+      "override": "%2$s\nde %1$s:\u000bactivé!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "poke-corpus GoldSilver gs.battle.BattleText_UsersStringBuffer1Activated, rendered through the same token expansion the automatic matches use. The cart names the held item before the POKéMON, which numbered directives express now that Strings() accepts them (gen1recomp#2346); Battle.lua passes the POKéMON first."
     },
     "%s's %s cured its confusion!": {
       "override": "%s guérit sa\nconfusion\u000bgrâce à son %s!",
@@ -753,9 +753,9 @@
       "provenance": "Restores GoldSilver's own wording now that Strings() accepts numbered directives (gen1recomp#2346): gs.common_2.Text_BattleFoeEffectActivate + BattleStatFellText print the stat before the POKéMON, which the engine's fixed argument order could not express before."
     },
     "%s's %s is DISABLED!": {
-      "override": "%s ne peut plus\nutiliser %s:\u000bENTRAVE!",
-      "reason": "engine-contract-gap",
-      "provenance": "Real corpus match exists (poke-corpus GoldSilver gs.battle.DisabledMoveText: \"<MOVE> de <USER> est sous ENTRAVE!\", move before POKéMON) but Battle.lua's Strings(\"%s's %s is DISABLED!\", monName, moveName) always binds the first %s to the POKéMON name and the second to the move; Lua's string.format binds %s tokens to arguments in call order, not by desired reading order, so the corpus's move-first phrasing cannot be reproduced. Rephrased to keep the engine's forced POKéMON-first order while staying natural French, the same technique already used for \"%s's %s\\nrose!\" in overrides/fr/rby/engine.json; requires in-game visual validation."
+      "override": "%2$s de\n%1$s\u000best sous ENTRAVE!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "poke-corpus GoldSilver gs.battle.DisabledMoveText, rendered through the same token expansion the automatic matches use. The cart names the move before the POKéMON, which numbered directives express now that Strings() accepts them (gen1recomp#2346); Battle.lua passes the POKéMON first."
     },
     "%s's %s restored health!": {
       "override": "%s restaure sa\nsanté\u000bgrâce à son %s!",
@@ -778,24 +778,24 @@
       "provenance": "Restores GoldSilver's own wording now that Strings() accepts numbered directives (gen1recomp#2346): gs.common_2.Text_Battle{Foe,}EffectActivate prints the stat before the POKéMON, and BattleStat{WentWayUp,SharplyFell}Text scrolls its own tail after it; the engine's fixed argument order could not express that before."
     },
     "%s's %s was disabled!": {
-      "override": "%s ne peut plus\nutiliser %s:\u000bENTRAVE!",
-      "reason": "engine-contract-gap",
-      "provenance": "Real corpus match exists (poke-corpus GoldSilver gs.battle.WasDisabledText: \"<MOVE> de <TARGET> est sous ENTRAVE!\", move before POKéMON) but Battle.lua's Strings(\"%s's %s was disabled!\", monName, moveName) always binds the first %s to the POKéMON name and the second to the move; Lua's string.format binds %s tokens to arguments in call order, not by desired reading order, so the corpus's move-first phrasing cannot be reproduced. Rephrased to keep the engine's forced POKéMON-first order while staying natural French, the same technique already used for \"%s's %s\\nrose!\" in overrides/fr/rby/engine.json; requires in-game visual validation."
+      "override": "%2$s de\n%1$s\u000best sous ENTRAVE!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "poke-corpus GoldSilver gs.battle.WasDisabledText, rendered through the same token expansion the automatic matches use. The cart names the move before the POKéMON, which numbered directives express now that Strings() accepts them (gen1recomp#2346); Battle.lua passes the POKéMON first."
     },
     "%s's %s was reduced by %d!": {
-      "override": "%s voit les PP de\n%s\u000bbaisser de %d!",
-      "reason": "engine-contract-gap",
-      "provenance": "Real corpus match exists (poke-corpus GoldSilver gs.battle.SpiteEffectText: \"<MOVE> de <TARGET> baisse de <N>!\", move before POKéMON) but Battle.lua's Strings(\"%s's %s was reduced by %d!\", monName, moveName, loss) always binds the first %s to the POKéMON name and the second to the move; Lua's string.format binds tokens to arguments in call order, not by desired reading order, so the corpus's move-first phrasing cannot be reproduced. Rephrased to keep the engine's forced POKéMON-first order while staying natural French, the same technique already used for \"%s's %s\\nrose!\" in overrides/fr/rby/engine.json; requires in-game visual validation."
+      "override": "%2$s de\n%1$s\u000bbaisse de %3$d!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "poke-corpus GoldSilver gs.battle.SpiteEffectText, rendered through the same token expansion the automatic matches use. The cart names the move before the POKéMON, which numbered directives express now that Strings() accepts them (gen1recomp#2346); Battle.lua passes the POKéMON first."
     },
     "%s's %s won't drop anymore!": {
-      "override": "%s voit sa\n%s\u000bne plus diminuer!",
-      "reason": "engine-contract-gap",
-      "provenance": "Real corpus match exists (poke-corpus GoldSilver gs.battle.WontDropAnymoreText: \"<STAT> de <TARGET> ne diminue plus!\", stat before POKéMON) but Battle:changeStage()'s Strings(source, name, label) always binds the first %s to the POKéMON name and the second to the stat; Lua's string.format binds %s tokens to arguments in call order, not by desired reading order, so the corpus's stat-first phrasing cannot be reproduced. Rephrased to keep the engine's forced POKéMON-first order while staying natural French, the same technique already used for \"%s's %s\\nrose!\" in overrides/fr/rby/engine.json; requires in-game visual validation."
+      "override": "%2$s de\n%1$s\u000bne diminue plus!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "poke-corpus GoldSilver gs.battle.WontDropAnymoreText, rendered through the same token expansion the automatic matches use. The cart names the stat before the POKéMON, which numbered directives express now that Strings() accepts them (gen1recomp#2346); Battle.lua passes the POKéMON first."
     },
     "%s's %s won't rise anymore!": {
-      "override": "%s voit sa\n%s\u000bne plus augmenter!",
-      "reason": "engine-contract-gap",
-      "provenance": "Real corpus match exists (poke-corpus GoldSilver gs.battle.WontRiseAnymoreText: \"<STAT> de <USER> n'augmente plus!\", stat before POKéMON) but Battle:changeStage()'s Strings(source, name, label) always binds the first %s to the POKéMON name and the second to the stat; Lua's string.format binds %s tokens to arguments in call order, not by desired reading order, so the corpus's stat-first phrasing cannot be reproduced. Rephrased to keep the engine's forced POKéMON-first order while staying natural French, the same technique already used for \"%s's %s\\nrose!\" in overrides/fr/rby/engine.json; requires in-game visual validation."
+      "override": "%2$s de\n%1$s\u000bn'augmente plus!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "poke-corpus GoldSilver gs.battle.WontRiseAnymoreText, rendered through the same token expansion the automatic matches use. The cart names the stat before the POKéMON, which numbered directives express now that Strings() accepts them (gen1recomp#2346); Battle.lua passes the POKéMON first."
     },
     "%s's ATTACK won't rise anymore!": {
       "override": "%s voit sa\nATTAQUE\u000bne plus augmenter!",

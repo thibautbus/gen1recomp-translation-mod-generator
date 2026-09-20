@@ -729,8 +729,8 @@
     },
     "%s's %s activated!": {
       "override": "%ss\n%s\u000baktiviert!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.battle.BattleText_UsersStringBuffer1Activated, rendered through the same token expansion the automatic matches use. The cart names the held item before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
     },
     "%s's %s cured its confusion!": {
       "override": "%ss %s\nheilt Verwirrung!",
@@ -749,8 +749,8 @@
     },
     "%s's %s is DISABLED!": {
       "override": "%ss\n%s\u000bwird BLOCKIERT!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.battle.DisabledMoveText, rendered through the same token expansion the automatic matches use. The cart names the move before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
     },
     "%s's %s restored health!": {
       "override": "%ss %s\nstellt die KP wieder her!",
@@ -774,23 +774,23 @@
     },
     "%s's %s was disabled!": {
       "override": "%ss\n%s\u000bwird BLOCKIERT!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.battle.WasDisabledText, rendered through the same token expansion the automatic matches use. The cart names the move before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
     },
     "%s's %s was reduced by %d!": {
       "override": "%s's\n%s\u000bsinkt um %d!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.battle.SpiteEffectText, rendered through the same token expansion the automatic matches use. The cart names the move before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
     },
     "%s's %s won't drop anymore!": {
-      "override": "%ss\n%s\u000bsinkt nicht mehr!",
-      "reason": "engine-contract-gap",
-      "provenance": "Real corpus match exists (poke-corpus GoldSilver gs.battle.WontDropAnymoreText: \"<STAT> von <TARGET> sinkt nicht mehr!\", stat before POKéMON via a \"von\" construction) but Battle:changeStage()'s Strings(source, name, label) always binds the first %s to the POKéMON name and the second to the stat; Lua's string.format binds %s tokens to arguments in call order, not by desired reading order, so the corpus's stat-first \"von\" phrasing cannot be reproduced. Switched to the same genitive-s POKéMON-first construction the game itself already uses for the plain fell/rose messages and this file's \"activated!\"/\"is DISABLED!\" entries -- grammatically correct German, just a different (also authentic) construction than the one this specific ROM string happened to use; requires in-game visual validation."
+      "override": "%2$s von\n%1$s\u000bsinkt nicht mehr!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "poke-corpus GoldSilver gs.battle.WontDropAnymoreText, rendered through the same token expansion the automatic matches use. The cart names the stat before the POKéMON, which numbered directives express now that Strings() accepts them (gen1recomp#2346); Battle.lua passes the POKéMON first."
     },
     "%s's %s won't rise anymore!": {
-      "override": "%ss\n%s\u000bsteigt nicht mehr!",
-      "reason": "engine-contract-gap",
-      "provenance": "Real corpus match exists (poke-corpus GoldSilver gs.battle.WontRiseAnymoreText: \"<STAT> von <USER> steigt nicht mehr!\", stat before POKéMON via a \"von\" construction) but Battle:changeStage()'s Strings(source, name, label) always binds the first %s to the POKéMON name and the second to the stat; Lua's string.format binds %s tokens to arguments in call order, not by desired reading order, so the corpus's stat-first \"von\" phrasing cannot be reproduced. Switched to the same genitive-s POKéMON-first construction the game itself already uses for the plain fell/rose messages and this file's \"activated!\"/\"is DISABLED!\" entries -- grammatically correct German, just a different (also authentic) construction than the one this specific ROM string happened to use; requires in-game visual validation."
+      "override": "%2$s von\n%1$s\u000bsteigt nicht mehr!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "poke-corpus GoldSilver gs.battle.WontRiseAnymoreText, rendered through the same token expansion the automatic matches use. The cart names the stat before the POKéMON, which numbered directives express now that Strings() accepts them (gen1recomp#2346); Battle.lua passes the POKéMON first."
     },
     "%s's ATTACK won't rise anymore!": {
       "override": "%ss\nANGR\u000bsteigt nicht mehr!",
@@ -3655,7 +3655,7 @@
     "Throw away %d\n%s(S)?": {
       "override": "Wegwerfen\n%d x %s?",
       "reason": "engine-contract-gap",
-      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_2.AskQuantityThrowAwayText), which names the quantity before the item exactly as PackMenu/ItemPcMenu pass them: nothing to reorder. Italian and the Asian languages use ItemsThrowAwayText, whose item-first order is expressed with numbered directives (gen1recomp#2346)."
+      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_2.ItemsThrowAwayText), which names the quantity before the item exactly as PackMenu/ItemPcMenu pass them: nothing to reorder. Italian and the Asian languages use the same row the other way round, and express it with numbered directives (gen1recomp#2346)."
     },
     "Throw away how\nmany?": {
       "override": "Wie viele\nwegwerfen?",

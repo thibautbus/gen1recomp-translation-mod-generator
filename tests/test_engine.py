@@ -461,6 +461,16 @@ class EngineTests(unittest.TestCase):
         self.assertTrue(check_printf_directives("%s", "%2$s"))
         self.assertTrue(check_printf_directives("%s %d", "%1$d %2$s"))
         self.assertEqual(check_printf_directives("%s rose!", "%s monte!"), [])
+        # "%%" is a literal percent sign, not an argument: Strings.lua's
+        # specifiers() skips it, so it neither breaks the all-or-none rule nor
+        # counts towards the source's arguments.  The engine catalog really
+        # carries such keys ("Downloading %d%%").
+        self.assertEqual(check_printf_directives("Downloading %d%%", "Lade %1$d%%"), [])
+        self.assertTrue(check_printf_directives("%d%% of %s done", "%3$s: %1$d"))
+        # A "%" that is neither "%%" nor a directive makes positional() give up
+        # on the whole string, so it is refused here rather than falling back
+        # to English in front of the player.
+        self.assertTrue(check_printf_directives("%s %s", "%2$s 50%! %1$s"))
 
     def test_catalog_reader_requires_empty_values(self):
         with tempfile.TemporaryDirectory() as tmp:

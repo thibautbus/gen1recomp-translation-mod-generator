@@ -739,8 +739,8 @@
     },
     "%s's %s activated!": {
       "override": "%s(이)가 지니고 있던\n%s(이)가\u000b작동했다!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.battle.BattleText_UsersStringBuffer1Activated, rendered through the same token expansion the automatic matches use. The cart names the held item before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
     },
     "%s's %s cured its confusion!": {
       "override": "%s의 %s(으)로\n혼란이 나았다!",
@@ -784,23 +784,23 @@
     },
     "%s's %s was disabled!": {
       "override": "%s의\n%s를(을)\u000b봉해버렸다!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.battle.WasDisabledText, rendered through the same token expansion the automatic matches use. The cart names the move before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
     },
     "%s's %s was reduced by %d!": {
       "override": "%s의\n%s를(을)\u000b%d 깎았다!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.battle.SpiteEffectText, rendered through the same token expansion the automatic matches use. The cart names the move before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
     },
     "%s's %s won't drop anymore!": {
       "override": "%s의\n%s는(은)\u000b더이상 내려가지않는다!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.battle.WontDropAnymoreText, rendered through the same token expansion the automatic matches use. The cart names the stat before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
     },
     "%s's %s won't rise anymore!": {
       "override": "%s의\n%s는(은)\u000b더 이상 오르지않는다",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.battle.WontRiseAnymoreText, rendered through the same token expansion the automatic matches use. The cart names the stat before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
     },
     "%s's ATTACK won't rise anymore!": {
       "override": "%s의\n공격력는(은)\u000b더 이상 오르지않는다",

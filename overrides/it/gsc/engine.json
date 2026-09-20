@@ -728,9 +728,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_1.RidOfParalysisText."
     },
     "%s's %s activated!": {
-      "override": "%s vede\n%s attivarsi!",
-      "reason": "engine-contract-gap",
-      "provenance": "Real corpus match exists (poke-corpus GoldSilver gs.battle.BattleText_UsersStringBuffer1Activated: \"Attivato: <ITEM> di <USER>!\", item before POKéMON) but Battle.lua's Strings(\"%s's %s activated!\", monName, itemName) always binds the first %s to the POKéMON name and the second to the item; Lua's string.format binds %s tokens to arguments in call order, not by desired reading order, so the corpus's item-first phrasing cannot be reproduced. Rephrased to keep the engine's forced POKéMON-first order while staying natural Italian; requires in-game visual validation."
+      "override": "Attivato:\n%2$s di\u000b%1$s!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "poke-corpus GoldSilver gs.battle.BattleText_UsersStringBuffer1Activated, rendered through the same token expansion the automatic matches use. The cart names the held item before the POKéMON, which numbered directives express now that Strings() accepts them (gen1recomp#2346); Battle.lua passes the POKéMON first."
     },
     "%s's %s cured its confusion!": {
       "override": "%s cura la\nconfusione\u000bgrazie al suo %s!",
@@ -748,9 +748,9 @@
       "provenance": "Restores GoldSilver's own wording now that Strings() accepts numbered directives (gen1recomp#2346): gs.common_2.Text_BattleFoeEffectActivate + BattleStatFellText print the stat before the POKéMON, which the engine's fixed argument order could not express before."
     },
     "%s's %s is DISABLED!": {
-      "override": "%s non può più\nusare %s:\nBLOCCATO!",
-      "reason": "engine-contract-gap",
-      "provenance": "Real corpus match exists (poke-corpus GoldSilver gs.battle.DisabledMoveText: \"<MOVE> di <USER> è fuori uso!\", move before POKéMON) but Battle.lua's Strings(\"%s's %s is DISABLED!\", monName, moveName) always binds the first %s to the POKéMON name and the second to the move; Lua's string.format binds %s tokens to arguments in call order, not by desired reading order, so the corpus's move-first phrasing cannot be reproduced. Rephrased to keep the engine's forced POKéMON-first order while staying natural Italian; requires in-game visual validation."
+      "override": "%2$s di\n%1$s\u000bè fuori uso!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "poke-corpus GoldSilver gs.battle.DisabledMoveText, rendered through the same token expansion the automatic matches use. The cart names the move before the POKéMON, which numbered directives express now that Strings() accepts them (gen1recomp#2346); Battle.lua passes the POKéMON first."
     },
     "%s's %s restored health!": {
       "override": "%s ripristina la\nsalute\u000bgrazie al suo %s!",
@@ -773,24 +773,24 @@
       "provenance": "Restores GoldSilver's own wording now that Strings() accepts numbered directives (gen1recomp#2346): gs.common_2.Text_Battle{Foe,}EffectActivate prints the stat before the POKéMON, and BattleStat{WentWayUp,SharplyFell}Text scrolls its own tail after it; the engine's fixed argument order could not express that before."
     },
     "%s's %s was disabled!": {
-      "override": "%s non può più\nusare %s:\nBLOCCATO!",
-      "reason": "engine-contract-gap",
-      "provenance": "Real corpus match exists (poke-corpus GoldSilver gs.battle.WasDisabledText: \"<MOVE> di <TARGET> è fuori uso!\", move before POKéMON) but Battle.lua's Strings(\"%s's %s was disabled!\", monName, moveName) always binds the first %s to the POKéMON name and the second to the move; Lua's string.format binds %s tokens to arguments in call order, not by desired reading order, so the corpus's move-first phrasing cannot be reproduced. Rephrased to keep the engine's forced POKéMON-first order while staying natural Italian; requires in-game visual validation."
+      "override": "%2$s di\n%1$s\u000bè fuori uso!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "poke-corpus GoldSilver gs.battle.WasDisabledText, rendered through the same token expansion the automatic matches use. The cart names the move before the POKéMON, which numbered directives express now that Strings() accepts them (gen1recomp#2346); Battle.lua passes the POKéMON first."
     },
     "%s's %s was reduced by %d!": {
-      "override": "%s perde PP di\n%s: -%d!",
-      "reason": "engine-contract-gap",
-      "provenance": "Real corpus match exists (poke-corpus GoldSilver gs.battle.SpiteEffectText: \"<MOVE> di <TARGET> cala di <N>!\", move before POKéMON) but Battle.lua's Strings(\"%s's %s was reduced by %d!\", monName, moveName, loss) always binds the first %s to the POKéMON name and the second to the move; Lua's string.format binds tokens to arguments in call order, not by desired reading order, so the corpus's move-first phrasing cannot be reproduced. Rephrased to keep the engine's forced POKéMON-first order while staying natural Italian; requires in-game visual validation."
+      "override": "%2$s di\n%1$s\u000bcala di %3$d!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "poke-corpus GoldSilver gs.battle.SpiteEffectText, rendered through the same token expansion the automatic matches use. The cart names the move before the POKéMON, which numbered directives express now that Strings() accepts them (gen1recomp#2346); Battle.lua passes the POKéMON first."
     },
     "%s's %s won't drop anymore!": {
-      "override": "%s non può più\nfar calare %s!",
-      "reason": "engine-contract-gap",
-      "provenance": "Real corpus match exists (poke-corpus GoldSilver gs.battle.WontDropAnymoreText: \"<STAT> di <TARGET> non può più calare!\", stat before POKéMON) but Battle:changeStage()'s Strings(source, name, label) always binds the first %s to the POKéMON name and the second to the stat; Lua's string.format binds %s tokens to arguments in call order, not by desired reading order, so the corpus's stat-first phrasing cannot be reproduced. Rephrased to keep the engine's forced POKéMON-first order while staying natural Italian; requires in-game visual validation."
+      "override": "%2$s di\n%1$s\u000bnon può più\u000bcalare!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "poke-corpus GoldSilver gs.battle.WontDropAnymoreText, rendered through the same token expansion the automatic matches use. The cart names the stat before the POKéMON, which numbered directives express now that Strings() accepts them (gen1recomp#2346); Battle.lua passes the POKéMON first."
     },
     "%s's %s won't rise anymore!": {
-      "override": "%s non può più\nfar salire %s!",
-      "reason": "engine-contract-gap",
-      "provenance": "Real corpus match exists (poke-corpus GoldSilver gs.battle.WontRiseAnymoreText: \"<STAT> di <USER> non può più crescere!\", stat before POKéMON) but Battle:changeStage()'s Strings(source, name, label) always binds the first %s to the POKéMON name and the second to the stat; Lua's string.format binds %s tokens to arguments in call order, not by desired reading order, so the corpus's stat-first phrasing cannot be reproduced. Rephrased to keep the engine's forced POKéMON-first order while staying natural Italian; requires in-game visual validation."
+      "override": "%2$s di\n%1$s\u000bnon può più\u000bcrescere!",
+      "reason": "engine-corpus-reordered",
+      "provenance": "poke-corpus GoldSilver gs.battle.WontRiseAnymoreText, rendered through the same token expansion the automatic matches use. The cart names the stat before the POKéMON, which numbered directives express now that Strings() accepts them (gen1recomp#2346); Battle.lua passes the POKéMON first."
     },
     "%s's ATTACK won't rise anymore!": {
       "override": "%s non può più\nfar salire ATTACCO!",
