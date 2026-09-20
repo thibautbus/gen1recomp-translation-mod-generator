@@ -519,6 +519,7 @@ class BuilderTests(unittest.TestCase):
             self.assertEqual(builder._prompt_generation(lambda _: ""), 1)
             self.assertEqual(builder._prompt_generation(lambda _: "1"), 1)
             self.assertEqual(builder._prompt_generation(lambda _: "2"), 2)
+            self.assertEqual(builder._prompt_generation(lambda _: "3"), 3)
 
     def test_invalid_generation_menu(self):
         with patch("builtins.print"), self.assertRaises(builder.BuildError):

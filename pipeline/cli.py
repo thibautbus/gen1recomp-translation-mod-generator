@@ -51,6 +51,9 @@ def main(argv=None) -> int:
     build_gs.add_argument("--engine-profile", choices=(PINNED_PROFILE, UPSTREAM_PROFILE), default=PINNED_PROFILE)
     build_gs.add_argument("--font-profile", choices=("fusion", "pokemon"), default="fusion")
     sub.add_parser("audit-disassemblies", help="developer-only private localized disassembly audit")
+    frlg_audit = sub.add_parser("frlg-hardcoded-strings", help="developer-only inventory of game3 text outside Strings()")
+    frlg_audit.add_argument("--checkout", default=".cache/dependencies/gen1recomp", help="Gen1Recomp checkout to scan")
+    frlg_audit.add_argument("-o", "--output", default=".cache/audit/frlg-hardcoded-strings.json")
     backlog = sub.add_parser("engine-backlog", help="developer-only private unresolved engine-string backlog")
     backlog.add_argument("--language", "--target-lang", dest="language", default=None)
     backlog.add_argument("--checkout", help="private Gen1Recomp checkout (defaults to .cache/dependencies/gen1recomp)")
@@ -95,6 +98,12 @@ def main(argv=None) -> int:
         return 0
     if args.command == "audit-disassemblies":
         run_audit()
+        return 0
+    if args.command == "frlg-hardcoded-strings":
+        from .frlg_audit import run_frlg_hardcoded_audit
+        report = run_frlg_hardcoded_audit(args.checkout, args.output)
+        print(json.dumps({"files": len(report["files"]), "literals": report["total_literals"],
+                          "output": args.output}, indent=2))
         return 0
     if args.command == "engine-backlog":
         try:

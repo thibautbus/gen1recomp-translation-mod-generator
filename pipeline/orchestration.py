@@ -20,7 +20,7 @@ class BuildContext:
     destination: Path
     gen1recomp: Path
     corpus: Path
-    font_source: Path
+    font_source: Path | None
     profile: ReleaseProfile
 
 
@@ -30,7 +30,7 @@ def prepare_build_context(
     *,
     profile: ReleaseProfile,
     language: str,
-    font_profile: str,
+    font_profile: str | None,
     engine_source: str | Path | None = None,
 ) -> BuildContext:
     """Resolve paths and prepare exactly the collections in ``profile``."""
@@ -111,5 +111,13 @@ def build_request(
             language_name, luajit, workspace_root=workspace_root, output_dir=output_dir,
             log_fn=log_fn, status_fn=status_fn, font_profile=request.font_profile,
             yellow_rom=request.source_for("yellow"),
+        )
+    if request.profile.id == "frlg":
+        from .frlg_mod import build_frlg
+
+        return build_frlg(
+            request.source_for("firered"), request.language, language_name, luajit,
+            workspace_root=workspace_root, output_dir=output_dir,
+            log_fn=log_fn, status_fn=status_fn,
         )
     raise ValueError(f"unsupported release profile: {request.profile.id!r}")
