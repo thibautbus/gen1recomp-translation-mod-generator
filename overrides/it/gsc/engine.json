@@ -1560,7 +1560,7 @@
     "Deposited %d\n%s(S).": {
       "override": "Depositato: %d\n%s.",
       "reason": "engine-contract-gap",
-      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_2.PlayersPCDepositItemsText); ItemPcMenu passes quantity then name and Strings() cannot reorder them, so Japanese/Korean put the quantity first; Italian's cart row drops both values (\"Operazione completata\"), rewritten to keep them."
+      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_2.PlayersPCDepositItemsText). Italian's cart row drops both values (\"Operazione completata\"), so this keeps them in the engine's own order; there is no cart wording to restore here, unlike the Japanese and Korean rows, which name the item first and now do so through numbered directives (gen1recomp#2346)."
     },
     "Disabled!": {
       "override": "fuori uso",
@@ -4070,7 +4070,7 @@
     "Withdrew %d\n%s(S).": {
       "override": "Ritirato: %d\n%s.",
       "reason": "engine-contract-gap",
-      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_2.PlayersPCWithdrewItemsText); ItemPcMenu passes quantity then name and Strings() cannot reorder them, so Japanese/Korean put the quantity first; Italian's cart row drops both values (\"Operazione completata\"), rewritten to keep them."
+      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_2.PlayersPCWithdrewItemsText). Italian's cart row drops both values (\"Operazione completata\"), so this keeps them in the engine's own order; there is no cart wording to restore here, unlike the Japanese and Korean rows, which name the item first and now do so through numbered directives (gen1recomp#2346)."
     },
     "Wonder what's<NEXT>inside? It needs<NEXT>more time, though.": {
       "override": "Chissà cosa\nc'è dentro! Ma\nbisogna ancora\naspettare.",

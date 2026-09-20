@@ -3655,7 +3655,7 @@
     "Throw away %d\n%s(S)?": {
       "override": "Wegwerfen\n%d x %s?",
       "reason": "engine-contract-gap",
-      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_2.AskQuantityThrowAwayText); PackMenu/ItemPcMenu pass quantity then name and Strings() cannot reorder them, so Japanese/Korean put the quantity first; Italian uses this row rather than ItemsThrowAwayText, whose name-first order would print the two values swapped."
+      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_2.AskQuantityThrowAwayText), which names the quantity before the item exactly as PackMenu/ItemPcMenu pass them: nothing to reorder. Italian and the Asian languages use ItemsThrowAwayText, whose item-first order is expressed with numbered directives (gen1recomp#2346)."
     },
     "Throw away how\nmany?": {
       "override": "Wie viele\nwegwerfen?",
