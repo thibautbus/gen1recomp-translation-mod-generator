@@ -50,15 +50,17 @@ target_lang = "fr"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
-# Pinned at v0.2.67, the upstream release used to validate and package the
-# RBY, Gold/Silver, Crystal and FireRed translation mods.  It is the first
-# release carrying the FireRed Strings() work the FireRed engine catalog
-# needs (gen1recomp#2346) and the numbered %n$ directives that go with it.
+# Pinned at v0.2.70, the upstream release used to validate and package the
+# RBY, Gold/Silver, Crystal and FireRed translation mods.  Beyond the FireRed
+# Strings() work and numbered %n$ directives of v0.2.67 (gen1recomp#2346), it
+# is the first release in which FireRed shows a mod's species and move names
+# at all (gen1recomp#2374) and routes the Easy Chat vocabulary through
+# Strings() and the dataset (gen1recomp#2375).
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "b9d2f97f4c9fc7e1ff059965f80b2282862bf93b"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/b9d2f97f4c9fc7e1ff059965f80b2282862bf93b"
-archive_sha256 = "584720a8684064988e5856349917f139cdaaa351d6dc619d7e3fae57b254c451"
-archive_tree_sha256 = "a99f1455c4f010c6c4d8e5a0e64f1cf0a55c0c92532675f0dd6f55e621b096a4"
+revision = "2148291c7139769cc1a6debf183cd0666f47e144"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/2148291c7139769cc1a6debf183cd0666f47e144"
+archive_sha256 = "067edc4913b6c6a79e8803b4d0530849e8c4a163c19f62f3e575d12b8e8ee8fc"
+archive_tree_sha256 = "96cdf42fc35059cedb53251dabacd2c0d52dc337fb7e9193e729264f79e4076e"
 
 # pret's FireRed decompilation data the FireRed release joins through (never
 # code, never game text): the symbol table names every ROM address the game3
