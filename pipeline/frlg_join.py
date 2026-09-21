@@ -593,7 +593,8 @@ def _key_parts(key: str) -> tuple[list[str], list[str]]:
 
 
 def _corpus_parts(text: str, charmap: PretCharmap, language: str, *, battle: bool = False,
-                  literal_buffers: bool = False, paragraph: str = "\n") -> tuple[list[str], list[tuple]]:
+                  literal_buffers: bool = False, paragraph: str = "\n", line: str = "\n",
+                  scroll: str = "\n") -> tuple[list[str], list[tuple]]:
     """Literal chunks around a corpus row's runtime values, and those values.
 
     Field text keeps the player's and rival's names as the ``{PLAYER}`` and
@@ -602,8 +603,9 @@ def _corpus_parts(text: str, charmap: PretCharmap, language: str, *, battle: boo
     other buffers become directive slots.  Battle text (``battle``) uses
     another placeholder table, which the field decoder reads as names and
     buffers: there, every placeholder is a slot, identified by its code.
-    A paragraph becomes ``paragraph`` and a trailing one is dropped; text
-    effects (sound waits, colours) are dropped too.
+    A paragraph becomes ``paragraph``, a line break ``line`` and a scrolled
+    line ``scroll``, and a trailing one is dropped; text effects (sound
+    waits, colours) are dropped too.
     """
     chunks, values, current = [], [], []
     segments = []
@@ -621,8 +623,10 @@ def _corpus_parts(text: str, charmap: PretCharmap, language: str, *, battle: boo
         kind = segment["t"]
         if kind == "text":
             current.append(segment["s"])
-        elif kind in {"nl", "scroll"}:
-            current.append("\n")
+        elif kind == "nl":
+            current.append(line)
+        elif kind == "scroll":
+            current.append(scroll)
         elif kind == "para":
             current.append(paragraph)
         elif battle and kind in {"player", "rival", "strvar", "ph"}:
@@ -645,7 +649,7 @@ def _corpus_parts(text: str, charmap: PretCharmap, language: str, *, battle: boo
 
 def _loose(text: str) -> str:
     """Line breaks and paragraph marks count as spaces."""
-    return re.sub(r"(?:\\p|[\s\f])+", " ", text).strip()
+    return re.sub(r"(?:\\[pnl]|[\s\f])+", " ", text).strip()
 
 
 def _paragraph_mark(key: str) -> str:
@@ -656,9 +660,21 @@ def _paragraph_mark(key: str) -> str:
     return "\n"
 
 
+def _break_marks(key: str) -> tuple[str, str]:
+    """How ``key`` writes a line break and a scrolled line.
+
+    Most keys use real newlines.  Some hand the runtime pret's own escapes
+    instead (Teachy TV's lessons are "...\\n...\\l...\\p"), and a value
+    must write its breaks the same way for the runtime to act on them.
+    """
+    if "\\n" in key or "\\l" in key:
+        return "\\n", ("\\l" if "\\l" in key else "\\n")
+    return "\n", "\n"
+
+
 def engine_context_source(key: str) -> str:
     """A context key ("option.battleStyle|SHIFT") reads as its English source."""
-    return key.split("|", 1)[1] if re.match(r"[a-z][\w.]*\|", key) else key
+    return key.split("|", 1)[1] if re.match(r"[a-z][\w.]*(?: [\w.]+)*\|", key) else key
 
 
 def is_battle_qid(qid: str) -> bool:
@@ -684,8 +700,9 @@ def engine_template(key: str, english: str, target: str, charmap: PretCharmap,
     numbered (``%2$s``), which Strings() maps back to its arguments.  Raises
     ValueError when the row cannot stand for the key.
     """
+    line, scroll = _break_marks(key)
     options = {"battle": battle, "literal_buffers": "{STR_VAR_" in key,
-               "paragraph": _paragraph_mark(key)}
+               "paragraph": _paragraph_mark(key), "line": line, "scroll": scroll}
     key_chunks, directives = _key_parts(key)
     en_chunks, en_values = _corpus_parts(english, charmap, "en", **options)
     if len(en_values) != len(directives):
@@ -718,7 +735,7 @@ def engine_template(key: str, english: str, target: str, charmap: PretCharmap,
         value = value.lstrip(" ")
     # A trailing page or line mark in the key is a pause the runtime acts on
     # (Oak's "\f" waits for A); the corpus row's own trailing mark is dropped.
-    return value + re.search(r"(?:\f|\\p|\n)*$", key).group(0), how
+    return value + re.search(r"(?:\f|\\[pnl]|\n)*$", key).group(0), how
 
 
 def check_engine_directives(key: str, value: str, language: str = "") -> None:
@@ -747,7 +764,7 @@ def _check_engine_glyphs(key: str, value: str, charmap: PretCharmap, language: s
     # Directives are filled in at runtime ("%%" prints a percent sign), and
     # {PLAYER}/{A_BUTTON}-style tokens are names or icons the runtime draws.
     printed = _ENGINE_DIRECTIVE.sub(lambda m: "%" if m.group(1) == "%" else "", value)
-    printed = re.sub(r"\{[A-Z0-9_]+\}|\\p", "", printed)
+    printed = re.sub(r"\{[A-Z0-9_]+\}|\\[pnl]", "", printed)
     for char in printed:
         # the key's own characters are drawn in English already (↑↓ icons)
         if char in "\n\f" or char in key:

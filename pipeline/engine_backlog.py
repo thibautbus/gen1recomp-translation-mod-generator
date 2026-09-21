@@ -41,6 +41,11 @@ MATRIX_SCHEMA = "gen1recomp-translation-mods/engine-backlog-matrix"
 MATRIX_VERSION = 1
 MATRIX_LANGUAGES = ("fr", "de", "es", "it", "ja-Hrkt")
 _CALL_RE = re.compile(r"\bStrings(?:\.source)?\s*\(")
+# ``require("src.core.Strings")("...")`` is the same call without a local
+# (FireRed's link/union_room.lua prints two messages that way).  Its module
+# name is a string, which comment stripping blanks, so it is found in the raw
+# text; see strings_calls().
+_REQUIRE_CALL_RE = re.compile(r"\brequire\(\s*\"src\.core\.Strings\"\s*\)\s*\(")
 _ROMTEXT_CALL_RE = re.compile(
     r"(?P<callee>\b(?:[Rr]omText|[A-Za-z_][A-Za-z0-9_.]*:romText))\s*\("
 )
@@ -239,6 +244,15 @@ def _argument_expression(raw: str, span: tuple[int, int]) -> str:
     return " ".join(raw[start:end].strip().split())[:300]
 
 
+def strings_calls(raw: str, cleaned: str) -> list[re.Match]:
+    """Every ``Strings(``/``Strings.source(`` call opening in live code, and
+    every ``require("src.core.Strings")(`` one, in source order."""
+    calls = list(_CALL_RE.finditer(cleaned))
+    # a require() call in a comment starts on a blanked character
+    calls += [m for m in _REQUIRE_CALL_RE.finditer(raw) if cleaned[m.start()] == "r"]
+    return sorted(calls, key=lambda m: m.start())
+
+
 def iter_literal_strings_callsites(checkout: str | Path) -> list[dict[str, Any]]:
     """Collect every literal ``Strings(...)``/``Strings.source(...)`` use.
 
@@ -258,7 +272,7 @@ def iter_literal_strings_callsites(checkout: str | Path) -> list[dict[str, Any]]
         raw = path.read_text(encoding="utf-8", errors="replace")
         cleaned = _strip_lua_comments(raw)
         lines = raw.splitlines()
-        for match in _CALL_RE.finditer(cleaned):
+        for match in strings_calls(raw, cleaned):
             index = match.end()
             while index < len(cleaned) and cleaned[index].isspace():
                 index += 1

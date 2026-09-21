@@ -66,6 +66,7 @@ NON_DISPLAY_FILES: Mapping[str, str] = {
     "src/core/game3/battle/items.lua": "fallback player, species and trainer names",
     "src/core/game3/battle/learn_move.lua": "fallback move label for a missing move pack",
     "src/core/game3/battle/moves.lua": "move identifiers (names come from the ROM pack)",
+    "src/core/game3/battle/oak_advice.lua": "fallback player name",
     "src/core/game3/battle/prize.lua": "fallback player name",
     "src/core/game3/battle/residual_handlers.lua": "status identifiers, fallback move name",
     "src/core/game3/battle/rules.lua": "weather identifiers",
@@ -80,22 +81,28 @@ NON_DISPLAY_FILES: Mapping[str, str] = {
     "src/core/game3/collision.lua": "log lines",
     "src/core/game3/dataset.lua": "cache paths and log lines",
     "src/core/game3/display.lua": "log line",
-    "src/core/game3/doors.lua": "asset paths",
+    "src/core/game3/easy_chat_text.lua": "catalog context prefix",
     "src/core/game3/encounters.lua": "log lines",
     "src/core/game3/evolution.lua": "species identifiers",
     "src/core/game3/field.lua": "quest-log event keys",
     "src/core/game3/field_moves.lua": "badge and move identifiers, fallback species name",
     "src/core/game3/field_view.lua": "log lines and time-of-day identifiers",
+    "src/core/game3/forced_movement.lua": "movement action identifiers",
     "src/core/game3/item_use.lua": "status identifier and quest-log event keys",
     "src/core/game3/items.lua": "item identifiers (names come from the ROM pack)",
     "src/core/game3/items_data.lua": "item name fallbacks for a missing item pack, TM/HM identifiers",
+    "src/core/game3/link/battle.lua": "fallback player name",
+    "src/core/game3/link/chat.lua": "fallback player name",
+    "src/core/game3/link/init.lua": "script-command key prefix",
+    "src/core/game3/link/trade.lua": "fallback player name",
+    "src/core/game3/link/union_room.lua": "fallback player name",
     "src/core/game3/m4a_player.lua": "log lines",
     "src/core/game3/m4a_sample.lua": "code comment string",
     "src/core/game3/map.lua": "internal error message",
+    "src/core/game3/mystery_gift.lua": "card status codes, an environment variable name and file paths",
     "src/core/game3/objects.lua": "movement identifiers and log lines",
     "src/core/game3/ow_sprites.lua": "asset paths",
     "src/core/game3/palette.lua": "internal error message",
-    "src/core/game3/party.lua": "fallback OT name",
     "src/core/game3/player.lua": "log line",
     "src/core/game3/pokedex_data.lua": "category identifier",
     "src/core/game3/pokemon.lua": "species name normalisation and ROM file names",
@@ -109,16 +116,22 @@ NON_DISPLAY_FILES: Mapping[str, str] = {
     "src/core/game3/scripting/gfx_ids.lua": "graphics identifiers",
     "src/core/game3/scripting/interaction_scripts.lua": "interaction identifiers (text comes from the ROM object pack)",
     "src/core/game3/scripting/natives.lua": "special/native identifiers, quest-log keys and log lines",
+    "src/core/game3/scripting/natives_seagallop.lua": "log lines",
+    "src/core/game3/scripting/natives_tower.lua": "log lines",
+    "src/core/game3/scripting/natives_trade.lua": "log lines",
     "src/core/game3/scripting/ops_a.lua": "debug fallbacks and log lines",
     "src/core/game3/scripting/space.lua": "cache paths and log lines",
+    "src/core/game3/scripting/stdscripts.lua": "script names",
     "src/core/game3/scripting/text_ir.lua": "fallback placeholder names",
     "src/core/game3/scripting/trainers.lua": "fallback trainer class and name identifiers",
     "src/core/game3/step_events.lua": "fallback player name",
     "src/core/game3/storage.lua": "quest-log event keys",
     "src/core/game3/summary_descriptions.lua": "fallback description table, passed to Strings() where the summary reads it",
+    "src/core/game3/teachy_tv.lua": "lesson identifiers (the lessons themselves go through Strings())",
     "src/core/game3/tileset_anim.lua": "asset paths and log lines",
     "src/core/game3/tileset_native.lua": "asset paths and log lines",
     "src/core/game3/trainer_pic.lua": "ROM file names and asset paths",
+    "src/core/game3/trainer_tower.lua": "log lines and status codes",
     "src/core/game3/void_fill.lua": "labels passed to Strings() by option_rows.lua",
     "src/core/game3/vs_seeker.lua": "map identifier and quest-log key",
     "src/core/game3/warp.lua": "internal error message",
@@ -126,11 +139,14 @@ NON_DISPLAY_FILES: Mapping[str, str] = {
     "src/ui/game3/battle_chrome.lua": "asset paths",
     "src/ui/game3/boot.lua": "title menu identifiers (drawn through Strings())",
     "src/ui/game3/easy_chat.lua": "screen-mode and button identifiers (its prompts and footer labels go through Strings())",
+    "src/ui/game3/egg_hatch.lua": "fallback species name",
     "src/ui/game3/evolution_scene.lua": "fallback species name",
+    "src/ui/game3/fame_checker.lua": "fallback player and rival names",
     "src/ui/game3/frlg_font.lua": "asset paths and log lines",
     "src/ui/game3/hall_of_fame.lua": "fallback player and species names",
     "src/ui/game3/intro_movie.lua": "scene identifiers",
     "src/ui/game3/map_name_popup.lua": "fallback name for a map with no id",
+    "src/ui/game3/move_relearner.lua": "fallback type identifier",
     "src/ui/game3/new_game_scene.lua": "naming template identifier",
     "src/ui/game3/option_menu.lua": "fallback page title",
     "src/ui/game3/option_rows.lua": "Strings() context prefix",
@@ -143,10 +159,13 @@ NON_DISPLAY_FILES: Mapping[str, str] = {
     "src/ui/game3/release_seq.lua": "fallback species name",
     "src/ui/game3/save_menu.lua": "fallback player and map names",
     "src/ui/game3/shop_menu.lua": "quest-log event keys",
+    "src/ui/game3/slot_machine.lua": "cache key suffix",
     "src/ui/game3/start_menu.lua": "labels the ui.start_menu.items hook translates",
     "src/ui/game3/summary_menu.lua": "stat colour identifiers",
+    "src/ui/game3/teachy_tv.lua": "bag pocket identifier",
     "src/ui/game3/tm_case.lua": "fallback TM label for a missing item pack",
     "src/ui/game3/trainer_card.lua": "badge flag identifiers",
+    "src/ui/game3/trainer_tower_records.lua": "log lines",
     "src/world/game3/WorldAPI.lua": "mod-API error messages",
 }
 
@@ -178,6 +197,32 @@ def _unescape(value: str) -> str:
     return re.sub(r"\\(.)", lambda m: {"n": "\n", "t": "\t", "f": "\f"}.get(m.group(1), m.group(1)), value)
 
 
+def _literal_argument_spans(text: str) -> list[bool]:
+    """Which characters of ``text`` a literal Strings() argument covers,
+    concatenation included.
+
+    The scan below reads one literal at a time, so a message split across
+    lines ("..." .. "..." inside Strings(), Teachy TV's lessons) or called
+    through require("src.core.Strings")(...) would read as bare literals;
+    the catalog harvester already recognises those calls, so ask it.  Only
+    the argument itself is covered: another literal on the same line (an
+    "or" fallback, a second value after the call) is still scanned.
+    """
+    from .engine_backlog import _read_concatenated_lua_literal, _strip_lua_comments, strings_calls
+    cleaned = _strip_lua_comments(text)
+    covered = [False] * len(text)
+    for match in strings_calls(text, cleaned):
+        index = match.end()
+        while index < len(cleaned) and cleaned[index].isspace():
+            index += 1
+        token = _read_concatenated_lua_literal(text, cleaned, index)
+        if token is None:
+            continue
+        for offset in range(index, token[1]):
+            covered[offset] = True
+    return covered
+
+
 def scan_hardcoded_literals(checkout: str | Path, reachable: Mapping[str, frozenset[str]] | None = None) -> dict[str, list[tuple[int, str]]]:
     """Every text-looking literal in game3 that is not a Strings() argument
     and that ``reachable`` (key -> files the scope reads it from) does not
@@ -190,10 +235,16 @@ def scan_hardcoded_literals(checkout: str | Path, reachable: Mapping[str, frozen
             relative = path.relative_to(root).as_posix()
             if "/anim_port/" in relative or path.name == "flags_table.lua":
                 continue
-            for number, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            text = path.read_text(encoding="utf-8", errors="replace")
+            covered = _literal_argument_spans(text)
+            line_start = 0
+            for number, line in enumerate(text.split("\n"), 1):
+                start, line_start = line_start, line_start + len(line) + 1
                 if line.lstrip().startswith("--"):
                     continue
                 for match in _LITERAL.finditer(line):
+                    if covered[start + match.start()]:
+                        continue
                     value = next(group for group in match.groups() if group is not None)
                     if not _looks_like_text(value) or relative in reachable.get(_unescape(value), ()):
                         continue
