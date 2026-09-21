@@ -116,7 +116,7 @@ and Mt. Moon's Magikarp salesman (which also already calls
 actually a blocker here) -- all confirmed already correctly translated,
 no config needed. The Pokédex "kind" classification
 (`src/ui/DexEntryMenu.lua:93`) looked like the same deep gap as the
-status-ailment abbreviations above, but isn't: `pipeline/mod.py` already
+status-ailment abbreviations above, but isn't: `pipeline/shared/mod.py` already
 has a dedicated `species_kinds` catalog for it. Viridian City's second
 Youngster was the one genuine exception -- two of its three lines had no
 reachable label at all until `fix/text-extractor-underscore-requirement`
@@ -349,8 +349,8 @@ carry its real, distinct localized text.
 The first five are named explicitly in "Fixed upstream" above
 (`fix/route-more-messages-through-romtext`, PR #1559); the last three are
 not -- discovered instead by running
-`pipeline.engine_scope.complete_engine_keys` (the same check
-`pipeline/mod.py`'s real build uses to reject a stale override key) against
+`pipeline.shared.engine_scope.complete_engine_keys` (the same check
+`pipeline/shared/mod.py`'s real build uses to reject a stale override key) against
 a real v0.2.19 checkout and diffing it against every override file's key
 set. All eight came back with zero matching callsites anywhere in the
 engine, meaning they would have made the next real build fail outright
@@ -425,7 +425,7 @@ against the bumped pin, not a source-diff guess.
   A real Gold/Silver/Crystal build against the bumped pin failed with
   `Gold engine overrides contain 1 unknown key(s):
   ['%s got %s%d for winning! Sent some to MOM!']`
-  (`pipeline/gs_engine.py`'s `match_gs_engine_strings()`, the Gold/Silver
+  (`pipeline/gsc/engine.py`'s `match_gs_engine_strings()`, the Gold/Silver
   analogue of the RBY check above). Every one of the six languages'
   `overrides/<language>/gsc/engine.json` had its entry renamed to the new
   key and its own translation reformatted onto the new two-break structure
@@ -465,7 +465,7 @@ guess.
   AI's own use of the same message, not an allowlist exclusion). A real
   RBY build against the bumped pin failed with `engine overrides contain 1
   unknown key(s):
-  ["%s's\nhits will never\nmiss!"]` (`pipeline/mod.py`'s
+  ["%s's\nhits will never\nmiss!"]` (`pipeline/shared/mod.py`'s
   `generate_mod()`). The entry was removed outright (not renamed) from all
   five languages' `overrides/<language>/rby/engine.json` -- fr, de, es, it,
   ja-Hrkt all had it; ko has no `rby/engine.json`.
@@ -476,7 +476,7 @@ guess.
   used\n%s!", ...)` -- the same ROM label and *rendered* fallback text
   `BattleState.lua`'s held-item-use line already used, just reached from a
   second call site. No override referenced this literal, so no build
-  broke, but `pipeline/engine_backlog.py`'s `iter_romtext_fallback_callsites()`
+  broke, but `pipeline/shared/engine_backlog.py`'s `iter_romtext_fallback_callsites()`
   only counts a romText fallback as a real (translatable) engine callsite
   when its literal is in the hand-maintained `RENDERED_ROMTEXT_FALLBACKS`
   allowlist -- and only the *other* `_ItemUseText001` fallback phrasing
@@ -485,7 +485,7 @@ guess.
   directly, it silently dropped out of the RBY-related engine-string scan
   (242 -> 240 keys scanned, not just the 1 legitimately retired one) --
   confirmed with a standalone before/after scan of both pinned revisions
-  via `pipeline.engine_backlog`/`pipeline.engine_scope`, not just the
+  via `pipeline.shared.engine_backlog`/`pipeline.shared.engine_scope`, not just the
   build's pass/fail. Fixed by adding `"%s used\n%s!"` to
   `RENDERED_ROMTEXT_FALLBACKS` alongside its sibling phrasing.
 - No other engine-string key broke or silently dropped out of scope: a
@@ -514,10 +514,10 @@ adding `HALL OF FAME No`.
 
 **Real build failure caught by this rewrite, now fixed:** a real Yellow mod
 build against the bumped pin failed with `Error: Yellow engine override
-contains unknown key: 'A: done'` (`pipeline/builder.py`'s Yellow layer
+contains unknown key: 'A: done'` (`pipeline/shared/builder.py`'s Yellow layer
 validates `overrides/<language>/rby/yellow_engine.json` against a real
 `strings.lua` worksheet dumped from the built game, the same kind of check
-`pipeline/mod.py`'s RBY layer does with `complete_engine_keys`). All four
+`pipeline/shared/mod.py`'s RBY layer does with `complete_engine_keys`). All four
 old HUD strings were removed from all five languages' `yellow_engine.json`
 files once confirmed dead by the same `complete_engine_keys` check used for
 the RBY overrides cleanup above.
@@ -567,7 +567,7 @@ PR's `_ItemUseBallText00` merge (see "Fixed upstream" above) also orphaned
 entry, caught by `tests/test_multilingual.py`'s
 `test_rby_anchor_callsites_are_unique_and_contextually_eligible` once
 `.cache/dependencies/gen1recomp` refreshed to the new pin. Semantic anchors
-have no equivalent of `pipeline/mod.py`'s `stale_overrides` build-time
+have no equivalent of `pipeline/shared/mod.py`'s `stale_overrides` build-time
 check, so an orphaned one doesn't crash a build -- it just silently stops
 matching anything. Running the same "is this key still a real callsite"
 audit across the entire anchor/decision config (not just this one test's
@@ -595,7 +595,7 @@ buckets:
     under "genuinely alive" below, alongside the sibling anchor it shares
     its fix with -- it belongs in this bucket by its own history, just
     narrated there for continuity). None of these ten were ever going to
-    reach `pipeline.engine_scope.iter_callsites` in the first place:
+    reach `pipeline.shared.engine_scope.iter_callsites` in the first place:
     `iter_romtext_fallback_callsites` only reports a fixed, audited
     allowlist of 3 fallback strings (see its own docstring), on the theory
     that every other `romText()` fallback resolves its real ROM label and
@@ -622,9 +622,9 @@ buckets:
     engine's own `%3d` printf directives, verified end-to-end against the
     real corpus for all five languages. An independent review then found
     that fix was solving an already-solved problem:
-    `pipeline/join.py`'s `pokedex_footer_catalog` -- pre-existing,
+    `pipeline/shared/join.py`'s `pokedex_footer_catalog` -- pre-existing,
     already tested in `tests/test_pipeline.py`, using the exact same two
-    qids -- runs unconditionally in `pipeline/mod.py` and overwrites
+    qids -- runs unconditionally in `pipeline/shared/mod.py` and overwrites
     `engine_values["SEEN %3d  OWN %3d"]` via a plain `dict.update()` call
     *after* the semantic-anchor matcher runs, regardless of whether the
     anchor resolved, failed, or didn't exist at all. Confirmed directly:
@@ -699,7 +699,7 @@ from the translation mod without gen1recomp itself changing.
   testing this project can't do), or a `config/rby/literal_handlers.json`
   entry the same way as the now-obsolete Youngster2 handler used to (see
   "Verified working, not a gap" above) -- blocked on extending
-  `pipeline/literals.py`'s flow DSL with `heal_party`/`fade`/`wait`
+  `pipeline/rby/literals.py`'s flow DSL with `heal_party`/`fade`/`wait`
   operations, which it doesn't support yet
   (only `say`/`choice`/`if`/`set_flag`/`inventory`/`money`/
   `script_move`/`done`/`engage_trainer`). Those three primitives already
@@ -717,12 +717,12 @@ from the translation mod without gen1recomp itself changing.
 ### Silver: supported by declaration, then by real dual-ROM extraction
 
 The mod's `manifest.json` declares `"games": ["gold", "silver"]` instead of
-just `["gold"]` (`pipeline/gs_mod.py`'s `generate_gs_mod()`). The rest of
+just `["gold"]` (`pipeline/gsc/mod.py`'s `generate_gs_mod()`). The rest of
 this section (measurement, aliasing) predates a later change that added a
-real dual-ROM extraction path: `pipeline/roms.py`'s `verify_gs_rom()` now
+real dual-ROM extraction path: `pipeline/shared/roms.py`'s `verify_gs_rom()` now
 accepts either a real Gold or a real Silver ROM (matching either SHA-1) and
 reports which one, `config/pipeline.toml` carries both `[rom.gold]` and
-`[rom.silver]`, and `tools/gs_extract.lua` selects the matching import
+`[rom.silver]`, and `tools/gsc/extract.lua` selects the matching import
 manifest (`rom_manifest_gold.json`/`rom_manifest_silver.json`) for whichever
 edition was detected. There is still no Silver-specific corpus join --
 Gold's own extracted text and corpus alignment are reused as-is for a
@@ -753,7 +753,7 @@ it was originally declared-only) is what's still current:
   `"gold"`), so declaring both is enough for the engine's own mod loader to
   apply this mod to a Silver save with no further engine-side work.
 - This project's own automatic dialogue join
-  (`pipeline/gs_join.py`'s `join_gs_pointers`) matches primarily by
+  (`pipeline/gsc/join.py`'s `join_gs_pointers`) matches primarily by
   normalized English text, not by pointer -- `bank:address` is only used
   to look up the small set of hand-reviewed, Gold-sha1-pinned overrides in
   `config/gsc/pointer_decisions.json`/`placeholder_decisions.json` and as
@@ -762,7 +762,7 @@ it was originally declared-only) is what's still current:
   fall back to automatic resolution or `UNRESOLVED`, never corrupt.
 
 **Measured, not just argued from the named-symbol proxy, and now closed to
-100%:** `tools/spike_gold_silver_text_overlap.lua` (a standalone
+100%:** `tools/gsc/spike_text_overlap.lua` (a standalone
 measurement script, not wired into the pipeline) extracts the real
 `data.text` key set from a real Gold ROM and a real Silver ROM
 independently and compares them directly. Result: 3036 of 3044 keys
@@ -773,14 +773,14 @@ similar) -- paired up by content, every one shifted the same uniform -2
 bytes between editions while carrying byte-identical English text.
 `config/gsc/silver_pointer_aliases.json` records those 8 `{gold_pointer:
 silver_pointer}` pairs, and `gs_text_catalog_from_join()`
-(`pipeline/gs_mod.py`) now aliases each Gold pointer's resolved
+(`pipeline/gsc/mod.py`) now aliases each Gold pointer's resolved
 translation onto its Silver pointer too. **Dialogue-pointer coverage
 between Gold and Silver is the full 3044/3044 (100%) when building from a
 Gold ROM,** verified by rebuilding a real French mod and confirming all 16
 pointers (8 Gold + 8 Silver) carry matching text in the generated
 `dialogue.lua`. This confirmed reusing Gold's own extraction and corpus
 join for Silver too was safe -- it's why the later dual-ROM extraction
-path (`[rom.silver]`, `verify_gs_rom()`, `gs_extract.lua`'s manifest
+path (`[rom.silver]`, `verify_gs_rom()`, `tools/gsc/extract.lua`'s manifest
 selection, `.cache/interactive-gs/` as the shared cache dir for either
 edition) still doesn't need a separate Silver-specific corpus join: a real
 Silver ROM build resolves 3036/3051 pointers on its own (99.5%, one
@@ -800,7 +800,7 @@ divergence from Gold. gen1recomp's own engine already has full Crystal
 support though: `tools/rom_manifest_crystal.json` is complete, and
 `src/import/RomExtractorGen2.lua` already has edition branches for
 `"crystal"` throughout (palettes, sprites, title screen, credits, music,
-text/opcodes, trade). This project's own `tools/gs_extract.lua` (a headless
+text/opcodes, trade). This project's own `tools/gsc/extract.lua` (a headless
 LuaJIT wrapper around that extractor, not gen1recomp's) just needed the same
 treatment as its existing `"gold"`/`"silver"` branches, accepting
 `"crystal"` and selecting `rom_manifest_crystal.json`.
@@ -811,10 +811,10 @@ format as `GoldSilver/` (`{qid,en,<lang>}_msg.txt`, same `<LINE>`/`<CONT>`/
 namespace with zero qid overlap with `gs.*` -- but 86% of GoldSilver's own
 unique English text reappears somewhere in Crystal's, so a from-scratch join
 against Crystal's own corpus (not a cross-collection qid alias) resolves
-most of it automatically: `pipeline.gs_join.join_gs_pointers()` already
+most of it automatically: `pipeline.gsc.join.join_gs_pointers()` already
 matches by normalized English text, not by pointer, so despite its "gs_"
 name it is edition-agnostic and needed no changes at all --
-`pipeline/crystal_mod.py`'s `join_crystal_dialogue()` just calls it against
+`pipeline/gsc/crystal_mod.py`'s `join_crystal_dialogue()` just calls it against
 Crystal's own extracted TSVs and its own corpus collection. A real build
 resolved 3864/4010 dialogue pointers (96.4%) automatically with no manual
 help at all.
@@ -829,7 +829,7 @@ whenever a Crystal pointer's ambiguous candidates included exactly one
 qid whose `gs.`-prefixed counterpart Gold's reviewers already confirmed
 was a real pointer's target, the same pick applied to Crystal -- resolving
 22 of 113 ambiguous pointers this way
-(`pipeline/crystal_mod.py`'s `load_crystal_pointer_decisions()`). Second,
+(`pipeline/gsc/crystal_mod.py`'s `load_crystal_pointer_decisions()`). Second,
 the [pokecrystal disassembly](https://github.com/pret/pokecrystal) (the
 user's own clone) was built from source with `rgbds`, confirmed to
 produce a ROM byte-for-byte identical to the real retail cartridge (both
@@ -862,7 +862,7 @@ Japanese poke-corpus data turned out to already carry real, official
 translations for every one of these lines -- so only French, German and
 Italian genuinely lacked corpus coverage here. Those three now carry
 hand-written, AI-generated text instead (`overrides/<lang>/gsc/
-crystal_dialogue.json`, loaded by `pipeline/crystal_mod.py`'s
+crystal_dialogue.json`, loaded by `pipeline/gsc/crystal_mod.py`'s
 `load_crystal_dialogue_overrides()`): 17 pointers for French, 9 for
 German (a subset of French's own set -- Spanish/Japanese's corpus already
 covered the rest for German too, it turned out), and 16 for Italian
@@ -890,14 +890,14 @@ below).
 
 Crystal ships as a mandatory companion ROM merged into the same
 `translation-<lang>-gen2` mod as Gold/Silver, the same way Yellow is a
-mandatory companion for the universal RBY mod: `pipeline/gs_mod.py`'s
+mandatory companion for the universal RBY mod: `pipeline/gsc/mod.py`'s
 `build_gs()` now always extracts and joins a Crystal ROM too, and
 `generate_gs_mod()` writes Crystal's own resolved dialogue to a separate
 `lang/dialogue_crystal.lua` layer, applied at runtime only when
 `GameVersion.get() == "crystal"` (there is no upstream `isCrystal()` helper
 the way there's an `isYellow()`, but `.get() == "crystal"` is exactly what
 `isGold()`/`isYellow()`/`isBlue()` do internally for their own edition, so
-this mirrors `pipeline/mod.py`'s own `yellow_isyellow_guard_lines()`
+this mirrors `pipeline/shared/mod.py`'s own `yellow_isyellow_guard_lines()`
 pattern for RBY's Yellow layer). The manifest declares `"gold"`, `"silver"`,
 and `"crystal"`. Korean has no Crystal corpus in poke-corpus (no
 `ko_msg.txt`, unlike GoldSilver's own six languages) -- rather than drop
@@ -909,7 +909,7 @@ compatibility, it just leaves Crystal's own dialogue in English.
 Since resolved: Crystal's own named catalogs (species/moves/items/trainer
 classes) reuse Gold/Silver's own already-translated values for the shared
 roster, verified against real builds, plus a dedicated
-`pipeline/crystal_registries.py` for the handful of records genuinely
+`pipeline/gsc/crystal_registries.py` for the handful of records genuinely
 Crystal-exclusive (item names, trainer class names, a landmarks subset).
 Crystal-exclusive content (MoveTutor, GenderSelect, Battle Tower, Buena's
 Password -- the 48 keys catalogued as `"crystal-only-feature"` in
@@ -917,7 +917,7 @@ Password -- the 48 keys catalogued as `"crystal-only-feature"` in
 engine-string metric precisely because they're Crystal's to translate, not
 Gold/Silver's) is now translated for fr/de/es/it (48/48) and ja-Hrkt (47/48);
 `ko` has no Crystal corpus and stays untranslated. A dedicated release gate
-(`tools/gate_gs_dialogue.lua`'s `hasCrystal` path) now verifies Crystal's own
+(`tools/gsc/gate_dialogue.lua`'s `hasCrystal` path) now verifies Crystal's own
 dialogue and registries are selected only under a Crystal save and never
 leak onto Gold or Silver, alongside Gold/Silver's existing gates. Crystal's
 own engine strings (the Options/Menu `Strings()` catalog) need no separate
@@ -1048,7 +1048,7 @@ prompt: this port's fixed 2-line box has no pagination.
   Fixed on gen1recomp `fix/translate-clock-and-day-of-week` (merged,
   PR #1450): both now live in `Strings`-backed lookups in
   `src/core/gen2/Clock.lua`. `SUNDAY`..`SATURDAY` and `MORN`/`DAY`/`NITE`
-  translate for free -- `pipeline/engine.py`'s corpus alignment matches
+  translate for free -- `pipeline/shared/engine.py`'s corpus alignment matches
   them byte-for-byte against poke-corpus's own literal ROM text rows.
   `"%s o'clock"`/`"%d min."` don't align automatically the same way (see
   the compromise table below), but the real corpus text is still directly
@@ -1401,7 +1401,7 @@ a matter of wiring a few missed callsites.
   reads `hudLabel`/`label` from the merged `statuses` registry the way
   RBY's fix will. Not a small mirror of the RBY fix: it needs all
   three call sites rewritten, not one lookup swapped in. This project's own
-  `status_labels` catalog (`pipeline/gs_mod.py`'s `status_label_catalog()`,
+  `status_labels` catalog (`pipeline/gsc/mod.py`'s `status_label_catalog()`,
   patched via `mod.content.statuses:patch(id, { label = value })`, same
   mechanism as RBY's) already exists and ships translated -- the gap is
   entirely upstream, waiting on those three Gold call sites to read from the
@@ -1504,7 +1504,7 @@ a matter of wiring a few missed callsites.
   matches the bare `wStringBuffer`/`wNameBuffer` spellings for Gold, not a
   numbered one), which `Tokens.expand` then silently drops -- a pipeline
   bug, not an engine one. Fixed entirely on this project's side:
-  `pipeline/tokens.py`'s `corpus_to_engine` gained an opt-in
+  `pipeline/shared/tokens.py`'s `corpus_to_engine` gained an opt-in
   `bare_dynamic_tokens` flag that Gold's call sites now pass, collapsing
   `{text_ram X}`/`{text_decimal X}`/`{text_bcd X}` to the bare
   `{STRBUF}`/`{NUM}` markers Gold's engine-side decoder actually produces;
@@ -1520,7 +1520,7 @@ The entries in `config/gsc/literal_handlers.json` record known stable corpus
 matches for menu screens exposed through `ui.pc.items`/`ui.start_menu.items`/
 `ui.title_menu.items`/`ui.options.rows`/`ui.party.submenu` -- deliberately not
 a private-class monkey patch. **Already active, not merely recorded for
-later:** `pipeline/gs_mod.py`'s `_gs_ui_labels()` reads this
+later:** `pipeline/gsc/mod.py`'s `_gs_ui_labels()` reads this
 file and ships every entry through the `ui_labels` catalog today, wired into
 those five hooks -- this is not a future activation step. Some of the file's
 entries (`FIGHT`, `PACK`, `RUN`, `BILL's PC`, `PROF.OAK's PC`, `TURN OFF`,
@@ -1535,7 +1535,7 @@ bullets above) visible to the engine project.
 
 ## FireRed
 
-FireRed (US, v1.0) is gen1recomp's first generation-3 game: a separate `game3` runtime (`src/core/game3`, `src/ui/game3`) with its own mod surface (`src/mods/Gen3Compat.lua`, `Schemas.GEN3` in `src/mods/Schemas.lua`). The pinned revision is `2148291c` (v0.2.70). v0.2.67 was the first upstream release carrying the engine work this mod needs, FireRed's own text routed through `Strings()` (gen1recomp#2346) and the ROM font's European letters (gen1recomp#2342); v0.2.70 adds the species and move names a mod ships (gen1recomp#2374) and the Easy Chat vocabulary (gen1recomp#2375). File:line citations refer to the pinned tree. The translation mod (`translation-<lang>-gen3`, fr/de/es/it) uses only the public generation-3 registries and one public hook, and `tools/gate_frlg.lua` loads it through the real generation-3 loader on top of the game3 data modules built from a private FireRed extract, so every "lands"/"does not land" statement here is measured, not inferred.
+FireRed (US, v1.0) is gen1recomp's first generation-3 game: a separate `game3` runtime (`src/core/game3`, `src/ui/game3`) with its own mod surface (`src/mods/Gen3Compat.lua`, `Schemas.GEN3` in `src/mods/Schemas.lua`). The pinned revision is `2148291c` (v0.2.70). v0.2.67 was the first upstream release carrying the engine work this mod needs, FireRed's own text routed through `Strings()` (gen1recomp#2346) and the ROM font's European letters (gen1recomp#2342); v0.2.70 adds the species and move names a mod ships (gen1recomp#2374) and the Easy Chat vocabulary (gen1recomp#2375). File:line citations refer to the pinned tree. The translation mod (`translation-<lang>-gen3`, fr/de/es/it) uses only the public generation-3 registries and one public hook, and `tools/frlg/gate.lua` loads it through the real generation-3 loader on top of the game3 data modules built from a private FireRed extract, so every "lands"/"does not land" statement here is measured, not inferred.
 
 Summary of what a translation mod can and cannot reach at the pinned revision:
 
@@ -1559,9 +1559,9 @@ Four FireRed fixes this project sent upstream are in the pinned release:
 
 The release also brings a large batch of new FireRed screens: Mystery Gift, Teachy TV, the Union Room and the wireless status screen, the network link menu, the slot machine, the Trainer Tower records, the elevators, Safari battles. The engine catalog grows from 1,616 to 2,914 keys, 1,028 of them Easy Chat. On this project's side:
 
-- `pipeline/frlg_engine_scope.py` collects the Easy Chat keys from the engine's own table (`easyChat.group|<name>`, and `easyChat.<group>|<word>` for the 18 text groups; the species and move groups are left to `species_names` and `move_names`, which the engine reads for them), and joins each word to its own group's `easy_chat_group_*` row, the one case a last-resort family stands for a key. Words that read as neutral are kept, since the carts do not all keep them: the Spanish cart's "…" is ¡QUÉ PLAN!.
+- `pipeline/frlg/engine_scope.py` collects the Easy Chat keys from the engine's own table (`easyChat.group|<name>`, and `easyChat.<group>|<word>` for the 18 text groups; the species and move groups are left to `species_names` and `move_names`, which the engine reads for them), and joins each word to its own group's `easy_chat_group_*` row, the one case a last-resort family stands for a key. Words that read as neutral are kept, since the carts do not all keep them: the Spanish cart's "…" is ¡QUÉ PLAN!.
 - It reads the new tables the runtime passes to `Strings()` through a variable (the Union Room's labels and activities, the wireless status rows, the Trainer Tower modes, the in-game trade names, the elevator's floors) and the `require("src.core.Strings")(...)` call form, and the hardcoded-text audit sees every table a value sits in and leaves out exactly what a literal `Strings()` argument covers, multi-line ones included.
-- Keys that hand the runtime pret's own escapes (`\n`, `\l`, `\p`, as Teachy TV's lessons do) are matched and written back in that form (`_break_marks` in `pipeline/frlg_join.py`).
+- Keys that hand the runtime pret's own escapes (`\n`, `\l`, `\p`, as Teachy TV's lessons do) are matched and written back in that form (`_break_marks` in `pipeline/frlg/join.py`).
 - The elevator menu spells the floor labels out as literals, which the neutral-string filter would have dropped together with the map popup's floor naming; a floor label now stays a floor.
 - 75 keys with no clean corpus row are covered by `overrides/<language>/frlg/engine.json`: cart rows the engine words or splits its own way (the Wonder Card bodies from `mystery_event_msg`, OAK's first-battle advice, the POKé FLUTE and lure/repel lines, the Safari and Trainer Tower labels), and port-added text with no cart equivalent (the network link menu, the slot machine's fallback labels), worded per language (`engine-original`). The six overrides for keys the engine removed are gone.
 
@@ -1578,7 +1578,7 @@ gen1recomp#2346 (eleven commits, in the pinned release) closes what this section
 - Ability names (battle messages and summary) go through `Strings()`, since no registry renames abilities. The summary's move and ability descriptions are looked up by the ROM's English names (`Pokemon.romMoveName`): before, a mod that renamed moves made every description read "---".
 - The map popup and the forest preview translate the section name, and the popup the floor label as a whole ("3F", "B1F", "ROOFTOP"): the European carts number floors differently (3F is "2e" in French, "2S" in German), so no template around the number could say it.
 
-On this project's side, `pipeline/frlg_engine_scope.py` rebuilds `config/frlg/engine_scope.json` from the pinned engine. It collects every literal `Strings()`/`Strings.source()` key under `src/*/game3`, every table the runtime passes to `Strings()` through a variable (read with LuaJIT, or from the source for local tables), the `Strings(x or "fallback")` literals, and the ROM's move and ability descriptions and ability names from the private extract. Each key is then joined to the FireRed corpus row that reads as it (`engine_template` in `pipeline/frlg_join.py`):
+On this project's side, `pipeline/frlg/engine_scope.py` rebuilds `config/frlg/engine_scope.json` from the pinned engine. It collects every literal `Strings()`/`Strings.source()` key under `src/*/game3`, every table the runtime passes to `Strings()` through a variable (read with LuaJIT, or from the source for local tables), the `Strings(x or "fallback")` literals, and the ROM's move and ability descriptions and ability names from the private extract. Each key is then joined to the FireRed corpus row that reads as it (`engine_template` in `pipeline/frlg/join.py`):
 
 - the row's buffers and battle placeholders stand where the key has directives, and are renumbered when the translation orders them differently;
 - line breaks may differ, and the translation's own breaks are kept;
@@ -1609,7 +1609,7 @@ The mod already ships the correct characters; the gate counts the characters of 
 
 Fix: extend `TextIR.CHARMAP` with pret's Latin glyphs (`charmap.txt` lines 1-156: `0x01`–`0x2B`, `0x36` `;`, `0x51` `¿`, `0x52` `¡`, `0x5A` `Í`, `0x68` `â`, `0x6F` `í`, `0xF1`–`0xF6` `ÄÖÜäöü`), or build `buildRev` from a dedicated render table so `TextIR.decode`'s English behaviour is untouched. The small font (`latin_small`, party/summary names) is CHARMAP-ordered too and needs the same entries. Nothing changes on this project's side: the gate's `blank_glyphs` metric drops to 0.
 
-**Fixed upstream in v0.2.67** by gen1recomp#2342 (`FrlgFont.LATIN_GLYPHS`, render-only, `TextIR.CHARMAP` untouched, with `tests/game3_latin_glyphs_test.lua`). The figures above are the ones measured before it; at the pinned revision `tools/gate_frlg.lua` reports `blank_glyphs: 0` for fr, de, es and it.
+**Fixed upstream in v0.2.67** by gen1recomp#2342 (`FrlgFont.LATIN_GLYPHS`, render-only, `TextIR.CHARMAP` untouched, with `tests/game3_latin_glyphs_test.lua`). The figures above are the ones measured before it; at the pinned revision `tools/frlg/gate.lua` reports `blank_glyphs: 0` for fr, de, es and it.
 
 #### 2. Name patches are reverted on entering the field
 
@@ -1623,7 +1623,7 @@ Fix: make the `Pokemon.onReload` callback re-apply the merged `pokemon` and `mov
 
 #### 3. Japanese cannot be rendered
 
-game3 draws every string with the cart's Latin font (`FrlgFont`), which has no kana, and `Schemas.GEN3` gates the `font` registry (`font = false`, `src/mods/Schemas.lua`), so a mod cannot register the TTF the Red/Blue and Gold/Silver Japanese mods use. The FireRedLeafGreen corpus has a complete `ja-Hrkt` column; the pipeline does not offer it (`pipeline/specs.py`) because every line would print blank.
+game3 draws every string with the cart's Latin font (`FrlgFont`), which has no kana, and `Schemas.GEN3` gates the `font` registry (`font = false`, `src/mods/Schemas.lua`), so a mod cannot register the TTF the Red/Blue and Gold/Silver Japanese mods use. The FireRedLeafGreen corpus has a complete `ja-Hrkt` column; the pipeline does not offer it (`pipeline/shared/specs.py`) because every line would print blank.
 
 Fix: route the `font` registry on generation 3 and let `FrlgFont.draw`/`measure` fall back to a registered TTF for characters with no ROM glyph (or for the whole string when the mod asks for it). Project side: add `ja-Hrkt` to the collection's languages and give the decoder the charmap's Japanese block as its glyph table.
 
@@ -1646,7 +1646,7 @@ Two places compare the display class name a mod patches:
 - `Trainers.info` substitutes the player's chosen rival name only when `info.className == "RIVAL"` (`src/core/game3/scripting/trainers.lua`). German and Italian translate that class (`RIVALE`), and the rival would then battle as the ROM's placeholder `TERRY`.
 - The quest log records a win as a gym-leader, Elite Four or champion event from `class == "LEADER"`, `"ELITE FOUR"` and `"CHAMPION"` (`src/core/game3/quest_log_recorder.lua`, fed by `battle/init.lua`'s `trainerClassName`). With translated classes, every such win falls back to the generic trainer event, and in French, where LEADER reads CHAMPION, every gym win would be recorded as a champion battle.
 
-The pipeline keeps these class names in English (`ENGINE_KEYED_CLASS_NAMES` in `pipeline/frlg_mod.py`: classes 81/89, 24/84, 23/87, 30/90), a test scans the pinned engine's game3 sources for any other class-name comparison, and the gate checks trainer 326 keeps the rival name it is given. Fix: compare class ids (`TRAINER_CLASS_RIVAL_EARLY`/`_LATE`, `TRAINER_CLASS_[RS_]LEADER`, `_ELITE_FOUR`, `_CHAMPION`) instead of display names; the pipeline can then drop the exception.
+The pipeline keeps these class names in English (`ENGINE_KEYED_CLASS_NAMES` in `pipeline/frlg/mod.py`: classes 81/89, 24/84, 23/87, 30/90), a test scans the pinned engine's game3 sources for any other class-name comparison, and the gate checks trainer 326 keeps the rival name it is given. Fix: compare class ids (`TRAINER_CLASS_RIVAL_EARLY`/`_LATE`, `TRAINER_CLASS_[RS_]LEADER`, `_ELITE_FOUR`, `_CHAMPION`) instead of display names; the pipeline can then drop the exception.
 
 #### 7. Braille and keypad icons in dialogue print as "?" in every language
 
@@ -1702,7 +1702,7 @@ Only the first half is missing text: the other 806 are species and move names du
 
 Fix, in two parts of very different size. The vocabulary groups can go through `Strings()` where the picker draws them, with a context per group: 155 of those words collide with keys this engine already uses elsewhere (ATTACK, BAG, CANCEL, BACK, BOY...), which one catalog entry cannot serve, and `Strings(source, context)` is what the engine already provides for exactly that (see the Contest status box's `contest.caught|None`). The species and move groups should instead read the ROM packs the rest of game3 reads, which fixes the renaming gap at the same time and needs no catalog work at all: those names are already translated in `lang/species_names.lua` and `lang/move_names.lua`.
 
-**Fixed upstream in v0.2.70** by gen1recomp#2375, along these lines: `src/core/game3/easy_chat_text.lua` looks each vocabulary word up as `Strings(word, "easyChat.<group>")` and each group name as `Strings(name, "easyChat.group")`, and resolves the species and move groups through `Pokemon.name`/`Pokemon.moveName`. `pipeline/frlg_engine_scope.py` emits the 1,028 keys (see the v0.2.70 section above), 1,025 of them joined to their group's corpus row; the `[POKEBLOCK]` and `[PK]RS` words and the POKéMON (NAT) group name, which the cart calls POKéMON2, are overrides.
+**Fixed upstream in v0.2.70** by gen1recomp#2375, along these lines: `src/core/game3/easy_chat_text.lua` looks each vocabulary word up as `Strings(word, "easyChat.<group>")` and each group name as `Strings(name, "easyChat.group")`, and resolves the species and move groups through `Pokemon.name`/`Pokemon.moveName`. `pipeline/frlg/engine_scope.py` emits the 1,028 keys (see the v0.2.70 section above), 1,025 of them joined to their group's corpus row; the `[POKEBLOCK]` and `[PK]RS` words and the POKéMON (NAT) group name, which the cart calls POKéMON2, are overrides.
 
 #### 12. An EGG is named in English in the party
 
@@ -1712,7 +1712,7 @@ Fix: store `Strings("EGG")` as the nickname when the egg is made, which is what 
 
 #### Inventory: every game3 file with hardcoded player-visible text
 
-Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg_audit.py`) at the pinned revision: every string literal under `src/{core,ui,battle,world}/game3` that looks like text, is not a `Strings()` argument and is not a value the runtime passes to `Strings()` through a variable from that same file (tables and lists `pipeline/frlg_engine_scope.py` reads), minus the files reviewed as never reaching the screen (`NON_DISPLAY_FILES`: identifiers, quest-log keys, log lines, name fallbacks for a missing pack, each with its reason). Reviewing a file as non-display hides any literal added to it later, so a pin bump should re-read the reasons of the files it touches. `tests/test_frlg.py` fails if the scan finds a player-visible file this table does not list, so the inventory stays complete across pin bumps. At `2c0f3ac0` (v0.2.64) the same scan, without the scope filter, found 74 files and 2,028 literals.
+Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/audit.py`) at the pinned revision: every string literal under `src/{core,ui,battle,world}/game3` that looks like text, is not a `Strings()` argument and is not a value the runtime passes to `Strings()` through a variable from that same file (tables and lists `pipeline/frlg/engine_scope.py` reads), minus the files reviewed as never reaching the screen (`NON_DISPLAY_FILES`: identifiers, quest-log keys, log lines, name fallbacks for a missing pack, each with its reason). Reviewing a file as non-display hides any literal added to it later, so a pin bump should re-read the reasons of the files it touches. `tests/test_frlg.py` fails if the scan finds a player-visible file this table does not list, so the inventory stays complete across pin bumps. At `2c0f3ac0` (v0.2.64) the same scan, without the scope filter, found 74 files and 2,028 literals.
 
 | File | Literals | What the player sees | Entry |
 | --- | ---: | --- | --- |

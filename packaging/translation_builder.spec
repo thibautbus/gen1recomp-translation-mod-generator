@@ -31,11 +31,11 @@ for source in (ROOT / "config").rglob("*"):
 for source in (ROOT / "overrides").rglob("*"):
     if source.is_file() and source.name != "rom_paths.toml":
         datas.append((str(source), str(source.parent.relative_to(ROOT))))
-# gs_extract.lua and the gate_*.lua scripts are read from resource_root()
-# at runtime (pipeline/roms.py, pipeline/gs_mod.py); missing from datas
-# meant a frozen Gold build failed with "cannot open ... gs_extract.lua:
+# tools/gsc/extract.lua and the gate_*.lua scripts are read from resource_root()
+# at runtime (pipeline/shared/roms.py, pipeline/gsc/mod.py); missing from datas
+# meant a frozen Gold build failed with "cannot open ... tools/gsc/extract.lua:
 # No such file or directory" past the first ROM extraction step. Bundle the
-# whole tools/ tree (including gen2_gate_fixtures/, the release gate's
+# whole tools/ tree (including tools/gsc/gate_fixtures/, the release gate's
 # fixture mods) rather than naming each script, so a future addition here
 # does not silently repeat the same gap.
 for source in (ROOT / "tools").rglob("*"):

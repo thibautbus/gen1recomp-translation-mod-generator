@@ -7,7 +7,7 @@ import sys
 import importlib.util
 from pathlib import Path
 
-from pipeline.builder import main
+from pipeline.shared.builder import main
 
 
 def _force_utf8_subprocess_text_decoding() -> None:
@@ -46,9 +46,9 @@ def _internal_worker() -> int:
 
 
 def _self_check() -> int:
-    from pipeline.builder import BuildError, _modkit_command, _which_luajit, is_frozen, project_config, project_version, resource_root, work_root
-    from pipeline.engine import load_semantic_anchors, load_semantic_anchor_decisions, merge_semantic_anchors
-    from pipeline.engine_scope import load_scope
+    from pipeline.shared.builder import BuildError, _modkit_command, _which_luajit, is_frozen, project_config, project_version, resource_root, work_root
+    from pipeline.shared.engine import load_semantic_anchors, load_semantic_anchor_decisions, merge_semantic_anchors
+    from pipeline.shared.engine_scope import load_scope
     try:
         config = project_config(resource_root())
         version = project_version(resource_root())

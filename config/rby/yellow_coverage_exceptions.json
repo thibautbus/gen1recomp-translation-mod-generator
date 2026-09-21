@@ -1,7 +1,7 @@
 {
   "schema": "gen1recomp-translation-mods/yellow-composition-overrides",
   "version": 1,
-  "description": "Human-reviewed exceptions for the Yellow dialogue coverage metric: a label whose own Yellow ROM extraction has no independent corpus match but that is proven harmless to leave untranslated, with a verified reason recorded per entry. Entries only credit the Yellow coverage *metric* for a label the dialogue layer itself intentionally leaves untranslated (see pipeline/builder.py's effective_dialogue_translated); they never derive or inject a translated *value* — that is config/rby/semantic_anchor_decisions.json's job, via the anchor extraction DSL.",
+  "description": "Human-reviewed exceptions for the Yellow dialogue coverage metric: a label whose own Yellow ROM extraction has no independent corpus match but that is proven harmless to leave untranslated, with a verified reason recorded per entry. Entries only credit the Yellow coverage *metric* for a label the dialogue layer itself intentionally leaves untranslated (see pipeline/shared/builder.py's effective_dialogue_translated); they never derive or inject a translated *value* — that is config/rby/semantic_anchor_decisions.json's job, via the anchor extraction DSL.",
   "entries": {
     "it": {
       "_RoseText": {
