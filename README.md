@@ -148,9 +148,9 @@ dialogue through `mod.content.text`, species, move and item names, item
 descriptions, trainer names and class names through their record registries,
 the start menu through the public `ui.start_menu.items` hook, and game3's own
 text (battle messages, menus, Pokédex labels, Oak's speech, options, place
-names) through `Strings()`. That last part needs gen1recomp's
-`fix/game3-translatable-strings` branch, not yet merged upstream: the
-pipeline is pinned to it on the `thibautbus/gen1recomp` fork until it is.
+names, the Easy Chat vocabulary) through `Strings()`. The pipeline is pinned
+to gen1recomp v0.2.70, the first release in which FireRed also shows a mod's
+species and move names and translates the Easy Chat words.
 
 Dialogue is joined differently from the two older releases: the game3
 extractor keys each message by its ROM address, pret's published
@@ -165,13 +165,12 @@ corpus; they carry addresses and an encoding table, no game text.
 Before packaging, `tools/gate_frlg.lua` loads the mod through gen1recomp's
 real generation-3 loader over the extracted game3 data and checks that each
 catalog lands where the FireRed screens read it. It also measures runtime
-limits the mod cannot fix itself, and the build prints them. Today the most
-visible one is that FireRed's font lookup only knows the US cart's letters, so
-accented letters (à, ç, ü, ñ, ¡…) render blank until gen1recomp maps them to
-the glyphs the ROM font already has. Species and move names also revert to
-English on entering the field, and the Pokédex descriptions, the help system
-and the quest log have no way in yet. Every one of these is tracked in the
-FireRed section of [docs/upstream-fixes.md](docs/upstream-fixes.md).
+limits the mod cannot fix itself, and the build prints them. Accented
+letters (fixed in v0.2.67) and species and move names reverting to English on
+entering the field (fixed in v0.2.70) no longer apply. What remains is that the
+Pokédex descriptions, the help system and the quest log have no way in yet, and
+that the party names an egg EGG. Every one of these is tracked in the FireRed
+section of [docs/upstream-fixes.md](docs/upstream-fixes.md).
 Japanese is not offered: the game3 runtime has no way to draw kana yet.
 
 ## Legal inputs and privacy
@@ -302,12 +301,12 @@ provenance. Future unresolved entries will keep their original English text.
 
 | Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings | Crystal dialogue coverage |
 | --- | ---: | ---: | ---: |
-| `fr` | 6839/6839 (100%) | 943/943 (100%) | 3994/3994 (100%) |
-| `de` | 6839/6839 (100%) | 943/943 (100%) | 3994/3994 (100%) |
-| `es` | 6839/6839 (100%) | 943/943 (100%) | 3994/3994 (100%) |
-| `it` | 6839/6839 (100%) | 943/943 (100%) | 3994/3994 (100%) |
-| `ja-Hrkt` | 6839/6839 (100%) | 943/943 (100%) | 3994/3994 (100%) |
-| `ko` | 5796/6839 (84.75%) | 943/943 (100%) | 0/3994 (0%) |
+| `fr` | 6839/6839 (100%) | 949/949 (100%) | 3994/3994 (100%) |
+| `de` | 6839/6839 (100%) | 949/949 (100%) | 3994/3994 (100%) |
+| `es` | 6839/6839 (100%) | 949/949 (100%) | 3994/3994 (100%) |
+| `it` | 6839/6839 (100%) | 949/949 (100%) | 3994/3994 (100%) |
+| `ja-Hrkt` | 6839/6839 (100%) | 949/949 (100%) | 3994/3994 (100%) |
+| `ko` | 5796/6839 (84.75%) | 949/949 (100%) | 0/3994 (0%) |
 
 ### FireRed
 
@@ -320,9 +319,11 @@ provenance. Future unresolved entries will keep their original English text.
   (RIVAL, LEADER, ELITE FOUR and CHAMPION, two classes each): translating
   them would lose the rival's chosen name and misfile gym, Elite Four and
   champion wins in the quest log.
-- `FireRed engine strings` covers the 1,616 `Strings()` keys reachable from
+- `FireRed engine strings` covers the 2,914 `Strings()` keys reachable from
   the game3 runtime: battle messages, menus, Pokédex labels, Oak's speech,
-  options, ability names, move and ability descriptions, place names. They
+  options, ability names, move and ability descriptions, place names, and
+  the 1,028 Easy Chat words and group names (the species and move groups
+  come from the species and move names). They
   are listed with their callsites and cart rows in
   [`config/frlg/engine_scope.json`](config/frlg/engine_scope.json), which
   `pipeline/frlg_engine_scope.py` regenerates from the pinned engine; a test
@@ -330,10 +331,10 @@ provenance. Future unresolved entries will keep their original English text.
 
 | Target | FireRed ROM aggregate | FireRed engine strings |
 | --- | ---: | ---: |
-| `fr` | 5631/5680 (99.14%) | 1616/1616 (100%) |
-| `de` | 5631/5680 (99.14%) | 1616/1616 (100%) |
-| `es` | 5631/5680 (99.14%) | 1616/1616 (100%) |
-| `it` | 5631/5680 (99.14%) | 1616/1616 (100%) |
+| `fr` | 5639/5688 (99.14%) | 2914/2914 (100%) |
+| `de` | 5639/5688 (99.14%) | 2914/2914 (100%) |
+| `es` | 5639/5688 (99.14%) | 2914/2914 (100%) |
+| `it` | 5639/5688 (99.14%) | 2914/2914 (100%) |
 
 These measure what the mod ships, not what the current runtime displays; see
 "Pokémon FireRed support" above for the runtime limits.
@@ -342,7 +343,7 @@ These measure what the mod ships, not what the current runtime displays; see
 
 The remaining engine keys are reported separately below. They are keys used by
 neither RBY nor Gold and Silver, so their denominator is the residual scope:
-`2808 - (421 + 943 - 85) = 1529`. The numerator counts keys translated in at
+`3093 - (421 + 949 - 85) = 1808`. The numerator counts keys translated in at
 least one of the RBY and Gold/Silver/Crystal artifacts; this is a
 project-level metric, not a claim that every key is present in both games.
 The FireRed-reachable keys are measured separately above ("FireRed engine
@@ -351,22 +352,22 @@ artifact out.
 
 | Target | Other engine strings |
 | --- | ---: |
-| `fr` | 267/1529 (17.46%) |
-| `de` | 270/1529 (17.66%) |
-| `es` | 267/1529 (17.46%) |
-| `it` | 268/1529 (17.53%) |
-| `ja-Hrkt` | 267/1529 (17.46%) |
-| `ko` | 184/1529 (12.03%) |
+| `fr` | 310/1808 (17.15%) |
+| `de` | 312/1808 (17.26%) |
+| `es` | 309/1808 (17.09%) |
+| `it` | 311/1808 (17.20%) |
+| `ja-Hrkt` | 302/1808 (16.70%) |
+| `ko` | 217/1808 (12.00%) |
 
-The denominator is calculated as follows: `2808` total engine keys, minus the
-`421` RBY-related keys and the `943` Gold and Silver-related keys, plus back the `85` keys
+The denominator is calculated as follows: `3093` total engine keys, minus the
+`421` RBY-related keys and the `949` Gold and Silver-related keys, plus back the `85` keys
 shared by both scopes so they are subtracted only once. The resulting residual
-scope is `1529` keys, most of them FireRed's: the Gold/Silver corpus
+scope is `1808` keys, most of them FireRed's: the Gold/Silver corpus
 also matches some of them, which is why the numerators grew with the
 FireRed branch.
 
 These values use the pinned ROMs, corpus snapshots and Gen1Recomp revision
-`b9d2f97f` (v0.2.67); regenerate them whenever one of those inputs changes.
+`2148291c` (v0.2.70); regenerate them whenever one of those inputs changes.
 
 ## Translation provenance
 
