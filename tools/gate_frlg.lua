@@ -246,9 +246,10 @@ local FrlgFont = require("src.ui.game3.frlg_font")
 local blank, blankByCatalog = {}, {}
 local blankTotal = 0
 local function countBlanks(catalogName, text)
-  -- Strings() directives, {PLAYER}/{A_BUTTON}-style tokens and page marks
-  -- are replaced or acted on before anything is drawn.
-  text = text:gsub("%%%d*%$?[-+ #0]*%d*%.?%d*[%a%%]", ""):gsub("{[%u%d_]+}", ""):gsub("\\p", ""):gsub("\f", "")
+  -- Strings() directives, {PLAYER}/{A_BUTTON}-style tokens and page and line
+  -- marks are replaced or acted on before anything is drawn, pret's own
+  -- escapes included (Teachy TV's lessons write "\\n", "\\l" and "\\p").
+  text = text:gsub("%%%d*%$?[-+ #0]*%d*%.?%d*[%a%%]", ""):gsub("{[%u%d_]+}", ""):gsub("\\[npl]", ""):gsub("\f", "")
   for char in text:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
     if char ~= " " and char ~= "\n" and FrlgFont.glyphId(char) == 0 then
       blank[char] = (blank[char] or 0) + 1

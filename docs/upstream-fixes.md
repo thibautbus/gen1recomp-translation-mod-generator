@@ -1535,7 +1535,7 @@ bullets above) visible to the engine project.
 
 ## FireRed
 
-FireRed (US, v1.0) is gen1recomp's first generation-3 game: a separate `game3` runtime (`src/core/game3`, `src/ui/game3`) with its own mod surface (`src/mods/Gen3Compat.lua`, `Schemas.GEN3` in `src/mods/Schemas.lua`). The pinned revision is `b9d2f97f` (v0.2.67), the first upstream release carrying the engine work this mod needs: FireRed's own text routed through `Strings()` (gen1recomp#2346) and the ROM font's European letters (gen1recomp#2342). File:line citations refer to the pinned tree. The translation mod (`translation-<lang>-gen3`, fr/de/es/it) uses only the public generation-3 registries and one public hook, and `tools/gate_frlg.lua` loads it through the real generation-3 loader on top of the game3 data modules built from a private FireRed extract, so every "lands"/"does not land" statement here is measured, not inferred.
+FireRed (US, v1.0) is gen1recomp's first generation-3 game: a separate `game3` runtime (`src/core/game3`, `src/ui/game3`) with its own mod surface (`src/mods/Gen3Compat.lua`, `Schemas.GEN3` in `src/mods/Schemas.lua`). The pinned revision is `2148291c` (v0.2.70). v0.2.67 was the first upstream release carrying the engine work this mod needs, FireRed's own text routed through `Strings()` (gen1recomp#2346) and the ROM font's European letters (gen1recomp#2342); v0.2.70 adds the species and move names a mod ships (gen1recomp#2374) and the Easy Chat vocabulary (gen1recomp#2375). File:line citations refer to the pinned tree. The translation mod (`translation-<lang>-gen3`, fr/de/es/it) uses only the public generation-3 registries and one public hook, and `tools/gate_frlg.lua` loads it through the real generation-3 loader on top of the game3 data modules built from a private FireRed extract, so every "lands"/"does not land" statement here is measured, not inferred.
 
 Summary of what a translation mod can and cannot reach at the pinned revision:
 
@@ -1549,6 +1549,23 @@ Summary of what a translation mod can and cannot reach at the pinned revision:
 | Accented letters on screen | **No**: drawn blank | glyph lookup, see first entry below |
 | Japanese | **No** | no glyphs, font registry gated |
 | Pokédex categories and descriptions, help system, quest log, naming keyboard | **No** | extracted packs or fixed layouts with no registry |
+
+### Fixed upstream in v0.2.70
+
+Four FireRed fixes this project sent upstream are in the pinned release:
+
+- gen1recomp#2374 re-applies a mod's `pokemon` and `moves` patches after `Pokemon.install()` reloads the species pack (entry 2), so the `species_names` and `move_names` catalogs reach the party, the summary and battles.
+- gen1recomp#2375 routes the Easy Chat vocabulary through `Strings()` and reads its species and move groups from the dataset (entry 11); gen1recomp#2365 draws the word pages' fourth row, and gen1recomp#2376 gives the summary's move names the width the cart gives them.
+
+The release also brings a large batch of new FireRed screens: Mystery Gift, Teachy TV, the Union Room and the wireless status screen, the network link menu, the slot machine, the Trainer Tower records, the elevators, Safari battles. The engine catalog grows from 1,616 to 2,914 keys, 1,028 of them Easy Chat. On this project's side:
+
+- `pipeline/frlg_engine_scope.py` collects the Easy Chat keys from the engine's own table (`easyChat.group|<name>`, and `easyChat.<group>|<word>` for the 18 text groups; the species and move groups are left to `species_names` and `move_names`, which the engine reads for them), and joins each word to its own group's `easy_chat_group_*` row, the one case a last-resort family stands for a key. Words that read as neutral are kept, since the carts do not all keep them: the Spanish cart's "…" is ¡QUÉ PLAN!.
+- It reads the new tables the runtime passes to `Strings()` through a variable (the Union Room's labels and activities, the wireless status rows, the Trainer Tower modes, the in-game trade names, the elevator's floors) and the `require("src.core.Strings")(...)` call form, and the hardcoded-text audit sees every table a value sits in and leaves out exactly what a literal `Strings()` argument covers, multi-line ones included.
+- Keys that hand the runtime pret's own escapes (`\n`, `\l`, `\p`, as Teachy TV's lessons do) are matched and written back in that form (`_break_marks` in `pipeline/frlg_join.py`).
+- The elevator menu spells the floor labels out as literals, which the neutral-string filter would have dropped together with the map popup's floor naming; a floor label now stays a floor.
+- 75 keys with no clean corpus row are covered by `overrides/<language>/frlg/engine.json`: cart rows the engine words or splits its own way (the Wonder Card bodies from `mystery_event_msg`, OAK's first-battle advice, the POKé FLUTE and lure/repel lines, the Safari and Trainer Tower labels), and port-added text with no cart equivalent (the network link menu, the slot machine's fallback labels), worded per language (`engine-original`). The six overrides for keys the engine removed are gone.
+
+In French, 2,489 of the 2,914 keys come from a corpus row, 290 from `overrides/fr/frlg/engine.json`, 43 from the Red/Blue and Gold overrides for rows the runtimes share, and 92 read the same as English (German, Spanish and Italian take 2,503, 2,530 and 2,515 from the corpus); none falls back to English in any of the four languages.
 
 ### Fixed upstream in v0.2.67
 
@@ -1602,6 +1619,8 @@ Measured by the gate: `BULBIZARRE`/`BISASAM` and `ECRAS'FACE`/`PFUND`/`DESTRUCTO
 
 Fix: make the `Pokemon.onReload` callback re-apply the merged `pokemon` and `moves` registries (`spec.write` for both, exactly as `reapplyMoves` does for `Moves`), or skip `Pokemon.install` in `Runtime.start` when the pack is already installed from the same cache.
 
+**Fixed upstream in v0.2.70** by gen1recomp#2374: the `Pokemon.onReload` callback re-applies the `moves` and then the `pokemon` registry, in `Loader:_mergeOrder`'s order, since the species writer resolves learnsets through the move index the moves writer fills (`tests/engine/game3_mod_names_survive_reload_test.lua`). Base-stat patches were reverted the same way and come back with it.
+
 #### 3. Japanese cannot be rendered
 
 game3 draws every string with the cart's Latin font (`FrlgFont`), which has no kana, and `Schemas.GEN3` gates the `font` registry (`font = false`, `src/mods/Schemas.lua`), so a mod cannot register the TTF the Red/Blue and Gold/Silver Japanese mods use. The FireRedLeafGreen corpus has a complete `ja-Hrkt` column; the pipeline does not offer it (`pipeline/specs.py`) because every line would print blank.
@@ -1647,7 +1666,7 @@ The pipeline keeps these class names in English (`ENGINE_KEYED_CLASS_NAMES` in `
 
 #### 10. Cart text the extractor never reaches
 
-Joining the other way round -- every `frlg.script.*` corpus row whose pret label has an address in `pokefirered.sym` but no key in the extracted text table -- finds 1,078 FireRed lines the game3 text registry cannot carry, because the script BFS (`src/import/gba/extract_scripts.lua`) never reads them. Part of it is dead content in FireRed, the rest is shown in game from Lua literals or by a native that bypasses the table:
+Joining the other way round -- every `frlg.script.*` corpus row whose pret label has an address in `pokefirered.sym` but no key in the extracted text table -- found 1,078 FireRed lines at v0.2.67 that the game3 text registry cannot carry, because the script BFS (`src/import/gba/extract_scripts.lua`) never reads them. Part of it is dead content in FireRed, the rest is shown in game from Lua literals or by a native that bypasses the table:
 
 | Corpus namespace | Rows | In game |
 | --- | ---: | --- |
@@ -1683,13 +1702,22 @@ Only the first half is missing text: the other 806 are species and move names du
 
 Fix, in two parts of very different size. The vocabulary groups can go through `Strings()` where the picker draws them, with a context per group: 155 of those words collide with keys this engine already uses elsewhere (ATTACK, BAG, CANCEL, BACK, BOY...), which one catalog entry cannot serve, and `Strings(source, context)` is what the engine already provides for exactly that (see the Contest status box's `contest.caught|None`). The species and move groups should instead read the ROM packs the rest of game3 reads, which fixes the renaming gap at the same time and needs no catalog work at all: those names are already translated in `lang/species_names.lua` and `lang/move_names.lua`.
 
+**Fixed upstream in v0.2.70** by gen1recomp#2375, along these lines: `src/core/game3/easy_chat_text.lua` looks each vocabulary word up as `Strings(word, "easyChat.<group>")` and each group name as `Strings(name, "easyChat.group")`, and resolves the species and move groups through `Pokemon.name`/`Pokemon.moveName`. `pipeline/frlg_engine_scope.py` emits the 1,028 keys (see the v0.2.70 section above), 1,025 of them joined to their group's corpus row; the `[POKEBLOCK]` and `[PK]RS` words and the POKéMON (NAT) group name, which the cart calls POKéMON2, are overrides.
+
+#### 12. An EGG is named in English in the party
+
+`Party.giveMon` gives a new egg the nickname `"EGG"` (`src/core/game3/party.lua:288-292`, and `src/core/game3/breeding.lua:395` for the Day-Care's), and the party slots print a mon's nickname as it is (`Pokemon.displayName`, `src/ui/game3/party_menu.lua`). The cart stores its own `gText_EggNickname` there, which each European cart translates (OEUF, EI, HUEVO, UOVO), so a translated game still lists its eggs as EGG. The summary and the link trade screen are not affected: they print `Strings("EGG")` for an egg.
+
+Fix: store `Strings("EGG")` as the nickname when the egg is made, which is what the cart does (the save holds the translated word), or have `displayName` return `Strings("EGG")` for an egg, as the summary does.
+
 #### Inventory: every game3 file with hardcoded player-visible text
 
 Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg_audit.py`) at the pinned revision: every string literal under `src/{core,ui,battle,world}/game3` that looks like text, is not a `Strings()` argument and is not a value the runtime passes to `Strings()` through a variable from that same file (tables and lists `pipeline/frlg_engine_scope.py` reads), minus the files reviewed as never reaching the screen (`NON_DISPLAY_FILES`: identifiers, quest-log keys, log lines, name fallbacks for a missing pack, each with its reason). Reviewing a file as non-display hides any literal added to it later, so a pin bump should re-read the reasons of the files it touches. `tests/test_frlg.py` fails if the scan finds a player-visible file this table does not list, so the inventory stays complete across pin bumps. At `2c0f3ac0` (v0.2.64) the same scan, without the scope filter, found 74 files and 2,028 literals.
 
 | File | Literals | What the player sees | Entry |
 | --- | ---: | --- | --- |
-| `src/core/game3/easy_chat_data.lua` | 1,824 | Easy Chat words and group names the player composes with | 11 |
+| `src/core/game3/breeding.lua` | 1 | The Day-Care egg's `EGG` nickname | 12 |
+| `src/core/game3/party.lua` | 6 | An egg's `EGG` nickname, and the `POKéMON`/`RED` fallbacks for a mon with no species or OT name | 12 |
 | `src/ui/game3/help_system.lua` | 5 | `{PLAYER}`/`{PC_OWNER}`/`{RIVAL}` fallbacks inside the (untranslated) help text | 5 |
 | `src/ui/game3/naming.lua` | 26 | Naming keyboard rows and page names | 8 |
 
@@ -1699,7 +1727,7 @@ Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg_
 - **Corrupted-save warning**: `src/ui/game3/boot.lua` prints the cart's `gText_SaveFileCorrupted` as two `Strings()` pages. The official translation is split at its sentence (Italian: paragraph) boundary.
 - **Imperial units**: the Pokédex and its size page print weights and heights gen1recomp computes in pounds and feet (`pokedex_data.lua`); the European carts print kilograms and metres. A template cannot convert the number, so the translations keep `lbs.` and feet/inches and only localise the labels (HAUT./POIDS…) and the decimal comma.
 - **Trainer names**: gen1recomp composes "<class> <name>" (`battle/init.lua`, `switch_seq.lua`, `trainers.lua`) and passes it as one argument to messages such as "%s defeated\n%s!". The Italian cart writes "<name>, <class>"; the Italian lines keep gen1recomp's order.
-- **Lines gen1recomp words its own way**: 220 French keys (similar in de/es/it) have no cart row that reads as them. They are either English the port added (PC item storage, Hall of Fame banner, bicycle, repel reuse, release, OAK's refusal without the player's name…) or cart messages gen1recomp rewords or splits (the stat-change lines the cart builds from `sText_AttackersStatRose` and a verb row, "gained a boosted", the double send-out, the berry flavour lines). They are worded from the nearest cart row, named in each entry's `provenance` (`overrides/<lang>/frlg/engine.json`, `reason: "engine-corpus"`, `"engine-contract-gap"` or `"engine-original"`).
+- **Lines gen1recomp words its own way**: 290 French keys (similar in de/es/it) have no cart row that reads as them. They are either English the port added (PC item storage, Hall of Fame banner, bicycle, repel reuse, release, OAK's refusal without the player's name…) or cart messages gen1recomp rewords or splits (the stat-change lines the cart builds from `sText_AttackersStatRose` and a verb row, "gained a boosted", the double send-out, the berry flavour lines). They are worded from the nearest cart row, named in each entry's `provenance` (`overrides/<lang>/frlg/engine.json`, `reason: "engine-corpus"`, `"engine-contract-gap"` or `"engine-original"`).
 - **One English label, several cart wordings**: FireRed words the same English differently from menu to menu (CANCEL is RETOUR in most French menus, ANNUL. in the PC). A `Strings()` key has one value, so the scope keeps the wording most cart rows share for that English (a `REVIEWED` pin where the majority is the wrong sense: FIGHT is the battle menu's ATTAQUE, not the FIGHT type).
 - **Shared `OFF`/`NORMAL` keys**: `Strings("OFF")` serves both the volume and music-filter rows, and the project's existing Red/Blue/Gold wording is reused for it.
 - **Named glyph runs**: the cart's superscript ordinals (`[SUPER_E]`/`[SUPER_ER]`/`[SUPER_RE]`, French "1er"/"2e", Spanish "1.er") and the `[POKEBLOCK]` glyph run have no single character FrlgFont can map, so translations spell them out as plain letters ("er", "POKéBLOCK").

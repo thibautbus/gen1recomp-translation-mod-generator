@@ -99,6 +99,17 @@ each("src/ui/game3/shop_menu.lua (ShopMenu.ROOT label)", Shop.ROOT, "label")
 local Party = require("src.ui.game3.party_menu")
 each("src/ui/game3/party_menu.lua (PartyMenu.ACTIONS)", Party.ACTIONS)
 each("src/ui/game3/party_menu.lua (PartyMenu.ITEM_ACTIONS)", Party.ITEM_ACTIONS)
+local UnionScreen = require("src.ui.game3.union_room")
+each("src/ui/game3/union_room.lua (UnionRoomScreen.LABELS)", UnionScreen.LABELS)
+each("src/ui/game3/union_room.lua (UnionRoomScreen.ACTIVITY_LABELS)", UnionScreen.ACTIVITY_LABELS)
+local Union = require("src.core.game3.link.union_room")
+each("src/core/game3/link/union_room.lua (Union.ACTIVITY_NAMES)", Union.ACTIVITY_NAMES)
+each("src/core/game3/link/union_room.lua (Union.INVITE_ITEMS key)", Union.INVITE_ITEMS, "key")
+local LinkStatus = require("src.core.game3.link.status")
+each("src/core/game3/link/status.lua (Status.LABELS)", LinkStatus.LABELS)
+add("src/core/game3/link/status.lua (Status.TITLE)", LinkStatus.TITLE)
+local TowerRecords = require("src.ui.game3.trainer_tower_records")
+each("src/ui/game3/trainer_tower_records.lua (Records.MODE_TEXT)", TowerRecords.MODE_TEXT)
 local FieldMoves = require("src.core.game3.field_moves")
 for _, name in pairs(FieldMoves.MOVE_NAME_BY_ID) do
   add("src/ui/game3/party_menu.lua (field move label)", (tostring(name):gsub("_", " ")))
@@ -134,6 +145,10 @@ LOCAL_SOURCES: tuple[tuple[str, str, str], ...] = (
     ("src/ui/game3/pc_menu.lua", "table", "storageOptions"),
     ("src/ui/game3/stat_growth.lua", "table", "STAT_NAMES"),
     ("src/ui/game3/summary_menu.lua", "table", "PAGE_TITLES"),
+    # in-game trade nicknames and OT names (sInGameTrades), Strings()'d on use
+    ("src/core/game3/scripting/natives_trade.lua", "table", "TRADES"),
+    # the elevator's floor window, the same floor labels as the map popup
+    ("src/core/game3/scripting/natives_elevator.lua", "table", "FLOOR_NAMES"),
 )
 
 # Corpus families to prefer when several rows read as the same key.  Rows
@@ -257,22 +272,39 @@ def reachable_by_file(engine: Path) -> dict[str, set[str]]:
             values = _line_values(text, what)
         for value in values:
             found.setdefault(value, set()).add(path)
-    for value, site in {**probe_values(engine), **fallback_values(engine)}.items():
+    # every table a probed value sits in: the same label can live in two
+    # files (the Union Room's screen and its link logic), and the audit asks
+    # per file
+    for site, value in probe_rows(engine):
         found.setdefault(value, set()).add(site.split(" ", 1)[0].split(":", 1)[0])
+    for value, site in fallback_values(engine).items():
+        found.setdefault(value, set()).add(site.split(" ", 1)[0].split(":", 1)[0])
+    # the Easy Chat vocabulary: text words and group names through Strings(),
+    # species and move words through the dataset's (translated) names
+    for _group_id, name, word in easy_chat_rows(engine):
+        found.setdefault(word or name, set()).add(EASY_CHAT_SITE.split(" ", 1)[0])
     return found
 
 
-def probe_values(engine: Path, luajit: str | None = None) -> dict[str, str]:
+def probe_rows(engine: Path, luajit: str | None = None) -> list[tuple[str, str]]:
+    """Every (site, value) the probe reads, a value once per table holding it."""
     luajit = luajit or shutil.which("luajit")
     if not luajit:
         raise RuntimeError("LuaJIT is needed to read the engine's tables")
     out = subprocess.run([luajit, "-e", _PROBE], cwd=engine, capture_output=True,
                          text=True, check=True).stdout
-    found: dict[str, str] = {}
+    rows = []
     for line in out.split("\n"):
         if "\t" in line:
             site, value = line.split("\t", 1)
-            found.setdefault(value.replace("\\n", "\n"), site)
+            rows.append((site, value.replace("\\n", "\n")))
+    return rows
+
+
+def probe_values(engine: Path, luajit: str | None = None) -> dict[str, str]:
+    found: dict[str, str] = {}
+    for site, value in probe_rows(engine, luajit):
+        found.setdefault(value, site)
     return found
 
 
@@ -315,7 +347,7 @@ def _neutral(value: str) -> bool:
 # same lines (Help.level == 'main', "a_button" icons, option keys).
 def context_source(key: str) -> str:
     """The English source of a context key ("option.battleStyle|SHIFT")."""
-    return key.split("|", 1)[1] if re.match(r"[a-z][\w.]*\|", key) else key
+    return key.split("|", 1)[1] if re.match(r"[a-z][\w.]*(?: [\w.]+)*\|", key) else key
 
 
 def _option_context_keys(engine: Path) -> dict[str, str]:
@@ -328,6 +360,68 @@ def _option_context_keys(engine: Path) -> dict[str, str]:
             value = _unescape(next(g for g in literal.groups() if g is not None))
             found[f"option.{match.group(1)}|{value}"] = f"{path} (cartLabel {match.group(1)})"
     return found
+
+
+EASY_CHAT_SITE = "src/core/game3/easy_chat_data.lua (EasyChatData.GROUPS)"
+# pret's "value" groups (EC_GROUP_POKEMON, EC_GROUP_MOVE_1, EC_GROUP_MOVE_2,
+# EC_GROUP_POKEMON_NATIONAL) list species and move ids: the engine draws them
+# from the dataset (src/core/game3/easy_chat_text.lua VALUE_GROUPS), so a
+# translation reaches them through species_names and move_names, and a key
+# here would only freeze the cart's name over a mod's rename.
+EASY_CHAT_VALUE_GROUPS = frozenset({0, 18, 19, 21})
+_EASY_CHAT_PROBE = r"""
+package.path = "./?.lua;./?/init.lua;" .. package.path
+local D = require("src.core.game3.easy_chat_data")
+local out = {}
+for id, group in pairs(D.GROUPS or {}) do
+  for _, word in ipairs(group.words or {}) do
+    out[#out + 1] = id .. "\t" .. group.name .. "\t" .. word.text
+  end
+  out[#out + 1] = id .. "\t" .. group.name .. "\t"
+end
+io.write(table.concat(out, "\n"))
+"""
+
+
+def easy_chat_rows(engine: Path, luajit: str | None = None) -> list[tuple[int, str, str]]:
+    """(group id, group name, word) for every Easy Chat word, and (id, name, "")
+    for each group itself."""
+    luajit = luajit or shutil.which("luajit")
+    if not luajit:
+        raise RuntimeError("LuaJIT is needed to read the engine's tables")
+    out = subprocess.run([luajit, "-e", _EASY_CHAT_PROBE], cwd=engine, capture_output=True,
+                         text=True, check=True).stdout
+    rows = []
+    for line in out.split("\n"):
+        if line.count("\t") == 2:
+            group_id, name, word = line.split("\t")
+            rows.append((int(group_id), name, word))
+    return rows
+
+
+def easy_chat_keys(engine: Path) -> dict[str, str]:
+    """The keys src/core/game3/easy_chat_text.lua looks the vocabulary up by:
+    Strings(name, "easyChat.group") for a group and Strings(word,
+    "easyChat.<group>") for a word of the text groups."""
+    keys = {}
+    for group_id, name, word in easy_chat_rows(engine):
+        if not word:
+            keys[f"easyChat.group|{name}"] = EASY_CHAT_SITE
+        elif group_id not in EASY_CHAT_VALUE_GROUPS:
+            keys[f"easyChat.{name}|{word}"] = EASY_CHAT_SITE
+    return keys
+
+
+def context_family(context: str) -> str | None:
+    """The corpus family a context key's row must come from: an Easy Chat
+    word is its own group's row, never the menu label it shares English with."""
+    if context in CONTEXT_FAMILIES:
+        return CONTEXT_FAMILIES[context]
+    if context == "easyChat.group":
+        return ".gEasyChatGroupName_"
+    if context.startswith("easyChat."):
+        return ".easy_chat_group_" + re.sub(r"[^a-z0-9]+", "_", context[len("easyChat."):].lower()).strip("_") + "."
+    return None
 
 
 def _identifier(value: str) -> bool:
@@ -358,17 +452,28 @@ def collect_keys(engine: Path, extracted: Path | None = None) -> dict[str, dict]
             continue
         keys.setdefault(row["source"], {"callsite": f"{path}:{row['line']}", "kind": "literal"})
     for value, site in {**local_source_values(engine), **probe_values(engine)}.items():
-        kind = "floor" if "floor label" in site else "dynamic"
-        keys.setdefault(value, {"callsite": site, "kind": kind})
+        if "floor label" in site:
+            # A floor label stays a floor even when a literal saw it first (the
+            # elevator menu spells "1F", "B1F"... out in natives_listmenu.lua):
+            # as a literal, the neutral-string filter below would drop it, and
+            # with it the cart's own floor naming ("2E" for 3F in French).
+            keys[value] = {"callsite": site, "kind": "floor"}
+            continue
+        keys.setdefault(value, {"callsite": site, "kind": "dynamic"})
     for value, site in fallback_values(engine).items():
         keys.setdefault(value, {"callsite": site, "kind": "dynamic"})
     for value, site in _option_context_keys(engine).items():
         keys.setdefault(value, {"callsite": site, "kind": "context"})
+    for value, site in easy_chat_keys(engine).items():
+        keys.setdefault(value, {"callsite": site, "kind": "context"})
     if extracted is not None:
         for value, site in rom_description_values(extracted).items():
             keys.setdefault(value, {"callsite": site, "kind": "rom"})
+    # Floors and Easy Chat words are kept even when they read as neutral: the
+    # carts word "3F" and the VOICES group's "…" or "-" their own way (the
+    # Spanish "…" is "¡QUÉ PLAN!"), and "A"/"I" are words of their groups.
     return {key: row for key, row in keys.items()
-            if (row["kind"] == "floor" or not _neutral(key))
+            if (row["kind"] == "floor" or key.startswith("easyChat.") or not _neutral(key))
             and not (row["kind"] == "dynamic" and _identifier(key))}
 
 
@@ -414,7 +519,7 @@ def match_qids(key: str, index, corpora: Mapping[str, object], charmap: PretChar
     exact, loose = index
     chunks, _directives = _key_parts(context_source(key))
     candidates = exact.get(_shape(chunks, False)) or loose.get(_shape(chunks, True)) or []
-    family = CONTEXT_FAMILIES.get(key.split("|", 1)[0]) if key != context_source(key) else None
+    family = context_family(key.split("|", 1)[0]) if key != context_source(key) else None
     if family:
         candidates = [qid for qid in candidates if family in qid]
     values: dict[str, tuple[str, ...]] = {}
@@ -432,7 +537,9 @@ def match_qids(key: str, index, corpora: Mapping[str, object], charmap: PretChar
         values[qid] = tuple(row)
     if not values:
         return []
-    preferred = [qid for qid in values if not _rank(qid)[0]]
+    # a context that names its family is the one case a last-resort row
+    # (an Easy Chat word under its own group) stands for the key
+    preferred = [qid for qid in values if family or not _rank(qid)[0]]
     if not preferred:
         return []
     def agreement(qid: str) -> int:

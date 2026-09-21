@@ -173,7 +173,7 @@ def read_engine_catalog(path: str | Path) -> dict[str, str]:
                 raise ValueError("duplicate engine source key")
             result[source] = ""
         if result:
-            return result
+            return _without_easy_chat(result)
     for line_no, line in enumerate(text.splitlines(), 1):
         stripped = line.strip()
         if not stripped or stripped.startswith("--") or stripped in {"return {", "}"}:
@@ -193,7 +193,16 @@ def read_engine_catalog(path: str | Path) -> dict[str, str]:
         result[source] = ""
     if not result:
         raise ValueError(f"engine strings catalogue is empty: {path}")
-    return result
+    return _without_easy_chat(result)
+
+
+# Modkit's scaffold (gen1recomp >= v0.2.70) lists the FireRed Easy Chat
+# vocabulary for every game, keyed "easyChat.<group>|<word>": engine data of the
+# game3 runtime that the Red/Blue and Gold catalogs this module reads neither
+# look up nor translate.  FireRed builds its own engine catalog
+# (pipeline/frlg_engine_scope.py), so the keys are dropped here.
+def _without_easy_chat(catalog: dict[str, str]) -> dict[str, str]:
+    return {key: value for key, value in catalog.items() if not key.startswith("easyChat.")}
 
 
 def require_worksheets(root: str | Path) -> dict[str, list]:

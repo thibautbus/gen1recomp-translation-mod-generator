@@ -2,6 +2,11 @@
   "schema": "gen1recomp-translation-mods/engine-overrides",
   "version": 1,
   "entries": {
+    "  YES > NO": {
+      "override": "  JA > NEIN",
+      "reason": "engine-corpus",
+      "provenance": "From strings.gText_Yes / gText_No; the link trade confirmation's cursor row (src/ui/game3/link_trade_menu.lua), cursor on NO, with the engine's own '>' marker and spacing."
+    },
     " ???? ? lbs.": {
       "override": " ???? ? lbs.",
       "reason": "engine-contract-gap",
@@ -37,10 +42,20 @@
       "reason": "engine-corpus",
       "provenance": "Pokédex category line: the cart prints the category followed by POKéMON in every language (gSpeciesInfo categories)."
     },
+    "%s and %s\nare not compatible.": {
+      "override": "%s und %s\nsind nicht kompatibel.",
+      "reason": "engine-corpus",
+      "provenance": "From strings.gText_PkmnCantLearnMove; its first paragraph, which party_menu.lua prints on its own."
+    },
     "%s blacked out!": {
       "override": "%s fällt in Ohnmacht!",
       "reason": "engine-corpus",
       "provenance": "From battle_message.sText_PlayerWhiteout2 (FireRed says \"whited out\" where gen1recomp's message says \"blacked out\")."
+    },
+    "%s can't be\nlearned.": {
+      "override": "%s kann nicht\nerlernt werden.",
+      "reason": "engine-corpus",
+      "provenance": "From strings.gText_PkmnCantLearnMove; its second paragraph. The French cart drops the move's name there (\"Impossible de l'enseigner.\"); the key passes it, so the French line names it."
     },
     "%s can't learn\n%s.": {
       "override": "%s kann %s\nnicht erlernen.",
@@ -137,6 +152,16 @@
       "reason": "engine-corpus",
       "provenance": "From strings.gText_PlayerUsedVar2 (player, then item)."
     },
+    "%s used the\n%s.\\pWild POKéMON will be lured.": {
+      "override": "%s setzt\n%s ein.\\pWilde POKéMON werden angezogen.",
+      "reason": "engine-corpus",
+      "provenance": "From strings.gText_UsedVar2WildLured; the cart names the player through [PLAYER], the key passes it as the first argument."
+    },
+    "%s used the\n%s.\\pWild POKéMON will be repelled.": {
+      "override": "%s setzt\n%s ein.\\pWilde POKéMON werden abgehalten.",
+      "reason": "engine-corpus",
+      "provenance": "From strings.gText_UsedVar2WildRepelled; the cart names the player through [PLAYER], the key passes it as the first argument."
+    },
     "%s wants to learn the\nmove %s.": {
       "override": "%s möchte %s\nerlernen.",
       "reason": "engine-contract-gap",
@@ -156,11 +181,6 @@
       "override": "%2$s erhält\n%1$s zum Tragen.",
       "reason": "engine-contract-gap",
       "provenance": "Item given to hold: gen1recomp passes the item, then the POKéMON; wording after strings.gText_PkmnWasGivenItem, reordered."
-    },
-    "%s was transferred\nto the PC.": {
-      "override": "%s wurde auf den\nPC übertragen.",
-      "reason": "engine-corpus",
-      "provenance": "Wording after obtain_item.Text_DecorTransferredToPC, for a caught POKéMON sent to the PC."
     },
     "%s's %s\ncured its love problem!": {
       "override": "%2$s von\n%1$s heilt sein Problem mit Liebe!",
@@ -196,6 +216,11 @@
       "override": "ANGRIFF von\n%s sinkt.",
       "reason": "engine-corpus",
       "provenance": "The cart builds this line from battle_message.sText_AttackersStatRose with the stat row (sText_Attack2, sText_Defense2) and the verb row (gBattleText_Rose, sText_StatFell)."
+    },
+    "%s's BATTLE RESULTS": {
+      "override": "KAMPFERGEBNISSE von %s",
+      "reason": "engine-corpus",
+      "provenance": "From strings.gString_BattleRecords_PlayersBattleResults; the player's name is the argument."
     },
     "%s's DAMP\nprevents %s\nfrom using %s!": {
       "override": "FEUCHTIGKEIT von\n%1$s hindert %2$s daran,\n%3$s einzusetzen!",
@@ -272,6 +297,11 @@
       "reason": "engine-corpus",
       "provenance": "From battle_message.sText_123Poof without its pauses."
     },
+    "> YES  NO": {
+      "override": "> JA  NEIN",
+      "reason": "engine-corpus",
+      "provenance": "From strings.gText_Yes / gText_No; the link trade confirmation's cursor row (src/ui/game3/link_trade_menu.lua), cursor on YES, with the engine's own '>' marker and spacing."
+    },
     "??????????? POKéMON": {
       "override": "??????????-POKéMON",
       "reason": "engine-corpus",
@@ -302,6 +332,11 @@
       "reason": "engine-original",
       "provenance": "Options group label added by gen1recomp; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
     },
+    "AURORA TICKET": {
+      "override": "AURORATICKET",
+      "reason": "engine-corpus",
+      "provenance": "From items.gItems.371; the Wonder Card title and list label use the item's name."
+    },
     "All POKéMON's HP was\nfully restored!": {
       "override": "Die KP aller POKéMON\nwurden aufgefüllt!",
       "reason": "engine-original",
@@ -327,10 +362,30 @@
       "reason": "engine-corpus",
       "provenance": "New-game hint part: the cart prints strings.gText_ABUTTONNext_BBUTTONBack as one row, which gen1recomp draws in pieces."
     },
+    "BAIT": {
+      "override": "KÖDER",
+      "reason": "engine-corpus",
+      "provenance": "From battle_message.gText_SafariZoneMenu; the Safari battle menu's second entry."
+    },
+    "BALL": {
+      "override": "BALL",
+      "reason": "engine-corpus",
+      "provenance": "From battle_message.gText_SafariZoneMenu; the Safari battle menu's first entry; BALL in every language."
+    },
+    "BATTLE COUNT CARD": {
+      "override": "KAMPFKARTE",
+      "reason": "engine-corpus",
+      "provenance": "From mystery_event_msg.sText_MysteryGiftBattleCountCard; the card's name as the cart's message spells it."
+    },
     "BATTLE SPEED": {
       "override": "KAMPFTEMPO",
       "reason": "engine-original",
       "provenance": "Options row added by gen1recomp; built like the project's SPIELTEMPO (overrides/de/{rby,gsc}/engine.json)."
+    },
+    "BET %d": {
+      "override": "EINSATZ %d",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the slot machine's bet counter, drawn only when the ROM's reel graphics are missing (src/ui/game3/slot_machine.lua)."
     },
     "BOX %d": {
       "override": "BOX %d",
@@ -342,15 +397,45 @@
       "reason": "engine-corpus",
       "provenance": "Box wallpaper name, from the cart's strings.gPCText_Beach row."
     },
+    "Big girl": {
+      "override": "großes Mädchen",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; buffered by BufferBigGuyOrBigGirlString for a few Sevii Islands lines; the European carts leave gText_BigGirl empty because their lines do not use it, so this only shows if a script still buffers it."
+    },
+    "Big guy": {
+      "override": "großer Junge",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; buffered by BufferBigGuyOrBigGirlString for a few Sevii Islands lines; the European carts leave gText_BigGuy empty because their lines do not use it, so this only shows if a script still buffers it."
+    },
     "Booted up a TM.\nIt contained %s.\nTeach %s to %s?": {
       "override": "TM aktiviert.\nSie enthält %1$s.\n%3$s %2$s beibringen?",
       "reason": "engine-contract-gap",
       "provenance": "TM prompt: the Western carts print gText_BootedUpTM / gText_TMHMContainedVar1 from English-only rows; arguments: move, move, POKéMON."
     },
+    "But %s can't learn more\nthan four moves.": {
+      "override": "Aber %s kann nicht\nmehr als vier Attacken erlernen.",
+      "reason": "engine-corpus",
+      "provenance": "From battle_message.sText_TryToLearnMove2; the level-up learn prompt in battle/learn_move.lua."
+    },
+    "CAVE have changed.": {
+      "override": "HÖHLE haben sich verändert.",
+      "reason": "engine-contract-gap",
+      "provenance": "Worded from mystery_event_msg.sText_MysteryGiftAlteringCave; second of the card's four body lines, ending the cave's name."
+    },
+    "CH": {
+      "override": "KI",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; two-letter stand-in for a slot reel icon when the ROM's graphics are missing (src/ui/game3/slot_machine.lua PLACEHOLDER): the first letters of this language's name for it (PIKACHU, PSYDUCK, cherries, MAGNEMITE, SHELLDER)."
+    },
     "CONGRATULATIONS!": {
       "override": "GLÜCKWUNSCH!",
       "reason": "engine-original",
       "provenance": "Hall of Fame banner added by gen1recomp."
+    },
+    "CREDIT": {
+      "override": "KREDIT",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the slot machine's coin counter label, drawn only when the ROM's graphics are missing (src/ui/game3/slot_machine.lua)."
     },
     "CRY": {
       "override": "RUF",
@@ -387,10 +472,20 @@
       "reason": "engine-corpus",
       "provenance": "Split from the cart's own gText_DelAllCancelOk, which stores the three footer labels as one padded row (CLEAR_TO); the engine draws them as separate buttons."
     },
+    "DRAW": {
+      "override": "PATT",
+      "reason": "engine-corpus",
+      "provenance": "From strings.gString_BattleRecords_ColumnHeaders; the Trainer Tower records' third column."
+    },
     "DUNGEON": {
       "override": "HÖHLE",
       "reason": "engine-original",
       "provenance": "Town Map dungeon title fallback, added by gen1recomp (only shown for a section with no name)."
+    },
+    "Delete an older move to make\nroom for %s?": {
+      "override": "Soll eine Attacke zu Gunsten von\n%s vergessen werden?",
+      "reason": "engine-corpus",
+      "provenance": "From strings.gText_MonIsTryingToLearnMove; its third paragraph."
     },
     "Desert": {
       "override": "WÜSTE",
@@ -401,6 +496,11 @@
       "override": "Was tun mit PKMN?",
       "reason": "engine-corpus",
       "provenance": "From strings.gText_DoWhatWithPokemon ([PKMN] spelled out)."
+    },
+    "EFFECT": {
+      "override": "EFFEKT",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the move relearner's move-detail label (src/ui/game3/move_relearner.lua), beside TYPE, POWER, PP and ACCURACY."
     },
     "ELECTRIC": {
       "override": "ELEK.",
@@ -462,15 +562,45 @@
       "reason": "engine-corpus",
       "provenance": "Box wallpaper name, from the cart's strings.gPCText_Forest row."
     },
-    "HOF DEBUT": {
-      "override": "ERSTE RUHMESHALLE",
+    "Friend joins at:": {
+      "override": "Freund verbindet mit:",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
+    },
+    "From the POKéMON CENTER we": {
+      "override": "Im POKéMON-CENTER wartet ein",
+      "reason": "engine-contract-gap",
+      "provenance": "Worded from mystery_event_msg.sText_MysteryGiftEgg, first of the Wonder Card's four body lines."
+    },
+    "GIFT System.": {
+      "override": "GESCHEHEN benutzt hast!",
       "reason": "engine-corpus",
-      "provenance": "Trainer card row: strings.gText_HallOfFameDebut."
+      "provenance": "From mystery_event_msg.sText_MysteryGiftAlteringCave; the Wonder Card body's second line, the second line of the cart's greeting."
+    },
+    "Go and see what turns up": {
+      "override": "Sieh nach, was dort auftaucht,",
+      "reason": "engine-contract-gap",
+      "provenance": "Worded from mystery_event_msg.sText_MysteryGiftAlteringCave (\"Why not visit there...?\"); third of the card's four body lines."
     },
     "HOF DEBUT: %d:%02d:%02d": {
       "override": "ERSTE RUHMESHALLE: %d:%02d:%02d",
       "reason": "engine-corpus",
       "provenance": "Hall of Fame debut time; label from strings.gText_HallOfFameDebut."
+    },
+    "HOST A GAME": {
+      "override": "SPIEL ERÖFFNEN",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
+    },
+    "HOST ADDRESS": {
+      "override": "HOST-ADRESSE",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
+    },
+    "HOSTING": {
+      "override": "GASTGEBER",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
     },
     "HT  %s": {
       "override": "GR. %s",
@@ -552,10 +682,25 @@
       "reason": "engine-corpus",
       "provenance": "Fallback item label; ITEM as help_system.Help_Text_Item names it."
     },
+    "It is for use at VERMILION CITY port.": {
+      "override": "Für den Hafen von ORANIA CITY.",
+      "reason": "engine-contract-gap",
+      "provenance": "Worded from mystery_event_msg.sText_AuroraTicket2 (\"It appears to be for use at the VERMILION CITY port.\"), kept to one Wonder Card line."
+    },
     "It restored health!": {
       "override": "Die KP wurden aufgefüllt!",
       "reason": "engine-corpus",
       "provenance": "Worded after battle_message.sText_PkmnRegainedHealth."
+    },
+    "JOIN A GAME": {
+      "override": "SPIEL BEITRETEN",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
+    },
+    "JOINING...": {
+      "override": "VERBINDEN...",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
     },
     "LEAGUE CHAMPION!": {
       "override": "LIGA-CHAMP!",
@@ -566,6 +711,31 @@
       "override": "LEICHT",
       "reason": "engine-original",
       "provenance": "VIBRATION strength value; overrides the shared LIGHT key, whose Red/Blue/Gold wording LEUCHTE translates the light/lamp sense."
+    },
+    "LINK CABLE": {
+      "override": "LINK-KABEL",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
+    },
+    "LOSE": {
+      "override": "NIEDER.",
+      "reason": "engine-corpus",
+      "provenance": "From strings.gString_BattleRecords_ColumnHeaders; the Trainer Tower records' second column."
+    },
+    "Left: %d": {
+      "override": "Übrig: %d",
+      "reason": "engine-corpus",
+      "provenance": "From battle_message.gText_HighlightRed_Left; the Safari Ball count under the healthbox (src/core/game3/battle/healthbox.lua)."
+    },
+    "Link error: %s": {
+      "override": "Verbindungsfehler: %s",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
+    },
+    "Look for them and battle!": {
+      "override": "Suche sie und kämpfe!",
+      "reason": "engine-contract-gap",
+      "provenance": "Worded from mystery_event_msg.sText_MysteryGiftBattleCountCard (\"Look for and battle TRAINERS who have the same CARD\"), shortened to the card's last body line."
     },
     "Lv%d": {
       "override": "Lv.%d",
@@ -581,6 +751,11 @@
       "override": "Lv.%d",
       "reason": "engine-corpus",
       "provenance": "Level label: strings.gText_Level."
+    },
+    "MA": {
+      "override": "MA",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; two-letter stand-in for a slot reel icon when the ROM's graphics are missing (src/ui/game3/slot_machine.lua PLACEHOLDER): the first letters of this language's name for it (PIKACHU, PSYDUCK, cherries, MAGNEMITE, SHELLDER)."
     },
     "MENU SPEED": {
       "override": "MENÜTEMPO",
@@ -601,6 +776,11 @@
       "override": "???",
       "reason": "engine-corpus",
       "provenance": "gen1recomp's type identifier, which the cart abbreviates: battle_main.gTypeNames.9 (???)."
+    },
+    "MYSTIC TICKET": {
+      "override": "GEHEIMTICKET",
+      "reason": "engine-corpus",
+      "provenance": "From items.gItems.370; the Wonder Card title and list label use the item's name."
     },
     "Met in %s\nat Lv. %d.": {
       "override": "In %s mit Lv. %d erh.",
@@ -662,10 +842,25 @@
       "reason": "engine-corpus",
       "provenance": "Hall of Fame Pokédex number; label from strings.gText_Number."
     },
+    "Not an IP address.": {
+      "override": "Keine gültige IP-Adresse.",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
+    },
     "OAK: %s!\nThis isn't the time to use that!": {
       "override": "EICH: %s!\nDafür ist jetzt keine Zeit!",
       "reason": "engine-corpus",
       "provenance": "From strings.gText_OakForbidsUseOfItemHere."
+    },
+    "OAK: Hm…\nHow disappointing…\fIf you win, you earn prize money,\nand your POKéMON grow.\fBut if you lose, {PLAYER}, you end\nup paying prize money…\fHowever, since you had no warning\nthis time, I'll pay for you.\fBut things won't be this way once\nyou step outside these doors.\fThat's why you must strengthen your\nPOKéMON by battling wild POKéMON.": {
+      "override": "EICH: Hm…\nWie enttäuschend…\fBei einem Sieg erhältst du ein\nPreisgeld und deine POKéMON\nwerden stärker!\nWenn du aber verlierst, {PLAYER},\nmusst du das Preisgeld zahlen…\fDa du dies noch nicht wusstest,\nzahle ich für dich.\fAber wenn du durch diese Tür\nschreitest, wird das nicht mehr\nso sein.\nDaher musst du deine POKéMON\nstärken, indem du gegen wilde\nPOKéMON kämpfst.",
+      "reason": "engine-corpus",
+      "provenance": "From battle_message.gText_HowDissapointing; [B_PLAYER_NAME] is the runtime's {PLAYER}, each paragraph a page, and scrolled lines are plain line breaks."
+    },
+    "OAK: Oh, for Pete's sake…\nSo pushy, as always.\f{PLAYER}.\fYou've never had a POKéMON battle\nbefore, have you?\fA POKéMON battle is when TRAINERS\npit their POKéMON against each\nother.": {
+      "override": "EICH: Oh, um Himmels willen…\nAufdringlich wie immer!\f{PLAYER}!\fDies ist dein erster POKéMON-\nKampf, nicht wahr?\fEin POKéMON-Kampf findet\nstatt, wenn TRAINER mit ihren\nPOKéMON gegeneinander kämpfen.",
+      "reason": "engine-corpus",
+      "provenance": "From battle_message.gText_ForPetesSake; [B_PLAYER_NAME] is the runtime's {PLAYER}, each paragraph a page, and scrolled lines are plain line breaks. The French cart row starts at the player's name."
     },
     "OAK: This isn't the\ntime to use that!": {
       "override": "EICH: Dafür ist jetzt\nkeine Zeit!",
@@ -707,6 +902,11 @@
       "reason": "engine-original",
       "provenance": "Options row added by gen1recomp; built like the project's SPIELTEMPO."
     },
+    "Oh, I'm sorry. Your BAG's\npocket is full.\\pPlease store something on your PC,\nthen come back for this.": {
+      "override": "Oh, es tut mir Leid! Die TASCHE\nin deinem BEUTEL ist voll.\\pLagere etwas auf deinem PC und\nkomme anschließend zurück.",
+      "reason": "engine-contract-gap",
+      "provenance": "Worded from mystery_event_msg.sText_AuroraTicketNoPlace. The cart names the player and the KEY ITEMS POCKET; the engine's gift message (src/core/game3/scripting/natives_gift.lua) does neither, so the pocket stays generic."
+    },
     "Opened BERRY POUCH.": {
       "override": "BEERENTÜTE geöffnet.",
       "reason": "engine-corpus",
@@ -742,6 +942,16 @@
       "reason": "engine-corpus",
       "provenance": "PC item storage header; ITEMS as help_system.Help_Text_Items names it."
     },
+    "PI": {
+      "override": "PI",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; two-letter stand-in for a slot reel icon when the ROM's graphics are missing (src/ui/game3/slot_machine.lua PLACEHOLDER): the first letters of this language's name for it (PIKACHU, PSYDUCK, cherries, MAGNEMITE, SHELLDER)."
+    },
+    "PLAYERS": {
+      "override": "SPIELER",
+      "reason": "engine-corpus",
+      "provenance": "From strings.gText_Var1Players; without the count, which the Union Room screen prints apart."
+    },
     "POKéMON %03d": {
       "override": "POKéMON %03d",
       "reason": "engine-original",
@@ -751,6 +961,11 @@
       "override": "POKéMON %d",
       "reason": "engine-original",
       "provenance": "Fallback species label (never printed for a valid species)."
+    },
+    "POKéMON EGG": {
+      "override": "POKéMON-EI",
+      "reason": "engine-corpus",
+      "provenance": "From mystery_event_msg.sText_MysteryGiftEgg; the gift's name as the cart's message spells it (French from strings.gText_EggNickname, OEUF)."
     },
     "POKéMON TRAINER": {
       "override": "POKéMON-TRAINER",
@@ -767,10 +982,25 @@
       "reason": "engine-original",
       "provenance": "Hall of Fame prompt added by gen1recomp."
     },
+    "PS": {
+      "override": "EN",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; two-letter stand-in for a slot reel icon when the ROM's graphics are missing (src/ui/game3/slot_machine.lua PLACEHOLDER): the first letters of this language's name for it (PIKACHU, PSYDUCK, cherries, MAGNEMITE, SHELLDER)."
+    },
     "PSYCHIC": {
       "override": "PSYCHO",
       "reason": "engine-corpus",
       "provenance": "gen1recomp's type identifier, which the cart abbreviates: battle_main.gTypeNames.14 (PSYCHC)."
+    },
+    "Played the POKé FLUTE.\\pThe POKé FLUTE awakened sleeping\nPOKéMON.": {
+      "override": "Die POKéFLÖTE erklingt.\\pDurch den Klang der POKéFLÖTE\nwachte das schlafende POKéMON auf.",
+      "reason": "engine-contract-gap",
+      "provenance": "Worded from Route12.Text_PlayedPokeFlute and strings.gText_PokeFluteAwakenedMon. The cart names the player in the first sentence (French does not); the engine's item-use line has no name, so German, Spanish and Italian drop it too."
+    },
+    "Please raise it with love and": {
+      "override": "Bitte trainiere das POKéMON",
+      "reason": "engine-corpus",
+      "provenance": "From mystery_event_msg.sText_MysteryGiftEgg; the line before the cart's last word; Spanish and Italian word the sentence on one line of their own, split here for the card."
     },
     "Pokecenter": {
       "override": "POKéCENTER",
@@ -827,6 +1057,11 @@
       "reason": "engine-corpus",
       "provenance": "Bag register action: strings.gOtherText_Register."
     },
+    "SH": {
+      "override": "MU",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; two-letter stand-in for a slot reel icon when the ROM's graphics are missing (src/ui/game3/slot_machine.lua PLACEHOLDER): the first letters of this language's name for it (PIKACHU, PSYDUCK, cherries, MAGNEMITE, SHELLDER)."
+    },
     "SIZE COMPARISON: %s": {
       "override": "GRÖSSENVERGLEICH: %s",
       "reason": "engine-original",
@@ -847,6 +1082,16 @@
       "reason": "engine-contract-gap",
       "provenance": "From battle_message.sText_SpikesScattered; de and es name the side with [B_DEF_PREFIX1], which gen1recomp does not pass, so the side is spelled out."
     },
+    "STAMP CARD": {
+      "override": "STEMPELKARTE",
+      "reason": "engine-corpus",
+      "provenance": "From mystery_event_msg.sText_MysteryGiftStampCard; the card's name as the cart's message spells it."
+    },
+    "SURFING PICHU EGG": {
+      "override": "SURFENDES PICHU-EI",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the Mystery Gift list label of the port's built-in Pichu egg (src/core/game3/mystery_gift.lua)."
+    },
     "SWITCH BOX": {
       "override": "BOX WECHSELN",
       "reason": "engine-original",
@@ -857,10 +1102,20 @@
       "reason": "engine-corpus",
       "provenance": "Box wallpaper name, from the cart's strings.gPCText_Savanna row."
     },
+    "Save failed.": {
+      "override": "Speicherfehler.",
+      "reason": "engine-corpus",
+      "provenance": "From strings.gText_SaveFailedCheckingBackup; its first sentence, the Mystery Gift screen's own save error."
+    },
     "Seafloor": {
       "override": "TIEFSEE",
       "reason": "engine-corpus",
       "provenance": "Box wallpaper name, from the cart's strings.gPCText_Seafloor row."
+    },
+    "Searching...": {
+      "override": "Suche...",
+      "reason": "engine-contract-gap",
+      "provenance": "Worded from union_room_message.gText_UR_SearchingForWirelessSystemWait, shortened to the Union Room status the engine prints on its own."
     },
     "Select a POKéMON.": {
       "override": "Wähle ein POKéMON.",
@@ -897,6 +1152,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Worded after strings.gText_CantUseUntilNewBadge."
     },
+    "Speak to the deliveryman": {
+      "override": "Sprich mit dem Boten",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the Wonder Card footer's first line (src/core/game3/mystery_gift.lua); the cart's own card footers are event data, not ROM text."
+    },
     "Stars": {
       "override": "STERNE",
       "reason": "engine-corpus",
@@ -912,6 +1172,11 @@
       "reason": "engine-original",
       "provenance": "PC deposit result added by gen1recomp."
     },
+    "System.": {
+      "override": "System benutzt hast.",
+      "reason": "engine-corpus",
+      "provenance": "From mystery_event_msg.sText_MysteryGiftStampCard; the second line of the cart's greeting, which follows the Stamp Card line above."
+    },
     "THEME %d": {
       "override": "MOTIV %d",
       "reason": "engine-original",
@@ -926,6 +1191,21 @@
       "override": "TRAINER",
       "reason": "engine-corpus",
       "provenance": "Pokédex size comparison label for the player, worded after trainer_class_names.gTrainerClassNames.0 (the Easy Chat group name the same English reads as is not this sense)."
+    },
+    "TRAINERS with the same CARD.": {
+      "override": "mit derselben KARTE fest.",
+      "reason": "engine-contract-gap",
+      "provenance": "Worded from mystery_event_msg.sText_MysteryGiftBattleCountCard, third of the card's four body lines."
+    },
+    "Thank you for using the MYSTERY": {
+      "override": "Danke, dass du das GEHEIM-",
+      "reason": "engine-corpus",
+      "provenance": "From mystery_event_msg.sText_MysteryGiftAlteringCave; the Wonder Card body's first line, the first line of the cart's greeting."
+    },
+    "Thank you for using the STAMP CARD": {
+      "override": "Danke, dass du das STEMPELKARTEN-",
+      "reason": "engine-corpus",
+      "provenance": "From mystery_event_msg.sText_MysteryGiftStampCard; the first line of the cart's greeting."
     },
     "That's much too important to deposit!": {
       "override": "Das ist zu wichtig, um es\nabzulegen!",
@@ -952,10 +1232,25 @@
       "reason": "engine-corpus",
       "provenance": "Worded after strings.gText_BoxIsFull2 for the item PC."
     },
+    "The POKéMON living in ALTERING": {
+      "override": "Die POKéMON in der WANDEL-",
+      "reason": "engine-contract-gap",
+      "provenance": "Worded from mystery_event_msg.sText_MysteryGiftAlteringCave and the cart's ALTERING CAVE name (region_map_entry_strings.sMapsecName_ALTERINGCAVE); first of the card's four body lines."
+    },
+    "The TRAINER": {
+      "override": "Der TRAINER",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; stand-in name when the Union Room does not know who is asking (src/core/game3/link/union_room.lua); it opens union_room_message.gText_UR_PlayerContactedYouForXAccept."
+    },
     "The edited words will not be saved.": {
       "override": "Die Änderungen gehen verloren.",
       "reason": "engine-original",
       "provenance": "gText_TheEditedWords/gText_WillNotBeSaved are still Japanese in every European ROM, so the cart never shows this line: the port writes it. Worded to fit the 208 px the dialog frame leaves."
+    },
+    "The link was broken.": {
+      "override": "Die Verbindung wurde getrennt.",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
     },
     "The previous save file will be\nloaded.": {
       "override": "Vorheriger Spielstand wird\ngeladen.",
@@ -971,6 +1266,11 @@
       "override": "Spielstand ist beschädigt.",
       "reason": "engine-contract-gap",
       "provenance": "First sentence of frlg.common.strings.gText_SaveFileCorrupted; src/ui/game3/boot.lua prints the cart's message as two Strings() pages, so the official translation is split at its sentence boundary."
+    },
+    "There is a ticket here for you.": {
+      "override": "Hier ist ein Ticket für dich!",
+      "reason": "engine-corpus",
+      "provenance": "From mystery_event_msg.sText_AuroraTicket1; the sentence after the player's name."
     },
     "There is no room in your BAG.": {
       "override": "Im BEUTEL ist\nkein Platz mehr.",
@@ -1052,6 +1352,16 @@
       "reason": "engine-contract-gap",
       "provenance": "From strings.gText_TossOutHowManyStrVar1s; fr, de and es leave the item out, which the argument allows."
     },
+    "Trade %s for %s?": {
+      "override": "%s gegen %s tauschen?",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the link trade confirmation (src/ui/game3/link_trade_menu.lua): the player's POKéMON, then the partner's."
+    },
+    "Trade with other TRAINERS to fill": {
+      "override": "Tausche mit anderen TRAINERN,",
+      "reason": "engine-contract-gap",
+      "provenance": "Worded from mystery_event_msg.sText_MysteryGiftStampCard (\"...to fill your STAMP CARD\"); third of the card's four body lines."
+    },
     "Turned over the %s and\nreceived ¥%d.": {
       "override": "%1$s wurde im Tausch\ngegen %2$d$ übergeben.",
       "reason": "engine-corpus",
@@ -1097,6 +1407,16 @@
       "reason": "engine-corpus",
       "provenance": "Box wallpaper name, from the cart's strings.gPCText_Volcano row."
     },
+    "WIN": {
+      "override": "SIEG",
+      "reason": "engine-corpus",
+      "provenance": "From strings.gString_BattleRecords_ColumnHeaders; the Trainer Tower records' first column."
+    },
+    "WONDER CARD FILE": {
+      "override": "WUNDERKARTEN-DATEI",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; fallback Mystery Gift list label for a card loaded from a file; WONDER CARD follows strings.gText_WonderCards."
+    },
     "WT  %s": {
       "override": "GEW. %s",
       "reason": "engine-corpus",
@@ -1106,6 +1426,11 @@
       "override": "GEW. 114,6 lbs.",
       "reason": "engine-contract-gap",
       "provenance": "Size comparison: label from strings.gText_WT; the value stays in pounds like the computed weights."
+    },
+    "Waiting...": {
+      "override": "Warten...",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
     },
     "Welcome! How may I serve you?": {
       "override": "Hallo!\nKann ich dir behilflich sein?",
@@ -1167,6 +1492,11 @@
       "reason": "engine-corpus",
       "provenance": "Worded after battle_message.sText_PlayerWhiteout."
     },
+    "Your BATTLE COUNT CARD keeps": {
+      "override": "Deine KAMPFKARTE hält deine",
+      "reason": "engine-contract-gap",
+      "provenance": "Worded from mystery_event_msg.sText_MysteryGiftBattleCountCard: the engine's Wonder Card body is four lines of its own, so the cart sentence is split at the same points."
+    },
     "Your party is full!": {
       "override": "Dein Team ist voll!",
       "reason": "engine-corpus",
@@ -1177,30 +1507,60 @@
       "reason": "engine-original",
       "provenance": "Options row added by gen1recomp; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
     },
-    "the attack": {
-      "override": "der Attacke",
+    "at a POKéMON CENTER.": {
+      "override": "in einem POKéMON-CENTER.",
       "reason": "engine-original",
-      "provenance": "Fallback move name for a partial-trap message with no move."
+      "provenance": "AI-generated engine-original translation; the Wonder Card footer's second line (src/core/game3/mystery_gift.lua)."
+    },
+    "easyChat.EVENTS|{POKEBLOCK}": {
+      "override": "POKéBLOCK",
+      "reason": "engine-corpus",
+      "provenance": "From easy_chat_group_events.sEasyChatWord_POKEBLOCK. The cart's word is the named [POKEBLOCK] glyph run ([POKEMELLA] in Italian), which FrlgFont has no single character for; spelled out as the project spells that run everywhere (pipeline/frlg_text.py TRANSLATION_TOKEN_TEXT), Italian with its own name."
+    },
+    "easyChat.STATUS|{PK}RS": {
+      "override": "POKéRUS",
+      "reason": "engine-corpus",
+      "provenance": "From easy_chat_group_status.sEasyChatWord_Pkrs. The English word is the [PK] glyph and RS, which the engine keys as {PK}RS; every European cart spells it POKéRUS."
+    },
+    "easyChat.group|POKéMON (NAT)": {
+      "override": "POKéMON (NAT)",
+      "reason": "engine-contract-gap",
+      "provenance": "The cart names this group POKéMON2 (strings.gEasyChatGroupName_Pokemon2); gen1recomp labels it POKéMON (NAT), for the National Pokédex species it holds, and each language keeps that label with its own abbreviation of national."
+    },
+    "have a gift, a POKéMON EGG!": {
+      "override": "Geschenk auf dich: ein POKéMON-EI!",
+      "reason": "engine-contract-gap",
+      "provenance": "Worded from mystery_event_msg.sText_MysteryGiftEgg, second of the Wonder Card's four body lines."
+    },
+    "kindness.": {
+      "override": "mit Liebe und Sorgfalt.",
+      "reason": "engine-corpus",
+      "provenance": "From mystery_event_msg.sText_MysteryGiftEgg; the end of the cart's last sentence, the Wonder Card's last body line."
+    },
+    "on SIX ISLAND.": {
+      "override": "auf EILAND SECHS.",
+      "reason": "engine-contract-gap",
+      "provenance": "The cart's SIX ISLAND name (region_map_entry_strings.sMapsecName_SIXISLAND); the card's last body line."
+    },
+    "the LINK TRAINER": {
+      "override": "den LINK-TRAINER",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; stand-in name for the link opponent in the battle-end line (src/core/game3/battle/init.lua), the object of 'defeated / lost against / battled to a draw against'; German takes the accusative."
+    },
+    "track of your battle record against": {
+      "override": "Kampfstatistik gegen TRAINER",
+      "reason": "engine-contract-gap",
+      "provenance": "Worded from mystery_event_msg.sText_MysteryGiftBattleCountCard, second of the card's four body lines."
+    },
+    "your STAMP CARD.": {
+      "override": "um die STEMPELKARTE zu füllen.",
+      "reason": "engine-contract-gap",
+      "provenance": "Worded from mystery_event_msg.sText_MysteryGiftStampCard; the card's last body line, naming the card as the cart does."
     },
     "{A_BUTTON}NEXT   {B_BUTTON}SKIP": {
       "override": "{A_BUTTON}WEITER   {B_BUTTON}ÜBERSPR.",
       "reason": "engine-corpus",
       "provenance": "Quest log hint; NEXT from strings.gText_ABUTTONNext, SKIP worded for this port."
-    },
-    "{DEFENDER} is hurt by %s!": {
-      "override": "{DEFENDER} wurde durch\n%s verletzt!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_PkmnHurtBy; {DEFENDER} is gen1recomp's own token."
-    },
-    "{DEFENDER} was freed from %s!": {
-      "override": "{DEFENDER} wurde von\n%s befreit!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_PkmnFreedFrom; {DEFENDER} is gen1recomp's own token."
-    },
-    "{DEFENDER} was trapped by %s!": {
-      "override": "{DEFENDER} wurde durch\n%s gefangen!",
-      "reason": "engine-corpus",
-      "provenance": "Worded after battle_message.sText_PkmnTrappedBySandTomb; {DEFENDER} is gen1recomp's own token."
     },
     "{DPAD_LEFTRIGHT}MAP {B_BUTTON}CANCEL": {
       "override": "{DPAD_LEFTRIGHT}KARTE {B_BUTTON}ZURÜCK",
