@@ -1687,6 +1687,10 @@
       "kind": "literal",
       "qid": "frlg.common.battle_message.sText_123Poof"
     },
+    "1,000": {
+      "callsite": "src/core/game3/scripting/natives_listmenu.lua:70",
+      "kind": "literal"
+    },
     "10F": {
       "callsite": "src/ui/game3/map_name_popup.lua (floor label)",
       "kind": "floor",
@@ -1706,6 +1710,10 @@
       "callsite": "src/ui/game3/map_name_popup.lua (floor label)",
       "kind": "floor",
       "qid": "frlg.common.strings.gText_2F"
+    },
+    "3,000": {
+      "callsite": "src/core/game3/scripting/natives_listmenu.lua:76",
+      "kind": "literal"
     },
     "3F": {
       "callsite": "src/ui/game3/map_name_popup.lua (floor label)",

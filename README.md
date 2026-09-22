@@ -313,13 +313,15 @@ provenance. Future unresolved entries will keep their original English text.
 - `FireRed ROM aggregate` combines the dialogue messages with the named
   catalogs (species, move and item names, item descriptions, trainer names
   and class names, start menu labels). The 39 braille messages stay in
-  English (the runtime cannot draw braille in any language), as do the
-  `POKéBLOCK CASE` item whose name the extractor already loses in English,
-  and the eight trainer classes whose English name gen1recomp compares
-  (RIVAL, LEADER, ELITE FOUR and CHAMPION, two classes each): translating
-  them would lose the rival's chosen name and misfile gym, Elite Four and
-  champion wins in the quest log.
-- `FireRed engine strings` covers the 2,914 `Strings()` keys reachable from
+  English (the runtime spells braille from Latin letters and cannot reach
+  every cell the European carts use, such as German ä), as do the eight
+  trainer classes whose English name gen1recomp compares (RIVAL, LEADER,
+  ELITE FOUR and CHAMPION, two classes each): translating them would lose
+  the rival's chosen name and misfile gym, Elite Four and champion wins in
+  the quest log. The `POKéBLOCK CASE` item's name and description are left
+  out of the aggregate: the item cannot be obtained in FireRed, and the
+  extractor loses its name even in English.
+- `FireRed engine strings` covers the 2,916 `Strings()` keys reachable from
   the game3 runtime: battle messages, menus, Pokédex labels, Oak's speech,
   options, ability names, move and ability descriptions, place names, and
   the 1,028 Easy Chat words and group names (the species and move groups
@@ -331,10 +333,10 @@ provenance. Future unresolved entries will keep their original English text.
 
 | Target | FireRed ROM aggregate | FireRed engine strings |
 | --- | ---: | ---: |
-| `fr` | 5639/5688 (99.14%) | 2914/2914 (100%) |
-| `de` | 5639/5688 (99.14%) | 2914/2914 (100%) |
-| `es` | 5639/5688 (99.14%) | 2914/2914 (100%) |
-| `it` | 5639/5688 (99.14%) | 2914/2914 (100%) |
+| `fr` | 5639/5686 (99.17%) | 2916/2916 (100%) |
+| `de` | 5639/5686 (99.17%) | 2916/2916 (100%) |
+| `es` | 5639/5686 (99.17%) | 2916/2916 (100%) |
+| `it` | 5639/5686 (99.17%) | 2916/2916 (100%) |
 
 These measure what the mod ships, not what the current runtime displays; see
 "Pokémon FireRed support" above for the runtime limits.
@@ -352,12 +354,12 @@ artifact out.
 
 | Target | Other engine strings |
 | --- | ---: |
-| `fr` | 310/1808 (17.15%) |
-| `de` | 312/1808 (17.26%) |
-| `es` | 309/1808 (17.09%) |
-| `it` | 311/1808 (17.20%) |
-| `ja-Hrkt` | 302/1808 (16.70%) |
-| `ko` | 217/1808 (12.00%) |
+| `fr` | 312/1808 (17.26%) |
+| `de` | 314/1808 (17.37%) |
+| `es` | 311/1808 (17.20%) |
+| `it` | 313/1808 (17.31%) |
+| `ja-Hrkt` | 304/1808 (16.81%) |
+| `ko` | 219/1808 (12.11%) |
 
 The denominator is calculated as follows: `3093` total engine keys, minus the
 `421` RBY-related keys and the `949` Gold and Silver-related keys, plus back the `85` keys
@@ -559,9 +561,9 @@ archive before upload.
   identical to an English type name is translated too.
 - The desktop launcher uses a separate renderer and is outside the content
   mod's translation hooks.
-- FireRed renders accented letters blank, reverts species and move names on
-  entering the field and keeps much of its interface in English until the
-  upstream fixes listed in the FireRed section of the document below land.
+- FireRed's Pokédex descriptions, help system and quest log stay in English,
+  and the party names an egg EGG, until the upstream fixes listed in the
+  FireRed section of the document below land.
 - RBY-, Gold and Silver- and FireRed-specific upstream engine gaps are tracked in
   [docs/upstream-fixes.md](docs/upstream-fixes.md).
 

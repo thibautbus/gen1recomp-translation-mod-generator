@@ -3247,6 +3247,11 @@
       "reason": "engine-original",
       "provenance": "AI-generated translation of Gen1Recomp's file-printer save-location suffix, shared by the Pokedex-entry and BOX print confirmations; split from the pre-v0.2.55 combined key when gen1recomp separated it into its own Strings() call."
     },
+    "Saved to\n%s.": {
+      "override": "Guardados en\n%s.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of Gen1Recomp's file-printer save-location line for a picture that went to the device's photo album (src/core/Printer.lua:78, Android), the sibling of the \"Saved as\" line shared by the Pokedex-entry and BOX print confirmations."
+    },
     "Saving… Leave ON!": {
       "override": "Guardando-No Apag.",
       "reason": "engine-corpus",
@@ -3656,6 +3661,11 @@
       "override": "No hay POKéMON\nahí.",
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row (another of Boxes.lua's own refusals, see BOX_FAILURE_SOURCES); composed keeping this catalog's own established POKéMON spelling."
+    },
+    "There was a trophy\ninside!\fThe trophy was\nsent home.": {
+      "override": "¡Había un trofeo\ndentro!\f{PLAYER} envió\nel trofeo a casa.",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-backed from gs.common_3.SentTrophyHomeText (real Gold ROM text), the row this message reproduces (src/core/Game2.lua:879, data/text/common_3.asm:372). Gen1Recomp's English leaves the player's name out; the cart's text names them, and TextBox fills {PLAYER}."
     },
     "There was a trophy\ninside!\f{PLAYER} sent the\ntrophy home.": {
       "override": "¡Había un trofeo\ndentro!\f{PLAYER} envió\nel trofeo a casa.",
