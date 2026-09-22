@@ -17,7 +17,7 @@ from pipeline.shared.engine_backlog import (
     run_backlog_matrix,
 )
 from pipeline.shared.cli import main as cli_main
-from pipeline.shared.engine_scope import load_manifest
+from pipeline.shared.engine_manifest import load_manifest
 
 
 class EngineBacklogTests(unittest.TestCase):

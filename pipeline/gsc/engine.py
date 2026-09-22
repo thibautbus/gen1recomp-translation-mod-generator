@@ -6,10 +6,7 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from ..shared.engine import load_engine_overrides, match_engine_catalog
-from ..shared.engine_scope import (
-    complete_engine_keys, is_gen2_path, iter_callsites, load_manifest,
-    verified_source,
-)
+from ..shared.engine_manifest import complete_engine_keys, is_gen2_path, iter_callsites, load_manifest, verified_source
 from ..shared.model import CorpusRecord
 from ..shared.engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE, checkout_revision, normalize_engine_profile
 

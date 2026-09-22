@@ -265,7 +265,7 @@ def prepare_dependencies(
         # The next phases execute both src-owned extractors and tools/modkit.
         # Do this immediately after checkout/cache publication so neither can
         # run against a dirty or tampered engine checkout.
-        from .engine_scope import load_manifest, verified_source
+        from .engine_manifest import load_manifest, verified_source
         try:
             verified_source(gen1recomp, load_manifest())
         except (OSError, ValueError) as error:

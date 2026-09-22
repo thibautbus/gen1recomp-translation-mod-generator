@@ -9,7 +9,7 @@ from pipeline.gsc.engine import (
     load_gs_engine_reviewed_identities, load_gs_engine_scope_exclusions, match_gs_engine_strings,
 )
 from pipeline.shared.engine import load_engine_overrides
-from pipeline.shared.engine_scope import is_gen2_path, load_manifest
+from pipeline.shared.engine_manifest import is_gen2_path, load_manifest
 from pipeline.shared.engine_profile import UPSTREAM_PROFILE
 
 

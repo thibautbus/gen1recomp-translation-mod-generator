@@ -8,7 +8,7 @@ Two things can make a corpus entry reachable today:
             found (tools/gsc/measure_join.py's join) -> ships through the `text`
             registry, converted by pipeline/shared/tokens.py:corpus_to_engine.
   strings   its normalised English matches a literal Strings(...) callsite
-            found anywhere in the engine source (pipeline/shared/engine_scope.py)
+            found anywhere in the engine source (pipeline/shared/engine_manifest.py)
             -> ships through the `strings` registry the same way RBY's
             engine backlog does, via a language's shared_engine_overrides
             (overrides/<language>/gsc/engine.json, following the existing
@@ -32,7 +32,7 @@ measure_join = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(measure_join)
 
 sys.path.insert(0, str(ROOT))
-from pipeline.shared.engine_scope import iter_callsites  # noqa: E402
+from pipeline.shared.engine_manifest import iter_callsites  # noqa: E402
 
 
 def _engine_normalised_index(checkout: Path) -> dict[str, list[str]]:

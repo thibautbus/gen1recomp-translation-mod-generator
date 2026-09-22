@@ -642,7 +642,7 @@ class BuilderTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory, \
                 patch.object(builder, "_ensure_dependency", side_effect=fake_ensure), \
                 patch.object(builder, "_font_source", side_effect=lambda *args, **kwargs: calls.append("font") or Path(directory) / "font"), \
-                patch("pipeline.shared.engine_scope.verified_source", side_effect=fake_verify):
+                patch("pipeline.shared.engine_manifest.verified_source", side_effect=fake_verify):
             builder.prepare_dependencies(
                 Path(directory), builder.project_config(),
                 corpus_collection="RedBlue", font_profile="fusion", language="fr",
@@ -665,7 +665,7 @@ class BuilderTests(unittest.TestCase):
             (engine / "tools" / "modkit.py").write_text("", encoding="utf-8")
             with patch.object(builder, "_ensure_dependency", side_effect=fake_ensure), \
                     patch.object(builder, "_font_source", return_value=root / "font"), \
-                    patch("pipeline.shared.engine_scope.verified_source") as verify:
+                    patch("pipeline.shared.engine_manifest.verified_source") as verify:
                 prepared, _, _ = builder.prepare_dependencies(
                     root / "workspace", builder.project_config(),
                     corpus_collection="RedBlue", font_profile="fusion", language="fr",

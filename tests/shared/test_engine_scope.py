@@ -6,11 +6,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from pipeline.shared.engine_scope import (
-    MANIFEST_PATH, SCOPE_PATH, classify_callsites, classify_catalog,
-    forced_dynamic_keys, iter_callsites, load_manifest, load_scope, validate_catalog_universe,
-    verified_source,
-)
+from pipeline.rby.engine_scope import SCOPE_PATH, classify_callsites, classify_catalog, load_scope, validate_catalog_universe
+from pipeline.shared.engine_manifest import MANIFEST_PATH, forced_dynamic_keys, iter_callsites, load_manifest, verified_source
 from pipeline.shared.dependencies import _tree_digest
 
 

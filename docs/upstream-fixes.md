@@ -349,7 +349,7 @@ carry its real, distinct localized text.
 The first five are named explicitly in "Fixed upstream" above
 (`fix/route-more-messages-through-romtext`, PR #1559); the last three are
 not -- discovered instead by running
-`pipeline.shared.engine_scope.complete_engine_keys` (the same check
+`pipeline.shared.engine_manifest.complete_engine_keys` (the same check
 `pipeline/shared/mod.py`'s real build uses to reject a stale override key) against
 a real v0.2.19 checkout and diffing it against every override file's key
 set. All eight came back with zero matching callsites anywhere in the
@@ -485,7 +485,7 @@ guess.
   directly, it silently dropped out of the RBY-related engine-string scan
   (242 -> 240 keys scanned, not just the 1 legitimately retired one) --
   confirmed with a standalone before/after scan of both pinned revisions
-  via `pipeline.shared.engine_backlog`/`pipeline.shared.engine_scope`, not just the
+  via `pipeline.shared.engine_backlog`/`pipeline.rby.engine_scope`, not just the
   build's pass/fail. Fixed by adding `"%s used\n%s!"` to
   `RENDERED_ROMTEXT_FALLBACKS` alongside its sibling phrasing.
 - No other engine-string key broke or silently dropped out of scope: a
@@ -595,7 +595,7 @@ buckets:
     under "genuinely alive" below, alongside the sibling anchor it shares
     its fix with -- it belongs in this bucket by its own history, just
     narrated there for continuity). None of these ten were ever going to
-    reach `pipeline.shared.engine_scope.iter_callsites` in the first place:
+    reach `pipeline.shared.engine_manifest.iter_callsites` in the first place:
     `iter_romtext_fallback_callsites` only reports a fixed, audited
     allowlist of 3 fallback strings (see its own docstring), on the theory
     that every other `romText()` fallback resolves its real ROM label and

@@ -31,7 +31,8 @@ from .engine import (
 from .project import ROOT, project_config
 from .tokens import corpus_to_engine
 from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE, checkout_revision, normalize_engine_profile
-from .engine_scope import classify_catalog, engine_dynamic_values, forced_dynamic_keys, load_scope, coverage_metadata
+from ..rby.engine_scope import classify_catalog, load_scope, coverage_metadata
+from .engine_manifest import engine_dynamic_values, forced_dynamic_keys
 from ..rby.join import ENGINE_CATALOG_EXTRA_KEYS
 
 
@@ -442,7 +443,7 @@ def _annotate_dynamic_manifest(
 
 
 def _classify_path(path: str) -> tuple[str, str]:
-    from .engine_scope import classify_path
+    from ..rby.engine_scope import classify_path
     category = classify_path(path)
     return category, "eligible" if category == "rby" else "ineligible" if category in {"link", "import", "core", "modern"} else "review"
 

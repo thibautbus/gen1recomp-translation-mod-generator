@@ -559,10 +559,8 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         if engine_catalog is None and strict_engine:
             engine_catalog = Path(modkit_worksheet) / "strings.lua"
     if engine_catalog:
-        from .engine_scope import (
-            complete_engine_keys, engine_dynamic_values, forced_dynamic_keys,
-            iter_callsites, load_scope, verified_source,
-        )
+        from ..rby.engine_scope import load_scope
+        from .engine_manifest import complete_engine_keys, engine_dynamic_values, forced_dynamic_keys, iter_callsites, verified_source
         scope_kwargs = {}
         if engine_scope:
             scope_kwargs["path"] = engine_scope
@@ -862,7 +860,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         if engine_report is not None:
             report["engine"] = engine_report
             if engine_source:
-                from .engine_scope import classify_catalog, coverage_metadata, validate_catalog_universe
+                from ..rby.engine_scope import classify_catalog, coverage_metadata, validate_catalog_universe
                 assert source_path is not None and engine_callsites is not None
                 validate_catalog_universe(catalog.keys(), source_path, scope)
                 classified = classify_catalog(catalog.keys(), engine_callsites, scope)

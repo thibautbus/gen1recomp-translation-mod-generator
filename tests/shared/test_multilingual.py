@@ -10,7 +10,8 @@ from pipeline.shared.generate import lua_string
 from pipeline.shared.model import Alignment, CorpusRecord
 from pipeline.shared.mod import generate_mod, validate_commands_show_text_collisions
 from pipeline.shared.cli import main as cli_main
-from pipeline.shared.engine_scope import classify_callsites, iter_callsites
+from pipeline.rby.engine_scope import classify_callsites
+from pipeline.shared.engine_manifest import iter_callsites
 from pipeline.shared.tokens import corpus_to_engine
 
 
