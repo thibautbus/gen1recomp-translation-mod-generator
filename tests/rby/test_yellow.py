@@ -4,7 +4,7 @@ from pathlib import Path
 
 from pipeline.shared.align import align
 from pipeline.shared.corpus import read_parallel_yellow
-from pipeline.shared.join import join_catalogs, WorksheetEntry
+from pipeline.rby.join import join_catalogs, WorksheetEntry
 from pipeline.shared.model import Alignment, CorpusRecord
 from pipeline.rby.yellow import parse_text_catalog, yellow_dialogue_layer
 from pipeline.shared.mod import effective_yellow_engine_coverage, yellow_coverage_metrics
@@ -326,7 +326,7 @@ class UniversalBuildTests(unittest.TestCase):
         from unittest.mock import patch
         from pipeline.shared.corpus import parse_redblue
         from pipeline.shared.mod import generate_mod
-        from pipeline.shared.join import join_catalogs, read_worksheets
+        from pipeline.rby.join import join_catalogs, read_worksheets
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             corpus = root / "RedBlue"

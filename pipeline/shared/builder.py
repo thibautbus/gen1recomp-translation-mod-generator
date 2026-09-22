@@ -1040,7 +1040,7 @@ def build(
         log("\nBuilding Yellow dialogue layer...")
         status("Building Yellow dialogue layer")
         from ..rby.yellow import parse_text_catalog, yellow_dialogue_layer
-        from .join import join_catalogs, read_worksheets
+        from ..rby.join import join_catalogs, read_worksheets
         red_text = parse_text_catalog(gen1recomp / "data" / "generated" / "text.lua")
         yellow_text = parse_text_catalog(gen1recomp / "yellow" / "data" / "generated" / "text.lua")
         yellow_rows = align(parse_yellow(corpus, language), target_lang=language)

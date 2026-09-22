@@ -622,7 +622,7 @@ buckets:
     engine's own `%3d` printf directives, verified end-to-end against the
     real corpus for all five languages. An independent review then found
     that fix was solving an already-solved problem:
-    `pipeline/shared/join.py`'s `pokedex_footer_catalog` -- pre-existing,
+    `pipeline/rby/join.py`'s `pokedex_footer_catalog` -- pre-existing,
     already tested in `tests/test_pipeline.py`, using the exact same two
     qids -- runs unconditionally in `pipeline/shared/mod.py` and overwrites
     `engine_values["SEEN %3d  OWN %3d"]` via a plain `dict.update()` call

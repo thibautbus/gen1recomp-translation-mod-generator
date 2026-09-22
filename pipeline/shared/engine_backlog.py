@@ -32,7 +32,7 @@ from .project import ROOT, project_config
 from .tokens import corpus_to_engine
 from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE, checkout_revision, normalize_engine_profile
 from .engine_scope import classify_catalog, engine_dynamic_values, forced_dynamic_keys, load_scope, coverage_metadata
-from .join import ENGINE_CATALOG_EXTRA_KEYS
+from ..rby.join import ENGINE_CATALOG_EXTRA_KEYS
 
 
 SCHEMA = "gen1recomp-translation-mods/engine-backlog"
