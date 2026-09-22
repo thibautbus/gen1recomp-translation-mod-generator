@@ -297,6 +297,16 @@
       "reason": "engine-corpus",
       "provenance": "From battle_message.sText_123Poof without its pauses."
     },
+    "1,000": {
+      "override": "1000",
+      "reason": "engine-corpus",
+      "provenance": "Price column of strings.gText_Protein_1000 (gText_Iron_1000 through gText_HpUp_1000 alike) in the Berry Powder exchange list (src/core/game3/scripting/natives_listmenu.lua:70-75), where the engine prints the item name and the price as separate Strings() keys; the cart groups thousands its own way."
+    },
+    "3,000": {
+      "override": "3000",
+      "reason": "engine-corpus",
+      "provenance": "Price column of strings.gText_PpUp_3000 in the Berry Powder exchange list (src/core/game3/scripting/natives_listmenu.lua:76), where the engine prints the item name and the price as separate Strings() keys; the cart groups thousands its own way."
+    },
     "> YES  NO": {
       "override": "> OUI  NON",
       "reason": "engine-corpus",

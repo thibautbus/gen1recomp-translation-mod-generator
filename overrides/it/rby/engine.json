@@ -522,6 +522,16 @@
       "reason": "engine-original",
       "provenance": "AI-generated Italian translation of the port-added BATTLE HUD Options row value (the default, and the only one the OG layout allows), new in gen1recomp v0.2.61 (ui/OptionsMenu.lua, ui/gen2/OptionsMenu.lua and the launcher settings row); follows this catalog's own BATTLE LAYOUT wording for the sibling row (\"LAYOUT LOTTA\"), keeping HUD as-is like the English label; requires in-game visual validation."
     },
+    "Saved as\n%s\u000bin the save\nfolder.": {
+      "override": "Salvati come\n%s nella cartella\ndi salvataggio.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of Gen1Recomp's file-printer save-location suffix, shared by the Pokedex-entry and BOX print confirmations; split from the pre-v0.2.55 combined key when gen1recomp separated it into its own Strings() call."
+    },
+    "Saved to\n%s.": {
+      "override": "Salvati in\n%s.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of Gen1Recomp's file-printer save-location line for a picture that went to the device's photo album (src/core/Printer.lua:78, Android), the sibling of the \"Saved as\" line shared by the Pokedex-entry and BOX print confirmations."
+    },
     "TILT": {
       "override": "INCLINAZIONE",
       "reason": "engine-original",

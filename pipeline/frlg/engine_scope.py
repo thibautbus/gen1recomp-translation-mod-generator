@@ -336,9 +336,13 @@ def rom_description_values(extracted: Path, luajit: str | None = None) -> dict[s
 
 
 # A key is language-neutral when nothing in it needs translating: numbers,
-# multipliers and refresh rates the option rows print.
+# multipliers and refresh rates the option rows print.  A number grouped with
+# a comma is not: the European carts write the Berry Powder prices as 1000
+# (fr, de) or 1.000 (es, it) (strings.gText_Protein_1000).
 def _neutral(value: str) -> bool:
     value = context_source(value)
+    if re.fullmatch(r"[0-9]{1,3}(,[0-9]{3})+", value):
+        return False
     stripped = _key_parts(value)[0]
     return not re.search(r"[A-Za-z]{2}", "".join(stripped)) or bool(re.fullmatch(r"[0-9.]+(X|HZ)?", value))
 
