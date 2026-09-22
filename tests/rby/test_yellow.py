@@ -4,10 +4,10 @@ from pathlib import Path
 
 from pipeline.shared.align import align
 from pipeline.shared.corpus import read_parallel_yellow
-from pipeline.shared.join import join_catalogs, WorksheetEntry
+from pipeline.rby.join import join_catalogs, WorksheetEntry
 from pipeline.shared.model import Alignment, CorpusRecord
 from pipeline.rby.yellow import parse_text_catalog, yellow_dialogue_layer
-from pipeline.shared.mod import effective_yellow_engine_coverage, yellow_coverage_metrics
+from pipeline.rby.mod import effective_yellow_engine_coverage, yellow_coverage_metrics
 
 
 def _corpus_records(directory: Path, lang: str = "fr") -> list[CorpusRecord]:
@@ -292,7 +292,7 @@ class UniversalBuildTests(unittest.TestCase):
     def test_generate_mod_emits_dialogue_yellow_and_isYellow_hook(self):
         import json
         from pipeline.shared.corpus import parse_redblue
-        from pipeline.shared.mod import generate_mod
+        from pipeline.rby.mod import generate_mod
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             corpus = root / "RedBlue"
@@ -325,8 +325,8 @@ class UniversalBuildTests(unittest.TestCase):
         # match pass over the same rows/worksheet.
         from unittest.mock import patch
         from pipeline.shared.corpus import parse_redblue
-        from pipeline.shared.mod import generate_mod
-        from pipeline.shared.join import join_catalogs, read_worksheets
+        from pipeline.rby.mod import generate_mod
+        from pipeline.rby.join import join_catalogs, read_worksheets
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             corpus = root / "RedBlue"
@@ -339,7 +339,7 @@ class UniversalBuildTests(unittest.TestCase):
             worksheets = read_worksheets(worksheet)
             joined, join_report = join_catalogs(rows, worksheets, "fr")
             mod = root / "mod"
-            with patch("pipeline.shared.mod.join_catalogs") as mocked_join:
+            with patch("pipeline.rby.mod.join_catalogs") as mocked_join:
                 generate_mod(rows, mod, mod_id="translation-fr", language="fr",
                              modkit_worksheet=worksheet,
                              precomputed_join=(joined, join_report))
@@ -348,7 +348,7 @@ class UniversalBuildTests(unittest.TestCase):
 
     def test_generate_mod_removes_stale_yellow_catalogs(self):
         from pipeline.shared.corpus import parse_redblue
-        from pipeline.shared.mod import generate_mod
+        from pipeline.rby.mod import generate_mod
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             corpus = root / "RedBlue"
@@ -365,7 +365,7 @@ class UniversalBuildTests(unittest.TestCase):
             self.assertFalse((mod / "lang" / "dialogue_yellow.lua").exists())
 
     def test_preserve_scaffold_support_injects_yellow_hook(self):
-        from pipeline.shared.builder import preserve_scaffold_support
+        from pipeline.rby.build import preserve_scaffold_support
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             scaffold = root / "scaffold"
@@ -390,7 +390,7 @@ class UniversalBuildTests(unittest.TestCase):
 
     def test_merge_engine_overrides_merges_shared_then_yellow(self):
         import json
-        from pipeline.shared.builder import _merge_engine_overrides
+        from pipeline.rby.build import _merge_engine_overrides
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             shared = root / "shared.json"
@@ -494,7 +494,7 @@ class YellowAuditFallbackTests(unittest.TestCase):
 
 class YellowCoverageExceptionsTests(unittest.TestCase):
     def test_loads_entries_as_frozensets_per_language(self):
-        from pipeline.shared.builder import load_yellow_coverage_exceptions
+        from pipeline.rby.build import load_yellow_coverage_exceptions
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "yellow_coverage_exceptions.json"
             path.write_text(
@@ -506,11 +506,11 @@ class YellowCoverageExceptionsTests(unittest.TestCase):
         self.assertEqual(overrides, {"it": frozenset({"_RoseText"})})
 
     def test_missing_file_returns_empty_mapping(self):
-        from pipeline.shared.builder import load_yellow_coverage_exceptions
+        from pipeline.rby.build import load_yellow_coverage_exceptions
         self.assertEqual(load_yellow_coverage_exceptions(Path("/nonexistent.json")), {})
 
     def test_repo_config_matches_expected_italian_entry(self):
-        from pipeline.shared.builder import load_yellow_coverage_exceptions
+        from pipeline.rby.build import load_yellow_coverage_exceptions
         from pipeline.shared.project import resource_root
         overrides = load_yellow_coverage_exceptions(
             resource_root() / "config" / "rby" / "yellow_coverage_exceptions.json"

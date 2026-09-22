@@ -208,7 +208,7 @@ def _literal_argument_spans(text: str) -> list[bool]:
     the argument itself is covered: another literal on the same line (an
     "or" fallback, a second value after the call) is still scanned.
     """
-    from ..shared.engine_backlog import _read_concatenated_lua_literal, _strip_lua_comments, strings_calls
+    from ..shared.strings_harvest import _read_concatenated_lua_literal, _strip_lua_comments, strings_calls
     cleaned = _strip_lua_comments(text)
     covered = [False] * len(text)
     for match in strings_calls(text, cleaned):

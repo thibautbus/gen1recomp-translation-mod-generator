@@ -8,8 +8,9 @@ from pathlib import Path
 from collections import defaultdict
 from typing import Iterable
 
-from .model import Alignment
-from .tokens import corpus_to_engine
+from ..shared.model import Alignment
+from ..shared.engine import ROM_CATALOGS, read_engine_catalog
+from ..shared.tokens import corpus_to_engine
 
 CATALOGS = ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels")
 
@@ -85,7 +86,7 @@ ENGINE_ALIASES = {
 
 
 # Type display names are engine content: they live in the ``type_chart``
-# registry (names are translated at draw time, see pipeline/shared/mod.py) and have
+# registry (names are translated at draw time, see pipeline/rby/mod.py) and have
 # no modkit worksheet, so the join is qid-driven instead of key-driven.  The
 # runtime chart carries exactly 15 records (TypeChart.TYPES).  PSYCHIC_TYPE is
 # the pokered constant species types are stored as, displayed back as
@@ -578,7 +579,7 @@ def romtext_fallback_catalog(values: dict[str, str], items: list[Alignment], tar
         # engine matcher instead of duplicating its placeholder composition
         # here.  This still fails closed when either corpus row is missing,
         # duplicated, empty, or structurally incompatible.
-        from .engine import match_engine_catalog
+        from ..shared.engine import match_engine_catalog
         derived, _ = match_engine_catalog(
             [ROMTEXT_USED_ALIAS], items, target_lang=target_lang,
         )
@@ -967,3 +968,16 @@ def join_catalogs(items: list[Alignment], worksheets: dict[str, list[WorksheetEn
         report["strategies"]["strings_pokedex"] = pokedex_report["strategies"]
         report["reasons"]["strings_pokedex"] = pokedex_report["reasons"]
     return output, report
+
+
+def require_worksheets(root: str | Path) -> dict[str, list]:
+    """Require all six ROM worksheets plus the engine strings.lua scaffold."""
+    root = Path(root)
+    missing = [str(root / f"{name}.txt") for name in ROM_CATALOGS if not (root / f"{name}.txt").is_file()]
+    if not (root / "strings.lua").is_file():
+        missing.append(str(root / "strings.lua"))
+    if missing:
+        raise FileNotFoundError("required modkit catalogue(s) missing: " + ", ".join(missing))
+    worksheets = read_worksheets(root)
+    read_engine_catalog(root / "strings.lua")
+    return worksheets

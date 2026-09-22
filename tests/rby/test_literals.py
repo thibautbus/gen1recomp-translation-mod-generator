@@ -5,8 +5,9 @@ from pathlib import Path
 
 from pipeline.rby.literals import extract_handlers, generate_handlers, load_recipes
 from pipeline.shared.model import Alignment, CorpusRecord
-from pipeline.shared.mod import generate_mod
+from pipeline.rby.mod import generate_mod
 from pipeline.shared import builder
+from pipeline.rby import build as rby_build
 
 
 QYES = "rb.ViridianCity.ViridianCityYoungster2CaterpieAndWeedleDescriptionText"
@@ -305,7 +306,7 @@ class LiteralHandlerTests(unittest.TestCase):
             (scaffold / "main.lua").write_text("return function(mod)\nend\n", encoding="utf-8")
             for name in ("font.lua", "charmap.lua", "naming.lua"):
                 (scaffold / "lang" / name).write_text(name, encoding="utf-8")
-            builder.preserve_scaffold_support(scaffold, mod)
+            rby_build.preserve_scaffold_support(scaffold, mod)
             preserved = (mod / "main.lua").read_text(encoding="utf-8")
             self.assertIn('mod:read("lang/literal_handlers.lua")', preserved)
             self.assertIn("setup(mod)", preserved)

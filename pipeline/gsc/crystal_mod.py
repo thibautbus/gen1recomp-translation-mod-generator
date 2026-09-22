@@ -18,7 +18,7 @@ namespace and no overlap with `gs.*` itself.
 Crystal ships as a mandatory companion catalog merged into the same mod as
 Gold/Silver (see pipeline/gsc/mod.py's build_gs()/generate_gs_mod()), applied
 at runtime only when GameVersion.get() == "crystal" -- the same pattern
-pipeline/shared/mod.py's RBY build uses for Yellow's own dialogue_yellow.lua layer,
+pipeline/rby/mod.py's RBY build uses for Yellow's own dialogue_yellow.lua layer,
 just without a large pointer-identical "free" majority to lean on (unlike
 Yellow vs Red/Blue).
 

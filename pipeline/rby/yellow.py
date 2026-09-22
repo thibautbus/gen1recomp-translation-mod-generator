@@ -27,7 +27,7 @@ import re
 from pathlib import Path
 from typing import Iterable
 
-from ..shared.join import WorksheetEntry, join_catalogs
+from .join import WorksheetEntry, join_catalogs
 from ..shared.model import Alignment
 
 _KEY = re.compile(r"^\s*([A-Za-z0-9_]+)\s*=\s*\"((?:[^\"\\]|\\.)*)\"\s*,?\s*$")

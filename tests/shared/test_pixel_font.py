@@ -3,8 +3,9 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from pipeline.shared.mod import generate_mod
+from pipeline.rby.mod import generate_mod
 from pipeline.shared import builder
+from pipeline.rby import build as rby_build
 import zipfile
 
 
@@ -137,7 +138,7 @@ class PixelFontTests(unittest.TestCase):
             mod = generate_mod([], root / "mod", language="fr", font_source=source)
             old_main = (mod / "main.lua").read_bytes()
             old_font = (mod / "fonts/fusion-pixel-10px-proportional-latin.ttf").read_bytes()
-            with patch("pipeline.shared.mod.load_recipes", side_effect=ValueError("invalid override")), self.assertRaisesRegex(ValueError, "invalid override"):
+            with patch("pipeline.rby.mod.load_recipes", side_effect=ValueError("invalid override")), self.assertRaisesRegex(ValueError, "invalid override"):
                 generate_mod([], mod, language="fr", font_source=source, font_profile="pokemon")
             self.assertEqual((mod / "main.lua").read_bytes(), old_main)
             self.assertEqual((mod / "fonts/fusion-pixel-10px-proportional-latin.ttf").read_bytes(), old_font)
@@ -155,7 +156,7 @@ class PixelFontTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (scaffold / "lang" / "naming.lua").write_text("return {}\n", encoding="utf-8")
-            builder.preserve_scaffold_support(scaffold, mod, "ja-Hrkt")
+            rby_build.preserve_scaffold_support(scaffold, mod, "ja-Hrkt")
             main = (mod / "main.lua").read_text(encoding="utf-8")
             self.assertIn(
                 'mod.content.font:register("ttf", {})',
@@ -175,7 +176,7 @@ class PixelFontTests(unittest.TestCase):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_bytes(b"stale")
             (mod / "lang" / "strings.lua").write_text("return {}\n", encoding="utf-8")
-            builder.remove_legacy_font_artifacts(mod)
+            rby_build.remove_legacy_font_artifacts(mod)
             self.assertTrue((mod / "lang" / "strings.lua").exists())
             self.assertFalse((mod / "lang" / "font.lua").exists())
             self.assertFalse((mod / "lang" / "charmap.lua").exists())

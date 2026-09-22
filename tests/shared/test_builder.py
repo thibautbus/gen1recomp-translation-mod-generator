@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import io
 import os
+import subprocess
 from pathlib import Path
 import tempfile
 import unittest
@@ -11,6 +12,7 @@ from contextlib import redirect_stdout
 import zipfile
 
 from pipeline.shared import builder
+from pipeline.rby import build as rby_build
 from pipeline.shared import project
 from pipeline.shared.project import project_version
 from pipeline.shared.rom_paths import load_rom_paths
@@ -29,7 +31,7 @@ class BuilderTests(unittest.TestCase):
                 return 0
 
         messages = []
-        with patch("pipeline.shared.builder.subprocess.Popen", return_value=Process()):
+        with patch("pipeline.shared.subprocess_run.subprocess.Popen", return_value=Process()):
             builder._run(["tool"], log_fn=messages.append)
         self.assertEqual(messages, ["\n> tool", "first", "second"])
 
@@ -44,7 +46,7 @@ class BuilderTests(unittest.TestCase):
             def wait():
                 return 1
 
-        with patch("pipeline.shared.builder.subprocess.Popen", return_value=Process()):
+        with patch("pipeline.shared.subprocess_run.subprocess.Popen", return_value=Process()):
             with self.assertRaises(builder.BuildError) as caught:
                 builder._run(["tool"], log_fn=lambda _: None)
         message = str(caught.exception)
@@ -60,7 +62,7 @@ class BuilderTests(unittest.TestCase):
             def wait():
                 return 1
 
-        with patch("pipeline.shared.builder.subprocess.Popen", return_value=Process()):
+        with patch("pipeline.shared.subprocess_run.subprocess.Popen", return_value=Process()):
             with self.assertRaises(builder.BuildError) as caught:
                 builder._run(["tool"], log_fn=lambda _: None)
         message = str(caught.exception)
@@ -69,13 +71,13 @@ class BuilderTests(unittest.TestCase):
         self.assertIn("20 earlier line(s) omitted", message)
 
     def test_run_cli_path_omits_captured_output_since_it_inherits_the_console(self):
-        with patch("pipeline.shared.builder.subprocess.run", side_effect=builder.subprocess.CalledProcessError(1, ["tool"])):
+        with patch("pipeline.shared.subprocess_run.subprocess.run", side_effect=subprocess.CalledProcessError(1, ["tool"])):
             with self.assertRaises(builder.BuildError) as caught:
                 builder._run(["tool"])
         self.assertEqual(str(caught.exception), "Command failed with exit code 1: tool")
 
     def test_font_dependencies_use_private_cache_and_checked_in_pins(self):
-        config = builder.project_config()
+        config = project.project_config()
         with tempfile.TemporaryDirectory() as directory, patch(
             "pipeline.shared.builder.fetch_files", side_effect=lambda *args, **kwargs: args[2]
         ) as fetch_files, patch(
@@ -91,7 +93,7 @@ class BuilderTests(unittest.TestCase):
             )
 
     def test_pokemon_font_profile_fetches_only_font_files(self):
-        config = builder.project_config()
+        config = project.project_config()
         with tempfile.TemporaryDirectory() as directory, patch(
             "pipeline.shared.builder.fetch_files", side_effect=lambda *args, **kwargs: args[2]
         ) as fetch_files, patch("pipeline.shared.builder.fetch_archive") as fetch_archive:
@@ -102,7 +104,7 @@ class BuilderTests(unittest.TestCase):
             self.assertIn("fonts/pokemon-font.ttf", fetch_files.call_args.args[1])
 
     def test_japanese_fusion_profile_fetches_the_8px_japanese_font(self):
-        config = builder.project_config()
+        config = project.project_config()
         def fake_fetch(*args, **kwargs):
             destination = args[2]
             destination.mkdir(parents=True, exist_ok=True)
@@ -396,10 +398,10 @@ class BuilderTests(unittest.TestCase):
                 patch.object(builder, "verify_rb_rom", side_effect=verify_rb),
                 patch.object(builder, "verify_rom", side_effect=verify),
                 patch.object(builder, "_confirm", return_value=True),
-                patch.object(builder, "build", return_value=root / "out.zip") as build,
+                patch.object(rby_build, "build", return_value=root / "out.zip") as build,
             ):
                 self.assertEqual(builder.main(input_fn, generation=1), 0)
-            load.assert_called_once_with(builder.ROOT / "config" / "rom_paths.toml")
+            load.assert_called_once_with(project.ROOT / "config" / "rom_paths.toml")
             self.assertEqual([call.args for call in configured_lookup.call_args_list],
                              [(configured, "rom", "red"), (configured, "rom", "yellow")])
             self.assertEqual(events, [("verify_rb", rb.resolve()), ("verify", "yellow", yellow.resolve())])
@@ -424,7 +426,7 @@ class BuilderTests(unittest.TestCase):
                 patch.object(builder, "verify_rb_rom"),
                 patch.object(builder, "verify_rom"),
                 patch.object(builder, "_confirm", return_value=True),
-                patch.object(builder, "build", return_value=root / "out.zip"),
+                patch.object(rby_build, "build", return_value=root / "out.zip"),
             ):
                 self.assertEqual(builder.main(lambda prompt: next(answers), generation=1), 0)
             self.assertEqual(configured["rom"].keys(), {"red", "yellow"})
@@ -444,7 +446,7 @@ class BuilderTests(unittest.TestCase):
                     patch.object(builder, "verify_rb_rom"), \
                     patch.object(builder, "verify_rom"), \
                     patch.object(builder, "_confirm", return_value=True), \
-                    patch.object(builder, "build", return_value=root / "out.zip") as build:
+                    patch.object(rby_build, "build", return_value=root / "out.zip") as build:
                     self.assertEqual(builder.main(lambda _: next(answers), font_profile="pokemon", generation=1), 0)
             self.assertIn("some translated text may overflow", output.getvalue())
             self.assertEqual(build.call_args.kwargs["font_profile"], "pokemon")
@@ -475,7 +477,7 @@ class BuilderTests(unittest.TestCase):
                     patch.object(builder, "verify_rb_rom"),
                     patch.object(builder, "verify_rom"),
                     patch.object(builder, "_confirm", return_value=True),
-                    patch.object(builder, "build", return_value=root / "out.zip") as build,
+                    patch.object(rby_build, "build", return_value=root / "out.zip") as build,
                 ):
                     self.assertEqual(builder.main(input_fn), 0)
             self.assertIn("Which games do you want to translate?", output.getvalue())
@@ -556,24 +558,24 @@ class BuilderTests(unittest.TestCase):
 
     def test_build_no_longer_accepts_localized_rom(self):
         import inspect
-        self.assertNotIn("localized_rom", inspect.signature(builder.build).parameters)
+        self.assertNotIn("localized_rom", inspect.signature(rby_build.build).parameters)
 
     def test_corpus_and_engine_override_defaults_use_language_subdirectories(self):
         self.assertEqual(
-            builder._corpus_overrides_path("fr"),
-            builder.ROOT / "overrides" / "fr" / "rby" / "corpus.json",
+            rby_build._corpus_overrides_path("fr"),
+            project.ROOT / "overrides" / "fr" / "rby" / "corpus.json",
         )
         self.assertEqual(
-            builder._engine_overrides_path("es"),
-            builder.ROOT / "overrides" / "es" / "rby" / "engine.json",
+            rby_build._engine_overrides_path("es"),
+            project.ROOT / "overrides" / "es" / "rby" / "engine.json",
         )
-        self.assertTrue(builder._corpus_overrides_path("fr").is_file())
-        self.assertTrue(builder._engine_overrides_path("it").is_file())
+        self.assertTrue(rby_build._corpus_overrides_path("fr").is_file())
+        self.assertTrue(rby_build._engine_overrides_path("it").is_file())
 
     def test_rby_override_layers_are_selected_only_by_explicit_profile(self):
-        pinned = builder._rby_engine_override_paths("fr", PINNED_PROFILE)
-        upstream = builder._rby_engine_override_paths("fr", UPSTREAM_PROFILE)
-        self.assertEqual(pinned, (builder._engine_overrides_path("fr"),))
+        pinned = rby_build._rby_engine_override_paths("fr", PINNED_PROFILE)
+        upstream = rby_build._rby_engine_override_paths("fr", UPSTREAM_PROFILE)
+        self.assertEqual(pinned, (rby_build._engine_overrides_path("fr"),))
         self.assertEqual(len(upstream), 2)
         self.assertTrue(upstream[0].name == "engine.json")
         self.assertTrue(upstream[1].name == "engine_upstream.json")
@@ -642,9 +644,9 @@ class BuilderTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory, \
                 patch.object(builder, "_ensure_dependency", side_effect=fake_ensure), \
                 patch.object(builder, "_font_source", side_effect=lambda *args, **kwargs: calls.append("font") or Path(directory) / "font"), \
-                patch("pipeline.shared.engine_scope.verified_source", side_effect=fake_verify):
+                patch("pipeline.shared.engine_manifest.verified_source", side_effect=fake_verify):
             builder.prepare_dependencies(
-                Path(directory), builder.project_config(),
+                Path(directory), project.project_config(),
                 corpus_collection="RedBlue", font_profile="fusion", language="fr",
             )
         self.assertEqual(calls[:3], ["gen1recomp", "verify-engine", "poke-corpus"])
@@ -665,9 +667,9 @@ class BuilderTests(unittest.TestCase):
             (engine / "tools" / "modkit.py").write_text("", encoding="utf-8")
             with patch.object(builder, "_ensure_dependency", side_effect=fake_ensure), \
                     patch.object(builder, "_font_source", return_value=root / "font"), \
-                    patch("pipeline.shared.engine_scope.verified_source") as verify:
+                    patch("pipeline.shared.engine_manifest.verified_source") as verify:
                 prepared, _, _ = builder.prepare_dependencies(
-                    root / "workspace", builder.project_config(),
+                    root / "workspace", project.project_config(),
                     corpus_collection="RedBlue", font_profile="fusion", language="fr",
                     engine_source=engine,
                 )
@@ -677,7 +679,7 @@ class BuilderTests(unittest.TestCase):
 
     def test_rby_upstream_profile_requires_an_explicit_checkout(self):
         with self.assertRaisesRegex(builder.BuildError, "upstream-local.*engine-source.*checkout"):
-            builder.build(
+            rby_build.build(
                 Path("missing-red.gb"), "fr", "French", "luajit",
                 engine_profile=UPSTREAM_PROFILE,
             )
@@ -756,7 +758,7 @@ class BuilderTests(unittest.TestCase):
             (scaffold / "assets" / "font" / "target.png").write_bytes(b"png")
             (scaffold / "assets" / "font" / "README.md").write_text("docs", encoding="utf-8")
 
-            builder.preserve_scaffold_support(scaffold, mod)
+            rby_build.preserve_scaffold_support(scaffold, mod)
 
             self.assertIn(
                 'mod.content.font:register("ttf", {})',
@@ -783,7 +785,7 @@ class BuilderTests(unittest.TestCase):
             )
             (scaffold / "lang" / "naming.lua").write_text("return {}", encoding="utf-8")
 
-            builder.preserve_scaffold_support(scaffold, mod)
+            rby_build.preserve_scaffold_support(scaffold, mod)
 
             main = (mod / "main.lua").read_text(encoding="utf-8")
             self.assertIn(
@@ -809,7 +811,7 @@ class BuilderTests(unittest.TestCase):
             for name in ("font.lua", "charmap.lua", "naming.lua"):
                 (scaffold / "lang" / name).write_text("return {}", encoding="utf-8")
 
-            builder.preserve_scaffold_support(scaffold, mod)
+            rby_build.preserve_scaffold_support(scaffold, mod)
 
             main = (mod / "main.lua").read_text(encoding="utf-8")
             self.assertIn('local raw_option_keys = {', main)
@@ -845,7 +847,7 @@ class BuilderTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            builder.preserve_scaffold_support(scaffold, mod)
+            rby_build.preserve_scaffold_support(scaffold, mod)
 
             main = (mod / "main.lua").read_text(encoding="utf-8")
             self.assertIn('counts.type_names = each("type_names"', main)
@@ -880,7 +882,7 @@ class BuilderTests(unittest.TestCase):
                 'return {\n  ["ABRA"] = "SEED",\n}\n', encoding="utf-8"
             )
 
-            builder.preserve_scaffold_support(scaffold, mod)
+            rby_build.preserve_scaffold_support(scaffold, mod)
 
             main = (mod / "main.lua").read_text(encoding="utf-8")
             self.assertIn('counts.species_kinds = each("species_kinds"', main)
@@ -916,7 +918,7 @@ class BuilderTests(unittest.TestCase):
                 'return {\n  ["FIRE"] = "FEU",\n}\n', encoding="utf-8"
             )
 
-            builder.preserve_scaffold_support(scaffold, mod)
+            rby_build.preserve_scaffold_support(scaffold, mod)
 
             main = (mod / "main.lua").read_text(encoding="utf-8")
             self.assertIn('counts.type_names = each("type_names"', main)
@@ -949,7 +951,7 @@ class BuilderTests(unittest.TestCase):
             for name in ("font.lua", "charmap.lua", "naming.lua"):
                 (scaffold / "lang" / name).write_text("return {}", encoding="utf-8")
 
-            builder.preserve_scaffold_support(scaffold, mod)
+            rby_build.preserve_scaffold_support(scaffold, mod)
 
             main = (mod / "main.lua").read_text(encoding="utf-8")
             self.assertIn('local demo_names = catalog("demo_names")', main)
@@ -978,7 +980,7 @@ class BuilderTests(unittest.TestCase):
             for name in ("font.lua", "charmap.lua", "naming.lua"):
                 (scaffold / "lang" / name).write_text("return {}", encoding="utf-8")
 
-            builder.preserve_scaffold_support(scaffold, mod)
+            rby_build.preserve_scaffold_support(scaffold, mod)
 
             main = (mod / "main.lua").read_text(encoding="utf-8")
             self.assertNotIn("type_names", main)
@@ -1041,7 +1043,7 @@ class BuilderTests(unittest.TestCase):
             )
             output = io.StringIO()
             with redirect_stdout(output):
-                builder.print_coverage(report)
+                rby_build.print_coverage(report)
         self.assertIn("Red Blue ROM aggregate: 3/4 (75.00%)", output.getvalue())
         self.assertIn("All engine strings: 1/2 (50.00%)", output.getvalue())
 
@@ -1062,7 +1064,7 @@ class BuilderTests(unittest.TestCase):
             }), encoding="utf-8")
             output = io.StringIO()
             with redirect_stdout(output):
-                builder.print_coverage(report)
+                rby_build.print_coverage(report)
         lines = [line.strip() for line in output.getvalue().splitlines() if line.strip()]
         self.assertEqual(lines, [
             "Translation coverage:",
@@ -1082,7 +1084,7 @@ class BuilderTests(unittest.TestCase):
             }), encoding="utf-8")
             output = io.StringIO()
             with redirect_stdout(output):
-                builder.print_coverage(report)
+                rby_build.print_coverage(report)
         self.assertIn("Gold and Silver-related engine strings: 1/2 (50.00%)", output.getvalue())
 
     def test_prerequisite_message_is_actionable(self):
@@ -1192,10 +1194,10 @@ class BuilderTests(unittest.TestCase):
                 "entries": {"HELLO": {"override": "Salut", "reason": "engine-corpus", "provenance": "y"}},
             }), encoding="utf-8")
             with self.assertRaisesRegex(builder.BuildError, "HELLO"):
-                builder._merge_engine_overrides(base, upstream, destination_dir=root, strict=True)
+                rby_build._merge_engine_overrides(base, upstream, destination_dir=root, strict=True)
             # Non-strict (the default, used for the shared/Yellow layering)
             # keeps its own deliberate later-wins contract instead.
-            destination = builder._merge_engine_overrides(base, upstream, destination_dir=root)
+            destination = rby_build._merge_engine_overrides(base, upstream, destination_dir=root)
             merged = json.loads(destination.read_text(encoding="utf-8"))
             self.assertEqual(merged["entries"]["HELLO"]["override"], "Salut")
 
@@ -1212,7 +1214,7 @@ class BuilderTests(unittest.TestCase):
                 "schema": "gen1recomp-translation-mods/engine-overrides", "version": 1,
                 "entries": {"GOODBYE": {"override": "Au revoir", "reason": "engine-corpus", "provenance": "y"}},
             }), encoding="utf-8")
-            destination = builder._merge_engine_overrides(base, upstream, destination_dir=root)
+            destination = rby_build._merge_engine_overrides(base, upstream, destination_dir=root)
             merged = json.loads(destination.read_text(encoding="utf-8"))
             self.assertEqual(set(merged["entries"]), {"HELLO", "GOODBYE"})
 

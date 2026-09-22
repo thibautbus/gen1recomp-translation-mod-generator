@@ -165,7 +165,7 @@ def corpus_to_engine(text: str, *, bare_dynamic_tokens: bool = False) -> str:
 
     A token missing from _CORPUS_EXPANSIONS passes through unconverted --
     this is the ONLY place that ever runs on `text`-registry (pointer)
-    content (pipeline/shared/join.py:437/485, the RBY dialogue join), and there is
+    content (pipeline/rby/join.py:437/485, the RBY dialogue join), and there is
     no override escape hatch on that path: pipeline/shared/align.py's
     apply_corpus_overrides rewrites Alignment.translation, but join.py still
     runs the result through this function afterwards.

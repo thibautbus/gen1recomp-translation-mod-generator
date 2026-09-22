@@ -436,7 +436,7 @@ class SemanticAnchorDecisionTests(unittest.TestCase):
             shutil.copy(ROOT / "config" / "rby" / "engine_scope.json", root / "config" / "rby" / "engine_scope.json")
             shutil.copy(ROOT / "config" / "shared" / "engine_manifest.json", root / "config" / "shared" / "engine_manifest.json")
             shutil.copy(ROOT / "pyproject.toml", root / "pyproject.toml")
-            with patch("pipeline.shared.builder.resource_root", return_value=root), patch("pipeline.shared.builder.work_root", return_value=root / "work"):
+            with patch("pipeline.shared.project.resource_root", return_value=root), patch("pipeline.shared.project.work_root", return_value=root / "work"):
                 error = StringIO()
                 with redirect_stderr(error):
                     self.assertEqual(build_translation._self_check(), 1)

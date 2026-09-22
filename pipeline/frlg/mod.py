@@ -43,7 +43,7 @@ from .join import (
 )
 from .text import ir_plain, load_charmap, load_symbols
 from ..shared.generate import lua_string
-from ..shared.mod import TRANSLATION_MOD_PRIORITY
+from ..shared.mod_assets import TRANSLATION_MOD_PRIORITY
 from ..shared.project import is_frozen, project_config, project_version, resource_root
 from ..shared.roms import import_frlg_rom, verify_firered_rom
 from ..shared.specs import game_spec, languages_for_collection, release_profile

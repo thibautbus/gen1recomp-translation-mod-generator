@@ -3,7 +3,7 @@ import tempfile
 from pathlib import Path
 
 from pipeline.shared.align import align
-from pipeline.shared.join import WorksheetEntry, join_catalogs
+from pipeline.rby.join import WorksheetEntry, join_catalogs
 from pipeline.shared.model import CorpusRecord
 
 

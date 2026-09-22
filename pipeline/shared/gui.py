@@ -9,6 +9,7 @@ import threading
 from typing import Callable
 
 from . import builder
+from .mod_assets import FONT_PROFILES
 from .project import project_version, work_root
 from .orchestration import build_request
 from .specs import BuildRequest, release_profile_for_generation
@@ -108,7 +109,7 @@ def font_profile_code(value: str) -> str:
         return "fusion"
     if raw.startswith("pokemon font"):
         return "pokemon"
-    if raw in builder.FONT_PROFILES:
+    if raw in FONT_PROFILES:
         return raw
     raise builder.BuildError(f"Invalid font profile selection: {value!r}")
 

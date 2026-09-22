@@ -8,9 +8,10 @@ from pipeline.shared.corpus import parse_redblue, parse_yellow, canonical_langua
 from pipeline.shared.engine import check_printf_directives, load_engine_overrides, load_semantic_anchors, match_engine_catalog, _extract_anchor, printf_directives, read_engine_catalog
 from pipeline.shared.generate import lua_string
 from pipeline.shared.model import Alignment, CorpusRecord
-from pipeline.shared.mod import generate_mod, validate_commands_show_text_collisions
+from pipeline.rby.mod import generate_mod, validate_commands_show_text_collisions
 from pipeline.shared.cli import main as cli_main
-from pipeline.shared.engine_scope import classify_callsites, iter_callsites
+from pipeline.rby.engine_scope import classify_callsites
+from pipeline.shared.engine_manifest import iter_callsites
 from pipeline.shared.tokens import corpus_to_engine
 
 
@@ -106,8 +107,8 @@ class MultilingualTests(unittest.TestCase):
                 scaffold = Path(".cache/interactive") / language / "translation_source"
                 if not (scaffold / "main.lua").is_file():
                     self.skipTest(f"cached {language} scaffold unavailable")
-                from pipeline.shared import builder
-                builder.preserve_scaffold_support(scaffold, mod)
+                from pipeline.rby import build as rby_build
+                rby_build.preserve_scaffold_support(scaffold, mod)
                 main = (mod / "main.lua").read_text(encoding="utf-8")
                 self.assertIn('counts.type_names = each("type_names"', main, language)
                 self.assertIn('by_english[canonical] = localized', main, language)
@@ -371,7 +372,7 @@ class MultilingualTests(unittest.TestCase):
         # sixth <NEXT>-separated menu item ("PRINT BOX") that RedBlue's
         # five-item rb.bills_pc.BillsPCMenuText does not have. The base RBY
         # engine-matching pass in generate_mod() only ever sees RedBlue-
-        # aligned records (see builder.build()), so a semantic anchor
+        # aligned records (see rby_build.build()), so a semantic anchor
         # pointing at a Yellow-only qid can never resolve there -- this key
         # must instead be a manual overrides/<language>/rby/yellow_engine.json
         # entry (like its Yellow-only siblings), not a semantic_anchors.json

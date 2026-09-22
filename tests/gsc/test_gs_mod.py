@@ -1003,7 +1003,7 @@ class GsUiLabelsTests(unittest.TestCase):
 
 
 class BuildGsEngineSourceTests(unittest.TestCase):
-    """build_gs() must mirror builder.build()'s engine_source/engine_profile
+    """build_gs() must mirror pipeline.rby.build.build()'s engine_source/engine_profile
     contract: both directions of the mismatch are rejected, and a supplied
     checkout actually reaches prepare_build_context() instead of being
     silently dropped in favor of the pinned dependency."""

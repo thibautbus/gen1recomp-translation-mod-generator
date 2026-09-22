@@ -11,9 +11,9 @@ from pipeline.shared.cli import main as cli_main
 from pipeline.shared.corpus import load_corpus
 from pipeline.shared.generate import generate_lua, lua_string
 from pipeline.shared.model import Alignment, CorpusRecord
-from pipeline.shared.mod import catalog_for, generate_mod
+from pipeline.rby.mod import catalog_for, generate_mod
 from pipeline.shared.engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE
-from pipeline.shared.join import (
+from pipeline.rby.join import (
     ENGINE_CATALOG_EXTRA_KEYS,
     SENDOUT_ENGINE_KEYS,
     WorksheetEntry,

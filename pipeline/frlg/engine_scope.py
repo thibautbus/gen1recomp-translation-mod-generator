@@ -30,7 +30,7 @@ import subprocess
 from pathlib import Path
 from typing import Iterable, Mapping
 
-from ..shared.engine_backlog import iter_literal_strings_callsites
+from ..shared.strings_harvest import iter_literal_strings_callsites
 from .join import (
     FRLG_ENGINE_SCOPE_SCHEMA,
     _corpus_parts,

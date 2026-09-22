@@ -205,20 +205,6 @@ def _without_easy_chat(catalog: dict[str, str]) -> dict[str, str]:
     return {key: value for key, value in catalog.items() if not key.startswith("easyChat.")}
 
 
-def require_worksheets(root: str | Path) -> dict[str, list]:
-    """Require all six ROM worksheets plus the engine strings.lua scaffold."""
-    from .join import read_worksheets, WorksheetEntry
-    root = Path(root)
-    missing = [str(root / f"{name}.txt") for name in ROM_CATALOGS if not (root / f"{name}.txt").is_file()]
-    if not (root / "strings.lua").is_file():
-        missing.append(str(root / "strings.lua"))
-    if missing:
-        raise FileNotFoundError("required modkit catalogue(s) missing: " + ", ".join(missing))
-    worksheets = read_worksheets(root)
-    read_engine_catalog(root / "strings.lua")
-    return worksheets
-
-
 def _normal(value: str, *, bare_dynamic_tokens: bool = False) -> str:
     return re.sub(r"\s+", " ",
                   corpus_to_engine(value, bare_dynamic_tokens=bare_dynamic_tokens).strip()).casefold()
