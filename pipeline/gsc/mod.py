@@ -32,7 +32,7 @@ from .text import parse_gs_text_catalog
 from .trainer_names import parse_trainer_names, trainer_name_catalog
 from ..shared.leak_audit import audit_generated_catalogs
 from ..shared.tokens import corpus_to_engine
-from ..shared.mod import TRANSLATION_MOD_PRIORITY, install_font_assets, ttf_registration, validate_font_profile
+from ..shared.mod_assets import TRANSLATION_MOD_PRIORITY, install_font_assets, ttf_registration, validate_font_profile
 from ..shared.project import is_frozen, project_config, project_version, resource_root
 from ..shared.specs import game_spec, release_profile
 from ..shared.engine_profile import (
@@ -370,7 +370,7 @@ def generate_gs_mod(
     with Crystal too (mandatory companion ROM, see build_gs()): its own
     dialogue pointers are written to a separate lang/dialogue_crystal.lua
     layer, applied only at runtime when GameVersion.get() == "crystal" (the
-    same conditional-layer pattern pipeline/shared/mod.py's RBY build uses for
+    same conditional-layer pattern pipeline/rby/mod.py's RBY build uses for
     Yellow's own dialogue_yellow.lua). An empty dict still declares "crystal"
     compatibility with no translated layer (Korean: Crystal has no corpus for
     it, so its dialogue simply stays in English on a Crystal save).

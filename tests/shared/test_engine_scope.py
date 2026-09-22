@@ -123,7 +123,7 @@ class EngineScopeTests(unittest.TestCase):
             self.assertEqual(result[key]["eligibility"], "ineligible")
 
     def test_reporting_scope_excludes_source_only_keys(self):
-        from pipeline.shared.mod import _catalog_scope
+        from pipeline.rby.mod import _catalog_scope
         classified = {
             "catalog": {"category": "rby", "eligibility": "eligible"},
             "source-only": {"category": "modern", "eligibility": "ineligible"},
@@ -326,7 +326,7 @@ class EngineScopeTests(unittest.TestCase):
             finally: tmp.cleanup()
 
     def test_generate_mod_rejects_invalid_engine_source_before_report(self):
-        from pipeline.shared.mod import generate_mod
+        from pipeline.rby.mod import generate_mod
         with tempfile.TemporaryDirectory() as d:
             root = Path(d); ws = root / "ws"; ws.mkdir()
             for name in ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels"):

@@ -116,7 +116,7 @@ and Mt. Moon's Magikarp salesman (which also already calls
 actually a blocker here) -- all confirmed already correctly translated,
 no config needed. The Pokédex "kind" classification
 (`src/ui/DexEntryMenu.lua:93`) looked like the same deep gap as the
-status-ailment abbreviations above, but isn't: `pipeline/shared/mod.py` already
+status-ailment abbreviations above, but isn't: `pipeline/rby/mod.py` already
 has a dedicated `species_kinds` catalog for it. Viridian City's second
 Youngster was the one genuine exception -- two of its three lines had no
 reachable label at all until `fix/text-extractor-underscore-requirement`
@@ -350,7 +350,7 @@ The first five are named explicitly in "Fixed upstream" above
 (`fix/route-more-messages-through-romtext`, PR #1559); the last three are
 not -- discovered instead by running
 `pipeline.shared.engine_manifest.complete_engine_keys` (the same check
-`pipeline/shared/mod.py`'s real build uses to reject a stale override key) against
+`pipeline/rby/mod.py`'s real build uses to reject a stale override key) against
 a real v0.2.19 checkout and diffing it against every override file's key
 set. All eight came back with zero matching callsites anywhere in the
 engine, meaning they would have made the next real build fail outright
@@ -465,7 +465,7 @@ guess.
   AI's own use of the same message, not an allowlist exclusion). A real
   RBY build against the bumped pin failed with `engine overrides contain 1
   unknown key(s):
-  ["%s's\nhits will never\nmiss!"]` (`pipeline/shared/mod.py`'s
+  ["%s's\nhits will never\nmiss!"]` (`pipeline/rby/mod.py`'s
   `generate_mod()`). The entry was removed outright (not renamed) from all
   five languages' `overrides/<language>/rby/engine.json` -- fr, de, es, it,
   ja-Hrkt all had it; ko has no `rby/engine.json`.
@@ -517,7 +517,7 @@ build against the bumped pin failed with `Error: Yellow engine override
 contains unknown key: 'A: done'` (`pipeline/shared/builder.py`'s Yellow layer
 validates `overrides/<language>/rby/yellow_engine.json` against a real
 `strings.lua` worksheet dumped from the built game, the same kind of check
-`pipeline/shared/mod.py`'s RBY layer does with `complete_engine_keys`). All four
+`pipeline/rby/mod.py`'s RBY layer does with `complete_engine_keys`). All four
 old HUD strings were removed from all five languages' `yellow_engine.json`
 files once confirmed dead by the same `complete_engine_keys` check used for
 the RBY overrides cleanup above.
@@ -567,7 +567,7 @@ PR's `_ItemUseBallText00` merge (see "Fixed upstream" above) also orphaned
 entry, caught by `tests/test_multilingual.py`'s
 `test_rby_anchor_callsites_are_unique_and_contextually_eligible` once
 `.cache/dependencies/gen1recomp` refreshed to the new pin. Semantic anchors
-have no equivalent of `pipeline/shared/mod.py`'s `stale_overrides` build-time
+have no equivalent of `pipeline/rby/mod.py`'s `stale_overrides` build-time
 check, so an orphaned one doesn't crash a build -- it just silently stops
 matching anything. Running the same "is this key still a real callsite"
 audit across the entire anchor/decision config (not just this one test's
@@ -624,7 +624,7 @@ buckets:
     that fix was solving an already-solved problem:
     `pipeline/rby/join.py`'s `pokedex_footer_catalog` -- pre-existing,
     already tested in `tests/test_pipeline.py`, using the exact same two
-    qids -- runs unconditionally in `pipeline/shared/mod.py` and overwrites
+    qids -- runs unconditionally in `pipeline/rby/mod.py` and overwrites
     `engine_values["SEEN %3d  OWN %3d"]` via a plain `dict.update()` call
     *after* the semantic-anchor matcher runs, regardless of whether the
     anchor resolved, failed, or didn't exist at all. Confirmed directly:
@@ -897,7 +897,7 @@ mandatory companion for the universal RBY mod: `pipeline/gsc/mod.py`'s
 `GameVersion.get() == "crystal"` (there is no upstream `isCrystal()` helper
 the way there's an `isYellow()`, but `.get() == "crystal"` is exactly what
 `isGold()`/`isYellow()`/`isBlue()` do internally for their own edition, so
-this mirrors `pipeline/shared/mod.py`'s own `yellow_isyellow_guard_lines()`
+this mirrors `pipeline/rby/mod.py`'s own `yellow_isyellow_guard_lines()`
 pattern for RBY's Yellow layer). The manifest declares `"gold"`, `"silver"`,
 and `"crystal"`. Korean has no Crystal corpus in poke-corpus (no
 `ko_msg.txt`, unlike GoldSilver's own six languages) -- rather than drop

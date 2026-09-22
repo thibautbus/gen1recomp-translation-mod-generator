@@ -14,15 +14,8 @@ import zipfile
 
 from .align import align, apply_corpus_overrides
 from .corpus import canonical_language, parse_redblue, parse_yellow
-from .mod import (
-    FONT_PROFILES,
-    YELLOW_CATALOG_HOOKS,
-    font_profile_warning,
-    generate_mod,
-    ttf_registration,
-    validate_font_profile,
-    yellow_isyellow_guard_lines,
-)
+from ..rby.mod import YELLOW_CATALOG_HOOKS, generate_mod, yellow_isyellow_guard_lines
+from .mod_assets import FONT_PROFILES, font_profile_warning, ttf_registration, validate_font_profile
 from .project import (
     ROOT,
     is_frozen,

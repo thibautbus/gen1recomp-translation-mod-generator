@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from pipeline.shared.mod import generate_mod
+from pipeline.rby.mod import generate_mod
 from pipeline.shared import builder
 import zipfile
 
@@ -137,7 +137,7 @@ class PixelFontTests(unittest.TestCase):
             mod = generate_mod([], root / "mod", language="fr", font_source=source)
             old_main = (mod / "main.lua").read_bytes()
             old_font = (mod / "fonts/fusion-pixel-10px-proportional-latin.ttf").read_bytes()
-            with patch("pipeline.shared.mod.load_recipes", side_effect=ValueError("invalid override")), self.assertRaisesRegex(ValueError, "invalid override"):
+            with patch("pipeline.rby.mod.load_recipes", side_effect=ValueError("invalid override")), self.assertRaisesRegex(ValueError, "invalid override"):
                 generate_mod([], mod, language="fr", font_source=source, font_profile="pokemon")
             self.assertEqual((mod / "main.lua").read_bytes(), old_main)
             self.assertEqual((mod / "fonts/fusion-pixel-10px-proportional-latin.ttf").read_bytes(), old_font)

@@ -1,5 +1,5 @@
 -- A representative RBY-shaped mod: no `games` field, matching
--- pipeline/shared/mod.py's real manifest_body for translation-<lang> (verified:
+-- pipeline/rby/mod.py's real manifest_body for translation-<lang> (verified:
 -- it does not emit the key), which covers every Gen 1 game and none of
 -- Gen 2. Used by tools/gsc/gate_package.lua to prove the Gold mod
 -- coexists with, rather than collides with, the real RBY archive.

@@ -8,7 +8,7 @@ from pipeline.shared.corpus import parse_redblue, parse_yellow, canonical_langua
 from pipeline.shared.engine import check_printf_directives, load_engine_overrides, load_semantic_anchors, match_engine_catalog, _extract_anchor, printf_directives, read_engine_catalog
 from pipeline.shared.generate import lua_string
 from pipeline.shared.model import Alignment, CorpusRecord
-from pipeline.shared.mod import generate_mod, validate_commands_show_text_collisions
+from pipeline.rby.mod import generate_mod, validate_commands_show_text_collisions
 from pipeline.shared.cli import main as cli_main
 from pipeline.rby.engine_scope import classify_callsites
 from pipeline.shared.engine_manifest import iter_callsites

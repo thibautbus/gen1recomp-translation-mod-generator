@@ -2,19 +2,22 @@
 from __future__ import annotations
 
 from pathlib import Path
-import os
-import shutil
-import tempfile
 from typing import Iterable, Mapping
 
-from .model import Alignment
-from .generate import lua_string
-from ..rby.join import read_worksheets, join_catalogs, require_worksheets
-from .engine import read_engine_catalog, match_engine_catalog, load_engine_overrides, ROM_CATALOGS
-from .corpus import canonical_language
-from .project import project_version
-from ..rby.literals import load_recipes, generate_handlers
-from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE, normalize_engine_profile, validate_upstream_checkout
+from ..shared.model import Alignment
+from ..shared.generate import lua_string
+from .join import read_worksheets, join_catalogs, require_worksheets
+from ..shared.engine import read_engine_catalog, match_engine_catalog, load_engine_overrides, ROM_CATALOGS
+from ..shared.corpus import canonical_language
+from ..shared.project import project_version
+from .literals import load_recipes, generate_handlers
+from ..shared.engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE, normalize_engine_profile, validate_upstream_checkout
+from ..shared.mod_assets import (
+    TRANSLATION_MOD_PRIORITY,
+    install_font_assets,
+    ttf_registration,
+    validate_font_profile,
+)
 
 CATALOGS = ("dialogue", "strings", "species_names", "move_names", "item_names", "trainer_names", "status_labels", "type_names", "demo_names", "species_kinds")
 
@@ -132,152 +135,12 @@ def yellow_coverage_metrics(stats: dict, shared_rom_details: dict | None = None)
     }
 
 
-FONT_PROFILES = {
-    "fusion": {
-        "warning": None,
-        "files": {
-            "latin": ("fusion-pixel-10px-proportional-latin.ttf", 10),
-            "ja": ("fusion-pixel-8px-proportional-ja.ttf", 8),
-            "ko": ("fusion-pixel-10px-proportional-ko.ttf", 10),
-        },
-        "licenses": (
-            Path("OFL.txt"),
-            Path("LICENSES/boutique-bitmap-9x9/OFL.txt"),
-            Path("LICENSES/ark-pixel/OFL.txt"),
-            Path("LICENSES/galmuri/LICENSE.txt"),
-        ),
-    },
-    "pokemon": {
-        "warning": "Pokemon Font is 8px; some translated text may overflow.",
-        "files": {"latin": ("pokemon-font.ttf", 8), "ja": None, "ko": None},
-        "licenses": (Path("LICENSES/pokemon-font/LICENSE.md"),),
-    },
-}
-
-
-def _font_variant(language: str) -> str:
-    language = canonical_language(language)
-    if language == "ja-Hrkt":
-        return "ja"
-    if language == "ko":
-        return "ko"
-    return "latin"
-
-
-def validate_font_profile(language: str, font_profile: str = "fusion") -> str:
-    profile = str(font_profile or "fusion").strip().lower()
-    if profile not in FONT_PROFILES:
-        raise ValueError(f"Unsupported font profile: {font_profile!r}")
-    variant = _font_variant(language)
-    if FONT_PROFILES[profile]["files"].get(variant) is None:
-        raise ValueError(
-            f"Font profile {profile!r} has no {canonical_language(language)} glyph variant; "
-            "use Fusion Pixel for this language; Pokemon Font is only available "
-            "for French, German, Spanish, and Italian."
-        )
-    return profile
-
-
-def font_profile_warning(font_profile: str) -> str | None:
-    profile = str(font_profile or "fusion").strip().lower()
-    if profile not in FONT_PROFILES:
-        raise ValueError(f"Unsupported font profile: {font_profile!r}")
-    return FONT_PROFILES[profile]["warning"]
-
-
-def plain_pixel_registration() -> str:
-    return '  mod.content.font:register("ttf", {})'
-
-
-def ttf_registration(
-    language: str,
-    font_source: str | Path | None = None,
-    font_profile: str = "fusion",
-) -> str:
-    """Return the selected font registration, or Plain Pixel without a source."""
-    if font_source is None:
-        return plain_pixel_registration()
-    profile = validate_font_profile(language, font_profile)
-    filename, size = FONT_PROFILES[profile]["files"][_font_variant(language)]
-    return (
-        '  mod.content.font:register("ttf", '
-        f'{{ file = mod.assets:path("fonts/{filename}"), size = {size} }})'
-    )
-
-
-def _font_source_file(source_root: Path, relative: Path) -> Path:
-    """Resolve a selected file from either a checkout or extracted archive."""
-    direct = source_root / relative
-    if direct.is_file():
-        return direct
-    candidates = [path for path in source_root.rglob(relative.name) if path.is_file()]
-    if relative.name == "OFL.txt":
-        candidates = [
-            path for path in candidates
-            if "Fusion Pixel Font" in path.read_text(encoding="utf-8", errors="replace")
-        ] or candidates
-    suffix = relative.as_posix()
-    candidates = [path for path in candidates if path.as_posix().endswith(suffix)] or candidates
-    if len(candidates) != 1:
-        raise FileNotFoundError(f"font dependency file not found: {relative}")
-    return candidates[0]
-
-
-def install_font_assets(
-    destination: Path,
-    language: str,
-    font_source: str | Path | None = None,
-    font_profile: str = "fusion",
-) -> None:
-    """Copy only the selected font and its applicable release notices."""
-    if font_source is None:
-        return
-    source_root = Path(font_source)
-    if not source_root.is_dir():
-        raise FileNotFoundError(f"font dependency directory not found: {source_root}")
-    profile = validate_font_profile(language, font_profile)
-    variant = _font_variant(language)
-    selected_files = [
-        (relative, _font_source_file(source_root, relative))
-        for relative in FONT_PROFILES[profile]["licenses"]
-    ]
-    selected, _ = FONT_PROFILES[profile]["files"][variant]
-    selected_files.append((Path(selected), _font_source_file(source_root, Path(selected))))
-    destination.mkdir(parents=True, exist_ok=True)
-    target_root = destination / "fonts"
-    temporary = Path(tempfile.mkdtemp(prefix=".fonts-", dir=destination))
-    try:
-        for relative, source in selected_files:
-            target = temporary / relative
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, target)
-        backup = destination.parent / f".{destination.name}.fonts-old"
-        if backup.exists():
-            shutil.rmtree(backup, ignore_errors=True)
-        had_target = target_root.exists()
-        if had_target:
-            os.replace(target_root, backup)
-        try:
-            os.replace(temporary, target_root)
-        except Exception:
-            if had_target and backup.exists() and not target_root.exists():
-                os.replace(backup, target_root)
-            raise
-        if backup.exists():
-            shutil.rmtree(backup, ignore_errors=True)
-        shutil.rmtree(destination / "assets" / "fonts", ignore_errors=True)
-    except Exception:
-        shutil.rmtree(temporary, ignore_errors=True)
-        raise
-
 
 def _catalog_scope(classified: dict[str, dict], catalog: Iterable[str]) -> dict[str, dict]:
     """Limit reporting statistics to keys present in the generated catalog."""
     keys = set(catalog)
     return {key: info for key, info in classified.items() if key in keys}
 
-# Keep every language at the same priority; language choice must not affect load order.
-TRANSLATION_MOD_PRIORITY = 100
 COMMANDS_SHOW_TEXT_KEYS = {
     "You can't carry\nany more items!",
     "{PLAYER} got\n%s!",
@@ -300,7 +163,7 @@ def validate_commands_show_text_collisions(engine_values: dict[str, str], dialog
 
 def catalog_for(qid: str) -> str:
     value = qid.lower()
-    from ..rby.join import (
+    from .join import (
         _type_name_tail,
         _species_kind_tail,
         _base_qid,
@@ -559,15 +422,15 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         if engine_catalog is None and strict_engine:
             engine_catalog = Path(modkit_worksheet) / "strings.lua"
     if engine_catalog:
-        from ..rby.engine_scope import load_scope
-        from .engine_manifest import complete_engine_keys, engine_dynamic_values, forced_dynamic_keys, iter_callsites, verified_source
+        from .engine_scope import load_scope
+        from ..shared.engine_manifest import complete_engine_keys, engine_dynamic_values, forced_dynamic_keys, iter_callsites, verified_source
         scope_kwargs = {}
         if engine_scope:
             scope_kwargs["path"] = engine_scope
         if engine_manifest:
             scope_kwargs["manifest_path"] = engine_manifest
         scope = load_scope(**scope_kwargs)
-        from ..rby.join import ENGINE_CATALOG_EXTRA_KEYS
+        from .join import ENGINE_CATALOG_EXTRA_KEYS
         catalog = read_engine_catalog(engine_catalog)
         for key in sorted(forced_dynamic_keys(scope)):
             catalog.setdefault(key, "")
@@ -623,7 +486,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
     # The trainer send-out templates (strings.lua) are qid-driven from one
     # corpus row (see pipeline/rby/join.py) and merged into the engine strings,
     # so they ship even without a worksheet.
-    from ..rby.join import sendout_strings_catalog, pokedex_footer_catalog, romtext_fallback_catalog, enemy_qualifier_catalog
+    from .join import sendout_strings_catalog, pokedex_footer_catalog, romtext_fallback_catalog, enemy_qualifier_catalog
     sendout_values, sendout_report = sendout_strings_catalog(rows, language)
     pokedex_values, pokedex_report = pokedex_footer_catalog(rows, language)
     if engine_values is None:
@@ -662,7 +525,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
             body = "\n".join(lines) + "\n"
         elif name == "demo_names" and joined is None:
             # Engine hard-coded demo names are qid-driven (see pipeline/rby/join.py).
-            from ..rby.join import demo_names_catalog
+            from .join import demo_names_catalog
             values, _ = demo_names_catalog(rows, language)
             lines = [f"-- Generated by multilingual pipeline ({language}): demo_names", "return {"]
             lines.extend(f"  [{lua_string(key)}] = {lua_string(value)}," for key, value in sorted(values.items()))
@@ -672,7 +535,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
             # Keys are the engine's pokemon ids, taken from the catalog the
             # generator already emitted: the corpus carries 154 .Species rows
             # against 151 species (see pipeline/rby/join.py).
-            from ..rby.join import species_kinds_catalog
+            from .join import species_kinds_catalog
             ids = (joined or {}).get("species_names", {}).keys()
             values, _ = species_kinds_catalog(rows, language, ids)
             lines = [f"-- Generated by multilingual pipeline ({language}): species_kinds", "return {"]
@@ -682,7 +545,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         elif name == "type_names" and joined is None:
             # Without a worksheet the join is purely qid-driven (see
             # pipeline/rby/join.py); keys are the engine's type_chart ids.
-            from ..rby.join import type_names_catalog
+            from .join import type_names_catalog
             values, _ = type_names_catalog(rows, language)
             lines = [f"-- Generated by multilingual pipeline ({language}): type_names", "return {"]
             lines.extend(f"  [{lua_string(key)}] = {lua_string(value)}," for key, value in sorted(values.items()))
@@ -782,7 +645,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         for recipe in recipes:
             flow = recipe.get("flow") if isinstance(recipe, dict) else None
             if flow is not None:
-                from ..rby.literals import _flow_qids
+                from .literals import _flow_qids
                 try:
                     literal_qids_total.update(_flow_qids(flow))
                 except ValueError:
@@ -860,7 +723,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         if engine_report is not None:
             report["engine"] = engine_report
             if engine_source:
-                from ..rby.engine_scope import classify_catalog, coverage_metadata, validate_catalog_universe
+                from .engine_scope import classify_catalog, coverage_metadata, validate_catalog_universe
                 assert source_path is not None and engine_callsites is not None
                 validate_catalog_universe(catalog.keys(), source_path, scope)
                 classified = classify_catalog(catalog.keys(), engine_callsites, scope)

@@ -5,7 +5,7 @@ from pathlib import Path
 
 from pipeline.rby.literals import extract_handlers, generate_handlers, load_recipes
 from pipeline.shared.model import Alignment, CorpusRecord
-from pipeline.shared.mod import generate_mod
+from pipeline.rby.mod import generate_mod
 from pipeline.shared import builder
 
 

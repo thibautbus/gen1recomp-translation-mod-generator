@@ -86,7 +86,7 @@ ENGINE_ALIASES = {
 
 
 # Type display names are engine content: they live in the ``type_chart``
-# registry (names are translated at draw time, see pipeline/shared/mod.py) and have
+# registry (names are translated at draw time, see pipeline/rby/mod.py) and have
 # no modkit worksheet, so the join is qid-driven instead of key-driven.  The
 # runtime chart carries exactly 15 records (TypeChart.TYPES).  PSYCHIC_TYPE is
 # the pokered constant species types are stored as, displayed back as

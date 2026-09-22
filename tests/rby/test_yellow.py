@@ -7,7 +7,7 @@ from pipeline.shared.corpus import read_parallel_yellow
 from pipeline.rby.join import join_catalogs, WorksheetEntry
 from pipeline.shared.model import Alignment, CorpusRecord
 from pipeline.rby.yellow import parse_text_catalog, yellow_dialogue_layer
-from pipeline.shared.mod import effective_yellow_engine_coverage, yellow_coverage_metrics
+from pipeline.rby.mod import effective_yellow_engine_coverage, yellow_coverage_metrics
 
 
 def _corpus_records(directory: Path, lang: str = "fr") -> list[CorpusRecord]:
@@ -292,7 +292,7 @@ class UniversalBuildTests(unittest.TestCase):
     def test_generate_mod_emits_dialogue_yellow_and_isYellow_hook(self):
         import json
         from pipeline.shared.corpus import parse_redblue
-        from pipeline.shared.mod import generate_mod
+        from pipeline.rby.mod import generate_mod
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             corpus = root / "RedBlue"
@@ -325,7 +325,7 @@ class UniversalBuildTests(unittest.TestCase):
         # match pass over the same rows/worksheet.
         from unittest.mock import patch
         from pipeline.shared.corpus import parse_redblue
-        from pipeline.shared.mod import generate_mod
+        from pipeline.rby.mod import generate_mod
         from pipeline.rby.join import join_catalogs, read_worksheets
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -339,7 +339,7 @@ class UniversalBuildTests(unittest.TestCase):
             worksheets = read_worksheets(worksheet)
             joined, join_report = join_catalogs(rows, worksheets, "fr")
             mod = root / "mod"
-            with patch("pipeline.shared.mod.join_catalogs") as mocked_join:
+            with patch("pipeline.rby.mod.join_catalogs") as mocked_join:
                 generate_mod(rows, mod, mod_id="translation-fr", language="fr",
                              modkit_worksheet=worksheet,
                              precomputed_join=(joined, join_report))
@@ -348,7 +348,7 @@ class UniversalBuildTests(unittest.TestCase):
 
     def test_generate_mod_removes_stale_yellow_catalogs(self):
         from pipeline.shared.corpus import parse_redblue
-        from pipeline.shared.mod import generate_mod
+        from pipeline.rby.mod import generate_mod
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             corpus = root / "RedBlue"
