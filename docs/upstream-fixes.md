@@ -564,7 +564,7 @@ than assuming AI-generated compromise was the only option:
 **Same audit, applied to semantic anchors too -- now completed.** The same
 PR's `_ItemUseBallText00` merge (see "Fixed upstream" above) also orphaned
 `config/rby/semantic_anchor_decisions.json`'s `"It dodged the\nthrown BALL!"`
-entry, caught by `tests/test_multilingual.py`'s
+entry, caught by `tests/shared/test_multilingual.py`'s
 `test_rby_anchor_callsites_are_unique_and_contextually_eligible` once
 `.cache/dependencies/gen1recomp` refreshed to the new pin. Semantic anchors
 have no equivalent of `pipeline/rby/mod.py`'s `stale_overrides` build-time
@@ -623,7 +623,7 @@ buckets:
     real corpus for all five languages. An independent review then found
     that fix was solving an already-solved problem:
     `pipeline/rby/join.py`'s `pokedex_footer_catalog` -- pre-existing,
-    already tested in `tests/test_pipeline.py`, using the exact same two
+    already tested in `tests/shared/test_pipeline.py`, using the exact same two
     qids -- runs unconditionally in `pipeline/rby/mod.py` and overwrites
     `engine_values["SEEN %3d  OWN %3d"]` via a plain `dict.update()` call
     *after* the semantic-anchor matcher runs, regardless of whether the
@@ -1542,11 +1542,11 @@ Summary of what a translation mod can and cannot reach at the pinned revision:
 | Surface | Reachable | Mechanism |
 | --- | --- | --- |
 | Script dialogue (3,571 messages, NPCs, signs, trainers' battle lines, item pickups) | Yes | `mod.content.text:override(key, ir)` |
-| Species, move, item names; item descriptions | Yes, but see "Name patches are reverted on entering the field" | `pokemon`/`moves`/`items` patches |
+| Species, move, item names; item descriptions | Yes (names stay patched on entering the field since v0.2.70) | `pokemon`/`moves`/`items` patches |
 | Trainer names and class names | Yes (except RIVAL, LEADER, ELITE FOUR and CHAMPION, see below) | `trainers` patches |
 | Start menu labels | Yes | `ui.start_menu.items` hook |
-| game3's own text: battle messages, bag/party/PC/shop/summary/save menus, Pokédex labels, Oak's speech, options, ability names, move and ability descriptions, natures, place names (1,598 `Strings()` keys) | Yes | `strings` registry, keys listed in `config/frlg/engine_scope.json` |
-| Accented letters on screen | **No**: drawn blank | glyph lookup, see first entry below |
+| game3's own text: battle messages, bag/party/PC/shop/summary/save menus, Pokédex labels, Oak's speech, options, ability names, move and ability descriptions, natures, place names, Easy Chat (2,916 `Strings()` keys) | Yes | `strings` registry, keys listed in `config/frlg/engine_scope.json` |
+| Accented letters on screen | Yes (since v0.2.67) | ROM font's European glyphs, see first entry below |
 | Japanese | **No** | no glyphs, font registry gated |
 | Pokédex categories and descriptions, help system, quest log, naming keyboard | **No** | extracted packs or fixed layouts with no registry |
 
@@ -1710,9 +1710,11 @@ Fix, in two parts of very different size. The vocabulary groups can go through `
 
 Fix: store `Strings("EGG")` as the nickname when the egg is made, which is what the cart does (the save holds the translated word), or have `displayName` return `Strings("EGG")` for an egg, as the summary does.
 
+**Fixed upstream by gen1recomp#2396** (merged into `dev` on 2026-09-22, not yet in a release, so the pinned revision still shows it): `Pokemon.displayName`/`displayMonName` return `Strings("EGG")` for any egg, as `GetMonData(MON_DATA_NICKNAME)` does (`pokefirered/src/pokemon.c:3020`), which also covers eggs saves already carry. The same PR draws an egg as an egg everywhere else (the menu icon from `MON_DATA_SPECIES_OR_EGG`, the PC panel, the summary's egg page, the trade scene, the party slot without level or HP). No catalog work is needed: all four languages already ship `EGG`. The pin bump that brings it marks this entry and the two inventory rows below as fixed.
+
 #### Inventory: every game3 file with hardcoded player-visible text
 
-Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/audit.py`) at the pinned revision: every string literal under `src/{core,ui,battle,world}/game3` that looks like text, is not a `Strings()` argument and is not a value the runtime passes to `Strings()` through a variable from that same file (tables and lists `pipeline/frlg/engine_scope.py` reads), minus the files reviewed as never reaching the screen (`NON_DISPLAY_FILES`: identifiers, quest-log keys, log lines, name fallbacks for a missing pack, each with its reason). Reviewing a file as non-display hides any literal added to it later, so a pin bump should re-read the reasons of the files it touches. `tests/test_frlg.py` fails if the scan finds a player-visible file this table does not list, so the inventory stays complete across pin bumps. At `2c0f3ac0` (v0.2.64) the same scan, without the scope filter, found 74 files and 2,028 literals.
+Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/audit.py`) at the pinned revision: every string literal under `src/{core,ui,battle,world}/game3` that looks like text, is not a `Strings()` argument and is not a value the runtime passes to `Strings()` through a variable from that same file (tables and lists `pipeline/frlg/engine_scope.py` reads), minus the files reviewed as never reaching the screen (`NON_DISPLAY_FILES`: identifiers, quest-log keys, log lines, name fallbacks for a missing pack, each with its reason). Reviewing a file as non-display hides any literal added to it later, so a pin bump should re-read the reasons of the files it touches. `tests/frlg/test_frlg.py` fails if the scan finds a player-visible file this table does not list, so the inventory stays complete across pin bumps. At `2c0f3ac0` (v0.2.64) the same scan, without the scope filter, found 74 files and 2,028 literals.
 
 | File | Literals | What the player sees | Entry |
 | --- | ---: | --- | --- |
