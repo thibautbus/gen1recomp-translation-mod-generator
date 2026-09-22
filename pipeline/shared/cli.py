@@ -12,7 +12,7 @@ from .validate import release_gate, validate
 from .roms import catalog_roms, import_rom, import_all, import_gs_rom
 from .mod import font_profile_warning, generate_mod
 from ..rby.disassembly_audit import run_audit
-from .engine_backlog import MATRIX_LANGUAGES, run_backlog, run_backlog_matrix
+from ..rby.engine_backlog import MATRIX_LANGUAGES, run_backlog, run_backlog_matrix
 from .engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE
 
 

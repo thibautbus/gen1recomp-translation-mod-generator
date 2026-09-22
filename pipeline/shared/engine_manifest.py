@@ -132,7 +132,7 @@ def verified_source(checkout: str | Path, scope: Mapping[str, Any] | None = None
         if not str(metadata.get("url", "")).startswith("https://"):
             raise ValueError("Gen1Recomp archive marker URL is not HTTPS")
         try:
-            from ..shared.project import project_config
+            from .project import project_config
             engine_cfg = project_config()["gen1recomp"]
             expected_tree = str(engine_cfg["archive_tree_sha256"])
         except (KeyError, OSError, ValueError) as exc:
@@ -144,7 +144,7 @@ def verified_source(checkout: str | Path, scope: Mapping[str, Any] | None = None
         src = archive_root / str(scope.get("source_subdir", "src"))
         if not src.is_dir():
             raise ValueError(f"engine archive has no {scope.get('source_subdir', 'src')}/ directory: {root}")
-        from ..shared.dependencies import _tree_digest
+        from .dependencies import _tree_digest
         configured_prefixes = metadata.get("immutable_prefixes")
         if configured_prefixes is None:
             # Markers written before immutable-prefix metadata was added used
@@ -183,7 +183,7 @@ def verified_source(checkout: str | Path, scope: Mapping[str, Any] | None = None
 def iter_callsites(checkout: str | Path) -> list[dict[str, Any]]:
     """Collect production literal ``Strings`` and all literal RomText fallbacks."""
     # Imported lazily to keep this module independent of backlog analysis.
-    from ..shared.engine_backlog import iter_literal_strings_callsites, iter_romtext_fallback_callsites
+    from .strings_harvest import iter_literal_strings_callsites, iter_romtext_fallback_callsites
     src = source_root(checkout)
     return iter_literal_strings_callsites(src) + iter_romtext_fallback_callsites(src)
 

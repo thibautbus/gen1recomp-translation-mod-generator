@@ -6,16 +6,8 @@ import unittest
 from contextlib import redirect_stderr
 from unittest.mock import patch
 
-from pipeline.shared.engine_backlog import (
-    analyze_engine_backlog,
-    analyze_engine_backlog_matrix,
-    iter_dynamic_strings_callsites,
-    iter_literal_strings_callsites,
-    iter_romtext_callsites,
-    iter_romtext_fallback_callsites,
-    run_backlog,
-    run_backlog_matrix,
-)
+from pipeline.rby.engine_backlog import analyze_engine_backlog, analyze_engine_backlog_matrix, iter_dynamic_strings_callsites, run_backlog, run_backlog_matrix
+from pipeline.shared.strings_harvest import iter_literal_strings_callsites, iter_romtext_callsites, iter_romtext_fallback_callsites
 from pipeline.shared.cli import main as cli_main
 from pipeline.shared.engine_manifest import load_manifest
 
@@ -379,7 +371,7 @@ class EngineBacklogTests(unittest.TestCase):
                                  "callsites": [], "fallback_reason": "english_fallback",
                                  "coverage_provenance": {}, "semantic_anchor": None}]},
         }
-        with patch("pipeline.shared.engine_backlog.analyze_engine_backlog", side_effect=lambda language, **_: reports[language]):
+        with patch("pipeline.rby.engine_backlog.analyze_engine_backlog", side_effect=lambda language, **_: reports[language]):
             matrix = analyze_engine_backlog_matrix(languages=["de", "fr"], coverage_paths={"de": "d", "fr": "f"}, engine_catalog_paths={"de": "d", "fr": "f"})
         self.assertEqual(matrix["entries"][0]["triage"], "rby-review")
         self.assertEqual(matrix["stats"]["triage"]["common-rby"], 0)

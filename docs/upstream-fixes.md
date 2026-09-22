@@ -476,7 +476,7 @@ guess.
   used\n%s!", ...)` -- the same ROM label and *rendered* fallback text
   `BattleState.lua`'s held-item-use line already used, just reached from a
   second call site. No override referenced this literal, so no build
-  broke, but `pipeline/shared/engine_backlog.py`'s `iter_romtext_fallback_callsites()`
+  broke, but `pipeline/shared/strings_harvest.py`'s `iter_romtext_fallback_callsites()`
   only counts a romText fallback as a real (translatable) engine callsite
   when its literal is in the hand-maintained `RENDERED_ROMTEXT_FALLBACKS`
   allowlist -- and only the *other* `_ItemUseText001` fallback phrasing
@@ -485,7 +485,7 @@ guess.
   directly, it silently dropped out of the RBY-related engine-string scan
   (242 -> 240 keys scanned, not just the 1 legitimately retired one) --
   confirmed with a standalone before/after scan of both pinned revisions
-  via `pipeline.shared.engine_backlog`/`pipeline.rby.engine_scope`, not just the
+  via `pipeline.rby.engine_backlog`/`pipeline.rby.engine_scope`, not just the
   build's pass/fail. Fixed by adding `"%s used\n%s!"` to
   `RENDERED_ROMTEXT_FALLBACKS` alongside its sibling phrasing.
 - No other engine-string key broke or silently dropped out of scope: a
