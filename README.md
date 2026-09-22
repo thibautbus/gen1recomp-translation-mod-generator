@@ -561,9 +561,9 @@ archive before upload.
   identical to an English type name is translated too.
 - The desktop launcher uses a separate renderer and is outside the content
   mod's translation hooks.
-- FireRed renders accented letters blank, reverts species and move names on
-  entering the field and keeps much of its interface in English until the
-  upstream fixes listed in the FireRed section of the document below land.
+- FireRed's Pokédex descriptions, help system and quest log stay in English,
+  and the party names an egg EGG, until the upstream fixes listed in the
+  FireRed section of the document below land.
 - RBY-, Gold and Silver- and FireRed-specific upstream engine gaps are tracked in
   [docs/upstream-fixes.md](docs/upstream-fixes.md).
 
