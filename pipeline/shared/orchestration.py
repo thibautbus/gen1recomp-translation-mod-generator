@@ -104,7 +104,7 @@ def build_request(
             log_fn=log_fn, status_fn=status_fn, font_profile=request.font_profile,
         )
     if request.profile.id == "rby":
-        from .builder import build
+        from ..rby.build import build
 
         return build(
             request.source_for("rb"), request.language,

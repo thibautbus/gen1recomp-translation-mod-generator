@@ -46,7 +46,8 @@ def _internal_worker() -> int:
 
 
 def _self_check() -> int:
-    from pipeline.shared.builder import BuildError, _modkit_command, _which_luajit, is_frozen, project_config, project_version, resource_root, work_root
+    from pipeline.shared.builder import BuildError, _modkit_command, _which_luajit
+    from pipeline.shared.project import is_frozen, project_config, project_version, resource_root, work_root
     from pipeline.shared.engine import load_semantic_anchors, load_semantic_anchor_decisions, merge_semantic_anchors
     from pipeline.rby.engine_scope import load_scope
     try:

@@ -365,7 +365,7 @@ class UniversalBuildTests(unittest.TestCase):
             self.assertFalse((mod / "lang" / "dialogue_yellow.lua").exists())
 
     def test_preserve_scaffold_support_injects_yellow_hook(self):
-        from pipeline.shared.builder import preserve_scaffold_support
+        from pipeline.rby.build import preserve_scaffold_support
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             scaffold = root / "scaffold"
@@ -390,7 +390,7 @@ class UniversalBuildTests(unittest.TestCase):
 
     def test_merge_engine_overrides_merges_shared_then_yellow(self):
         import json
-        from pipeline.shared.builder import _merge_engine_overrides
+        from pipeline.rby.build import _merge_engine_overrides
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             shared = root / "shared.json"
@@ -494,7 +494,7 @@ class YellowAuditFallbackTests(unittest.TestCase):
 
 class YellowCoverageExceptionsTests(unittest.TestCase):
     def test_loads_entries_as_frozensets_per_language(self):
-        from pipeline.shared.builder import load_yellow_coverage_exceptions
+        from pipeline.rby.build import load_yellow_coverage_exceptions
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "yellow_coverage_exceptions.json"
             path.write_text(
@@ -506,11 +506,11 @@ class YellowCoverageExceptionsTests(unittest.TestCase):
         self.assertEqual(overrides, {"it": frozenset({"_RoseText"})})
 
     def test_missing_file_returns_empty_mapping(self):
-        from pipeline.shared.builder import load_yellow_coverage_exceptions
+        from pipeline.rby.build import load_yellow_coverage_exceptions
         self.assertEqual(load_yellow_coverage_exceptions(Path("/nonexistent.json")), {})
 
     def test_repo_config_matches_expected_italian_entry(self):
-        from pipeline.shared.builder import load_yellow_coverage_exceptions
+        from pipeline.rby.build import load_yellow_coverage_exceptions
         from pipeline.shared.project import resource_root
         overrides = load_yellow_coverage_exceptions(
             resource_root() / "config" / "rby" / "yellow_coverage_exceptions.json"

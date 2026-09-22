@@ -60,7 +60,7 @@ class EngineProfileTests(unittest.TestCase):
             run.assert_called_once()
 
     def test_validate_engine_profile_and_source_rejects_both_mismatches(self):
-        # Shared by builder.build() and gs_mod.build_gs(), which each catch
+        # Shared by pipeline.rby.build.build() and gs_mod.build_gs(), which each catch
         # this ValueError and re-raise it as their own BuildError.
         with self.assertRaisesRegex(ValueError, "upstream-local.*engine-source.*checkout"):
             validate_engine_profile_and_source(UPSTREAM_PROFILE, None)

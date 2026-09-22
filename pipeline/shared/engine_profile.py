@@ -58,7 +58,7 @@ def profile_for(value: str | None) -> EngineProfile:
 
 def validate_engine_profile_and_source(engine_profile: str, engine_source: str | Path | None) -> str:
     """Validate the engine_profile/engine_source pairing every build entry
-    point (builder.build(), gs_mod.build_gs()) requires identically.
+    point (rby/build.py's build(), gs_mod.build_gs()) requires identically.
 
     Raises ValueError -- callers that need a BuildError (the CLI-facing
     ones) catch it and re-raise with the same message, keeping this helper

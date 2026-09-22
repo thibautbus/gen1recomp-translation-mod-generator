@@ -1358,7 +1358,7 @@ def build_gs(
     """Run Gold's private extraction, join, validation, and packaging flow.
 
     ``crystal_rom`` is a mandatory companion ROM, like Yellow is for the
-    "rby" release (pipeline.shared.builder.build()'s own yellow_rom): one mod
+    "rby" release (pipeline.rby.build.build()'s own yellow_rom): one mod
     covers gold/silver/crystal, Crystal's own dialogue applied at runtime
     only when GameVersion.get() == "crystal" (see generate_gs_mod()).
     """
