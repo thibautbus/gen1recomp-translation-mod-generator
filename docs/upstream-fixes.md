@@ -1648,9 +1648,9 @@ Two places compare the display class name a mod patches:
 
 The pipeline keeps these class names in English (`ENGINE_KEYED_CLASS_NAMES` in `pipeline/frlg/mod.py`: classes 81/89, 24/84, 23/87, 30/90), a test scans the pinned engine's game3 sources for any other class-name comparison, and the gate checks trainer 326 keeps the rival name it is given. Fix: compare class ids (`TRAINER_CLASS_RIVAL_EARLY`/`_LATE`, `TRAINER_CLASS_[RS_]LEADER`, `_ELITE_FOUR`, `_CHAMPION`) instead of display names; the pipeline can then drop the exception.
 
-#### 7. Braille and keypad icons in dialogue print as "?" in every language
+#### 7. Braille stays in English, and keypad icons in dialogue print as "?" in every language
 
-- Braille messages (`braillemessage`, 39 lines: Dotted Hole, Ruin Valley and Mt. Ember's Ruby Path) are decoded with the Latin charmap like any message (`src/import/gba/extract_scripts.lua` → `TextIR.decode`), so English already prints noise such as `?é?`. The corpus has every braille line per language (Unicode braille); translating them needs the runtime to draw braille cells (the cart's `FONT_BRAILLE`) first, and a braille encoding on the pipeline side.
+- Braille messages (`braillemessage`, 39 lines: Dotted Hole, Ruin Valley and Mt. Ember's Ruby Path) are drawn as braille cells since v0.2.70: the extractor decodes them to Latin letters with the cart's braille table (`src/import/gba/extract_scripts.lua` `decode_braille`), and `src/ui/game3/braille.lua` spells the message back into cells (`Braille.encode`: `Braille.CODE` for letters and punctuation, then the Latin charmap byte of any other character). The corpus has every braille line per language (Unicode braille). French needs only letters, `,` and `'`, but the German, Spanish and Italian lines use cells no character reaches (German ä, `⠿`, dot 5 alone), so the lines stay in English in every language. Fix: let `Braille.encode` take Unicode braille characters (U+2800–U+283F) as cells, so a mod can hand each cart's own braille over unchanged.
 - Keypad-icon and extra-symbol escapes in extracted text (`F8 xx`/`F9 xx`: A_BUTTON, DPAD_*, the ones help and minigame texts use) have no case in `TextIR.decode` and fall through to `"?"`, followed by the argument byte as a glyph. The pipeline mirrors that exactly so a translation never prints worse than English, but the icons are missing in every language. (`Strings()` values are not affected: their keypad icons are the `{A_BUTTON}` tokens `FrlgFont` draws.) Fix: decode them to a tag and draw the already-extracted `chrome/fonts/keypad_icons.rgba`.
 
 #### 8. The naming keyboard is the US layout
@@ -1660,7 +1660,7 @@ The pipeline keeps these class names in English (`ENGINE_KEYED_CLASS_NAMES` in `
 #### 9. Minor extraction and runtime inconsistencies
 
 - The `PK`/`MN` ligature pair (`53 54`) decodes to `"POKé"` in `TextIR.decode` (`text_ir.lua:161-165`) but to `"POKéMON"` in the trainer extractor (`src/import/gba/trainer_extract.lua:148`); the pipeline follows each one where it applies.
-- The items extractor drops the `POKEBLOCK` glyph run (`55`–`59`), so item 273 reads `" CASE"` and its description `"A case for holding S made…"` in English too; it stays untranslated (and is not obtainable in FireRed).
+- The items extractor drops the `POKEBLOCK` glyph run (`55`–`59`), so item 273 reads `" CASE"` and its description `"A case for holding S made…"` in English too. The item cannot be obtained in FireRed, so the pipeline leaves it out of the join and of the coverage (`UNOBTAINABLE_ITEMS` in `pipeline/frlg/mod.py`) rather than asking for an extractor fix.
 - The summary's met-location line reads `mon.metLocationName`, which nothing sets (`src/core/game3/summary_data.lua:268`), so it always prints the "PALLET TOWN" fallback (translated at the pinned revision, but the wrong place in every language).
 - Type badges and some chrome are ROM graphics with English text baked in; they are out of reach of any text mod.
 

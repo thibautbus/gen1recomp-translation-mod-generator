@@ -313,12 +313,14 @@ provenance. Future unresolved entries will keep their original English text.
 - `FireRed ROM aggregate` combines the dialogue messages with the named
   catalogs (species, move and item names, item descriptions, trainer names
   and class names, start menu labels). The 39 braille messages stay in
-  English (the runtime cannot draw braille in any language), as do the
-  `POKéBLOCK CASE` item whose name the extractor already loses in English,
-  and the eight trainer classes whose English name gen1recomp compares
-  (RIVAL, LEADER, ELITE FOUR and CHAMPION, two classes each): translating
-  them would lose the rival's chosen name and misfile gym, Elite Four and
-  champion wins in the quest log.
+  English (the runtime spells braille from Latin letters and cannot reach
+  every cell the European carts use, such as German ä), as do the eight
+  trainer classes whose English name gen1recomp compares (RIVAL, LEADER,
+  ELITE FOUR and CHAMPION, two classes each): translating them would lose
+  the rival's chosen name and misfile gym, Elite Four and champion wins in
+  the quest log. The `POKéBLOCK CASE` item's name and description are left
+  out of the aggregate: the item cannot be obtained in FireRed, and the
+  extractor loses its name even in English.
 - `FireRed engine strings` covers the 2,916 `Strings()` keys reachable from
   the game3 runtime: battle messages, menus, Pokédex labels, Oak's speech,
   options, ability names, move and ability descriptions, place names, and
@@ -331,10 +333,10 @@ provenance. Future unresolved entries will keep their original English text.
 
 | Target | FireRed ROM aggregate | FireRed engine strings |
 | --- | ---: | ---: |
-| `fr` | 5639/5688 (99.14%) | 2916/2916 (100%) |
-| `de` | 5639/5688 (99.14%) | 2916/2916 (100%) |
-| `es` | 5639/5688 (99.14%) | 2916/2916 (100%) |
-| `it` | 5639/5688 (99.14%) | 2916/2916 (100%) |
+| `fr` | 5639/5686 (99.17%) | 2916/2916 (100%) |
+| `de` | 5639/5686 (99.17%) | 2916/2916 (100%) |
+| `es` | 5639/5686 (99.17%) | 2916/2916 (100%) |
+| `it` | 5639/5686 (99.17%) | 2916/2916 (100%) |
 
 These measure what the mod ships, not what the current runtime displays; see
 "Pokémon FireRed support" above for the runtime limits.

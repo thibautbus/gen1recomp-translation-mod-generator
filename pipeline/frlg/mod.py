@@ -218,6 +218,12 @@ def _numbered(path: Path) -> dict[int, object]:
     return {int(key): value for key, value in json.loads(path.read_text(encoding="utf-8")).items()}
 
 
+# Items left out of the join and of the coverage: ITEM_POKEBLOCK_CASE cannot be
+# obtained in FireRed, and the items extractor drops its POKEBLOCK glyph run, so
+# even English reads " CASE" (docs/upstream-fixes.md, FireRed entry 9).
+UNOBTAINABLE_ITEMS = frozenset({273})
+
+
 # ---------------------------------------------------------------- join
 
 def join_frlg(
@@ -243,7 +249,8 @@ def join_frlg(
 
     species = _numbered(extracted / "frlg_species.json")
     moves = _numbered(extracted / "frlg_moves.json")
-    items = _numbered(extracted / "frlg_items.json")
+    items = {number: row for number, row in _numbered(extracted / "frlg_items.json").items()
+             if number not in UNOBTAINABLE_ITEMS}
     trainers = _numbered(extracted / "frlg_trainers.json")
 
     species_ids = registry_ids(species)
