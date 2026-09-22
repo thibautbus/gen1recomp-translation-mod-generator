@@ -121,7 +121,7 @@ join against poke-corpus's separate `Crystal/` collection and ships as a
 save. Crystal reuses Gold/Silver's own engine-string catalog and shared named
 ROM catalogs (species/moves/items/trainer classes) as-is where the roster is
 identical across editions, and ships its own dedicated registries
-(`crystal_registries.py`) for the handful of records that are genuinely
+(`pipeline/gsc/crystal_registries.py`) for the handful of records that are genuinely
 Crystal-exclusive (item names, trainer class names and a landmarks subset).
 It also carries its own translated engine strings for the 48 keys reachable
 only from a Crystal-exclusive feature (Move Tutor, gender selection, the
@@ -162,7 +162,7 @@ name, `STR_VAR` buffers and page breaks survive), encoded through pret's
 text exactly. The pinned symbol table and charmap are downloaded like the
 corpus; they carry addresses and an encoding table, no game text.
 
-Before packaging, `tools/gate_frlg.lua` loads the mod through gen1recomp's
+Before packaging, `tools/frlg/gate.lua` loads the mod through gen1recomp's
 real generation-3 loader over the extracted game3 data and checks that each
 catalog lands where the FireRed screens read it. It also measures runtime
 limits the mod cannot fix itself, and the build prints them. Accented
@@ -326,7 +326,7 @@ provenance. Future unresolved entries will keep their original English text.
   come from the species and move names). They
   are listed with their callsites and cart rows in
   [`config/frlg/engine_scope.json`](config/frlg/engine_scope.json), which
-  `pipeline/frlg_engine_scope.py` regenerates from the pinned engine; a test
+  `pipeline/frlg/engine_scope.py` regenerates from the pinned engine; a test
   derives the same set from it, so a new key cannot slip out of the metric.
 
 | Target | FireRed ROM aggregate | FireRed engine strings |
@@ -475,16 +475,22 @@ fully translated.
 
 ### Module map
 
-| Area | Modules | Responsibility |
+The pipeline is split like `config/`: one package per game, and
+`pipeline/shared/` for what several games use. `tools/` and `tests/` follow
+the same split.
+
+| Package | Modules | Responsibility |
 | --- | --- | --- |
-| Entry points and policy | `cli.py`, `builder.py`, `gui.py`, `orchestration.py`, `specs.py` | Resolve release requests and dispatch the command, interactive and GUI flows. |
-| Inputs and workspace | `project.py`, `dependencies.py`, `rom_paths.py`, `roms.py` | Resolve paths, verify private ROMs and prepare pinned dependencies. |
-| Corpus model | `corpus.py`, `model.py`, `align.py`, `worksheet.py`, `tokens.py` | Parse parallel corpora, align qids and preserve control-token contracts. |
-| RBY generation | `join.py`, `generate.py`, `literals.py`, `yellow.py`, `yellow_audit.py`, `mod.py` | Join Red/Blue catalogs, build the Yellow layer and emit the universal mod. |
-| Gold and Silver generation | `gs_text.py`, `gs_join.py`, `gs_index_join.py`, `gs_engine.py`, `gs_mod.py` | Join GoldSilver to pointer/index catalogs, engine strings and the Gen 2 artifact. |
-| FireRed generation | `frlg_text.py`, `frlg_join.py`, `frlg_mod.py` | pret charmap/symbols, the game3 text IR, the address-to-label join and the Gen 3 artifact. |
-| Engine strings | `engine.py`, `engine_scope.py` | Match the versioned engine catalog and classify production callsites. |
-| Validation and audits | `validate.py`, `disassembly_audit.py`, `engine_backlog.py` | Enforce release gates and produce private diagnostic reports. |
+| `pipeline/shared/` | `cli.py`, `builder.py`, `gui.py`, `orchestration.py`, `specs.py` | Resolve release requests and dispatch the command, interactive and GUI flows. |
+| `pipeline/shared/` | `project.py`, `dependencies.py`, `rom_paths.py`, `roms.py`, `subprocess_run.py`, `engine_profile.py` | Resolve paths, verify private ROMs and prepare pinned dependencies. |
+| `pipeline/shared/` | `corpus.py`, `model.py`, `align.py`, `worksheet.py`, `tokens.py`, `generate.py` | Parse parallel corpora, align qids, preserve control-token contracts and write Lua. |
+| `pipeline/shared/` | `engine.py`, `engine_scope.py`, `engine_backlog.py` | Match the versioned Red/Blue and Gold engine catalog, classify production callsites and harvest `Strings()` keys. |
+| `pipeline/shared/` | `join.py`, `mod.py`, `validate.py`, `leak_audit.py` | Join the Red/Blue catalogs and write the mod (whose font and packaging helpers the Gold and FireRed builds reuse), enforce release gates. |
+| `pipeline/rby/` | `yellow.py`, `yellow_audit.py`, `literals.py`, `disassembly_audit.py` | Build the Yellow layer, resolve literal handlers and audit the localized disassemblies. |
+| `pipeline/gsc/` | `text.py`, `join.py`, `index_join.py`, `localized_registries.py`, `trainer_names.py`, `engine.py`, `mod.py` | Join GoldSilver to pointer/index catalogs and engine strings, and emit the Gen 2 artifact. |
+| `pipeline/gsc/` | `crystal_mod.py`, `crystal_registries.py`, `crystal_strings.py` | The Crystal layer of the Gen 2 artifact. |
+| `pipeline/frlg/` | `text.py`, `join.py`, `engine_scope.py`, `audit.py`, `mod.py` | pret charmap/symbols, the game3 text IR, the address-to-label and engine joins, the hardcoded-text audit and the Gen 3 artifact. |
+| `tools/gsc/`, `tools/frlg/` | `extract.lua`, `gate*.lua`, `measure_*.py` | ROM extractors and release gates run under LuaJIT, and the Gold join measurements. |
 
 `build_translation.py` is the normal entry point. Intermediate and audit files
 stay under `.cache/`.

@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from pipeline.gui import main
+from pipeline.shared.gui import main
 
 
 def _force_utf8_subprocess_text_decoding() -> None:
@@ -52,7 +52,7 @@ def _self_check() -> int:
 
 
 def _gui_self_check() -> int:
-    from pipeline.gui import TranslationBuilderApp
+    from pipeline.shared.gui import TranslationBuilderApp
 
     app = TranslationBuilderApp()
     app.root.update_idletasks()

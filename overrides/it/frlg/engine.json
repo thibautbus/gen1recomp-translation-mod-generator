@@ -1505,7 +1505,7 @@
     "easyChat.EVENTS|{POKEBLOCK}": {
       "override": "POKéMELLA",
       "reason": "engine-corpus",
-      "provenance": "From easy_chat_group_events.sEasyChatWord_POKEBLOCK. The cart's word is the named [POKEBLOCK] glyph run ([POKEMELLA] in Italian), which FrlgFont has no single character for; spelled out as the project spells that run everywhere (pipeline/frlg_text.py TRANSLATION_TOKEN_TEXT), Italian with its own name."
+      "provenance": "From easy_chat_group_events.sEasyChatWord_POKEBLOCK. The cart's word is the named [POKEBLOCK] glyph run ([POKEMELLA] in Italian), which FrlgFont has no single character for; spelled out as the project spells that run everywhere (pipeline/frlg/text.py TRANSLATION_TOKEN_TEXT), Italian with its own name."
     },
     "easyChat.STATUS|{PK}RS": {
       "override": "POKéRUS",
