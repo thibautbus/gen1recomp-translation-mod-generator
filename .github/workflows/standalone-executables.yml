@@ -50,9 +50,35 @@ jobs:
           name: gen1recomp-translation-mod-generator-gui-linux-x86_64
           path: dist/gen1recomp-translation-mod-generator-*-gui-linux-x86_64.tar.gz
 
+  build-macos:
+    strategy:
+      matrix:
+        include:
+          - runner: macos-15-intel
+            arch: x86_64
+          - runner: macos-15
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38
+        with: {python-version: "3.12"}
+      - name: Build macOS executables
+        run: bash ./packaging/build_macos_executable.sh
+      - name: Upload macOS CLI archive
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: gen1recomp-translation-mod-generator-cli-macos-${{ matrix.arch }}
+          path: dist/gen1recomp-translation-mod-generator-*-cli-macos-${{ matrix.arch }}.tar.gz
+      - name: Upload macOS GUI archive
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: gen1recomp-translation-mod-generator-gui-macos-${{ matrix.arch }}
+          path: dist/gen1recomp-translation-mod-generator-*-gui-macos-${{ matrix.arch }}.tar.gz
+
   release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    needs: [build-windows, build-linux]
+    needs: [build-windows, build-linux, build-macos]
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -72,5 +98,7 @@ jobs:
           version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' pyproject.toml)
           test "$GITHUB_REF_NAME" = "v$version"
           test "$(find release -maxdepth 1 -type f -name '*.exe' | wc -l)" -eq 2
-          test "$(find release -maxdepth 1 -type f -name '*.tar.gz' | wc -l)" -eq 2
+          test "$(find release -maxdepth 1 -type f -name '*-linux-x86_64.tar.gz' | wc -l)" -eq 2
+          test "$(find release -maxdepth 1 -type f -name '*-macos-x86_64.tar.gz' | wc -l)" -eq 2
+          test "$(find release -maxdepth 1 -type f -name '*-macos-arm64.tar.gz' | wc -l)" -eq 2
           gh release create "$GITHUB_REF_NAME" release/*.exe release/*.tar.gz --verify-tag --generate-notes
