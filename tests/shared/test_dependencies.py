@@ -374,6 +374,7 @@ class DependencyTests(unittest.TestCase):
                         "Analysis": fake_analysis,
                         "PYZ": lambda pure: SimpleNamespace(pure=pure),
                         "EXE": lambda *args, **kwargs: captured.setdefault("exe", kwargs) or SimpleNamespace(),
+                        "BUNDLE": lambda *args, **kwargs: None,
                     },
                 )
             self.assertTrue(self._paths_equivalent(captured["scripts"][0], root / "build_translation_gui.py"))
