@@ -11,7 +11,7 @@ from unittest.mock import patch
 from contextlib import redirect_stdout
 import zipfile
 
-from pipeline.shared import builder
+from pipeline.shared import builder, gui
 from pipeline.rby import build as rby_build
 from pipeline.shared import project
 from pipeline.shared.project import project_version
@@ -22,6 +22,17 @@ from pipeline.shared.engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE
 
 
 class BuilderTests(unittest.TestCase):
+    def test_finder_launched_macos_gui_uses_user_workspace(self):
+        with tempfile.TemporaryDirectory() as directory, \
+             patch.object(gui, "is_frozen", return_value=True), \
+             patch.object(gui.platform, "system", return_value="Darwin"), \
+             patch.object(gui.Path, "home", return_value=Path(directory)), \
+             patch.object(gui, "work_root", return_value=Path("/")):
+            self.assertEqual(
+                gui.gui_workspace_root(),
+                Path(directory) / "Library" / "Application Support" / "Gen1Recomp Translation Mod Generator" / ".cache",
+            )
+
     def test_run_streams_subprocess_output_to_log(self):
         class Process:
             stdout = iter(("first\n", "second\n"))

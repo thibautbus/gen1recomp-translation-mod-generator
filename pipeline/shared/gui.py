@@ -4,13 +4,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from pathlib import Path
+import platform
 import queue
 import threading
 from typing import Callable
 
 from . import builder
 from .mod_assets import FONT_PROFILES
-from .project import project_version, work_root
+from .project import is_frozen, project_version, work_root
 from .orchestration import build_request
 from .specs import BuildRequest, release_profile_for_generation
 
@@ -36,6 +37,13 @@ ROMS_BY_GENERATION = {1: ("rb", "yellow"), 2: ("gs", "crystal"), 3: ("firered",)
 
 # Where each release leaves its coverage report (pipeline/*_mod.py).
 BUILD_CACHE_BY_GENERATION = {1: "interactive", 2: "interactive-gs", 3: "interactive-gen3"}
+
+
+def gui_workspace_root() -> Path:
+    """Keep Finder-launched macOS apps out of their unwritable cwd (/)."""
+    if is_frozen() and platform.system() == "Darwin":
+        return Path.home() / "Library" / "Application Support" / "Gen1Recomp Translation Mod Generator" / ".cache"
+    return work_root() / ".cache"
 
 # Fixed wrap width (pixels) for every Hint.TLabel. Without it, hint labels
 # with no wraplength request exactly as much width as their longest line
@@ -495,8 +503,8 @@ class TranslationBuilderApp:
                 inputs.language, inputs.output_dir, inputs.font_profile,
             )
             # The workspace (gen1recomp/poke-corpus checkouts, LuaJIT-driven
-            # mod validation) stays anchored near the executable rather than
-            # inside the user's chosen output directory: LuaJIT's io.open
+            # mod validation) stays in a stable location outside the user's
+            # chosen output directory: LuaJIT's io.open
             # takes narrow (ANSI-codepage) paths on Windows, so a non-ASCII
             # output folder name -- reported as "Build failed", exit code 1,
             # from a real folder with an accent in it -- silently broke
@@ -504,7 +512,7 @@ class TranslationBuilderApp:
             # also means the (multi-hundred-MB) dependency downloads are
             # reused across builds no matter what output folder is picked,
             # instead of being tied to one and re-fetched if it changes.
-            workspace = work_root() / ".cache"
+            workspace = gui_workspace_root()
             output = build_request(
                 request, language_name=language_name, luajit=luajit,
                 workspace_root=workspace, output_dir=inputs.output_dir,

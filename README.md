@@ -400,13 +400,15 @@ Generated coverage reports are the authoritative inventory of unmatched and
 ambiguous strings. Every manual override must explain its source and accepted
 limitations; otherwise the English fallback is preferred.
 
-## Windows/Linux standalone executables
+## Windows, Linux and macOS standalone executables
 
 The GitHub Actions workflow builds CLI and graphical Tkinter executables for
-Windows x64 and Linux x86_64:
+Windows x64, Linux x86_64, and macOS Intel/Apple Silicon:
 
 - `gen1recomp-translation-mod-generator-<version>-<cli|gui>-windows-x64.exe`
 - `gen1recomp-translation-mod-generator-<version>-<cli|gui>-linux-x86_64.tar.gz`
+- `gen1recomp-translation-mod-generator-<version>-cli-macos-<x86_64|arm64>.tar.gz`
+- `gen1recomp-translation-mod-generator-<version>-gui-macos-<x86_64|arm64>.zip`
 
 Windows users can run the downloaded EXE directly. Linux builds target Ubuntu
 22.04 (glibc) and compatible newer systems; extract the selected archive and
@@ -417,6 +419,22 @@ tar -xzf gen1recomp-translation-mod-generator-<version>-gui-linux-x86_64.tar.gz
 chmod +x gen1recomp-translation-mod-generator-<version>-gui-linux-x86_64
 ./gen1recomp-translation-mod-generator-<version>-gui-linux-x86_64
 ```
+
+On macOS, select `arm64` for Apple Silicon or `x86_64` for Intel. Extract the
+GUI ZIP and double-click `gen1recomp-translation-mod-generator-gui.app` in
+Finder. The CLI archive still runs from Terminal:
+
+```sh
+tar -xzf gen1recomp-translation-mod-generator-<version>-cli-macos-arm64.tar.gz
+./gen1recomp-translation-mod-generator-<version>-cli-macos-arm64
+```
+
+The macOS builds are not notarized. If macOS blocks the app because its
+developer cannot be verified, first confirm that the archive
+came from this project's GitHub release. Then try to open the app once, go
+to **System Settings → Privacy & Security**, and select **Open Anyway**. See
+[Apple's instructions](https://support.apple.com/en-gb/102445). Do not bypass
+a warning that the binary is damaged or will harm your computer.
 
 Standalone builds verify their pinned downloads and never bundle or upload
 ROMs. The CLI stores its cache in the current directory; the GUI uses the
@@ -538,9 +556,10 @@ Build standalone artifacts locally with:
 
 ```sh
 ./packaging/build_linux_executable.sh
+./packaging/build_macos_executable.sh
 ```
 
-Tag pushes matching `v<version>` validate the version and publish all four
+Tag pushes matching `v<version>` validate the version and publish all eight
 CLI/GUI artifacts. `workflow_dispatch` builds them without publishing. The
 workflow compiles pinned LuaJIT, validates both front ends and inspects each
 archive before upload.
