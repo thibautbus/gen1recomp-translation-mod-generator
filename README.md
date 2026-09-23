@@ -407,7 +407,8 @@ Windows x64, Linux x86_64, and macOS Intel/Apple Silicon:
 
 - `gen1recomp-translation-mod-generator-<version>-<cli|gui>-windows-x64.exe`
 - `gen1recomp-translation-mod-generator-<version>-<cli|gui>-linux-x86_64.tar.gz`
-- `gen1recomp-translation-mod-generator-<version>-<cli|gui>-macos-<x86_64|arm64>.tar.gz`
+- `gen1recomp-translation-mod-generator-<version>-cli-macos-<x86_64|arm64>.tar.gz`
+- `gen1recomp-translation-mod-generator-<version>-gui-macos-<x86_64|arm64>.zip`
 
 Windows users can run the downloaded EXE directly. Linux builds target Ubuntu
 22.04 (glibc) and compatible newer systems; extract the selected archive and
@@ -419,17 +420,18 @@ chmod +x gen1recomp-translation-mod-generator-<version>-gui-linux-x86_64
 ./gen1recomp-translation-mod-generator-<version>-gui-linux-x86_64
 ```
 
-On macOS, select `arm64` for Apple Silicon or `x86_64` for Intel, extract the
-archive, and run the CLI or GUI binary from Terminal:
+On macOS, select `arm64` for Apple Silicon or `x86_64` for Intel. Extract the
+GUI ZIP and double-click `gen1recomp-translation-mod-generator-gui.app` in
+Finder. The CLI archive still runs from Terminal:
 
 ```sh
-tar -xzf gen1recomp-translation-mod-generator-<version>-gui-macos-arm64.tar.gz
-./gen1recomp-translation-mod-generator-<version>-gui-macos-arm64
+tar -xzf gen1recomp-translation-mod-generator-<version>-cli-macos-arm64.tar.gz
+./gen1recomp-translation-mod-generator-<version>-cli-macos-arm64
 ```
 
-The macOS builds are not notarized. If macOS blocks a binary extracted with
-Finder because its developer cannot be verified, first confirm that the archive
-came from this project's GitHub release. Then try to open the binary once, go
+The macOS builds are not notarized. If macOS blocks the app because its
+developer cannot be verified, first confirm that the archive
+came from this project's GitHub release. Then try to open the app once, go
 to **System Settings → Privacy & Security**, and select **Open Anyway**. See
 [Apple's instructions](https://support.apple.com/en-gb/102445). Do not bypass
 a warning that the binary is damaged or will harm your computer.

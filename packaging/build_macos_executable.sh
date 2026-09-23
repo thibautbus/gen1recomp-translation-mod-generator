@@ -56,9 +56,19 @@ for variant in cli gui; do
   binary="$DIST/gen1recomp-translation-mod-generator-$variant"
   "$binary" --self-check
   if [[ "$variant" == gui ]]; then
-    "$binary" --gui-self-check
+    app="$DIST/gen1recomp-translation-mod-generator-gui.app"
+    app_binary="$app/Contents/MacOS/gen1recomp-translation-mod-generator-gui"
+    [[ -x "$app_binary" ]]
+    "$app_binary" --self-check
+    "$app_binary" --gui-self-check
+    archive="$DIST/gen1recomp-translation-mod-generator-${VERSION}-gui-macos-$ARCH.zip"
+    rm -f -- "$archive"
+    ditto -c -k --sequesterRsrc --keepParent "$app" "$archive"
+    unzip -tq "$archive"
+    echo "Built $archive"
+    continue
   fi
-  versioned="$DIST/gen1recomp-translation-mod-generator-${VERSION}-$variant-macos-$ARCH"
+  versioned="$DIST/gen1recomp-translation-mod-generator-${VERSION}-cli-macos-$ARCH"
   rm -f -- "$versioned" "$versioned.tar.gz"
   cp "$binary" "$versioned"
   chmod 0755 "$versioned"

@@ -178,7 +178,7 @@ class DependencyTests(unittest.TestCase):
         self.assertIn("apt-get install --no-install-recommends -y build-essential file python3-tk xvfb xauth", workflow)
         self.assertIn("needs: [build-windows, build-linux, build-macos]", workflow)
         self.assertIn("actions/download-artifact@", workflow)
-        self.assertIn("release/*.exe release/*.tar.gz", workflow)
+        self.assertIn("release/*.exe release/*.tar.gz release/*.zip", workflow)
         self.assertEqual(workflow.count("actions/upload-artifact@"), 6)
         self.assertIn("-eq 2", workflow)
         self.assertIn("dist/gen1recomp-translation-mod-generator-*-cli-windows-x64.exe", workflow)
@@ -186,9 +186,11 @@ class DependencyTests(unittest.TestCase):
         self.assertIn("dist/gen1recomp-translation-mod-generator-*-cli-linux-x86_64.tar.gz", workflow)
         self.assertIn("dist/gen1recomp-translation-mod-generator-*-gui-linux-x86_64.tar.gz", workflow)
         self.assertIn("dist/gen1recomp-translation-mod-generator-*-cli-macos-${{ matrix.arch }}.tar.gz", workflow)
-        self.assertIn("dist/gen1recomp-translation-mod-generator-*-gui-macos-${{ matrix.arch }}.tar.gz", workflow)
-        self.assertIn("*-macos-x86_64.tar.gz", workflow)
-        self.assertIn("*-macos-arm64.tar.gz", workflow)
+        self.assertIn("dist/gen1recomp-translation-mod-generator-*-gui-macos-${{ matrix.arch }}.zip", workflow)
+        self.assertIn("*-cli-macos-x86_64.tar.gz", workflow)
+        self.assertIn("*-cli-macos-arm64.tar.gz", workflow)
+        self.assertIn("*-gui-macos-x86_64.zip", workflow)
+        self.assertIn("*-gui-macos-arm64.zip", workflow)
 
     def test_macos_packaging_builds_both_variants_with_pinned_luajit(self):
         script = (Path(__file__).parents[2] / "packaging/build_macos_executable.sh").read_text()
@@ -198,9 +200,11 @@ class DependencyTests(unittest.TestCase):
         self.assertIn('for variant in cli gui; do', script)
         self.assertIn('GEN1RECOMP_VARIANT="$variant"', script)
         self.assertIn('"$binary" --self-check', script)
-        self.assertIn('"$binary" --gui-self-check', script)
+        self.assertIn('"$app_binary" --gui-self-check', script)
         self.assertIn('macos-$ARCH', script)
         self.assertIn('tar -czf "$versioned.tar.gz"', script)
+        self.assertIn('ditto -c -k --sequesterRsrc --keepParent "$app" "$archive"', script)
+        self.assertIn('unzip -tq "$archive"', script)
         self.assertIn('if [[ -e "$RUNTIME" ]]', script)
         self.assertIn('rm -rf -- "$RUNTIME"', script)
 
@@ -374,6 +378,32 @@ class DependencyTests(unittest.TestCase):
                 )
             self.assertTrue(self._paths_equivalent(captured["scripts"][0], root / "build_translation_gui.py"))
             self.assertFalse(captured["exe"]["console"])
+
+    def test_spec_wraps_macos_gui_in_app_bundle(self):
+        spec = Path(__file__).parents[2] / "packaging/translation_builder.spec"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "packaging").mkdir()
+            (root / "build_translation_gui.py").write_text("# test fixture\n")
+            captured = {}
+
+            def fake_bundle(exe, **kwargs):
+                captured["bundle"] = (exe, kwargs)
+
+            exe = object()
+            with patch.dict(os.environ, {"GEN1RECOMP_VARIANT": "gui"}), patch("sys.platform", "darwin"):
+                runpy.run_path(
+                    str(spec),
+                    init_globals={
+                        "SPECPATH": str(root / "packaging"),
+                        "Analysis": lambda *args, **kwargs: SimpleNamespace(pure=[], scripts=[], binaries=[], datas=[]),
+                        "PYZ": lambda pure: SimpleNamespace(pure=pure),
+                        "EXE": lambda *args, **kwargs: exe,
+                        "BUNDLE": fake_bundle,
+                    },
+                )
+            self.assertIs(captured["bundle"][0], exe)
+            self.assertEqual(captured["bundle"][1]["name"], "gen1recomp-translation-mod-generator-gui.app")
 
     def test_archive_failure_closes_temp_download_before_cleanup(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -2,6 +2,7 @@
 # build scripts; ROMs, private config, and caches are intentionally absent.
 from pathlib import Path
 import os
+import sys
 
 spec_path = Path(SPECPATH).resolve()
 # PyInstaller sets SPECPATH to the spec directory.  Accept a file path too so
@@ -67,3 +68,9 @@ exe = EXE(
     debug=False, bootloader_ignore_signals=False, strip=False, upx=False,
     console=False if variant == "gui" else True,
 )
+if sys.platform == "darwin" and variant == "gui":
+    app = BUNDLE(
+        exe,
+        name="gen1recomp-translation-mod-generator-gui.app",
+        bundle_identifier="com.thibautbus.gen1recomp-translation-mod-generator",
+    )
