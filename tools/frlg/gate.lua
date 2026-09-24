@@ -245,13 +245,20 @@ end
 local FrlgFont = require("src.ui.game3.frlg_font")
 local blank, blankByCatalog = {}, {}
 local blankTotal = 0
+-- A braille message is drawn cell for cell by src/ui/game3/braille.lua, not
+-- by FrlgFont, so a Unicode braille cell (U+2800-U+283F) is never blank.
+local function brailleCell(char)
+  local b1, b2, b3 = char:byte(1, 3)
+  return #char == 3 and b1 == 0xE2 and b2 == 0xA0 and b3 and b3 >= 0x80 and b3 <= 0xBF
+end
+
 local function countBlanks(catalogName, text)
   -- Strings() directives, {PLAYER}/{A_BUTTON}-style tokens and page and line
   -- marks are replaced or acted on before anything is drawn, pret's own
   -- escapes included (Teachy TV's lessons write "\\n", "\\l" and "\\p").
   text = text:gsub("%%%d*%$?[-+ #0]*%d*%.?%d*[%a%%]", ""):gsub("{[%u%d_]+}", ""):gsub("\\[npl]", ""):gsub("\f", "")
   for char in text:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
-    if char ~= " " and char ~= "\n" and FrlgFont.glyphId(char) == 0 then
+    if char ~= " " and char ~= "\n" and not brailleCell(char) and FrlgFont.glyphId(char) == 0 then
       blank[char] = (blank[char] or 0) + 1
       blankByCatalog[catalogName] = (blankByCatalog[catalogName] or 0) + 1
       blankTotal = blankTotal + 1
@@ -259,7 +266,8 @@ local function countBlanks(catalogName, text)
   end
 end
 for _, catalogName in ipairs({ "dialogue", "species_names", "move_names", "item_names",
-    "item_descriptions", "trainer_names", "trainer_class_names", "start_menu", "strings" }) do
+    "item_descriptions", "trainer_names", "trainer_class_names", "start_menu", "strings",
+    "strings_by_english" }) do
   local body = readFile(modDir .. "/lang/" .. catalogName .. ".lua")
   local chunk = body and loadstring(body)
   for _, value in pairs(chunk and chunk() or {}) do
