@@ -1,0 +1,566 @@
+{
+  "schema": "gen1recomp-translation-mods/engine-overrides",
+  "version": 1,
+  "entries": {
+    "%d INSTALLED": {
+      "override": "%dこ",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%d OPTIONS": {
+      "override": "%dこうもく",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s (HM)": {
+      "override": "%s　ひでん",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s obtained %s!": {
+      "override": "%sは %sを てにいれた！",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s obtained the %s!": {
+      "override": "%sは %sを てにいれた！",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s received an EGG!": {
+      "override": "%sは タマゴを うけとった！",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s wants to battle!\nWill you accept?": {
+      "override": "%sが しょうぶを\nもうしこんできた！ うける？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s wants to chat!\nWill you join?": {
+      "override": "%sが チャットに\nさそっている！ さんかする？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s wants to show\nyou a TRAINER CARD. OK?": {
+      "override": "%sが トレーナーカードを\nみせたがっている！ いい？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s wants to trade!": {
+      "override": "%sが こうかんを\nもうしこんできた！",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "A:OK": {
+      "override": "A：けってい",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "AURORA TICKET": {
+      "override": "オーロラチケット",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "AUTO or CHOOSE finds a partner.\nSET PIN hosts a private room.": {
+      "override": "オートか えらぶで あいてを さがす。\nあんしょうばんごうで へやを つくる。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "An EGG can't be used on.": {
+      "override": "タマゴには　つかえない。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "BATTLE COUNT CARD": {
+      "override": "たいせんカウントカード",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "BATTLE SPEED": {
+      "override": "たたかいのはやさ",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "BET %d": {
+      "override": "ベット%d",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "BOX %d": {
+      "override": "ボックス%d",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "CAVE have changed.": {
+      "override": "ポケモンが　かわりました。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "CENTER": {
+      "override": "ちゅうおう",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "CH": {
+      "override": "CH",
+      "reason": "engine-original",
+      "provenance": "Read the same way in Japanese: the cart's Japanese fonts draw the Latin block's characters in their full-width form."
+    },
+    "CHOOSE": {
+      "override": "えらぶ",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "CREDIT": {
+      "override": "クレジット",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Connect to the Wireless Club?": {
+      "override": "ワイヤレスクラブに つなぐ？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Connecting...": {
+      "override": "せつぞくちゅう…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "EFFECT": {
+      "override": "こうか",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Enter the 4-digit PIN.": {
+      "override": "４けたの あんしょうばんごうを\nいれてね。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "From the POKéMON CENTER we": {
+      "override": "ポケモンセンターから",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "GIFT System.": {
+      "override": "ごりようありがとうございます。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Go and see what turns up": {
+      "override": "なにが　でるか　みにいこう",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "HIGH": {
+      "override": "たかい",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "HOW MANY?": {
+      "override": "いくつ？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "IN1": {
+      "override": "IN1",
+      "reason": "engine-original",
+      "provenance": "Read the same way in Japanese: the cart's Japanese fonts draw the Latin block's characters in their full-width form."
+    },
+    "IN2": {
+      "override": "IN2",
+      "reason": "engine-original",
+      "provenance": "Read the same way in Japanese: the cart's Japanese fonts draw the Latin block's characters in their full-width form."
+    },
+    "IN3": {
+      "override": "IN3",
+      "reason": "engine-original",
+      "provenance": "Read the same way in Japanese: the cart's Japanese fonts draw the Latin block's characters in their full-width form."
+    },
+    "IN4": {
+      "override": "IN4",
+      "reason": "engine-original",
+      "provenance": "Read the same way in Japanese: the cart's Japanese fonts draw the Latin block's characters in their full-width form."
+    },
+    "It is for use at VERMILION CITY port.": {
+      "override": "クチバシティの　みなとで　つかえます。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "LOW": {
+      "override": "ひくい",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Let AUTO players join?": {
+      "override": "オートの ひとも さんかできる？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Link desync! %s differs. Are both games the same version and mods?": {
+      "override": "どうきが ずれた！ %sが ちがう。\nバージョンと モッドは おなじ？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Look for them and battle!": {
+      "override": "さがして　しょうぶしよう！",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Lv%s": {
+      "override": "Lv%s",
+      "reason": "engine-original",
+      "provenance": "Read the same way in Japanese: the cart's Japanese fonts draw the Latin block's characters in their full-width form."
+    },
+    "MA": {
+      "override": "MA",
+      "reason": "engine-original",
+      "provenance": "Read the same way in Japanese: the cart's Japanese fonts draw the Latin block's characters in their full-width form."
+    },
+    "MENU SPEED": {
+      "override": "メニューのはやさ",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "MOD MANAGER": {
+      "override": "モッドかんり",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "MOVE %s": {
+      "override": "わざ%s",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "MYSTIC TICKET": {
+      "override": "ふしぎなチケット",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Mods that change link play are on, so this game can't go online.": {
+      "override": "つうしんを かえる モッドが あるので\nオンラインに つなげません。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "NAME?": {
+      "override": "なまえは？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "OK, LET'S BATTLE!": {
+      "override": "よし　しょうぶだ！",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "OPTION %s": {
+      "override": "せんたく%s",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "OUT1": {
+      "override": "OUT1",
+      "reason": "engine-original",
+      "provenance": "Read the same way in Japanese: the cart's Japanese fonts draw the Latin block's characters in their full-width form."
+    },
+    "OUT2": {
+      "override": "OUT2",
+      "reason": "engine-original",
+      "provenance": "Read the same way in Japanese: the cart's Japanese fonts draw the Latin block's characters in their full-width form."
+    },
+    "OUT3": {
+      "override": "OUT3",
+      "reason": "engine-original",
+      "provenance": "Read the same way in Japanese: the cart's Japanese fonts draw the Latin block's characters in their full-width form."
+    },
+    "OUT4": {
+      "override": "OUT4",
+      "reason": "engine-original",
+      "provenance": "Read the same way in Japanese: the cart's Japanese fonts draw the Latin block's characters in their full-width form."
+    },
+    "OVERWORLD SPEED": {
+      "override": "マップのはやさ",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Online play isn't available in this build.": {
+      "override": "このバージョンでは オンラインは\nつかえません。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "PI": {
+      "override": "PI",
+      "reason": "engine-original",
+      "provenance": "Read the same way in Japanese: the cart's Japanese fonts draw the Latin block's characters in their full-width form."
+    },
+    "POKéMON EGG": {
+      "override": "ポケモンのタマゴ",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "PS": {
+      "override": "PS",
+      "reason": "engine-original",
+      "provenance": "Read the same way in Japanese: the cart's Japanese fonts draw the Latin block's characters in their full-width form."
+    },
+    "Please raise it with love and": {
+      "override": "あいじょうを　もって",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "RETURN TO MAIN\nMENU?": {
+      "override": "メインメニューに\nもどりますか？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "SET PIN": {
+      "override": "あんしょう",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "SH": {
+      "override": "SH",
+      "reason": "engine-original",
+      "provenance": "Read the same way in Japanese: the cart's Japanese fonts draw the Latin block's characters in their full-width form."
+    },
+    "STAMP CARD": {
+      "override": "スタンプカード",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "STRONG": {
+      "override": "つよい",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "SURFING PICHU EGG": {
+      "override": "なみのりピチューのタマゴ",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "SWITCH BOX": {
+      "override": "ボックスをかえる",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Save failed.": {
+      "override": "セーブに　しっぱいしました。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Searching...": {
+      "override": "さがしています…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Select a POKéMON.": {
+      "override": "ポケモンを　えらんでください。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Set a 4-digit PIN.": {
+      "override": "４けたの あんしょうばんごうを\nきめてね。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Speak to the deliveryman": {
+      "override": "はいたついんに　はなしかけて",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "System.": {
+      "override": "ごりようありがとうございます。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "TOP": {
+      "override": "うえ",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "TRAINER": {
+      "override": "トレーナー",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "TRAINERS with the same CARD.": {
+      "override": "たいせんきろくを　のこします。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Thank you for using the MYSTERY": {
+      "override": "ふしぎなおくりものを",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Thank you for using the STAMP CARD": {
+      "override": "スタンプカードシステムを",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "The BAG is empty.": {
+      "override": "バッグは　からっぽだ！",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "The PIN didn't match.": {
+      "override": "あんしょうばんごうが ちがう。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "The POKéMON living in ALTERING": {
+      "override": "うつりかわりのどうくつに　すむ",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "The TRAINER": {
+      "override": "トレーナー",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "The connection failed.": {
+      "override": "せつぞくに しっぱいしました。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "The connection failed: %s.": {
+      "override": "せつぞくに しっぱい：%s。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "The game could not be saved.": {
+      "override": "ゲームを　セーブ\nできませんでした。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "There is a ticket here for you.": {
+      "override": "あなたへの　チケットが　あります。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "This POKéMON isn't holding anything.": {
+      "override": "この　ポケモンは　なにも　もっていない。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "This can't be used right now.": {
+      "override": "いまは　つかえません。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Too many tries. Please try again later.": {
+      "override": "ためしすぎです。あとで もういちど。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Trade with other TRAINERS to fill": {
+      "override": "ほかのトレーナーと　こうかんして",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Unknown item.": {
+      "override": "ふめいな　どうぐ。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Use this PIN?": {
+      "override": "この あんしょうばんごうで いい？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Which WONDER CARD\nwould you like?": {
+      "override": "どの ふしぎなカードに\nしますか？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Which WONDER NEWS\nwould you like to read?": {
+      "override": "どの ふしぎなニュースを\nよみますか？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Which move?": {
+      "override": "どのわざ？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "You don't have that item.": {
+      "override": "その　どうぐを　もっていない。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Your BATTLE COUNT CARD keeps": {
+      "override": "たいせんカウントカードは",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "at a POKéMON CENTER.": {
+      "override": "ポケモンセンターで　うけとってね。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "easyChat.EVENTS|?????": {
+      "override": "?????",
+      "reason": "engine-corpus",
+      "provenance": "From strings.gText_FiveMarks; the EVENTS group's placeholder word, five marks on every cart."
+    },
+    "easyChat.STATUS|{PK}RS": {
+      "override": "ポケルス",
+      "reason": "engine-corpus",
+      "provenance": "From strings.gText_Pokerus; the STATUS group's POKéRUS word, which the cart writes in kana."
+    },
+    "have a gift, a POKéMON EGG!": {
+      "override": "ポケモンのタマゴを　プレゼント！",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "kindness.": {
+      "override": "そだててくださいね。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "on SIX ISLAND.": {
+      "override": "６のしまへ。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "track of your battle record against": {
+      "override": "おなじカードを　もつトレーナーとの",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "your STAMP CARD.": {
+      "override": "スタンプカードを　うめてね。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "{A_BUTTON}NEXT   {B_BUTTON}SKIP": {
+      "override": "{A_BUTTON}つぎへ   {B_BUTTON}とばす",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "{A_BUTTON}OK {B_BUTTON}CANCEL": {
+      "override": "{A_BUTTON}けってい {B_BUTTON}やめる",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "{A_BUTTON}{B_BUTTON}OK": {
+      "override": "{A_BUTTON}{B_BUTTON}けってい",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a key hint gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "{DPAD_UPDOWN}PICK {A_BUTTON}OK {B_BUTTON}BACK": {
+      "override": "{DPAD_UPDOWN}えらぶ {A_BUTTON}けってい {B_BUTTON}もどる",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a key hint gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "{DPAD_UPDOWN}PICK {DPAD_LEFTRIGHT}SWITCH {B_BUTTON}DONE": {
+      "override": "{DPAD_UPDOWN}えらぶ {DPAD_LEFTRIGHT}きりかえ {B_BUTTON}おわり",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a key hint gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "{DPAD_UPDOWN}PICK {DPAD_LEFTRIGHT}TAB {A_BUTTON}OPEN {START_BUTTON}APPLY": {
+      "override": "{DPAD_UPDOWN}えらぶ {DPAD_LEFTRIGHT}タブ {A_BUTTON}ひらく {START_BUTTON}てきよう",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a key hint gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    }
+  }
+}

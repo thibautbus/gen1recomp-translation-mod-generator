@@ -93,11 +93,10 @@ COLLECTION_LANGUAGES: Mapping[str, tuple[tuple[str, str], ...]] = {
     # Crystal has no Korean corpus, unlike GoldSilver.
     "Crystal": (("fr", "French"), ("de", "German"), ("es", "Spanish"),
                 ("it", "Italian"), ("ja-Hrkt", "Japanese")),
-    # The FireRedLeafGreen corpus also has Japanese, but game3 draws every
-    # string with the US cart's Latin ROM font and gates the font registry,
-    # so kana would print as blanks (docs/upstream-fixes.md, FireRed).
+    # game3 draws kana with the cart's own Japanese fonts since v0.3.4
+    # (gen1recomp#2406), so FireRed has a Japanese release like the rest.
     "FireRedLeafGreen": (("fr", "French"), ("de", "German"), ("es", "Spanish"),
-                         ("it", "Italian")),
+                         ("it", "Italian"), ("ja-Hrkt", "Japanese")),
 }
 
 
