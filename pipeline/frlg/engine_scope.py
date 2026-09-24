@@ -52,9 +52,14 @@ GAME3_DIRS = ("src/core/game3", "src/ui/game3", "src/battle/game3", "src/world/g
 _PROBE = r"""
 package.path = "./?.lua;./?/init.lua;" .. package.path
 love = require("tests.love_stub")
+--[[EXTRACT]]
 local out = {}
 local function add(site, v)
-  if type(v) == "string" and v ~= "" then out[#out + 1] = site .. "\t" .. v end
+  -- one row per line: a value written with real newlines (the cart's region
+  -- map descriptions) is escaped back to "\n", as probe_rows reads it
+  if type(v) == "string" and v ~= "" then
+    out[#out + 1] = site .. "\t" .. (v:gsub("\n", "\\n"))
+  end
 end
 local function each(site, t, field)
   for _, v in pairs(t or {}) do add(site, field and type(v) == "table" and v[field] or v) end
@@ -110,6 +115,16 @@ each("src/core/game3/link/status.lua (Status.LABELS)", LinkStatus.LABELS)
 add("src/core/game3/link/status.lua (Status.TITLE)", LinkStatus.TITLE)
 local TowerRecords = require("src.ui.game3.trainer_tower_records")
 each("src/ui/game3/trainer_tower_records.lua (Records.MODE_TEXT)", TowerRecords.MODE_TEXT)
+-- the nine in-game trades: their nickname and OT name are printed through
+-- Strings() (src/core/game3/scripting/natives_trade.lua:244, :260, :424)
+local Trade = require("src.core.game3.scripting.natives_trade")
+for id = 0, Trade.COUNT - 1 do
+  local entry = Trade.entry(id)
+  if entry then
+    add("src/core/game3/scripting/natives_trade.lua (Trade.entry nickname)", entry.nickname)
+    add("src/core/game3/scripting/natives_trade.lua (Trade.entry otName)", entry.otName)
+  end
+end
 local FieldMoves = require("src.core.game3.field_moves")
 for _, name in pairs(FieldMoves.MOVE_NAME_BY_ID) do
   add("src/ui/game3/party_menu.lua (field move label)", (tostring(name):gsub("_", " ")))
@@ -122,33 +137,17 @@ io.write(table.concat(out, "\n"))
 # constructor (its string values are keys, except id/icon fields); a "lines"
 # selector is a pattern, and every string literal on a matching line is a key.
 LOCAL_SOURCES: tuple[tuple[str, str, str], ...] = (
-    ("src/core/game3/battle/items.lua", "table", "ENEMY_STAT_NAME"),
-    ("src/core/game3/battle/items.lua", "lines", r"^\s*(local label = Strings\(\(\{|attack = \"ATTACK\", defense|accuracy = \"ACCURACY\")"),
-    ("src/ui/game3/bag_menu.lua", "lines", r"(ACTIONS = \{|return \{ \")"),
+    ("src/ui/game3/bag_menu.lua", "lines", r"(^BagMenu\.ACTIONS = \{|^\s*return \{ \")"),
     ("src/ui/game3/berry_pouch.lua", "table", "ACTIONS"),
     ("src/ui/game3/tm_case.lua", "table", "ACTIONS"),
     ("src/ui/game3/box_storage_ui.lua", "lines", r"(_activeActions = \{|boxActions = \{|or \{ \"CANCEL\" \})"),
-    ("src/ui/game3/help_system.lua", "lines", r"(local controls=|or Help\.level=='main')"),
-    ("src/ui/game3/new_game_scene.lua", "table", "CONTROLS_TEXT"),
-    ("src/ui/game3/new_game_scene.lua", "table", "PIKA_TEXT"),
-    ("src/ui/game3/new_game_scene.lua", "table", "OAK_TEXT"),
-    ("src/ui/game3/new_game_scene.lua", "table", "MALE_NAMES@intro.nameChoice"),
-    ("src/ui/game3/new_game_scene.lua", "table", "FEMALE_NAMES@intro.nameChoice"),
-    ("src/ui/game3/new_game_scene.lua", "table", "RIVAL_NAMES@intro.nameChoice"),
-    ("src/ui/game3/new_game_scene.lua", "lines", r"(^local HINT_NEXT|setTopBar\(\")"),
-    ("src/ui/game3/option_menu.lua", "table", "HELP_TEXT"),
     ("src/ui/game3/option_rows.lua", "lines", r"(cartLabel\(c, \"\w+\", \{|^local FILTERS|uiLayout == \"dynamic\" and)"),
     ("src/core/VSync.lua", "table", "LABELS"),
     ("src/core/FrameCap.lua", "lines", r"FrameCap\.DISPLAY and \"DISPLAY\""),
-    ("src/ui/game3/party_menu.lua", "lines", r"(ACTIONS = \{|actions\[#actions \+ 1\] = \"|local options = \{)"),
-    ("src/ui/game3/party_menu.lua", "table", "statNames"),
-    ("src/ui/game3/pc_menu.lua", "table", "storageOptions"),
-    ("src/ui/game3/stat_growth.lua", "table", "STAT_NAMES"),
-    ("src/ui/game3/summary_menu.lua", "table", "PAGE_TITLES"),
-    # in-game trade nicknames and OT names (sInGameTrades), Strings()'d on use
-    ("src/core/game3/scripting/natives_trade.lua", "table", "TRADES"),
-    # the elevator's floor window, the same floor labels as the map popup
-    ("src/core/game3/scripting/natives_elevator.lua", "table", "FLOOR_NAMES"),
+    ("src/ui/game3/party_menu.lua", "lines", r"(ACTIONS = \{|actions\[#actions \+ 1\] = \")"),
+    # the mod manager's help bar: helpText() returns one of four hints and
+    # the bar draws Strings(helpText()) (src/ui/game3/mod_manager.lua:73)
+    ("src/ui/game3/mod_manager.lua", "lines", r"^\s*(?:and|or|return) \"\{"),
 )
 
 # Corpus families to prefer when several rows read as the same key.  Rows
@@ -259,7 +258,7 @@ def local_source_values(engine: Path) -> dict[str, str]:
     return found
 
 
-def reachable_by_file(engine: Path) -> dict[str, set[str]]:
+def reachable_by_file(engine: Path, extracted: Path | None = None) -> dict[str, set[str]]:
     """Each value the runtime passes to Strings() through a variable -> the
     files that hold it (for the hardcoded-text audit)."""
     found: dict[str, set[str]] = {}
@@ -275,23 +274,52 @@ def reachable_by_file(engine: Path) -> dict[str, set[str]]:
     # every table a probed value sits in: the same label can live in two
     # files (the Union Room's screen and its link logic), and the audit asks
     # per file
-    for site, value in probe_rows(engine):
+    for site, value in probe_rows(engine, extracted=extracted):
         found.setdefault(value, set()).add(site.split(" ", 1)[0].split(":", 1)[0])
     for value, site in fallback_values(engine).items():
         found.setdefault(value, set()).add(site.split(" ", 1)[0].split(":", 1)[0])
     # the Easy Chat vocabulary: text words and group names through Strings(),
     # species and move words through the dataset's (translated) names
-    for _group_id, name, word in easy_chat_rows(engine):
+    for _group_id, name, word in easy_chat_rows(engine, extracted=extracted):
         found.setdefault(word or name, set()).add(EASY_CHAT_SITE.split(" ", 1)[0])
     return found
 
 
-def probe_rows(engine: Path, luajit: str | None = None) -> list[tuple[str, str]]:
+# The option rows and the other probed tables name their labels by the
+# cart's own text since gen1recomp v0.3.0, so the probe reads them out of a
+# FireRed extract the way tools/frlg/gate.lua does.
+_PROBE_EXTRACT = """
+local FileIO = require("src.import.gba.file_io")
+local cache = FileIO.makeCache({path})
+package.loaded["src.core.game3.dataset"] = {{
+  cache = function() return cache end,
+  mountExtractRoots = function() end,
+}}
+local Space = require("src.core.game3.scripting.space")
+Space.bundle = require("src.import.gba.extract_scripts")
+  .loadBundle(cache, "data/generated/gba", {{ allowIncomplete = true }})
+-- The map section names and the dungeon descriptions are the cart's, read
+-- from the extract the way RegionMapExtract.ensureGenerated does (without
+-- its layouts, which this probe never draws).
+local MapPreview = require("src.import.gba.map_preview_extract")
+local Sections = require("src.import.gba.map_sections_extract")
+local names = assert(MapPreview.loadNames(cache), "region_map/names.lua")
+local dungeons = assert(MapPreview.loadDungeonInfo(cache), "region_map/dungeon_info.lua")
+Sections.installNames(names)
+require("src.import.gba.region_map_extract").applyGeneratedText(names, dungeons, Sections.SECTIONS)
+"""
+
+
+def probe_rows(engine: Path, luajit: str | None = None,
+               extracted: Path | None = None) -> list[tuple[str, str]]:
     """Every (site, value) the probe reads, a value once per table holding it."""
     luajit = luajit or shutil.which("luajit")
     if not luajit:
         raise RuntimeError("LuaJIT is needed to read the engine's tables")
-    out = subprocess.run([luajit, "-e", _PROBE], cwd=engine, capture_output=True,
+    if extracted is None:
+        raise ValueError("the probe needs a FireRed extract to read the cart's labels")
+    probe = _PROBE.replace("--[[EXTRACT]]", _PROBE_EXTRACT.format(path=json.dumps(str(Path(extracted).resolve()))))
+    out = subprocess.run([luajit, "-e", probe], cwd=engine, capture_output=True,
                          text=True, check=True).stdout
     rows = []
     for line in out.split("\n"):
@@ -301,9 +329,10 @@ def probe_rows(engine: Path, luajit: str | None = None) -> list[tuple[str, str]]
     return rows
 
 
-def probe_values(engine: Path, luajit: str | None = None) -> dict[str, str]:
+def probe_values(engine: Path, luajit: str | None = None,
+                 extracted: Path | None = None) -> dict[str, str]:
     found: dict[str, str] = {}
-    for site, value in probe_rows(engine, luajit):
+    for site, value in probe_rows(engine, luajit, extracted):
         found.setdefault(value, site)
     return found
 
@@ -366,19 +395,21 @@ def _option_context_keys(engine: Path) -> dict[str, str]:
     return found
 
 
-EASY_CHAT_SITE = "src/core/game3/easy_chat_data.lua (EasyChatData.GROUPS)"
+EASY_CHAT_SITE = "src/core/game3/easy_chat_text.lua (the extract's easy_chat/words.lua)"
 # pret's "value" groups (EC_GROUP_POKEMON, EC_GROUP_MOVE_1, EC_GROUP_MOVE_2,
 # EC_GROUP_POKEMON_NATIONAL) list species and move ids: the engine draws them
 # from the dataset (src/core/game3/easy_chat_text.lua VALUE_GROUPS), so a
 # translation reaches them through species_names and move_names, and a key
 # here would only freeze the cart's name over a mod's rename.
 EASY_CHAT_VALUE_GROUPS = frozenset({0, 18, 19, 21})
+# The vocabulary itself is the cart's: since gen1recomp v0.3.0 the runtime
+# reads it from the extract (src/core/game3/easy_chat_text.lua EasyChatText.FILE)
+# instead of a source table, and looks each word up as Strings(word, group).
 _EASY_CHAT_PROBE = r"""
-package.path = "./?.lua;./?/init.lua;" .. package.path
-local D = require("src.core.game3.easy_chat_data")
-local out = {}
-for id, group in pairs(D.GROUPS or {}) do
-  for _, word in ipairs(group.words or {}) do
+local words = dofile({path})
+local out = {{}}
+for id, group in pairs(words.groups or {{}}) do
+  for _, word in ipairs(group.words or {{}}) do
     out[#out + 1] = id .. "\t" .. group.name .. "\t" .. word.text
   end
   out[#out + 1] = id .. "\t" .. group.name .. "\t"
@@ -387,13 +418,18 @@ io.write(table.concat(out, "\n"))
 """
 
 
-def easy_chat_rows(engine: Path, luajit: str | None = None) -> list[tuple[int, str, str]]:
+def easy_chat_rows(engine: Path, luajit: str | None = None,
+                   extracted: Path | None = None) -> list[tuple[int, str, str]]:
     """(group id, group name, word) for every Easy Chat word, and (id, name, "")
     for each group itself."""
     luajit = luajit or shutil.which("luajit")
     if not luajit:
         raise RuntimeError("LuaJIT is needed to read the engine's tables")
-    out = subprocess.run([luajit, "-e", _EASY_CHAT_PROBE], cwd=engine, capture_output=True,
+    if extracted is None:
+        raise ValueError("the Easy Chat vocabulary comes from a FireRed extract")
+    words = Path(extracted) / "data" / "generated" / "gba" / "easy_chat" / "words.lua"
+    probe = _EASY_CHAT_PROBE.format(path=json.dumps(str(words.resolve())))
+    out = subprocess.run([luajit, "-e", probe], cwd=engine, capture_output=True,
                          text=True, check=True).stdout
     rows = []
     for line in out.split("\n"):
@@ -403,12 +439,12 @@ def easy_chat_rows(engine: Path, luajit: str | None = None) -> list[tuple[int, s
     return rows
 
 
-def easy_chat_keys(engine: Path) -> dict[str, str]:
+def easy_chat_keys(engine: Path, extracted: Path | None = None) -> dict[str, str]:
     """The keys src/core/game3/easy_chat_text.lua looks the vocabulary up by:
     Strings(name, "easyChat.group") for a group and Strings(word,
     "easyChat.<group>") for a word of the text groups."""
     keys = {}
-    for group_id, name, word in easy_chat_rows(engine):
+    for group_id, name, word in easy_chat_rows(engine, extracted=extracted):
         if not word:
             keys[f"easyChat.group|{name}"] = EASY_CHAT_SITE
         elif group_id not in EASY_CHAT_VALUE_GROUPS:
@@ -455,7 +491,7 @@ def collect_keys(engine: Path, extracted: Path | None = None) -> dict[str, dict]
         if not any(path.startswith(directory) for directory in GAME3_DIRS):
             continue
         keys.setdefault(row["source"], {"callsite": f"{path}:{row['line']}", "kind": "literal"})
-    for value, site in {**local_source_values(engine), **probe_values(engine)}.items():
+    for value, site in {**local_source_values(engine), **probe_values(engine, extracted=extracted)}.items():
         if "floor label" in site:
             # A floor label stays a floor even when a literal saw it first (the
             # elevator menu spells "1F", "B1F"... out in natives_listmenu.lua):
@@ -468,7 +504,7 @@ def collect_keys(engine: Path, extracted: Path | None = None) -> dict[str, dict]
         keys.setdefault(value, {"callsite": site, "kind": "dynamic"})
     for value, site in _option_context_keys(engine).items():
         keys.setdefault(value, {"callsite": site, "kind": "context"})
-    for value, site in easy_chat_keys(engine).items():
+    for value, site in easy_chat_keys(engine, extracted).items():
         keys.setdefault(value, {"callsite": site, "kind": "context"})
     if extracted is not None:
         for value, site in rom_description_values(extracted).items():

@@ -26,6 +26,15 @@ from typing import Mapping
 
 SCANNED_DIRS = ("src/ui/game3", "src/core/game3", "src/world/game3", "src/battle/game3")
 
+ROOT = Path(__file__).resolve().parents[2]
+# The scope generator's probe reads the cart's own labels out of a FireRed
+# extract; the audit reads the same table.
+DEFAULT_EXTRACT = ROOT / ".cache" / "firered" / "extracted" / "cache"
+
+
+def _extract(path: str | Path | None) -> Path:
+    return Path(path) if path else DEFAULT_EXTRACT
+
 # Files the scan flags whose literals never reach the screen, reviewed at the
 # pinned revision.  Keep one line per file so a pin bump shows what changed.
 NON_DISPLAY_FILES: Mapping[str, str] = {
@@ -36,14 +45,16 @@ NON_DISPLAY_FILES: Mapping[str, str] = {
     "src/core/game3/battle/adapter.lua": "status identifiers",
     "src/core/game3/battle/ai.lua": "cache paths",
     "src/core/game3/battle/ai_items.lua": "status identifiers",
+    "src/core/game3/battle/ai_vm.lua": "log lines",
     "src/core/game3/battle/anim.lua": "animation identifiers",
     "src/core/game3/battle/anim_callbacks.lua": "animation identifiers",
     "src/core/game3/battle/anim_pack_fallback.lua": "animation identifiers",
+    "src/core/game3/battle/anim_seq.lua": "log lines",
     "src/core/game3/battle/anim_tasks.lua": "animation identifiers",
     "src/core/game3/battle/anim_templates.lua": "animation identifiers",
     "src/core/game3/battle/anim_vm.lua": "animation identifiers",
     "src/core/game3/battle/ball_open.lua": "asset paths",
-    "src/core/game3/battle/catch_seq.lua": "fallback ball name for a missing item pack",
+    "src/core/game3/battle/battle_text.lua": "battle string identifiers and log lines",
     "src/core/game3/battle/catching.lua": "fallback OT name",
     "src/core/game3/battle/commands.lua": "command and move identifiers, fallback item name",
     "src/core/game3/battle/damage.lua": "stat identifiers",
@@ -52,39 +63,36 @@ NON_DISPLAY_FILES: Mapping[str, str] = {
     "src/core/game3/battle/effects/hazards.lua": "move identifier",
     "src/core/game3/battle/effects/healing.lua": "status identifier, fallback move name",
     "src/core/game3/battle/effects/hit.lua": "status and move identifiers",
-    "src/core/game3/battle/effects/screens.lua": "fallback move names for a missing move pack",
     "src/core/game3/battle/effects/secondary.lua": "status and move identifiers, fallback move names",
     "src/core/game3/battle/effects/setup.lua": "status identifiers, fallback move name",
-    "src/core/game3/battle/effects/special.lua": "fallback trainer name",
     "src/core/game3/battle/effects/stats.lua": "status identifier",
     "src/core/game3/battle/effects/status.lua": "status identifiers",
+    "src/core/game3/battle/effects/volatiles.lua": "ability identifiers",
     "src/core/game3/battle/effects/weather.lua": "weather identifiers",
     "src/core/game3/battle/engine.lua": "status, semi-invulnerable and volatile identifiers",
     "src/core/game3/battle/evo_seq.lua": "fallback species name",
     "src/core/game3/battle/held_items.lua": "item name fallbacks for a missing item pack (names come from the pack and the items registry)",
     "src/core/game3/battle/init.lua": "weather and status identifiers, internal errors, fallback ball name",
-    "src/core/game3/battle/items.lua": "fallback player, species and trainer names",
-    "src/core/game3/battle/learn_move.lua": "fallback move label for a missing move pack",
     "src/core/game3/battle/moves.lua": "move identifiers (names come from the ROM pack)",
-    "src/core/game3/battle/oak_advice.lua": "fallback player name",
-    "src/core/game3/battle/prize.lua": "fallback player name",
+    "src/core/game3/battle/pokedude.lua": "cache error messages",
     "src/core/game3/battle/residual_handlers.lua": "status identifiers, fallback move name",
     "src/core/game3/battle/rules.lua": "weather identifiers",
     "src/core/game3/battle/state.lua": "fallback name",
     "src/core/game3/battle/status.lua": "status identifier",
-    "src/core/game3/battle/switch_seq.lua": "fallback trainer and species names",
     "src/core/game3/battle/types.lua": "type identifiers",
-    "src/core/game3/battle/ui.lua": "fallback species name",
     "src/core/game3/battle_bridge.lua": "internal error messages",
     "src/core/game3/battle_downgrade.lua": "move identifiers",
+    "src/core/game3/breeding.lua": "the stored EGG nickname, which the runtime no longer displays",
     "src/core/game3/bridge.lua": "log lines",
+    "src/core/game3/capabilities.lua": "capability names and the notes on which decompilation has them",
     "src/core/game3/collision.lua": "log lines",
     "src/core/game3/dataset.lua": "cache paths and log lines",
+    "src/core/game3/deoxys.lua": "object identifiers",
     "src/core/game3/display.lua": "log line",
     "src/core/game3/easy_chat_text.lua": "catalog context prefix",
     "src/core/game3/encounters.lua": "log lines",
-    "src/core/game3/evolution.lua": "species identifiers",
     "src/core/game3/field.lua": "quest-log event keys",
+    "src/core/game3/field_move_show_mon.lua": "cache error messages",
     "src/core/game3/field_moves.lua": "badge and move identifiers, fallback species name",
     "src/core/game3/field_view.lua": "log lines and time-of-day identifiers",
     "src/core/game3/forced_movement.lua": "movement action identifiers",
@@ -94,11 +102,20 @@ NON_DISPLAY_FILES: Mapping[str, str] = {
     "src/core/game3/link/battle.lua": "fallback player name",
     "src/core/game3/link/chat.lua": "fallback player name",
     "src/core/game3/link/init.lua": "script-command key prefix",
+    "src/core/game3/link/relay_transport.lua": "session error messages",
+    "src/core/game3/link/status.lua": "ROM text table keys",
     "src/core/game3/link/trade.lua": "fallback player name",
     "src/core/game3/link/union_room.lua": "fallback player name",
     "src/core/game3/m4a_player.lua": "log lines",
     "src/core/game3/m4a_sample.lua": "code comment string",
     "src/core/game3/map.lua": "internal error message",
+    "src/core/game3/minigames/berry_crush/init.lua": "cache error messages",
+    "src/core/game3/minigames/berry_crush/sim.lua": "cache and player-count error messages",
+    "src/core/game3/minigames/common.lua": "module and table error messages",
+    "src/core/game3/minigames/dodrio_berry_picking/rules.lua": "table error messages and a hex alphabet",
+    "src/core/game3/minigames/dodrio_berry_picking/sim.lua": "a player-count error message",
+    "src/core/game3/minigames/pokemon_jump/game.lua": "the plural suffix the cart appends (sPluralTxt)",
+    "src/core/game3/minigames/pokemon_jump/init.lua": "art and seat error messages",
     "src/core/game3/mystery_gift.lua": "card status codes, an environment variable name and file paths",
     "src/core/game3/objects.lua": "movement identifiers and log lines",
     "src/core/game3/ow_sprites.lua": "asset paths",
@@ -106,7 +123,12 @@ NON_DISPLAY_FILES: Mapping[str, str] = {
     "src/core/game3/player.lua": "log line",
     "src/core/game3/pokedex_data.lua": "category identifier",
     "src/core/game3/pokemon.lua": "species name normalisation and ROM file names",
+    "src/core/game3/profile.lua": "module paths and log lines",
+    "src/core/game3/profiles/firered.lua": "the game's name, badge flag keys and the rival's placeholder name",
+    "src/core/game3/profiles/leafgreen.lua": "the game's name",
     "src/core/game3/quest_log_recorder.lua": "quest-log event keys",
+    "src/core/game3/renewable_hidden_items.lua": "map identifiers",
+    "src/core/game3/rom_text.lua": "cache error messages",
     "src/core/game3/runtime.lua": "log lines",
     "src/core/game3/save_schema_firered.lua": "default save names",
     "src/core/game3/scripting/adapters.lua": "default rival name, quest-log keys and log lines",
@@ -124,40 +146,54 @@ NON_DISPLAY_FILES: Mapping[str, str] = {
     "src/core/game3/scripting/stdscripts.lua": "script names",
     "src/core/game3/scripting/text_ir.lua": "fallback placeholder names",
     "src/core/game3/scripting/trainers.lua": "fallback trainer class and name identifiers",
-    "src/core/game3/step_events.lua": "fallback player name",
     "src/core/game3/storage.lua": "quest-log event keys",
-    "src/core/game3/summary_descriptions.lua": "fallback description table, passed to Strings() where the summary reads it",
+    "src/core/game3/summary_data.lua": "cache error messages",
     "src/core/game3/teachy_tv.lua": "lesson identifiers (the lessons themselves go through Strings())",
     "src/core/game3/tileset_anim.lua": "asset paths and log lines",
     "src/core/game3/tileset_native.lua": "asset paths and log lines",
-    "src/core/game3/trainer_pic.lua": "ROM file names and asset paths",
+    "src/core/game3/trainer_fan_club.lua": "the rival's placeholder name",
+    "src/core/game3/trainer_sight.lua": "movement identifiers",
     "src/core/game3/trainer_tower.lua": "log lines and status codes",
+    "src/core/game3/virtual_objects.lua": "object identifiers and log lines",
     "src/core/game3/void_fill.lua": "labels passed to Strings() by option_rows.lua",
     "src/core/game3/vs_seeker.lua": "map identifier and quest-log key",
     "src/core/game3/warp.lua": "internal error message",
+    "src/ui/game3/arena_state.lua": "install and party error messages",
     "src/ui/game3/bag_menu.lua": "fallback item name",
-    "src/ui/game3/battle_chrome.lua": "asset paths",
     "src/ui/game3/boot.lua": "title menu identifiers (drawn through Strings())",
+    "src/ui/game3/cave_transition.lua": "cache error messages",
     "src/ui/game3/easy_chat.lua": "screen-mode and button identifiers (its prompts and footer labels go through Strings())",
     "src/ui/game3/egg_hatch.lua": "fallback species name",
     "src/ui/game3/evolution_scene.lua": "fallback species name",
     "src/ui/game3/fame_checker.lua": "fallback player and rival names",
     "src/ui/game3/frlg_font.lua": "asset paths and log lines",
     "src/ui/game3/hall_of_fame.lua": "fallback player and species names",
+    "src/ui/game3/hall_of_fame_gfx.lua": "cache error messages",
     "src/ui/game3/intro_movie.lua": "scene identifiers",
+    "src/ui/game3/item_pc.lua": "quest-log keys and cache error messages",
+    "src/ui/game3/link_trade_menu.lua": "cache error messages",
+    "src/ui/game3/list_menu.lua": "chrome cache error messages",
     "src/ui/game3/map_name_popup.lua": "fallback name for a map with no id",
+    "src/ui/game3/map_preview_screen.lua": "manifest error messages",
+    "src/ui/game3/minigames/common_art.lua": "cache and manifest error messages",
+    "src/ui/game3/minigames/dodrio_berry_picking/art.lua": "cache and manifest error messages",
+    "src/ui/game3/minigames/pokemon_jump/art.lua": "cache and manifest error messages",
     "src/ui/game3/move_relearner.lua": "fallback type identifier",
+    "src/ui/game3/mystery_gift.lua": "cache error messages and asset keys",
     "src/ui/game3/new_game_scene.lua": "naming template identifier",
-    "src/ui/game3/option_menu.lua": "fallback page title",
     "src/ui/game3/option_rows.lua": "Strings() context prefix",
     "src/ui/game3/party_menu.lua": "quest-log event keys",
     "src/ui/game3/pc_chrome.lua": "default box name format compared with the stored name",
     "src/ui/game3/pc_menu.lua": "pocket identifier, fallback player name",
-    "src/ui/game3/pokedex.lua": "input-side action labels (the drawn list goes through Strings()), fallback category",
+    "src/ui/game3/pin_entry.lua": "a cache error message",
     "src/ui/game3/pokedex_chrome.lua": "type identifier",
     "src/ui/game3/quest_log.lua": "default rival name and quest-log key",
-    "src/ui/game3/release_seq.lua": "fallback species name",
+    "src/ui/game3/region_map.lua": "ROM table error messages",
+    "src/ui/game3/region_map_gpu.lua": "cache error messages",
+    "src/ui/game3/region_map_position.lua": "map section identifiers and error messages",
     "src/ui/game3/save_menu.lua": "fallback player and map names",
+    "src/ui/game3/seagallop.lua": "the HOME environment variable",
+    "src/ui/game3/sell_flow.lua": "quest-log keys",
     "src/ui/game3/shop_menu.lua": "quest-log event keys",
     "src/ui/game3/slot_machine.lua": "cache key suffix",
     "src/ui/game3/start_menu.lua": "labels the ui.start_menu.items hook translates",
@@ -166,6 +202,9 @@ NON_DISPLAY_FILES: Mapping[str, str] = {
     "src/ui/game3/tm_case.lua": "fallback TM label for a missing item pack",
     "src/ui/game3/trainer_card.lua": "badge flag identifiers",
     "src/ui/game3/trainer_tower_records.lua": "log lines",
+    "src/ui/game3/union_chat.lua": "cache and manifest error messages",
+    "src/ui/game3/union_room.lua": "ROM text table keys",
+    "src/ui/game3/wireless_icon.lua": "cache error messages and an asset key",
     "src/world/game3/WorldAPI.lua": "mod-API error messages",
 }
 
@@ -260,21 +299,24 @@ def scan_hardcoded_literals(checkout: str | Path, reachable: Mapping[str, frozen
     return dict(found)
 
 
-def reachable_keys(checkout: str | Path) -> dict[str, frozenset[str]]:
+def reachable_keys(checkout: str | Path, extracted: str | Path | None = None) -> dict[str, frozenset[str]]:
     """Text the runtime passes to Strings() through a variable -> the files
     holding it, read from the engine the way the scope generator reads it."""
     from .engine_scope import reachable_by_file
-    return {key: frozenset(paths) for key, paths in reachable_by_file(Path(checkout)).items()}
+    return {key: frozenset(paths)
+            for key, paths in reachable_by_file(Path(checkout), _extract(extracted)).items()}
 
 
-def player_visible_files(checkout: str | Path, reachable: Mapping[str, frozenset[str]] | None = None) -> dict[str, list[tuple[int, str]]]:
-    reachable = reachable_keys(checkout) if reachable is None else reachable
+def player_visible_files(checkout: str | Path, reachable: Mapping[str, frozenset[str]] | None = None,
+                         extracted: str | Path | None = None) -> dict[str, list[tuple[int, str]]]:
+    reachable = reachable_keys(checkout, extracted) if reachable is None else reachable
     return {path: rows for path, rows in scan_hardcoded_literals(checkout, reachable).items()
             if path not in NON_DISPLAY_FILES}
 
 
-def run_frlg_hardcoded_audit(checkout: str | Path, output: str | Path) -> dict:
-    visible = player_visible_files(checkout)
+def run_frlg_hardcoded_audit(checkout: str | Path, output: str | Path,
+                             extracted: str | Path | None = None) -> dict:
+    visible = player_visible_files(checkout, extracted=extracted)
     report = {
         "checkout": str(checkout),
         "files": {path: {"literals": len(rows), "rows": [{"line": n, "text": t} for n, t in rows]}
