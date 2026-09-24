@@ -9,7 +9,7 @@ from pathlib import Path
 
 from pipeline.frlg import join as frlg_join, text as frlg_text
 from pipeline.frlg.join import (
-    ENGLISH_MISMATCH, MARKUP_ONLY, NO_MATCH, OVERRIDE, PLACEHOLDER_MISMATCH, REVIEWED,
+    CONTENT_MATCH, ENGLISH_MISMATCH, MARKUP_ONLY, NO_MATCH, OVERRIDE, PLACEHOLDER_MISMATCH, REVIEWED,
     SAME_AS_ENGLISH, TRANSLATED, UNENCODABLE, UNRESOLVED,
     join_frlg_dialogue, join_frlg_engine_strings, join_indexed_catalog,
     join_item_descriptions, join_start_menu, load_frlg_corpus, load_frlg_dialogue_decisions,
@@ -60,13 +60,18 @@ PLAYER         = FD 01
 STR_VAR_1      = FD 02
 STR_VAR_2      = FD 03
 RIVAL          = FD 06
+B_ATK_NAME_WITH_PREFIX = FD 0F
 PKMN = 53 54
+PK = 53
+MN = 54
 COLOR = FC 01 @ use a color listed below right after
 PAUSE = FC 08
 PLAY_BGM = FC 0B
 BLUE = 08
 MUS_TEST = 56 01
-DPAD_LEFTRIGHT = F8 04
+DPAD_LEFTRIGHT = F8 0B
+LV_2 = F9 05
+NO = F9 08
 '\\l' = FA @ scroll up window text
 '\\p' = FB @ new paragraph
 '\\n' = FE @ new line
@@ -115,11 +120,15 @@ class FrlgTextTests(unittest.TestCase):
             text("now"), EOS,
         ])
 
-    def test_control_escapes_keep_only_the_command_byte(self):
+    def test_control_escapes_keep_their_command_and_arguments(self):
+        # The runtime reads an argument back: the Easy Chat keyboard and the
+        # Battle Records screen take a column from an FC 13's args[1].
         ir = corpus_ir("[COLOR BLUE]A[PAUSE 15]B[PLAY_BGM MUS_TEST]C[PLAY_BGM MUS_UNKNOWN]", self.charmap)
         self.assertEqual(ir, [
-            {"t": "ext", "cmd": 1}, text("A"), {"t": "ext", "cmd": 8}, text("B"),
-            {"t": "ext", "cmd": 11}, text("C"), {"t": "ext", "cmd": 11}, EOS,
+            {"t": "ext", "cmd": 1, "args": [8]}, text("A"),
+            {"t": "ext", "cmd": 8, "args": [15]}, text("B"),
+            {"t": "ext", "cmd": 11, "args": [86, 1]}, text("C"),
+            {"t": "ext", "cmd": 11, "args": [0, 0]}, EOS,
         ])
 
     def test_english_uses_the_runtime_glyphs_and_translations_the_rom_font(self):
@@ -128,11 +137,40 @@ class FrlgTextTests(unittest.TestCase):
 
     def test_keypad_escapes_mirror_the_runtime_in_every_language(self):
         english = corpus_ir("[DPAD_LEFTRIGHT]", self.charmap)
-        self.assertEqual(english, [text("??"), EOS])
+        self.assertEqual(english, [{"t": "tag", "tag": "{DPAD_LEFTRIGHT}"}, EOS])
         self.assertEqual(corpus_ir("[DPAD_LEFTRIGHT]", self.charmap, language="fr"), english)
 
-    def test_pkmn_ligature_reads_poke_like_text_ir(self):
-        self.assertEqual(corpus_ir("[PKMN]", self.charmap), [text("POKé"), EOS])
+    def test_extra_symbols_are_text_or_a_tag_like_the_runtime(self):
+        self.assertEqual(corpus_ir("[NO]", self.charmap), [text("№"), EOS])
+        self.assertEqual(corpus_ir("[LV_2]", self.charmap), [{"t": "tag", "tag": "{LV_2}"}, EOS])
+
+    def test_pkmn_ligature_reads_as_the_runtime_tag(self):
+        self.assertEqual(corpus_ir("[PKMN]", self.charmap), [{"t": "tag", "tag": "{PKMN}"}, EOS])
+        self.assertEqual(corpus_ir("[PK]", self.charmap), [{"t": "tag", "tag": "{PK}"}, EOS])
+
+    def test_japanese_keeps_its_characters_and_reads_the_control_codes(self):
+        # The cart's Japanese block reuses the Latin byte values, so a kana
+        # cannot survive the byte round trip: it is kept as written, while
+        # the tokens and escapes still decode to the runtime's segments.
+        ir = corpus_ir("こんにちは[PLAYER]！\\nげんき？", self.charmap, language="ja-Hrkt")
+        self.assertEqual(ir, [text("こんにちは"), {"t": "player"}, text("！"),
+                              {"t": "nl"}, text("げんき？"), EOS])
+        self.assertEqual(corpus_ir("[PKMN]", self.charmap, language="ja-Hrkt"),
+                         [{"t": "tag", "tag": "{PKMN}"}, EOS])
+        # a token that draws a character of its own joins the text run
+        self.assertEqual(corpus_ir("[NO]1", self.charmap, language="ja-Hrkt"),
+                         [text("№1"), EOS])
+
+    def test_the_charmap_lists_the_japanese_glyphs_the_font_draws(self):
+        path = ROOT / ".cache" / "dependencies" / "pret" / "charmap" / "charmap.txt"
+        if not path.is_file():
+            self.skipTest("pinned pret charmap unavailable")
+        charmap = load_charmap(path)
+        for char in ("あ", "ア", "ー", "。"):
+            self.assertIn(char, charmap.japanese)
+        for char in ("Ａ", "０", "　", "「"):
+            self.assertIn(char, frlg_text.JAPANESE_FULLWIDTH)
+        self.assertNotIn("中", charmap.japanese | frlg_text.JAPANESE_FULLWIDTH)
 
     def test_language_folds_map_missing_quotes_onto_cart_bytes(self):
         self.assertEqual(corpus_ir("«Oui»", self.charmap, language="fr"), [text("“Oui”"), EOS])
@@ -209,7 +247,8 @@ class FrlgDialogueJoinTests(unittest.TestCase):
         self.charmap = write_charmap(self.tmp)
         self.symbols = {0x08000010: ["Map_Text_Hello"], 0x08000020: ["Map_Text_Buffer"],
                         0x08000030: ["Map_Text_Twice"], 0x08000040: ["Map_Text_Stale"],
-                        0x08000050: ["Map_Text_Ambiguous"], 0x08000060: ["Map_Text_Braille"]}
+                        0x08000050: ["Map_Text_Ambiguous"], 0x08000060: ["Map_Text_Braille"],
+                        0x08000090: ["Map_Text_Symbol"]}
         self.corpus = load_frlg_corpus(write_corpus(self.tmp / "corpus", "fr", [
             ("frlg.script.Map.Map_Text_Hello", "Hello [PLAYER]!", "Salut [PLAYER]!"),
             ("frlg.script.Map.Map_Text_Buffer", "Got [STR_VAR_1].", "Obtenu [STR_VAR_2]."),
@@ -217,7 +256,8 @@ class FrlgDialogueJoinTests(unittest.TestCase):
             ("frlg.script.Map.Map_Text_Stale", "Old text.", "Vieux texte."),
             ("frlg.script.A.Map_Text_Ambiguous", "Same.", "Un."),
             ("frlg.script.B.Map_Text_Ambiguous", "Same.", "Deux."),
-            ("frlg.script.Map.Map_Text_Braille", "⠁", "⠁"),
+            ("frlg.script.Map.Map_Text_Braille", "⠁⠃", "⠁⠉"),
+            ("frlg.script.Map.Map_Text_Symbol", "A≈B", "A≈B"),
             ("frlg.script.std.Text_Std", "Obtained!", "Obtenu!"),
             ("frlg.script.Map.Map_Text_Same", "OK!", "OK!"),
         ]), "fr")
@@ -246,7 +286,8 @@ class FrlgDialogueJoinTests(unittest.TestCase):
             "g3:08000030": self.rom("[PLAYER]! [PLAYER]!"),
             "g3:08000040": self.rom("New text."),
             "g3:08000050": self.rom("Same."),
-            "g3:08000060": [text("?é?"), EOS],
+            "g3:08000060": [text("AB"), EOS],
+            "g3:08000090": [text("A?B"), EOS],
             "g3:08000070": self.rom("Nobody."),
             "g3:08000080": [text("  "), EOS],
             "Text_Unknown": self.rom("Engine only."),
@@ -256,12 +297,76 @@ class FrlgDialogueJoinTests(unittest.TestCase):
         self.assertEqual(entries["g3:08000030"].status, TRANSLATED)
         self.assertEqual(entries["g3:08000040"].status, ENGLISH_MISMATCH)
         self.assertEqual(entries["g3:08000050"].status, UNRESOLVED)
-        self.assertEqual(entries["g3:08000060"].status, UNENCODABLE)
+        # a braille message joins cell for cell, the cart's line spelled back
+        self.assertEqual(entries["g3:08000060"].status, TRANSLATED)
+        self.assertEqual(entries["g3:08000060"].translation, [text("⠁⠉"), EOS])
+        self.assertEqual(entries["g3:08000090"].status, UNENCODABLE)
         self.assertEqual(entries["g3:08000070"].status, frlg_join.NO_SYMBOL)
         self.assertEqual(entries["g3:08000080"].status, MARKUP_ONLY)
         self.assertEqual(entries["Text_Unknown"].status, NO_MATCH)
-        self.assertEqual(stats["total"], 7)
+        self.assertEqual(stats["total"], 8)
         self.assertEqual(stats["ignored_markup_only"], 1)
+
+    def test_rom_text_tables_join_row_by_row(self):
+        # RomText.key("gTypeNames", 1) against the corpus's ".gTypeNames.1"
+        corpus = load_frlg_corpus(write_corpus(self.tmp / "tables", "fr", [
+            ("frlg.common.battle_main.gTypeNames.0", "NORMAL", "NORMAL"),
+            ("frlg.common.battle_main.gTypeNames.1", "FIGHT", "COMBAT"),
+        ]), "fr")
+        entries, _ = join_frlg_dialogue({"gTypeNames[1]": [text("FIGHT"), EOS]}, corpus,
+                                        self.symbols, self.charmap)
+        self.assertEqual(entries[0].status, TRANSLATED)
+        self.assertEqual(entries[0].translation, [text("COMBAT"), EOS])
+
+    def test_battle_strings_join_on_their_english_text(self):
+        # The extractor keys the battle string table by pret's STRINGID_*,
+        # the corpus by the symbol it points at, and both carry battle
+        # placeholders ([B_ATK_NAME_WITH_PREFIX] is FD 0F).
+        corpus = load_frlg_corpus(write_corpus(self.tmp / "battle", "fr", [
+            ("frlg.common.battle_message.sText_AttackMissed",
+             "[B_ATK_NAME_WITH_PREFIX]'s\\nattack missed!",
+             "L'attaque de [B_ATK_NAME_WITH_PREFIX]\\néchoue!"),
+        ]), "fr")
+        rom = [{"t": "bph", "code": 0x0F}, text("'s"), {"t": "nl"}, text("attack missed!"), EOS]
+        entries, _ = join_frlg_dialogue({"STRINGID_ATTACKMISSED": rom}, corpus,
+                                        self.symbols, self.charmap)
+        self.assertEqual(entries[0].status, TRANSLATED)
+        self.assertEqual(entries[0].translation[0], text("L'attaque de "))
+        self.assertIn({"t": "bph", "code": 0x0F}, entries[0].translation)
+
+    def test_a_key_with_no_label_takes_one_agreed_translation(self):
+        # A ROM table the cart reaches through a pointer has no corpus row of
+        # its own; its text is joined when every row reading the same English
+        # agrees on one translation.
+        corpus = load_frlg_corpus(write_corpus(self.tmp / "content", "fr", [
+            ("frlg.common.strings.gText_Cancel", "CANCEL", "ANNULER"),
+            ("frlg.common.strings.gText_Cancel2", "CANCEL", "ANNULER"),
+            ("frlg.common.strings.gText_Store", "STORE", "RANGER"),
+            ("frlg.common.strings.gText_Store2", "STORE", "DÉPOSER"),
+        ]), "fr")
+        entries, _ = join_frlg_dialogue({"sMenuTexts[0]": [text("CANCEL"), EOS],
+                                         "sMenuTexts[1]": [text("STORE"), EOS]},
+                                        corpus, self.symbols, self.charmap)
+        by_key = {entry.key: entry for entry in entries}
+        self.assertEqual(by_key["sMenuTexts[0]"].status, CONTENT_MATCH)
+        self.assertEqual(by_key["sMenuTexts[0]"].translation, [text("ANNULER"), EOS])
+        self.assertEqual(by_key["sMenuTexts[1]"].status, NO_MATCH)
+
+    def test_braille_ships_cells_no_latin_letter_reaches(self):
+        # German ä is dots 3-4-5, a cell the cart's braille table has no
+        # letter for; the runtime draws it since v0.3.4 (gen1recomp#2400).
+        corpus = load_frlg_corpus(write_corpus(self.tmp / "de", "de", [
+            ("frlg.script.Map.Map_Text_Braille", "⠁⠃", "⠁⠜"),
+        ]), "de")
+        entries, _ = join_frlg_dialogue({"g3:08000060": [text("AB"), EOS]}, corpus,
+                                        self.symbols, self.charmap)
+        self.assertEqual(entries[0].status, TRANSLATED)
+        self.assertEqual(entries[0].translation, [text("⠁⠜"), EOS])
+
+    def test_braille_english_mismatch_is_reported(self):
+        entries, _ = join_frlg_dialogue({"g3:08000060": [text("AC"), EOS]}, self.corpus,
+                                        self.symbols, self.charmap)
+        self.assertEqual(entries[0].status, ENGLISH_MISMATCH)
 
     def test_same_as_english_is_covered_but_not_shipped(self):
         self.symbols[0x08000090] = ["Map_Text_Same"]
@@ -342,25 +447,23 @@ class FrlgCatalogTests(unittest.TestCase):
         self.assertEqual(result.values, {})
         self.assertEqual(result.stats["english_mismatch"], 1)
 
-    def test_class_names_the_engine_compares_stay_english(self):
+    def test_the_rivals_class_is_translated_like_any_other(self):
         trainers = {1: {"class": 1, "className": "POKéMON TRAINER", "name": "A"},
                     2: {"class": 81, "className": "RIVAL", "name": "TERRY"}}
         result = _trainer_class_names(trainers, {1: "1", 2: "2"}, self.corpus, self.charmap)
-        self.assertEqual(result.values, {"1": "DRESSEUR"})
-        self.assertEqual(result.summary()["fallback_english"], 1)
+        self.assertEqual(result.values, {"1": "DRESSEUR", "2": "RIVALE"})
+        self.assertEqual(result.summary()["fallback_english"], 0)
 
-    def test_every_class_name_the_engine_compares_stays_english(self):
+    def test_no_game3_file_compares_a_trainer_class_name(self):
         source = ROOT / ".cache" / "dependencies" / "gen1recomp" / "src"
         if not source.is_dir():
             self.skipTest("pinned gen1recomp checkout unavailable")
-        from pipeline.frlg.mod import ENGINE_KEYED_CLASS_NAMES
         pattern = re.compile(r"\b(?:className|trainerClassName|class)\s*[=~]=\s*['\"]([^'\"]+)['\"]")
         compared = set()
         for root in ("core/game3", "ui/game3", "battle/game3", "world/game3"):
             for path in (source / root).rglob("*.lua"):
                 compared.update(pattern.findall(path.read_text(encoding="utf-8", errors="replace")))
-        self.assertTrue(compared)
-        self.assertLessEqual(compared, set(ENGINE_KEYED_CLASS_NAMES))
+        self.assertEqual(sorted(compared), [], "the engine reads a trainer's class by id since v0.3.4")
 
     def test_start_menu_labels(self):
         result = join_start_menu(self.corpus, self.charmap)
@@ -523,6 +626,7 @@ class FrlgModTests(unittest.TestCase):
                 Path(directory) / "mod", language="fr", target_name="French translation for FireRed",
                 dialogue={"g3:08000010": [text('Dit "oui"\\'), {"t": "player"}, {"t": "strvar", "n": 2}, EOS]},
                 catalogs={"species_names": {"BULBASAUR": "BULBIZARRE"}, "strings": {"YES": "OUI"},
+                          "strings_by_english": {"VIRIDIAN CITY": "JADIELLE"},
                           "start_menu": {"bag": "SAC"}},
             )
             manifest = json.loads((mod / "manifest.json").read_text(encoding="utf-8"))
@@ -531,6 +635,11 @@ class FrlgModTests(unittest.TestCase):
             main = (mod / "main.lua").read_text(encoding="utf-8")
             self.assertIn(FRLG_CATALOG_HOOKS["species_names"], main)
             self.assertIn(FRLG_CATALOG_HOOKS["strings"], main)
+            # the same registry, in a file of its own (ENGLISH_LOOKUP_SITES)
+            self.assertIn('each("strings_by_english"', main)
+            self.assertEqual(FRLG_CATALOG_HOOKS["strings_by_english"], FRLG_CATALOG_HOOKS["strings"])
+            self.assertIn('["VIRIDIAN CITY"] = "JADIELLE"',
+                          (mod / "lang" / "strings_by_english.lua").read_text(encoding="utf-8"))
             self.assertNotIn("font", main)
             self.assertIn('mod.hooks:wrap("ui.start_menu.items"', main)
             self.assertTrue((mod / "lang" / "start_menu.lua").is_file())
@@ -543,11 +652,40 @@ class FrlgModTests(unittest.TestCase):
                                      capture_output=True, text=True, check=True).stdout
                 self.assertEqual(out, 'Dit "oui"\\|player|2|eos')
 
+    def test_the_english_lookup_sites_still_read_a_value_through_strings(self):
+        """The three screens whose value has no label the runtime reads.
+
+        `modkit pack` refuses a cart string keyed by its English in
+        lang/strings.lua (MK306), so those entries ship in a catalog of their
+        own; if a pin bump gives one of them a label path, its site leaves
+        this list and the entries go back with the others.
+        """
+        from pipeline.frlg.mod import ENGLISH_LOOKUP_SITES
+        engine = ROOT / ".cache" / "dependencies" / "gen1recomp"
+        if not (engine / "src").is_dir():
+            self.skipTest("pinned gen1recomp checkout unavailable")
+        reads = {
+            "src/core/game3/battle/abilities.lua": ("src/ui/game3/summary_menu.lua", r"Strings\(tostring\(ability\)\)"),
+            "src/ui/game3/map_name_popup.lua": ("src/ui/game3/map_name_popup.lua", r"Strings\(label\)"),
+            "src/ui/game3/region_map.lua": ("src/ui/game3/region_map.lua", r"Strings\(RegionExtract\.SECTION_NAMES"),
+        }
+        self.assertEqual(sorted(reads), sorted(ENGLISH_LOOKUP_SITES))
+        for site, (path, pattern) in reads.items():
+            body = (engine / path).read_text(encoding="utf-8")
+            self.assertRegex(body, pattern, site)
+
     def test_gate_counts_glyphs_in_every_generated_catalog(self):
         gate = (ROOT / "tools" / "frlg" / "gate.lua").read_text(encoding="utf-8")
         listed = re.search(r'for _, catalogName in ipairs\(\{(.*?)\}\)', gate, re.S).group(1)
         names = set(re.findall(r'"([a-z_]+)"', listed))
         self.assertEqual(names, set(FRLG_CATALOG_HOOKS) | {"dialogue", "start_menu"})
+
+    def test_lua_ir_writes_every_field_the_runtime_reads(self):
+        # a tag is drawn from seg.tag, and the Easy Chat keyboard and the
+        # Battle Records screen read a column from an ext's args[1]
+        self.assertEqual(
+            lua_ir([{"t": "tag", "tag": "{PKMN}"}, {"t": "ext", "cmd": 19, "args": [87]}]),
+            '{ { t = "tag", tag = "{PKMN}" }, { t = "ext", cmd = 19, args = { 87 } } }')
 
     def test_lua_ir_rejects_unknown_values(self):
         with self.assertRaises(TypeError):
@@ -564,51 +702,61 @@ class FrlgConfigTests(unittest.TestCase):
         self.assertEqual((profile.generation, profile.games), (3, ("firered",)))
         self.assertEqual(game_spec("firered").corpus_collection, "FireRedLeafGreen")
         codes = [code for code, _ in languages_for_collection("FireRedLeafGreen")]
-        self.assertEqual(codes, ["fr", "de", "es", "it"])
+        self.assertEqual(codes, ["fr", "de", "es", "it", "ja-Hrkt"])
 
     def test_checked_in_config_loads(self):
         scope = load_frlg_engine_scope()
         self.assertIn("TEXT SPEED", scope)
-        # a Strings.source() table value is translated where it is read
-        self.assertIn("Go back to the\nprevious menu.", scope)
+        # a value the runtime reaches through a table, not a literal callsite
+        self.assertIn("SWITCH BOX", scope)
+        # the option menu's help text comes from the cart since v0.3.0
+        self.assertNotIn("Go back to the\nprevious menu.", scope)
         decisions = load_frlg_dialogue_decisions()
-        self.assertIn("Text_TownMap", decisions)
-        for language in ("fr", "de", "es", "it"):
+        self.assertIn("Text_ObtainedTheX", decisions)
+        # a cart table the corpus names by the string each entry points at
+        self.assertEqual(decisions["sMenuTexts[0]"], "frlg.common.strings.gPCText_Cancel")
+        for language in ("fr", "de", "es", "it", "ja-Hrkt"):
             with self.subTest(language=language):
                 overrides = load_frlg_dialogue_overrides(language)
-                self.assertIn("Text_FoundTMHMContainsMove", overrides)
+                if language != "ja-Hrkt":
+                    self.assertIn("Text_FoundTMHMContainsMove", overrides)
                 engine = json.loads((ROOT / "overrides" / language / "frlg" / "engine.json").read_text(encoding="utf-8"))
                 for key, row in engine["entries"].items():
                     self.assertIn(key, scope)
                     self.assertTrue(row.get("reason") and row.get("provenance"), key)
 
     def test_engine_scope_matches_the_pinned_engine(self):
+        # The probe reads the cart's own labels out of a FireRed extract, so
+        # it has nothing to say without one.
         engine = ROOT / ".cache" / "dependencies" / "gen1recomp"
         extracted = ROOT / ".cache" / "firered" / "extracted" / "cache"
-        if not (engine / "src").is_dir() or not shutil.which("luajit"):
-            self.skipTest("pinned gen1recomp checkout or LuaJIT unavailable")
+        if not (engine / "src").is_dir() or not shutil.which("luajit") or not (extracted / "data").is_dir():
+            self.skipTest("pinned gen1recomp checkout, LuaJIT or FireRed extract unavailable")
         from pipeline.frlg.engine_scope import collect_keys
-        rom = extracted if (extracted / "data").is_dir() else None
-        keys = collect_keys(engine, rom)
+        keys = collect_keys(engine, extracted)
         scope = load_frlg_engine_scope()
         self.assertEqual(sorted(set(keys) - set(scope)), [], "engine keys missing from the scope")
-        if rom is not None:
-            self.assertEqual(sorted(set(scope) - set(keys)), [], "scope keys the engine no longer has")
+        self.assertEqual(sorted(set(scope) - set(keys)), [], "scope keys the engine no longer has")
 
     def test_upstream_doc_inventories_every_hardcoded_text_file(self):
         engine = ROOT / ".cache" / "dependencies" / "gen1recomp"
         if not (engine / "src").is_dir():
             self.skipTest("pinned gen1recomp checkout unavailable")
         from pipeline.frlg.audit import NON_DISPLAY_FILES, player_visible_files, scan_hardcoded_literals
+        self.assertEqual(sorted(set(NON_DISPLAY_FILES) - set(scan_hardcoded_literals(engine))), [],
+                         "stale NON_DISPLAY_FILES entries")
+        # Which files hold text a player reads depends on what the scope
+        # reaches through a variable, which the probe reads from the extract.
+        extracted = ROOT / ".cache" / "firered" / "extracted" / "cache"
+        if not shutil.which("luajit") or not (extracted / "data").is_dir():
+            self.skipTest("LuaJIT or FireRed extract unavailable")
         doc = (ROOT / "docs" / "upstream-fixes.md").read_text(encoding="utf-8")
         inventory = doc.split("#### Inventory: every game3 file with hardcoded player-visible text", 1)[1]
         inventory = inventory.split("\n### ", 1)[0]
         listed = set(re.findall(r"^\| `(src/[^`]+)` \|", inventory, re.M))
-        visible = set(player_visible_files(engine))
+        visible = set(player_visible_files(engine, extracted=extracted))
         self.assertEqual(sorted(visible - listed), [], "player-visible files missing from the inventory")
         self.assertEqual(sorted(listed - visible), [], "inventory rows the scan no longer finds")
-        self.assertEqual(sorted(set(NON_DISPLAY_FILES) - set(scan_hardcoded_literals(engine))), [],
-                         "stale NON_DISPLAY_FILES entries")
 
     def test_reviewed_qids_exist_in_the_pinned_corpus(self):
         corpus = ROOT / ".cache" / "dependencies" / "poke-corpus" / "corpus" / "FireRedLeafGreen"

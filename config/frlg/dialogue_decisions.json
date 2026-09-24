@@ -2,6 +2,58 @@
   "schema": "gen1recomp-translation-mods/frlg-dialogue-decisions",
   "version": 1,
   "entries": {
+    "Help_Text_HowToReadPokedex": {
+      "qid": "frlg.script.help_system.Help_Text_HowToReadPokedex",
+      "reason": "The cart's own help entry: this ROM writes its third step about the TOWN MAP where the corpus row writes it about NEXT DATA, the same lesson reworded between revisions."
+    },
+    "STRINGID_ATTACKERSSTATFELL": {
+      "qid": "frlg.common.battle_message.sText_AttackersStatFell",
+      "reason": "The stat-fall row of the same pair (see STRINGID_ATTACKERSSTATROSE)."
+    },
+    "STRINGID_ATTACKERSSTATROSE": {
+      "qid": "frlg.common.battle_message.sText_AttackersStatRose",
+      "reason": "The stat-rise and stat-fall rows share the same fragment in English (\"'s \\n\"); the battle string table names each one, so the row follows the constant."
+    },
+    "STRINGID_CANTESCAPE": {
+      "qid": "frlg.common.battle_message.sText_CantEscape",
+      "reason": "Two rows of the battle string table read the same in English; this one is sText_CantEscape, the constant's own row."
+    },
+    "STRINGID_CANTESCAPE2": {
+      "qid": "frlg.common.battle_message.sText_CantEscape2",
+      "reason": "Two rows of the battle string table read the same in English; this one is sText_CantEscape2, the constant's own row."
+    },
+    "STRINGID_PKMNBOXBILLSPCFULL": {
+      "qid": "frlg.script.pc_transfer.Text_MonSentToBoxBillsBoxFull",
+      "reason": "The battle string table's row, which the corpus names after the script text it shares: Text_MonSentToBoxBillsBoxFull, whose English is this very text."
+    },
+    "STRINGID_PKMNBOXSOMEONESPCFULL": {
+      "qid": "frlg.script.pc_transfer.Text_MonSentToBoxSomeonesBoxFull",
+      "reason": "The battle string table's row, which the corpus names after the script text it shares: Text_MonSentToBoxSomeonesBoxFull, whose English is this very text."
+    },
+    "STRINGID_PKMNCANTSLEEPINUPROAR": {
+      "qid": "frlg.common.battle_message.sText_PkmnCantSleepInUproar",
+      "reason": "Two rows of the battle string table read the same in English; this one is sText_PkmnCantSleepInUproar, the constant's own row."
+    },
+    "STRINGID_PKMNCANTSLEEPINUPROAR2": {
+      "qid": "frlg.common.battle_message.sText_PkmnCantSleepInUproar2",
+      "reason": "Two rows of the battle string table read the same in English; this one is sText_PkmnCantSleepInUproar2, the constant's own row."
+    },
+    "STRINGID_PKMNSXCUREDITSYPROBLEM": {
+      "qid": "frlg.common.battle_message.sText_PkmnsXCuredItsYProblem",
+      "reason": "Two rows of the battle string table read the same in English; this one is sText_PkmnsXCuredItsYProblem, the constant's own row."
+    },
+    "STRINGID_PKMNSXCUREDYPROBLEM": {
+      "qid": "frlg.common.battle_message.sText_PkmnsXCuredYProblem",
+      "reason": "Two rows of the battle string table read the same in English; this one is sText_PkmnsXCuredYProblem, the constant's own row."
+    },
+    "STRINGID_PKMNTRANSFERREDBILLSPC": {
+      "qid": "frlg.script.pc_transfer.Text_MonSentToBoxInBillsPC",
+      "reason": "The battle string table's row, which the corpus names after the script text it shares: Text_MonSentToBoxInBillsPC, whose English is this very text."
+    },
+    "STRINGID_PKMNTRANSFERREDSOMEONESPC": {
+      "qid": "frlg.script.pc_transfer.Text_MonSentToBoxInSomeonesPC",
+      "reason": "The battle string table's row, which the corpus names after the script text it shares: Text_MonSentToBoxInSomeonesPC, whose English is this very text."
+    },
     "Text_ObtainedTheX": {
       "qid": "frlg.script.obtain_item.Text_ObtainedTheX",
       "reason": "stdscripts.lua prefixes the cart's \"Obtained the [STR_VAR_2]!\" with the player's name; the translation keeps the item buffer the script fills."
@@ -18,17 +70,889 @@
       "qid": "frlg.script.event_scripts.Text_TakeYourPkmnForFewSeconds",
       "reason": "stdscripts.lua writes \"OK.\" where the cart writes \"Okay,\"; same message and no runtime value."
     },
-    "Text_TownMap": {
-      "qid": "frlg.script.flavor_text.Text_ATownMap",
-      "reason": "stdscripts.lua's shared TOWN MAP sign reads \"It's a TOWN MAP.\" where the cart's flavor text reads \"A TOWN MAP.\"; same message and no runtime value."
-    },
-    "Text_UsualPCServicesUnavailable": {
-      "qid": "frlg.script.OneIsland_PokemonCenter_1F.OneIsland_PokemonCenter_1F_Text_UsualPCServicesUnavailable",
-      "reason": "stdscripts.lua's shared PC-unavailable line is One Island's own message with \"right now\" appended; no runtime value."
-    },
     "Text_WelcomeWantToHealPkmn": {
       "qid": "frlg.script.event_scripts.Text_WelcomeWantToHealPkmn",
       "reason": "gen1recomp's standard nurse script (src/core/game3/scripting/stdscripts.lua) words the cart's greeting on one page (\"rest your POKéMON to good health\"); same message and no runtime value."
+    },
+    "gStatNamesTable[0]": {
+      "qid": "frlg.common.battle_message.sText_HP2",
+      "reason": "The cart reaches this row through gStatNamesTable, which the corpus has no row of its own for: pret points that entry at sText_HP2, whose English is this very text."
+    },
+    "gStatNamesTable[1]": {
+      "qid": "frlg.common.battle_message.sText_Attack2",
+      "reason": "The cart reaches this row through gStatNamesTable, which the corpus has no row of its own for: pret points that entry at sText_Attack2, whose English is this very text."
+    },
+    "gStatNamesTable[2]": {
+      "qid": "frlg.common.battle_message.sText_Defense2",
+      "reason": "The cart reaches this row through gStatNamesTable, which the corpus has no row of its own for: pret points that entry at sText_Defense2, whose English is this very text."
+    },
+    "gStatNamesTable[3]": {
+      "qid": "frlg.common.battle_message.sText_Speed",
+      "reason": "The cart reaches this row through gStatNamesTable, which the corpus has no row of its own for: pret points that entry at sText_Speed, whose English is this very text."
+    },
+    "gStatusConditionStringsTable[2][0]": {
+      "qid": "frlg.common.battle_main.gStatusConditionString_ParalysisJpn",
+      "reason": "The cart reaches this row through gStatusConditionStringsTable, which the corpus has no row of its own for: pret points that entry at gStatusConditionString_ParalysisJpn, whose English is this very text."
+    },
+    "gStatusConditionStringsTable[5][0]": {
+      "qid": "frlg.common.battle_main.gStatusConditionString_ConfusionJpn",
+      "reason": "The cart reaches this row through gStatusConditionStringsTable, which the corpus has no row of its own for: pret points that entry at gStatusConditionString_ConfusionJpn, whose English is this very text."
+    },
+    "gStdStringPtrs[0]": {
+      "qid": "frlg.common.strings.gText_Cool",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Cool, whose English is this very text."
+    },
+    "gStdStringPtrs[10]": {
+      "qid": "frlg.common.strings.gText_Items",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Items, whose English is this very text."
+    },
+    "gStdStringPtrs[11]": {
+      "qid": "frlg.common.strings.gText_KeyItems",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_KeyItems, whose English is this very text."
+    },
+    "gStdStringPtrs[12]": {
+      "qid": "frlg.common.strings.gText_PokeBalls",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_PokeBalls, whose English is this very text."
+    },
+    "gStdStringPtrs[15]": {
+      "qid": "frlg.common.strings.gText_Boulderbadge",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Boulderbadge, whose English is this very text."
+    },
+    "gStdStringPtrs[16]": {
+      "qid": "frlg.common.strings.gText_Cascadebadge",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Cascadebadge, whose English is this very text."
+    },
+    "gStdStringPtrs[17]": {
+      "qid": "frlg.common.strings.gText_Thunderbadge",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Thunderbadge, whose English is this very text."
+    },
+    "gStdStringPtrs[18]": {
+      "qid": "frlg.common.strings.gText_Rainbowbadge",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Rainbowbadge, whose English is this very text."
+    },
+    "gStdStringPtrs[19]": {
+      "qid": "frlg.common.strings.gText_Soulbadge",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Soulbadge, whose English is this very text."
+    },
+    "gStdStringPtrs[1]": {
+      "qid": "frlg.common.strings.gText_Beauty",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Beauty, whose English is this very text."
+    },
+    "gStdStringPtrs[20]": {
+      "qid": "frlg.common.strings.gText_Marshbadge",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Marshbadge, whose English is this very text."
+    },
+    "gStdStringPtrs[21]": {
+      "qid": "frlg.common.strings.gText_Volcanobadge",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Volcanobadge, whose English is this very text."
+    },
+    "gStdStringPtrs[22]": {
+      "qid": "frlg.common.strings.gText_Earthbadge",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Earthbadge, whose English is this very text."
+    },
+    "gStdStringPtrs[2]": {
+      "qid": "frlg.common.strings.gText_Cute",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Cute, whose English is this very text."
+    },
+    "gStdStringPtrs[3]": {
+      "qid": "frlg.common.strings.gText_Smart",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Smart, whose English is this very text."
+    },
+    "gStdStringPtrs[4]": {
+      "qid": "frlg.common.strings.gText_Tough",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Tough, whose English is this very text."
+    },
+    "gStdStringPtrs[5]": {
+      "qid": "frlg.common.strings.gText_Cool_2",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Cool_2, whose English is this very text."
+    },
+    "gStdStringPtrs[6]": {
+      "qid": "frlg.common.strings.gText_Beauty_2",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Beauty_2, whose English is this very text."
+    },
+    "gStdStringPtrs[7]": {
+      "qid": "frlg.common.strings.gText_Cute_2",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Cute_2, whose English is this very text."
+    },
+    "gStdStringPtrs[8]": {
+      "qid": "frlg.common.strings.gText_Smart_2",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Smart_2, whose English is this very text."
+    },
+    "gStdStringPtrs[9]": {
+      "qid": "frlg.common.strings.gText_Tough_2",
+      "reason": "The cart reaches this row through gStdStringPtrs, which the corpus has no row of its own for: pret points that entry at gText_Tough_2, whose English is this very text."
+    },
+    "gTrainerTowerChallengeTypeTexts[0]": {
+      "qid": "frlg.common.strings.gOtherText_Single",
+      "reason": "The cart reaches this row through gTrainerTowerChallengeTypeTexts, which the corpus has no row of its own for: pret points that entry at gOtherText_Single, whose English is this very text."
+    },
+    "gTrainerTowerChallengeTypeTexts[1]": {
+      "qid": "frlg.common.strings.gOtherText_Double",
+      "reason": "The cart reaches this row through gTrainerTowerChallengeTypeTexts, which the corpus has no row of its own for: pret points that entry at gOtherText_Double, whose English is this very text."
+    },
+    "gTrainerTowerChallengeTypeTexts[2]": {
+      "qid": "frlg.common.strings.gOtherText_Knockout",
+      "reason": "The cart reaches this row through gTrainerTowerChallengeTypeTexts, which the corpus has no row of its own for: pret points that entry at gOtherText_Knockout, whose English is this very text."
+    },
+    "gTrainerTowerChallengeTypeTexts[3]": {
+      "qid": "frlg.common.strings.gOtherText_Mixed",
+      "reason": "The cart reaches this row through gTrainerTowerChallengeTypeTexts, which the corpus has no row of its own for: pret points that entry at gOtherText_Mixed, whose English is this very text."
+    },
+    "sActionStringTable[0]": {
+      "qid": "frlg.common.strings.gText_ChoosePokemon",
+      "reason": "The cart reaches this row through sActionStringTable, which the corpus has no row of its own for: pret points that entry at gText_ChoosePokemon, whose English is this very text."
+    },
+    "sActionStringTable[15]": {
+      "qid": "frlg.common.strings.gText_ChoosePokemon2",
+      "reason": "The cart reaches this row through sActionStringTable, which the corpus has no row of its own for: pret points that entry at gText_ChoosePokemon2, whose English is this very text."
+    },
+    "sActionTexts[0]": {
+      "qid": "frlg.common.strings.gTradeText_Cancel",
+      "reason": "The cart reaches this row through sActionTexts, which the corpus has no row of its own for: pret points that entry at gTradeText_Cancel, whose English is this very text."
+    },
+    "sActionTexts[1]": {
+      "qid": "frlg.common.strings.gTradeText_ChooseAPokemon",
+      "reason": "The cart reaches this row through sActionTexts, which the corpus has no row of its own for: pret points that entry at gTradeText_ChooseAPokemon, whose English is this very text."
+    },
+    "sActionTexts[2]": {
+      "qid": "frlg.common.strings.gTradeText_Summary",
+      "reason": "The cart reaches this row through sActionTexts, which the corpus has no row of its own for: pret points that entry at gTradeText_Summary, whose English is this very text."
+    },
+    "sActionTexts[3]": {
+      "qid": "frlg.common.strings.gTradeText_Trade",
+      "reason": "The cart reaches this row through sActionTexts, which the corpus has no row of its own for: pret points that entry at gTradeText_Trade, whose English is this very text."
+    },
+    "sBCRankingHeaders[0]": {
+      "qid": "frlg.common.strings.gText_SpaceTimes2",
+      "reason": "The cart reaches this row through sBCRankingHeaders, which the corpus has no row of its own for: pret points that entry at gText_SpaceTimes2, whose English is this very text."
+    },
+    "sBattleStyleOptions[0]": {
+      "qid": "frlg.common.strings.gText_BattleStyleShift",
+      "reason": "The cart reaches this row through sBattleStyleOptions, which the corpus has no row of its own for: pret points that entry at gText_BattleStyleShift, whose English is this very text."
+    },
+    "sContextMenuActions[2]": {
+      "qid": "frlg.common.strings.gOtherText_Give",
+      "reason": "The cart reaches this row through sContextMenuActions, which the corpus has no row of its own for: pret points that entry at gOtherText_Give, whose English is this very text."
+    },
+    "sContextMenuActions[3]": {
+      "qid": "frlg.common.strings.gOtherText_Exit",
+      "reason": "The cart reaches this row through sContextMenuActions, which the corpus has no row of its own for: pret points that entry at gOtherText_Exit, whose English is this very text."
+    },
+    "sCursorOptions[0]": {
+      "qid": "frlg.common.strings.gText_Summary5",
+      "reason": "The cart reaches this row through sCursorOptions, which the corpus has no row of its own for: pret points that entry at gText_Summary5, whose English is this very text."
+    },
+    "sCursorOptions[10]": {
+      "qid": "frlg.common.strings.gText_Shift",
+      "reason": "The cart reaches this row through sCursorOptions, which the corpus has no row of its own for: pret points that entry at gText_Shift, whose English is this very text."
+    },
+    "sCursorOptions[14]": {
+      "qid": "frlg.common.strings.gText_Store",
+      "reason": "The cart reaches this row through sCursorOptions, which the corpus has no row of its own for: pret points that entry at gText_Store, whose English is this very text."
+    },
+    "sCursorOptions[15]": {
+      "qid": "frlg.common.strings.gText_Register",
+      "reason": "The cart reaches this row through sCursorOptions, which the corpus has no row of its own for: pret points that entry at gText_Register, whose English is this very text."
+    },
+    "sCursorOptions[16]": {
+      "qid": "frlg.common.strings.gText_Trade4",
+      "reason": "The cart reaches this row through sCursorOptions, which the corpus has no row of its own for: pret points that entry at gText_Trade4, whose English is this very text."
+    },
+    "sCursorOptions[17]": {
+      "qid": "frlg.common.strings.gText_Trade4",
+      "reason": "The cart reaches this row through sCursorOptions, which the corpus has no row of its own for: pret points that entry at gText_Trade4, whose English is this very text."
+    },
+    "sCursorOptions[1]": {
+      "qid": "frlg.common.strings.gText_Switch2",
+      "reason": "The cart reaches this row through sCursorOptions, which the corpus has no row of its own for: pret points that entry at gText_Switch2, whose English is this very text."
+    },
+    "sCursorOptions[2]": {
+      "qid": "frlg.common.strings.gFameCheckerText_Cancel",
+      "reason": "The cart reaches this row through sCursorOptions, which the corpus has no row of its own for: pret points that entry at gFameCheckerText_Cancel, whose English is this very text."
+    },
+    "sCursorOptions[4]": {
+      "qid": "frlg.common.strings.gOtherText_Give",
+      "reason": "The cart reaches this row through sCursorOptions, which the corpus has no row of its own for: pret points that entry at gOtherText_Give, whose English is this very text."
+    },
+    "sCursorOptions[5]": {
+      "qid": "frlg.common.strings.gText_Take",
+      "reason": "The cart reaches this row through sCursorOptions, which the corpus has no row of its own for: pret points that entry at gText_Take, whose English is this very text."
+    },
+    "sCursorOptions[7]": {
+      "qid": "frlg.common.strings.gText_Take2",
+      "reason": "The cart reaches this row through sCursorOptions, which the corpus has no row of its own for: pret points that entry at gText_Take2, whose English is this very text."
+    },
+    "sCursorOptions[8]": {
+      "qid": "frlg.common.strings.gText_Read2",
+      "reason": "The cart reaches this row through sCursorOptions, which the corpus has no row of its own for: pret points that entry at gText_Read2, whose English is this very text."
+    },
+    "sCursorOptions[9]": {
+      "qid": "frlg.common.strings.gFameCheckerText_Cancel",
+      "reason": "The cart reaches this row through sCursorOptions, which the corpus has no row of its own for: pret points that entry at gFameCheckerText_Cancel, whose English is this very text."
+    },
+    "sDescriptionStringTable[1]": {
+      "qid": "frlg.common.strings.gText_Able",
+      "reason": "The cart reaches this row through sDescriptionStringTable, which the corpus has no row of its own for: pret points that entry at gText_Able, whose English is this very text."
+    },
+    "sDescriptionStringTable[5]": {
+      "qid": "frlg.common.strings.gText_Able2",
+      "reason": "The cart reaches this row through sDescriptionStringTable, which the corpus has no row of its own for: pret points that entry at gText_Able2, whose English is this very text."
+    },
+    "sDoYouWantModeTexts[0]": {
+      "qid": "frlg.common.union_room_message.sText_DoYouWantXMode",
+      "reason": "The cart reaches this row through sDoYouWantModeTexts, which the corpus has no row of its own for: pret points that entry at sText_DoYouWantXMode, whose English is this very text."
+    },
+    "sDoYouWantModeTexts[1]": {
+      "qid": "frlg.common.union_room_message.sText_DoYouWantXMode2",
+      "reason": "The cart reaches this row through sDoYouWantModeTexts, which the corpus has no row of its own for: pret points that entry at sText_DoYouWantXMode2, whose English is this very text."
+    },
+    "sEasyChatGroupNamePointers[14]": {
+      "qid": "frlg.common.strings.gEasyChatGroupName_Time",
+      "reason": "The cart reaches this row through sEasyChatGroupNamePointers, which the corpus has no row of its own for: pret points that entry at gEasyChatGroupName_Time, whose English is this very text."
+    },
+    "sEasyChatGroupNamePointers[17]": {
+      "qid": "frlg.common.strings.gEasyChatGroupName_Events",
+      "reason": "The cart reaches this row through sEasyChatGroupNamePointers, which the corpus has no row of its own for: pret points that entry at gEasyChatGroupName_Events, whose English is this very text."
+    },
+    "sEasyChatKeyboardAlphabet[2]": {
+      "qid": "frlg.common.keyboard_text.gText_EasyChatKeyboard_MNOPQRS",
+      "reason": "The cart reaches this row through sEasyChatKeyboardAlphabet, which the corpus has no row of its own for: pret points that entry at gText_EasyChatKeyboard_MNOPQRS, whose English is this very text."
+    },
+    "sEasyChatKeyboardAlphabet[3]": {
+      "qid": "frlg.common.keyboard_text.gText_EasyChatKeyboard_TUVWXYZ",
+      "reason": "The cart reaches this row through sEasyChatKeyboardAlphabet, which the corpus has no row of its own for: pret points that entry at gText_EasyChatKeyboard_TUVWXYZ, whose English is this very text."
+    },
+    "sFameCheckerFlavorTextPointers[3]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorText_ProfOak3",
+      "reason": "The cart reaches this row through sFameCheckerFlavorTextPointers, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorText_ProfOak3, whose English is this very text."
+    },
+    "sFameCheckerFlavorTextPointers[4]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorText_ProfOak4",
+      "reason": "The cart reaches this row through sFameCheckerFlavorTextPointers, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorText_ProfOak4, whose English is this very text."
+    },
+    "sFameCheckerFlavorTextPointers[70]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorText_Agatha4",
+      "reason": "The cart reaches this row through sFameCheckerFlavorTextPointers, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorText_Agatha4, whose English is this very text."
+    },
+    "sFameCheckerFlavorTextPointers[9]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorText_Daisy3",
+      "reason": "The cart reaches this row through sFameCheckerFlavorTextPointers, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorText_Daisy3, whose English is this very text."
+    },
+    "sFemaleNameChoices[1]": {
+      "qid": "frlg.script.new_game_intro.gNameChoice_Fire",
+      "reason": "The cart reaches this row through sFemaleNameChoices, which the corpus has no row of its own for: pret points that entry at gNameChoice_Fire, whose English is this very text."
+    },
+    "sFemaleNameChoices[4]": {
+      "qid": "frlg.script.new_game_intro.gNameChoice_Amanda",
+      "reason": "The cart reaches this row through sFemaleNameChoices, which the corpus has no row of its own for: pret points that entry at gNameChoice_Amanda, whose English is this very text."
+    },
+    "sFemaleNameChoices[8]": {
+      "qid": "frlg.script.new_game_intro.gNameChoice_Paula",
+      "reason": "The cart reaches this row through sFemaleNameChoices, which the corpus has no row of its own for: pret points that entry at gNameChoice_Paula, whose English is this very text."
+    },
+    "sFlavorTextOriginObjectNameTexts[10]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorTextOriginObjectName_Daisy4",
+      "reason": "The cart reaches this row through sFlavorTextOriginObjectNameTexts, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorTextOriginObjectName_Daisy4, whose English is this very text."
+    },
+    "sFlavorTextOriginObjectNameTexts[16]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorTextOriginObjectName_Brock4",
+      "reason": "The cart reaches this row through sFlavorTextOriginObjectNameTexts, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorTextOriginObjectName_Brock4, whose English is this very text."
+    },
+    "sFlavorTextOriginObjectNameTexts[41]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorTextOriginObjectName_Koga5",
+      "reason": "The cart reaches this row through sFlavorTextOriginObjectNameTexts, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorTextOriginObjectName_Koga5, whose English is this very text."
+    },
+    "sFlavorTextOriginObjectNameTexts[51]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorTextOriginObjectName_Blaine3",
+      "reason": "The cart reaches this row through sFlavorTextOriginObjectNameTexts, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorTextOriginObjectName_Blaine3, whose English is this very text."
+    },
+    "sFlavorTextOriginObjectNameTexts[59]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorTextOriginObjectName_Lorelei5",
+      "reason": "The cart reaches this row through sFlavorTextOriginObjectNameTexts, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorTextOriginObjectName_Lorelei5, whose English is this very text."
+    },
+    "sFlavorTextOriginObjectNameTexts[64]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorTextOriginObjectName_Bruno4",
+      "reason": "The cart reaches this row through sFlavorTextOriginObjectNameTexts, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorTextOriginObjectName_Bruno4, whose English is this very text."
+    },
+    "sFlavorTextOriginObjectNameTexts[71]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorTextOriginObjectName_Agatha5",
+      "reason": "The cart reaches this row through sFlavorTextOriginObjectNameTexts, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorTextOriginObjectName_Agatha5, whose English is this very text."
+    },
+    "sFlavorTextOriginObjectNameTexts[74]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorTextOriginObjectName_Lance2",
+      "reason": "The cart reaches this row through sFlavorTextOriginObjectNameTexts, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorTextOriginObjectName_Lance2, whose English is this very text."
+    },
+    "sFlavorTextOriginObjectNameTexts[7]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorTextOriginObjectName_Daisy1",
+      "reason": "The cart reaches this row through sFlavorTextOriginObjectNameTexts, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorTextOriginObjectName_Daisy1, whose English is this very text."
+    },
+    "sFlavorTextOriginObjectNameTexts[86]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorTextOriginObjectName_MrFuji2",
+      "reason": "The cart reaches this row through sFlavorTextOriginObjectNameTexts, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorTextOriginObjectName_MrFuji2, whose English is this very text."
+    },
+    "sFlavorTextOriginObjectNameTexts[87]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorTextOriginObjectName_MrFuji3",
+      "reason": "The cart reaches this row through sFlavorTextOriginObjectNameTexts, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorTextOriginObjectName_MrFuji3, whose English is this very text."
+    },
+    "sFlavorTextOriginObjectNameTexts[8]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorTextOriginObjectName_Daisy2",
+      "reason": "The cart reaches this row through sFlavorTextOriginObjectNameTexts, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorTextOriginObjectName_Daisy2, whose English is this very text."
+    },
+    "sFlavorTextOriginObjectNameTexts[94]": {
+      "qid": "frlg.script.fame_checker.gFameCheckerFlavorTextOriginObjectName_Giovanni4",
+      "reason": "The cart reaches this row through sFlavorTextOriginObjectNameTexts, which the corpus has no row of its own for: pret points that entry at gFameCheckerFlavorTextOriginObjectName_Giovanni4, whose English is this very text."
+    },
+    "sFloorNamePointers[10]": {
+      "qid": "frlg.common.strings.gText_7F",
+      "reason": "The cart reaches this row through sFloorNamePointers, which the corpus has no row of its own for: pret points that entry at gText_7F, whose English is this very text."
+    },
+    "sFloorNamePointers[11]": {
+      "qid": "frlg.common.strings.gText_8F",
+      "reason": "The cart reaches this row through sFloorNamePointers, which the corpus has no row of its own for: pret points that entry at gText_8F, whose English is this very text."
+    },
+    "sFloorNamePointers[4]": {
+      "qid": "frlg.common.strings.gText_1F",
+      "reason": "The cart reaches this row through sFloorNamePointers, which the corpus has no row of its own for: pret points that entry at gText_1F, whose English is this very text."
+    },
+    "sFloorNamePointers[5]": {
+      "qid": "frlg.common.strings.gText_2F",
+      "reason": "The cart reaches this row through sFloorNamePointers, which the corpus has no row of its own for: pret points that entry at gText_2F, whose English is this very text."
+    },
+    "sFloorNamePointers[6]": {
+      "qid": "frlg.common.strings.gText_3F",
+      "reason": "The cart reaches this row through sFloorNamePointers, which the corpus has no row of its own for: pret points that entry at gText_3F, whose English is this very text."
+    },
+    "sFloorNamePointers[7]": {
+      "qid": "frlg.common.strings.gText_4F",
+      "reason": "The cart reaches this row through sFloorNamePointers, which the corpus has no row of its own for: pret points that entry at gText_4F, whose English is this very text."
+    },
+    "sFloorNamePointers[8]": {
+      "qid": "frlg.common.strings.gText_5F",
+      "reason": "The cart reaches this row through sFloorNamePointers, which the corpus has no row of its own for: pret points that entry at gText_5F, whose English is this very text."
+    },
+    "sFloorNamePointers[9]": {
+      "qid": "frlg.common.strings.gText_6F",
+      "reason": "The cart reaches this row through sFloorNamePointers, which the corpus has no row of its own for: pret points that entry at gText_6F, whose English is this very text."
+    },
+    "sItemMenuContextActions[2]": {
+      "qid": "frlg.common.strings.gOtherText_Register",
+      "reason": "The cart reaches this row through sItemMenuContextActions, which the corpus has no row of its own for: pret points that entry at gOtherText_Register, whose English is this very text."
+    },
+    "sItemMenuContextActions[3]": {
+      "qid": "frlg.common.strings.gOtherText_Give",
+      "reason": "The cart reaches this row through sItemMenuContextActions, which the corpus has no row of its own for: pret points that entry at gOtherText_Give, whose English is this very text."
+    },
+    "sItemMenuContextActions[4]": {
+      "qid": "frlg.common.strings.gFameCheckerText_Cancel",
+      "reason": "The cart reaches this row through sItemMenuContextActions, which the corpus has no row of its own for: pret points that entry at gFameCheckerText_Cancel, whose English is this very text."
+    },
+    "sItemPcSubmenuOptions[0]": {
+      "qid": "frlg.common.strings.gText_Withdraw",
+      "reason": "The cart reaches this row through sItemPcSubmenuOptions, which the corpus has no row of its own for: pret points that entry at gText_Withdraw, whose English is this very text."
+    },
+    "sItemPcSubmenuOptions[1]": {
+      "qid": "frlg.common.strings.gOtherText_Give",
+      "reason": "The cart reaches this row through sItemPcSubmenuOptions, which the corpus has no row of its own for: pret points that entry at gOtherText_Give, whose English is this very text."
+    },
+    "sItemPcSubmenuOptions[2]": {
+      "qid": "frlg.common.strings.gFameCheckerText_Cancel",
+      "reason": "The cart reaches this row through sItemPcSubmenuOptions, which the corpus has no row of its own for: pret points that entry at gFameCheckerText_Cancel, whose English is this very text."
+    },
+    "sKeyboardSwapTexts[3]": {
+      "qid": "frlg.common.strings.gText_Register2",
+      "reason": "The cart reaches this row through sKeyboardSwapTexts, which the corpus has no row of its own for: pret points that entry at gText_Register2, whose English is this very text."
+    },
+    "sKeyboardSwapTexts[4]": {
+      "qid": "frlg.common.strings.gText_Exit",
+      "reason": "The cart reaches this row through sKeyboardSwapTexts, which the corpus has no row of its own for: pret points that entry at gText_Exit, whose English is this very text."
+    },
+    "sLevelMenuItems[2]": {
+      "qid": "frlg.common.strings.gOtherText_Exit",
+      "reason": "The cart reaches this row through sLevelMenuItems, which the corpus has no row of its own for: pret points that entry at gOtherText_Exit, whose English is this very text."
+    },
+    "sLevelUpWindowStatNames[1]": {
+      "qid": "frlg.common.strings.gText_LevelUp_Attack",
+      "reason": "The cart reaches this row through sLevelUpWindowStatNames, which the corpus has no row of its own for: pret points that entry at gText_LevelUp_Attack, whose English is this very text."
+    },
+    "sLevelUpWindowStatNames[2]": {
+      "qid": "frlg.common.strings.gText_LevelUp_Defense",
+      "reason": "The cart reaches this row through sLevelUpWindowStatNames, which the corpus has no row of its own for: pret points that entry at gText_LevelUp_Defense, whose English is this very text."
+    },
+    "sLevelUpWindowStatNames[5]": {
+      "qid": "frlg.common.strings.gText_LevelUp_Speed",
+      "reason": "The cart reaches this row through sLevelUpWindowStatNames, which the corpus has no row of its own for: pret points that entry at gText_LevelUp_Speed, whose English is this very text."
+    },
+    "sLinkGroupActivityNameTexts[12]": {
+      "qid": "frlg.common.union_room_message.gText_UR_Search",
+      "reason": "The cart reaches this row through sLinkGroupActivityNameTexts, which the corpus has no row of its own for: pret points that entry at gText_UR_Search, whose English is this very text."
+    },
+    "sLinkGroupActivityNameTexts[21]": {
+      "qid": "frlg.common.union_room_message.gText_UR_WonderCards",
+      "reason": "The cart reaches this row through sLinkGroupActivityNameTexts, which the corpus has no row of its own for: pret points that entry at gText_UR_WonderCards, whose English is this very text."
+    },
+    "sLinkGroupActivityNameTexts[22]": {
+      "qid": "frlg.common.union_room_message.gText_UR_WonderNews",
+      "reason": "The cart reaches this row through sLinkGroupActivityNameTexts, which the corpus has no row of its own for: pret points that entry at gText_UR_WonderNews, whose English is this very text."
+    },
+    "sLinkGroupActivityNameTexts[4]": {
+      "qid": "frlg.common.union_room_message.gText_UR_PokemonTrades",
+      "reason": "The cart reaches this row through sLinkGroupActivityNameTexts, which the corpus has no row of its own for: pret points that entry at gText_UR_PokemonTrades, whose English is this very text."
+    },
+    "sLinkGroupActivityNameTexts[6]": {
+      "qid": "frlg.common.union_room_message.gText_UR_WonderCards",
+      "reason": "The cart reaches this row through sLinkGroupActivityNameTexts, which the corpus has no row of its own for: pret points that entry at gText_UR_WonderCards, whose English is this very text."
+    },
+    "sLinkGroupActivityNameTexts[7]": {
+      "qid": "frlg.common.union_room_message.gText_UR_WonderNews",
+      "reason": "The cart reaches this row through sLinkGroupActivityNameTexts, which the corpus has no row of its own for: pret points that entry at gText_UR_WonderNews, whose English is this very text."
+    },
+    "sLinkGroupActivityNameTexts[9]": {
+      "qid": "frlg.common.union_room_message.gText_UR_PokemonJump",
+      "reason": "The cart reaches this row through sLinkGroupActivityNameTexts, which the corpus has no row of its own for: pret points that entry at gText_UR_PokemonJump, whose English is this very text."
+    },
+    "sListMenuItems[6]": {
+      "qid": "frlg.common.teachy_tv.gTeachyTvString_Cancel",
+      "reason": "The cart reaches this row through sListMenuItems, which the corpus has no row of its own for: pret points that entry at gTeachyTvString_Cancel, whose English is this very text."
+    },
+    "sListMenuItems_CardsOrNews[0]": {
+      "qid": "frlg.common.strings.gText_WonderCards",
+      "reason": "The cart reaches this row through sListMenuItems_CardsOrNews, which the corpus has no row of its own for: pret points that entry at gText_WonderCards, whose English is this very text."
+    },
+    "sListMenuItems_CardsOrNews[1]": {
+      "qid": "frlg.common.strings.gText_WonderNews",
+      "reason": "The cart reaches this row through sListMenuItems_CardsOrNews, which the corpus has no row of its own for: pret points that entry at gText_WonderNews, whose English is this very text."
+    },
+    "sListMenuItems_CardsOrNews[2]": {
+      "qid": "frlg.common.strings.gText_Exit3",
+      "reason": "The cart reaches this row through sListMenuItems_CardsOrNews, which the corpus has no row of its own for: pret points that entry at gText_Exit3, whose English is this very text."
+    },
+    "sListMenuItems_InviteToActivity[3]": {
+      "qid": "frlg.common.union_room_message.gText_UR_Exit",
+      "reason": "The cart reaches this row through sListMenuItems_InviteToActivity, which the corpus has no row of its own for: pret points that entry at gText_UR_Exit, whose English is this very text."
+    },
+    "sListMenuItems_NoTMCase[4]": {
+      "qid": "frlg.common.teachy_tv.gTeachyTvString_Cancel",
+      "reason": "The cart reaches this row through sListMenuItems_NoTMCase, which the corpus has no row of its own for: pret points that entry at gTeachyTvString_Cancel, whose English is this very text."
+    },
+    "sListMenuItems_ReceiveSendToss[3]": {
+      "qid": "frlg.common.strings.gFameCheckerText_Cancel",
+      "reason": "The cart reaches this row through sListMenuItems_ReceiveSendToss, which the corpus has no row of its own for: pret points that entry at gFameCheckerText_Cancel, whose English is this very text."
+    },
+    "sListMenuItems_ReceiveSend[2]": {
+      "qid": "frlg.common.strings.gFameCheckerText_Cancel",
+      "reason": "The cart reaches this row through sListMenuItems_ReceiveSend, which the corpus has no row of its own for: pret points that entry at gFameCheckerText_Cancel, whose English is this very text."
+    },
+    "sListMenuItems_ReceiveToss[2]": {
+      "qid": "frlg.common.strings.gFameCheckerText_Cancel",
+      "reason": "The cart reaches this row through sListMenuItems_ReceiveToss, which the corpus has no row of its own for: pret points that entry at gFameCheckerText_Cancel, whose English is this very text."
+    },
+    "sListMenuItems_Receive[1]": {
+      "qid": "frlg.common.strings.gFameCheckerText_Cancel",
+      "reason": "The cart reaches this row through sListMenuItems_Receive, which the corpus has no row of its own for: pret points that entry at gFameCheckerText_Cancel, whose English is this very text."
+    },
+    "sListMenuItems_RegisterForTrade[0]": {
+      "qid": "frlg.common.strings.gText_Register",
+      "reason": "The cart reaches this row through sListMenuItems_RegisterForTrade, which the corpus has no row of its own for: pret points that entry at gText_Register, whose English is this very text."
+    },
+    "sListMenuItems_RegisterForTrade[1]": {
+      "qid": "frlg.common.union_room_message.gText_UR_Info",
+      "reason": "The cart reaches this row through sListMenuItems_RegisterForTrade, which the corpus has no row of its own for: pret points that entry at gText_UR_Info, whose English is this very text."
+    },
+    "sListMenuItems_RegisterForTrade[2]": {
+      "qid": "frlg.common.union_room_message.gText_UR_Exit",
+      "reason": "The cart reaches this row through sListMenuItems_RegisterForTrade, which the corpus has no row of its own for: pret points that entry at gText_UR_Exit, whose English is this very text."
+    },
+    "sListMenuItems_TradeBoard[9]": {
+      "qid": "frlg.common.union_room_message.gText_UR_Exit2",
+      "reason": "The cart reaches this row through sListMenuItems_TradeBoard, which the corpus has no row of its own for: pret points that entry at gText_UR_Exit2, whose English is this very text."
+    },
+    "sListMenuItems_TypeNames[0]": {
+      "qid": "frlg.common.battle_main.gTypeNames.0",
+      "reason": "The cart reaches this row through sListMenuItems_TypeNames, which the corpus has no row of its own for: pret points that entry at 0, whose English is this very text."
+    },
+    "sListMenuItems_TypeNames[13]": {
+      "qid": "frlg.common.battle_main.gTypeNames.7",
+      "reason": "The cart reaches this row through sListMenuItems_TypeNames, which the corpus has no row of its own for: pret points that entry at 7, whose English is this very text."
+    },
+    "sListMenuItems_TypeNames[17]": {
+      "qid": "frlg.common.union_room_message.gText_UR_Exit",
+      "reason": "The cart reaches this row through sListMenuItems_TypeNames, which the corpus has no row of its own for: pret points that entry at gText_UR_Exit, whose English is this very text."
+    },
+    "sListMenuItems_TypeNames[1]": {
+      "qid": "frlg.common.battle_main.gTypeNames.10",
+      "reason": "The cart reaches this row through sListMenuItems_TypeNames, which the corpus has no row of its own for: pret points that entry at 10, whose English is this very text."
+    },
+    "sListMenuItems_WirelessOrFriend[2]": {
+      "qid": "frlg.common.strings.gFameCheckerText_Cancel",
+      "reason": "The cart reaches this row through sListMenuItems_WirelessOrFriend, which the corpus has no row of its own for: pret points that entry at gFameCheckerText_Cancel, whose English is this very text."
+    },
+    "sListMenuLabels[0][0]": {
+      "qid": "frlg.common.strings.gText_BoulderBadge",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_BoulderBadge, whose English is this very text."
+    },
+    "sListMenuLabels[0][1]": {
+      "qid": "frlg.common.strings.gText_CascadeBadge",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_CascadeBadge, whose English is this very text."
+    },
+    "sListMenuLabels[0][2]": {
+      "qid": "frlg.common.strings.gText_ThunderBadge",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_ThunderBadge, whose English is this very text."
+    },
+    "sListMenuLabels[0][3]": {
+      "qid": "frlg.common.strings.gText_RainbowBadge",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_RainbowBadge, whose English is this very text."
+    },
+    "sListMenuLabels[0][4]": {
+      "qid": "frlg.common.strings.gText_SoulBadge",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_SoulBadge, whose English is this very text."
+    },
+    "sListMenuLabels[0][5]": {
+      "qid": "frlg.common.strings.gText_MarshBadge",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_MarshBadge, whose English is this very text."
+    },
+    "sListMenuLabels[0][6]": {
+      "qid": "frlg.common.strings.gText_VolcanoBadge",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_VolcanoBadge, whose English is this very text."
+    },
+    "sListMenuLabels[0][7]": {
+      "qid": "frlg.common.strings.gText_EarthBadge",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_EarthBadge, whose English is this very text."
+    },
+    "sListMenuLabels[0][8]": {
+      "qid": "frlg.common.strings.gOtherText_Exit",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gOtherText_Exit, whose English is this very text."
+    },
+    "sListMenuLabels[1][10]": {
+      "qid": "frlg.common.strings.gText_1F",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_1F, whose English is this very text."
+    },
+    "sListMenuLabels[1][11]": {
+      "qid": "frlg.common.strings.gOtherText_Exit",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gOtherText_Exit, whose English is this very text."
+    },
+    "sListMenuLabels[1][3]": {
+      "qid": "frlg.common.strings.gText_8F",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_8F, whose English is this very text."
+    },
+    "sListMenuLabels[1][4]": {
+      "qid": "frlg.common.strings.gText_7F",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_7F, whose English is this very text."
+    },
+    "sListMenuLabels[1][5]": {
+      "qid": "frlg.common.strings.gText_6F",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_6F, whose English is this very text."
+    },
+    "sListMenuLabels[1][6]": {
+      "qid": "frlg.common.strings.gText_5F",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_5F, whose English is this very text."
+    },
+    "sListMenuLabels[1][7]": {
+      "qid": "frlg.common.strings.gText_4F",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_4F, whose English is this very text."
+    },
+    "sListMenuLabels[1][8]": {
+      "qid": "frlg.common.strings.gText_3F",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_3F, whose English is this very text."
+    },
+    "sListMenuLabels[1][9]": {
+      "qid": "frlg.common.strings.gText_2F",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_2F, whose English is this very text."
+    },
+    "sListMenuLabels[2][3]": {
+      "qid": "frlg.common.strings.gOtherText_Exit",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gOtherText_Exit, whose English is this very text."
+    },
+    "sListMenuLabels[3][0]": {
+      "qid": "frlg.common.strings.gText_5F",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_5F, whose English is this very text."
+    },
+    "sListMenuLabels[3][1]": {
+      "qid": "frlg.common.strings.gText_4F",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_4F, whose English is this very text."
+    },
+    "sListMenuLabels[3][2]": {
+      "qid": "frlg.common.strings.gText_3F",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_3F, whose English is this very text."
+    },
+    "sListMenuLabels[3][3]": {
+      "qid": "frlg.common.strings.gText_2F",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_2F, whose English is this very text."
+    },
+    "sListMenuLabels[3][4]": {
+      "qid": "frlg.common.strings.gText_1F",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gText_1F, whose English is this very text."
+    },
+    "sListMenuLabels[3][5]": {
+      "qid": "frlg.common.strings.gOtherText_Exit",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gOtherText_Exit, whose English is this very text."
+    },
+    "sListMenuLabels[4][3]": {
+      "qid": "frlg.common.strings.gOtherText_Quit",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gOtherText_Quit, whose English is this very text."
+    },
+    "sListMenuLabels[5][11]": {
+      "qid": "frlg.common.strings.gOtherText_Exit",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gOtherText_Exit, whose English is this very text."
+    },
+    "sListMenuLabels[6][2]": {
+      "qid": "frlg.common.strings.gOtherText_Exit",
+      "reason": "The cart reaches this row through sListMenuLabels, which the corpus has no row of its own for: pret points that entry at gOtherText_Exit, whose English is this very text."
+    },
+    "sLocationNameTexts[0]": {
+      "qid": "frlg.common.quest_log.gText_QuestLog_Home",
+      "reason": "The cart reaches this row through sLocationNameTexts, which the corpus has no row of its own for: pret points that entry at gText_QuestLog_Home, whose English is this very text."
+    },
+    "sLocationNameTexts[20]": {
+      "qid": "frlg.common.quest_log.gText_QuestLog_DiglettsCave",
+      "reason": "The cart reaches this row through sLocationNameTexts, which the corpus has no row of its own for: pret points that entry at gText_QuestLog_DiglettsCave, whose English is this very text."
+    },
+    "sLocationNameTexts[21]": {
+      "qid": "frlg.common.quest_log.gText_QuestLog_DiglettsCave",
+      "reason": "The cart reaches this row through sLocationNameTexts, which the corpus has no row of its own for: pret points that entry at gText_QuestLog_DiglettsCave, whose English is this very text."
+    },
+    "sLocationNameTexts[22]": {
+      "qid": "frlg.common.quest_log.gText_QuestLog_RockTunnel",
+      "reason": "The cart reaches this row through sLocationNameTexts, which the corpus has no row of its own for: pret points that entry at gText_QuestLog_RockTunnel, whose English is this very text."
+    },
+    "sLocationNameTexts[23]": {
+      "qid": "frlg.common.quest_log.gText_QuestLog_RockTunnel",
+      "reason": "The cart reaches this row through sLocationNameTexts, which the corpus has no row of its own for: pret points that entry at gText_QuestLog_RockTunnel, whose English is this very text."
+    },
+    "sLocationNameTexts[24]": {
+      "qid": "frlg.common.quest_log.gText_QuestLog_PowerPlant",
+      "reason": "The cart reaches this row through sLocationNameTexts, which the corpus has no row of its own for: pret points that entry at gText_QuestLog_PowerPlant, whose English is this very text."
+    },
+    "sMaleNameChoices[10]": {
+      "qid": "frlg.script.new_game_intro.gNameChoice_Taylor",
+      "reason": "The cart reaches this row through sMaleNameChoices, which the corpus has no row of its own for: pret points that entry at gNameChoice_Taylor, whose English is this very text."
+    },
+    "sMaleNameChoices[16]": {
+      "qid": "frlg.script.new_game_intro.gNameChoice_Kay",
+      "reason": "The cart reaches this row through sMaleNameChoices, which the corpus has no row of its own for: pret points that entry at gNameChoice_Kay, whose English is this very text."
+    },
+    "sMaleNameChoices[1]": {
+      "qid": "frlg.script.new_game_intro.gNameChoice_Fire",
+      "reason": "The cart reaches this row through sMaleNameChoices, which the corpus has no row of its own for: pret points that entry at gNameChoice_Fire, whose English is this very text."
+    },
+    "sMenuAction_SummaryTrade[0]": {
+      "qid": "frlg.common.strings.gText_TradeAction_Summary",
+      "reason": "The cart reaches this row through sMenuAction_SummaryTrade, which the corpus has no row of its own for: pret points that entry at gText_TradeAction_Summary, whose English is this very text."
+    },
+    "sMenuAction_SummaryTrade[1]": {
+      "qid": "frlg.common.strings.gText_TradeAction_Trade",
+      "reason": "The cart reaches this row through sMenuAction_SummaryTrade, which the corpus has no row of its own for: pret points that entry at gText_TradeAction_Trade, whose English is this very text."
+    },
+    "sMenuActions[1]": {
+      "qid": "frlg.common.strings.gOtherText_Give",
+      "reason": "The cart reaches this row through sMenuActions, which the corpus has no row of its own for: pret points that entry at gOtherText_Give, whose English is this very text."
+    },
+    "sMenuActions[2]": {
+      "qid": "frlg.common.strings.gOtherText_Exit",
+      "reason": "The cart reaches this row through sMenuActions, which the corpus has no row of its own for: pret points that entry at gOtherText_Exit, whose English is this very text."
+    },
+    "sMenuActions_ItemPc[1]": {
+      "qid": "frlg.common.strings.gText_DepositItem2",
+      "reason": "The cart reaches this row through sMenuActions_ItemPc, which the corpus has no row of its own for: pret points that entry at gText_DepositItem2, whose English is this very text."
+    },
+    "sMenuActions_ItemPc[2]": {
+      "qid": "frlg.common.strings.gFameCheckerText_Cancel",
+      "reason": "The cart reaches this row through sMenuActions_ItemPc, which the corpus has no row of its own for: pret points that entry at gFameCheckerText_Cancel, whose English is this very text."
+    },
+    "sMenuActions_MailSubmenu[0]": {
+      "qid": "frlg.common.strings.gOtherText_Read",
+      "reason": "The cart reaches this row through sMenuActions_MailSubmenu, which the corpus has no row of its own for: pret points that entry at gOtherText_Read, whose English is this very text."
+    },
+    "sMenuActions_MailSubmenu[2]": {
+      "qid": "frlg.common.strings.gOtherText_Give2",
+      "reason": "The cart reaches this row through sMenuActions_MailSubmenu, which the corpus has no row of its own for: pret points that entry at gOtherText_Give2, whose English is this very text."
+    },
+    "sMenuActions_MailSubmenu[3]": {
+      "qid": "frlg.common.strings.gOtherText_Exit",
+      "reason": "The cart reaches this row through sMenuActions_MailSubmenu, which the corpus has no row of its own for: pret points that entry at gOtherText_Exit, whose English is this very text."
+    },
+    "sMenuTexts[0]": {
+      "qid": "frlg.common.strings.gPCText_Cancel",
+      "reason": "The cart reaches this row through sMenuTexts, which the corpus has no row of its own for: pret points that entry at gPCText_Cancel, whose English is this very text."
+    },
+    "sMenuTexts[11]": {
+      "qid": "frlg.common.strings.gPCText_Name",
+      "reason": "The cart reaches this row through sMenuTexts, which the corpus has no row of its own for: pret points that entry at gPCText_Name, whose English is this very text."
+    },
+    "sMenuTexts[12]": {
+      "qid": "frlg.common.strings.gPCText_Take",
+      "reason": "The cart reaches this row through sMenuTexts, which the corpus has no row of its own for: pret points that entry at gPCText_Take, whose English is this very text."
+    },
+    "sMenuTexts[13]": {
+      "qid": "frlg.common.strings.gPCText_Give",
+      "reason": "The cart reaches this row through sMenuTexts, which the corpus has no row of its own for: pret points that entry at gPCText_Give, whose English is this very text."
+    },
+    "sMenuTexts[14]": {
+      "qid": "frlg.common.strings.gPCText_Give",
+      "reason": "The cart reaches this row through sMenuTexts, which the corpus has no row of its own for: pret points that entry at gPCText_Give, whose English is this very text."
+    },
+    "sMenuTexts[15]": {
+      "qid": "frlg.common.strings.gPCText_Switch",
+      "reason": "The cart reaches this row through sMenuTexts, which the corpus has no row of its own for: pret points that entry at gPCText_Switch, whose English is this very text."
+    },
+    "sMenuTexts[16]": {
+      "qid": "frlg.common.strings.gPCText_Bag",
+      "reason": "The cart reaches this row through sMenuTexts, which the corpus has no row of its own for: pret points that entry at gPCText_Bag, whose English is this very text."
+    },
+    "sMenuTexts[17]": {
+      "qid": "frlg.common.strings.gPCText_Info",
+      "reason": "The cart reaches this row through sMenuTexts, which the corpus has no row of its own for: pret points that entry at gPCText_Info, whose English is this very text."
+    },
+    "sMenuTexts[1]": {
+      "qid": "frlg.common.strings.gPCText_Store",
+      "reason": "The cart reaches this row through sMenuTexts, which the corpus has no row of its own for: pret points that entry at gPCText_Store, whose English is this very text."
+    },
+    "sMenuTexts[2]": {
+      "qid": "frlg.common.strings.gPCText_Withdraw",
+      "reason": "The cart reaches this row through sMenuTexts, which the corpus has no row of its own for: pret points that entry at gPCText_Withdraw, whose English is this very text."
+    },
+    "sMenuTexts[4]": {
+      "qid": "frlg.common.strings.gPCText_Shift",
+      "reason": "The cart reaches this row through sMenuTexts, which the corpus has no row of its own for: pret points that entry at gPCText_Shift, whose English is this very text."
+    },
+    "sMenuTexts[6]": {
+      "qid": "frlg.common.strings.gPCText_Summary",
+      "reason": "The cart reaches this row through sMenuTexts, which the corpus has no row of its own for: pret points that entry at gPCText_Summary, whose English is this very text."
+    },
+    "sMenuTexts[8]": {
+      "qid": "frlg.common.strings.gPCText_Mark",
+      "reason": "The cart reaches this row through sMenuTexts, which the corpus has no row of its own for: pret points that entry at gPCText_Mark, whose English is this very text."
+    },
+    "sNonTrainerNamePointers[1]": {
+      "qid": "frlg.common.strings.gFameCheckerDaisyName",
+      "reason": "The cart reaches this row through sNonTrainerNamePointers, which the corpus has no row of its own for: pret points that entry at gFameCheckerDaisyName, whose English is this very text."
+    },
+    "sOptionMenuItemsNames[6]": {
+      "qid": "frlg.common.strings.gText_OptionMenuCancel",
+      "reason": "The cart reaches this row through sOptionMenuItemsNames, which the corpus has no row of its own for: pret points that entry at gText_OptionMenuCancel, whose English is this very text."
+    },
+    "sPocketNames[0]": {
+      "qid": "frlg.common.strings.gText_Items2",
+      "reason": "The cart reaches this row through sPocketNames, which the corpus has no row of its own for: pret points that entry at gText_Items2, whose English is this very text."
+    },
+    "sPocketNames[1]": {
+      "qid": "frlg.common.strings.gText_KeyItems2",
+      "reason": "The cart reaches this row through sPocketNames, which the corpus has no row of its own for: pret points that entry at gText_KeyItems2, whose English is this very text."
+    },
+    "sPocketNames[2]": {
+      "qid": "frlg.common.strings.gText_PokeBalls2",
+      "reason": "The cart reaches this row through sPocketNames, which the corpus has no row of its own for: pret points that entry at gText_PokeBalls2, whose English is this very text."
+    },
+    "sShopMenuActions_BuySellQuit[2]": {
+      "qid": "frlg.common.strings.gText_ShopQuit",
+      "reason": "The cart reaches this row through sShopMenuActions_BuySellQuit, which the corpus has no row of its own for: pret points that entry at gText_ShopQuit, whose English is this very text."
+    },
+    "sStartMenuActionTable[0]": {
+      "qid": "frlg.common.strings.gText_MenuPokedex",
+      "reason": "The cart reaches this row through sStartMenuActionTable, which the corpus has no row of its own for: pret points that entry at gText_MenuPokedex, whose English is this very text."
+    },
+    "sStartMenuActionTable[2]": {
+      "qid": "frlg.common.strings.gText_MenuBag",
+      "reason": "The cart reaches this row through sStartMenuActionTable, which the corpus has no row of its own for: pret points that entry at gText_MenuBag, whose English is this very text."
+    },
+    "sStartMenuActionTable[5]": {
+      "qid": "frlg.common.strings.gText_MenuOption",
+      "reason": "The cart reaches this row through sStartMenuActionTable, which the corpus has no row of its own for: pret points that entry at gText_MenuOption, whose English is this very text."
+    },
+    "sStartMenuActionTable[6]": {
+      "qid": "frlg.common.strings.gText_MenuExit",
+      "reason": "The cart reaches this row through sStartMenuActionTable, which the corpus has no row of its own for: pret points that entry at gText_MenuExit, whose English is this very text."
+    },
+    "sStatNamesTable2[4]": {
+      "qid": "frlg.common.battle_message.sText_Defense",
+      "reason": "The cart reaches this row through sStatNamesTable2, which the corpus has no row of its own for: pret points that entry at sText_Defense, whose English is this very text."
+    },
+    "sStatNamesTable2[5]": {
+      "qid": "frlg.common.battle_message.sText_Speed",
+      "reason": "The cart reaches this row through sStatNamesTable2, which the corpus has no row of its own for: pret points that entry at sText_Speed, whose English is this very text."
+    },
+    "stdstring:0": {
+      "qid": "frlg.common.strings.gText_Cool",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Cool."
+    },
+    "stdstring:1": {
+      "qid": "frlg.common.strings.gText_Beauty",
+      "reason": "The battle string table's row, which the corpus names after the script text it shares: gText_Beauty, whose English is this very text."
+    },
+    "stdstring:10": {
+      "qid": "frlg.common.strings.gText_Items",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Items."
+    },
+    "stdstring:11": {
+      "qid": "frlg.common.strings.gText_KeyItems",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_KeyItems."
+    },
+    "stdstring:12": {
+      "qid": "frlg.common.strings.gText_PokeBalls",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_PokeBalls."
+    },
+    "stdstring:15": {
+      "qid": "frlg.common.strings.gText_Boulderbadge",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Boulderbadge."
+    },
+    "stdstring:16": {
+      "qid": "frlg.common.strings.gText_Cascadebadge",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Cascadebadge."
+    },
+    "stdstring:17": {
+      "qid": "frlg.common.strings.gText_Thunderbadge",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Thunderbadge."
+    },
+    "stdstring:18": {
+      "qid": "frlg.common.strings.gText_Rainbowbadge",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Rainbowbadge."
+    },
+    "stdstring:19": {
+      "qid": "frlg.common.strings.gText_Soulbadge",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Soulbadge."
+    },
+    "stdstring:2": {
+      "qid": "frlg.common.strings.gText_Cute",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Cute."
+    },
+    "stdstring:20": {
+      "qid": "frlg.common.strings.gText_Marshbadge",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Marshbadge."
+    },
+    "stdstring:21": {
+      "qid": "frlg.common.strings.gText_Volcanobadge",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Volcanobadge."
+    },
+    "stdstring:22": {
+      "qid": "frlg.common.strings.gText_Earthbadge",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Earthbadge."
+    },
+    "stdstring:3": {
+      "qid": "frlg.common.strings.gText_Smart",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Smart."
+    },
+    "stdstring:4": {
+      "qid": "frlg.common.strings.gText_Tough",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Tough."
+    },
+    "stdstring:5": {
+      "qid": "frlg.common.strings.gText_Cool_2",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Cool_2."
+    },
+    "stdstring:6": {
+      "qid": "frlg.common.strings.gText_Beauty_2",
+      "reason": "The battle string table's row, which the corpus names after the script text it shares: gText_Beauty_2, whose English is this very text."
+    },
+    "stdstring:7": {
+      "qid": "frlg.common.strings.gText_Cute_2",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Cute_2."
+    },
+    "stdstring:8": {
+      "qid": "frlg.common.strings.gText_Smart_2",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Smart_2."
+    },
+    "stdstring:9": {
+      "qid": "frlg.common.strings.gText_Tough_2",
+      "reason": "The same standard string as the table row above, which the extractor also keys by its index alone; pret points it at gText_Tough_2."
     }
   }
 }
