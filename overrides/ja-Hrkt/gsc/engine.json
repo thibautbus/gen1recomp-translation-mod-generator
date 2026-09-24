@@ -1747,6 +1747,11 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The VOID FILL row's dissolve-border option; trailing space matches the source key's own column-blanking padding (see this file's own comment on overwriting a longer previous value)."
     },
+    "FAITHFUL RATIO": {
+      "override": "オリジナルひれい",
+      "reason": "engine-original",
+      "provenance": "Already carried by overrides/ja-Hrkt/rby/engine.json for the same shared OptionsMenu.lua label, which a Gen 2 callsite now reaches too."
+    },
     "FAST": {
       "override": "はやい",
       "reason": "engine-original",

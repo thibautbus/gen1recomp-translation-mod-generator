@@ -1742,6 +1742,11 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The VOID FILL row's dissolve-border option; trailing space matches the source key's own column-blanking padding (see this file's own comment on overwriting a longer previous value)."
     },
+    "FAITHFUL RATIO": {
+      "override": "원본 비율",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of the port-added FAITHFUL RATIO option label; shared OptionsMenu.lua/LauncherSettings.lua value; requires in-game visual validation."
+    },
     "FAST": {
       "override": "빠르게",
       "reason": "engine-original",

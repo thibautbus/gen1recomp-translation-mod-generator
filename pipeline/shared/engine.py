@@ -196,13 +196,18 @@ def read_engine_catalog(path: str | Path) -> dict[str, str]:
     return _without_easy_chat(result)
 
 
-# Modkit's scaffold (gen1recomp >= v0.2.70) lists the FireRed Easy Chat
-# vocabulary for every game, keyed "easyChat.<group>|<word>": engine data of the
-# game3 runtime that the Red/Blue and Gold catalogs this module reads neither
-# look up nor translate.  FireRed builds its own engine catalog
-# (pipeline/frlg/engine_scope.py), so the keys are dropped here.
+# Modkit's scaffold lists FireRed's own text for every game: the Easy Chat
+# vocabulary (keyed "easyChat.<group>|<word>" up to v0.2.75, "easyChat.word[N]"
+# since v0.3.0) and, since v0.3.0, every cart string by its ROM label
+# ("gText_*", "sText_*", "STRINGID_*", "gTypeNames[3]"...).  None of it is
+# looked up by the Red/Blue or Gold runtime the catalogs this module reads
+# belong to; FireRed builds its own engine catalog and translates the cart's
+# text through the ROM labels (pipeline/frlg), so the keys are dropped here.
+_ROM_LABEL = re.compile(r"^(gText_|sText_|gBattleText_|STRINGID_|easyChat\.|[A-Za-z_][\w]*\[\d+\])")
+
+
 def _without_easy_chat(catalog: dict[str, str]) -> dict[str, str]:
-    return {key: value for key, value in catalog.items() if not key.startswith("easyChat.")}
+    return {key: value for key, value in catalog.items() if not _ROM_LABEL.match(key)}
 
 
 def _normal(value: str, *, bare_dynamic_tokens: bool = False) -> str:

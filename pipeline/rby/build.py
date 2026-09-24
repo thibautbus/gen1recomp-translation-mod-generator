@@ -585,6 +585,10 @@ def build(
     if is_frozen():
         lua_dir = str(Path(luajit).resolve().parent)
         env["PATH"] = lua_dir + os.pathsep + env.get("PATH", "")
+    # Modkit refuses to refresh a scaffold it finds in place unless an
+    # imported FireRed cache is there to re-key the cart's text with (v0.3.0);
+    # this scaffold is a disposable key list, so it is written from scratch.
+    shutil.rmtree(scaffold, ignore_errors=True)
     _run(_modkit_command(modkit, "--repo", str(gen1recomp),
             "translation", "translation_source", "--language", language_name,
             "--base", "imported", "--dest", str(build_root), "--pixel-font", "--force"),
@@ -599,6 +603,7 @@ def build(
         yellow_scaffold = yellow_root / "translation_source_yellow"
         yellow_env = dict(env)
         yellow_env["POKEPORT_DATA_DIR"] = str(gen1recomp / "yellow" / "data" / "generated")
+        shutil.rmtree(yellow_scaffold, ignore_errors=True)
         _run(_modkit_command(modkit, "--repo", str(gen1recomp),
                 "translation", "translation_source_yellow", "--language", language_name,
                 "--base", "imported", "--dest", str(yellow_root), "--pixel-font", "--force"),

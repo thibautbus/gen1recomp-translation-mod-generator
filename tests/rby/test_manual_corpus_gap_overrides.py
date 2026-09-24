@@ -11,7 +11,8 @@ KEYS = (
     "No good! It's not\neven near water.",
     "PP",
     "PRNT",
-    "The boulder fell\nthrough the hole!",
+    "The boulder fell\nthrough.",
+    "The boulder fell\nthrough!",
     "BOX%2d",
 )
 
@@ -19,32 +20,31 @@ EXPECTED = {
     "fr": [
         ":N%d", ":N%d No.%03d", "Vide.",
         "Pas bon! Même pas\nprès de l'eau.", "PP", "PRNT",
-        "Le rocher est tombé\ndans le trou!", "BOITE%2d",
+        "Le rocher est tombé\ndans le trou.", "Le rocher est tombé\ndans le trou!", "BOITE%2d",
     ],
     "de": [
         ":L%d", ":L%d Nr.%03d", "Leer.",
         "Schade! Nicht mal\nin Wassernähe.", "PP", "PRNT",
-        "Der Felsen fiel\ndurch das Loch!", "BOX%2d",
+        "Der Felsen fiel\ndurch das Loch.", "Der Felsen fiel\ndurch das Loch!", "BOX%2d",
     ],
     "es": [
         ":N%d", ":N%d Nº%03d", "Vacía.",
         "¡Qué mal! No estás\nni cerca del agua.", "PP", "PRNT",
-        "¡La roca cayó\npor el agujero!", "CAJA%2d",
+        "La roca cayó\npor el agujero.", "¡La roca cayó\npor el agujero!", "CAJA%2d",
     ],
     "it": [
         ":L%d", ":L%d Nº%03d", "Vuoto.",
         "Niente da fare!\nLontano dall'acqua.", "PP", "PRNT",
-        "Il masso è caduto\nnel buco!", "BOX%2d",
+        "Il masso è caduto\nnel buco.", "Il masso è caduto\nnel buco!", "BOX%2d",
     ],
     "ja-Hrkt": [
         ":L%d", ":L%d No.%03d", "からっぽ。",
         "だめだ！\nみずの　そばじゃ　ない！", "PP", "PRNT",
-        "いわが　あなに\nおちた！", "ボックス%2d",
+        "いわが　あなに\nおちた。", "いわが　あなに\nおちた！", "ボックス%2d",
     ],
 }
 
 CONTRACT_GAP_KEYS = (
-    "%s's %s\nrose!",
     "Once released,\n%s is\ngone forever. OK?",
     "BADGES",
     "%s\nfainted!",
