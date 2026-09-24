@@ -115,6 +115,17 @@ end)
 stage("items", function()
   require("src.import.gba.items_extract").run(rom, cache, { cacheRoot = CACHE_ROOT })
 end)
+-- region_map/names.lua: the cart's own map section names, which the map name
+-- popup, the region map and the save menu print through Strings()
+-- (MapSectionsExtract.ensureGenerated reads them from this file).
+stage("map_sections", function()
+  require("src.import.gba.map_preview_extract").run(rom, cache, { cacheRoot = CACHE_ROOT })
+end)
+-- trades/ingame_trades.lua: the nine in-game trades, whose nickname and OT
+-- name the scripts print through Strings() (natives_trade.lua:244, :260).
+stage("ingame_trades", function()
+  require("src.import.gba.ingame_trades_extract").run(rom, cache, { cacheRoot = CACHE_ROOT })
+end)
 rom:clearCache()
 imports:_close()
 

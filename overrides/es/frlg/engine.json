@@ -2,340 +2,60 @@
   "schema": "gen1recomp-translation-mods/engine-overrides",
   "version": 1,
   "entries": {
-    "  YES > NO": {
-      "override": "  SÍ > NO",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_Yes / gText_No; the link trade confirmation's cursor row (src/ui/game3/link_trade_menu.lua), cursor on NO, with the engine's own '>' marker and spacing."
-    },
-    " ???? ? lbs.": {
-      "override": " ???? ? lbs.",
-      "reason": "engine-contract-gap",
-      "provenance": "Unknown-weight placeholder of the Pokédex page. The runtime computes weights in pounds (src/core/game3/pokedex_data.lua), so the cart's metric \"kg\" (gText_Lbs) cannot be used without converting the number; kept in pounds."
-    },
-    "%4d.%d lbs.": {
-      "override": "%4d,%d lbs.",
-      "reason": "engine-contract-gap",
-      "provenance": "Pokédex weight. The runtime computes the value in pounds, so the cart's metric unit (gText_Lbs: kg) would mislabel it; the decimal separator follows the language."
+    "%d INSTALLED": {
+      "override": "%d INSTALADOS",
+      "reason": "engine-original",
+      "provenance": "Value of the MODS option row added by gen1recomp (src/ui/game3/option_rows.lua): how many mods are installed."
     },
     "%d OPTIONS": {
       "override": "%d OPCIONES",
       "reason": "engine-original",
       "provenance": "Option-group row value added by gen1recomp (src/ui/game3/option_rows.lua); AI-composed, same noun as the project's OPCIONES COMBATE (overrides/es/gsc/engine.json)."
     },
-    "%s\nused %s!": {
-      "override": "¡Uso de %2$s por\n%1$s!",
-      "reason": "engine-corpus",
-      "provenance": "Trainer item use, from battle_message.sText_Trainer1UsedItem; gen1recomp passes \"<class> <name>\" as one argument, then the item."
-    },
-    "%s\nwould like to battle!": {
-      "override": "¡A luchar contra\n%s!",
-      "reason": "engine-corpus",
-      "provenance": "Adapted from battle_message.sText_Trainer1WantsToBattle; the runtime passes \"<class> <name>\" as one argument."
-    },
     "%s (HM)": {
       "override": "%s (MO)",
       "reason": "engine-original",
       "provenance": "TM Case label for a Hidden Machine move, added by gen1recomp; HM is CS/VM/MO/MN in the carts (help_system.Help_Text_HM)."
     },
-    "%s POKéMON": {
-      "override": "POKéMON %s",
-      "reason": "engine-corpus",
-      "provenance": "Pokédex category line: the cart prints the category followed by POKéMON in every language (gSpeciesInfo categories)."
-    },
-    "%s and %s\nare not compatible.": {
-      "override": "%s y %s\nson incompatibles.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_PkmnCantLearnMove; its first paragraph, which party_menu.lua prints on its own."
-    },
-    "%s blacked out!": {
-      "override": "¡%s está fuera\nde combate!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_PlayerWhiteout2 (FireRed says \"whited out\" where gen1recomp's message says \"blacked out\")."
-    },
-    "%s can't be\nlearned.": {
-      "override": "No puede aprender\n%s.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_PkmnCantLearnMove; its second paragraph. The French cart drops the move's name there (\"Impossible de l'enseigner.\"); the key passes it, so the French line names it."
-    },
-    "%s can't learn\n%s.": {
-      "override": "%s no puede aprender\n%s.",
-      "reason": "engine-contract-gap",
-      "provenance": "Adapted from battle_message.sText_DidNotLearnMove for the TM refusal gen1recomp shows (pokémon, then move)."
-    },
-    "%s can't learn\nmore than four moves.": {
-      "override": "%s no puede aprender\nmás de cuatro movimientos.",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_TryToLearnMove2 without its leading \"But,\"."
-    },
-    "%s defeated\n%s!": {
-      "override": "¡%s derrotó a\n%s!",
-      "reason": "engine-corpus",
-      "provenance": "Adapted from battle_message.sText_PlayerDefeatedLinkTrainer (player, then opponent)."
-    },
-    "%s evolved into\n%s!": {
-      "override": "¡%s se ha convertido\nen %s!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.gText_CongratsPkmnEvolved without its \"Congratulations!\" opener."
-    },
-    "%s fainted...": {
-      "override": "%s se debilitó...",
-      "reason": "engine-corpus",
-      "provenance": "From event_scripts.gText_PkmnFainted3."
-    },
-    "%s forgot how to\nuse %s.": {
-      "override": "%s olvidó\n%s.",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_PkmnForgotMove."
-    },
-    "%s gained\n%s EXP. Points!": {
-      "override": "¡%s ganó %s\npuntos de EXP.!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_PkmnGainedEXP with an empty [B_BUFF2]; es puts the points before its noun, which the argument order allows."
-    },
-    "%s gained a boosted\n%s EXP. Points!": {
-      "override": "¡%s ganó %s\npuntos de EXP. adicionales!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_PkmnGainedEXP with [B_BUFF2] = sText_ABoosted."
-    },
-    "%s got off the\nBICYCLE.": {
-      "override": "%s se bajó de\nla BICI.",
+    "%s obtained %s!": {
+      "override": "¡%s obtuvo %s!",
       "reason": "engine-original",
-      "provenance": "Bicycle dismount message added by gen1recomp; BICYCLE as the cart names it (BICYCLETTE/FAHRRAD/BICI/BICICLETTA)."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
-    "%s got on the\nBICYCLE.": {
-      "override": "%s se subió a\nla BICI.",
+    "%s obtained the %s!": {
+      "override": "¡%s obtuvo el %s!",
       "reason": "engine-original",
-      "provenance": "Bicycle mount message added by gen1recomp; BICYCLE as the cart names it."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
-    "%s grew to\nLv. %d!": {
-      "override": "¡%s subió al\nnivel %d!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_PkmnGrewToLv."
+    "%s received an EGG!": {
+      "override": "¡%s recibió un HUEVO!",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
-    "%s is\nabout to use %s.\\pWill %s change\nPOKéMON?": {
-      "override": "%2$s será el próximo POKéMON\nde %1$s.\\p%3$s, ¿quieres\ncambiar de POKéMON?",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_EnemyAboutToSwitchPkmn; the trainer is one argument, then the POKéMON, then the player. fr and it put the POKéMON first."
+    "%s wants to battle!\nWill you accept?": {
+      "override": "¡%s quiere luchar!\n¿Aceptas?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
-    "%s is hurt\nby the SPIKES!": {
-      "override": "¡%s ha sido\nherido por PÚAS!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_PkmnHurtBySpikes."
+    "%s wants to chat!\nWill you join?": {
+      "override": "¡%s quiere charlar!\n¿Te unes?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
-    "%s is out of usable\nPOKéMON!\n\n%s whited out!": {
-      "override": "¡A %s no le quedan\nmás POKéMON!\n\n¡%s está fuera de combate!",
-      "reason": "engine-corpus",
-      "provenance": "From white_out.Text_WhitedOut."
+    "%s wants to show\nyou a TRAINER CARD. OK?": {
+      "override": "%s quiere enseñarte su\nFICHA de ENTRENADOR. ¿Vale?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
-    "%s nature.": {
-      "override": "Naturaleza %s.",
-      "reason": "engine-contract-gap",
-      "provenance": "Trainer memo nature line (pokemon_summary_screen.c prints it from a per-language layout); NATURE as help_system.Help_Text_Nature names it."
+    "%s wants to trade!": {
+      "override": "¡%s quiere hacer un intercambio!",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
-    "%s recovered\nfrom illness!": {
-      "override": "¡%s recuperó\nsu estado!",
-      "reason": "engine-contract-gap",
-      "provenance": "Full-heal result in the field; wording after strings.gText_PkmnBecameHealthy."
-    },
-    "%s used\n%s!": {
-      "override": "¡%s usó\n%s!",
-      "reason": "engine-corpus",
-      "provenance": "From field_moves.Text_MonUsedMove, with the battle message's line break."
-    },
-    "%s used\nESCAPE ROPE.": {
-      "override": "%s usó\nCUERDA HUIDA.",
-      "reason": "engine-corpus",
-      "provenance": "Item name from items.gItems.85; sentence after strings.gText_PlayerUsedVar2."
-    },
-    "%s used\nthe %s!": {
-      "override": "¡%s usó\n%s!",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_PlayerUsedVar2 (player, then item)."
-    },
-    "%s used the\n%s.\\pWild POKéMON will be lured.": {
-      "override": "%s usó\n%s.\\pEso atrae a los POKéMON salvajes.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_UsedVar2WildLured; the cart names the player through [PLAYER], the key passes it as the first argument."
-    },
-    "%s used the\n%s.\\pWild POKéMON will be repelled.": {
-      "override": "%s usó\n%s.\\pEso aleja a los POKéMON salvajes.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_UsedVar2WildRepelled; the cart names the player through [PLAYER], the key passes it as the first argument."
-    },
-    "%s wants to learn the\nmove %s.": {
-      "override": "%s quiere aprender\n%s.",
-      "reason": "engine-contract-gap",
-      "provenance": "Wording after strings.gText_MoveNotLearned for the TM prompt gen1recomp shows."
-    },
-    "%s was\ncured of poison.": {
-      "override": "%s se ha curado\ndel envenenamiento.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_PkmnCuredOfPoison."
-    },
-    "%s was\ndefrosted.": {
-      "override": "%s ya\nno está congelado.",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_PkmnWasDefrosted."
-    },
-    "%s was given\nto %s.": {
-      "override": "¡%2$s lleva ahora\n%1$s!",
-      "reason": "engine-contract-gap",
-      "provenance": "Item given to hold: gen1recomp passes the item, then the POKéMON; wording after strings.gText_PkmnWasGivenItem, reordered."
-    },
-    "%s's %s\ncured its love problem!": {
-      "override": "¡%2$s de %1$s\ncuró su problema de amor!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_PkmnsXCuredYProblem with [B_BUFF1] = gText_Love; POKéMON, then item."
-    },
-    "%s's %s\nfell!": {
-      "override": "¡%2$s de %1$s\nbajó!",
-      "reason": "engine-corpus",
-      "provenance": "The cart builds this line from battle_message.sText_AttackersStatRose/gText_DefendersStatRose ([B_BUFF1] = stat, [B_BUFF2] = verb row: gBattleText_Rose, sText_StatSharply, sText_StatFell, sText_StatHarshly); gen1recomp passes the POKéMON, then the stat, and the stat comes first in every translation."
-    },
-    "%s's %s\nharshly fell!": {
-      "override": "¡%2$s de %1$s\nbajó mucho!",
-      "reason": "engine-corpus",
-      "provenance": "The cart builds this line from battle_message.sText_AttackersStatRose/gText_DefendersStatRose ([B_BUFF1] = stat, [B_BUFF2] = verb row: gBattleText_Rose, sText_StatSharply, sText_StatFell, sText_StatHarshly); gen1recomp passes the POKéMON, then the stat, and the stat comes first in every translation."
-    },
-    "%s's %s\nprevented %s's\nINTIMIDATE from working!": {
-      "override": "¡%2$s de %1$s\nimpidió que INTIMIDACIÓN\nde %3$s funcionase!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_PreventedFromWorking with [B_BUFF1] = INTIMIDATE (gAbilityNames.22); arguments: holder, its ability, the INTIMIDATE user."
-    },
-    "%s's %s\nrose!": {
-      "override": "¡%2$s de %1$s\nsubió!",
-      "reason": "engine-corpus",
-      "provenance": "The cart builds this line from battle_message.sText_AttackersStatRose/gText_DefendersStatRose ([B_BUFF1] = stat, [B_BUFF2] = verb row: gBattleText_Rose, sText_StatSharply, sText_StatFell, sText_StatHarshly); gen1recomp passes the POKéMON, then the stat, and the stat comes first in every translation."
-    },
-    "%s's %s\nsharply rose!": {
-      "override": "¡%2$s de %1$s\nsubió mucho!",
-      "reason": "engine-corpus",
-      "provenance": "The cart builds this line from battle_message.sText_AttackersStatRose/gText_DefendersStatRose ([B_BUFF1] = stat, [B_BUFF2] = verb row: gBattleText_Rose, sText_StatSharply, sText_StatFell, sText_StatHarshly); gen1recomp passes the POKéMON, then the stat, and the stat comes first in every translation."
-    },
-    "%s's ATTACK\nfell!": {
-      "override": "¡ATAQUE de %s\nbajó!",
-      "reason": "engine-corpus",
-      "provenance": "The cart builds this line from battle_message.sText_AttackersStatRose with the stat row (sText_Attack2, sText_Defense2) and the verb row (gBattleText_Rose, sText_StatFell)."
-    },
-    "%s's BATTLE RESULTS": {
-      "override": "RESULTADOS COMBATES de %s",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gString_BattleRecords_PlayersBattleResults; the player's name is the argument."
-    },
-    "%s's DAMP\nprevents %s\nfrom using %s!": {
-      "override": "¡HUMEDAD de %1$s\nimpide que %2$s\nutilice %3$s!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_PkmnPreventsUsage with [B_DEF_ABILITY] = DAMP (gAbilityNames.6); arguments: holder, attacker, move."
-    },
-    "%s's DEFENSE\nfell!": {
-      "override": "¡DEFENSA de %s\nbajó!",
-      "reason": "engine-corpus",
-      "provenance": "The cart builds this line from battle_message.sText_AttackersStatRose with the stat row (sText_Attack2, sText_Defense2) and the verb row (gBattleText_Rose, sText_StatFell)."
-    },
-    "%s's DEFENSE\nrose!": {
-      "override": "¡DEFENSA de %s\nsubió!",
-      "reason": "engine-corpus",
-      "provenance": "The cart builds this line from battle_message.sText_AttackersStatRose with the stat row (sText_Attack2, sText_Defense2) and the verb row (gBattleText_Rose, sText_StatFell)."
-    },
-    "%s's HP was\nrestored by %d points.": {
-      "override": "%s ha recuperado\n%d PS.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_PkmnHPRestoredByVar2."
-    },
-    "%s's HP was\nrestored!": {
-      "override": "¡%s ha recuperado\nPS!",
-      "reason": "engine-contract-gap",
-      "provenance": "Wording after strings.gText_PkmnHPRestoredByVar2 without the amount."
-    },
-    "%s's HYPER CUTTER\nprevents ATTACK loss!": {
-      "override": "¡CORTE FUERTE de %s\nimpide que pierda ATAQUE!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_PkmnsXPreventsYLoss with the ability HYPER CUTTER (gAbilityNames.52) and [B_BUFF1] = sText_Attack2."
-    },
-    "%s's KEEN EYE\nprevents accuracy loss!": {
-      "override": "¡VISTA LINCE de %s\nimpide que pierda PRECISIÓN!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_PkmnsXPreventsYLoss with the ability KEEN EYE (gAbilityNames.51) and [B_BUFF1] = sText_Accuracy."
-    },
-    "%s's nickname?": {
-      "override": "¿Mote de %s?",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_PkmnsNickname (the cart prepends the species; the translations wrap it)."
-    },
-    "%s, good job!\nCome back!": {
-      "override": "¡Muy bien, %s!\n¡Ven aquí!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_PkmnGoodComeBack."
-    },
-    "%s, you did it!\nCome back!": {
-      "override": "¡Bien hecho, %s!\n¡Ven aquí!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_PkmnOkComeBack (the cart's other recall line)."
-    },
-    "%s? And you wanted %d?\nThat will be ¥%d. OK?": {
-      "override": "%s... Y quieres %d, ¿no?\nTe costará %d$.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_Var1AndYouWantedVar2 (the ¥ sign is gen1recomp's; the carts write $ after the price)."
-    },
-    "%s? And you wanted to sell %d?\nI can pay ¥%d. OK?": {
-      "override": "%s... Y quieres vender %d, ¿no?\nTe daré %d$.",
-      "reason": "engine-contract-gap",
-      "provenance": "Selling counterpart of strings.gText_Var1AndYouWantedVar2, which the cart does not have as one line; worded after it and gText_HowManyWouldYouLikeToSell."
-    },
-    "+MOVE  A OK  B BACK": {
-      "override": "+MOVER  A VALE  B ATRÁS",
-      "reason": "engine-corpus",
-      "provenance": "Naming screen hint, from strings.gText_MoveOkBack (gen1recomp draws the icons as plain letters here)."
-    },
-    "---.- lbs.": {
-      "override": "---,- lbs.",
-      "reason": "engine-contract-gap",
-      "provenance": "Pokédex weight placeholder; kept in pounds like the computed weights (see \"%4d.%d lbs.\")."
-    },
-    "1, 2, and… Poof!": {
-      "override": "1, 2 y... ... ... ¡puf!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_123Poof without its pauses."
-    },
-    "1,000": {
-      "override": "1.000",
-      "reason": "engine-corpus",
-      "provenance": "Price column of strings.gText_Protein_1000 (gText_Iron_1000 through gText_HpUp_1000 alike) in the Berry Powder exchange list (src/core/game3/scripting/natives_listmenu.lua:70-75), where the engine prints the item name and the price as separate Strings() keys; the cart groups thousands its own way."
-    },
-    "3,000": {
-      "override": "3.000",
-      "reason": "engine-corpus",
-      "provenance": "Price column of strings.gText_PpUp_3000 in the Berry Powder exchange list (src/core/game3/scripting/natives_listmenu.lua:76), where the engine prints the item name and the price as separate Strings() keys; the cart groups thousands its own way."
-    },
-    "> YES  NO": {
-      "override": "> SÍ  NO",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_Yes / gText_No; the link trade confirmation's cursor row (src/ui/game3/link_trade_menu.lua), cursor on YES, with the engine's own '>' marker and spacing."
-    },
-    "??????????? POKéMON": {
-      "override": "POKéMON ??????????",
-      "reason": "engine-corpus",
-      "provenance": "Unknown Pokédex category: gSpeciesNames.0's question marks with the cart's category order."
-    },
-    "A B: CANCEL": {
-      "override": "A B: ATRÁS",
-      "reason": "engine-corpus",
-      "provenance": "Help System bar, from help_system.Help_Text_Cancel."
-    },
-    "A: NEXT": {
-      "override": "A: SIG.",
-      "reason": "engine-corpus",
-      "provenance": "Help System bar, from strings.gText_HelpSystemControls_A_Next."
-    },
-    "ABILITY %d": {
-      "override": "HABILIDAD %d",
-      "reason": "engine-corpus",
-      "provenance": "Fallback ability label; ABILITY as help_system.Help_Text_Ability names it."
-    },
-    "AREA: %s": {
-      "override": "ÁREA: %s",
-      "reason": "engine-corpus",
-      "provenance": "Pokédex area header; AREA as strings.gText_Area names it."
+    "A:OK": {
+      "override": "A:OK",
+      "reason": "engine-original",
+      "provenance": "Key hint of the mod manager's message box (src/ui/game3/mod_manager.lua); the button letter and OK read the same in this language."
     },
     "AUDIO": {
       "override": "AUDIO",
@@ -347,40 +67,15 @@
       "reason": "engine-corpus",
       "provenance": "From items.gItems.371; the Wonder Card title and list label use the item's name."
     },
-    "All POKéMON's HP was\nfully restored!": {
-      "override": "¡Todos los POKéMON han\nrecuperado sus PS!",
+    "AUTO or CHOOSE finds a partner.\nSET PIN hosts a private room.": {
+      "override": "AUTO o ELEGIR busca pareja.\nPIN abre una sala privada.",
       "reason": "engine-original",
-      "provenance": "Sacred Ash-style result line added by gen1recomp."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
     "An EGG can't be used on.": {
       "override": "No se puede usar\ncon un HUEVO.",
       "reason": "engine-contract-gap",
       "provenance": "Worded after strings.gText_EggCantBeTradedNow (gen1recomp's own English is cut short)."
-    },
-    "An EGG can't hold an item.": {
-      "override": "Los HUEVOS no pueden\nllevar objetos.",
-      "reason": "engine-contract-gap",
-      "provenance": "Worded after strings.gText_EggCantBattle."
-    },
-    "And...": {
-      "override": "Y...",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_And (which reads And… in the cart)."
-    },
-    "BACK": {
-      "override": "ATRÁS",
-      "reason": "engine-corpus",
-      "provenance": "New-game hint part: the cart prints strings.gText_ABUTTONNext_BBUTTONBack as one row, which gen1recomp draws in pieces."
-    },
-    "BAIT": {
-      "override": "CEBO",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.gText_SafariZoneMenu; the Safari battle menu's second entry."
-    },
-    "BALL": {
-      "override": "BALL",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.gText_SafariZoneMenu; the Safari battle menu's first entry; BALL in every language."
     },
     "BATTLE COUNT CARD": {
       "override": "TARJETA COMBATES",
@@ -402,31 +97,6 @@
       "reason": "engine-corpus",
       "provenance": "Default box name: strings.gText_Box followed by the number."
     },
-    "Beach": {
-      "override": "PLAYA",
-      "reason": "engine-corpus",
-      "provenance": "Box wallpaper name, from the cart's strings.gPCText_Beach row."
-    },
-    "Big girl": {
-      "override": "chica grande",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; buffered by BufferBigGuyOrBigGirlString for a few Sevii Islands lines; the European carts leave gText_BigGirl empty because their lines do not use it, so this only shows if a script still buffers it."
-    },
-    "Big guy": {
-      "override": "chico grande",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; buffered by BufferBigGuyOrBigGirlString for a few Sevii Islands lines; the European carts leave gText_BigGuy empty because their lines do not use it, so this only shows if a script still buffers it."
-    },
-    "Booted up a TM.\nIt contained %s.\nTeach %s to %s?": {
-      "override": "Has activado la MT.\nContiene %1$s.\n¿Enseñar %2$s a %3$s?",
-      "reason": "engine-contract-gap",
-      "provenance": "TM prompt: the Western carts print gText_BootedUpTM / gText_TMHMContainedVar1 from English-only rows; arguments: move, move, POKéMON."
-    },
-    "But %s can't learn more\nthan four moves.": {
-      "override": "Pero %s no puede aprender\nmás de cuatro movimientos.",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_TryToLearnMove2; the level-up learn prompt in battle/learn_move.lua."
-    },
     "CAVE have changed.": {
       "override": "CAMBIANTE han cambiado.",
       "reason": "engine-contract-gap",
@@ -437,145 +107,45 @@
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; two-letter stand-in for a slot reel icon when the ROM's graphics are missing (src/ui/game3/slot_machine.lua PLACEHOLDER): the first letters of this language's name for it (PIKACHU, PSYDUCK, cherries, MAGNEMITE, SHELLDER)."
     },
-    "CONGRATULATIONS!": {
-      "override": "¡ENHORABUENA!",
+    "CHOOSE": {
+      "override": "ELEGIR",
       "reason": "engine-original",
-      "provenance": "Hall of Fame banner added by gen1recomp."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
     "CREDIT": {
       "override": "CRÉDITO",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; the slot machine's coin counter label, drawn only when the ROM's graphics are missing (src/ui/game3/slot_machine.lua)."
     },
-    "CRY": {
-      "override": "GRITO",
-      "reason": "engine-corpus",
-      "provenance": "Pokédex action menu label: strings.gText_Cry without its START icon."
-    },
-    "Cave": {
-      "override": "CUEVA",
-      "reason": "engine-corpus",
-      "provenance": "Box wallpaper name, from the cart's strings.gPCText_Cave row."
-    },
-    "City": {
-      "override": "CIUDAD",
-      "reason": "engine-corpus",
-      "provenance": "Box wallpaper name, from the cart's strings.gPCText_City row."
-    },
-    "Crag": {
-      "override": "MONTAÑA",
-      "reason": "engine-corpus",
-      "provenance": "Box wallpaper name, from the cart's strings.gPCText_Crag row."
-    },
-    "Current POKéDEX status:\nSeen: %d   Owned: %d": {
-      "override": "Estado de la POKéDEX:\nVistos: %d   Capturados: %d",
-      "reason": "engine-corpus",
-      "provenance": "PC Pokédex status; SEEN/OWNED wording after pokedex_rating.PokedexRating_Text_SeenXOwnedY."
-    },
-    "DATA": {
-      "override": "DATOS",
+    "Connect to the Wireless Club?": {
+      "override": "¿Conectar al CLUB INALÁMBRICO?",
       "reason": "engine-original",
-      "provenance": "Pokédex action menu label drawn by gen1recomp (the cart's action window draws it from graphics); wording after strings.gText_NextDataCancel."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
-    "DEL. ALL": {
-      "override": "BORRAR",
-      "reason": "engine-corpus",
-      "provenance": "Split from the cart's own gText_DelAllCancelOk, which stores the three footer labels as one padded row (CLEAR_TO); the engine draws them as separate buttons."
-    },
-    "DRAW": {
-      "override": "EMP.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gString_BattleRecords_ColumnHeaders; the Trainer Tower records' third column."
-    },
-    "DUNGEON": {
-      "override": "MAZMORRA",
+    "Connecting...": {
+      "override": "Conectando...",
       "reason": "engine-original",
-      "provenance": "Town Map dungeon title fallback, added by gen1recomp (only shown for a section with no name)."
-    },
-    "Delete an older move to make\nroom for %s?": {
-      "override": "¿Quieres borrar un movimiento\npara hacer sitio a %s?",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_MonIsTryingToLearnMove; its third paragraph."
-    },
-    "Desert": {
-      "override": "DESIERTO",
-      "reason": "engine-corpus",
-      "provenance": "Box wallpaper name, from the cart's strings.gPCText_Desert row."
-    },
-    "Do what with this PKMN?": {
-      "override": "PKMN seleccionado.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_DoWhatWithPokemon ([PKMN] spelled out)."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
     "EFFECT": {
       "override": "EFECTO",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; the move relearner's move-detail label (src/ui/game3/move_relearner.lua), beside TYPE, POWER, PP and ACCURACY."
     },
-    "ELECTRIC": {
-      "override": "ELÉCT.",
-      "reason": "engine-corpus",
-      "provenance": "gen1recomp's type identifier, which the cart abbreviates: battle_main.gTypeNames.13 (ELECTR)."
-    },
     "EXTRAS": {
       "override": "EXTRAS",
       "reason": "engine-original",
       "provenance": "Options group label added by gen1recomp; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
     },
-    "Evolving...": {
-      "override": "Evolucionando...",
+    "Enter the 4-digit PIN.": {
+      "override": "Introduce el PIN de 4 cifras.",
       "reason": "engine-original",
-      "provenance": "Field evolution wait line added by gen1recomp."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
     "FAITHFUL RATIO": {
       "override": "RATIO FIEL",
       "reason": "engine-original",
       "provenance": "Option label added by gen1recomp, as the Red/Blue overrides word it; fr writes FIDÈLE, which Gen 1's font could not (FIDèLE) and FireRed's can."
-    },
-    "FIGHT": {
-      "override": "LUCHA",
-      "reason": "engine-corpus",
-      "provenance": "Battle menu label, from battle_message.gText_BattleMenu (one row in the cart)."
-    },
-    "FIGHTING": {
-      "override": "LUCHA",
-      "reason": "engine-corpus",
-      "provenance": "gen1recomp's type identifier, which the cart abbreviates: battle_main.gTypeNames.1 (FIGHT)."
-    },
-    "For %s,\n%s was too bitter!": {
-      "override": "¡Para %s,\n%s era demasiado amarga!",
-      "reason": "engine-corpus",
-      "provenance": "Berry flavour line gen1recomp words itself; the flavour clause follows the cart's battle_message.sText_PokeblockWasToo* rows. gen1recomp passes the POKéMON, then the berry."
-    },
-    "For %s,\n%s was too dry!": {
-      "override": "¡Para %s,\n%s era demasiado seca!",
-      "reason": "engine-corpus",
-      "provenance": "Berry flavour line gen1recomp words itself; the flavour clause follows the cart's battle_message.sText_PokeblockWasToo* rows. gen1recomp passes the POKéMON, then the berry."
-    },
-    "For %s,\n%s was too sour!": {
-      "override": "¡Para %s,\n%s era demasiado ácida!",
-      "reason": "engine-corpus",
-      "provenance": "Berry flavour line gen1recomp words itself; the flavour clause follows the cart's battle_message.sText_PokeblockWasToo* rows. gen1recomp passes the POKéMON, then the berry."
-    },
-    "For %s,\n%s was too spicy!": {
-      "override": "¡Para %s,\n%s era demasiado picante!",
-      "reason": "engine-corpus",
-      "provenance": "Berry flavour line gen1recomp words itself; the flavour clause follows the cart's battle_message.sText_PokeblockWasToo* rows. gen1recomp passes the POKéMON, then the berry."
-    },
-    "For %s,\n%s was too sweet!": {
-      "override": "¡Para %s,\n%s era demasiado dulce!",
-      "reason": "engine-corpus",
-      "provenance": "Berry flavour line gen1recomp words itself; the flavour clause follows the cart's battle_message.sText_PokeblockWasToo* rows. gen1recomp passes the POKéMON, then the berry."
-    },
-    "Forest": {
-      "override": "BOSQUE",
-      "reason": "engine-corpus",
-      "provenance": "Box wallpaper name, from the cart's strings.gPCText_Forest row."
-    },
-    "Friend joins at:": {
-      "override": "Tu amigo se une en:",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
     },
     "From the POKéMON CENTER we": {
       "override": "Tenemos un REGALO del CENTRO",
@@ -592,80 +162,10 @@
       "reason": "engine-contract-gap",
       "provenance": "Worded from mystery_event_msg.sText_MysteryGiftAlteringCave (\"Why not visit there...?\"); third of the card's four body lines."
     },
-    "HOF DEBUT: %d:%02d:%02d": {
-      "override": "PRIMER HALL de la FAMA: %d:%02d:%02d",
-      "reason": "engine-corpus",
-      "provenance": "Hall of Fame debut time; label from strings.gText_HallOfFameDebut."
-    },
-    "HOST A GAME": {
-      "override": "CREAR PARTIDA",
+    "HOW MANY?": {
+      "override": "¿CUÁNTOS?",
       "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
-    },
-    "HOST ADDRESS": {
-      "override": "DIRECCIÓN DEL HOST",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
-    },
-    "HOSTING": {
-      "override": "ANFITRIÓN",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
-    },
-    "HT  %s": {
-      "override": "ALT. %s",
-      "reason": "engine-corpus",
-      "provenance": "Size comparison label: strings.gText_HT."
-    },
-    "HT  4'07\"": {
-      "override": "ALT. 4'07”",
-      "reason": "engine-contract-gap",
-      "provenance": "Size comparison: the trainer's height label is strings.gText_HT; the value stays in feet and inches like the POKéMON's (gen1recomp computes imperial sizes)."
-    },
-    "Hatched: %s\nat Lv. %d.": {
-      "override": "Abierto en %s\ncon Nv. %d.",
-      "reason": "engine-corpus",
-      "provenance": "Trainer memo, from strings.gText_PokeSum_Hatched without the nature line (gen1recomp prints it separately); place, then level."
-    },
-    "Here you are! Thank you!\nI'll also include a PREMIER BALL!": {
-      "override": "¡Aquí tienes! Muchas gracias.\n¡Te regalo una HONOR BALL!",
-      "reason": "engine-contract-gap",
-      "provenance": "Mart bonus line: strings.gText_HereYouGoThankYou plus the PREMIER BALL bonus, which the Western carts print from an English-only row (gText_ThrowInPremierBall)."
-    },
-    "How many to deposit?": {
-      "override": "¿Cuántas quieres dejar?",
-      "reason": "engine-original",
-      "provenance": "PC item storage prompt added by gen1recomp."
-    },
-    "How many to withdraw?": {
-      "override": "¿Cuántas quieres sacar?",
-      "reason": "engine-original",
-      "provenance": "PC item storage prompt added by gen1recomp."
-    },
-    "However, %s already\nknows four moves.": {
-      "override": "Pero %s ya conoce\ncuatro movimientos.",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_TryToLearnMove2's sibling in the cart's learn-move script; wording after sText_TryToLearnMove2."
-    },
-    "I can pay ¥%d for that.\nHow many would you like to sell?": {
-      "override": "Te doy %d$.\n¿Cuántas unidades quieres vender?",
-      "reason": "engine-corpus",
-      "provenance": "Worded after strings.gText_HowManyWouldYouLikeToSell (the ¥ sign is gen1recomp's; the carts write $ after the price)."
-    },
-    "IDNo. %05d": {
-      "override": "N.ºID. %05d",
-      "reason": "engine-corpus",
-      "provenance": "IDNo. label: strings.gText_IDNumber."
-    },
-    "IDNo. %s": {
-      "override": "N.ºID. %s",
-      "reason": "engine-corpus",
-      "provenance": "IDNo. label: strings.gText_IDNumber."
-    },
-    "IN BAG:": {
-      "override": "LLEVAS:",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_InBagVar1."
+      "provenance": "Title of the mod manager's quantity box (src/ui/game3/mod_manager.lua); worded as the cart asks for a quantity (strings.gText_Var1CertainlyHowMany)."
     },
     "IN1": {
       "override": "IN1",
@@ -687,80 +187,35 @@
       "reason": "engine-original",
       "provenance": "Zoom step label from Zoom.offsetLabel, added by gen1recomp; kept as the engine's compact IN/OUT step so the value still fits the Options column."
     },
-    "ITEM %s": {
-      "override": "OBJETO %s",
-      "reason": "engine-corpus",
-      "provenance": "Fallback item label; ITEM as help_system.Help_Text_Item names it."
-    },
     "It is for use at VERMILION CITY port.": {
       "override": "Sirve en el PUERTO de CIUDAD CARMÍN.",
       "reason": "engine-contract-gap",
       "provenance": "Worded from mystery_event_msg.sText_AuroraTicket2 (\"It appears to be for use at the VERMILION CITY port.\"), kept to one Wonder Card line."
-    },
-    "It restored health!": {
-      "override": "¡Ha restaurado salud!",
-      "reason": "engine-corpus",
-      "provenance": "Worded after battle_message.sText_PkmnRegainedHealth."
-    },
-    "JOIN A GAME": {
-      "override": "UNIRSE A PARTIDA",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
-    },
-    "JOINING...": {
-      "override": "CONECTANDO...",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
-    },
-    "LEAGUE CHAMPION!": {
-      "override": "¡CAMPEÓN DE LA LIGA!",
-      "reason": "engine-original",
-      "provenance": "Hall of Fame banner added by gen1recomp; CHAMPION as gTrainerClassNames.30 names it."
     },
     "LIGHT": {
       "override": "SUAVE",
       "reason": "engine-original",
       "provenance": "VIBRATION strength value; overrides the shared LIGHT key, whose Red/Blue/Gold wording LUZ translates the light/lamp sense."
     },
-    "LINK CABLE": {
-      "override": "CABLE LINK",
+    "Let AUTO players join?": {
+      "override": "¿Permitir jugadores AUTO?",
       "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
-    "LOSE": {
-      "override": "DERR.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gString_BattleRecords_ColumnHeaders; the Trainer Tower records' second column."
-    },
-    "Left: %d": {
-      "override": "Tienes %d",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.gText_HighlightRed_Left; the Safari Ball count under the healthbox (src/core/game3/battle/healthbox.lua)."
-    },
-    "Link error: %s": {
-      "override": "Error de conexión: %s",
+    "Link desync! %s differs. Are both games the same version and mods?": {
+      "override": "¡Desincronización! %s difiere. ¿Tienen ambos juegos la misma versión y los mismos mods?",
       "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
     "Look for them and battle!": {
       "override": "¡Búscalos y combate!",
       "reason": "engine-contract-gap",
       "provenance": "Worded from mystery_event_msg.sText_MysteryGiftBattleCountCard (\"Look for and battle TRAINERS who have the same CARD\"), shortened to the card's last body line."
     },
-    "Lv%d": {
-      "override": "Nv.%d",
-      "reason": "engine-corpus",
-      "provenance": "Level label: strings.gText_UnusedLv."
-    },
     "Lv%s": {
       "override": "Nv.%s",
       "reason": "engine-corpus",
       "provenance": "Level label: strings.gText_UnusedLv."
-    },
-    "Lv. %d": {
-      "override": "Nv. %d",
-      "reason": "engine-corpus",
-      "provenance": "Level label: strings.gText_Level."
     },
     "MA": {
       "override": "MA",
@@ -772,120 +227,45 @@
       "reason": "engine-original",
       "provenance": "Options row added by gen1recomp; AI-composed, abbreviated to fit the Options column."
     },
-    "MOVE %d": {
-      "override": "ATAQUE %d",
-      "reason": "engine-corpus",
-      "provenance": "Fallback move label; MOVE as strings.gEasyChatGroupName_Move1 names it."
+    "MOD MANAGER": {
+      "override": "GESTOR DE MODS",
+      "reason": "engine-original",
+      "provenance": "Title of the mod manager screen added by gen1recomp (src/ui/game3/mod_manager.lua)."
     },
     "MOVE %s": {
       "override": "ATAQUE %s",
       "reason": "engine-corpus",
       "provenance": "Fallback move label; MOVE as strings.gEasyChatGroupName_Move1 names it."
     },
-    "MYSTERY": {
-      "override": "(?)",
-      "reason": "engine-corpus",
-      "provenance": "gen1recomp's type identifier, which the cart abbreviates: battle_main.gTypeNames.9 (???)."
-    },
     "MYSTIC TICKET": {
       "override": "MISTI-TICKET",
       "reason": "engine-corpus",
       "provenance": "From items.gItems.370; the Wonder Card title and list label use the item's name."
     },
-    "Met in %s\nat Lv. %d.": {
-      "override": "Conseguido en %s\ncon Nv. %d.",
-      "reason": "engine-corpus",
-      "provenance": "Trainer memo, from strings.gText_PokeSum_Met without the nature line; place, then level."
-    },
-    "Met in a fateful encounter\n(hatched: %s at Lv. %d).": {
-      "override": "Conseguido de forma curiosa\n(abierto en %s con Nv. %d).",
-      "reason": "engine-corpus",
-      "provenance": "Trainer memo, from strings.gText_PokeSum_FatefulEncounterHatched without the nature."
-    },
-    "Met in a fateful encounter when\nat Lv. %d.": {
-      "override": "Conseguido de forma curiosa\ncon Nv. %d.",
-      "reason": "engine-corpus",
-      "provenance": "Trainer memo, from strings.gText_PokeSum_FatefulEncounterMet without the nature."
-    },
-    "Met in a trade.": {
-      "override": "Conseguido por intercambio.",
-      "reason": "engine-corpus",
-      "provenance": "Trainer memo, from strings.gText_PokeSum_MetInATrade without the nature."
-    },
-    "NAME: %s": {
-      "override": "NOMBRE / %s",
-      "reason": "engine-corpus",
-      "provenance": "Hall of Fame row; label from strings.gText_TrainerCardName."
+    "Mods that change link play are on, so this game can't go online.": {
+      "override": "Hay mods que cambian el juego en red: esta partida no puede conectarse.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
     "NAME?": {
       "override": "¿NOMBRE?",
       "reason": "engine-original",
       "provenance": "Naming screen title for a script-opened naming; NAME as strings.gText_TrainerCardName."
     },
-    "NEXT": {
-      "override": "SIG.",
-      "reason": "engine-corpus",
-      "provenance": "New-game hint part: the cart prints strings.gText_ABUTTONNext_BBUTTONBack as one row, which gen1recomp draws in pieces."
-    },
-    "NEXT ": {
-      "override": "SIG. ",
-      "reason": "engine-corpus",
-      "provenance": "New-game hint part: the cart prints strings.gText_ABUTTONNext_BBUTTONBack as one row, which gen1recomp draws in pieces."
-    },
     "NORMAL": {
       "override": "NORMAL",
       "reason": "engine-original",
       "provenance": "Game speed 1X value; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
     },
-    "No": {
-      "override": "No",
-      "reason": "engine-corpus",
-      "provenance": "Battle yes/no box (battle_message.c:1288 prints Yes/No); the carts' NO from strings.gText_No, in the battle box's case."
-    },
-    "No records in the HALL OF FAME.": {
-      "override": "No hay registros\nen el HALL de la FAMA.",
+    "OK, LET'S BATTLE!": {
+      "override": "¡VALE, A LUCHAR!",
       "reason": "engine-original",
-      "provenance": "PC message added by gen1recomp; HALL OF FAME as strings.gText_HallOfFame names it."
-    },
-    "No. %03d": {
-      "override": "N.º %03d",
-      "reason": "engine-corpus",
-      "provenance": "Hall of Fame Pokédex number; label from strings.gText_Number."
-    },
-    "Not an IP address.": {
-      "override": "No es una dirección IP.",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
-    },
-    "OAK: %s!\nThis isn't the time to use that!": {
-      "override": "Consejo de OAK:\n¡%s, cada cosa en su\nmomento!",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_OakForbidsUseOfItemHere."
-    },
-    "OAK: Hm…\nHow disappointing…\fIf you win, you earn prize money,\nand your POKéMON grow.\fBut if you lose, {PLAYER}, you end\nup paying prize money…\fHowever, since you had no warning\nthis time, I'll pay for you.\fBut things won't be this way once\nyou step outside these doors.\fThat's why you must strengthen your\nPOKéMON by battling wild POKéMON.": {
-      "override": "OAK: Oh...\nVaya chasco...\fSi vences, ganas dinero;\ny tu POKéMON, experiencia.\fPero si te derrotan, {PLAYER},\ndebes pagar una cantidad...\fBueno, como es la primera vez\ny no lo sabías, yo pagaré por ti.\fPero piensa que las cosas no\nson así fuera del laboratorio.\fDebes luchar con muchos POKéMON\nsalvajes; debes hacerte fuerte.",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.gText_HowDissapointing; [B_PLAYER_NAME] is the runtime's {PLAYER}, each paragraph a page, and scrolled lines are plain line breaks."
-    },
-    "OAK: Oh, for Pete's sake…\nSo pushy, as always.\f{PLAYER}.\fYou've never had a POKéMON battle\nbefore, have you?\fA POKéMON battle is when TRAINERS\npit their POKéMON against each\nother.": {
-      "override": "OAK: ¡Pero bueno!...\n¡Qué impaciente es este chico!\f{PLAYER}, no te asustes.\fTú nunca has participado\nen un combate POKéMON, ¿no?\fEn ellos se enfrentan ENTRENADORES\ncon sus POKéMON.",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.gText_ForPetesSake; [B_PLAYER_NAME] is the runtime's {PLAYER}, each paragraph a page, and scrolled lines are plain line breaks. The French cart row starts at the player's name."
-    },
-    "OAK: This isn't the\ntime to use that!": {
-      "override": "Consejo de OAK:\n¡Cada cosa en su momento!",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_OakForbidsUseOfItemHere. (without the player's name, which this caller does not pass)"
+      "provenance": "Union Room greeting gen1recomp falls back to when a linked trainer has no Easy Chat greeting (src/core/game3/scripting/natives_wireless.lua)."
     },
     "OPTION %s": {
       "override": "OPCIONES %s",
       "reason": "engine-corpus",
       "provenance": "Fallback multichoice label; OPTION as strings.gText_MenuOption names it."
-    },
-    "OT/ %s": {
-      "override": "EO/ %s",
-      "reason": "engine-corpus",
-      "provenance": "Original trainer label of the Hall of Fame, as the summary page prints it (OT/ in every Western cart's summary graphics)."
     },
     "OUT1": {
       "override": "OUT1",
@@ -912,180 +292,55 @@
       "reason": "engine-original",
       "provenance": "Options row added by gen1recomp; AI-composed, abbreviated to fit the Options column."
     },
-    "Oh, I'm sorry. Your BAG's\npocket is full.\\pPlease store something on your PC,\nthen come back for this.": {
-      "override": "Lo siento. El BOLSILLO de\ntu MOCHILA está lleno.\\pGuarda algo en el PC y vuelve más\ntarde.",
-      "reason": "engine-contract-gap",
-      "provenance": "Worded from mystery_event_msg.sText_AuroraTicketNoPlace. The cart names the player and the KEY ITEMS POCKET; the engine's gift message (src/core/game3/scripting/natives_gift.lua) does neither, so the pocket stays generic."
-    },
-    "Opened BERRY POUCH.": {
-      "override": "Has abierto el SACO BAYAS.",
-      "reason": "engine-corpus",
-      "provenance": "BERRY POUCH from items.gItems.365."
-    },
-    "Opened TM CASE.": {
-      "override": "Has abierto el TUBO MT-MO.",
-      "reason": "engine-corpus",
-      "provenance": "TM CASE from items.gItems.364."
-    },
-    "PAGE %d/ %d": {
-      "override": "PÁG. %d/ %d",
-      "reason": "engine-corpus",
-      "provenance": "Pokédex page header; PAGE from strings.gText_Page."
-    },
-    "PAGE 1/ 2": {
-      "override": "PÁG. 1/ 2",
-      "reason": "engine-corpus",
-      "provenance": "Pokédex page header; PAGE from strings.gText_Page."
-    },
-    "PAGE 2/ 2": {
-      "override": "PÁG. 2/ 2",
-      "reason": "engine-corpus",
-      "provenance": "Pokédex page header; PAGE from strings.gText_Page."
-    },
-    "PC ITEMS": {
-      "override": "OBJETOS PC",
-      "reason": "engine-corpus",
-      "provenance": "PC item storage header; ITEMS as help_system.Help_Text_Items names it."
+    "Online play isn't available in this build.": {
+      "override": "El juego en línea no está disponible en esta versión.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
     "PI": {
       "override": "PI",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; two-letter stand-in for a slot reel icon when the ROM's graphics are missing (src/ui/game3/slot_machine.lua PLACEHOLDER): the first letters of this language's name for it (PIKACHU, PSYDUCK, cherries, MAGNEMITE, SHELLDER)."
     },
-    "PLAYERS": {
-      "override": "JUGAD.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_Var1Players; without the count, which the Union Room screen prints apart."
-    },
-    "POKéMON %03d": {
-      "override": "POKéMON %03d",
-      "reason": "engine-original",
-      "provenance": "Fallback species label (never printed for a valid species)."
-    },
-    "POKéMON %d": {
-      "override": "POKéMON %d",
-      "reason": "engine-original",
-      "provenance": "Fallback species label (never printed for a valid species)."
-    },
     "POKéMON EGG": {
       "override": "HUEVO POKéMON",
       "reason": "engine-corpus",
       "provenance": "From mystery_event_msg.sText_MysteryGiftEgg; the gift's name as the cart's message spells it (French from strings.gText_EggNickname, OEUF)."
-    },
-    "POKéMON TRAINER": {
-      "override": "ENTRENADOR",
-      "reason": "engine-corpus",
-      "provenance": "Default trainer class; POKéMON TRAINER as trainer_class_names.gTrainerClassNames names the player's class."
-    },
-    "PP %d/%d": {
-      "override": "PP %d/%d",
-      "reason": "engine-corpus",
-      "provenance": "Battle move PP counter: PP/ as learn_move.sJPText_PP and the summary page print it."
-    },
-    "PRESS A TO CONTINUE": {
-      "override": "PULSA A PARA SEGUIR",
-      "reason": "engine-original",
-      "provenance": "Hall of Fame prompt added by gen1recomp."
     },
     "PS": {
       "override": "PS",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; two-letter stand-in for a slot reel icon when the ROM's graphics are missing (src/ui/game3/slot_machine.lua PLACEHOLDER): the first letters of this language's name for it (PIKACHU, PSYDUCK, cherries, MAGNEMITE, SHELLDER)."
     },
-    "PSYCHIC": {
-      "override": "PSÍQ.",
-      "reason": "engine-corpus",
-      "provenance": "gen1recomp's type identifier, which the cart abbreviates: battle_main.gTypeNames.14 (PSYCHC)."
-    },
-    "Played the POKé FLUTE.\\pThe POKé FLUTE awakened sleeping\nPOKéMON.": {
-      "override": "Tocaste la POKé FLAUTA.\\p¡El POKéMON se ha despertado\ncon el sonido de la POKé FLAUTA!",
-      "reason": "engine-contract-gap",
-      "provenance": "Worded from Route12.Text_PlayedPokeFlute and strings.gText_PokeFluteAwakenedMon. The cart names the player in the first sentence (French does not); the engine's item-use line has no name, so German, Spanish and Italian drop it too."
-    },
     "Please raise it with love and": {
       "override": "Cuídalo con tacto",
       "reason": "engine-corpus",
       "provenance": "From mystery_event_msg.sText_MysteryGiftEgg; the line before the cart's last word; Spanish and Italian word the sentence on one line of their own, split here for the card."
-    },
-    "Pokecenter": {
-      "override": "CENTRO PKMN",
-      "reason": "engine-corpus",
-      "provenance": "Box wallpaper name, from the cart's strings.gPCText_Pokecenter row. The [PKMN] glyph is spelled out."
     },
     "RETURN TO MAIN\nMENU?": {
       "override": "¿VOLVER AL MENÚ\nPRINCIPAL?",
       "reason": "engine-original",
       "provenance": "Start-menu exit prompt added by gen1recomp (src/ui/game3/start_menu.lua); AI-composed, kept to the English two-line layout."
     },
-    "RIVAL: Yeah!\nAm I great or what?": {
-      "override": "RIVAL: ¡Bien!\n¿No soy el mejor?",
-      "reason": "engine-corpus",
-      "provenance": "From PalletTown_ProfessorOaksLab.Text_RivalVictory ([RIVAL] spelled out as RIVAL, like gen1recomp's fallback)."
-    },
-    "RUN": {
-      "override": "HUIDA",
-      "reason": "engine-corpus",
-      "provenance": "Battle menu label, from battle_message.gText_BattleMenu (one row in the cart)."
-    },
-    "Release %s?": {
-      "override": "¿Soltar a %s?",
-      "reason": "engine-original",
-      "provenance": "Box release prompt added by gen1recomp; RELEASE as strings.gPCText_Release names it."
-    },
-    "Releasing %s…": {
-      "override": "Soltando a %s...",
-      "reason": "engine-original",
-      "provenance": "Box release line added by gen1recomp."
-    },
-    "Repel's effect wore off...": {
-      "override": "El REPELENTE ha dejado de hacer\nefecto.",
-      "reason": "engine-corpus",
-      "provenance": "From repel.Text_RepelWoreOff."
-    },
-    "Return to the last POKéMON CENTER.": {
-      "override": "Volver al último CENTRO POKéMON.",
-      "reason": "engine-contract-gap",
-      "provenance": "Worded after strings.gText_ReturnToPC."
-    },
-    "River": {
-      "override": "RÍO",
-      "reason": "engine-corpus",
-      "provenance": "Box wallpaper name, from the cart's strings.gPCText_River row."
-    },
-    "SELECT WALLPAPER": {
-      "override": "ELIGE UN PAPEL PINTADO",
-      "reason": "engine-corpus",
-      "provenance": "Wallpaper picker header, worded after strings.gText_PickTheWallpaper."
-    },
     "SET": {
       "override": "ASIGNAR",
       "reason": "engine-corpus",
       "provenance": "Bag register action: strings.gOtherText_Register."
+    },
+    "SET PIN": {
+      "override": "PIN",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
     "SH": {
       "override": "SH",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; two-letter stand-in for a slot reel icon when the ROM's graphics are missing (src/ui/game3/slot_machine.lua PLACEHOLDER): the first letters of this language's name for it (PIKACHU, PSYDUCK, cherries, MAGNEMITE, SHELLDER)."
     },
-    "SIZE COMPARISON: %s": {
-      "override": "COMPARAR TAMAÑO: %s",
-      "reason": "engine-original",
-      "provenance": "Pokédex size page header added by gen1recomp."
-    },
     "SKIN": {
       "override": "SKIN",
       "reason": "engine-original",
       "provenance": "Screen-position value shown while a device skin is active; same word as the Options row itself in every language."
-    },
-    "SOMEONE's PC": {
-      "override": "PC de ALGUIEN",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_SomeoneSPc."
-    },
-    "SPIKES were scattered all around\nthe opponent's side!": {
-      "override": "¡El equipo POKéMON rival\nha sido rodeado de PÚAS!",
-      "reason": "engine-contract-gap",
-      "provenance": "From battle_message.sText_SpikesScattered; de and es name the side with [B_DEF_PREFIX1], which gen1recomp does not pass, so the side is spelled out."
     },
     "STAMP CARD": {
       "override": "TARJETA SELLOS",
@@ -1102,20 +357,10 @@
       "reason": "engine-original",
       "provenance": "Box menu action added by gen1recomp; BOX as strings.gText_Box names it."
     },
-    "Savanna": {
-      "override": "SABANA",
-      "reason": "engine-corpus",
-      "provenance": "Box wallpaper name, from the cart's strings.gPCText_Savanna row."
-    },
     "Save failed.": {
       "override": "Error al guardar.",
       "reason": "engine-corpus",
       "provenance": "From strings.gText_SaveFailedCheckingBackup; its first sentence, the Mystery Gift screen's own save error."
-    },
-    "Seafloor": {
-      "override": "MAR",
-      "reason": "engine-corpus",
-      "provenance": "Box wallpaper name, from the cart's strings.gPCText_Seafloor row."
     },
     "Searching...": {
       "override": "Buscando...",
@@ -1127,70 +372,20 @@
       "reason": "engine-corpus",
       "provenance": "From strings.gText_ChoosePokemon."
     },
-    "Select a group.": {
-      "override": "Elige un grupo.",
+    "Set a 4-digit PIN.": {
+      "override": "Define un PIN de 4 cifras.",
       "reason": "engine-original",
-      "provenance": "No cart row: the group-selection header is port-authored (the ROM's own Easy Chat screens carry no equivalent line)."
-    },
-    "Should a move be deleted and\nreplaced with %s?": {
-      "override": "¿Olvidar un movimiento\npara aprender %s?",
-      "reason": "engine-contract-gap",
-      "provenance": "Learn-move prompt gen1recomp words itself, after the cart's battle_message.sText_TryToLearnMove1/2 rows."
-    },
-    "Simple": {
-      "override": "SENCILLO",
-      "reason": "engine-corpus",
-      "provenance": "Box wallpaper name, from the cart's strings.gPCText_Simple row."
-    },
-    "Sky": {
-      "override": "CIELO",
-      "reason": "engine-corpus",
-      "provenance": "Box wallpaper name, from the cart's strings.gPCText_Sky row."
-    },
-    "Snow": {
-      "override": "NIEVE",
-      "reason": "engine-corpus",
-      "provenance": "Box wallpaper name, from the cart's strings.gPCText_Snow row."
-    },
-    "Sorry! A new BADGE is required.": {
-      "override": "¡Necesitas una nueva MEDALLA!",
-      "reason": "engine-contract-gap",
-      "provenance": "Worded after strings.gText_CantUseUntilNewBadge."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
     "Speak to the deliveryman": {
       "override": "Habla con el repartidor",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; the Wonder Card footer's first line (src/core/game3/mystery_gift.lua); the cart's own card footers are event data, not ROM text."
     },
-    "Stars": {
-      "override": "ESTRELLAS",
-      "reason": "engine-corpus",
-      "provenance": "Box wallpaper name, from the cart's strings.gPCText_PolkaDot row."
-    },
-    "Stored %d %s.": {
-      "override": "Has dejado %1$d %2$s.",
-      "reason": "engine-original",
-      "provenance": "PC deposit result added by gen1recomp (count, then item)."
-    },
-    "Stored 1 %s.": {
-      "override": "Has dejado %s.",
-      "reason": "engine-original",
-      "provenance": "PC deposit result added by gen1recomp."
-    },
     "System.": {
       "override": "de SELLOS.",
       "reason": "engine-corpus",
       "provenance": "From mystery_event_msg.sText_MysteryGiftStampCard; the second line of the cart's greeting, which follows the Stamp Card line above."
-    },
-    "THEME %d": {
-      "override": "P. PINTADO %d",
-      "reason": "engine-original",
-      "provenance": "Fallback wallpaper label; wallpaper as strings.gPCText_Wallpaper names it."
-    },
-    "TOSS HOW MANY?": {
-      "override": "¿QUÉ CANTIDAD?",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_TossOutHowManyStrVar1s without the item."
     },
     "TRAINER": {
       "override": "ENTRENADOR",
@@ -1212,30 +407,15 @@
       "reason": "engine-corpus",
       "provenance": "From mystery_event_msg.sText_MysteryGiftStampCard; the first line of the cart's greeting."
     },
-    "That's much too important to deposit!": {
-      "override": "¡Es demasiado importante\npara dejarlo!",
-      "reason": "engine-original",
-      "provenance": "PC deposit refusal added by gen1recomp."
-    },
     "The BAG is empty.": {
       "override": "La MOCHILA está vacía.",
       "reason": "engine-corpus",
       "provenance": "Worded after strings.gText_BagIsFull2."
     },
-    "The BAG is full. The\nitem could not be removed.": {
-      "override": "MOCHILA llena. El POKéMON no\npudo desprenderse del objeto.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_BagFullCouldNotRemoveItem with the BAG spelled out."
-    },
-    "The Box is full!": {
-      "override": "La CAJA está llena.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_BoxIsFull2."
-    },
-    "The PC is full.": {
-      "override": "El PC está lleno.",
-      "reason": "engine-corpus",
-      "provenance": "Worded after strings.gText_BoxIsFull2 for the item PC."
+    "The PIN didn't match.": {
+      "override": "El PIN no coincide.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
     "The POKéMON living in ALTERING": {
       "override": "Los POKéMON de la CUEVA",
@@ -1247,135 +427,45 @@
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; stand-in name when the Union Room does not know who is asking (src/core/game3/link/union_room.lua); it opens union_room_message.gText_UR_PlayerContactedYouForXAccept."
     },
-    "The edited words will not be saved.": {
-      "override": "Los cambios no se guardarán.",
+    "The connection failed.": {
+      "override": "La conexión ha fallado.",
       "reason": "engine-original",
-      "provenance": "gText_TheEditedWords/gText_WillNotBeSaved are still Japanese in every European ROM, so the cart never shows this line: the port writes it. Worded to fit the 208 px the dialog frame leaves."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
-    "The link was broken.": {
-      "override": "Se ha cortado la conexión.",
+    "The connection failed: %s.": {
+      "override": "La conexión ha fallado: %s.",
       "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
-    "The previous save file will be\nloaded.": {
-      "override": "Se cargará la partida\nguardada anterior.",
-      "reason": "engine-contract-gap",
-      "provenance": "Second sentence of frlg.common.strings.gText_SaveFileCorrupted (see the first page), rewrapped onto two lines."
-    },
-    "The repelling effect wore\non for a while.": {
-      "override": "El efecto repelente\ndurará un tiempo.",
+    "The game could not be saved.": {
+      "override": "No se ha podido guardar\nla partida.",
       "reason": "engine-original",
-      "provenance": "Repel reuse line added by gen1recomp; REPEL wording after repel.Text_RepelWoreOff."
-    },
-    "The save file is corrupted.": {
-      "override": "Partida dañada.",
-      "reason": "engine-contract-gap",
-      "provenance": "First sentence of frlg.common.strings.gText_SaveFileCorrupted; src/ui/game3/boot.lua prints the cart's message as two Strings() pages, so the official translation is split at its sentence boundary."
+      "provenance": "Save failure gen1recomp reports where the cart cannot fail (src/ui/game3/save_menu.lua); worded from strings.gText_SaveFailedCheckingBackup and gText_WouldYouLikeToSaveTheGame."
     },
     "There is a ticket here for you.": {
       "override": "Tenemos un ticket para ti.",
       "reason": "engine-corpus",
       "provenance": "From mystery_event_msg.sText_AuroraTicket1; the sentence after the player's name."
     },
-    "There is no room in your BAG.": {
-      "override": "No hay más espacio\nen la MOCHILA.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_NoMoreRoomInBag."
-    },
-    "There's no POKéMON!": {
-      "override": "No quedan\nPOKéMON.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_ThereIsNoPokemon."
-    },
-    "There's nothing to CUT here.": {
-      "override": "No hay nada que CORTAR.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_NothingToCut."
-    },
     "This POKéMON isn't holding anything.": {
       "override": "Este POKéMON no\nlleva nada.",
       "reason": "engine-corpus",
       "provenance": "From strings.gText_PkmnNotHolding with the POKéMON spelled out."
-    },
-    "This can't be used outside\nof battle.": {
-      "override": "Esto solo se puede usar\nen combate.",
-      "reason": "engine-contract-gap",
-      "provenance": "Worded after strings.gText_CantBeUsedOnPkmn."
     },
     "This can't be used right now.": {
       "override": "Ahora no se puede usar esto.",
       "reason": "engine-contract-gap",
       "provenance": "Worded after battle_message.sText_ItemsCantBeUsedNow."
     },
-    "This is a newly discovered POKéMON. It is\ncurrently under investigation.": {
-      "override": "Es un POKéMON descubierto hace poco.\nTodavía se está investigando.",
-      "reason": "engine-corpus",
-      "provenance": "From pokedex_text.gDummyPokedexText, first two lines."
-    },
-    "This isn't the time to use\nthat!": {
-      "override": "¡Cada cosa en su\nmomento!",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_OakForbidsUseOfItemHere. (without the speaker and the player's name)"
-    },
-    "This item can't be held.": {
-      "override": "No se puede llevar este objeto.",
-      "reason": "engine-corpus",
-      "provenance": "Worded after strings.gText_ItemCantBeHeld."
-    },
-    "Threw away %d\n%s.": {
-      "override": "Has tirado %1$d\n%2$s.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_ThrewAwayStrVar2StrVar1s (count, then berry)."
-    },
-    "Throw away %d of\nthis item?": {
-      "override": "¿Seguro que\nquieres tirar %d?",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_ThrowAwayStrVar2OfThisItemQM."
-    },
-    "Tiles": {
-      "override": "LOSAS",
-      "reason": "engine-corpus",
-      "provenance": "Box wallpaper name, from the cart's strings.gPCText_Machine row."
-    },
-    "Took the %s and\ngave the %s to\n%s.": {
-      "override": "Le quitó %1$s\na %3$s y le dio %2$s.",
-      "reason": "engine-corpus",
-      "provenance": "From quest_log.gText_QuestLog_SwappedHeldItemsOnMon: old item, new item, POKéMON."
-    },
-    "Took the %s and put it in the BAG.": {
-      "override": "Guardaste %s en la MOCHILA.",
-      "reason": "engine-corpus",
-      "provenance": "Worded after strings.gText_ReceivedItemFromPkmn."
-    },
-    "Took the %s from\n%s and put it in the BAG.": {
-      "override": "Recibiste %1$s\nde %2$s y lo guardaste.",
-      "reason": "engine-corpus",
-      "provenance": "Worded after strings.gText_ReceivedItemFromPkmn (item, then POKéMON)."
-    },
-    "Toss out how many\n%s?": {
-      "override": "¿Qué cantidad de\n%s?",
-      "reason": "engine-contract-gap",
-      "provenance": "From strings.gText_TossOutHowManyStrVar1s; fr, de and es leave the item out, which the argument allows."
-    },
-    "Trade %s for %s?": {
-      "override": "¿Cambiar %s por %s?",
+    "Too many tries. Please try again later.": {
+      "override": "Demasiados intentos. Inténtalo más tarde.",
       "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; the link trade confirmation (src/ui/game3/link_trade_menu.lua): the player's POKéMON, then the partner's."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
     "Trade with other TRAINERS to fill": {
       "override": "Intercambia con ENTRENADORES",
       "reason": "engine-contract-gap",
       "provenance": "Worded from mystery_event_msg.sText_MysteryGiftStampCard (\"...to fill your STAMP CARD\"); third of the card's four body lines."
-    },
-    "Turned over the %s and\nreceived ¥%d.": {
-      "override": "Recibiste %2$d$\npor %1$s.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_TurnedOverItemsWorthYen (item, then price)."
-    },
-    "UNKNOWN POKéMON": {
-      "override": "POKéMON DESCON.",
-      "reason": "engine-corpus",
-      "provenance": "Unknown Pokédex category; UNKNOWN from gPokedexEntries.0 in the cart's category order."
     },
     "UPPER": {
       "override": "ARRIBA",
@@ -1387,120 +477,35 @@
       "reason": "engine-original",
       "provenance": "Item-use fallback for an item with no known effect, added by gen1recomp."
     },
-    "Used TOWN MAP.": {
-      "override": "Has usado el MAPA.",
-      "reason": "engine-corpus",
-      "provenance": "TOWN MAP as help_system.Help_Text_UsingTownMap names it."
-    },
-    "Using %s, the %s\nof %s rose!": {
-      "override": "¡%2$s de %3$s\nsubió con %1$s!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_UsingItemTheStatOfPkmnRose ([B_BUFF2] = gBattleText_Rose or sText_StatSharply); gen1recomp passes the item, the stat, then the POKéMON."
-    },
-    "Using %s, the %s\nof %s sharply rose!": {
-      "override": "¡%2$s de %3$s\nsubió mucho con %1$s!",
-      "reason": "engine-corpus",
-      "provenance": "From battle_message.sText_UsingItemTheStatOfPkmnRose ([B_BUFF2] = gBattleText_Rose or sText_StatSharply); gen1recomp passes the item, the stat, then the POKéMON."
-    },
-    "Volcano": {
-      "override": "VOLCÁN",
-      "reason": "engine-corpus",
-      "provenance": "Box wallpaper name, from the cart's strings.gPCText_Volcano row."
-    },
-    "WIN": {
-      "override": "VICT.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gString_BattleRecords_ColumnHeaders; the Trainer Tower records' first column."
-    },
-    "WONDER CARD FILE": {
-      "override": "ARCHIVO TARJETA MIST.",
+    "Use this PIN?": {
+      "override": "¿Usar este PIN?",
       "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; fallback Mystery Gift list label for a card loaded from a file; WONDER CARD follows strings.gText_WonderCards."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
-    "WT  %s": {
-      "override": "PESO %s",
-      "reason": "engine-corpus",
-      "provenance": "Size comparison label: strings.gText_WT."
-    },
-    "WT 114.6 lbs.": {
-      "override": "PESO 114,6 lbs.",
-      "reason": "engine-contract-gap",
-      "provenance": "Size comparison: label from strings.gText_WT; the value stays in pounds like the computed weights."
-    },
-    "Waiting...": {
-      "override": "Esperando...",
+    "Which WONDER CARD\nwould you like?": {
+      "override": "¿Qué CARTA MÁGICA\nquieres?",
       "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; the port's network link menu (src/ui/game3/link_menu.lua), which has no cart equivalent."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
-    "Welcome! How may I serve you?": {
-      "override": "¡Hola! ¿Puedo ayudarte en algo?",
-      "reason": "engine-corpus",
-      "provenance": "Mart greeting, from poke_mart.Text_MayIHelpYou."
-    },
-    "What do you want to deposit?": {
-      "override": "¿Qué deseas dejar?",
-      "reason": "engine-contract-gap",
-      "provenance": "Worded after strings.gText_WhatDoYouWantToDo."
-    },
-    "What do you want to withdraw?": {
-      "override": "¿Qué deseas sacar?",
-      "reason": "engine-contract-gap",
-      "provenance": "Worded after strings.gText_WhatDoYouWantToDo."
-    },
-    "Which PC would you like to access?": {
-      "override": "¿Qué PC quieres usar?",
+    "Which WONDER NEWS\nwould you like to read?": {
+      "override": "¿Qué NOTICIA MÁGICA\nquieres leer?",
       "reason": "engine-original",
-      "provenance": "PC selection prompt added by gen1recomp."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
     "Which move?": {
       "override": "¿Qué movimiento?",
       "reason": "engine-contract-gap",
       "provenance": "Worded after strings.gText_RestoreWhichMove."
     },
-    "Withdrew %d %s.": {
-      "override": "Has sacado %1$d %2$s.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_WithdrewQuantItem (count, then item)."
-    },
-    "Withdrew 1 %s.": {
-      "override": "Has sacado %s.",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_WithdrewQuantItem with a count of one."
-    },
-    "Would you like to SAVE\nthe game?": {
-      "override": "¿Quieres guardar\nla partida?",
-      "reason": "engine-corpus",
-      "provenance": "From save.gText_WouldYouLikeToSaveTheGame, with gen1recomp's line break."
-    },
-    "Yes": {
-      "override": "Sí",
-      "reason": "engine-corpus",
-      "provenance": "Battle yes/no box (battle_message.c:1288 prints Yes/No); the carts' YES from strings.gText_Yes, in the battle box's case."
-    },
-    "You don't have anything to sell.": {
-      "override": "No tienes nada que vender.",
-      "reason": "engine-original",
-      "provenance": "Mart message added by gen1recomp."
-    },
     "You don't have that item.": {
       "override": "No tienes ese objeto.",
       "reason": "engine-original",
       "provenance": "Battle bag message added by gen1recomp."
     },
-    "You have no more\nPOKéMON left!": {
-      "override": "¡No te quedan\nPOKéMON!",
-      "reason": "engine-corpus",
-      "provenance": "Worded after battle_message.sText_PlayerWhiteout."
-    },
     "Your BATTLE COUNT CARD keeps": {
       "override": "Tu TARJETA de RECUENTO de",
       "reason": "engine-contract-gap",
       "provenance": "Worded from mystery_event_msg.sText_MysteryGiftBattleCountCard: the engine's Wonder Card body is four lines of its own, so the cart sentence is split at the same points."
-    },
-    "Your party is full!": {
-      "override": "¡Tu equipo está completo!",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_YourPartysFull."
     },
     "ZOOM": {
       "override": "ZOOM",
@@ -1512,20 +517,15 @@
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; the Wonder Card footer's second line (src/core/game3/mystery_gift.lua)."
     },
-    "easyChat.EVENTS|{POKEBLOCK}": {
-      "override": "POKéBLOCK",
+    "easyChat.EVENTS|?????": {
+      "override": "?????",
       "reason": "engine-corpus",
-      "provenance": "From easy_chat_group_events.sEasyChatWord_POKEBLOCK. The cart's word is the named [POKEBLOCK] glyph run ([POKEMELLA] in Italian), which FrlgFont has no single character for; spelled out as the project spells that run everywhere (pipeline/frlg/text.py TRANSLATION_TOKEN_TEXT), Italian with its own name."
+      "provenance": "From strings.gText_FiveMarks; the EVENTS group's placeholder word, five marks on every cart."
     },
     "easyChat.STATUS|{PK}RS": {
       "override": "POKéRUS",
       "reason": "engine-corpus",
       "provenance": "From easy_chat_group_status.sEasyChatWord_Pkrs. The English word is the [PK] glyph and RS, which the engine keys as {PK}RS; every European cart spells it POKéRUS."
-    },
-    "easyChat.group|POKéMON (NAT)": {
-      "override": "POKéMON (NAC)",
-      "reason": "engine-contract-gap",
-      "provenance": "The cart names this group POKéMON2 (strings.gEasyChatGroupName_Pokemon2); gen1recomp labels it POKéMON (NAT), for the National Pokédex species it holds, and each language keeps that label with its own abbreviation of national."
     },
     "have a gift, a POKéMON EGG!": {
       "override": "POKéMON: ¡un HUEVO POKéMON!",
@@ -1542,11 +542,6 @@
       "reason": "engine-contract-gap",
       "provenance": "The cart's SIX ISLAND name (region_map_entry_strings.sMapsecName_SIXISLAND); the card's last body line."
     },
-    "the LINK TRAINER": {
-      "override": "el otro ENTRENADOR",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; stand-in name for the link opponent in the battle-end line (src/core/game3/battle/init.lua), the object of 'defeated / lost against / battled to a draw against'; German takes the accusative."
-    },
     "track of your battle record against": {
       "override": "COMBATES muestra tus récords",
       "reason": "engine-contract-gap",
@@ -1562,35 +557,30 @@
       "reason": "engine-corpus",
       "provenance": "Quest log hint; NEXT from strings.gText_ABUTTONNext, SKIP worded for this port."
     },
-    "{DPAD_LEFTRIGHT}MAP {B_BUTTON}CANCEL": {
-      "override": "{DPAD_LEFTRIGHT}MAPA {B_BUTTON}ATRÁS",
+    "{A_BUTTON}OK {B_BUTTON}CANCEL": {
+      "override": "{A_BUTTON}OK {B_BUTTON}ATRÁS",
       "reason": "engine-corpus",
-      "provenance": "Pokédex area hint; CANCEL from strings.gText_HelpSystemControls_AorBtoCancel, MAP as the Town Map names it."
+      "provenance": "CANCEL as strings.gText_UPDOWNPick_ABUTTONBBUTTONCancel words it; the mod manager's quantity box hint (src/ui/game3/mod_manager.lua)."
     },
-    "{DPAD_LEFTRIGHT}PICK+FLIP PAGE {A_BUTTON}CHECK {B_BUTTON}CANCEL": {
-      "override": "{DPAD_LEFTRIGHT}SEL.+PASAR PÁG. {A_BUTTON}VER {B_BUTTON}ATRÁS",
-      "reason": "engine-corpus",
-      "provenance": "From strings.gText_PickFlipPageCheckCancel ([PLUS] spelled +)."
+    "{A_BUTTON}{B_BUTTON}OK": {
+      "override": "{A_BUTTON}{B_BUTTON}OK",
+      "reason": "engine-original",
+      "provenance": "Key hint of the mod manager's help bar, added by gen1recomp (src/ui/game3/mod_manager.lua:73); the button words follow strings.gText_UPDOWNPick_ABUTTONNext_BBUTTONBack."
     },
-    "{PLAYER} used an ESCAPE ROPE.": {
-      "override": "{PLAYER} usó\nCUERDA HUIDA.",
-      "reason": "engine-corpus",
-      "provenance": "From quest_log.gText_QuestLog_UsedEscapeRope without the place."
+    "{DPAD_UPDOWN}PICK {A_BUTTON}OK {B_BUTTON}BACK": {
+      "override": "{DPAD_UPDOWN}SEL. {A_BUTTON}OK {B_BUTTON}ATRÁS",
+      "reason": "engine-original",
+      "provenance": "Key hint of the mod manager's help bar, added by gen1recomp (src/ui/game3/mod_manager.lua:73); the button words follow strings.gText_UPDOWNPick_ABUTTONNext_BBUTTONBack."
     },
-    "{STR_VAR_1} used FLASH!\nA blinding light illuminates\nthe area!": {
-      "override": "¡{STR_VAR_1} usó DESTELLO!\n¡Una luz cegadora\nilumina la zona!",
-      "reason": "engine-contract-gap",
-      "provenance": "FLASH field move line, worded after field_moves.Text_MonUsedMove with the move from gMoveNames.148."
+    "{DPAD_UPDOWN}PICK {DPAD_LEFTRIGHT}SWITCH {B_BUTTON}DONE": {
+      "override": "{DPAD_UPDOWN}SEL. {DPAD_LEFTRIGHT}CAMBIAR {B_BUTTON}LISTO",
+      "reason": "engine-original",
+      "provenance": "Key hint of the mod manager's help bar, added by gen1recomp (src/ui/game3/mod_manager.lua:73); the button words follow strings.gText_UPDOWNPick_ABUTTONNext_BBUTTONBack."
     },
-    "↑↓ PICK  A OK  B CANCEL": {
-      "override": "↑↓ SEL.  A OK  B ATRÁS",
-      "reason": "engine-corpus",
-      "provenance": "Help System bar, from strings.gText_PickOKExit."
-    },
-    "↑↓ PICK  A OK  B END": {
-      "override": "↑↓ SEL.  A VALE  B FIN",
-      "reason": "engine-corpus",
-      "provenance": "Help System bar, from strings.gText_HelpSystemControls_PickOkEnd."
+    "{DPAD_UPDOWN}PICK {DPAD_LEFTRIGHT}TAB {A_BUTTON}OPEN {START_BUTTON}APPLY": {
+      "override": "{DPAD_UPDOWN}SEL. {DPAD_LEFTRIGHT}PESTAÑA {A_BUTTON}ABRIR {START_BUTTON}APLICAR",
+      "reason": "engine-original",
+      "provenance": "Key hint of the mod manager's help bar, added by gen1recomp (src/ui/game3/mod_manager.lua:73); the button words follow strings.gText_UPDOWNPick_ABUTTONNext_BBUTTONBack."
     }
   }
 }

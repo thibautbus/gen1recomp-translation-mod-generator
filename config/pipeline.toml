@@ -50,17 +50,20 @@ target_lang = "fr"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
-# Pinned at v0.2.70, the upstream release used to validate and package the
-# RBY, Gold/Silver, Crystal and FireRed translation mods.  Beyond the FireRed
-# Strings() work and numbered %n$ directives of v0.2.67 (gen1recomp#2346), it
-# is the first release in which FireRed shows a mod's species and move names
-# at all (gen1recomp#2374) and routes the Easy Chat vocabulary through
-# Strings() and the dataset (gen1recomp#2375).
+# Pinned at v0.3.11, the upstream release used to validate and package the
+# RBY, Gold/Silver, Crystal and FireRed translation mods.  It is the release
+# in which FireRed draws most of its own text from the cart instead of
+# English literals (option menu, summary pages, intro, Pokedex, region map,
+# battle messages, stat names...), so a mod translates them through the
+# cart's rows; it also names an egg by the language's EGG (gen1recomp#2396),
+# recognises trainer classes by id so the class names can be translated
+# (gen1recomp#2398), takes Unicode braille cells (gen1recomp#2400) and draws
+# Japanese with the cart's own fonts (gen1recomp#2406).
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "2148291c7139769cc1a6debf183cd0666f47e144"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/2148291c7139769cc1a6debf183cd0666f47e144"
-archive_sha256 = "067edc4913b6c6a79e8803b4d0530849e8c4a163c19f62f3e575d12b8e8ee8fc"
-archive_tree_sha256 = "96cdf42fc35059cedb53251dabacd2c0d52dc337fb7e9193e729264f79e4076e"
+revision = "09a3df2b98d2e6215e0bc0bdc5f2ef316896af2f"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/09a3df2b98d2e6215e0bc0bdc5f2ef316896af2f"
+archive_sha256 = "29febdb692d13f50356df4b6266b0598e40370bcf17ca06c892053c68d198c5d"
+archive_tree_sha256 = "790a38ae3aa734a8d0c213c8345c476c2f08969c525de58e00d12b38571a4f1b"
 
 # pret's FireRed decompilation data the FireRed release joins through (never
 # code, never game text): the symbol table names every ROM address the game3

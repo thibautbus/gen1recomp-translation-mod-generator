@@ -31,14 +31,18 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable, Mapping
 
-from ..shared.corpus import canonical_language, corpus_target_text
+from ..shared.corpus import CORPUS_NULL, canonical_language, corpus_target_text
 from .text import (
     LANGUAGE_FOLDS,
     EncodeError,
     PretCharmap,
+    braille_text,
     corpus_ir,
     dynamic_signature,
+    JAPANESE,
+    JAPANESE_FULLWIDTH,
     ir_plain,
+    is_braille,
     normalise_ir,
     text_key_address,
 )
@@ -56,11 +60,21 @@ UNRESOLVED = "unresolved"
 ENGLISH_MISMATCH = "english_mismatch"
 UNENCODABLE = "unencodable"
 NO_TRANSLATION = "no_translation"
+CART_EMPTY = "cart_empty"
+UNDECODABLE = "undecodable"
+JAPANESE_SOURCE = "japanese_source"
 PLACEHOLDER_MISMATCH = "placeholder_mismatch"
 REVIEWED = "reviewed"
+CONTENT_MATCH = "content_match"
 
-SHIPPED = frozenset({TRANSLATED, OVERRIDE, REVIEWED})
-COVERED = frozenset({TRANSLATED, OVERRIDE, REVIEWED, SAME_AS_ENGLISH})
+# Rows nothing can translate, left out of the total as the markup-only ones
+# are: the extractor cannot read the first (they are drawn from tiles, not
+# from charmap bytes), and the second are Ruby/Sapphire leftovers the US cart
+# still carries, whose only corpus row is the Japanese text.
+IGNORED = frozenset({MARKUP_ONLY, UNDECODABLE, JAPANESE_SOURCE})
+
+SHIPPED = frozenset({TRANSLATED, OVERRIDE, REVIEWED, CONTENT_MATCH, CART_EMPTY})
+COVERED = frozenset({TRANSLATED, OVERRIDE, REVIEWED, CONTENT_MATCH, CART_EMPTY, SAME_AS_ENGLISH})
 
 FRLG_DIALOGUE_OVERRIDES_SCHEMA = "gen1recomp-translation-mods/frlg-dialogue-overrides"
 FRLG_DIALOGUE_DECISIONS_SCHEMA = "gen1recomp-translation-mods/frlg-dialogue-decisions"
@@ -74,6 +88,7 @@ class FrlgCorpus:
     target: tuple[str, ...]
     by_qid: Mapping[str, int]
     by_label: Mapping[str, tuple[int, ...]]
+    missing: tuple[bool, ...] = ()
 
     def row(self, qid: str) -> tuple[str, str] | None:
         index = self.by_qid.get(qid)
@@ -96,16 +111,31 @@ def load_frlg_corpus(corpus_dir: str | Path, language: str) -> FrlgCorpus:
     root = Path(corpus_dir)
     qids = _read_lines(root / "qid_msg.txt")
     english = _read_lines(root / "en_msg.txt")
-    target = [corpus_target_text(line) for line in _read_lines(root / f"{language}_msg.txt")]
+    raw_target = _read_lines(root / f"{language}_msg.txt")
+    target = [corpus_target_text(line) for line in raw_target]
+    # "[NULL]" is not an empty row: it says the collection has no line there
+    # for this language, where an empty line is a row the cart itself leaves
+    # blank.  The two are told apart before the marker is read as empty.
+    missing = tuple(line == CORPUS_NULL for line in raw_target)
     if not (len(qids) == len(english) == len(target)):
         raise ValueError(f"{COLLECTION} corpus files for {language} are not parallel")
     by_label: dict[str, list[int]] = defaultdict(list)
     for index, qid in enumerate(qids):
         by_label[qid.rsplit(".", 1)[-1]].append(index)
+        # A ROM text table: the extractor keys its rows "gTypeNames[0]" and
+        # "sFlavorTextOriginLocationTexts[3][1]" (RomText.key), the corpus
+        # writes the same rows as "<family>.gTypeNames.0".
+        parts = qid.split(".")
+        indices = []
+        while len(parts) > 1 and parts[-1].isdigit():
+            indices.insert(0, parts.pop())
+        if indices:
+            by_label[parts[-1] + "".join(f"[{number}]" for number in indices)].append(index)
     return FrlgCorpus(
         language, tuple(qids), tuple(english), tuple(target),
         {qid: index for index, qid in enumerate(qids)},
         {label: tuple(indices) for label, indices in by_label.items()},
+        missing,
     )
 
 
@@ -183,6 +213,37 @@ def placeholders_supported(target: Iterable[Mapping], english: Iterable[Mapping]
     return all(row in available for row in dynamic_signature(target))
 
 
+def _is_undecodable(segments: Iterable[Mapping]) -> bool:
+    """A row the extractor could not read: its bytes are not charmap text.
+
+    The battle HUD's status strings and the Union Room's activity list are
+    drawn from tiles, so ``TextIR.decode`` writes a "?" per byte; a cart row
+    of real text never reads like that.
+    """
+    body = "".join(segment.get("s", "") for segment in segments)
+    body = body.replace(" ", "").replace("\n", "")
+    marks = body.count("?")
+    if marks >= 2 and marks == len(body):
+        return True
+    return marks >= 3 and marks >= len(body) / 2
+
+
+# Ruby/Sapphire leftovers the US cart still carries: the corpus has them only
+# as the Japanese source, which the cart's Latin charmap cannot encode -- as
+# a Japanese character, or as a token only the Japanese charmap names (the
+# full-width parentheses of the help system's own EXP and Level entries).
+_JAPANESE_RANGES = ((0x2E80, 0x9FFF), (0x3000, 0x303F), (0xFF01, 0xFF9F))
+_TOKEN = re.compile(r"\[([^\]\[]*)\]")
+
+
+def _is_japanese(text: str, charmap: PretCharmap | None = None) -> bool:
+    if any(start <= ord(char) <= stop for char in text for start, stop in _JAPANESE_RANGES):
+        return True
+    if charmap is None:
+        return False
+    return any(token.split()[0] not in charmap.names for token in _TOKEN.findall(text) if token.split())
+
+
 def _has_prose(segments: Iterable[Mapping]) -> bool:
     for segment in segments:
         kind = segment.get("t")
@@ -193,6 +254,68 @@ def _has_prose(segments: Iterable[Mapping]) -> bool:
     return False
 
 
+# The cart's battle string table: the extractor keys its rows by pret's
+# STRINGID_* constant (src/core/game3/battle/battle_text.lua), the corpus by
+# the pret symbol each one points at, so they are joined on their English
+# text instead of on a label.  Their FD escapes are battle placeholders.
+BATTLE_QID_PREFIX = "frlg.common.battle_message."
+
+
+def is_battle_key(key: str, rom_ir: Iterable[Mapping] = ()) -> bool:
+    """A row of the battle string table: the extractor keys most of them by
+    their STRINGID_* constant, the rest by their own pret symbol, and gives
+    every one of them battle placeholders."""
+    return key.startswith("STRINGID_") or any(segment.get("t") == "bph" for segment in rom_ir)
+
+
+def _battle_index(corpus: FrlgCorpus, charmap: PretCharmap) -> Mapping[str, tuple[int, ...]]:
+    rows: dict[str, list[int]] = defaultdict(list)
+    for index, qid in enumerate(corpus.qids):
+        if not qid.startswith(BATTLE_QID_PREFIX):
+            continue
+        try:
+            english = corpus_ir(corpus.english[index], charmap, battle=True)
+        except EncodeError:
+            continue
+        rows[json.dumps(english, sort_keys=True)].append(index)
+    return {key: tuple(indices) for key, indices in rows.items()}
+
+
+# Families that share an English word with a menu label but not its
+# translation, so a match on their text says nothing: the Easy Chat
+# vocabulary, the quest log's phrases, the Pokedex categories and the Fame
+# Checker's lines (the same list the engine scope keeps as a last resort).
+_CONTENT_LAST_RESORT = (".easy_chat_", ".gEasyChatGroupName_", ".quest_log.",
+                        ".gPokedexEntries.", ".fame_checker.")
+
+
+def _content_index(corpus: FrlgCorpus, charmap: PretCharmap) -> Mapping[str, tuple[int, ...]]:
+    """Every corpus row by the IR its English reads as.
+
+    A ROM text table the cart reaches through a pointer (the Fame Checker's
+    prompts, the list menus, the cursor options...) is named in the corpus
+    by the symbol it points at, not by the table, so those rows are joined
+    on their English text.  Only a text whose rows all agree on one
+    translation is taken, the way the engine catalog's automatic matches
+    are.
+    """
+    rows: dict[str, list[int]] = defaultdict(list)
+    for index, qid in enumerate(corpus.qids):
+        try:
+            english = corpus_ir(corpus.english[index], charmap)
+        except EncodeError:
+            continue
+        rows[json.dumps(english, sort_keys=True)].append(index)
+    # A family that shares its English but not its translation is only read
+    # when it is the only one that has the text at all.
+    return {key: tuple(sorted(indices, key=lambda index: _is_last_resort(corpus.qids[index])))
+            for key, indices in rows.items()}
+
+
+def _is_last_resort(qid: str) -> bool:
+    return any(family in qid for family in _CONTENT_LAST_RESORT)
+
+
 def _candidates(key: str, symbols: Mapping[int, list[str]], corpus: FrlgCorpus) -> tuple[tuple[str, ...], list[int]]:
     address = text_key_address(key)
     labels = tuple(symbols.get(address, ())) if address is not None else (key,)
@@ -200,6 +323,32 @@ def _candidates(key: str, symbols: Mapping[int, list[str]], corpus: FrlgCorpus) 
     for label in labels:
         indices.extend(corpus.by_label.get(label, ()))
     return labels, sorted(set(indices))
+
+
+def _join_braille(entry: "FrlgDialogueEntry", spelled: str, target: str,
+                  rom_ir: list[dict]) -> None:
+    """A braille message: the corpus writes every cart's line as Unicode
+    braille, the extractor decodes the cart's own line to Latin letters
+    (``decode_braille``), and the runtime draws a Unicode cell as that very
+    cell since gen1recomp v0.3.4 (gen1recomp#2400).  So the English row is
+    checked by spelling it back into letters, and the translation is shipped
+    as the cells themselves."""
+    if spelled != ir_plain(rom_ir):
+        entry.status = ENGLISH_MISMATCH
+        entry.detail = f"ROM {ir_plain(rom_ir)!r} != corpus braille {spelled!r}"
+        return
+    if not target:
+        entry.status = NO_TRANSLATION
+        return
+    if not is_braille(target):
+        entry.status = UNENCODABLE
+        entry.detail = "target row is not braille"
+        return
+    if braille_text(target) == spelled:
+        entry.status = SAME_AS_ENGLISH
+        return
+    entry.translation = [{"t": "text", "s": target}, {"t": "eos"}]
+    entry.status = TRANSLATED
 
 
 def join_frlg_dialogue(
@@ -214,10 +363,16 @@ def join_frlg_dialogue(
     """Join every extracted text key to one corpus row and translate it."""
     overrides = overrides or {}
     decisions = decisions or {}
+    battle_index = _battle_index(corpus, charmap)
+    content_index = _content_index(corpus, charmap)
     entries: list[FrlgDialogueEntry] = []
     for key in sorted(text):
         rom_ir = normalise_ir(text[key])
+        battle = is_battle_key(key, rom_ir)
         labels, indices = _candidates(key, symbols, corpus)
+        if battle and not indices:
+            indices = list(battle_index.get(json.dumps(rom_ir, sort_keys=True), ()))
+        matched_on_text = False
         entry = FrlgDialogueEntry(key, NO_MATCH, rom_ir, labels=labels)
         entries.append(entry)
         if not _has_prose(rom_ir):
@@ -231,8 +386,23 @@ def join_frlg_dialogue(
             if reviewed not in corpus.by_qid:
                 raise ValueError(f"FireRed dialogue decision {key!r}: unknown qid {reviewed}")
             indices = [corpus.by_qid[reviewed]]
+        if not indices and reviewed is None:
+            rows = content_index.get(json.dumps(rom_ir, sort_keys=True), ())
+            if _is_undecodable(rom_ir):
+                # Text the extractor could not read matches only another row
+                # it could not read: neither says anything about the other.
+                entry.status = UNDECODABLE
+                continue
+            preferred = [i for i in rows if not _is_last_resort(corpus.qids[i])]
+            rows = preferred or list(rows)
+            targets = {corpus.target[i] for i in rows if corpus.target[i]}
+            if len(targets) == 1:
+                indices = [next(i for i in rows if corpus.target[i])]
+                matched_on_text = True
         if not indices:
-            entry.status = NO_MATCH
+            # A row the extractor could not read has no corpus row to find:
+            # it is not a gap a translation could close.
+            entry.status = UNDECODABLE if _is_undecodable(rom_ir) else NO_MATCH
             continue
         if len(indices) > 1 and len({corpus.target[i] for i in indices}) > 1:
             entry.status = UNRESOLVED
@@ -240,10 +410,22 @@ def join_frlg_dialogue(
             continue
         index = indices[0]
         entry.qid = corpus.qids[index]
+        if entry.qid.endswith("Jpn"):
+            # The cart keeps its Japanese status strings for a comparison the
+            # battle HUD draws from tiles (pret's *Jpn rows,
+            # battle_message.c:1798): they are Japanese text stored with the
+            # Japanese charmap, which this cart's Latin table reads as junk.
+            entry.status = JAPANESE_SOURCE
+            continue
+        spelled = braille_text(corpus.english[index])
+        if spelled is not None:
+            _join_braille(entry, spelled, corpus.target[index], rom_ir)
+            continue
         try:
-            english_ir = corpus_ir(corpus.english[index], charmap)
+            english_ir = corpus_ir(corpus.english[index], charmap, battle=battle)
         except EncodeError as exc:
-            entry.status = UNENCODABLE
+            entry.status = (JAPANESE_SOURCE if _is_japanese(corpus.english[index], charmap)
+                            else UNENCODABLE)
             entry.detail = f"English corpus row: {exc}"
             continue
         override = overrides.get(key)
@@ -253,10 +435,21 @@ def join_frlg_dialogue(
             continue
         source = override["text"] if override else corpus.target[index]
         if not source:
-            entry.status = NO_TRANSLATION
+            if override is not None or (corpus.missing and corpus.missing[index]):
+                # The collection has no line there for this language: nothing
+                # says the cart prints nothing, so the English stays.
+                entry.status = NO_TRANSLATION
+                continue
+            # The cart itself has nothing at this row in this language: its
+            # sentences are worded without the fragment ("From ", the plural
+            # "S", the "Big girl" a French NPC never says).  Shipping the
+            # cart's own empty row prints nothing, as the cart does, instead
+            # of leaving the English fragment on screen.
+            entry.translation = [{"t": "eos"}]
+            entry.status = CART_EMPTY
             continue
         try:
-            target_ir = corpus_ir(source, charmap, language=corpus.language)
+            target_ir = corpus_ir(source, charmap, language=corpus.language, battle=battle)
         except EncodeError as exc:
             entry.status = UNENCODABLE
             entry.detail = str(exc)
@@ -269,9 +462,11 @@ def join_frlg_dialogue(
             entry.status = SAME_AS_ENGLISH
             continue
         entry.translation = target_ir
-        entry.status = OVERRIDE if override else REVIEWED if reviewed else TRANSLATED
+        entry.status = (OVERRIDE if override else REVIEWED if reviewed
+                        else CONTENT_MATCH if matched_on_text else TRANSLATED)
     stats = Counter(entry.status for entry in entries)
-    total = len(entries) - stats[MARKUP_ONLY]
+    ignored = sum(stats[status] for status in IGNORED)
+    total = len(entries) - ignored
     covered = sum(stats[status] for status in COVERED)
     return entries, {
         "total": total,
@@ -279,6 +474,8 @@ def join_frlg_dialogue(
         "shipped": sum(stats[status] for status in SHIPPED),
         "percent": round(100.0 * covered / total, 2) if total else 100.0,
         "ignored_markup_only": stats[MARKUP_ONLY],
+        "ignored_undecodable": stats[UNDECODABLE],
+        "ignored_japanese_source": stats[JAPANESE_SOURCE],
         "by_status": dict(sorted(stats.items())),
     }
 
@@ -761,6 +958,11 @@ def _check_engine_glyphs(key: str, value: str, charmap: PretCharmap, language: s
     """A Strings() value is drawn by FrlgFont too: refuse what it cannot print."""
     folds = {**LANGUAGE_FOLDS["*"], **LANGUAGE_FOLDS.get(language, {})}
     drawable = set(charmap.translation_glyphs.values())
+    if language == JAPANESE:
+        # FrlgFont draws the cart's Japanese fonts since v0.3.4: the kana and
+        # the symbols the Japanese sheets keep at the Latin block's codes,
+        # which a Japanese string writes in their full-width form.
+        drawable |= set(charmap.japanese) | JAPANESE_FULLWIDTH
     # Directives are filled in at runtime ("%%" prints a percent sign), and
     # {PLAYER}/{A_BUTTON}-style tokens are names or icons the runtime draws.
     printed = _ENGINE_DIRECTIVE.sub(lambda m: "%" if m.group(1) == "%" else "", value)

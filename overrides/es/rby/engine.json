@@ -77,11 +77,6 @@
       "reason": "engine-original",
       "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- this port's own generic status-cure confirmation (shared across every status-healing item) replaces the cart's own per-status cure messages)."
     },
-    "%s's %s\nrose!": {
-      "override": "¡%s hizo que %s\nsubiera!",
-      "reason": "engine-contract-gap",
-      "provenance": "AI-generated translation; concrete engine contract limitation is reordered stat arguments at shared callsites; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
-    },
     "%s's HP\nwas restored!": {
       "override": "¡Los PS de %s\nse restauraron!",
       "reason": "engine-original",
@@ -562,8 +557,13 @@
       "reason": "engine-contract-gap",
       "provenance": "AI-generated engine-original translation; raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."
     },
-    "The boulder fell\nthrough the hole!": {
+    "The boulder fell\nthrough!": {
       "override": "¡La roca cayó\npor el agujero!",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
+    },
+    "The boulder fell\nthrough.": {
+      "override": "La roca cayó\npor el agujero.",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
