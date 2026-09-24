@@ -142,21 +142,31 @@ release.
 ## Pokémon FireRed support
 
 FireRed (US, v1.0) is published as `translation-<lang>-gen3` for `fr`, `de`,
-`es` and `it`, built from a real FireRed ROM. gen1recomp runs it on its own
+`es`, `it` and `ja-Hrkt`, built from a real FireRed ROM. gen1recomp runs it on its own
 generation-3 runtime, so the mod uses that runtime's content registries:
 dialogue through `mod.content.text`, species, move and item names, item
 descriptions, trainer names and class names through their record registries,
 the start menu through the public `ui.start_menu.items` hook, and game3's own
-text (battle messages, menus, Pokédex labels, Oak's speech, options, place
-names, the Easy Chat vocabulary) through `Strings()`. The pipeline is pinned
-to gen1recomp v0.2.70, the first release in which FireRed also shows a mod's
-species and move names and translates the Easy Chat words.
+text (its own menus, the mod manager, the options it adds) through
+`Strings()`. The pipeline is pinned to gen1recomp v0.3.11, whose FireRed
+draws most of its text from the cart itself: the option menu,
+the summary pages, the intro, the Pokédex, the region map, the battle
+messages and the lists all read the cart's rows through `RomText`, so the
+mod translates them with the cart's own text instead of a catalog of its
+own. That release also names an egg by the language's EGG, reads a
+trainer's class by id, takes Unicode braille cells and draws Japanese with
+the cart's fonts.
 
 Dialogue is joined differently from the two older releases: the game3
-extractor keys each message by its ROM address, pret's published
+extractor keys each script message by its ROM address, pret's published
 `pokefirered.sym` names that address with the same label the PokeCorpus
 `FireRedLeafGreen` qid ends with, so every message maps to exactly one corpus
-row. Each translation is shipped as the runtime's own text IR (so the player
+row. The cart text the runtime reads by name joins beside it: a ROM table row
+by row (`gTypeNames[1]` against the corpus's `gTypeNames.1`), the battle
+string table on its English text (the extractor keys it by pret's
+`STRINGID_*`, the corpus by the symbol each row points at), and a row the
+cart reaches through a pointer table by the translation every row reading the
+same English agrees on. Each translation is shipped as the runtime's own text IR (so the player
 name, `STR_VAR` buffers and page breaks survive), encoded through pret's
 `charmap.txt`, and only after the corpus English has reproduced the ROM's own
 text exactly. The pinned symbol table and charmap are downloaded like the
@@ -166,12 +176,22 @@ Before packaging, `tools/frlg/gate.lua` loads the mod through gen1recomp's
 real generation-3 loader over the extracted game3 data and checks that each
 catalog lands where the FireRed screens read it. It also measures runtime
 limits the mod cannot fix itself, and the build prints them. Accented
-letters (fixed in v0.2.67) and species and move names reverting to English on
-entering the field (fixed in v0.2.70) no longer apply. What remains is that the
-Pokédex descriptions, the help system and the quest log have no way in yet, and
-that the party names an egg EGG. Every one of these is tracked in the FireRed
-section of [docs/upstream-fixes.md](docs/upstream-fixes.md).
-Japanese is not offered: the game3 runtime has no way to draw kana yet.
+letters (fixed in v0.2.67), species and move names reverting to English on
+entering the field (v0.2.70), the party naming an egg EGG, the trainer
+classes recognised by their English name and the braille lines (all v0.3.4)
+no longer apply. What remains is that the help system and the mod manager's
+own screens have no way in. Three screens also read their value by its
+English text alone — the region map's section names and guide text, the
+summary's ability name and the popup's floor suffix — which `modkit pack`
+refuses to see in `lang/strings.lua`, so those ~150 entries ship in a
+catalog of their own (`lang/strings_by_english.lua`) registered through the
+same `strings` registry, until the engine reads them by label. Every one of
+these is tracked in the FireRed section of
+[docs/upstream-fixes.md](docs/upstream-fixes.md).
+Japanese is published too, since the runtime draws kana with the cart's own
+Japanese fonts (v0.3.4): its rows keep their characters instead of going
+through the cart's byte encoding, whose Japanese block reuses the Latin
+block's values.
 
 ## Legal inputs and privacy
 
@@ -200,7 +220,7 @@ font profiles are:
 | Target languages | Releases | Default font | Optional font |
 | --- | --- | --- | --- |
 | `fr`, `de`, `es`, `it` | RBY, Gold/Silver/Crystal, FireRed | Fusion Pixel Latin, 10px (RBY, GSC); the cart's own font (FireRed) | Pokemon Font, 8px (RBY, GSC) |
-| `ja-Hrkt` | RBY, Gold/Silver/Crystal | Fusion Pixel Japanese, 8px | — |
+| `ja-Hrkt` | RBY, Gold/Silver/Crystal, FireRed | Fusion Pixel Japanese, 8px (RBY, GSC); the cart's own Japanese fonts (FireRed) | — |
 | `ko` | Gold/Silver/Crystal only (Crystal's own dialogue stays in English) | Fusion Pixel Hangul, 10px | — |
 
 The optional Pokemon Font is more compact, but translated text can still
@@ -228,11 +248,11 @@ engine's English fallback.
 
 | Target | Red Blue ROM aggregate | Yellow ROM aggregate | RBY-related engine strings |
 | --- | ---: | ---: | ---: |
-| `fr` | 3286/3286 (100%) | 3400/3400 (100%) | 421/421 (100%) |
-| `de` | 3286/3286 (100%) | 3400/3400 (100%) | 421/421 (100%) |
-| `es` | 3286/3286 (100%) | 3400/3400 (100%) | 421/421 (100%) |
-| `it` | 3286/3286 (100%) | 3400/3400 (100%) | 421/421 (100%) |
-| `ja-Hrkt` | 3286/3286 (100%) | 3397/3400 (99.91%) | 421/421 (100%) |
+| `fr` | 3286/3286 (100%) | 3400/3400 (100%) | 419/419 (100%) |
+| `de` | 3286/3286 (100%) | 3400/3400 (100%) | 419/419 (100%) |
+| `es` | 3286/3286 (100%) | 3400/3400 (100%) | 419/419 (100%) |
+| `it` | 3286/3286 (100%) | 3400/3400 (100%) | 419/419 (100%) |
+| `ja-Hrkt` | 3286/3286 (100%) | 3397/3400 (99.91%) | 419/419 (100%) |
 
 The ROM aggregates exclude extracted labels that do not render visible text.
 Reviewed exceptions are recorded in
@@ -301,42 +321,55 @@ provenance. Future unresolved entries will keep their original English text.
 
 | Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings | Crystal dialogue coverage |
 | --- | ---: | ---: | ---: |
-| `fr` | 6839/6839 (100%) | 949/949 (100%) | 3994/3994 (100%) |
-| `de` | 6839/6839 (100%) | 949/949 (100%) | 3994/3994 (100%) |
-| `es` | 6839/6839 (100%) | 949/949 (100%) | 3994/3994 (100%) |
-| `it` | 6839/6839 (100%) | 949/949 (100%) | 3994/3994 (100%) |
-| `ja-Hrkt` | 6839/6839 (100%) | 949/949 (100%) | 3994/3994 (100%) |
-| `ko` | 5796/6839 (84.75%) | 949/949 (100%) | 0/3994 (0%) |
+| `fr` | 6839/6839 (100%) | 951/951 (100%) | 3994/3994 (100%) |
+| `de` | 6839/6839 (100%) | 951/951 (100%) | 3994/3994 (100%) |
+| `es` | 6839/6839 (100%) | 951/951 (100%) | 3994/3994 (100%) |
+| `it` | 6839/6839 (100%) | 951/951 (100%) | 3994/3994 (100%) |
+| `ja-Hrkt` | 6839/6839 (100%) | 951/951 (100%) | 3994/3994 (100%) |
+| `ko` | 5796/6839 (84.75%) | 951/951 (100%) | 0/3994 (0%) |
 
 ### FireRed
 
-- `FireRed ROM aggregate` combines the dialogue messages with the named
+- `FireRed ROM aggregate` combines every cart text the runtime reads -- the
+  script messages and the 5,475 rows it now reads by name (menus, battle
+  messages, lists, the Pokédex, the region map, the intro) -- with the named
   catalogs (species, move and item names, item descriptions, trainer names
-  and class names, start menu labels). The 39 braille messages stay in
-  English (the runtime spells braille from Latin letters and cannot reach
-  every cell the European carts use, such as German ä), as do the eight
-  trainer classes whose English name gen1recomp compares (RIVAL, LEADER,
-  ELITE FOUR and CHAMPION, two classes each): translating them would lose
-  the rival's chosen name and misfile gym, Elite Four and champion wins in
-  the quest log. The `POKéBLOCK CASE` item's name and description are left
-  out of the aggregate: the item cannot be obtained in FireRed, and the
-  extractor loses its name even in English.
-- `FireRed engine strings` covers the 2,916 `Strings()` keys reachable from
-  the game3 runtime: battle messages, menus, Pokédex labels, Oak's speech,
-  options, ability names, move and ability descriptions, place names, and
-  the 1,028 Easy Chat words and group names (the species and move groups
-  come from the species and move names). They
-  are listed with their callsites and cart rows in
+  and class names, start menu labels). The 39 braille lines ship as each
+  cart's own braille cells, and so do the eight trainer classes the runtime
+  used to recognise by name (RIVAL, LEADER, ELITE FOUR, CHAMPION). The
+  `POKéBLOCK CASE` item's name and description are left out of the
+  aggregate: the item cannot be obtained in FireRed, and the extractor loses
+  its name even in English. Three kinds of row are left out the same way:
+  157 that carry no text at all (a lone control code, an empty string), 21
+  the extractor cannot read (the battle HUD's status strings and the Union
+  Room's activity list are drawn from tiles, not from charmap bytes) and 61
+  whose only corpus line is Japanese -- the Ruby/Sapphire leftovers the US
+  cart still carries, and the Japanese status strings it keeps for a
+  comparison. What is left unshipped is five fragments the cart
+  concatenates between two buffers (`'s level rose to`, ` was used on`): the
+  European carts reword the whole sentence and the engine cannot reorder it.
+  German, Spanish and Italian each leave a seventh row for the same reason.
+  Japanese leaves 85: 30 whose phrasing names the player where the English
+  does not, and 50 lines the collection has no Japanese text for at all.
+- `FireRed engine strings` covers the 1,890 `Strings()` keys the game3
+  runtime reaches on its own: its menus and prompts, the ability names, the
+  move and ability descriptions, the map section names and the region map's
+  guide text, and the 1,028 Easy Chat words and group names (the species and
+  move groups come from the species and move names). They are listed with
+  their callsites and cart rows in
   [`config/frlg/engine_scope.json`](config/frlg/engine_scope.json), which
   `pipeline/frlg/engine_scope.py` regenerates from the pinned engine; a test
   derives the same set from it, so a new key cannot slip out of the metric.
+  A key whose text is a cart string is shipped under that string's ROM
+  label, which is how the runtime looks it up.
 
 | Target | FireRed ROM aggregate | FireRed engine strings |
 | --- | ---: | ---: |
-| `fr` | 5639/5686 (99.17%) | 2916/2916 (100%) |
-| `de` | 5639/5686 (99.17%) | 2916/2916 (100%) |
-| `es` | 5639/5686 (99.17%) | 2916/2916 (100%) |
-| `it` | 5639/5686 (99.17%) | 2916/2916 (100%) |
+| `fr` | 10921/10929 (99.93%) | 1890/1890 (100%) |
+| `de` | 10919/10929 (99.91%) | 1890/1890 (100%) |
+| `es` | 10919/10929 (99.91%) | 1890/1890 (100%) |
+| `it` | 10919/10929 (99.91%) | 1890/1890 (100%) |
+| `ja-Hrkt` | 10844/10929 (99.22%) | 1890/1890 (100%) |
 
 These measure what the mod ships, not what the current runtime displays; see
 "Pokémon FireRed support" above for the runtime limits.
@@ -345,31 +378,32 @@ These measure what the mod ships, not what the current runtime displays; see
 
 The remaining engine keys are reported separately below. They are keys used by
 neither RBY nor Gold and Silver, so their denominator is the residual scope:
-`3093 - (421 + 949 - 85) = 1808`. The numerator counts keys translated in at
-least one of the RBY and Gold/Silver/Crystal artifacts; this is a
-project-level metric, not a claim that every key is present in both games.
+`2467 - (419 + 951 - 86) = 1183`. The numerator counts keys translated in at
+least one of the RBY and Gold/Silver/Crystal artifacts, the RBY release's
+Yellow layer included; this is a project-level metric, not a claim that
+every key is present in both games.
 The FireRed-reachable keys are measured separately above ("FireRed engine
 strings"), so this residual scope and its numerators leave the FireRed
 artifact out.
 
 | Target | Other engine strings |
 | --- | ---: |
-| `fr` | 312/1808 (17.26%) |
-| `de` | 314/1808 (17.37%) |
-| `es` | 311/1808 (17.20%) |
-| `it` | 313/1808 (17.31%) |
-| `ja-Hrkt` | 304/1808 (16.81%) |
-| `ko` | 219/1808 (12.11%) |
+| `fr` | 118/1183 (9.97%) |
+| `de` | 118/1183 (9.97%) |
+| `es` | 116/1183 (9.81%) |
+| `it` | 117/1183 (9.89%) |
+| `ja-Hrkt` | 116/1183 (9.81%) |
+| `ko` | 55/1183 (4.65%) |
 
-The denominator is calculated as follows: `3093` total engine keys, minus the
-`421` RBY-related keys and the `949` Gold and Silver-related keys, plus back the `85` keys
+The denominator is calculated as follows: `2467` total engine keys, minus the
+`419` RBY-related keys and the `951` Gold and Silver-related keys, plus back the `86` keys
 shared by both scopes so they are subtracted only once. The resulting residual
-scope is `1808` keys, most of them FireRed's: the Gold/Silver corpus
-also matches some of them, which is why the numerators grew with the
-FireRed branch.
+scope is `1183` keys. Both figures fell when FireRed
+stopped passing the cart's own text through `Strings()`: those keys are
+measured in the FireRed tables above instead.
 
 These values use the pinned ROMs, corpus snapshots and Gen1Recomp revision
-`2148291c` (v0.2.70); regenerate them whenever one of those inputs changes.
+`09a3df2b` (v0.3.11); regenerate them whenever one of those inputs changes.
 
 ## Translation provenance
 
