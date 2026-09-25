@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -23,6 +24,7 @@ from pipeline.frlg.text import (
     EncodeError, RUNTIME_CHARMAP, corpus_ir, decode, encode, ir_plain, load_charmap, load_symbols,
     text_key_address,
 )
+from pipeline.shared.builder import BuildError
 from pipeline.shared.specs import game_spec, languages_for_collection, release_profile
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -694,6 +696,71 @@ class FrlgModTests(unittest.TestCase):
     def test_names(self):
         self.assertEqual(frlg_mod_id("ja-Hrkt"), "translation-ja-hrkt-gen3")
         self.assertEqual(frlg_archive_name("fr", "1.0"), "translation-fr-gen3-1.0.zip")
+
+    def test_the_extract_link_lives_only_as_long_as_the_build(self):
+        # A symlink, or on Windows a directory junction, which needs no
+        # privilege: either way Modkit finds the cart's text through it.
+        from pipeline.frlg import mod as frlg_mod
+        with tempfile.TemporaryDirectory() as directory:
+            engine, extracted = Path(directory) / "engine", Path(directory) / "extracted"
+            text = extracted / "cache" / "data" / "generated" / "gba" / "scripts" / "text.lua"
+            text.parent.mkdir(parents=True)
+            text.write_text("return {}\n", encoding="utf-8")
+            engine.mkdir()
+            link = engine / "firered"
+            with frlg_mod._rom_text_cache(engine, extracted) as made:
+                self.assertTrue(frlg_mod._is_link(made))
+                self.assertTrue((made / "data" / "generated" / "gba" / "scripts" / "text.lua").is_file())
+            self.assertFalse(os.path.lexists(link))
+            self.assertTrue(text.is_file())
+            # a crashed build's link is replaced, not followed into
+            frlg_mod._link_directory(link, (extracted / "cache").resolve())
+            with frlg_mod._rom_text_cache(engine, extracted):
+                pass
+            self.assertFalse(os.path.lexists(link))
+            self.assertTrue(text.is_file())
+            # a real import in its place is left alone
+            link.mkdir()
+            with self.assertRaises(BuildError):
+                with frlg_mod._rom_text_cache(engine, extracted):
+                    pass
+            self.assertTrue(link.is_dir())
+
+    def test_the_rom_label_harvest_runs_the_builds_luajit(self):
+        # Modkit runs $LUA, or else the luajit on PATH, and a standalone
+        # build keeps its own LuaJIT where no PATH looks.
+        from pipeline.frlg import mod as frlg_mod
+        seen = []
+
+        class Modkit:
+            @staticmethod
+            def rom_text_caches(repo):
+                return [(os.path.join(repo, "firered", "data", "generated", "gba", "scripts", "text.lua"), "")]
+
+            @staticmethod
+            def harvest_rom_text(repo, caches):
+                seen.append(os.environ.get("LUA"))
+                return []
+
+            @staticmethod
+            def harvest_engine_strings(repo):
+                return []
+
+            @staticmethod
+            def migrate_rom_text(done, rom_text, engine_keys):
+                pass
+
+            @staticmethod
+            def rom_english_keys(rom_text):
+                return set()
+
+        with tempfile.TemporaryDirectory() as directory, \
+                unittest.mock.patch.object(frlg_mod, "_modkit", return_value=Modkit), \
+                unittest.mock.patch.dict(os.environ, {"LUA": "lua5.1"}):
+            catalog, _ = frlg_mod.rom_label_strings({"YES": "OUI"}, Path(directory), luajit="/opt/bundle/luajit")
+            self.assertEqual(os.environ["LUA"], "lua5.1")
+        self.assertEqual(seen, ["/opt/bundle/luajit"])
+        self.assertEqual(catalog, {"YES": "OUI"})
 
 
 class FrlgConfigTests(unittest.TestCase):
