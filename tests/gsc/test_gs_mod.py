@@ -234,6 +234,23 @@ class GsUiLabelTests(unittest.TestCase):
         self.assertEqual(_gs_ui_labels(rows)["PACK"], "リュック")
 
 
+class JapaneseKanaTests(unittest.TestCase):
+    def test_japanese_overrides_are_written_in_kana(self):
+        # The Japanese carts print kana, and the 8px Japanese font draws kanji
+        # illegibly; 円 is the one kanji the carts carry a tile for.
+        import re
+        kanji = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
+        root = Path(__file__).resolve().parents[2] / "overrides" / "ja-Hrkt"
+        found = []
+        for path in sorted(root.rglob("*.json")):
+            entries = json.loads(path.read_text(encoding="utf-8")).get("entries") or {}
+            for key, row in entries.items():
+                value = row.get("override", row.get("text")) if isinstance(row, dict) else row
+                if isinstance(value, str) and kanji.search(value.replace("円", "")):
+                    found.append(f"{path.relative_to(root)}: {key!r}")
+        self.assertEqual(found, [])
+
+
 class GsReleaseGateFlowTests(unittest.TestCase):
     def test_registry_expectations_reject_missing_or_empty_catalogs(self):
         with tempfile.TemporaryDirectory() as tmp:
