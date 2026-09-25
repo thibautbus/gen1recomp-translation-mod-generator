@@ -9,7 +9,7 @@ artifacts per language:
 - a universal Pokémon Red, Blue and Yellow mod, with a runtime-selected Yellow
   layer;
 - a Pokémon Gold, Silver and Crystal mod for Gen1Recomp's generation-2 runtime;
-- a Pokémon FireRed mod for Gen1Recomp's generation-3 (game3) runtime.
+- a Pokémon FireRed and LeafGreen mod for Gen1Recomp's generation-3 (game3) runtime.
 
 The artifacts have distinct mod IDs and filenames, so they can be installed
 side by side.
@@ -28,7 +28,7 @@ then select the target games and the corresponding ROM dumps:
 
 ![Gen1Recomp translation mod generator GUI](docs/gui.png)
 
-1. Red, Blue and Yellow, Gold and Silver, or FireRed;
+1. Red, Blue and Yellow, Gold, Silver and Crystal, or FireRed and LeafGreen;
 2. your own canonical US ROM dumps for the selected games;
 3. the target language and output directory.
 
@@ -63,7 +63,7 @@ private ignored workspace.
 
 The final file is `dist/translation-<lang>-<version>.zip` for RBY,
 `dist/translation-<lang>-gen2-<version>.zip` for Gold and Silver, or
-`dist/translation-<lang>-gen3-<version>.zip` for FireRed; the command prints its
+`dist/translation-<lang>-gen3-<version>.zip` for FireRed and LeafGreen; the command prints its
 absolute path.
 
 ### Optional local path configuration
@@ -80,12 +80,13 @@ gold = "/absolute/path/to/PokemonGold.gbc"
 silver = "/absolute/path/to/PokemonSilver.gbc"
 crystal = "/absolute/path/to/PokemonCrystal.gbc"
 firered = "/absolute/path/to/PokemonFireRed.gba"
+leafgreen = "/absolute/path/to/PokemonLeafGreen.gba"
 ```
 
 The three RBY entries are required for the universal build; `gold`/`silver` are
 required only for the Gold and Silver build, and either one alone is enough (the
-prompt accepts a Gold or a Silver ROM interchangeably), and `firered` only for the
-FireRed build. Relative paths resolve from this file and `~` expands, although
+prompt accepts a Gold or a Silver ROM interchangeably), and `firered` and
+`leafgreen` only for the FireRed and LeafGreen build. Relative paths resolve from this file and `~` expands, although
 absolute paths are recommended. On Windows, use forward slashes or TOML
 single-quoted paths such as `red = 'C:\Games\PokemonRed.gb'`. Configured files
 are still checked for existence and SHA-1; declining one returns to the normal
@@ -139,10 +140,11 @@ and registries are selected under a Crystal save and never leak onto a Gold
 or Silver one. These checks do not replace an in-game smoke test before
 release.
 
-## Pokémon FireRed support
+## Pokémon FireRed and LeafGreen support
 
-FireRed (US, v1.0) is published as `translation-<lang>-gen3` for `fr`, `de`,
-`es`, `it` and `ja-Hrkt`, built from a real FireRed ROM. gen1recomp runs it on its own
+FireRed and LeafGreen (US, v1.0) are published as one `translation-<lang>-gen3`
+mod for `fr`, `de`, `es`, `it` and `ja-Hrkt`, built from a real FireRed ROM and a
+real LeafGreen ROM. gen1recomp runs them on its own
 generation-3 runtime, so the mod uses that runtime's content registries:
 dialogue through `mod.content.text`, species, move and item names, item
 descriptions, trainer names and class names through their record registries,
@@ -193,6 +195,21 @@ Japanese fonts (v0.3.4): its rows keep their characters instead of going
 through the cart's byte encoding, whose Japanese block reuses the Latin
 block's values.
 
+LeafGreen is required alongside FireRed, the way Crystal is alongside Gold and
+Silver. The two carts share their named text, their catalogs and the engine's
+own strings, but lay their script text out at different addresses: the
+dialogue keys of one cart mean nothing on the other, and the few addresses both
+use hold different lines. The LeafGreen ROM is therefore extracted and joined
+through pret's `pokeleafgreen.sym` like FireRed through `pokefirered.sym`, and
+the mod ships the dialogue in three layers: the named text both carts share
+(`lang/dialogue.lua`), then each edition's own (`lang/dialogue_firered.lua`,
+`lang/dialogue_leafgreen.lua`), picked at runtime from `GameVersion`. Where a
+ROM table points at another string in LeafGreen (the naming screen's GREEN and
+LEAF), the reviewed decision names LeafGreen's own row. The build refuses to
+package if the two carts would translate a catalog differently, and the
+release gate runs once per edition over that edition's extract, checking that
+an address both carts use keeps its own edition's line.
+
 ## Legal inputs and privacy
 
 Use dumps from your own original US cartridges:
@@ -206,6 +223,7 @@ Use dumps from your own original US cartridges:
 | Silver | `49b163f7e57702bc939d642a18f591de55d92dae` |
 | Crystal | `f4cd194bdee0d04ca4eac29e09b8e4e9d818c133` |
 | FireRed | `41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc` |
+| LeafGreen | `574fa542ffebb14be69902d1d36f1ec0a4afd71e` |
 
 The pipeline verifies these fingerprints and never downloads, provides or
 redistributes ROMs, patches or copyrighted text extracts. Generated data,
@@ -219,8 +237,8 @@ font profiles are:
 
 | Target languages | Releases | Default font | Optional font |
 | --- | --- | --- | --- |
-| `fr`, `de`, `es`, `it` | RBY, Gold/Silver/Crystal, FireRed | Fusion Pixel Latin, 10px (RBY, GSC); the cart's own font (FireRed) | Pokemon Font, 8px (RBY, GSC) |
-| `ja-Hrkt` | RBY, Gold/Silver/Crystal, FireRed | Fusion Pixel Japanese, 8px (RBY, GSC); the cart's own Japanese fonts (FireRed) | — |
+| `fr`, `de`, `es`, `it` | RBY, Gold/Silver/Crystal, FireRed/LeafGreen | Fusion Pixel Latin, 10px (RBY, GSC); the cart's own font (FireRed/LeafGreen) | Pokemon Font, 8px (RBY, GSC) |
+| `ja-Hrkt` | RBY, Gold/Silver/Crystal, FireRed/LeafGreen | Fusion Pixel Japanese, 8px (RBY, GSC); the cart's own Japanese fonts (FireRed/LeafGreen) | — |
 | `ko` | Gold/Silver/Crystal only (Crystal's own dialogue stays in English) | Fusion Pixel Hangul, 10px | — |
 
 The optional Pokemon Font is more compact, but translated text can still
@@ -328,7 +346,7 @@ provenance. Future unresolved entries will keep their original English text.
 | `ja-Hrkt` | 6839/6839 (100%) | 951/951 (100%) | 3994/3994 (100%) |
 | `ko` | 5796/6839 (84.75%) | 951/951 (100%) | 0/3994 (0%) |
 
-### FireRed
+### FireRed and LeafGreen
 
 - `FireRed ROM aggregate` combines every cart text the runtime reads -- the
   script messages and the 5,475 rows it now reads by name (menus, battle
@@ -351,6 +369,11 @@ provenance. Future unresolved entries will keep their original English text.
   German, Spanish and Italian each leave a seventh row for the same reason.
   Japanese leaves 85: 30 whose phrasing names the player where the English
   does not, and 50 lines the collection has no Japanese text for at all.
+- `LeafGreen ROM aggregate` measures the same way over the LeafGreen cart's
+  own extract, joined through `pokeleafgreen.sym`. It lands on the same
+  figures in every language: the two carts differ in where their script
+  text sits and in the naming screen's choices, not in what can be
+  translated.
 - `FireRed engine strings` covers the 1,891 `Strings()` keys the game3
   runtime reaches on its own: its menus and prompts, the ability names, the
   move and ability descriptions, the map section names and the region map's
@@ -363,16 +386,16 @@ provenance. Future unresolved entries will keep their original English text.
   A key whose text is a cart string is shipped under that string's ROM
   label, which is how the runtime looks it up.
 
-| Target | FireRed ROM aggregate | FireRed engine strings |
-| --- | ---: | ---: |
-| `fr` | 10921/10929 (99.93%) | 1891/1891 (100%) |
-| `de` | 10919/10929 (99.91%) | 1891/1891 (100%) |
-| `es` | 10919/10929 (99.91%) | 1891/1891 (100%) |
-| `it` | 10919/10929 (99.91%) | 1891/1891 (100%) |
-| `ja-Hrkt` | 10844/10929 (99.22%) | 1891/1891 (100%) |
+| Target | FireRed ROM aggregate | LeafGreen ROM aggregate | FireRed engine strings |
+| --- | ---: | ---: | ---: |
+| `fr` | 10921/10929 (99.93%) | 10921/10929 (99.93%) | 1891/1891 (100%) |
+| `de` | 10919/10929 (99.91%) | 10919/10929 (99.91%) | 1891/1891 (100%) |
+| `es` | 10919/10929 (99.91%) | 10919/10929 (99.91%) | 1891/1891 (100%) |
+| `it` | 10919/10929 (99.91%) | 10919/10929 (99.91%) | 1891/1891 (100%) |
+| `ja-Hrkt` | 10844/10929 (99.22%) | 10844/10929 (99.22%) | 1891/1891 (100%) |
 
 These measure what the mod ships, not what the current runtime displays; see
-"Pokémon FireRed support" above for the runtime limits.
+"Pokémon FireRed and LeafGreen support" above for the runtime limits.
 
 ### Other engine strings
 
@@ -416,8 +439,8 @@ Every translated engine string remains traceable:
 | Human-reviewed RBY anchor | Contextual or language-specific extraction reviewed by a maintainer; text still comes from PokeCorpus. | `config/rby/semantic_anchor_decisions.json` |
 | Human-reviewed Gold pointer | Ambiguous ROM pointer resolved to a reviewed PokeCorpus qid. | `config/gsc/pointer_decisions.json` |
 | Human-reviewed Crystal pointer | Ambiguous Crystal ROM pointer resolved to a reviewed PokeCorpus qid. | `config/gsc/crystal_pointer_decisions.json` |
-| Exact FireRed dialogue join | ROM address -> pret symbol -> PokeCorpus qid label, English verified against the ROM text. | Generation report |
-| Reviewed FireRed dialogue decision | A standard-script line gen1recomp reworded itself, joined to the cart's row carrying the same message. | `config/frlg/dialogue_decisions.json` |
+| Exact FireRed/LeafGreen dialogue join | ROM address -> the edition's pret symbol -> PokeCorpus qid label, English verified against the ROM text. | Generation report |
+| Reviewed FireRed dialogue decision | A standard-script line gen1recomp reworded itself, joined to the cart's row carrying the same message; LeafGreen's own row where its table points elsewhere. | `config/frlg/dialogue_decisions.json` |
 | Reviewed FireRed engine anchor | The cart's own row for an original FireRed menu string. | `config/frlg/engine_scope.json` |
 | Reviewed Crystal engine selector | Crystal corpus row whose list boundaries or placeholder count don't fit the shared anchor grammar, resolved to a specific qid/segment. | `config/gsc/crystal_string_selectors.json` |
 | Reviewed placeholder exception | Official localized wording legitimately adds or omits a runtime value such as the player name or an item quantity. This records no translated text and does not disable the audit; each exception is scoped to a language, ROM pointer, corpus QID, and exact audit message. | `config/gsc/placeholder_decisions.json` |
@@ -515,7 +538,7 @@ language overrides follow the same split under `overrides/<language>/`.
 | `config/gsc/crystal_pointer_decisions.json` | Human-reviewed picks for ambiguous Crystal dialogue pointers. |
 | `config/gsc/crystal_rom_text_anchors.json` | Crystal-only RomText labels mapped to their PokeCorpus rows -- a labeled fallback path alongside Crystal's own pointer-based dialogue join. |
 | `config/gsc/crystal_semantic_anchors.json` | Evidence for Crystal engine-string corpus matches. |
-| `config/frlg/dialogue_decisions.json` | Reviewed corpus rows for FireRed standard-script lines gen1recomp reworded. |
+| `config/frlg/dialogue_decisions.json` | Reviewed corpus rows for FireRed standard-script lines gen1recomp reworded, with LeafGreen's own pick where its tables differ. |
 | `config/frlg/engine_scope.json` | FireRed-reachable `Strings()` keys, their callsites and reviewed cart rows. |
 | `config/gsc/crystal_string_selectors.json` | Reviewed qid/segment picks for Crystal corpus rows whose list boundaries or placeholder count don't fit the shared semantic-anchor grammar. |
 
@@ -614,9 +637,9 @@ archive before upload.
   identical to an English type name is translated too.
 - The desktop launcher uses a separate renderer and is outside the content
   mod's translation hooks.
-- FireRed's Pokédex descriptions, help system and quest log stay in English,
-  and the party names an egg EGG, until the upstream fixes listed in the
-  FireRed section of the document below land.
+- FireRed and LeafGreen's Pokédex descriptions, help system and quest log
+  stay in English until the upstream fixes listed in the FireRed section of
+  the document below land.
 - RBY-, Gold and Silver- and FireRed-specific upstream engine gaps are tracked in
   [docs/upstream-fixes.md](docs/upstream-fixes.md).
 
