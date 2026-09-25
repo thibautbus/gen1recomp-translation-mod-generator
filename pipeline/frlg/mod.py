@@ -46,7 +46,7 @@ from .join import (
 from .text import ir_plain, load_charmap, load_symbols
 from ..shared.generate import lua_string
 from ..shared.mod_assets import TRANSLATION_MOD_PRIORITY
-from ..shared.project import is_frozen, project_config, project_version, resource_root
+from ..shared.project import is_frozen, project_config, project_version, resource_root, which_luajit
 from ..shared.roms import import_frlg_rom, verify_firered_rom
 from ..shared.specs import game_spec, languages_for_collection, release_profile
 
@@ -245,6 +245,7 @@ def join_frlg(
     symbols_path: str | Path,
     charmap_path: str | Path,
     gen1recomp: str | Path | None = None,
+    luajit: str | None = None,
 ) -> dict:
     """Run every FireRed join for one language; return catalogs and stats."""
     extracted = Path(extracted)
@@ -290,7 +291,7 @@ def join_frlg(
     strings, engine_stats = join_frlg_engine_strings(scope, corpus, charmap)
     by_english: dict[str, str] = {}
     if gen1recomp is not None:
-        strings, by_english = rom_label_strings(strings, gen1recomp, scope)
+        strings, by_english = rom_label_strings(strings, gen1recomp, scope, luajit)
     catalogs = {name: result.values for name, result in results.items()}
     catalogs["strings"] = strings
     if by_english:
@@ -339,7 +340,8 @@ ENGLISH_LOOKUP_SITES = (
 
 
 def rom_label_strings(values: Mapping[str, str], gen1recomp: str | Path,
-                      scope: Mapping[str, Mapping] | None = None) -> tuple[dict[str, str], dict[str, str]]:
+                      scope: Mapping[str, Mapping] | None = None,
+                      luajit: str | None = None) -> tuple[dict[str, str], dict[str, str]]:
     """Key every cart string of the engine catalog by its ROM label.
 
     Since gen1recomp v0.3.0 the runtime looks a cart string up by its label
@@ -369,7 +371,20 @@ def rom_label_strings(values: Mapping[str, str], gen1recomp: str | Path,
             "no imported FireRed cache to read the cart's ROM labels from; "
             "the extract must be mounted before the catalogs are written"
         )
-    rom_text = modkit.harvest_rom_text(repo, caches)
+    # harvest_rom_text runs $LUA, or else the luajit on PATH, and a standalone
+    # build carries its own LuaJIT where no PATH looks: hand Modkit that one.
+    luajit = luajit or which_luajit()
+    if luajit is None:
+        raise BuildError("LuaJIT is required to read the cart's ROM labels; see MODKIT_LUAJIT")
+    previous = os.environ.get("LUA")
+    os.environ["LUA"] = str(luajit)
+    try:
+        rom_text = modkit.harvest_rom_text(repo, caches)
+    finally:
+        if previous is None:
+            os.environ.pop("LUA", None)
+        else:
+            os.environ["LUA"] = previous
     engine_literals = {literal for literal, _site in modkit.harvest_engine_strings(repo)}
     done = {lua_string(key): lua_string(value) for key, value in values.items()}
     modkit.migrate_rom_text(done, rom_text, engine_literals)
@@ -537,6 +552,43 @@ def write_frlg_report(path: Path, joined: dict, coverage: dict, gate: dict) -> N
 
 # ---------------------------------------------------------------- build
 
+def _is_link(path: Path) -> bool:
+    """A symlink, or the directory junction a Windows build links with."""
+    if path.is_symlink():
+        return True
+    if hasattr(os.path, "isjunction"):  # Python 3.12
+        return os.path.isjunction(path)
+    try:
+        tag = getattr(os.lstat(path), "st_reparse_tag", 0)
+    except OSError:
+        return False
+    return tag == 0xA0000003  # IO_REPARSE_TAG_MOUNT_POINT
+
+
+def _link_directory(link: Path, target: Path) -> None:
+    """Point ``link`` at the directory ``target``.
+
+    Windows only lets an elevated prompt or Developer Mode make a symlink, so
+    a build there makes a directory junction instead, which needs neither and
+    which Modkit reads through the same way.
+    """
+    if os.name == "nt":
+        import _winapi
+        _winapi.CreateJunction(str(target), str(link))
+    else:
+        link.symlink_to(target, target_is_directory=True)
+
+
+def _unlink_directory(link: Path) -> None:
+    """Remove a link made by _link_directory, never what it points at."""
+    try:
+        link.unlink()
+    except OSError:
+        if not _is_link(link):
+            raise
+        os.rmdir(link)  # a junction, where unlink refuses a directory
+
+
 @contextmanager
 def _rom_text_cache(gen1recomp: Path, extracted: Path):
     """Let Modkit read the imported cart text while the mod is built.
@@ -554,18 +606,20 @@ def _rom_text_cache(gen1recomp: Path, extracted: Path):
     target = (extracted / "cache").resolve()
     if not (target / "data" / "generated" / "gba" / "scripts" / "text.lua").is_file():
         raise BuildError(f"the FireRed extract has no script text cache: {target}")
-    if link.is_symlink() or link.is_file():
+    if _is_link(link):
+        _unlink_directory(link)
+    elif link.is_file():
         link.unlink()
     elif link.is_dir():
         # A real import lives there (Modkit documents <repo>/firered as the
         # place it reads the cart's text from): the build never removes one.
         raise BuildError(f"{link} is a directory, not this build's link to its extract")
-    link.symlink_to(target, target_is_directory=True)
+    _link_directory(link, target)
     try:
         yield link
     finally:
-        if link.is_symlink():
-            link.unlink()
+        if _is_link(link):
+            _unlink_directory(link)
 
 
 def package_frlg_mod(
@@ -637,7 +691,7 @@ def build_frlg(
     with _rom_text_cache(gen1recomp, extracted):
         log("\nJoining corpus and generating the mod...")
         status("Joining corpus and generating the mod")
-        joined = join_frlg(extracted, corpus_dir, language, symbols, charmap, gen1recomp)
+        joined = join_frlg(extracted, corpus_dir, language, symbols, charmap, gen1recomp, luajit)
         build_root = workspace / "interactive-gen3" / language
         mod_dir = build_root / frlg_mod_id(language)
         generate_frlg_mod(

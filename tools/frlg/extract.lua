@@ -43,6 +43,40 @@ package.path = table.concat({
 
 love = require("tests.love_stub")
 
+-- FileIO.makeCache creates its directories with lfs when it can, and with
+-- `mkdir -p '<dir>'` through the shell otherwise, which only a POSIX shell
+-- understands: cmd.exe refuses the command, no directory is made and every
+-- stage's first cache write fails.  Without lfs, hand it one backed by the
+-- mkdir syscall through the FFI, as src/import/CacheFs.lua does for the game
+-- itself; it also keeps a path's `&` or quote away from any shell.
+if not pcall(require, "lfs") then
+  local ok, ffi = pcall(require, "ffi")
+  if ok then
+    local mkdir
+    if ffi.os == "Windows" then
+      ffi.cdef("int CreateDirectoryA(const char *lpPathName, void *lpSecurityAttributes);")
+      mkdir = function(path) return ffi.C.CreateDirectoryA(path, nil) ~= 0 end
+    else
+      ffi.cdef("int mkdir(const char *pathname, unsigned int mode);")
+      mkdir = function(path) return ffi.C.mkdir(path, 493) == 0 end -- 0755
+    end
+    package.preload.lfs = function()
+      -- FileIO splits a path on "/" only, so a Windows path reaches this
+      -- with its backslash components joined: make each of them in turn.
+      return {
+        mkdir = function(path)
+          local sep = path:find("[\\/]", 2)
+          while sep do
+            mkdir(path:sub(1, sep - 1))
+            sep = path:find("[\\/]", sep + 1)
+          end
+          return mkdir(path)
+        end,
+      }
+    end
+  end
+end
+
 local Json = require("src.link.Json")
 local FileIO = require("src.import.gba.file_io")
 local Rom = require("src.import.gba.rom")
