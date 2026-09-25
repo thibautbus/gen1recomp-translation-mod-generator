@@ -20,7 +20,7 @@ from .subprocess_run import run_streamed
 # Product support is intentionally limited to the canonical US games; this
 # allowlist is independent of whatever sections a config may contain.
 SUPPORTED_VERSIONS = frozenset(("red", "blue", "yellow"))
-CONFIGURED_VERSIONS = SUPPORTED_VERSIONS | {"gold", "silver", "crystal", "firered"}
+CONFIGURED_VERSIONS = SUPPORTED_VERSIONS | {"gold", "silver", "crystal", "firered", "leafgreen"}
 _SHA1 = re.compile(r"[0-9a-f]{40}\Z")
 _MANIFESTS = {
     "red": "rom_manifest.json",
@@ -362,9 +362,11 @@ def import_crystal_rom(
             shutil.rmtree(temporary, ignore_errors=True)
 
 
-# FireRed (US, v1.0) is its own generation-3 release; [rom.firered] is
-# optional in pipeline.toml like the Gen 2 sections.
+# FireRed and LeafGreen (US, v1.0) make the generation-3 release;
+# [rom.firered] and [rom.leafgreen] are optional in pipeline.toml like the
+# Gen 2 sections.
 FIRERED_SHA1 = CANONICAL.get("firered")
+LEAFGREEN_SHA1 = CANONICAL.get("leafgreen")
 
 # tools/frlg/extract.lua's outputs the FireRed join cannot do without.
 FRLG_REQUIRED_JSON = (
@@ -377,38 +379,58 @@ FRLG_REQUIRED_JSON = (
 )
 
 
-def verify_firered_rom(path: str | Path) -> dict[str, Any]:
-    """Verify a real FireRed (US) ROM against the canonical fingerprint."""
-    if FIRERED_SHA1 is None:
+_FRLG_EDITIONS = {"firered": "FireRed", "leafgreen": "LeafGreen"}
+
+
+def _verify_frlg_edition(path: str | Path, edition: str) -> dict[str, Any]:
+    name = _FRLG_EDITIONS[edition]
+    expected = CANONICAL.get(edition)
+    if expected is None:
         raise ValueError(
-            "missing [rom.firered] configuration: FireRed ROM verification "
+            f"missing [rom.{edition}] configuration: {name} ROM verification "
             "requires that section in config/pipeline.toml"
         )
     path = Path(path)
     actual = sha1(path)
-    if actual != FIRERED_SHA1:
-        raise ValueError(f"FireRed ROM SHA-1 mismatch: {actual} (expected {FIRERED_SHA1})")
-    return {"version": "firered", "path": str(path.resolve()), "sha1": actual, "size": path.stat().st_size}
+    if actual != expected:
+        raise ValueError(f"{name} ROM SHA-1 mismatch: {actual} (expected {expected})")
+    return {"version": edition, "path": str(path.resolve()), "sha1": actual, "size": path.stat().st_size}
+
+
+def verify_firered_rom(path: str | Path) -> dict[str, Any]:
+    """Verify a real FireRed (US) ROM against the canonical fingerprint."""
+    return _verify_frlg_edition(path, "firered")
+
+
+def verify_leafgreen_rom(path: str | Path) -> dict[str, Any]:
+    """Verify a real LeafGreen (US) ROM against the canonical fingerprint."""
+    return _verify_frlg_edition(path, "leafgreen")
 
 
 def import_frlg_rom(
     rom: str | Path, gen1recomp: str | Path, out: str | Path,
     log_fn: Callable[[str], None] | None = None,
+    edition: str = "firered",
 ) -> None:
-    """Extract and atomically publish the FireRed JSON tables.
+    """Extract and atomically publish one edition's JSON tables.
 
     tools/frlg/extract.lua drives gen1recomp's own GBA extractor under the
     headless LÖVE stub; the extractor's cache (the layout a game3 boot reads)
-    is kept under ``out/cache`` for the release gate.
+    is kept under ``out/cache`` for the release gate.  The extractor picks
+    the edition's addresses from the ROM's SHA-1 (``Rom.open`` calls
+    ``Versions.select``), so FireRed and LeafGreen go through the same script.
     """
-    info = verify_firered_rom(rom)
+    if edition not in _FRLG_EDITIONS:
+        raise ValueError(f"unsupported generation-3 edition: {edition!r}")
+    name = _FRLG_EDITIONS[edition]
+    info = _verify_frlg_edition(rom, edition)
     root = Path(gen1recomp).resolve()
     rom = Path(rom).resolve()
     out = Path(out).resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
     luajit = which_luajit()
     if luajit is None:
-        raise RuntimeError("LuaJIT is required to import a FireRed ROM; see MODKIT_LUAJIT")
+        raise RuntimeError(f"LuaJIT is required to import a {name} ROM; see MODKIT_LUAJIT")
     script = resource_root() / "tools" / "frlg" / "extract.lua"
     temporary = Path(tempfile.mkdtemp(prefix=f".{out.name}-", dir=out.parent))
     command = [luajit, str(script), str(root), str(rom), str(temporary), info["sha1"]]
@@ -422,7 +444,7 @@ def import_frlg_rom(
         ]
         if failed or missing:
             raise RuntimeError(
-                "FireRed extraction did not complete: "
+                f"{name} extraction did not complete: "
                 + "; ".join(filter(None, (
                     ("failed stages: " + ", ".join(f"{name} ({stages[name]})" for name in failed)) if failed else "",
                     ("missing outputs: " + ", ".join(missing)) if missing else "",

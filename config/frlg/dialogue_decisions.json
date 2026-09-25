@@ -340,7 +340,11 @@
     },
     "sFemaleNameChoices[1]": {
       "qid": "frlg.script.new_game_intro.gNameChoice_Fire",
-      "reason": "The cart reaches this row through sFemaleNameChoices, which the corpus has no row of its own for: pret points that entry at gNameChoice_Fire, whose English is this very text."
+      "reason": "The cart reaches this row through sFemaleNameChoices, which the corpus has no row of its own for: pret points that entry at gNameChoice_Fire, whose English is this very text.",
+      "leafgreen": {
+        "qid": "frlg.script.new_game_intro.gNameChoice_Leaf",
+        "reason": "LeafGreen builds sFemaleNameChoices from its own names (pret oak_speech.c, #elif defined(LEAFGREEN)): this entry points at gNameChoice_Leaf, whose English is the LeafGreen cart's text here."
+      }
     },
     "sFemaleNameChoices[4]": {
       "qid": "frlg.script.new_game_intro.gNameChoice_Amanda",
@@ -732,7 +736,11 @@
     },
     "sMaleNameChoices[1]": {
       "qid": "frlg.script.new_game_intro.gNameChoice_Fire",
-      "reason": "The cart reaches this row through sMaleNameChoices, which the corpus has no row of its own for: pret points that entry at gNameChoice_Fire, whose English is this very text."
+      "reason": "The cart reaches this row through sMaleNameChoices, which the corpus has no row of its own for: pret points that entry at gNameChoice_Fire, whose English is this very text.",
+      "leafgreen": {
+        "qid": "frlg.script.new_game_intro.gNameChoice_Leaf",
+        "reason": "LeafGreen builds sMaleNameChoices from its own names (pret oak_speech.c, #elif defined(LEAFGREEN)): this entry points at gNameChoice_Leaf, whose English is the LeafGreen cart's text here."
+      }
     },
     "sMenuAction_SummaryTrade[0]": {
       "qid": "frlg.common.strings.gText_TradeAction_Summary",

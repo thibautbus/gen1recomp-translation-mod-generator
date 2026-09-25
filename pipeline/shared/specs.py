@@ -63,6 +63,7 @@ GAME_SPECS: Mapping[str, GameSpec] = {
     "gs": GameSpec("gs", 2, "GoldSilver"),
     "crystal": GameSpec("crystal", 2, "Crystal"),
     "firered": GameSpec("firered", 3, "FireRedLeafGreen"),
+    "leafgreen": GameSpec("leafgreen", 3, "FireRedLeafGreen"),
 }
 
 RELEASE_PROFILES: Mapping[str, ReleaseProfile] = {
@@ -76,9 +77,12 @@ RELEASE_PROFILES: Mapping[str, ReleaseProfile] = {
     # in its games tuple is GAME_SPECS' own Gold/Silver-only entry, matching
     # how "rby"'s games tuple keeps "rb"/"yellow" as separate sub-keys.
     "gsc": ReleaseProfile("gsc", 2, ("gs", "crystal")),
-    # FireRed alone: gen1recomp's game3 runtime only boots FireRed (US),
-    # LeafGreen is not a supported game there.
-    "frlg": ReleaseProfile("frlg", 3, ("firered",)),
+    # LeafGreen is a mandatory companion ROM, like Crystal is for "gsc": one
+    # mod covers firered/leafgreen, gated at runtime by GameVersion.  The two
+    # carts share their named text and catalogs but lay their script text out
+    # at different addresses, so LeafGreen's dialogue can only be keyed from
+    # its own ROM (pipeline/frlg/mod.py's build_frlg()).
+    "frlg": ReleaseProfile("frlg", 3, ("firered", "leafgreen")),
 }
 
 # The collection is the source of truth for the UI language domain.  Keeping

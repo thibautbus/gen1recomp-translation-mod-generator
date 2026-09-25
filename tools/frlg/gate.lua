@@ -1,12 +1,15 @@
--- Proof the FireRed translation mod reaches what the game3 runtime reads,
--- through gen1recomp's real generation-3 mod loader (tests.modkit's SDK,
--- the seam its own Gen 3 registry tests use), on top of the real game3 data
--- modules loaded from a private FireRed extract -- not a fixture.
+-- Proof the FireRed/LeafGreen translation mod reaches what the game3 runtime
+-- reads, through gen1recomp's real generation-3 mod loader (tests.modkit's
+-- SDK, the seam its own Gen 3 registry tests use), on top of the real game3
+-- data modules loaded from a private extract of one edition -- not a fixture.
 --
 -- Checks, for one sample per catalog the build hands over in <expectations>:
---   * the mod loads with no error under GameVersion "firered";
+--   * the mod loads with no error under GameVersion <edition> ("firered"
+--     unless given);
 --   * dialogue: data.gen3Text (the live Space.bundle.text a game3 boot
 --     exposes) holds the translated IR, and TextIR.toTextBox renders it;
+--   * edition: at an address both carts use for different lines, the text
+--     is this edition's -- the other edition's layer never reaches it;
 --   * species/move/item/trainer names, item descriptions and trainer class
 --     names are read back through the same module
 --     APIs the game3 UI calls (Pokemon.name, ItemsData.info, Trainers.get...);
@@ -22,12 +25,13 @@
 --   * strings: whether Strings() answers from the merged catalog at all.
 --
 -- Usage: luajit tools/frlg/gate.lua <gen1recomp_root> <extract_cache_dir> <mod_dir>
---                             <expectations.json> <report.json>
+--                             <expectations.json> <report.json> [edition]
 
-local engineRoot, cacheDir, modDir, expectationPath, reportPath = ...
+local engineRoot, cacheDir, modDir, expectationPath, reportPath, edition = ...
+edition = edition or "firered"
 if not (engineRoot and cacheDir and modDir and expectationPath and reportPath) then
   io.stderr:write("usage: luajit tools/frlg/gate.lua <gen1recomp_root> <extract_cache_dir> "
-    .. "<mod_dir> <expectations.json> <report.json>\n")
+    .. "<mod_dir> <expectations.json> <report.json> [edition]\n")
   os.exit(2)
 end
 
@@ -37,7 +41,7 @@ love = require("tests.love_stub")
 local Json = require("src.link.Json")
 local FileIO = require("src.import.gba.file_io")
 local GameVersion = require("src.core.GameVersion")
-GameVersion.set("firered")
+GameVersion.set(edition)
 
 local function readFile(path)
   local file = io.open(path, "rb")
@@ -118,7 +122,7 @@ local T = require("tests.modkit")
 local modParent, modName = modDir:match("^(.*)[/\\]([^/\\]*)$")
 if not modParent then modParent, modName = ".", modDir end
 local result = T.sdk.loadMod(modName, { generation = 3, root = modParent, data = data })
-check(#result.errors == 0, "the mod loads with no errors under GameVersion=firered")
+check(#result.errors == 0, "the mod loads with no errors under GameVersion=" .. edition)
 for _, err in ipairs(result.errors or {}) do
   io.stderr:write("  loader error: " .. tostring(err.message or err) .. "\n")
 end
@@ -146,6 +150,12 @@ if sample then
   local rendered = TextIR.toTextBox(live or {}, { playerName = "RED" })
   check(type(rendered) == "string" and rendered:find(sample.probe, 1, true) ~= nil,
     "dialogue " .. sample.key .. " renders through TextIR.toTextBox")
+end
+
+local guard = expectations.edition_guard
+if guard then
+  check(sameIr(data.gen3Text[guard.key], guard.ir),
+    "dialogue " .. guard.key .. " keeps the " .. edition .. " line (the other edition's layer stays out)")
 end
 
 local function names()

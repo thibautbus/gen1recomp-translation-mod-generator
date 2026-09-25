@@ -116,7 +116,8 @@ def build_request(
         from ..frlg.mod import build_frlg
 
         return build_frlg(
-            request.source_for("firered"), request.language, language_name, luajit,
+            request.source_for("firered"), request.source_for("leafgreen"), request.language,
+            language_name, luajit,
             workspace_root=workspace_root, output_dir=output_dir,
             log_fn=log_fn, status_fn=status_fn,
         )

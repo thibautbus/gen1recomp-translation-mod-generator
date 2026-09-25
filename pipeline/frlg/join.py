@@ -175,14 +175,25 @@ def load_frlg_dialogue_overrides(language: str, root: str | Path | None = None) 
     return entries
 
 
-def load_frlg_dialogue_decisions(path: str | Path | None = None) -> dict[str, str]:
+FRLG_EDITIONS = ("firered", "leafgreen")
+
+
+def load_frlg_dialogue_decisions(path: str | Path | None = None,
+                                 edition: str = "firered") -> dict[str, str]:
     """Reviewed ``{key: qid}`` picks for text gen1recomp rewrote itself.
 
     The standard scripts (nurse, PC, item pickup) are keyed by label and
     their English is gen1recomp's own wording, not the cart's, so it can
     never reproduce the corpus row.  A decision records that the corpus row
     is still the same message; the translation keeps every other check.
+
+    A label names the same table in both carts, but a table can point at
+    another string in LeafGreen (pret's ``#elif defined(LEAFGREEN)``): such an
+    entry carries a ``leafgreen`` pick of its own, which that edition reads
+    instead.
     """
+    if edition not in FRLG_EDITIONS:
+        raise ValueError(f"unsupported generation-3 edition: {edition!r}")
     if path is None:
         path = Path(__file__).resolve().parents[2] / "config" / "frlg" / "dialogue_decisions.json"
     path = Path(path)
@@ -191,12 +202,18 @@ def load_frlg_dialogue_decisions(path: str | Path | None = None) -> dict[str, st
     data = json.loads(path.read_text(encoding="utf-8"))
     if data.get("schema") != FRLG_DIALOGUE_DECISIONS_SCHEMA or data.get("version") != 1:
         raise ValueError(f"unsupported FireRed dialogue decisions: {path}")
+
+    def pick(row) -> bool:
+        return (isinstance(row, dict) and isinstance(row.get("qid"), str)
+                and row["qid"].startswith("frlg.") and isinstance(row.get("reason"), str))
+
     result: dict[str, str] = {}
     for key, row in (data.get("entries") or {}).items():
-        if (not isinstance(row, dict) or not isinstance(row.get("qid"), str)
-                or not row["qid"].startswith("frlg.") or not isinstance(row.get("reason"), str)):
+        if not pick(row) or set(row) - {"qid", "reason", "leafgreen"}:
             raise ValueError(f"invalid FireRed dialogue decision for {key!r}: {path}")
-        result[key] = row["qid"]
+        if "leafgreen" in row and (not pick(row["leafgreen"]) or set(row["leafgreen"]) - {"qid", "reason"}):
+            raise ValueError(f"invalid LeafGreen dialogue decision for {key!r}: {path}")
+        result[key] = (row["leafgreen"] if edition == "leafgreen" and "leafgreen" in row else row)["qid"]
     return result
 
 

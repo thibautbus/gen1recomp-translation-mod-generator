@@ -1,5 +1,7 @@
--- Headless FireRed ROM extraction under plain LuaJIT (no LÖVE, no ROM in
--- git).
+-- Headless FireRed or LeafGreen ROM extraction under plain LuaJIT (no LÖVE,
+-- no ROM in git).  The edition follows from <rom_sha1>: Rom.open hands it to
+-- Versions.select, which moves every FireRed address onto LeafGreen's
+-- (src/import/gba/editions/leafgreen_1_0.lua).
 --
 -- Runs the subset of gen1recomp's own FireRed extractor
 -- (src/import/gba/extract_island1.lua's Extract.run and
@@ -110,7 +112,7 @@ local function loadCached(rel)
   return chunk()
 end
 
-local version = assert(Versions.lookup(sha1), "unsupported FireRed ROM " .. sha1)
+local version = assert(Versions.lookup(sha1), "unsupported FireRed/LeafGreen ROM " .. sha1)
 
 -- Census first: it registers every map header the script BFS seeds from
 -- (Extract.run does the same before writeBundleFromRom).
