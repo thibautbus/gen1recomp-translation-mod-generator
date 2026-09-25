@@ -222,6 +222,18 @@ class GenerateGsModTests(unittest.TestCase):
             self.assertNotIn("crystal_game_version", main)
 
 
+class GsUiLabelTests(unittest.TestCase):
+    def test_the_start_menu_pack_label_comes_from_the_start_menus_own_row(self):
+        # The Japanese and Korean carts order their battle menu FIGHT/PACK/
+        # #MON/RUN, so its third segment is the #MON label there: taking PACK
+        # from it printed ポケモン/포켓몬 on the start menu's bag entry.
+        rows = [
+            ("gs.menu.BattleMenuHeader.Text", "FIGHT@<PK><MN>@PACK@RUN@", "たたかう@リュック@#@にげる@"),
+            ("gs.start_menu.StartMenu.PackString", "PACK@", "リュック@"),
+        ]
+        self.assertEqual(_gs_ui_labels(rows)["PACK"], "リュック")
+
+
 class GsReleaseGateFlowTests(unittest.TestCase):
     def test_registry_expectations_reject_missing_or_empty_catalogs(self):
         with tempfile.TemporaryDirectory() as tmp:

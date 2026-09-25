@@ -2763,9 +2763,9 @@
       "provenance": "Generic, matching the bare \"ON\" key (also carried from RBY) -- this padded variant is shared literally by both the Battle Scene and Menu Account toggle rows (ui/gen2/OptionsMenu.lua), whose real corpus text differs per context (\"watch slowly\" vs \"display\"); a single shared key can't carry both, so it uses the same generic word as every other ON/OFF toggle in this port."
     },
     "OPTION": {
-      "override": "せっていを　かえる",
+      "override": "せってい",
       "reason": "engine-original",
-      "provenance": "Corpus-confirmed from gs.main_menu.MainMenu.Strings, segment 2 of the packed CONTINUE/NEW GAME/OPTION/MYSTERY GIFT row (real Gold ROM title-menu text). Explicit override needed: without it, the automatic matcher resolves this key to a truncated \"せってい\" (settings, noun only) from an unrelated row, missing the verb half of this specific segment."
+      "provenance": "Corpus-confirmed from gs.start_menu.StartMenu.OptionString, the start menu's own label: the OPTION key is drawn there as well as on the title menu, and the title menu's longer gs.main_menu.MainMenu.Strings wording overflows the start menu."
     },
     "ORANGE": {
       "override": "オレンジ",
