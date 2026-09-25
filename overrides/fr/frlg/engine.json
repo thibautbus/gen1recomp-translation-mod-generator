@@ -432,6 +432,11 @@
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; stand-in name when the Union Room does not know who is asking (src/core/game3/link/union_room.lua); it opens union_room_message.gText_UR_PlayerContactedYouForXAccept."
     },
+    "The battle couldn't start: %s.": {
+      "override": "Le combat n'a pas pu commencer: %s.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
+    },
     "The connection failed.": {
       "override": "La connexion a échoué.",
       "reason": "engine-original",

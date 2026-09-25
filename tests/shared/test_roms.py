@@ -10,7 +10,7 @@ from pipeline.shared.project import project_config
 from pipeline.shared.roms import (
     CANONICAL, CRYSTAL_SHA1, GS_REQUIRED_TSV, GOLD_SHA1, SILVER_SHA1, import_crystal_rom,
     GS_PINNED_REQUIRED_TSV, import_gs_rom, import_rom, verify_crystal_rom,
-    verify_gs_rom, verify_rb_rom, verify_rom,
+    import_frlg_rom, verify_firered_rom, verify_gs_rom, verify_leafgreen_rom, verify_rb_rom, verify_rom,
 )
 from pipeline.shared.engine_profile import UPSTREAM_PROFILE
 
@@ -43,9 +43,28 @@ class RomConfigTests(unittest.TestCase):
 
     def test_checked_in_rom_sections_have_no_paths(self):
         config = project_config()
-        self.assertEqual(set(config["rom"]), {"red", "blue", "yellow", "gold", "silver", "crystal", "firered"})
+        self.assertEqual(set(config["rom"]),
+                         {"red", "blue", "yellow", "gold", "silver", "crystal", "firered", "leafgreen"})
         for section in config["rom"].values():
             self.assertNotIn("path", section)
+
+    def test_each_generation_3_edition_checks_its_own_fingerprint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rom = Path(tmp) / "leafgreen.gba"
+            rom.write_bytes(b"test LeafGreen ROM")
+            digest = hashlib.sha1(b"test LeafGreen ROM").hexdigest()
+            with patch("pipeline.shared.roms.CANONICAL", {"firered": "0" * 40, "leafgreen": digest}):
+                self.assertEqual(verify_leafgreen_rom(rom)["version"], "leafgreen")
+                with self.assertRaisesRegex(ValueError, "FireRed ROM SHA-1 mismatch"):
+                    verify_firered_rom(rom)
+            with patch("pipeline.shared.roms.CANONICAL", {"firered": "0" * 40}):
+                with self.assertRaisesRegex(ValueError, r"missing \[rom.leafgreen\]"):
+                    verify_leafgreen_rom(rom)
+
+    def test_generation_3_import_refuses_an_unknown_edition(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(ValueError, "unsupported generation-3 edition"):
+                import_frlg_rom(Path(tmp) / "rom.gba", tmp, Path(tmp) / "out", edition="emerald")
 
     def test_verify_rom_loads_expected_hash_from_toml(self):
         payload = b"test red ROM"

@@ -18,7 +18,8 @@ from pipeline.frlg.join import (
     registry_id, registry_ids,
 )
 from pipeline.frlg.mod import (
-    FRLG_CATALOG_HOOKS, _trainer_class_names, frlg_archive_name, frlg_mod_id, generate_frlg_mod, lua_ir,
+    FRLG_CATALOG_HOOKS, _trainer_class_names, check_shared_catalogs, edition_guards, frlg_archive_name,
+    frlg_mod_id, generate_frlg_mod, lua_ir, split_frlg_dialogue, write_gate_expectations,
 )
 from pipeline.frlg.text import (
     EncodeError, RUNTIME_CHARMAP, corpus_ir, decode, encode, ir_plain, load_charmap, load_symbols,
@@ -763,11 +764,127 @@ class FrlgModTests(unittest.TestCase):
         self.assertEqual(catalog, {"YES": "OUI"})
 
 
+class FrlgLeafGreenTests(unittest.TestCase):
+    """One mod for both editions: LeafGreen's script text sits at its own
+    addresses, its named text and catalogs are FireRed's."""
+
+    FIRERED = {
+        "g3:08000010": [text("FEU ROUGE"), EOS],
+        "sMaleNameChoices[1]": [text("FEU"), EOS],
+        "gText_Shared": [text("PARTAGE"), EOS],
+    }
+    LEAFGREEN = {
+        "g3:08000010": [text("VERT FEUILLE"), EOS],
+        "g3:08000020": [text("SEULEMENT VERT"), EOS],
+        "sMaleNameChoices[1]": [text("FEUILLE"), EOS],
+        "gText_Shared": [text("PARTAGE"), EOS],
+    }
+
+    def test_decisions_name_leafgreens_own_rows_where_its_tables_differ(self):
+        firered = load_frlg_dialogue_decisions()
+        leafgreen = load_frlg_dialogue_decisions(edition="leafgreen")
+        for key in ("sMaleNameChoices[1]", "sFemaleNameChoices[1]"):
+            self.assertTrue(firered[key].endswith(".gNameChoice_Fire"))
+            self.assertTrue(leafgreen[key].endswith(".gNameChoice_Leaf"))
+        self.assertEqual(firered.keys(), leafgreen.keys())
+        self.assertEqual(sum(firered[key] != leafgreen[key] for key in firered), 2)
+        with self.assertRaises(ValueError):
+            load_frlg_dialogue_decisions(edition="emerald")
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "decisions.json"
+            path.write_text(json.dumps({
+                "schema": "gen1recomp-translation-mods/frlg-dialogue-decisions", "version": 1,
+                "entries": {"k": {"qid": "frlg.a", "reason": "r", "leafgreen": {"qid": "frlg.b"}}},
+            }), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "LeafGreen dialogue decision"):
+                load_frlg_dialogue_decisions(path, edition="leafgreen")
+
+    def test_address_keys_belong_to_their_edition_and_named_text_is_shared(self):
+        shared, firered, leafgreen = split_frlg_dialogue(self.FIRERED, self.LEAFGREEN)
+        self.assertEqual(set(shared), {"gText_Shared"})
+        self.assertEqual(set(firered), {"g3:08000010", "sMaleNameChoices[1]"})
+        self.assertEqual(set(leafgreen), {"g3:08000010", "g3:08000020", "sMaleNameChoices[1]"})
+        self.assertEqual(edition_guards(firered, leafgreen), {
+            "firered": {"key": "g3:08000010", "ir": self.FIRERED["g3:08000010"]},
+            "leafgreen": {"key": "g3:08000010", "ir": self.LEAFGREEN["g3:08000010"]},
+        })
+        self.assertEqual(edition_guards({"sMaleNameChoices[1]": [EOS]}, {"sMaleNameChoices[1]": [text("X")]}), {})
+
+    def test_each_edition_reads_its_own_layer_at_runtime(self):
+        with tempfile.TemporaryDirectory() as directory:
+            mod = generate_frlg_mod(
+                Path(directory) / "mod", language="fr", target_name="French translation",
+                dialogue=self.FIRERED, leafgreen_dialogue=self.LEAFGREEN, catalogs={"strings": {"YES": "OUI"}},
+            )
+            manifest = json.loads((mod / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["games"], ["firered", "leafgreen"])
+            for name in ("dialogue", "dialogue_firered", "dialogue_leafgreen"):
+                self.assertTrue((mod / "lang" / f"{name}.lua").is_file(), name)
+            luajit = shutil.which("luajit")
+            if not luajit:
+                self.skipTest("LuaJIT unavailable")
+            harness = """
+local dir, edition = arg[1], arg[2]
+package.loaded["src.core.GameVersion"] = { get = function() return edition end }
+local applied = {}
+local registry = setmetatable({}, { __index = function() return function() end end })
+local mod = {
+  read = function(_, path)
+    local file = io.open(dir .. "/" .. path, "rb")
+    if not file then return nil end
+    local body = file:read("*a"); file:close(); return body
+  end,
+  content = setmetatable({ text = { override = function(_, key, ir) applied[key] = ir[1].s end } },
+                         { __index = function() return registry end }),
+  hooks = { wrap = function() end },
+}
+assert(loadfile(dir .. "/main.lua"))()(mod)
+io.write(tostring(applied["g3:08000010"]), "|", tostring(applied["g3:08000020"]), "|",
+         tostring(applied["sMaleNameChoices[1]"]), "|", tostring(applied["gText_Shared"]))
+"""
+            script = Path(directory) / "harness.lua"
+            script.write_text(harness, encoding="utf-8")
+            runs = {edition: subprocess.run([luajit, str(script), str(mod), edition],
+                                            capture_output=True, text=True, check=True).stdout
+                    for edition in ("firered", "leafgreen")}
+            self.assertEqual(runs["firered"], "FEU ROUGE|nil|FEU|PARTAGE")
+            self.assertEqual(runs["leafgreen"], "VERT FEUILLE|SEULEMENT VERT|FEUILLE|PARTAGE")
+
+    def test_a_firered_only_mod_keeps_one_dialogue_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            mod = generate_frlg_mod(Path(directory) / "mod", language="fr", target_name="French",
+                                    dialogue=self.FIRERED, catalogs={})
+            self.assertEqual(json.loads((mod / "manifest.json").read_text(encoding="utf-8"))["games"], ["firered"])
+            self.assertEqual(sorted(path.name for path in (mod / "lang").iterdir()), ["dialogue.lua"])
+
+    def test_both_editions_must_agree_on_the_catalogs_the_mod_ships(self):
+        firered = {"catalogs": {"species_names": {"BULBASAUR": "BULBIZARRE"}, "strings": {"YES": "OUI"}}}
+        check_shared_catalogs(firered, {"catalogs": {"species_names": {"BULBASAUR": "BULBIZARRE"},
+                                                     "strings": {"Yes": "OUI"}}})
+        with self.assertRaisesRegex(BuildError, "species_names"):
+            check_shared_catalogs(firered, {"catalogs": {"species_names": {"BULBASAUR": "HERBIZARRE"}}})
+
+    def test_gate_samples_the_editions_own_layer_and_its_guard(self):
+        entries = [
+            frlg_join.FrlgDialogueEntry("gText_Shared", TRANSLATED, [], translation=[{"t": "player"}, text(" PARTAGE"), EOS]),
+            frlg_join.FrlgDialogueEntry("g3:08000020", TRANSLATED, [], translation=[{"t": "player"}, text(" VERT"), EOS]),
+        ]
+        guard = {"key": "g3:08000010", "ir": self.LEAFGREEN["g3:08000010"]}
+        with tempfile.TemporaryDirectory() as directory:
+            expectations = write_gate_expectations(
+                Path(directory) / "gate.json", {"entries": entries, "catalogs": {}, "numbers": {}},
+                dialogue_keys={"g3:08000020"}, edition_guard=guard)
+        self.assertEqual(expectations["dialogue"]["key"], "g3:08000020")
+        self.assertEqual(expectations["edition_guard"], guard)
+
+
 class FrlgConfigTests(unittest.TestCase):
     def test_release_profile(self):
         profile = release_profile("frlg")
-        self.assertEqual((profile.generation, profile.games), (3, ("firered",)))
+        # LeafGreen is required alongside FireRed, the way Crystal is for Gold.
+        self.assertEqual((profile.generation, profile.games), (3, ("firered", "leafgreen")))
         self.assertEqual(game_spec("firered").corpus_collection, "FireRedLeafGreen")
+        self.assertEqual(game_spec("leafgreen").corpus_collection, "FireRedLeafGreen")
         codes = [code for code, _ in languages_for_collection("FireRedLeafGreen")]
         self.assertEqual(codes, ["fr", "de", "es", "it", "ja-Hrkt"])
 

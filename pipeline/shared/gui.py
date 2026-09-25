@@ -30,10 +30,10 @@ class GuiInputs:
 GENERATIONS = (
     (1, "Red, Blue and Yellow"),
     (2, "Gold, Silver and Crystal"),
-    (3, "FireRed"),
+    (3, "FireRed and LeafGreen"),
 )
 
-ROMS_BY_GENERATION = {1: ("rb", "yellow"), 2: ("gs", "crystal"), 3: ("firered",)}
+ROMS_BY_GENERATION = {1: ("rb", "yellow"), 2: ("gs", "crystal"), 3: ("firered", "leafgreen")}
 
 # Where each release leaves its coverage report (pipeline/*_mod.py).
 BUILD_CACHE_BY_GENERATION = {1: "interactive", 2: "interactive-gs", 3: "interactive-gen3"}
@@ -90,11 +90,12 @@ def language_label(code: str, generation: int = 1) -> str:
     raise builder.BuildError(f"Invalid language selection: {code!r}")
 
 
-# FireRed draws every string with the cart's own font and Schemas.GEN3 gates
-# the `font` registry, so generation 3 has no profile to choose.  The box still
+# FireRed and LeafGreen draw every string with the cart's own font and
+# Schemas.GEN3 gates the `font` registry, so generation 3 has no profile to
+# choose.  The box still
 # shows a value rather than a stale "Fusion Pixel...", which would read as a
 # choice the build silently ignores.
-GEN3_FONT_LABEL = "No font profile: FireRed uses the cart's own font"
+GEN3_FONT_LABEL = "No font profile: the cart's own font is used"
 
 
 def font_profile_label(profile: str, language: str = "fr") -> str:
@@ -150,7 +151,8 @@ def validate_inputs(
     for game in ROMS_BY_GENERATION[generation]:
         raw = rom_paths.get(game)
         if not raw or not str(raw).strip():
-            display = {"gs": "Gold or Silver", "rb": "Red or Blue", "firered": "FireRed"}.get(game, game.capitalize())
+            display = {"gs": "Gold or Silver", "rb": "Red or Blue", "firered": "FireRed",
+                       "leafgreen": "LeafGreen"}.get(game, game.capitalize())
             raise builder.BuildError(f"A Pokemon {display} ROM path is required.")
         path = Path(raw).expanduser()
         if not path.is_file():
@@ -163,6 +165,8 @@ def validate_inputs(
             builder.verify_crystal_rom(path)
         elif game == "firered":
             builder.verify_firered_rom(path)
+        elif game == "leafgreen":
+            builder.verify_leafgreen_rom(path)
         else:
             builder.verify_rom(path, game)
         resolved[game] = path.resolve()
@@ -176,8 +180,11 @@ def coverage_lines(path: str | Path, generation: int = 1) -> list[str]:
     if generation == 3:
         # pipeline/frlg_mod.write_frlg_report nests the metrics.
         coverage = report.get("coverage") or {}
-        for key, label in (("rom", "FireRed ROM aggregate"), ("engine_gen3", "FireRed engine strings")):
-            section = coverage.get(key) or {}
+        for key, label in (("rom", "FireRed ROM aggregate"), ("rom_leafgreen", "LeafGreen ROM aggregate"),
+                           ("engine_gen3", "FireRed engine strings")):
+            section = coverage.get(key)
+            if section is None:
+                continue
             lines.append(
                 f"{label}: {int(section.get('translated', 0))}/{int(section.get('total', 0))} "
                 f"({float(section.get('percent', 0.0)):.2f}%)"
@@ -276,7 +283,7 @@ class TranslationBuilderApp:
     def _build_widgets(self):
         tk, ttk = self.tk, self.ttk
         self.generation_var = tk.StringVar(value=generation_label(1))
-        self.rom_vars = {game: tk.StringVar() for game in ("rb", "yellow", "gs", "crystal", "firered")}
+        self.rom_vars = {game: tk.StringVar() for game in ("rb", "yellow", "gs", "crystal", "firered", "leafgreen")}
         self.language_var = tk.StringVar(value=language_label("fr"))
         self.font_profile_var = tk.StringVar(value=font_profile_label("fusion"))
         self.output_var = tk.StringVar()
@@ -299,12 +306,14 @@ class TranslationBuilderApp:
         # row is ever shown at a time, toggled by _sync_generation (the GUI
         # is a flat form, not a wizard). Crystal takes row 4 (formerly
         # Blue's own field, free since Red and Blue share byte-identical
-        # game text and only need one field between them).
+        # game text and only need one field between them), and so does
+        # LeafGreen, FireRed's companion the way Crystal is Gold's.
         rom_fields = (
             ("rb", 2, "Required to extract shared Pokémon Red/Blue game text and data. Either ROM works: Red and Blue share identical text.", "Pokemon Red or Blue ROM (US)"),
             ("gs", 2, "Required to extract Pokémon Gold and Silver game text and data. Either ROM works: Gold and Silver share identical text.", "Pokemon Gold or Silver ROM (US)"),
             ("firered", 2, "Required to extract Pokémon FireRed game text and data.", "Pokemon FireRed ROM (US)"),
             ("crystal", 4, "Required to extract Pokémon Crystal-specific game text and data.", "Pokemon Crystal ROM (US)"),
+            ("leafgreen", 4, "Required to extract Pokémon LeafGreen game text and data.", "Pokemon LeafGreen ROM (US)"),
             ("yellow", 6, "Required to extract Pokémon Yellow-specific game text and data.", "Pokemon Yellow ROM (US)"),
         )
         self.rom_widgets: dict[str, tuple] = {}
@@ -380,8 +389,9 @@ class TranslationBuilderApp:
         elif generation == 3:
             self.games_hint_var.set(
                 "Which games do you want to translate?\n"
-                "FireRed prints every string with the cart's own font, so no "
-                "font profile applies."
+                "FireRed and LeafGreen share one translation: select the two "
+                "ROMs below. Both print every string with the cart's own "
+                "font, so no font profile applies."
             )
         else:
             self.games_hint_var.set("Which games do you want to translate?")

@@ -204,11 +204,26 @@ class BuilderTests(unittest.TestCase):
         self.assertEqual(font_profile_code(GEN3_FONT_LABEL), "fusion")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            rom = root / "firered.gba"
-            rom.write_bytes(b"firered")
-            with patch.object(builder, "verify_firered_rom"), patch.object(builder, "verify_rom"):
-                inputs = validate_inputs(3, {"firered": rom}, "fr", root / "out", GEN3_FONT_LABEL)
+            firered, leafgreen = root / "firered.gba", root / "leafgreen.gba"
+            firered.write_bytes(b"firered")
+            leafgreen.write_bytes(b"leafgreen")
+            with patch.object(builder, "verify_firered_rom"), patch.object(builder, "verify_leafgreen_rom"), \
+                    patch.object(builder, "verify_rom"):
+                inputs = validate_inputs(3, {"firered": firered, "leafgreen": leafgreen}, "fr",
+                                         root / "out", GEN3_FONT_LABEL)
             self.assertEqual(inputs.font_profile, "fusion")
+            self.assertEqual(set(inputs.rom_paths), {"firered", "leafgreen"})
+
+    def test_gui_requires_the_leafgreen_rom_with_firered(self):
+        # LeafGreen's dialogue sits at its own addresses: FireRed alone
+        # cannot key it, so the generation-3 build needs both ROMs.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            firered = root / "firered.gba"
+            firered.write_bytes(b"firered")
+            with patch.object(builder, "verify_firered_rom"), \
+                    self.assertRaisesRegex(builder.BuildError, "LeafGreen ROM path is required"):
+                validate_inputs(3, {"firered": firered}, "fr", root / "out", GEN3_FONT_LABEL)
 
     def test_gui_font_profile_is_fixed_for_japanese(self):
         self.assertIn("recommended", font_profile_label("fusion"))
