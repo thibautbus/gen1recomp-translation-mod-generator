@@ -6,7 +6,7 @@
     "YES": {"qid": "gs.menu.YesNoMenuHeader.MenuData", "segment": 0},
     "NO": {"qid": "gs.menu.YesNoMenuHeader.MenuData", "segment": 1},
     "FIGHT": {"qid": "gs.menu.BattleMenuHeader.Text", "segment": 0},
-    "PACK": {"qid": "gs.menu.BattleMenuHeader.Text", "segment": 2},
+    "PACK": {"qid": "gs.start_menu.StartMenu.PackString", "segment": 0},
     "RUN": {"qid": "gs.menu.BattleMenuHeader.Text", "segment": 3},
     "CANCEL": {"qid": "gs.scrolling_menu.ScrollingMenu_UpdateDisplay.CancelString", "segment": 0},
     "WITHDRAW ITEM": {"qid": "gs.pokecenter_pc.PlayersPCMenuData.WithdrawItem", "segment": 0},

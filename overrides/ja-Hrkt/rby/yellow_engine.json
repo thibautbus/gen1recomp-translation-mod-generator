@@ -45,11 +45,11 @@
       "provenance": "Corpus-backed from poke-corpus y.bills_pc.BillsPCMenuText (Yellow-only sixth <NEXT>-separated menu item; RedBlue's rb.bills_pc.BillsPCMenuText has only five)."
     },
     "Pts": {
-      "override": "点",
+      "override": "てん",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD unit suffix (src/ui/SurfingMinigame.lua), no PokeCorpus source -- see docs/upstream-fixes.md for the full investigation."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD unit suffix (src/ui/SurfingMinigame.lua), no PokeCorpus source -- see docs/upstream-fixes.md for the full investigation. Written in kana only, as the Japanese carts are: the 8px Japanese font draws kanji illegibly."
     },
     "Radness": {
       "override": "スタイル",
@@ -66,11 +66,11 @@
       "provenance": "Corpus-backed from poke-corpus y.text_3.SleepingPikachuText1; engine fallback (src/ui/PartyMenu.lua refuseUnavailable, Yellow Pikachu follower); no dynamic parameter."
     },
     "Total": {
-      "override": "合計",
+      "override": "ごうけい",
       "reason": "yellow-only-engine-text",
       "game_version": "yellow",
       "warning": "Requires in-game visual validation",
-      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD label (src/ui/SurfingMinigame.lua), no PokeCorpus source -- see docs/upstream-fixes.md for the full investigation."
+      "provenance": "AI-generated translation; engine-authored Surfing Pikachu minigame HUD label (src/ui/SurfingMinigame.lua), no PokeCorpus source -- see docs/upstream-fixes.md for the full investigation. Written in kana only, as the Japanese carts are: the 8px Japanese font draws kanji illegibly."
     }
   }
 }

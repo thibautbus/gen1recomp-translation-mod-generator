@@ -148,9 +148,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated. v0.2.55 reformatted the engine's own English source to match the corpus row's own line breaks (previously a single unbroken line); the translation already used a different (also corpus-derived) line-break shape, so it carries over unchanged."
     },
     "%s\nused %s!": {
-      "override": "%sは\n%sを使った！",
+      "override": "%sは\n%sを　つかった！",
       "reason": "engine-contract-gap",
-      "provenance": "French/German/Spanish/Italian adapted from poke-corpus GoldSilver gs.common_2.UsedMove1Text/UsedMove2Text's own \"used\" wording (a mid-sentence fragment after the name and before the move, matching this engine's own name+LINE+used+move shape). Japanese/Korean composed: those two corpus rows are themselves two different grammatical-particle fragments (possessive vs. topic marker) for two different surrounding sentences, too entangled with their own context to reuse verbatim, so this key uses the standard real-game \"X used Y!\" phrasing instead."
+      "provenance": "French/German/Spanish/Italian adapted from poke-corpus GoldSilver gs.common_2.UsedMove1Text/UsedMove2Text's own \"used\" wording (a mid-sentence fragment after the name and before the move, matching this engine's own name+LINE+used+move shape). Japanese/Korean composed: those two corpus rows are themselves two different grammatical-particle fragments (possessive vs. topic marker) for two different surrounding sentences, too entangled with their own context to reuse verbatim, so this key uses the standard real-game \"X used Y!\" phrasing instead. Written in kana only, as the Japanese carts are: the 8px Japanese font draws kanji illegibly."
     },
     "%s\nwas defrosted.": {
       "override": "%sの　からだの\nこおりが　とけた",
@@ -1378,9 +1378,9 @@
       "provenance": "Corpus-derived from poke-corpus GoldSilver's own received-cascade-badge event message (the Kanto gym that awards it), extracting just the badge's own name from the full sentence; the engine clamps this label to 4 display glyphs itself (src/ui/gen2/TrainerCard.lua's badgeCaption), so the full name is given here rather than a pre-abbreviated one."
     },
     "CENTER": {
-      "override": "中央",
+      "override": "まんなか",
       "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. src/core/ScreenPosition.lua's centred mode."
+      "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. src/core/ScreenPosition.lua's centred mode. Written in kana only, as the Japanese carts are: the 8px Japanese font draws kanji illegibly."
     },
     "CHANGE BOX": {
       "override": "ボックスを　かえる",
@@ -1818,9 +1818,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "FULL": {
-      "override": "全画面",
+      "override": "ぜんがめん",
       "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The fullscreen-vs-windowed display mode toggle."
+      "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The fullscreen-vs-windowed display mode toggle. Written in kana only, as the Japanese carts are: the 8px Japanese font draws kanji illegibly."
     },
     "Failed to boot %s:\n%s": {
       "override": "%sを きどうできません:\n%s",
@@ -1948,9 +1948,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "HIGH": {
-      "override": "高",
+      "override": "たかい",
       "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The PERFORMANCE row's high-performance tier."
+      "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The PERFORMANCE row's high-performance tier. Written in kana only, as the Japanese carts are: the 8px Japanese font draws kanji illegibly."
     },
     "HIVE": {
       "override": "インセクト",
@@ -2013,9 +2013,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_1.MomHiHowAreYouText."
     },
     "Hit %d times!": {
-      "override": "%d回あたった！",
+      "override": "%dかい　あたった！",
       "reason": "engine-contract-gap",
-      "provenance": "Corpus-derived from poke-corpus GoldSilver gs.battle.PlayerHitTimesText/EnemyHitTimesText (identical wording in both, differing only by which RAM counter they read); Japanese/Korean reorder the number to the front to match their own natural word order."
+      "provenance": "Corpus-derived from poke-corpus GoldSilver gs.battle.PlayerHitTimesText/EnemyHitTimesText (identical wording in both, differing only by which RAM counter they read); Japanese/Korean reorder the number to the front to match their own natural word order. Written in kana only, as the Japanese carts are: the 8px Japanese font draws kanji illegibly."
     },
     "Hm… %s\ncame from %s\u000bin a trade?\f%s\nwas where %s\u000bmet %s!": {
       "override": "ふむ……\nこの%1$sは　%2$sと\u000bこうかんした　POKéじゃな？\f%2$sは　この%1$sと\n%3$sで　であった！",
@@ -2358,9 +2358,9 @@
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's own logic-clock-mode row, src/core/LogicClock.lua), not real cart text. Composed."
     },
     "LOW": {
-      "override": "低",
+      "override": "ひくい",
       "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The PERFORMANCE row's low-performance tier."
+      "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The PERFORMANCE row's low-performance tier. Written in kana only, as the Japanese carts are: the 8px Japanese font draws kanji illegibly."
     },
     "LUCKY NUMBER SHOW!": {
       "override": "\nじゃあ　はっぴょう　するよ",
@@ -2763,9 +2763,9 @@
       "provenance": "Generic, matching the bare \"ON\" key (also carried from RBY) -- this padded variant is shared literally by both the Battle Scene and Menu Account toggle rows (ui/gen2/OptionsMenu.lua), whose real corpus text differs per context (\"watch slowly\" vs \"display\"); a single shared key can't carry both, so it uses the same generic word as every other ON/OFF toggle in this port."
     },
     "OPTION": {
-      "override": "せっていを　かえる",
+      "override": "せってい",
       "reason": "engine-original",
-      "provenance": "Corpus-confirmed from gs.main_menu.MainMenu.Strings, segment 2 of the packed CONTINUE/NEW GAME/OPTION/MYSTERY GIFT row (real Gold ROM title-menu text). Explicit override needed: without it, the automatic matcher resolves this key to a truncated \"せってい\" (settings, noun only) from an unrelated row, missing the verb half of this specific segment."
+      "provenance": "Corpus-confirmed from gs.start_menu.StartMenu.OptionString, the start menu's own label: the OPTION key is drawn there as well as on the title menu, and the title menu's longer gs.main_menu.MainMenu.Strings wording overflows the start menu."
     },
     "ORANGE": {
       "override": "オレンジ",
@@ -3353,9 +3353,9 @@
       "provenance": "Corpus-derived from poke-corpus GoldSilver's own received-storm-badge event message (the Johto gym that awards it), extracting just the badge's own name from the full sentence; the engine clamps this label to 4 display glyphs itself (src/ui/gen2/TrainerCard.lua's badgeCaption), so the full name is given here rather than a pre-abbreviated one."
     },
     "STRONG": {
-      "override": "強",
+      "override": "つよい",
       "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The VIBRATION row's strong-intensity haptic level."
+      "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The VIBRATION row's strong-intensity haptic level. Written in kana only, as the Japanese carts are: the 8px Japanese font draws kanji illegibly."
     },
     "SUNDAY": {
       "override": "にち",
@@ -3533,9 +3533,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "TOP": {
-      "override": "最上部",
+      "override": "いちばんうえ",
       "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. src/core/ScreenPosition.lua's fully-raised mode (distinct from UPPER, which is only partially raised)."
+      "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. src/core/ScreenPosition.lua's fully-raised mode (distinct from UPPER, which is only partially raised). Written in kana only, as the Japanese carts are: the 8px Japanese font draws kanji illegibly."
     },
     "TOSS": {
       "override": "すてる",
@@ -3973,9 +3973,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "Used the %s.": {
-      "override": "%sを\n使った。",
+      "override": "%sを\nつかった。",
       "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
+      "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation. Written in kana only, as the Japanese carts are: the 8px Japanese font draws kanji illegibly."
     },
     "VACANT": {
       "override": "くうはく",
@@ -4603,9 +4603,9 @@
       "provenance": "Adapted from poke-corpus GoldSilver gs.pokedex.Pokedex_DisplayModeDescription.UnownMode's own \"catching order\" vocabulary to read correctly after the shared \"<PK><MN> are listed\" first line above."
     },
     "infatuation kept\nit from attacking!": {
-      "override": "わざが\n出せなかった！",
+      "override": "わざが\nだせなかった！",
       "reason": "engine-contract-gap",
-      "provenance": "Corpus-backed from gs.battle.InfatuationText, continuation half with no argument; see \"%s's\\ninfatuation kept\"."
+      "provenance": "Corpus-backed from gs.battle.InfatuationText, continuation half with no argument; see \"%s's\\ninfatuation kept\". Written in kana only, as the Japanese carts are: the 8px Japanese font draws kanji illegibly."
     },
     "inspiring.": {
       "override": "\nあこがれちゃうー！",
