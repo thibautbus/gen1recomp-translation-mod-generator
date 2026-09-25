@@ -148,7 +148,7 @@ dialogue through `mod.content.text`, species, move and item names, item
 descriptions, trainer names and class names through their record registries,
 the start menu through the public `ui.start_menu.items` hook, and game3's own
 text (its own menus, the mod manager, the options it adds) through
-`Strings()`. The pipeline is pinned to gen1recomp v0.3.11, whose FireRed
+`Strings()`. The pipeline is pinned to gen1recomp v0.3.14, whose FireRed
 draws most of its text from the cart itself: the option menu,
 the summary pages, the intro, the Pokédex, the region map, the battle
 messages and the lists all read the cart's rows through `RomText`, so the
@@ -351,7 +351,7 @@ provenance. Future unresolved entries will keep their original English text.
   German, Spanish and Italian each leave a seventh row for the same reason.
   Japanese leaves 85: 30 whose phrasing names the player where the English
   does not, and 50 lines the collection has no Japanese text for at all.
-- `FireRed engine strings` covers the 1,890 `Strings()` keys the game3
+- `FireRed engine strings` covers the 1,891 `Strings()` keys the game3
   runtime reaches on its own: its menus and prompts, the ability names, the
   move and ability descriptions, the map section names and the region map's
   guide text, and the 1,028 Easy Chat words and group names (the species and
@@ -365,11 +365,11 @@ provenance. Future unresolved entries will keep their original English text.
 
 | Target | FireRed ROM aggregate | FireRed engine strings |
 | --- | ---: | ---: |
-| `fr` | 10921/10929 (99.93%) | 1890/1890 (100%) |
-| `de` | 10919/10929 (99.91%) | 1890/1890 (100%) |
-| `es` | 10919/10929 (99.91%) | 1890/1890 (100%) |
-| `it` | 10919/10929 (99.91%) | 1890/1890 (100%) |
-| `ja-Hrkt` | 10844/10929 (99.22%) | 1890/1890 (100%) |
+| `fr` | 10921/10929 (99.93%) | 1891/1891 (100%) |
+| `de` | 10919/10929 (99.91%) | 1891/1891 (100%) |
+| `es` | 10919/10929 (99.91%) | 1891/1891 (100%) |
+| `it` | 10919/10929 (99.91%) | 1891/1891 (100%) |
+| `ja-Hrkt` | 10844/10929 (99.22%) | 1891/1891 (100%) |
 
 These measure what the mod ships, not what the current runtime displays; see
 "Pokémon FireRed support" above for the runtime limits.
@@ -378,7 +378,7 @@ These measure what the mod ships, not what the current runtime displays; see
 
 The remaining engine keys are reported separately below. They are keys used by
 neither RBY nor Gold and Silver, so their denominator is the residual scope:
-`2467 - (419 + 951 - 86) = 1183`. The numerator counts keys translated in at
+`2468 - (419 + 951 - 86) = 1184`. The numerator counts keys translated in at
 least one of the RBY and Gold/Silver/Crystal artifacts, the RBY release's
 Yellow layer included; this is a project-level metric, not a claim that
 every key is present in both games.
@@ -388,22 +388,22 @@ artifact out.
 
 | Target | Other engine strings |
 | --- | ---: |
-| `fr` | 118/1183 (9.97%) |
-| `de` | 118/1183 (9.97%) |
-| `es` | 116/1183 (9.81%) |
-| `it` | 117/1183 (9.89%) |
-| `ja-Hrkt` | 116/1183 (9.81%) |
-| `ko` | 55/1183 (4.65%) |
+| `fr` | 118/1184 (9.97%) |
+| `de` | 118/1184 (9.97%) |
+| `es` | 116/1184 (9.80%) |
+| `it` | 117/1184 (9.88%) |
+| `ja-Hrkt` | 116/1184 (9.80%) |
+| `ko` | 55/1184 (4.65%) |
 
-The denominator is calculated as follows: `2467` total engine keys, minus the
+The denominator is calculated as follows: `2468` total engine keys, minus the
 `419` RBY-related keys and the `951` Gold and Silver-related keys, plus back the `86` keys
 shared by both scopes so they are subtracted only once. The resulting residual
-scope is `1183` keys. Both figures fell when FireRed
+scope is `1184` keys. Both figures fell when FireRed
 stopped passing the cart's own text through `Strings()`: those keys are
 measured in the FireRed tables above instead.
 
 These values use the pinned ROMs, corpus snapshots and Gen1Recomp revision
-`09a3df2b` (v0.3.11); regenerate them whenever one of those inputs changes.
+`591bf4d6` (v0.3.14); regenerate them whenever one of those inputs changes.
 
 ## Translation provenance
 

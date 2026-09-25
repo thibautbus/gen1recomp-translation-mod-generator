@@ -417,6 +417,11 @@
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
     },
+    "The battle couldn't start: %s.": {
+      "override": "しょうぶを はじめられなかった：%s。",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
     "The connection failed.": {
       "override": "せつぞくに しっぱいしました。",
       "reason": "engine-original",

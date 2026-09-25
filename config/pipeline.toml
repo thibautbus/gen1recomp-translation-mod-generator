@@ -50,20 +50,20 @@ target_lang = "fr"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
-# Pinned at v0.3.11, the upstream release used to validate and package the
-# RBY, Gold/Silver, Crystal and FireRed translation mods.  It is the release
-# in which FireRed draws most of its own text from the cart instead of
-# English literals (option menu, summary pages, intro, Pokedex, region map,
-# battle messages, stat names...), so a mod translates them through the
-# cart's rows; it also names an egg by the language's EGG (gen1recomp#2396),
+# Pinned at v0.3.14, the upstream release used to validate and package the
+# RBY, Gold/Silver, Crystal and FireRed translation mods.  Since v0.3.4,
+# FireRed draws most of its own text from the cart instead of English
+# literals (option menu, summary pages, intro, Pokedex, region map, battle
+# messages, stat names...), so a mod translates them through the cart's
+# rows; the engine also names an egg by the language's EGG (gen1recomp#2396),
 # recognises trainer classes by id so the class names can be translated
 # (gen1recomp#2398), takes Unicode braille cells (gen1recomp#2400) and draws
 # Japanese with the cart's own fonts (gen1recomp#2406).
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "09a3df2b98d2e6215e0bc0bdc5f2ef316896af2f"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/09a3df2b98d2e6215e0bc0bdc5f2ef316896af2f"
-archive_sha256 = "29febdb692d13f50356df4b6266b0598e40370bcf17ca06c892053c68d198c5d"
-archive_tree_sha256 = "790a38ae3aa734a8d0c213c8345c476c2f08969c525de58e00d12b38571a4f1b"
+revision = "591bf4d6d605b15a0f2990efa8e024aece3c54b5"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/591bf4d6d605b15a0f2990efa8e024aece3c54b5"
+archive_sha256 = "6964a8802ce3ed0e52efa4adea746d61a9e97c0ce9e935b1e630b5c1be400006"
+archive_tree_sha256 = "03f65a2b75bb36137a56086694a08f40e546d391239a83839ad82966ed40db0f"
 
 # pret's FireRed decompilation data the FireRed release joins through (never
 # code, never game text): the symbol table names every ROM address the game3
