@@ -935,7 +935,7 @@ class FrlgConfigTests(unittest.TestCase):
         if not shutil.which("luajit") or not (extracted / "data").is_dir():
             self.skipTest("LuaJIT or FireRed extract unavailable")
         doc = (ROOT / "docs" / "upstream-fixes.md").read_text(encoding="utf-8")
-        inventory = doc.split("#### Inventory: every game3 file with hardcoded player-visible text", 1)[1]
+        inventory = doc.split("#### Inventory: game3 files flagged by the hardcoded-text scan", 1)[1]
         inventory = inventory.split("\n### ", 1)[0]
         listed = set(re.findall(r"^\| `(src/[^`]+)` \|", inventory, re.M))
         visible = set(player_visible_files(engine, extracted=extracted))
@@ -949,13 +949,20 @@ class FrlgConfigTests(unittest.TestCase):
             self.skipTest("pinned FireRedLeafGreen corpus or pret charmap unavailable")
         charmap = load_charmap(charmap_path)
         qids = set((corpus / "qid_msg.txt").read_text(encoding="utf-8").splitlines())
+        expected_engine_fallbacks = {
+            "CHECK_TAG", "CONFIRM", "ESC/2ND CANCELS", "EVENT TICKETS",
+            "It is for use at LILYCOVE CITY port.", "OLD SEA MAP", "PRESS A BUTTON",
+            "RELEASE TO SET", "We received this OLD SEA MAP",
+            "Would you like to forfeit the match\nand quit now?", "addressed to you.",
+            "on ROUTE 103.",
+        }
         for key, qid in load_frlg_dialogue_decisions().items():
             self.assertIn(qid, qids, key)
         for language in ("fr", "de", "es", "it"):
             with self.subTest(language=language):
                 loaded = load_frlg_corpus(corpus, language)
                 values, stats = join_frlg_engine_strings(load_frlg_engine_scope(), loaded, charmap)
-                self.assertEqual(stats["fallback_english"], [])
+                self.assertEqual(stats["fallback_english"], sorted(expected_engine_fallbacks))
                 for row in load_frlg_dialogue_overrides(language).values():
                     self.assertIn(row["qid"], qids)
                     corpus_ir(row["text"], charmap, language=language)

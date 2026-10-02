@@ -1742,17 +1742,186 @@ Five rows are fragments the cart prints between two buffers -- `gText_LevelRoseT
 
 Fix: give those five lookups the cart's own row instead of the fragment, as `Strings()` already does elsewhere with numbered directives (`%2$s ... %1$s`), so a translation can put the buffers where the language needs them.
 
-#### Inventory: every game3 file with hardcoded player-visible text
+#### Inventory: game3 files flagged by the hardcoded-text scan
 
-Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/audit.py`) at the pinned revision: every string literal under `src/{core,ui,battle,world}/game3` that looks like text, is not a `Strings()` argument and is not a value the runtime passes to `Strings()` through a variable from that same file (tables and lists `pipeline/frlg/engine_scope.py` reads), minus the files reviewed as never reaching the screen (`NON_DISPLAY_FILES`: identifiers, quest-log keys, log lines, name fallbacks for a missing pack, each with its reason). Reviewing a file as non-display hides any literal added to it later, so a pin bump should re-read the reasons of the files it touches. `tests/frlg/test_frlg.py` fails if the scan finds a player-visible file this table does not list, so the inventory stays complete across pin bumps. At `2c0f3ac0` (v0.2.64) the same scan, without the scope filter, found 74 files and 2,028 literals.
+Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/audit.py`) at the pinned revision: every string literal under `src/{core,ui,battle,world}/game3` that looks like text, is not a `Strings()` argument and is not a value the runtime passes to `Strings()` through a variable from that same file (tables and lists `pipeline/frlg/engine_scope.py` reads), minus the files reviewed as never reaching the screen (`NON_DISPLAY_FILES`: identifiers, quest-log keys, log lines, name fallbacks for a missing pack, each with its reason). This is a heuristic inventory of raw-text candidates: inclusion alone does not confirm that the text appears onscreen or represents a translation gap. Files without a reviewed explanation are left marked as candidates for manual review. Reviewing a file as non-display hides any literal added to it later, so a pin bump should re-read the reasons of the files it touches. `tests/frlg/test_frlg.py` fails if the scan finds a candidate file this table does not list, so the inventory stays complete across pin bumps. At `2c0f3ac0` (v0.2.64) the same scan, without the scope filter, found 74 files and 2,028 literals.
+
+At Gen1Recomp v0.3.47, 12 newly reachable dynamic keys have no reviewed FireRed corpus row, so all five FRLG language catalogs retain their natural English fallback for them. The join report keeps these keys in `fallback_english`; they are not represented by identity overrides as translated. `test_reviewed_qids_exist_in_the_pinned_corpus` pins the reviewed fallback set so future engine or corpus changes require an explicit review.
 
 | File | Literals | What the player sees | Entry |
 | --- | ---: | --- | --- |
+| `src/core/game3/asset_decode.lua` | 6 | Raw-text candidate; review needed | — |
+| `src/core/game3/asset_stream.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/audio_policy_rse.lua` | 9 | Raw-text candidate; review needed | — |
+| `src/core/game3/battle/builtin_moves.lua` | 860 | Raw-text candidate; review needed | — |
+| `src/core/game3/battle/env_rse.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/battle/facility_arena.lua` | 26 | Raw-text candidate; review needed | — |
+| `src/core/game3/battle/facility_palace.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/battle/kinds.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/battle/pic_coords.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/battle/prize.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/battle/profile.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/battle_transition.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/constants.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/constants/emerald/map_groups.lua` | 96 | Raw-text candidate; review needed | — |
+| `src/core/game3/constants/emerald/script_cmds.lua` | 44 | Raw-text candidate; review needed | — |
+| `src/core/game3/constants/emerald/specials.lua` | 484 | Raw-text candidate; review needed | — |
+| `src/core/game3/constants/firered/map_groups.lua` | 46 | Raw-text candidate; review needed | — |
+| `src/core/game3/constants/firered/script_cmds.lua` | 40 | Raw-text candidate; review needed | — |
+| `src/core/game3/constants/firered/specials.lua` | 415 | Raw-text candidate; review needed | — |
+| `src/core/game3/dex.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/dive.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/encounter_rules/rse.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/field_cell_prepare.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/field_effects.lua` | 11 | Raw-text candidate; review needed | — |
+| `src/core/game3/field_effects_rse.lua` | 9 | Raw-text candidate; review needed | — |
+| `src/core/game3/field_modules.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/field_semantics.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/field_weather_rse.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/fldeff_misc.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/gba_ppu.lua` | 15 | Raw-text candidate; review needed | — |
+| `src/core/game3/gba_sprites.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/indexed_png.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/link/contest_link.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/link/family.lua` | 53 | Raw-text candidate; review needed | — |
+| `src/core/game3/link/record_mix.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/link/rse_groups.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/link/tower_link.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/link/union_plaza_map.lua` | 6 | Raw-text candidate; review needed | — |
+| `src/core/game3/mon_anim.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/movement_types.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/object_prepare.lua` | 3 | Raw-text candidate; review needed | — |
 | `src/core/game3/party.lua` | 5 | The `RED` fallback for a mon with no OT name (the `EGG` nickname it also stores is no longer displayed) | 9 |
+| `src/core/game3/pokecenter_heal.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/emerald.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/emerald/badges.lua` | 8 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/emerald/bag.lua` | 8 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/emerald/coreSpecials.lua` | 14 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/emerald_rules.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/firered_rules.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/roamer.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rotating_tile_puzzle.lua` | 12 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/berry_blender.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/berry_blender_link.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/berry_trees.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/cable_car.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/contest.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/contest_ai.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/contest_ai_disasm.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/contest_util.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/daily_events.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/decoration.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/decoration_inventory.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/dewford_trend.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/easy_chat_types.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/event_islands.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/frontier/apprentice.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/frontier/dome.lua` | 5 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/frontier/f2_data.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/frontier/factory.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/frontier/pike.lua` | 6 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/frontier/pyramid.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/frontier/tower.lua` | 5 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/frontier/trainers.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/frontier/util.lua` | 5 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/init.lua` | 5 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/lilycove_lady.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/lottery.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/match_call.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/pokeblock.lua` | 5 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/rematch.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/ribbons.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/roulette.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/secret_base.lua` | 31 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/slot_machine.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/town_common.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/trainer_hill.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/tv.lua` | 6 | Raw-text candidate; review needed | — |
+| `src/core/game3/safari.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/save_sections.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/collision_frlg.lua` | 23 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/collision_rse.lua` | 16 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_apprentice.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_arena.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_blender.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_contest.lua` | 5 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_dewford.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_dome.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_elevator.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_factory.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_field_rse.lua` | 26 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_frontier.lua` | 7 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_frontier_story.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_lilycove_lady.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_match_call.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_old_man.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_palace.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_pc_rse.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_pike.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_pyramid.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_shared_rse.lua` | 11 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_tents.lua` | 5 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_tower_rse.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_trainer_hill.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_tv.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_walda_rse.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/opcodes.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/opcodes_emerald.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/ops_rse.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/step_callbacks_rse.lua` | 18 | Raw-text candidate; review needed | — |
+| `src/core/game3/time_events.lua` | 15 | Raw-text candidate; review needed | — |
+| `src/core/game3/weather.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/battle_transition_chrome.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/ui/game3/boot_modules.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/ui/game3/chrome.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/ui/game3/controls_menu.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/ui/game3/diploma.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/ui/game3/help_system.lua` | 3 | `{PLAYER}`/`{RIVAL}` fallbacks inside the (untranslated) help text | 5 |
+| `src/ui/game3/minigames/berry_crush/pouch.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/ui/game3/mod_manager.lua` | 17 | Its tab headers, its screen titles and the states it prints for a mod | 13 |
-| `src/ui/game3/naming.lua` | 11 | Naming keyboard rows and page names | 8 |
-
+| `src/ui/game3/naming.lua` | 22 | Naming keyboard rows and page names | 8 |
+| `src/ui/game3/rse/bag_menu.lua` | 19 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/berry_blender.lua` | 15 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/birch_speech.lua` | 36 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/cable_car.lua` | 32 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/condition_graph.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/contest.lua` | 11 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/contest_image_fx.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/contest_painting.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/contest_results.lua` | 14 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/contest_vram.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/credits.lua` | 24 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/decoration.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/factory_select.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/frontier_pass.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/gba_machine.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/intro_credits_scenery.lua` | 13 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/intro_emerald.lua` | 80 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/mail.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/main_menu_rse.lua` | 8 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/mapsec.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/ow_sheet.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/player_pc.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/pokeblock_case.lua` | 5 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/pokeblock_gfx.lua` | 6 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/pokedex.lua` | 11 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/pokedex_gfx.lua` | 7 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/pokenav/condition.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/pokenav/condition_search.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/pokenav/gfx.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/pokenav/mon_info.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/pokenav/region_map.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/pokenav/ribbons.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/pokenav/ribbons_summary.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/pyramid_bag.lua` | 10 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/rayquaza_scene.lua` | 47 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/region_map.lua` | 9 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/roulette.lua` | 12 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/scene_kit.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/shop_menu.lua` | 5 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/slot_machine.lua` | 32 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/summary_menu.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/title_rse.lua` | 44 | Raw-text candidate; review needed | — |
 ### Translated via a compromise (`engine-contract-gap`)
 
 - **TM/HM pickup** (`Text_FoundTMHMContainsMove`): gen1recomp's item-ball script buffers only the TM's name and prints `"[PLAYER] found\n[STR_VAR_2]!"`, while the cart's line also names the move from `STR_VAR_1`. Each language keeps the first clause of its own cart row (`overrides/<lang>/frlg/dialogue.json`); German, whose cart line names only the move, is reworded around the TM name.

@@ -159,7 +159,8 @@ class MultilingualTests(unittest.TestCase):
             self.skipTest("pinned Gen1Recomp checkout is unavailable")
         oak_runtime = oak_source.read_text(encoding="utf-8")
         self.assertIn('Strings.source("This world is\\ninhabited by\\vcreatures called\\vPOKéMON!")', oak_runtime)
-        self.assertIn('self:say("_OakSpeechText2A", function() self:advance() end)', oak_runtime)
+        self.assertIn('_OakSpeechText2A = Strings.source("This world is\\ninhabited by\\vcreatures called\\vPOKéMON!")', oak_runtime)
+        self.assertIn('self:sayText(textOr(self.game, "_OakSpeechText2A"), function() self:advance() end,', oak_runtime)
         for language, target in translations.items():
             with tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp)

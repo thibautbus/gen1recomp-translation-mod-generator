@@ -150,7 +150,7 @@ dialogue through `mod.content.text`, species, move and item names, item
 descriptions, trainer names and class names through their record registries,
 the start menu through the public `ui.start_menu.items` hook, and game3's own
 text (its own menus, the mod manager, the options it adds) through
-`Strings()`. The pipeline is pinned to gen1recomp v0.3.14, whose FireRed
+`Strings()`. The pipeline is pinned to gen1recomp v0.3.47, whose FireRed
 draws most of its text from the cart itself: the option menu,
 the summary pages, the intro, the Pokédex, the region map, the battle
 messages and the lists all read the cart's rows through `RomText`, so the
@@ -426,7 +426,8 @@ stopped passing the cart's own text through `Strings()`: those keys are
 measured in the FireRed tables above instead.
 
 These values use the pinned ROMs, corpus snapshots and Gen1Recomp revision
-`591bf4d6` (v0.3.14); regenerate them whenever one of those inputs changes.
+`591bf4d6` (v0.3.14). The dependency is now pinned to `8fd45152`
+(v0.3.47); these historical coverage figures have not yet been regenerated.
 
 ## Translation provenance
 
