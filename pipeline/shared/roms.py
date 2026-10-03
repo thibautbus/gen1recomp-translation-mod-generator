@@ -20,7 +20,7 @@ from .subprocess_run import run_streamed
 # Product support is intentionally limited to the canonical US games; this
 # allowlist is independent of whatever sections a config may contain.
 SUPPORTED_VERSIONS = frozenset(("red", "blue", "yellow"))
-CONFIGURED_VERSIONS = SUPPORTED_VERSIONS | {"gold", "silver", "crystal", "firered", "leafgreen"}
+CONFIGURED_VERSIONS = SUPPORTED_VERSIONS | {"gold", "silver", "crystal", "firered", "leafgreen", "emerald"}
 _SHA1 = re.compile(r"[0-9a-f]{40}\Z")
 _MANIFESTS = {
     "red": "rom_manifest.json",
@@ -367,6 +367,7 @@ def import_crystal_rom(
 # Gen 2 sections.
 FIRERED_SHA1 = CANONICAL.get("firered")
 LEAFGREEN_SHA1 = CANONICAL.get("leafgreen")
+EMERALD_SHA1 = CANONICAL.get("emerald")
 
 # tools/frlg/extract.lua's outputs the FireRed join cannot do without.
 FRLG_REQUIRED_JSON = (
@@ -405,6 +406,79 @@ def verify_firered_rom(path: str | Path) -> dict[str, Any]:
 def verify_leafgreen_rom(path: str | Path) -> dict[str, Any]:
     """Verify a real LeafGreen (US) ROM against the canonical fingerprint."""
     return _verify_frlg_edition(path, "leafgreen")
+
+
+def verify_emerald_rom(path: str | Path) -> dict[str, Any]:
+    """Verify the canonical US Emerald ROM against its fingerprint."""
+    expected = EMERALD_SHA1
+    if expected is None:
+        raise ValueError("missing [rom.emerald] configuration: Emerald ROM verification requires that section")
+    path = Path(path)
+    actual = sha1(path)
+    if actual != expected:
+        raise ValueError(f"Emerald ROM SHA-1 mismatch: {actual} (expected {expected})")
+    return {"version": "emerald", "path": str(path.resolve()), "sha1": actual, "size": path.stat().st_size}
+
+
+RSE_REQUIRED_JSON = (
+    "rse_text.json", "rse_text_pointers.json", "rse_species.json", "rse_moves.json",
+    "rse_items.json", "rse_trainers.json", "rse_trainer_classes.json",
+)
+
+
+def import_rse_rom(
+    rom: str | Path, gen1recomp: str | Path, out: str | Path,
+    log_fn: Callable[[str], None] | None = None,
+) -> None:
+    """Extract and atomically publish Emerald's JSON tables.
+
+    tools/rse/extract.lua runs the text steps of gen1recomp's own Emerald
+    import plan under the headless LÖVE stub; the extractor's cache (the
+    layout a game3 boot reads) is kept under ``out/cache`` for the release
+    gate and the engine scope generator.
+    """
+    info = verify_emerald_rom(rom)
+    root = Path(gen1recomp).resolve()
+    rom = Path(rom).resolve()
+    out = Path(out).resolve()
+    out.parent.mkdir(parents=True, exist_ok=True)
+    luajit = which_luajit()
+    if luajit is None:
+        raise RuntimeError("LuaJIT is required to import an Emerald ROM; see MODKIT_LUAJIT")
+    script = resource_root() / "tools" / "rse" / "extract.lua"
+    temporary = Path(tempfile.mkdtemp(prefix=f".{out.name}-", dir=out.parent))
+    command = [luajit, str(script), str(root), str(rom), str(temporary), info["sha1"]]
+    try:
+        run_streamed(command, log_fn=log_fn)
+        stages = json.loads((temporary / "rse_stages.json").read_text(encoding="utf-8"))
+        failed = sorted(name for name, state in stages.items() if state != "ok")
+        missing = [
+            name for name in RSE_REQUIRED_JSON
+            if not (temporary / name).is_file() or (temporary / name).stat().st_size < 3
+        ]
+        if failed or missing:
+            raise RuntimeError(
+                "Emerald extraction did not complete: "
+                + "; ".join(filter(None, (
+                    ("failed stages: " + ", ".join(f"{name} ({stages[name]})" for name in failed)) if failed else "",
+                    ("missing outputs: " + ", ".join(missing)) if missing else "",
+                )))
+            )
+        backup = temporary.with_name(f"{temporary.name}.old")
+        had_output = out.exists()
+        if had_output:
+            out.replace(backup)
+        try:
+            temporary.replace(out)
+        except Exception:
+            if had_output and backup.exists() and not out.exists():
+                backup.replace(out)
+            raise
+        if backup.exists():
+            shutil.rmtree(backup)
+    finally:
+        if temporary.exists():
+            shutil.rmtree(temporary, ignore_errors=True)
 
 
 def import_frlg_rom(

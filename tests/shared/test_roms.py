@@ -44,7 +44,8 @@ class RomConfigTests(unittest.TestCase):
     def test_checked_in_rom_sections_have_no_paths(self):
         config = project_config()
         self.assertEqual(set(config["rom"]),
-                         {"red", "blue", "yellow", "gold", "silver", "crystal", "firered", "leafgreen"})
+                         {"red", "blue", "yellow", "gold", "silver", "crystal",
+                          "firered", "leafgreen", "emerald"})
         for section in config["rom"].values():
             self.assertNotIn("path", section)
 

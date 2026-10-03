@@ -1,0 +1,31 @@
+{
+  "schema": "gen1recomp-translation-mods/engine-overrides",
+  "version": 1,
+  "entries": {
+    "EVENT TICKETS": {
+      "override": "BIGLIETTI EVENTO",
+      "reason": "engine-original",
+      "provenance": "Option row added by gen1recomp for Emerald's event islands (src/core/game3/rse/event_islands.lua:101); no cart text. Worded after the cart's ticket item names (gItems.275, gItems.371)."
+    },
+    "It is for use at LILYCOVE CITY port.": {
+      "override": "Serve allo scalo di PORTO ALGHEPOLI.",
+      "reason": "engine-original",
+      "provenance": "Wonder Card body line gen1recomp composes for Emerald's event ticket cards (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (sMapName_LILYCOVE_CITY, gift_*_ticket.sText_*UseAtPort) to follow the lines FireRed's overrides give the rest of the card; requires in-game visual validation."
+    },
+    "We received this OLD SEA MAP": {
+      "override": "Abbiamo ricevuto una MAPPA STINTA",
+      "reason": "engine-original",
+      "provenance": "Wonder Card body line gen1recomp composes for Emerald's OLD SEA MAP card (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (gItems.376, gift_old_sea_map.sText_MysteryGiftOldSeaMapForYou) to follow the lines FireRed's overrides give the rest of the card; requires in-game visual validation."
+    },
+    "addressed to you.": {
+      "override": "indirizzata a te.",
+      "reason": "engine-original",
+      "provenance": "Wonder Card body line gen1recomp composes for Emerald's OLD SEA MAP card (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (gItems.376, gift_old_sea_map.sText_MysteryGiftOldSeaMapForYou) to follow the lines FireRed's overrides give the rest of the card; requires in-game visual validation."
+    },
+    "on ROUTE 103.": {
+      "override": "sul PERCORSO 103.",
+      "reason": "engine-original",
+      "provenance": "Wonder Card body line gen1recomp composes for Emerald's ALTERING CAVE card (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (sMapName_ROUTE_103, gift_altering_cave.sText_MysteryGiftAlteringCave) to follow the lines FireRed's overrides give the rest of the card; requires in-game visual validation."
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "schema": "gen1recomp-translation-mods/engine-overrides",
+  "version": 1,
+  "entries": {
+    "EVENT TICKETS": {
+      "override": "イベントチケット",
+      "reason": "engine-original",
+      "provenance": "Option row added by gen1recomp for Emerald's event islands (src/core/game3/rse/event_islands.lua:101); no cart text. Worded after the cart's ticket item names (gItems.275, gItems.371)."
+    },
+    "Go and see what turns up": {
+      "override": "１０３ばん　どうろで",
+      "reason": "engine-original",
+      "provenance": "Wonder Card body line gen1recomp composes for Emerald's ALTERING CAVE card (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (sMapName_ROUTE_103, gift_altering_cave.sText_MysteryGiftAlteringCave) split across the card's last two lines in Japanese word order; requires in-game visual validation."
+    },
+    "It is for use at LILYCOVE CITY port.": {
+      "override": "ミナモシティの　ふなつきばで　つかえます。",
+      "reason": "engine-original",
+      "provenance": "Wonder Card body line gen1recomp composes for Emerald's event ticket cards (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (sMapName_LILYCOVE_CITY, gift_*_ticket.sText_*UseAtPort) to follow the lines FireRed's overrides give the rest of the card; requires in-game visual validation."
+    },
+    "The POKéMON living in ALTERING": {
+      "override": "へんげのどうくつに　すむ",
+      "reason": "engine-original",
+      "provenance": "Wonder Card body line gen1recomp composes for Emerald's ALTERING CAVE card (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (sMapName_ROUTE_103, gift_altering_cave.sText_MysteryGiftAlteringCave) with the Emerald cart's name for the cave (FireRed's override names it otherwise); requires in-game visual validation."
+    },
+    "We received this OLD SEA MAP": {
+      "override": "ふるびたかいずが",
+      "reason": "engine-original",
+      "provenance": "Wonder Card body line gen1recomp composes for Emerald's OLD SEA MAP card (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (gItems.376, gift_old_sea_map.sText_MysteryGiftOldSeaMapForYou) to follow the lines FireRed's overrides give the rest of the card; requires in-game visual validation."
+    },
+    "addressed to you.": {
+      "override": "あなたあてに　とどいています。",
+      "reason": "engine-original",
+      "provenance": "Wonder Card body line gen1recomp composes for Emerald's OLD SEA MAP card (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (gItems.376, gift_old_sea_map.sText_MysteryGiftOldSeaMapForYou) to follow the lines FireRed's overrides give the rest of the card; requires in-game visual validation."
+    },
+    "on ROUTE 103.": {
+      "override": "なにが　でるか　みにいこう！",
+      "reason": "engine-original",
+      "provenance": "Wonder Card body line gen1recomp composes for Emerald's ALTERING CAVE card (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (sMapName_ROUTE_103, gift_altering_cave.sText_MysteryGiftAlteringCave) split across the card's last two lines in Japanese word order; requires in-game visual validation."
+    }
+  }
+}

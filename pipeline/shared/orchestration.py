@@ -121,4 +121,12 @@ def build_request(
             workspace_root=workspace_root, output_dir=output_dir,
             log_fn=log_fn, status_fn=status_fn,
         )
+    if request.profile.id == "rse":
+        from ..rse.mod import build_rse
+
+        return build_rse(
+            request.source_for("emerald"), request.language, language_name, luajit,
+            workspace_root=workspace_root, output_dir=output_dir,
+            log_fn=log_fn, status_fn=status_fn,
+        )
     raise ValueError(f"unsupported release profile: {request.profile.id!r}")

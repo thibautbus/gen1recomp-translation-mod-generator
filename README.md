@@ -3,13 +3,14 @@
 [![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
 
 This repository reproducibly generates multilingual `Gen1Recomp` translation
-mods without storing a ROM or ROM extract. It currently produces three separate
+mods without storing a ROM or ROM extract. It currently produces four separate
 artifacts per language:
 
 - a universal Pokémon Red, Blue and Yellow mod, with a runtime-selected Yellow
   layer;
 - a Pokémon Gold, Silver and Crystal mod for Gen1Recomp's generation-2 runtime;
-- a Pokémon FireRed and LeafGreen mod for Gen1Recomp's generation-3 (game3) runtime.
+- a Pokémon FireRed and LeafGreen mod for Gen1Recomp's generation-3 (game3) runtime;
+- a Pokémon Emerald mod for the same runtime.
 
 The artifacts have distinct mod IDs and filenames, so they can be installed
 side by side.
@@ -62,9 +63,10 @@ then extracts, translates, validates and packages the selected release in a
 private ignored workspace.
 
 The final file is `dist/translation-<lang>-<version>.zip` for RBY,
-`dist/translation-<lang>-gen2-<version>.zip` for Gold and Silver, or
-`dist/translation-<lang>-gen3-<version>.zip` for FireRed and LeafGreen; the command prints its
-absolute path.
+`dist/translation-<lang>-gen2-<version>.zip` for Gold and Silver,
+`dist/translation-<lang>-gen3-<version>.zip` for FireRed and LeafGreen, or
+`dist/translation-<lang>-gen3-emerald-<version>.zip` for Emerald. The command
+prints its absolute path.
 
 ### Optional local path configuration
 
@@ -81,12 +83,14 @@ silver = "/absolute/path/to/PokemonSilver.gbc"
 crystal = "/absolute/path/to/PokemonCrystal.gbc"
 firered = "/absolute/path/to/PokemonFireRed.gba"
 leafgreen = "/absolute/path/to/PokemonLeafGreen.gba"
+emerald = "/absolute/path/to/PokemonEmerald.gba"
 ```
 
 The three RBY entries are required for the universal build; `gold`/`silver` are
 required only for the Gold and Silver build, and either one alone is enough (the
 prompt accepts a Gold or a Silver ROM interchangeably), and `firered` and
-`leafgreen` only for the FireRed and LeafGreen build. Relative paths resolve from this file and `~` expands, although
+`leafgreen` only for the FireRed and LeafGreen build. `emerald` is used only
+for the Emerald build. Relative paths resolve from this file and `~` expands, although
 absolute paths are recommended. On Windows, use forward slashes or TOML
 single-quoted paths such as `red = 'C:\Games\PokemonRed.gb'`. Configured files
 are still checked for existence and SHA-1; declining one returns to the normal
@@ -210,6 +214,50 @@ package if the two carts would translate a catalog differently, and the
 release gate runs once per edition over that edition's extract, checking that
 an address both carts use keeps its own edition's line.
 
+## Pokémon Emerald support
+
+Emerald (US, v1.0) is published as its own `translation-<lang>-gen3-emerald`
+mod for `fr`, `de`, `es`, `it` and `ja-Hrkt`, built from a real Emerald ROM
+alone: select **Emerald (generation 3)** in the GUI or the interactive CLI.
+gen1recomp runs it on the same generation-3 runtime as FireRed, as a game
+family of its own, so the mod uses the same content registries and is built
+the same way (`pipeline/gen3/`), with Emerald's own inputs: the `Emerald`
+PokeCorpus collection, pret's `pokeemerald.sym` and `charmap.txt`, and the
+runtime's Emerald text dialect (its named placeholders, fonts and glyph runs).
+
+`tools/rse/extract.lua` runs the text steps of the engine's own Emerald
+import plan. Each script message is joined through the pret symbol its ROM
+address carries, the cart's tables by label, and every slot of a ROM pointer
+table (the battle string table, the nature names, the script menus' standard
+strings...) through the pret symbol its pointer reaches. Where the corpus
+lists a label twice, the row whose English reproduces the ROM wins. Every
+translation is the official row, shipped as the runtime's text IR once its
+English has reproduced the ROM's own text exactly. The game3 interface
+strings (`Strings()`) are listed in
+[`config/rse/engine_scope.json`](config/rse/engine_scope.json) and joined to
+Emerald's own cart rows. A cart label the dialogue already translates keeps
+its own row: the engine catalog never lends it another screen's wording.
+What has no Emerald row is reviewed and carries its provenance: the
+interface rows gen1recomp added to both games reuse FireRed's reviewed
+overrides (and the Red/Blue and Gold ones before English), the Wonder Card
+lines gen1recomp composes for Emerald's events are worded from the cart's
+own vocabulary (`overrides/<lang>/rse/engine.json`), and the one French line
+the corpus lacks is the French cart's own, read from pret's multi-language
+decompilation (`overrides/fr/rse/dialogue.json`).
+
+Before packaging, `tools/rse/gate.lua` loads the mod through gen1recomp's
+real generation-3 loader over the extracted Emerald data and checks that the
+dialogue, the battle string table, the nature names, the name catalogs, the
+engine strings and an Easy Chat word land where the Emerald screens read
+them, and that the mod stays out of a FireRed session. Four Emerald screens
+still print the cart's English as it is at the pinned revision: the ability
+names, the Pokédex entries, the contest texts and the map section names. The
+mod already ships their official rows, and the gate measures whether they
+are displayed (`hooks` in the build report); a gen1recomp change routing them
+is tracked in the Emerald section of
+[docs/upstream-fixes.md](docs/upstream-fixes.md), with the seven
+engine rows that stay in English.
+
 ## Legal inputs and privacy
 
 Use dumps from your own original US cartridges:
@@ -237,8 +285,8 @@ font profiles are:
 
 | Target languages | Releases | Default font | Optional font |
 | --- | --- | --- | --- |
-| `fr`, `de`, `es`, `it` | RBY, Gold/Silver/Crystal, FireRed/LeafGreen | Fusion Pixel Latin, 10px (RBY, GSC); the cart's own font (FireRed/LeafGreen) | Pokemon Font, 8px (RBY, GSC) |
-| `ja-Hrkt` | RBY, Gold/Silver/Crystal, FireRed/LeafGreen | Fusion Pixel Japanese, 8px (RBY, GSC); the cart's own Japanese fonts (FireRed/LeafGreen) | — |
+| `fr`, `de`, `es`, `it` | RBY, Gold/Silver/Crystal, FireRed/LeafGreen, Emerald | Fusion Pixel Latin, 10px (RBY, GSC); the cart's own font (FireRed/LeafGreen, Emerald) | Pokemon Font, 8px (RBY, GSC) |
+| `ja-Hrkt` | RBY, Gold/Silver/Crystal, FireRed/LeafGreen, Emerald | Fusion Pixel Japanese, 8px (RBY, GSC); the cart's own Japanese fonts (FireRed/LeafGreen, Emerald) | — |
 | `ko` | Gold/Silver/Crystal only (Crystal's own dialogue stays in English) | Fusion Pixel Hangul, 10px | — |
 
 The optional Pokemon Font is more compact, but translated text can still
@@ -384,18 +432,55 @@ provenance. Future unresolved entries will keep their original English text.
   `pipeline/gen3/engine_scope.py` regenerates from the pinned engine; a test
   derives the same set from it, so a new key cannot slip out of the metric.
   A key whose text is a cart string is shipped under that string's ROM
-  label, which is how the runtime looks it up.
+  label, which is how the runtime looks it up, except on a label the
+  dialogue already ships with its own row: the runtime reads a label's
+  catalog entry first, which would give it another screen's wording.
 
 | Target | FireRed ROM aggregate | LeafGreen ROM aggregate | FireRed engine strings |
 | --- | ---: | ---: | ---: |
-| `fr` | 10921/10929 (99.93%) | 10921/10929 (99.93%) | 1891/1891 (100%) |
-| `de` | 10919/10929 (99.91%) | 10919/10929 (99.91%) | 1891/1891 (100%) |
-| `es` | 10919/10929 (99.91%) | 10919/10929 (99.91%) | 1891/1891 (100%) |
-| `it` | 10919/10929 (99.91%) | 10919/10929 (99.91%) | 1891/1891 (100%) |
-| `ja-Hrkt` | 10844/10929 (99.22%) | 10844/10929 (99.22%) | 1891/1891 (100%) |
+| `fr` | 10921/10929 (99.93%) | 10921/10929 (99.93%) | 1894/1906 (99.37%) |
+| `de` | 10919/10929 (99.91%) | 10919/10929 (99.91%) | 1894/1906 (99.37%) |
+| `es` | 10919/10929 (99.91%) | 10919/10929 (99.91%) | 1894/1906 (99.37%) |
+| `it` | 10919/10929 (99.91%) | 10919/10929 (99.91%) | 1894/1906 (99.37%) |
+| `ja-Hrkt` | 10844/10929 (99.22%) | 10844/10929 (99.22%) | 1894/1906 (99.37%) |
 
 These measure what the mod ships, not what the current runtime displays; see
-"Pokémon FireRed and LeafGreen support" above for the runtime limits.
+"Pokémon FireRed and LeafGreen support" above for the runtime limits. The
+twelve engine strings left in English are rows gen1recomp v0.3.47 added
+without a cart row (Emerald's event tickets among them), listed in the
+FireRed section of [docs/upstream-fixes.md](docs/upstream-fixes.md).
+
+### Emerald
+
+- `Emerald ROM aggregate` measures the same way as FireRed's: the script
+  messages and the 10,010 rows the runtime reads by label or through a
+  pointer table, with the named catalogs (species, move and item names, item
+  descriptions, trainer names and class names). It leaves out 162 rows that
+  carry no text and 49 whose only corpus line is Japanese. What is left
+  unshipped is the fragments the cart concatenates around a buffer, whose
+  European rows reword the whole sentence or print a value the English line
+  does not have (7 in French and Italian, 9 in Spanish, 13 in German), and,
+  in Japanese, 113 lines the collection has no Japanese text for, 54 whose
+  placeholders differ from the English, three written with a token or
+  escape the join does not encode (`[DAKUTEN]`, `\e`) and one with no row.
+- `Emerald engine strings` covers the 2,645 `Strings()` keys the game3
+  runtime reaches for Emerald: its menus and options, the move and ability
+  descriptions, the 1,030 Easy Chat words and group names, and the ability
+  names, Pokédex entries, contest texts and map section names the Emerald
+  screens look up once gen1recomp routes them (see above). Seven engine
+  rows have neither an Emerald cart row nor a reviewed override and stay in
+  English.
+
+| Target | Emerald ROM aggregate | Emerald engine strings |
+| --- | ---: | ---: |
+| `fr` | 17714/17721 (99.96%) | 2638/2645 (99.74%) |
+| `de` | 17708/17721 (99.93%) | 2638/2645 (99.74%) |
+| `es` | 17712/17721 (99.95%) | 2638/2645 (99.74%) |
+| `it` | 17714/17721 (99.96%) | 2638/2645 (99.74%) |
+| `ja-Hrkt` | 17550/17721 (99.04%) | 2638/2645 (99.74%) |
+
+As for FireRed, these measure what the mod ships, not what the current
+runtime displays.
 
 ### Other engine strings
 
@@ -425,9 +510,11 @@ scope is `1184` keys. Both figures fell when FireRed
 stopped passing the cart's own text through `Strings()`: those keys are
 measured in the FireRed tables above instead.
 
-These values use the pinned ROMs, corpus snapshots and Gen1Recomp revision
-`591bf4d6` (v0.3.14). The dependency is now pinned to `8fd45152`
-(v0.3.47); these historical coverage figures have not yet been regenerated.
+The FireRed/LeafGreen and Emerald figures use Gen1Recomp revision `8fd45152`
+(v0.3.47). The Red/Blue/Yellow, Gold/Silver/Crystal and residual figures
+were measured at `591bf4d6` (v0.3.14) and have not yet been regenerated at
+the new pin. All use the pinned ROMs and corpus snapshots; regenerate them
+whenever one of those inputs changes.
 
 ## Translation provenance
 
@@ -515,7 +602,8 @@ explicit override > semantic anchor > exact > normalized
 > structural placeholder match > empty entry (runtime English fallback)
 ```
 
-Game-specific configuration lives under `config/rby/`, `config/gsc/` and `config/frlg/`;
+Game-specific configuration lives under `config/rby/`, `config/gsc/`,
+`config/frlg/` and `config/rse/`;
 language overrides follow the same split under `overrides/<language>/`.
 
 | Configuration | Purpose |
@@ -541,6 +629,7 @@ language overrides follow the same split under `overrides/<language>/`.
 | `config/gsc/crystal_semantic_anchors.json` | Evidence for Crystal engine-string corpus matches. |
 | `config/frlg/dialogue_decisions.json` | Reviewed corpus rows for FireRed standard-script lines gen1recomp reworded, with LeafGreen's own pick where its tables differ. |
 | `config/frlg/engine_scope.json` | FireRed-reachable `Strings()` keys, their callsites and reviewed cart rows. |
+| `config/rse/engine_scope.json` | Emerald-reachable `Strings()` keys, their callsites and Emerald cart rows (`python -m pipeline.gen3.engine_scope --family rse`). |
 | `config/gsc/crystal_string_selectors.json` | Reviewed qid/segment picks for Crystal corpus rows whose list boundaries or placeholder count don't fit the shared semantic-anchor grammar. |
 
 The semantic anchors and reviewed decisions are described in the
@@ -570,7 +659,8 @@ the same split.
 | `pipeline/gsc/` | `crystal_mod.py`, `crystal_registries.py`, `crystal_strings.py` | The Crystal layer of the Gen 2 artifact. |
 | `pipeline/gen3/` | `family.py`, `text.py`, `join.py`, `engine_scope.py`, `mod.py` | What every generation-3 family shares: its corpus, pret charmap/symbols and text IR dialect, the address-to-label, catalog and engine joins, the engine scope generator and the mod helpers. |
 | `pipeline/frlg/` | `start_menu.py`, `audit.py`, `mod.py` | The FireRed/LeafGreen artifact: its edition layers, start menu, release gate and the game3 hardcoded-text audit. |
-| `tools/gsc/`, `tools/frlg/` | `extract.lua`, `gate*.lua`, `measure_*.py` | ROM extractors and release gates run under LuaJIT, and the Gold join measurements. |
+| `pipeline/rse/` | `mod.py` | The Emerald artifact: its join, release gate and build. |
+| `tools/gsc/`, `tools/frlg/`, `tools/rse/` | `extract.lua`, `gate*.lua`, `measure_*.py` | ROM extractors and release gates run under LuaJIT, and the Gold join measurements. |
 
 `build_translation.py` is the normal entry point. Intermediate and audit files
 stay under `.cache/`.

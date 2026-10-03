@@ -1,6 +1,6 @@
 # Translation: upstream engine gaps
 
-All three mods use only the public `gen1recomp` content and hook APIs. Each game's section (RBY, then Gold, then FireRed) tracks these kinds of entries:
+All four mods use only the public `gen1recomp` content and hook APIs. Each game's section (RBY, then Gold, then FireRed, then Emerald) tracks these kinds of entries:
 
 - **Required upstream capabilities**: strings that render in English with no
   override reaching them at all -- no hook, no catalog entry can fix these
@@ -1934,6 +1934,54 @@ At Gen1Recomp v0.3.47, 12 newly reachable dynamic keys have no reviewed FireRed 
 - **Named glyph runs**: the cart's superscript ordinals (`[SUPER_E]`/`[SUPER_ER]`/`[SUPER_RE]`, French "1er"/"2e", Spanish "1.er") and the `[POKEBLOCK]` glyph run have no single character FrlgFont can map, so translations spell them out as plain letters ("er", "POKéBLOCK").
 - **Context-dependent shared keys**: `UPPER` (screen position) and `LIGHT` (vibration strength) reuse the Red/Blue/Gold keys, whose wording there is the naming keyboard's upper case and the light/lamp sense; FireRed overrides give them the Options meaning.
 - **Port-added Options rows** (group labels, OVERWORLD/BATTLE/MENU SPEED, RETURN TO MAIN MENU?) have no cart text; they are AI-composed per language following the project's existing wording (`overrides/<lang>/frlg/engine.json`, `reason: "engine-original"`).
+
+## Emerald
+
+Emerald (US, v1.0) runs on the same game3 runtime as FireRed, as its own game family: `GameVersion` id `emerald`, the `rse` text dialect of `src/core/game3/scripting/text_ir.lua` (named `ph` placeholders, named `FC 06` fonts, the `{POKEBLOCK}`, `{LV}` and arrow glyph runs), and its own screens under `src/ui/game3/rse/`. The pinned revision is `8fd45152` (v0.3.47); file:line citations refer to it. The translation mod (`translation-<lang>-gen3-emerald`, fr/de/es/it/ja-Hrkt) is a mod of its own, built from the Emerald ROM alone, and goes through the same joins as FireRed (`pipeline/gen3/`) with the Emerald family (`pipeline/gen3/family.py`): the Emerald PokeCorpus collection, pret's `pokeemerald.sym` (`symbols` branch) and `charmap.txt`, and its own reviewed configuration under `config/rse/`. `tools/rse/extract.lua` runs the text steps of the engine's own Emerald import plan (`src/import/gba/plans/rse/`), and `tools/rse/gate.lua` loads the mod through the real generation-3 loader on top of the game3 data modules built from that extract, so the statements below are measured, not inferred.
+
+Summary of what a translation mod can and cannot reach at the pinned revision:
+
+| Surface | Reachable | Mechanism |
+| --- | --- | --- |
+| Cart text (15,444 rows: script messages, menus, battle messages, lists, the Pokédex screens, PokéNav, contests, the Battle Frontier, the intro) | Yes, 99.9% of it | `mod.content.text:override(key, ir)`, by ROM address or label |
+| Species, move, item names; item descriptions; trainer names and class names | Yes | `pokemon`/`moves`/`items`/`trainers` patches |
+| game3's own text: its menus and prompts, the options it adds, the move and ability descriptions, Easy Chat (2,645 `Strings()` keys) | Yes, except 7 engine rows (entry 2) | `strings` registry, keys listed in `config/rse/engine_scope.json` |
+| Ability names, Pokédex categories and descriptions, contest categories and effect descriptions, map section names | **No** at the pinned revision (entry 1); the mod already ships them | `strings` registry once the screens look them up |
+| Japanese | Yes (the cart's own Japanese fonts) | as for FireRed |
+
+### In progress
+
+#### 1. Emerald screens print the cart's English names and descriptions as they are
+
+The Emerald summary and battle messages print `Pokemon.abilityName()`, the Pokédex entry, the starter selection and the Battle Factory print the entry's category and description, the summary, the move relearner and the contest move window print the contest category and effect description, and the region map, the PokéNav, the map name popup, Match Call and TV print `Mapsec.name()` (`src/ui/game3/rse/mapsec.lua:46`): all straight from the extracted packs, with no registry or `Strings()` lookup on the way. FireRed's own screens already pass the same kinds of text through `Strings()`.
+
+A gen1recomp change routes all four through `Strings()`, keyed by the cart's English as FireRed's are, and keeps the battle adapter's ability key on the ROM name (two commits prepared on top of v0.3.51, "Route Emerald text through the translation registry" and "Translate Emerald map-section names", not yet proposed). On this project's side the keys are already in `config/rse/engine_scope.json`: `pipeline/gen3/engine_scope.py` reads the Pokédex entries and contest texts from the extract (`rse_rom_values`) and the map sections through `Mapsec`, and joins a Pokédex category to its own `gPokedexEntries` row (`SITE_FAMILIES`, which also overrides a row kept from an earlier scope), never to the type, move or menu label with the same English (DARK is SOMBRE, not the TENEBR type). The keys the ROM-label migration would move onto a label ship in `lang/strings_by_english.lua`, the others in `lang/strings.lua`. The release gate measures each of the four (`hooks` in the gate report): `routed: false` at the pinned revision, `routed: true` with the change, each showing the official row (the contest effect "A highly appealing move." reads "Une démonstration qui\nplaît énormément." in French).
+
+### Required upstream capabilities
+
+#### 2. Engine rows with no Emerald cart row
+
+Seven `Strings()` keys have neither an Emerald corpus row nor a reviewed override, in every language, and keep their English: the controls screen's `ESC/2ND CANCELS`, `PRESS A BUTTON` and `RELEASE TO SET`, FireRed's bag actions `CHECK_TAG` and `OPEN` (shared code), the `SPECIAL AREA` map section (an empty row in every European cart) and the Easy Chat word `{POKEBLOCK}`, whose European rows are each cart's own glyph run. FireRed leaves the controls screen's three and `CHECK_TAG` in English too (`test_reviewed_qids_exist_in_the_pinned_corpus`); `test_engine_strings_resolve_in_every_language` pins Emerald's set.
+
+The Wonder Cards gen1recomp composes for Emerald's events (`src/core/game3/mystery_gift.lua`, `rseBuiltins`) have no cart row either: FireRed's reviewed overrides cover most of their lines, and `overrides/<language>/rse/engine.json` covers the rest (`It is for use at LILYCOVE CITY port.`, `We received this OLD SEA MAP`, `addressed to you.`, `on ROUTE 103.`) and the `EVENT TICKETS` option (`src/core/game3/rse/event_islands.lua:101`), worded from the Emerald cart's own names (NENUCRIQUE, VIEILLECARTE, ROUTE 103). In Japanese, the ALTERING CAVE card names the cave as Emerald does (へんげのどうくつ) instead of FireRed's override.
+
+#### 3. The Battle Pyramid's floor names
+
+The map name popup decodes the Battle Pyramid's floor names from the pyramid's map headers (`src/ui/game3/map_name_popup.lua:156`, `TextIR.toPlain(ref.ir)`) instead of looking them up by key, so no registry reaches them.
+
+### Verified working, not a gap
+
+- **Dialogue overrides reach Emerald's text.** `mod.content.text` writes into the live `Space.bundle.text` exactly as for FireRed, and `RomText.ir`/`RomText.box`, `BattleText.get` (the `STRINGID_*` keys) and `SummaryData.NATURES` read it back; the gate checks each. Emerald's 15,000 IR lists exceed LuaJIT's 65,536 constants per chunk, so the mod writes them in several files (`lang/dialogue.lua`, `lang/dialogue_2.lua`, ...), and its `main.lua` fails loudly on a file it cannot load instead of skipping it.
+- **Pointer tables join exactly.** The extractor keys a ROM pointer table by its name and index (`gNatureNamePointers[3]`, `sMenuTexts[25]`, `gStdStrings[18]`, the `stdstring:<n>` script menu entries) and the battle string table by `STRINGID_*`; the corpus names the strings those pointers reach (`sHardyNatureName`). `tools/rse/extract.lua` writes each slot's pointer (`rse_text_pointers.json`) and the join names it with pret's symbol table, so these rows join on a symbol like any script message.
+- **Lines left in English by every European cart are unused.** Outside the credits, the rows that read the same as English in every European corpus (`gText_Birch_Pokemon`, the Battle Tent rules variants, the `*2` Union Room and trade-center lines, `gText_HOFDexRating`...) are almost all lines pokeemerald never references and gen1recomp's Emerald screens never draw; the mod ships no stand-in for them.
+- **A label keeps its own row.** The engine catalog's ROM-label migration copies an English entry onto every label with that English, and `RomText.translate` reads a label's catalog entry before the label's text: the French cart's SORTIR menu would have read the RETOUR of another one. A label the dialogue join has its own row for keeps it (`dialogue_label_rows`), for FireRed too, and both release gates fail if a shipped dialogue label also has a catalog entry.
+- **One French corpus row is empty.** `Route119_Text_StayAwayFromWeatherInstitute` is empty in the French corpus only; `overrides/fr/rse/dialogue.json` ships the French cart's own line, read from pret's multi-language decompilation (`data/maps/Route119/text_fr.inc`), which builds the French cart byte for byte.
+- **The start menu needs no hook.** Emerald's start menu prints the cart's `gText_Menu*` rows through `RomText` (`src/ui/game3/rse/start_menu_data.lua:8`), which the named text join translates.
+
+### Translated via a compromise (`engine-contract-gap`)
+
+- **Glyph runs.** The cart draws `{POKEBLOCK}` and `{LV}` as glyph runs the `rse` dialect reads as tags. A translation keeps the tag the English row has, so the French, German and Spanish rows' `[POKEBLOCK]` show the US cart's run; the Italian carts' own runs are spelled out (`[POKEMELLA]` as POKéMELLA, like the French Battle Points symbol `[Pco]` as Pco, which the French rows also write in letters).
+- **A section name that holds a placeholder.** `MAPSEC_AQUA_HIDEOUT_OLD` holds the team's name as a placeholder, which the map section extractor drops (" HIDEOUT" in English); its translation drops it the same way.
 
 ## Engine bugs surfaced by TTF mode (not translation gaps)
 
