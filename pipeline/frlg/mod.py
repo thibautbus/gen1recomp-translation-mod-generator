@@ -47,6 +47,7 @@ from ..gen3.join import (
 )
 from ..gen3.mod import (
     CATALOG_HOOKS,
+    dialogue_label_rows,
     gen3_coverage,
     lua_ir,
     package_gen3_mod,
@@ -305,7 +306,8 @@ def join_frlg(
     strings, engine_stats = join_gen3_engine_strings(scope, corpus, charmap)
     by_english: dict[str, str] = {}
     if gen1recomp is not None:
-        strings, by_english = rom_label_strings(strings, gen1recomp, scope, luajit, ENGLISH_LOOKUP_SITES)
+        strings, by_english = rom_label_strings(strings, gen1recomp, scope, luajit, ENGLISH_LOOKUP_SITES,
+                                                 dialogue_label_rows(entries))
     catalogs = {name: result.values for name, result in results.items()}
     catalogs["strings"] = strings
     if by_english:
@@ -398,6 +400,15 @@ def write_gate_expectations(path: Path, joined: dict, *,
     sample = _sample(catalogs.get("strings", {}), "YES")
     if sample:
         expectations["strings"] = {"id": sample[0], "value": sample[1]}
+    # The samples the gate must find: one for every catalog that has rows.
+    expectations["required"] = sorted(
+        name for name in ("species_names", "move_names", "item_names", "item_descriptions",
+                          "trainer_names", "trainer_class_names", "start_menu", "strings")
+        if catalogs.get(name))
+    if any(entry.status in SHIPPED and entry.translation and (dialogue_keys is None or entry.key in dialogue_keys)
+           and any(segment.get("t") == "player" for segment in entry.translation)
+           for entry in joined["entries"]):
+        expectations["required"].append("dialogue")
     path.write_text(json.dumps(expectations, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return expectations
 

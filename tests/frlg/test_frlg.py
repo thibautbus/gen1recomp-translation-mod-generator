@@ -683,7 +683,8 @@ class FrlgModTests(unittest.TestCase):
         gate = (ROOT / "tools" / "frlg" / "gate.lua").read_text(encoding="utf-8")
         listed = re.search(r'for _, catalogName in ipairs\(\{(.*?)\}\)', gate, re.S).group(1)
         names = set(re.findall(r'"([a-z_]+)"', listed))
-        self.assertEqual(names, set(CATALOG_HOOKS) | {"dialogue", "start_menu"})
+        # "dialogue_" .. edition is the edition's own layer
+        self.assertEqual(names, set(CATALOG_HOOKS) | {"dialogue", "dialogue_", "start_menu"})
 
     def test_lua_ir_writes_every_field_the_runtime_reads(self):
         # a tag is drawn from seg.tag, and the Easy Chat keyboard and the

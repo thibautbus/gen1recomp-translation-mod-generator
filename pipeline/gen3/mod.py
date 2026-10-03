@@ -19,8 +19,8 @@ from typing import Callable, Mapping
 from ..shared.builder import BuildError
 from ..shared.generate import lua_string
 from ..shared.project import is_frozen, which_luajit
-from .join import SHIPPED
-from .text import ir_plain
+from .join import COVERED, SAME_AS_ENGLISH, SHIPPED
+from .text import ir_plain, text_key_address
 
 # Catalog name -> the registry call applying one value.
 CATALOG_HOOKS: Mapping[str, str] = {
@@ -81,7 +81,9 @@ def _modkit(gen1recomp: Path):
 def rom_label_strings(values: Mapping[str, str], gen1recomp: str | Path,
                       scope: Mapping[str, Mapping] | None = None,
                       luajit: str | None = None,
-                      english_lookup_sites: tuple[str, ...] = ()) -> tuple[dict[str, str], dict[str, str]]:
+                      english_lookup_sites: tuple[str, ...] = (),
+                      label_rows: Mapping[str, str | None] | None = None,
+                      ) -> tuple[dict[str, str], dict[str, str]]:
     """Key every cart string of the engine catalog by its ROM label.
 
     Since gen1recomp v0.3.0 the runtime looks a cart string up by its label
@@ -91,6 +93,15 @@ def rom_label_strings(values: Mapping[str, str], gen1recomp: str | Path,
     it is written: an entry whose key is the English of a ROM label moves
     onto that label, and only the literals the engine passes to ``Strings()``
     itself stay keyed by their English.
+
+    The migration copies one English entry onto every label with that
+    English, and the runtime reads a label's catalog entry before the
+    label's own text (``RomText.translate``): a label the dialogue join has
+    its own cart row for would show another screen's wording (CANCEL is
+    SORTIR on one French menu, RETOUR on another).  ``label_rows`` names
+    those labels: each one's migrated entry is dropped, or replaced by the
+    label's own text where the cart keeps the English (a ``str`` value), so
+    an English entry the engine also uses cannot reach it.
 
     Returns the migrated catalog and, separately, the entries of
     ``english_lookup_sites`` (the family's) the migration took away: the runtime reads those
@@ -134,6 +145,12 @@ def rom_label_strings(values: Mapping[str, str], gen1recomp: str | Path,
     for key in modkit.rom_english_keys(rom_text) - engine_literals:
         done.pop(key, None)
     catalog = {_unlua(key): _unlua(value) for key, value in done.items()}
+    for label, own in (label_rows or {}).items():
+        if label in catalog:
+            if own is None:
+                del catalog[label]
+            else:
+                catalog[label] = own
     scope = scope or {}
     by_english = {
         key: value for key, value in values.items()
@@ -156,6 +173,24 @@ def _unlua(literal: str) -> str:
         return _LUA_CONTROL.get(token, token)
 
     return _LUA_ESCAPE.sub(replace, literal[1:-1])
+
+
+def dialogue_label_rows(entries) -> dict[str, str | None]:
+    """The labels the dialogue join has the cart's own row for (rom_label_strings).
+
+    A label the cart keeps in English, as plain text, maps to that text; any
+    other covered label maps to None.
+    """
+    rows: dict[str, str | None] = {}
+    for entry in entries:
+        if entry.status not in COVERED or text_key_address(entry.key) is not None:
+            continue
+        own = None
+        if entry.status == SAME_AS_ENGLISH and all(
+                segment.get("t") in {"text", "eos"} for segment in entry.english):
+            own = "".join(segment.get("s", "") for segment in entry.english)
+        rows[entry.key] = own
+    return rows
 
 
 # ---------------------------------------------------------------- coverage
