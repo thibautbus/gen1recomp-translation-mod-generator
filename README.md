@@ -381,7 +381,7 @@ provenance. Future unresolved entries will keep their original English text.
   move groups come from the species and move names). They are listed with
   their callsites and cart rows in
   [`config/frlg/engine_scope.json`](config/frlg/engine_scope.json), which
-  `pipeline/frlg/engine_scope.py` regenerates from the pinned engine; a test
+  `pipeline/gen3/engine_scope.py` regenerates from the pinned engine; a test
   derives the same set from it, so a new key cannot slip out of the metric.
   A key whose text is a cart string is shipped under that string's ROM
   label, which is how the runtime looks it up.
@@ -568,7 +568,8 @@ the same split.
 | `pipeline/rby/` | `engine_scope.py`, `engine_backlog.py`, `disassembly_audit.py` | Classify the engine strings for Red/Blue, report the private backlog and audit the localized disassemblies. |
 | `pipeline/gsc/` | `text.py`, `join.py`, `index_join.py`, `localized_registries.py`, `trainer_names.py`, `engine.py`, `mod.py` | Join GoldSilver to pointer/index catalogs and engine strings, and emit the Gen 2 artifact. |
 | `pipeline/gsc/` | `crystal_mod.py`, `crystal_registries.py`, `crystal_strings.py` | The Crystal layer of the Gen 2 artifact. |
-| `pipeline/frlg/` | `text.py`, `join.py`, `engine_scope.py`, `audit.py`, `mod.py` | pret charmap/symbols, the game3 text IR, the address-to-label and engine joins, the hardcoded-text audit and the Gen 3 artifact. |
+| `pipeline/gen3/` | `family.py`, `text.py`, `join.py`, `engine_scope.py`, `mod.py` | What every generation-3 family shares: its corpus, pret charmap/symbols and text IR dialect, the address-to-label, catalog and engine joins, the engine scope generator and the mod helpers. |
+| `pipeline/frlg/` | `start_menu.py`, `audit.py`, `mod.py` | The FireRed/LeafGreen artifact: its edition layers, start menu, release gate and the game3 hardcoded-text audit. |
 | `tools/gsc/`, `tools/frlg/` | `extract.lua`, `gate*.lua`, `measure_*.py` | ROM extractors and release gates run under LuaJIT, and the Gold join measurements. |
 
 `build_translation.py` is the normal entry point. Intermediate and audit files

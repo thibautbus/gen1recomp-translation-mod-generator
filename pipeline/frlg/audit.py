@@ -6,7 +6,7 @@ literals that look like text and are not handed to ``Strings()``, then
 separates the files whose literals reach the screen from the files whose
 literals are internal (identifiers, asset paths, log lines, mod-API errors).
 A literal the runtime passes to ``Strings()`` through a variable (a table or
-list pipeline/frlg/engine_scope.py reads from that same file) is reachable
+list pipeline/gen3/engine_scope.py reads from that same file) is reachable
 too, so it is not counted; the same text drawn raw elsewhere still is.
 The second list is reviewed by hand and lives in ``NON_DISPLAY_FILES`` with
 its reason; any other file the scan flags is player-visible and must be
@@ -300,7 +300,7 @@ def scan_hardcoded_literals(checkout: str | Path, reachable: Mapping[str, frozen
 def reachable_keys(checkout: str | Path, extracted: str | Path | None = None) -> dict[str, frozenset[str]]:
     """Text the runtime passes to Strings() through a variable -> the files
     holding it, read from the engine the way the scope generator reads it."""
-    from .engine_scope import reachable_by_file
+    from ..gen3.engine_scope import reachable_by_file
     return {key: frozenset(paths)
             for key, paths in reachable_by_file(Path(checkout), _extract(extracted)).items()}
 

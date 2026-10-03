@@ -1,7 +1,9 @@
-"""Join PokeCorpus's FireRedLeafGreen collection to FireRed ROM data.
+"""Join a PokeCorpus generation-3 collection to its cart's ROM data.
 
-Three different keys meet here, one per surface gen1recomp's game3 runtime
-exposes to a content mod:
+FireRed/LeafGreen and Emerald are joined the same way, each through its own
+collection, pret symbol table and charmap (pipeline.gen3.family); the
+examples below are FireRed's.  Three different keys meet here, one per
+surface gen1recomp's game3 runtime exposes to a content mod:
 
 * Dialogue.  The script extractor keys each message by its ROM pointer
   (``g3:081722c7``).  pret's ``pokefirered.sym`` names that address
@@ -11,7 +13,7 @@ exposes to a content mod:
   third strategy next to Red/Blue's label join and Gold/Silver's normalised
   English join; it is only possible because pret publishes FireRed's symbol
   table.  The English corpus row must still reproduce the extracted ROM IR
-  (pipeline.frlg.text), so a stale symbol or a corpus/ROM mismatch falls
+  (pipeline.gen3.text), so a stale symbol or a corpus/ROM mismatch falls
   back to English instead of shipping the wrong line.
 * Named catalogs (species, moves, items, trainers, trainer classes) are ROM
   tables indexed by number, like the corpus rows
@@ -21,6 +23,11 @@ exposes to a content mod:
   item record; they are matched by their English text among the corpus's
   item and move description rows, and only used when every candidate row
   carries the same translation.
+
+A ROM text table the extractor keys by its own name and index
+(``gNatureNamePointers[3]``) points at a string pret names
+(``sHardyNatureName``): an extract that reads those pointers hands the
+symbols over as ``aliases``, which join exactly like an address's symbols.
 """
 from __future__ import annotations
 
@@ -32,6 +39,7 @@ from pathlib import Path
 from typing import Iterable, Mapping
 
 from ..shared.corpus import CORPUS_NULL, canonical_language, corpus_target_text
+from .family import FRLG, Gen3Family
 from .text import (
     LANGUAGE_FOLDS,
     EncodeError,
@@ -46,8 +54,6 @@ from .text import (
     normalise_ir,
     text_key_address,
 )
-
-COLLECTION = "FireRedLeafGreen"
 
 # Dialogue provenance values.
 TRANSLATED = "translated"
@@ -76,12 +82,12 @@ IGNORED = frozenset({MARKUP_ONLY, UNDECODABLE, JAPANESE_SOURCE})
 SHIPPED = frozenset({TRANSLATED, OVERRIDE, REVIEWED, CONTENT_MATCH, CART_EMPTY})
 COVERED = frozenset({TRANSLATED, OVERRIDE, REVIEWED, CONTENT_MATCH, CART_EMPTY, SAME_AS_ENGLISH})
 
-FRLG_DIALOGUE_OVERRIDES_SCHEMA = "gen1recomp-translation-mods/frlg-dialogue-overrides"
-FRLG_DIALOGUE_DECISIONS_SCHEMA = "gen1recomp-translation-mods/frlg-dialogue-decisions"
+FRLG_DIALOGUE_OVERRIDES_SCHEMA = FRLG.schema("dialogue-overrides")
+FRLG_DIALOGUE_DECISIONS_SCHEMA = FRLG.schema("dialogue-decisions")
 
 
 @dataclass(frozen=True)
-class FrlgCorpus:
+class Gen3Corpus:
     language: str
     qids: tuple[str, ...]
     english: tuple[str, ...]
@@ -89,6 +95,7 @@ class FrlgCorpus:
     by_qid: Mapping[str, int]
     by_label: Mapping[str, tuple[int, ...]]
     missing: tuple[bool, ...] = ()
+    family: Gen3Family = FRLG
 
     def row(self, qid: str) -> tuple[str, str] | None:
         index = self.by_qid.get(qid)
@@ -105,8 +112,8 @@ def _read_lines(path: Path) -> list[str]:
     return lines
 
 
-def load_frlg_corpus(corpus_dir: str | Path, language: str) -> FrlgCorpus:
-    """Load one language of the FireRedLeafGreen parallel corpus."""
+def load_gen3_corpus(corpus_dir: str | Path, language: str, family: Gen3Family = FRLG) -> Gen3Corpus:
+    """Load one language of a generation-3 family's parallel corpus."""
     language = canonical_language(language)
     root = Path(corpus_dir)
     qids = _read_lines(root / "qid_msg.txt")
@@ -118,7 +125,7 @@ def load_frlg_corpus(corpus_dir: str | Path, language: str) -> FrlgCorpus:
     # blank.  The two are told apart before the marker is read as empty.
     missing = tuple(line == CORPUS_NULL for line in raw_target)
     if not (len(qids) == len(english) == len(target)):
-        raise ValueError(f"{COLLECTION} corpus files for {language} are not parallel")
+        raise ValueError(f"{family.collection} corpus files for {language} are not parallel")
     by_label: dict[str, list[int]] = defaultdict(list)
     for index, qid in enumerate(qids):
         by_label[qid.rsplit(".", 1)[-1]].append(index)
@@ -131,16 +138,16 @@ def load_frlg_corpus(corpus_dir: str | Path, language: str) -> FrlgCorpus:
             indices.insert(0, parts.pop())
         if indices:
             by_label[parts[-1] + "".join(f"[{number}]" for number in indices)].append(index)
-    return FrlgCorpus(
+    return Gen3Corpus(
         language, tuple(qids), tuple(english), tuple(target),
         {qid: index for index, qid in enumerate(qids)},
         {label: tuple(indices) for label, indices in by_label.items()},
-        missing,
+        missing, family,
     )
 
 
 @dataclass
-class FrlgDialogueEntry:
+class Gen3DialogueEntry:
     key: str
     status: str
     english: list[dict]
@@ -150,7 +157,8 @@ class FrlgDialogueEntry:
     detail: str = ""
 
 
-def load_frlg_dialogue_overrides(language: str, root: str | Path | None = None) -> dict[str, dict]:
+def load_dialogue_overrides(language: str, family: Gen3Family = FRLG,
+                            root: str | Path | None = None) -> dict[str, dict]:
     """Reviewed per-key corrections: ``{key: {"qid": ..., "text": ...}}``.
 
     ``text`` is corpus notation (``\\n``, ``\\c``, ``[PLAYER]``...) and goes
@@ -159,27 +167,29 @@ def load_frlg_dialogue_overrides(language: str, root: str | Path | None = None) 
     """
     language = canonical_language(language)
     base = Path(root) if root else Path(__file__).resolve().parents[2]
-    path = base / "overrides" / language / "frlg" / "dialogue.json"
+    path = base / "overrides" / language / family.id / "dialogue.json"
     if not path.is_file():
         return {}
     data = json.loads(path.read_text(encoding="utf-8"))
-    if data.get("schema") != FRLG_DIALOGUE_OVERRIDES_SCHEMA or data.get("version") != 1:
-        raise ValueError(f"unsupported FireRed dialogue overrides: {path}")
+    if data.get("schema") != family.schema("dialogue-overrides") or data.get("version") != 1:
+        raise ValueError(f"unsupported {family.game} dialogue overrides: {path}")
     entries = data.get("entries")
     if not isinstance(entries, dict):
-        raise ValueError(f"FireRed dialogue overrides need an entries object: {path}")
+        raise ValueError(f"{family.game} dialogue overrides need an entries object: {path}")
     for key, row in entries.items():
         if (not isinstance(row, dict) or not isinstance(row.get("text"), str)
-                or not isinstance(row.get("qid"), str) or not isinstance(row.get("reason"), str)):
-            raise ValueError(f"invalid FireRed dialogue override for {key!r}: {path}")
+                or not isinstance(row.get("qid"), str) or not isinstance(row.get("reason"), str)
+                or not row["qid"].startswith(family.qid_prefix)):
+            raise ValueError(f"invalid {family.game} dialogue override for {key!r}: {path}")
     return entries
 
 
-FRLG_EDITIONS = ("firered", "leafgreen")
+FRLG_EDITIONS = FRLG.editions
+EDITION_NAMES: Mapping[str, str] = {"firered": "FireRed", "leafgreen": "LeafGreen", "emerald": "Emerald"}
 
 
-def load_frlg_dialogue_decisions(path: str | Path | None = None,
-                                 edition: str = "firered") -> dict[str, str]:
+def load_dialogue_decisions(family: Gen3Family = FRLG, path: str | Path | None = None,
+                            edition: str | None = None) -> dict[str, str]:
     """Reviewed ``{key: qid}`` picks for text gen1recomp rewrote itself.
 
     The standard scripts (nurse, PC, item pickup) are keyed by label and
@@ -192,28 +202,31 @@ def load_frlg_dialogue_decisions(path: str | Path | None = None,
     entry carries a ``leafgreen`` pick of its own, which that edition reads
     instead.
     """
-    if edition not in FRLG_EDITIONS:
-        raise ValueError(f"unsupported generation-3 edition: {edition!r}")
+    edition = edition or family.editions[0]
+    if edition not in family.editions:
+        raise ValueError(f"unsupported {family.game} edition: {edition!r}")
     if path is None:
-        path = Path(__file__).resolve().parents[2] / "config" / "frlg" / "dialogue_decisions.json"
+        path = Path(__file__).resolve().parents[2] / "config" / family.id / "dialogue_decisions.json"
     path = Path(path)
     if not path.is_file():
         return {}
     data = json.loads(path.read_text(encoding="utf-8"))
-    if data.get("schema") != FRLG_DIALOGUE_DECISIONS_SCHEMA or data.get("version") != 1:
-        raise ValueError(f"unsupported FireRed dialogue decisions: {path}")
+    if data.get("schema") != family.schema("dialogue-decisions") or data.get("version") != 1:
+        raise ValueError(f"unsupported {family.game} dialogue decisions: {path}")
 
     def pick(row) -> bool:
         return (isinstance(row, dict) and isinstance(row.get("qid"), str)
-                and row["qid"].startswith("frlg.") and isinstance(row.get("reason"), str))
+                and row["qid"].startswith(family.qid_prefix) and isinstance(row.get("reason"), str))
 
+    others = set(family.editions[1:])
     result: dict[str, str] = {}
     for key, row in (data.get("entries") or {}).items():
-        if not pick(row) or set(row) - {"qid", "reason", "leafgreen"}:
-            raise ValueError(f"invalid FireRed dialogue decision for {key!r}: {path}")
-        if "leafgreen" in row and (not pick(row["leafgreen"]) or set(row["leafgreen"]) - {"qid", "reason"}):
-            raise ValueError(f"invalid LeafGreen dialogue decision for {key!r}: {path}")
-        result[key] = (row["leafgreen"] if edition == "leafgreen" and "leafgreen" in row else row)["qid"]
+        if not pick(row) or set(row) - {"qid", "reason"} - others:
+            raise ValueError(f"invalid {family.game} dialogue decision for {key!r}: {path}")
+        for other in others & set(row):
+            if not pick(row[other]) or set(row[other]) - {"qid", "reason"}:
+                raise ValueError(f"invalid {EDITION_NAMES.get(other, other)} dialogue decision for {key!r}: {path}")
+        result[key] = (row[edition] if edition in row else row)["qid"]
     return result
 
 
@@ -275,7 +288,11 @@ def _has_prose(segments: Iterable[Mapping]) -> bool:
 # STRINGID_* constant (src/core/game3/battle/battle_text.lua), the corpus by
 # the pret symbol each one points at, so they are joined on their English
 # text instead of on a label.  Their FD escapes are battle placeholders.
-BATTLE_QID_PREFIX = "frlg.common.battle_message."
+def battle_qid_prefix(family: Gen3Family) -> str:
+    return f"{family.qid_prefix}common.battle_message."
+
+
+BATTLE_QID_PREFIX = battle_qid_prefix(FRLG)
 
 
 def is_battle_key(key: str, rom_ir: Iterable[Mapping] = ()) -> bool:
@@ -285,10 +302,11 @@ def is_battle_key(key: str, rom_ir: Iterable[Mapping] = ()) -> bool:
     return key.startswith("STRINGID_") or any(segment.get("t") == "bph" for segment in rom_ir)
 
 
-def _battle_index(corpus: FrlgCorpus, charmap: PretCharmap) -> Mapping[str, tuple[int, ...]]:
+def _battle_index(corpus: Gen3Corpus, charmap: PretCharmap) -> Mapping[str, tuple[int, ...]]:
     rows: dict[str, list[int]] = defaultdict(list)
+    prefix = battle_qid_prefix(corpus.family)
     for index, qid in enumerate(corpus.qids):
-        if not qid.startswith(BATTLE_QID_PREFIX):
+        if not qid.startswith(prefix):
             continue
         try:
             english = corpus_ir(corpus.english[index], charmap, battle=True)
@@ -306,7 +324,7 @@ _CONTENT_LAST_RESORT = (".easy_chat_", ".gEasyChatGroupName_", ".quest_log.",
                         ".gPokedexEntries.", ".fame_checker.")
 
 
-def _content_index(corpus: FrlgCorpus, charmap: PretCharmap) -> Mapping[str, tuple[int, ...]]:
+def _content_index(corpus: Gen3Corpus, charmap: PretCharmap) -> Mapping[str, tuple[int, ...]]:
     """Every corpus row by the IR its English reads as.
 
     A ROM text table the cart reaches through a pointer (the Fame Checker's
@@ -333,16 +351,26 @@ def _is_last_resort(qid: str) -> bool:
     return any(family in qid for family in _CONTENT_LAST_RESORT)
 
 
-def _candidates(key: str, symbols: Mapping[int, list[str]], corpus: FrlgCorpus) -> tuple[tuple[str, ...], list[int]]:
+def _candidates(key: str, symbols: Mapping[int, list[str]], corpus: Gen3Corpus,
+                aliases: Mapping[str, Iterable[str]] | None = None) -> tuple[tuple[str, ...], list[int]]:
     address = text_key_address(key)
     labels = tuple(symbols.get(address, ())) if address is not None else (key,)
+    if aliases and key in aliases:
+        labels += tuple(label for label in aliases[key] if label not in labels)
     indices: list[int] = []
     for label in labels:
         indices.extend(corpus.by_label.get(label, ()))
     return labels, sorted(set(indices))
 
 
-def _join_braille(entry: "FrlgDialogueEntry", spelled: str, target: str,
+def _reads_as(english: str, rom_ir: list[dict], charmap: PretCharmap, battle: bool) -> bool:
+    try:
+        return corpus_ir(english, charmap, battle=battle) == rom_ir
+    except EncodeError:
+        return False
+
+
+def _join_braille(entry: "Gen3DialogueEntry", spelled: str, target: str,
                   rom_ir: list[dict]) -> None:
     """A braille message: the corpus writes every cart's line as Unicode
     braille, the extractor decodes the cart's own line to Latin letters
@@ -368,29 +396,33 @@ def _join_braille(entry: "FrlgDialogueEntry", spelled: str, target: str,
     entry.status = TRANSLATED
 
 
-def join_frlg_dialogue(
+def join_gen3_dialogue(
     text: Mapping[str, list[dict]],
-    corpus: FrlgCorpus,
+    corpus: Gen3Corpus,
     symbols: Mapping[int, list[str]],
     charmap: PretCharmap,
     *,
     overrides: Mapping[str, Mapping] | None = None,
     decisions: Mapping[str, str] | None = None,
-) -> tuple[list[FrlgDialogueEntry], dict]:
-    """Join every extracted text key to one corpus row and translate it."""
+    aliases: Mapping[str, Iterable[str]] | None = None,
+) -> tuple[list[Gen3DialogueEntry], dict]:
+    """Join every extracted text key to one corpus row and translate it.
+
+    ``aliases`` names the pret symbols a table key's pointer reaches.
+    """
     overrides = overrides or {}
     decisions = decisions or {}
     battle_index = _battle_index(corpus, charmap)
     content_index = _content_index(corpus, charmap)
-    entries: list[FrlgDialogueEntry] = []
+    entries: list[Gen3DialogueEntry] = []
     for key in sorted(text):
         rom_ir = normalise_ir(text[key])
         battle = is_battle_key(key, rom_ir)
-        labels, indices = _candidates(key, symbols, corpus)
+        labels, indices = _candidates(key, symbols, corpus, aliases)
         if battle and not indices:
             indices = list(battle_index.get(json.dumps(rom_ir, sort_keys=True), ()))
         matched_on_text = False
-        entry = FrlgDialogueEntry(key, NO_MATCH, rom_ir, labels=labels)
+        entry = Gen3DialogueEntry(key, NO_MATCH, rom_ir, labels=labels)
         entries.append(entry)
         if not _has_prose(rom_ir):
             entry.status = MARKUP_ONLY
@@ -401,7 +433,7 @@ def join_frlg_dialogue(
         reviewed = decisions.get(key)
         if reviewed is not None:
             if reviewed not in corpus.by_qid:
-                raise ValueError(f"FireRed dialogue decision {key!r}: unknown qid {reviewed}")
+                raise ValueError(f"{corpus.family.game} dialogue decision {key!r}: unknown qid {reviewed}")
             indices = [corpus.by_qid[reviewed]]
         if not indices and reviewed is None:
             rows = content_index.get(json.dumps(rom_ir, sort_keys=True), ())
@@ -421,6 +453,13 @@ def join_frlg_dialogue(
             # it is not a gap a translation could close.
             entry.status = UNDECODABLE if _is_undecodable(rom_ir) else NO_MATCH
             continue
+        if len(indices) > 1 and len({corpus.target[i] for i in indices}) > 1:
+            # Rows that share a label (a qid the corpus lists twice, the same
+            # symbol in two files) are told apart by the ROM itself: only a
+            # row whose English reproduces the extracted IR can be its line.
+            same = [i for i in indices if _reads_as(corpus.english[i], rom_ir, charmap, battle)]
+            if same and len({corpus.target[i] for i in same}) == 1:
+                indices = same
         if len(indices) > 1 and len({corpus.target[i] for i in indices}) > 1:
             entry.status = UNRESOLVED
             entry.detail = ", ".join(corpus.qids[i] for i in indices)
@@ -497,7 +536,7 @@ def join_frlg_dialogue(
     }
 
 
-def dialogue_catalog(entries: Iterable[FrlgDialogueEntry]) -> dict[str, list[dict]]:
+def dialogue_catalog(entries: Iterable[Gen3DialogueEntry]) -> dict[str, list[dict]]:
     return {entry.key: entry.translation for entry in entries
             if entry.status in SHIPPED and entry.translation}
 
@@ -533,24 +572,38 @@ def registry_ids(names: Mapping[int, str]) -> dict[int, str]:
 _CATALOG_PKMN = ("[PKMN]", "POKéMON")
 
 
+def _dialect_tag(segment: Mapping, charmap: PretCharmap) -> str | None:
+    """A glyph-run tag the cart's dialect draws ({POKEBLOCK}), which the
+    table extractors write into a catalog value as its tag."""
+    tag = segment.get("tag") if segment.get("t") == "tag" else None
+    return tag if tag and tag in charmap.dialect.charmap_extra.values() else None
+
+
 def _plain(text: str, charmap: PretCharmap, language: str) -> str:
     """Encode/decode a one-line catalog value through the cart's glyph set."""
     segments = corpus_ir(text.replace(*_CATALOG_PKMN), charmap, language=language)
-    if any(segment["t"] not in {"text", "eos"} for segment in segments):
-        raise EncodeError("catalog value carries control codes")
-    return "".join(segment.get("s", "") for segment in segments)
+    parts = []
+    for segment in segments:
+        tag = _dialect_tag(segment, charmap)
+        if segment["t"] not in {"text", "eos"} and tag is None:
+            raise EncodeError("catalog value carries control codes")
+        parts.append(tag or segment.get("s", ""))
+    return "".join(parts)
 
 
 def _plain_multiline(text: str, charmap: PretCharmap, language: str) -> str:
     """Item/move descriptions: newlines are kept, other controls refused."""
-    segments = corpus_ir(text, charmap, language=language)
+    segments = corpus_ir(text.replace(*_CATALOG_PKMN), charmap, language=language)
     parts = []
     for segment in segments:
         kind = segment["t"]
+        tag = _dialect_tag(segment, charmap)
         if kind == "text":
             parts.append(segment["s"])
         elif kind == "nl":
             parts.append("\n")
+        elif tag is not None:
+            parts.append(tag)
         elif kind != "eos":
             raise EncodeError("description carries control codes")
     return "".join(parts)
@@ -577,7 +630,7 @@ class CatalogResult:
 def join_indexed_catalog(
     rom_values: Mapping[int, str],
     ids: Mapping[int, str],
-    corpus: FrlgCorpus,
+    corpus: Gen3Corpus,
     qid_prefix: str,
     charmap: PretCharmap,
     *,
@@ -623,27 +676,55 @@ def join_indexed_catalog(
     return result
 
 
+# Each family's item description rows, and the prefix that names an item's
+# own row after its constant (FireRed's gItemDescription_ITEM_<ID>); Emerald
+# names them after the string (sMasterBallDesc), which the extract reaches
+# through each item's description pointer (``own_qids``).
+_ITEM_DESCRIPTION_FAMILIES: Mapping[str, tuple[tuple[str, ...], str | None]] = {
+    "frlg": (("frlg.common.items.gItemDescription_", "frlg.common.move_descriptions."),
+             "frlg.common.items.gItemDescription_ITEM_"),
+    "rse": (("e.common.item_descriptions.", "e.common.move_descriptions."), None),
+}
+
+
 def join_item_descriptions(
     items: Mapping[int, Mapping[str, str]],
     ids: Mapping[int, str],
-    corpus: FrlgCorpus,
+    corpus: Gen3Corpus,
     charmap: PretCharmap,
+    *,
+    own_qids: Mapping[int, Iterable[str]] | None = None,
 ) -> CatalogResult:
-    """Item descriptions (TM/HM descriptions are their move's description)."""
+    """Item descriptions (TM/HM descriptions are their move's description).
+
+    ``own_qids`` maps an item number to the rows its description pointer
+    names, for a family whose rows are not named after the item.
+    """
     by_english: dict[str, set[str]] = defaultdict(set)
     own_label: dict[str, str] = {}
+    families, own_prefix = _ITEM_DESCRIPTION_FAMILIES[corpus.family.id]
     for index, qid in enumerate(corpus.qids):
-        if not (qid.startswith("frlg.common.items.gItemDescription_")
-                or qid.startswith("frlg.common.move_descriptions.")):
+        if not qid.startswith(families):
             continue
         try:
             english = _plain_multiline(corpus.english[index], charmap, "en")
         except EncodeError:
             continue
         by_english[english].add(corpus.target[index])
-        prefix = "frlg.common.items.gItemDescription_ITEM_"
-        if qid.startswith(prefix):
-            own_label[qid[len(prefix):]] = corpus.target[index]
+        if own_prefix and qid.startswith(own_prefix):
+            own_label[qid[len(own_prefix):]] = corpus.target[index]
+    for number, qids in (own_qids or {}).items():
+        english = (items.get(number) or {}).get("description")
+        targets = set()
+        for qid in qids:
+            index = corpus.by_qid.get(qid)
+            try:
+                if index is not None and _plain_multiline(corpus.english[index], charmap, "en") == english:
+                    targets.add(corpus.target[index])
+            except EncodeError:
+                continue
+        if len(targets) == 1 and ids.get(number):
+            own_label[ids[number]] = next(iter(targets))
     result = CatalogResult()
     for number, row in sorted(items.items()):
         id_ = ids.get(number)
@@ -682,74 +763,52 @@ def join_item_descriptions(
     return result
 
 
-# ------------------------------------------------------------- start menu
+def join_trainer_class_names(trainers: Mapping[int, Mapping], trainer_ids: Mapping[int, str],
+                             corpus: Gen3Corpus, charmap: PretCharmap) -> CatalogResult:
+    """Join each trainer class once, then fan it out to its trainers.
 
-# src/ui/game3/start_menu.lua build_entries(): entry id -> the cart's own
-# label row.  The labels are printed as-is (no Strings()), but the public
-# ``ui.start_menu.items`` hook hands the entry list to mods before it is
-# drawn.  The player's own name row ("trainer") is left alone.
-START_MENU_QIDS: Mapping[str, str] = {
-    "pokedex": "frlg.common.strings.gText_MenuPokedex",
-    "pokemon": "frlg.common.strings.gText_MenuPokemon",
-    "bag": "frlg.common.strings.gText_MenuBag",
-    "save": "frlg.common.strings.gText_MenuSave",
-    "option": "frlg.common.strings.gText_MenuOption",
-    "exit": "frlg.common.strings.gText_MenuExit",
-}
-START_MENU_ENGLISH: Mapping[str, str] = {
-    "pokedex": "POKéDEX", "pokemon": "POKéMON", "bag": "BAG",
-    "save": "SAVE", "option": "OPTION", "exit": "EXIT",
-}
-
-
-def join_start_menu(corpus: FrlgCorpus, charmap: PretCharmap) -> CatalogResult:
-    """Start-menu labels, keyed by entry id; English must match the engine's."""
+    Every class is translated since gen1recomp v0.3.4: the runtime reads a
+    trainer's class by id (gen1recomp#2398), so RIVAL, LEADER, ELITE FOUR
+    and CHAMPION no longer have to stay in English for the rival's name, the
+    quest log and the battle transition to work.
+    """
+    per_class = join_indexed_catalog(
+        {row["class"]: row["className"] for row in trainers.values()
+         if isinstance(row.get("class"), int) and row.get("className")},
+        {row["class"]: str(row["class"]) for row in trainers.values() if isinstance(row.get("class"), int)},
+        corpus, f"{corpus.family.qid_prefix}common.trainer_class_names.gTrainerClassNames.", charmap,
+    )
     result = CatalogResult()
-    for entry_id, qid in START_MENU_QIDS.items():
-        result.stats["total"] += 1
-        row = corpus.row(qid)
-        if row is None:
-            result.stats["no_corpus_row"] += 1
-            result.issues.append(f"{entry_id}: no corpus row {qid}")
-            continue
-        english, target = row
-        if _plain(english, charmap, "en") != START_MENU_ENGLISH[entry_id]:
-            result.stats["english_mismatch"] += 1
-            result.issues.append(f"{entry_id}: {qid} reads {english!r}")
-            continue
-        if not target:
-            result.stats["no_translation"] += 1
-            continue
-        value = _plain(target, charmap, corpus.language)
-        if value == START_MENU_ENGLISH[entry_id]:
-            result.stats["same_as_english"] += 1
-            continue
-        result.values[entry_id] = value
-        result.stats["translated"] += 1
+    result.stats.update(per_class.stats)
+    result.issues = per_class.issues
+    for number, row in trainers.items():
+        value = per_class.values.get(str(row.get("class")))
+        if row.get("className") and value:
+            result.values[trainer_ids[number]] = value
     return result
 
 
 # ----------------------------------------------------------- engine strings
 
-FRLG_ENGINE_SCOPE_SCHEMA = "gen1recomp-translation-mods/frlg-engine-scope"
+FRLG_ENGINE_SCOPE_SCHEMA = FRLG.schema("engine-scope")
 FRLG_ENGINE_OVERRIDES_SCHEMA = "gen1recomp-translation-mods/engine-overrides"
 
 
-def load_frlg_engine_scope(path: str | Path | None = None) -> dict[str, dict]:
+def load_engine_scope(family: Gen3Family = FRLG, path: str | Path | None = None) -> dict[str, dict]:
     if path is None:
-        path = Path(__file__).resolve().parents[2] / "config" / "frlg" / "engine_scope.json"
+        path = Path(__file__).resolve().parents[2] / "config" / family.id / "engine_scope.json"
     data = json.loads(Path(path).read_text(encoding="utf-8"))
-    if data.get("schema") != FRLG_ENGINE_SCOPE_SCHEMA or data.get("version") != 1:
-        raise ValueError(f"unsupported FireRed engine scope: {path}")
+    if data.get("schema") != family.schema("engine-scope") or data.get("version") != 1:
+        raise ValueError(f"unsupported {family.game} engine scope: {path}")
     keys = data.get("keys")
     if not isinstance(keys, dict) or not keys:
-        raise ValueError(f"FireRed engine scope has no keys: {path}")
+        raise ValueError(f"{family.game} engine scope has no keys: {path}")
     for key, row in keys.items():
         if not isinstance(row, dict) or not isinstance(row.get("callsite"), str):
-            raise ValueError(f"FireRed engine scope row {key!r} needs a callsite")
+            raise ValueError(f"{family.game} engine scope row {key!r} needs a callsite")
         qid = row.get("qid")
-        if qid is not None and not (isinstance(qid, str) and qid.startswith("frlg.")):
-            raise ValueError(f"FireRed engine scope row {key!r} has an invalid qid")
+        if qid is not None and not (isinstance(qid, str) and qid.startswith(family.qid_prefix)):
+            raise ValueError(f"{family.game} engine scope row {key!r} has an invalid qid")
     return keys
 
 
@@ -959,7 +1018,7 @@ def check_engine_directives(key: str, value: str, language: str = "") -> None:
     wanted = [d for d in (m.group(1) for m in _ENGINE_DIRECTIVE.finditer(key)) if d != "%"]
     given = [d for d in (m.group(1) for m in _ENGINE_DIRECTIVE.finditer(value)) if d != "%"]
     numbered = [d for d in given if re.match(r"\d+\$", d)]
-    where = f"FireRed engine string {key!r} ({language})"
+    where = f"engine string {key!r} ({language})"
     if numbered:
         if len(numbered) != len(given):
             raise ValueError(f"{where}: mixes numbered and plain directives")
@@ -989,45 +1048,51 @@ def _check_engine_glyphs(key: str, value: str, charmap: PretCharmap, language: s
         if char in "\n\f" or char in key:
             continue
         if folds.get(char, char) not in drawable:
-            raise ValueError(f"FireRed engine string {key!r} ({language}): {char!r} has no FireRed glyph")
+            raise ValueError(f"engine string {key!r} ({language}): {char!r} has no game3 glyph")
 
 
-def join_frlg_engine_strings(
+def join_gen3_engine_strings(
     scope: Mapping[str, Mapping],
-    corpus: FrlgCorpus,
+    corpus: Gen3Corpus,
     charmap: PretCharmap,
     *,
     root: str | Path | None = None,
 ) -> tuple[dict[str, str], dict]:
-    """Resolve each FireRed-reachable ``Strings()`` key.
+    """Resolve each ``Strings()`` key the family's runtime can reach.
 
-    Order: this language's FireRed overrides, then the reviewed FireRed
-    corpus row named in the scope (the cart's own wording for its original
-    menus), then the project's existing Gold/Silver and Red/Blue overrides
-    for port-added rows the three runtimes share (same key, same Strings()
-    registry), then English.
+    Order: this language's overrides for the family, then the reviewed corpus
+    row named in the scope (the cart's own wording for its original menus),
+    then the reviewed overrides of the other game3 families for the port-added
+    rows they share (Emerald falls back on FireRed's), then the project's
+    existing Gold/Silver and Red/Blue overrides for port-added rows the
+    runtimes share (same key, same Strings() registry), then English.
     """
     language = corpus.language
+    family = corpus.family
     base = Path(root) if root else Path(__file__).resolve().parents[2]
-    frlg = _override_values(base / "overrides" / language / "frlg" / "engine.json")
+    own = _override_values(base / "overrides" / language / family.id / "engine.json")
+    game3 = {}
+    for other in reversed(family.shared_engine_families):
+        game3.update(_override_values(base / "overrides" / language / other / "engine.json"))
     shared = {**_override_values(base / "overrides" / language / "rby" / "engine.json"),
               **_override_values(base / "overrides" / language / "gsc" / "engine.json")}
+    where = f"{family.game} engine scope row"
     values: dict[str, str] = {}
     details: dict[str, str] = {}
     for key, row in sorted(scope.items()):
         value, origin = None, None
-        if key in frlg:
-            value, origin = frlg[key], "frlg_override"
+        if key in own:
+            value, origin = own[key], f"{family.id}_override"
         elif row.get("qid"):
             pair = corpus.row(row["qid"])
             if pair is None:
-                raise ValueError(f"FireRed engine scope row {key!r}: unknown qid {row['qid']}")
+                raise ValueError(f"{where} {key!r}: unknown qid {row['qid']}")
             english, target = pair
             fills = row.get("fill") or {}
             if fills:
                 rows = {placeholder: corpus.row(qid) for placeholder, qid in fills.items()}
                 if any(pair is None for pair in rows.values()):
-                    raise ValueError(f"FireRed engine scope row {key!r}: unknown fill qid")
+                    raise ValueError(f"{where} {key!r}: unknown fill qid")
                 english = apply_fills(english, {p: pair[0] for p, pair in rows.items()})
                 target = apply_fills(target, {p: pair[1] for p, pair in rows.items()}) if target else target
                 if any(not pair[1] for pair in rows.values()):
@@ -1038,13 +1103,15 @@ def join_frlg_engine_strings(
                 engine_template(source, english, english, charmap, "en", battle=battle)
             except ValueError as error:
                 raise ValueError(
-                    f"FireRed engine scope row {key!r}: {row['qid']} reads {english!r} ({error})") from None
+                    f"{where} {key!r}: {row['qid']} reads {english!r} ({error})") from None
             if target:
                 try:
                     value, _how = engine_template(source, english, target, charmap, language, battle=battle)
                     origin = "corpus"
                 except ValueError:
                     value = None
+        if value is None and key in game3:
+            value, origin = game3[key], "game3_override"
         if value is None and key in shared:
             # Gold's text engine marks a scrolled line break with \v.
             value, origin = shared[key].replace("\v", "\n"), "shared_override"
