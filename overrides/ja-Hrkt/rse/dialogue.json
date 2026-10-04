@@ -8,6 +8,12 @@
       "reason": "corpus-gap",
       "provenance": "The Japanese corpus row is empty; こたえ is the Emerald cart's own word (gText_TheAnswer, \"こたえは\")."
     },
+    "gText_BattleMenu": {
+      "qid": "e.common.battle_message.gText_BattleMenu",
+      "text": "たたかう[CLEAR_TO 56]バッグ\\nポケモン[CLEAR_TO 56]にげる",
+      "reason": "engine-contract-gap",
+      "provenance": "The Japanese cart's own words; only the alignment changes. The cart lines the two columns up with ideographic spaces (\"たたかう　　バッグ / ポケモン　　にげる\"), where every other cart uses the CLEAR_TO layout code (\"FIGHT[CLEAR_TO 56]BAG / POKéMON[CLEAR_TO 56]RUN\"). gen1recomp draws the four options in its own grid and splits the row into them at each line break and CLEAR_TO (src/core/game3/battle/ui.lua:2097, menu_labels), so the Japanese row gave it two options holding two words each and left the other two slots empty. The override keeps the words and puts CLEAR_TO 56 where the spaces were, as the US row does."
+    },
     "gText_CommaSpace": {
       "qid": "e.common.battle_message.gText_CommaSpace",
       "text": "・",
@@ -74,6 +80,12 @@
       "reason": "corpus-gap",
       "provenance": "The Japanese corpus row is empty; クイズ is the Emerald cart's own word (gText_TheQuizColon, \"クイズは\")."
     },
+    "gText_SafariZoneMenu": {
+      "qid": "e.common.battle_message.gText_SafariZoneMenu",
+      "text": "ボール[CLEAR_TO 56]ポロック\\nちかづく[CLEAR_TO 56]にげる",
+      "reason": "engine-contract-gap",
+      "provenance": "The Japanese cart's own words; only the alignment changes. The cart lines the two columns up with ideographic spaces (\"ボール　　　ポロック / ちかづく　　にげる\"), where every other cart uses the CLEAR_TO layout code (\"BALL[CLEAR_TO 56][POKEBLOCK] / GO NEAR[CLEAR_TO 56]RUN\"). gen1recomp draws the four options in its own grid and splits the row into them at each line break and CLEAR_TO (src/core/game3/battle/ui.lua:2097, menu_labels), so the Japanese row gave it two options holding two words each and left the other two slots empty. The override keeps the words and puts CLEAR_TO 56 where the spaces were, as the US row does."
+    },
     "gText_SpaceAndSpace": {
       "qid": "e.common.battle_message.gText_SpaceAndSpace",
       "text": "と",
@@ -94,6 +106,24 @@
       "text": "おもさ",
       "reason": "corpus-gap",
       "provenance": "The Japanese corpus row is empty; FireRed's Pokédex label with the same English, frlg.common.strings.gText_WT, is the official Japanese word (\"おもさ\")."
+    },
+    "gText_WhatWillPkmnDo": {
+      "qid": "e.common.battle_message.gText_WhatWillPkmnDo",
+      "text": "[B_ACTIVE_NAME_WITH_PREFIX]は\\nどうする？",
+      "reason": "engine-contract-gap",
+      "provenance": "The Japanese cart's own words, broken after は like every other cart's two-line row (\"What will / [B_ACTIVE_NAME_WITH_PREFIX] do?\"). The Japanese cart prints \"[B_ACTIVE_NAME_WITH_PREFIX]は　どうする？\" on one line in its own, wider prompt window; gen1recomp draws the US window, whose right part the action menu covers (src/core/game3/battle/ui.lua:2123, action_prompt), so the line lost its ending."
+    },
+    "gText_WhatWillPkmnDo2": {
+      "qid": "e.common.battle_message.gText_WhatWillPkmnDo2",
+      "text": "[B_PLAYER_NAME]は\\nどうする？",
+      "reason": "engine-contract-gap",
+      "provenance": "The Japanese cart's own words, broken after は like every other cart's two-line row (\"What will / [B_PLAYER_NAME] do?\"). The Japanese cart prints \"[B_PLAYER_NAME]は　どうする？\" on one line in its own, wider prompt window; gen1recomp draws the US window, whose right part the action menu covers (src/core/game3/battle/ui.lua:2123, action_prompt), so the line lost its ending."
+    },
+    "gText_WhatWillWallyDo": {
+      "qid": "e.common.battle_message.gText_WhatWillWallyDo",
+      "text": "ミツルは\\nどうする？",
+      "reason": "engine-contract-gap",
+      "provenance": "The Japanese cart's own words, broken after は like every other cart's two-line row (\"What will / WALLY do?\"). The Japanese cart prints \"ミツルは　どうする？\" on one line in its own, wider prompt window; gen1recomp draws the US window, whose right part the action menu covers (src/core/game3/battle/ui.lua:2123, action_prompt), so the line lost its ending."
     },
     "gText_YesNo": {
       "qid": "e.common.strings.gText_YesNo",

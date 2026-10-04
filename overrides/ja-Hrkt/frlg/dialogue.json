@@ -14,6 +14,30 @@
       "reason": "us-cart-empty",
       "provenance": "The Japanese cart's own row, verbatim: the honorific {KUN} expands to after the player's name (pokefirered/src/string_util.c:386, ExpandPlaceholder_KunChan, by the player's gender). The US cart's row is empty, so the join, which needs an English line, never ships it. gen1recomp does not expand {KUN} in FireRed yet (docs/upstream-fixes.md, FireRed entry 18)."
     },
+    "gText_BattleMenu": {
+      "qid": "frlg.common.battle_message.gText_BattleMenu",
+      "text": "[PALETTE 5][COLOR_HIGHLIGHT_SHADOW DYNAMIC_COLOR4 DYNAMIC_COLOR5 DYNAMIC_COLOR6]たたかう[CLEAR_TO 56]バッグ\\nポケモン[CLEAR_TO 56]にげる",
+      "reason": "engine-contract-gap",
+      "provenance": "The Japanese cart's own words; only the alignment changes. The cart lines the two columns up with ideographic spaces (\"たたかう　　バッグ / ポケモン　　にげる\"), where every other cart uses the CLEAR_TO layout code (\"FIGHT[CLEAR_TO 56]BAG / POKéMON[CLEAR_TO 56]RUN\"). gen1recomp draws the four options in its own grid and splits the row into them at each line break and CLEAR_TO (src/core/game3/battle/ui.lua:2097, menu_labels), so the Japanese row gave it two options holding two words each and left the other two slots empty. The override keeps the words and puts CLEAR_TO 56 where the spaces were, as the US row does."
+    },
+    "gText_SafariZoneMenu": {
+      "qid": "frlg.common.battle_message.gText_SafariZoneMenu",
+      "text": "[PALETTE 5][COLOR_HIGHLIGHT_SHADOW DYNAMIC_COLOR4 DYNAMIC_COLOR5 DYNAMIC_COLOR6]ボール[CLEAR_TO 56]エサだま\\nいしころ[CLEAR_TO 56]にげる",
+      "reason": "engine-contract-gap",
+      "provenance": "The Japanese cart's own words; only the alignment changes. The cart lines the two columns up with ideographic spaces (\"ボール　　　エサだま / いしころ　　にげる\"), where every other cart uses the CLEAR_TO layout code (\"BALL[CLEAR_TO 56]BAIT / ROCK[CLEAR_TO 56]RUN\"). gen1recomp draws the four options in its own grid and splits the row into them at each line break and CLEAR_TO (src/core/game3/battle/ui.lua:2097, menu_labels), so the Japanese row gave it two options holding two words each and left the other two slots empty. The override keeps the words and puts CLEAR_TO 56 where the spaces were, as the US row does."
+    },
+    "gText_WhatWillOldManDo": {
+      "qid": "frlg.common.battle_message.gText_WhatWillOldManDo",
+      "text": "おじいさんは\\nどうする？",
+      "reason": "engine-contract-gap",
+      "provenance": "The Japanese cart's own words, broken after は like every other cart's two-line row (\"What will the / old man do?\"). The Japanese cart prints \"おじいさんは　どうする？\" on one line in its own, wider prompt window; gen1recomp draws the US window, whose right part the action menu covers (src/core/game3/battle/ui.lua:2123, action_prompt), so the line lost its ending."
+    },
+    "gText_WhatWillPkmnDo": {
+      "qid": "frlg.common.battle_message.gText_WhatWillPkmnDo",
+      "text": "[B_ACTIVE_NAME_WITH_PREFIX]は\\nどうする？",
+      "reason": "engine-contract-gap",
+      "provenance": "The Japanese cart's own words, broken after は like every other cart's two-line row (\"What will / [B_ACTIVE_NAME_WITH_PREFIX] do?\"). The Japanese cart prints \"[B_ACTIVE_NAME_WITH_PREFIX]は　どうする？\" on one line in its own, wider prompt window; gen1recomp draws the US window, whose right part the action menu covers (src/core/game3/battle/ui.lua:2123, action_prompt), so the line lost its ending."
+    },
     "sText_AttackerUsedX": {
       "qid": "frlg.common.battle_message.sText_AttackerUsedX",
       "text": "[B_ATK_NAME_WITH_PREFIX]の\\n[B_BUFF2]",
