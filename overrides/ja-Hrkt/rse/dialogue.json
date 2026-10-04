@@ -2,15 +2,9 @@
   "schema": "gen1recomp-translation-mods/rse-dialogue-overrides",
   "version": 1,
   "entries": {
-    "g3:081f50eb": {
-      "qid": "e.script.Route119.Route119_Text_StayAwayFromWeatherInstitute",
-      "text": "Nous, on surveille ici.\\cHé, toi! Ne t'approche pas du CENTRE\\nMETEO. C'est dangereux.",
-      "reason": "corpus-gap",
-      "provenance": "The French cart's own line (pret pokeemerald multi-language, data/maps/Route119/text_fr.inc, which builds the French cart byte for byte); the French corpus row is empty while the other languages have the line."
-    },
     "gText_Var1CertainlyHowMany2": {
       "qid": "e.common.strings.gText_Var1CertainlyHowMany2",
-      "text": "[STR_VAR_2] de [STR_VAR_1]?\\nBien sûr. Combien en voulez-vous?",
+      "text": "[STR_VAR_1]　「[STR_VAR_2]」　を\\nいくつ　おかいあげに　なりますか？",
       "reason": "engine-contract-gap",
       "runtime_fills": [
         "STR_VAR_2"

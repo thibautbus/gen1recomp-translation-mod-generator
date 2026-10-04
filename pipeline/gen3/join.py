@@ -163,7 +163,10 @@ def load_dialogue_overrides(language: str, family: Gen3Family = FRLG,
 
     ``text`` is corpus notation (``\\n``, ``\\c``, ``[PLAYER]``...) and goes
     through the same encoder as a corpus row; ``qid`` documents which corpus
-    row the correction replaces.
+    row the correction replaces.  ``runtime_fills`` lists the ``STR_VAR_n``
+    buffers the runtime fills for this key although the English line does
+    not print them (the provenance cites the callsite), so a translation
+    that prints one passes the placeholder check.
     """
     language = canonical_language(language)
     base = Path(root) if root else Path(__file__).resolve().parents[2]
@@ -179,7 +182,10 @@ def load_dialogue_overrides(language: str, family: Gen3Family = FRLG,
     for key, row in entries.items():
         if (not isinstance(row, dict) or not isinstance(row.get("text"), str)
                 or not isinstance(row.get("qid"), str) or not isinstance(row.get("reason"), str)
-                or not row["qid"].startswith(family.qid_prefix)):
+                or not row["qid"].startswith(family.qid_prefix)
+                or not isinstance(row.get("runtime_fills", []), list)
+                or not all(isinstance(fill, str) and re.fullmatch(r"STR_VAR_[123]", fill)
+                           for fill in row.get("runtime_fills", []))):
             raise ValueError(f"invalid {family.game} dialogue override for {key!r}: {path}")
     return entries
 
@@ -230,16 +236,24 @@ def load_dialogue_decisions(family: Gen3Family = FRLG, path: str | Path | None =
     return result
 
 
-def placeholders_supported(target: Iterable[Mapping], english: Iterable[Mapping]) -> bool:
+# Runtime values every line can print: the player's name and the honorific
+# the cart puts after it (FD placeholder KUN, 0x05), which the runtime
+# expands to the cart's word or, where it does not know it, to nothing.
+ALWAYS_FILLED = frozenset({("player", None, None), ("ph", None, 0x05)})
+
+
+def placeholders_supported(target: Iterable[Mapping], english: Iterable[Mapping],
+                           runtime_fills: Iterable[str] = ()) -> bool:
     """Every runtime value the translation prints is one the English prints.
 
     The runtime substitutes placeholders by kind (text_ir.lua expand_seg),
-    not by position, and the player/rival names are always known, but a
-    ``STR_VAR_n`` is only filled when the script buffered it -- which the
-    English line proves.  Official translations legitimately repeat or drop
+    not by position, and the player's name and its honorific are always
+    known (``ALWAYS_FILLED``), but a ``STR_VAR_n`` is only filled when the
+    script buffered it -- which the English line proves.  Official translations legitimately repeat or drop
     the player's name, so counts are not compared.
     """
-    available = set(dynamic_signature(english))
+    available = set(dynamic_signature(english)) | ALWAYS_FILLED
+    available.update(("strvar", int(fill[-1]), None) for fill in runtime_fills)
     return all(row in available for row in dynamic_signature(target))
 
 
@@ -510,7 +524,7 @@ def join_gen3_dialogue(
             entry.status = UNENCODABLE
             entry.detail = str(exc)
             continue
-        if not placeholders_supported(target_ir, rom_ir):
+        if not placeholders_supported(target_ir, rom_ir, (override or {}).get("runtime_fills", ())):
             entry.status = PLACEHOLDER_MISMATCH
             entry.detail = f"{dynamic_signature(rom_ir)} != {dynamic_signature(target_ir)}"
             continue

@@ -218,6 +218,32 @@ class EmeraldJoinTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsupported Emerald edition"):
             load_dialogue_decisions(EMERALD, edition="firered")
 
+    def test_the_player_and_honorific_are_always_filled(self):
+        from pipeline.gen3.join import placeholders_supported
+        english = [{"t": "text", "s": "Hello!"}, {"t": "eos"}]
+        named = [{"t": "player"}, {"t": "ph", "code": 5, "name": "KUN"}, {"t": "text", "s": "!"}, {"t": "eos"}]
+        self.assertTrue(placeholders_supported(named, english))
+        self.assertFalse(placeholders_supported([{"t": "strvar", "n": 1}, {"t": "eos"}], english))
+        self.assertFalse(placeholders_supported([{"t": "ph", "code": 6, "name": "RIVAL"}, {"t": "eos"}], english))
+
+    def test_a_dialogue_override_can_name_a_buffer_the_runtime_fills(self):
+        from pipeline.gen3.join import placeholders_supported
+        english = [{"t": "strvar", "n": 1}, {"t": "text", "s": "? Certainly."}, {"t": "eos"}]
+        target = [{"t": "strvar", "n": 2}, {"t": "text", "s": " de "}, {"t": "strvar", "n": 1}, {"t": "eos"}]
+        self.assertFalse(placeholders_supported(target, english))
+        self.assertTrue(placeholders_supported(target, english, ["STR_VAR_2"]))
+        base = self.tmp / "repo"
+        path = base / "overrides" / "fr" / "rse" / "dialogue.json"
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps({"schema": EMERALD.schema("dialogue-overrides"), "version": 1, "entries": {
+            "k": {"qid": "e.script.x", "text": "t", "reason": "r", "runtime_fills": ["PLAYER"]}}}), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "invalid Emerald dialogue override"):
+            load_dialogue_overrides("fr", EMERALD, root=base)
+        path.write_text(json.dumps({"schema": EMERALD.schema("dialogue-overrides"), "version": 1, "entries": {
+            "k": {"qid": "e.script.x", "text": "t", "reason": "r", "runtime_fills": "STR_VAR_2"}}}), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "invalid Emerald dialogue override"):
+            load_dialogue_overrides("fr", EMERALD, root=base)
+
 
 class EmeraldModTests(unittest.TestCase):
     def setUp(self):
@@ -383,6 +409,11 @@ class EmeraldConfigTests(unittest.TestCase):
                     self.assertIn(key, scope)
                     self.assertTrue(row.get("reason") and row.get("provenance"), key)
         self.assertIn("g3:081f50eb", load_dialogue_overrides("fr", EMERALD))
+        # the TM shop prompt ships the official rows in every language, the
+        # move named by the buffer the runtime fills
+        for language in ("fr", "de", "es", "it", "ja-Hrkt"):
+            row = load_dialogue_overrides(language, EMERALD)["gText_Var1CertainlyHowMany2"]
+            self.assertEqual(row["runtime_fills"], ["STR_VAR_2"], language)
 
     def test_engine_scope_matches_the_pinned_engine(self):
         engine = ROOT / ".cache" / "dependencies" / "gen1recomp"
