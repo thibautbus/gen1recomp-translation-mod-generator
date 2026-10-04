@@ -438,7 +438,9 @@ def join_gen3_dialogue(
         matched_on_text = False
         entry = Gen3DialogueEntry(key, NO_MATCH, rom_ir, labels=labels)
         entries.append(entry)
-        if not _has_prose(rom_ir):
+        if not _has_prose(rom_ir) and key not in overrides:
+            # (a reviewed override can fill a string the US cart leaves
+            # empty: the Japanese honorific gText_ExpandedPlaceholder_Kun)
             entry.status = MARKUP_ONLY
             continue
         if text_key_address(key) is not None and not labels:

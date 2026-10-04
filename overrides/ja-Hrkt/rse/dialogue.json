@@ -2,6 +2,84 @@
   "schema": "gen1recomp-translation-mods/rse-dialogue-overrides",
   "version": 1,
   "entries": {
+    "gText_Answer": {
+      "qid": "e.common.strings.gText_Answer",
+      "text": "こたえ",
+      "reason": "corpus-gap",
+      "provenance": "The Japanese corpus row is empty; こたえ is the Emerald cart's own word (gText_TheAnswer, \"こたえは\")."
+    },
+    "gText_CommaSpace": {
+      "qid": "e.common.battle_message.gText_CommaSpace",
+      "text": "・",
+      "reason": "corpus-gap",
+      "provenance": "The Japanese corpus row is empty. The joiner the Battle Frontier puts between a list's species names (pokeemerald/src/frontier_util.c:1951); the cart's Japanese font has no comma, so items are separated with ・ as the cart's own rows separate words (サン・トウカ); requires in-game visual validation."
+    },
+    "gText_ContinueMenuBadges": {
+      "qid": "e.common.strings.gText_ContinueMenuBadges",
+      "text": "もっているバッジ",
+      "reason": "engine-contract-gap",
+      "provenance": "The label part of the cart's row (\"もっているバッジ　[STR_VAR_1]こ\"), which prints the value itself; gen1recomp's continue window draws the value in its own column (src/ui/game3/rse/main_menu_rse.lua:509-517)."
+    },
+    "gText_ContinueMenuPlayer": {
+      "qid": "e.common.strings.gText_ContinueMenuPlayer",
+      "text": "しゅじんこう",
+      "reason": "engine-contract-gap",
+      "provenance": "The label part of the cart's row (\"しゅじんこう　[STR_VAR_1]\"), which prints the value itself; gen1recomp's continue window draws the value in its own column (src/ui/game3/rse/main_menu_rse.lua:509-517)."
+    },
+    "gText_ContinueMenuPokedex": {
+      "qid": "e.common.strings.gText_ContinueMenuPokedex",
+      "text": "ポケモンずかん",
+      "reason": "engine-contract-gap",
+      "provenance": "The label part of the cart's row (\"ポケモンずかん　[STR_VAR_1]ひき\"), which prints the value itself; gen1recomp's continue window draws the value in its own column (src/ui/game3/rse/main_menu_rse.lua:509-517)."
+    },
+    "gText_ContinueMenuTime": {
+      "qid": "e.common.strings.gText_ContinueMenuTime",
+      "text": "プレイじかん",
+      "reason": "engine-contract-gap",
+      "provenance": "The label part of the cart's row (\"プレイじかん　[STR_VAR_1]：[STR_VAR_2]\"), which prints the value itself; gen1recomp's continue window draws the value in its own column (src/ui/game3/rse/main_menu_rse.lua:509-517)."
+    },
+    "gText_DelAll": {
+      "qid": "e.common.strings.gText_DelAll",
+      "text": "ぜんけし",
+      "reason": "corpus-gap",
+      "provenance": "AI-generated Japanese translation: the Japanese corpus row is empty; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "gText_ExpandedPlaceholder_Chan": {
+      "qid": "e.common.strings.gText_ExpandedPlaceholder_Chan",
+      "text": "ちゃん",
+      "reason": "us-cart-empty",
+      "provenance": "The Japanese cart's own row, verbatim: the honorific {KUN} expands to after the player's name (pokeemerald/src/string_util.c:448, by the player's gender). The US cart's row is empty, so the join, which needs an English line, never ships it."
+    },
+    "gText_ExpandedPlaceholder_Kun": {
+      "qid": "e.common.strings.gText_ExpandedPlaceholder_Kun",
+      "text": "くん",
+      "reason": "us-cart-empty",
+      "provenance": "The Japanese cart's own row, verbatim: the honorific {KUN} expands to after the player's name (pokeemerald/src/string_util.c:448, by the player's gender). The US cart's row is empty, so the join, which needs an English line, never ships it."
+    },
+    "gText_HTHeight": {
+      "qid": "e.common.strings.gText_HTHeight",
+      "text": "たかさ",
+      "reason": "corpus-gap",
+      "provenance": "The Japanese corpus row is empty; FireRed's Pokédex label with the same English, frlg.common.strings.gText_HT, is the official Japanese word (\"たかさ\")."
+    },
+    "gText_Ok2": {
+      "qid": "e.common.strings.gText_Ok2",
+      "text": "けってい",
+      "reason": "corpus-gap",
+      "provenance": "The Japanese corpus row is empty; けってい is the Emerald cart's own word for the same action (gText_Confirm2, gText_Confirm3, gMenuText_Confirm)."
+    },
+    "gText_Quiz": {
+      "qid": "e.common.strings.gText_Quiz",
+      "text": "クイズ",
+      "reason": "corpus-gap",
+      "provenance": "The Japanese corpus row is empty; クイズ is the Emerald cart's own word (gText_TheQuizColon, \"クイズは\")."
+    },
+    "gText_SpaceAndSpace": {
+      "qid": "e.common.battle_message.gText_SpaceAndSpace",
+      "text": "と",
+      "reason": "corpus-gap",
+      "provenance": "The Japanese corpus row is empty. The joiner the Battle Frontier puts before the last of a list of species names (pokeemerald/src/frontier_util.c:1949); と is the Japanese particle for \"and\"; requires in-game visual validation."
+    },
     "gText_Var1CertainlyHowMany2": {
       "qid": "e.common.strings.gText_Var1CertainlyHowMany2",
       "text": "[STR_VAR_1]　「[STR_VAR_2]」　を\\nいくつ　おかいあげに　なりますか？",
@@ -10,6 +88,30 @@
         "STR_VAR_2"
       ],
       "provenance": "The cart's own row, verbatim. It names the TM's move with STR_VAR_2, which the English line does not print but gen1recomp buffers for this key (src/ui/game3/rse/shop_menu.lua:240, say(shop, \"gText_Var1CertainlyHowMany2\", { name, moveName }), as pokeemerald/src/shop.c:1004 does)."
+    },
+    "gText_WTWeight": {
+      "qid": "e.common.strings.gText_WTWeight",
+      "text": "おもさ",
+      "reason": "corpus-gap",
+      "provenance": "The Japanese corpus row is empty; FireRed's Pokédex label with the same English, frlg.common.strings.gText_WT, is the official Japanese word (\"おもさ\")."
+    },
+    "gText_YesNo": {
+      "qid": "e.common.strings.gText_YesNo",
+      "text": "はい　\\nいいえ",
+      "reason": "corpus-gap",
+      "provenance": "The Japanese row of gText_YesNo is empty; the cart's other YES/NO menu row, e.common.berry_blender.sUnusedText_YesNo (same English), says it."
+    },
+    "sText_AttackerUsedX": {
+      "qid": "e.common.battle_message.sText_AttackerUsedX",
+      "text": "[B_ATK_NAME_WITH_PREFIX]の\\n[B_BUFF2]",
+      "reason": "engine-contract-gap",
+      "provenance": "The cart's row is \"[B_ATK_NAME_WITH_PREFIX][B_BUFF1]\\n[B_BUFF2]\": the particle and the ending appended to the move's name depend on the move (ChooseMoveUsedParticle and ChooseTypeOfMoveUsedString, pokeemerald/src/battle_message.c:2882, :2922). gen1recomp fills no particle and always appends sText_ExclamationMark (src/core/game3/battle/battle_text.lua:249), so the Japanese overrides give both the values of the moves outside sGrammarMoveUsedTable, most of them: the particle sText_ApostropheS (\"の\") here, and the ending sText_ExclamationMark5 (\"！\") under sText_ExclamationMark. The line reads \"ポチエナの\\nたいあたり！\", as the cart prints it for those moves."
+    },
+    "sText_ExclamationMark": {
+      "qid": "e.common.battle_message.sText_ExclamationMark",
+      "text": "！",
+      "reason": "engine-contract-gap",
+      "provenance": "The cart's sText_ExclamationMark5 row (\"！\"), the ending of the moves outside sGrammarMoveUsedTable (pokeemerald/src/battle_message.c:2922, case 4). gen1recomp appends sText_ExclamationMark to every move's name (src/core/game3/battle/battle_text.lua:249), whose Japanese row is the ending of a small group of moves (\"を　つかった！\"); see sText_AttackerUsedX."
     }
   }
 }

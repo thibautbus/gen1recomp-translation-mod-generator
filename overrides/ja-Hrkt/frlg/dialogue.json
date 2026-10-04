@@ -1,0 +1,30 @@
+{
+  "schema": "gen1recomp-translation-mods/frlg-dialogue-overrides",
+  "version": 1,
+  "entries": {
+    "gExpandedPlaceholder_Chan": {
+      "qid": "frlg.common.strings.gExpandedPlaceholder_Chan",
+      "text": "ちゃん",
+      "reason": "us-cart-empty",
+      "provenance": "The Japanese cart's own row, verbatim: the honorific {KUN} expands to after the player's name (pokefirered/src/string_util.c:386, ExpandPlaceholder_KunChan, by the player's gender). The US cart's row is empty, so the join, which needs an English line, never ships it. gen1recomp does not expand {KUN} in FireRed yet (docs/upstream-fixes.md, FireRed entry 18)."
+    },
+    "gExpandedPlaceholder_Kun": {
+      "qid": "frlg.common.strings.gExpandedPlaceholder_Kun",
+      "text": "くん",
+      "reason": "us-cart-empty",
+      "provenance": "The Japanese cart's own row, verbatim: the honorific {KUN} expands to after the player's name (pokefirered/src/string_util.c:386, ExpandPlaceholder_KunChan, by the player's gender). The US cart's row is empty, so the join, which needs an English line, never ships it. gen1recomp does not expand {KUN} in FireRed yet (docs/upstream-fixes.md, FireRed entry 18)."
+    },
+    "sText_AttackerUsedX": {
+      "qid": "frlg.common.battle_message.sText_AttackerUsedX",
+      "text": "[B_ATK_NAME_WITH_PREFIX]の\\n[B_BUFF2]",
+      "reason": "engine-contract-gap",
+      "provenance": "The cart's row is \"[B_ATK_NAME_WITH_PREFIX][B_BUFF1]\\n[B_BUFF2]\": the particle and the ending appended to the move's name depend on the move (ChooseMoveUsedParticle and ChooseTypeOfMoveUsedString, pokefirered/src/battle_message.c:2325, :2365). gen1recomp fills no particle and always appends sText_ExclamationMark (src/core/game3/battle/battle_text.lua:249), so the Japanese overrides give both the values of the moves outside sGrammarMoveUsedTable, most of them: the particle sText_ApostropheS (\"の\") here, and the ending sText_ExclamationMark5 (\"！\") under sText_ExclamationMark. The line reads \"ポチエナの\\nたいあたり！\", as the cart prints it for those moves; the same overrides as Emerald's."
+    },
+    "sText_ExclamationMark": {
+      "qid": "frlg.common.battle_message.sText_ExclamationMark",
+      "text": "！",
+      "reason": "engine-contract-gap",
+      "provenance": "The cart's sText_ExclamationMark5 row (\"！\"), the ending of the moves outside sGrammarMoveUsedTable (pokefirered/src/battle_message.c:2396). gen1recomp appends sText_ExclamationMark to every move's name (src/core/game3/battle/battle_text.lua:249), whose Japanese row is the ending of a small group of moves (\"を　つかった！\"); see sText_AttackerUsedX."
+    }
+  }
+}

@@ -907,6 +907,10 @@ class FrlgConfigTests(unittest.TestCase):
                 overrides = load_dialogue_overrides(language)
                 if language != "ja-Hrkt":
                     self.assertIn("Text_FoundTMHMContainsMove", overrides)
+                else:
+                    # the particle and ending of the moves outside sGrammarMoveUsedTable
+                    self.assertEqual(overrides["sText_AttackerUsedX"]["text"], "[B_ATK_NAME_WITH_PREFIX]の\\n[B_BUFF2]")
+                    self.assertEqual(overrides["sText_ExclamationMark"]["text"], "！")
                 engine = json.loads((ROOT / "overrides" / language / "frlg" / "engine.json").read_text(encoding="utf-8"))
                 for key, row in engine["entries"].items():
                     self.assertIn(key, scope)

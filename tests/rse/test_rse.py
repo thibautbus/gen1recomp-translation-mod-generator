@@ -414,6 +414,12 @@ class EmeraldConfigTests(unittest.TestCase):
         for language in ("fr", "de", "es", "it", "ja-Hrkt"):
             row = load_dialogue_overrides(language, EMERALD)["gText_Var1CertainlyHowMany2"]
             self.assertEqual(row["runtime_fills"], ["STR_VAR_2"], language)
+        japanese = load_dialogue_overrides("ja-Hrkt", EMERALD)
+        # the particle and ending of the moves outside sGrammarMoveUsedTable
+        self.assertEqual(japanese["sText_AttackerUsedX"]["text"], "[B_ATK_NAME_WITH_PREFIX]の\\n[B_BUFF2]")
+        self.assertEqual(japanese["sText_ExclamationMark"]["text"], "！")
+        self.assertEqual((japanese["gText_ExpandedPlaceholder_Kun"]["text"],
+                          japanese["gText_ExpandedPlaceholder_Chan"]["text"]), ("くん", "ちゃん"))
 
     def test_engine_scope_matches_the_pinned_engine(self):
         engine = ROOT / ".cache" / "dependencies" / "gen1recomp"
