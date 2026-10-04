@@ -1706,7 +1706,7 @@
       "no_op_total": 10
     },
     "ko": {
-      "total": 11,
+      "total": 10,
       "entries": {
         "%dX": {
           "override": "%dX",
@@ -1743,14 +1743,6 @@
           "reason": "engine-fallback",
           "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language (matching 1X/2X/3X)."
-        },
-        "<PK><MN>": {
-          "override": "<PK><MN>",
-          "reason": "engine-fallback",
-          "status": "reviewed-identity",
-          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
-          "original_reason": "engine-corpus",
-          "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
         },
         "DMG": {
           "override": "DMG",

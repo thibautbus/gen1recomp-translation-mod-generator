@@ -738,9 +738,9 @@
       "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
     },
     "%s's %s fell!": {
-      "override": "%s의\n%s는(은)\u000b내려갔다!",
+      "override": "%s의\n%s(이)가 떨어졌다!",
       "reason": "engine-contract-gap",
-      "provenance": "No direct corpus match for this generic per-stat template; wording and \\n/\\x0b split reused verbatim from this catalog's own sibling entries for the same %s's %s ...! shape (\"%s's %s was reduced by %d!\", \"%s's %s won't rise/drop anymore!\"), which share this message's exact name-then-stat argument order."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.common_2.Text_BattleFoeEffectActivate + gs.common_2.BattleStatFellText, joined as the cart prints them: \"%s의／%s(이)가 떨어졌다!\" (the opening row names the POKéMON and the stat, then runs on into the stat change; the Korean \"sharply\" row prints its own verb)."
     },
     "%s's %s is DISABLED!": {
       "override": "%s의 %s는(은)\n헤롱헤롱 해서 펼칠 수 없었다!",
@@ -753,19 +753,19 @@
       "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
     },
     "%s's %s rose!": {
-      "override": "%s의\n%s는(은)\u000b올랐다!",
+      "override": "%s의\n%s(이)가 올랐다!",
       "reason": "engine-contract-gap",
-      "provenance": "No direct corpus match for this generic per-stat template; wording and \\n/\\x0b split reused verbatim from this catalog's own sibling entries for the same %s's %s ...! shape (\"%s's %s was reduced by %d!\", \"%s's %s won't rise/drop anymore!\"), which share this message's exact name-then-stat argument order."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.common_2.Text_BattleEffectActivate + gs.common_2.BattleStatWentUpText, joined as the cart prints them: \"%s의／%s(이)가 올랐다!\" (the opening row names the POKéMON and the stat, then runs on into the stat change; the Korean \"sharply\" row prints its own verb)."
     },
     "%s's %s sharply fell!": {
-      "override": "%s의\n%s는(은)\u000b큰 폭으로 내려갔다!",
+      "override": "%s의\n%s(이)가\u000b확 떨어졌다!",
       "reason": "engine-contract-gap",
-      "provenance": "No direct corpus match for this generic per-stat template; wording and \\n/\\x0b split reused verbatim from this catalog's own sibling entries for the same %s's %s ...! shape (\"%s's %s was reduced by %d!\", \"%s's %s won't rise/drop anymore!\"), which share this message's exact name-then-stat argument order."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.common_2.Text_BattleFoeEffectActivate + gs.common_2.BattleStatSharplyFellText, joined as the cart prints them: \"%s의／%s(이)가／확 떨어졌다!\" (the opening row names the POKéMON and the stat, then runs on into the stat change; the Korean \"sharply\" row prints its own verb)."
     },
     "%s's %s sharply rose!": {
-      "override": "%s의\n%s는(은)\u000b큰 폭으로 올랐다!",
+      "override": "%s의\n%s(이)가\u000b부쩍 올랐다!",
       "reason": "engine-contract-gap",
-      "provenance": "No direct corpus match for this generic per-stat template; wording and \\n/\\x0b split reused verbatim from this catalog's own sibling entries for the same %s's %s ...! shape (\"%s's %s was reduced by %d!\", \"%s's %s won't rise/drop anymore!\"), which share this message's exact name-then-stat argument order."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.common_2.Text_BattleEffectActivate + gs.common_2.BattleStatWentWayUpText, joined as the cart prints them: \"%s의／%s(이)가／부쩍 올랐다!\" (the opening row names the POKéMON and the stat, then runs on into the stat change; the Korean \"sharply\" row prints its own verb)."
     },
     "%s's %s was disabled!": {
       "override": "%s의\n%s를(을)\u000b봉해버렸다!",
@@ -946,6 +946,11 @@
       "override": "{ID}№.",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "<PK><MN>": {
+      "override": "포켓몬",
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.menu.BattleMenuHeader.Text, the battle menu's own row (src/ui/gen2/BattleState.lua:196, FIGHT / <PK><MN> / PACK / RUN). This language's cart lists the options in its own order, 싸우다@가방@포켓몬@도망치다@, so the POKéMON option is the third segment, 포켓몬, not the second. The automatic match took gs.text.PlacePKMNText instead, the charmap's <PK><MN> control code, whose row is not the menu's label (it keeps the English ligature, which the Korean menu does not print)."
     },
     "<PK><MN> are listed": {
       "override": "포켓몬을",

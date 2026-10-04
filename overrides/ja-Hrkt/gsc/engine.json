@@ -738,9 +738,9 @@
       "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
     },
     "%s's %s fell!": {
-      "override": "%sの\n%sは　さがった！",
+      "override": "%sの\n%sが　さがった！",
       "reason": "engine-contract-gap",
-      "provenance": "No direct corpus match for this generic per-stat template; wording and \\n/\\x0b split reused verbatim from this catalog's own sibling entries for the same %s's %s ...! shape (\"%s's %s was reduced by %d!\", \"%s's %s won't rise/drop anymore!\"), which share this message's exact name-then-stat argument order."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.common_2.Text_BattleFoeEffectActivate + gs.common_2.BattleStatFellText, joined as the cart prints them: \"%sの／%sが　さがった！\" (the opening row names the POKéMON and the stat, then runs on into the stat change; the Japanese \"sharply\" row stops at its adverb (\"ぐーんと@\", \"がくっと@\") and the plain row prints the verb). Crystal's rows are identical."
     },
     "%s's %s is DISABLED!": {
       "override": "%sは　かなしばりで\n%sがだせない！",
@@ -753,19 +753,19 @@
       "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
     },
     "%s's %s rose!": {
-      "override": "%sの\n%sは　あがった！",
+      "override": "%sの\n%sが　あがった！",
       "reason": "engine-contract-gap",
-      "provenance": "No direct corpus match for this generic per-stat template; wording and \\n/\\x0b split reused verbatim from this catalog's own sibling entries for the same %s's %s ...! shape (\"%s's %s was reduced by %d!\", \"%s's %s won't rise/drop anymore!\"), which share this message's exact name-then-stat argument order."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.common_2.Text_BattleEffectActivate + gs.common_2.BattleStatWentUpText, joined as the cart prints them: \"%sの／%sが　あがった！\" (the opening row names the POKéMON and the stat, then runs on into the stat change; the Japanese \"sharply\" row stops at its adverb (\"ぐーんと@\", \"がくっと@\") and the plain row prints the verb). Crystal's rows are identical."
     },
     "%s's %s sharply fell!": {
-      "override": "%sの\n%sは　ぐーんと　さがった！",
+      "override": "%sの\n%sが\u000bがくっと　さがった！",
       "reason": "engine-contract-gap",
-      "provenance": "No direct corpus match for this generic per-stat template; wording and \\n/\\x0b split reused verbatim from this catalog's own sibling entries for the same %s's %s ...! shape (\"%s's %s was reduced by %d!\", \"%s's %s won't rise/drop anymore!\"), which share this message's exact name-then-stat argument order."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.common_2.Text_BattleFoeEffectActivate + gs.common_2.BattleStatSharplyFellText + gs.common_2.BattleStatFellText, joined as the cart prints them: \"%sの／%sが／がくっと　さがった！\" (the opening row names the POKéMON and the stat, then runs on into the stat change; the Japanese \"sharply\" row stops at its adverb (\"ぐーんと@\", \"がくっと@\") and the plain row prints the verb). Crystal's rows are identical."
     },
     "%s's %s sharply rose!": {
-      "override": "%sの\n%sは　ぐーんと　あがった！",
+      "override": "%sの\n%sが\u000bぐーんと　あがった！",
       "reason": "engine-contract-gap",
-      "provenance": "No direct corpus match for this generic per-stat template; wording and \\n/\\x0b split reused verbatim from this catalog's own sibling entries for the same %s's %s ...! shape (\"%s's %s was reduced by %d!\", \"%s's %s won't rise/drop anymore!\"), which share this message's exact name-then-stat argument order."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.common_2.Text_BattleEffectActivate + gs.common_2.BattleStatWentWayUpText + gs.common_2.BattleStatWentUpText, joined as the cart prints them: \"%sの／%sが／ぐーんと　あがった！\" (the opening row names the POKéMON and the stat, then runs on into the stat change; the Japanese \"sharply\" row stops at its adverb (\"ぐーんと@\", \"がくっと@\") and the plain row prints the verb). Crystal's rows are identical."
     },
     "%s's %s was disabled!": {
       "override": "%sの\n%sを　ふうじこめた！",
@@ -848,9 +848,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "%s's attack missed!": {
-      "override": "%sの\nこうげきは　はずれた！",
+      "override": "しかし　%sの\nこうげきは　はずれた！",
       "reason": "engine-contract-gap",
-      "provenance": "Corpus-derived from poke-corpus GoldSilver gs.battle.AttackMissed2Text, not the plain AttackMissedText this key's own qid citation might suggest: AttackMissedText's ja-Hrkt row is a bare \"しかし　\" (\"however\") fragment from a differently-segmented cart sentence, with the complete translation living in the corpus's own \"2Text\" sibling instead."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.battle.AttackMissedText (\"しかし　\") and gs.battle.AttackMissed2Text, joined: on the Japanese cart AttackMissedText is only the \"しかし　\" opening of the sentence and runs on into AttackMissed2Text, so the line it prints is \"しかし　<USER>の／こうげきは　はずれた！\". Crystal's rows (c.battle.*) are identical."
     },
     "%s's attack!": {
       "override": "%sの　こうげき！",
@@ -948,9 +948,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "<PK><MN>": {
-      "override": "が　",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "override": "ポケモン",
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.menu.BattleMenuHeader.Text, the battle menu's own row (src/ui/gen2/BattleState.lua:196, FIGHT / <PK><MN> / PACK / RUN). This language's cart lists the options in its own order, たたかう@リュック@#@にげる@, so the POKéMON option is the third segment, \"#\", the character the Japanese cart prints as ポケモン (gs.text.PlacePOKeText), not the second. The automatic match took gs.text.PlacePKMNText instead, the charmap's <PK><MN> control code, whose row is not the menu's label (the Japanese cart uses that code for the particle が, which the menu showed alone)."
     },
     "<PK><MN> are listed": {
       "override": "ポケモンを",
@@ -1303,9 +1303,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "But it failed!": {
-      "override": "しかし　",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "override": "しかし　うまく　きまらなかった！",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.battle.ButItFailedText (\"しかし　\") and gs.battle.ItFailedText, joined: on the Japanese cart ButItFailedText is only the \"しかし　\" opening of the sentence and runs on into ItFailedText, so the line it prints is \"しかし　うまく　きまらなかった！\". Crystal's rows (c.battle.*) are identical."
     },
     "But nothing\nhappened.": {
       "override": "しかし　なにもおこらない",
@@ -2118,14 +2118,14 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_2.BreedAppearsToCareForText."
     },
     "It didn't affect\n%s!": {
-      "override": "%sには\nきかなかった！",
+      "override": "しかし　%sには\nきかなかった！",
       "reason": "engine-contract-gap",
-      "provenance": "Corpus row poke-corpus GoldSilver gs.battle.DidntAffect2Text (\"<TARGET>には<LINE>きかなかった！\"), which has the same English as DidntAffect1Text; this language's DidntAffect1Text row is the bare \"しかし　\" opening of the same sentence. Used for the line SKETCH prints when it fails (pokecrystal engine/battle/move_effects/sketch.asm, PrintDidntAffect); same value as \"It didn't affect %s!\"."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.battle.DidntAffect1Text (\"しかし　\") and gs.battle.DidntAffect2Text, joined: on the Japanese cart DidntAffect1Text is only the \"しかし　\" opening of the sentence and runs on into DidntAffect2Text, so the line it prints is \"しかし　<TARGET>には／きかなかった！\". Crystal's rows (c.battle.*) are identical. Also the line SKETCH prints when it fails (pokecrystal engine/battle/move_effects/sketch.asm, PrintDidntAffect)."
     },
     "It didn't affect %s!": {
-      "override": "%sには\nきかなかった！",
+      "override": "しかし　%sには\nきかなかった！",
       "reason": "engine-contract-gap",
-      "provenance": "Corpus-derived from poke-corpus GoldSilver gs.battle.DidntAffect1Text. Fixed for one language whose own corpus row diverges from the engine's exact %s-argument contract; see the composed override for details."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.battle.DidntAffect1Text (\"しかし　\") and gs.battle.DidntAffect2Text, joined: on the Japanese cart DidntAffect1Text is only the \"しかし　\" opening of the sentence and runs on into DidntAffect2Text, so the line it prints is \"しかし　<TARGET>には／きかなかった！\". Crystal's rows (c.battle.*) are identical."
     },
     "It doesn't affect %s...": {
       "override": "%sには\nこうかが　ない　みたいだ……",

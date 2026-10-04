@@ -113,6 +113,39 @@ class GoldEngineCatalogTests(unittest.TestCase):
                 self.assertTrue(available[key]["override"].strip(), f"{language}: {key}")
                 self.assertTrue(available[key]["provenance"].strip(), f"{language}: {key}")
 
+    def test_the_battle_menu_pokemon_option_follows_each_carts_menu_order(self):
+        # gs.menu.BattleMenuHeader.Text is "FIGHT@<PK><MN>@PACK@RUN@" in
+        # English but lists POKéMON third in Japanese and Korean; the charmap
+        # row gs.text.PlacePKMNText is no label (Japanese: the particle が).
+        root = Path(__file__).resolve().parents[2]
+        for language, value in (("ja-Hrkt", "ポケモン"), ("ko", "포켓몬")):
+            overrides = load_engine_overrides(root / "overrides" / language / "gsc" / "engine.json")
+            self.assertEqual(overrides["<PK><MN>"]["override"], value, language)
+            self.assertIn("BattleMenuHeader", overrides["<PK><MN>"]["provenance"], language)
+
+    def test_stat_changes_join_the_carts_rows(self):
+        # the opening row ("<USER>の<LINE><STAT>が") runs on into the change;
+        # the Japanese "sharply" row stops at its adverb
+        root = Path(__file__).resolve().parents[2]
+        expected = {
+            "ja-Hrkt": {
+                "%s's %s rose!": "%sの\n%sが　あがった！",
+                "%s's %s sharply rose!": "%sの\n%sが\vぐーんと　あがった！",
+                "%s's %s fell!": "%sの\n%sが　さがった！",
+                "%s's %s sharply fell!": "%sの\n%sが\vがくっと　さがった！",
+            },
+            "ko": {
+                "%s's %s rose!": "%s의\n%s(이)가 올랐다!",
+                "%s's %s sharply rose!": "%s의\n%s(이)가\v부쩍 올랐다!",
+                "%s's %s fell!": "%s의\n%s(이)가 떨어졌다!",
+                "%s's %s sharply fell!": "%s의\n%s(이)가\v확 떨어졌다!",
+            },
+        }
+        for language, lines in expected.items():
+            overrides = load_engine_overrides(root / "overrides" / language / "gsc" / "engine.json")
+            for key, value in lines.items():
+                self.assertEqual(overrides[key]["override"], value, (language, key))
+
     def test_japanese_crystal_shape_gaps_have_explicit_overrides(self):
         root = Path(__file__).resolve().parents[2]
         overrides = load_engine_overrides(root / "overrides" / "ja-Hrkt" / "gsc" / "engine.json")
