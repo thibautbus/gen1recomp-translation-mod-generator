@@ -1709,6 +1709,10 @@ Fix: give those five lookups the cart's own row instead of the fragment, as `Str
 
 At Gen1Recomp v0.3.47, 12 newly reachable dynamic keys have no reviewed FireRed corpus row (still the case at v0.3.51), so all five FRLG language catalogs retain their natural English fallback for them. The join report keeps these keys in `fallback_english`; they are not represented by identity overrides as translated. `test_reviewed_qids_exist_in_the_pinned_corpus` pins the reviewed fallback set so future engine or corpus changes require an explicit review.
 
+#### 18. The honorific after the player's name is never printed
+
+The Japanese cart writes くん or ちゃん after the player's name, by the player's gender (`{KUN}`, `pokefirered/src/string_util.c:386`). The `frlg` text dialect has no placeholder source (`src/core/game3/scripting/text_ir.lua`, which gives Emerald's `rse` dialect one), so `expand_seg` prints nothing for it. The Japanese FireRed mod ships the rows that add the honorific where the English line has none (Daisy's, Mr. Fuji's and the fishing guru's greetings, about twenty lines), since the rest of each line is the cart's, and ships the honorific itself from the Japanese rows (`gExpandedPlaceholder_Kun`/`_Chan` in `overrides/ja-Hrkt/frlg/dialogue.json`; the US cart's rows are empty); the honorific stays missing from those lines until the runtime expands it. A gen1recomp change expands `{KUN}` in FireRed from the cart's `gExpandedPlaceholder_Kun`/`_Chan` strings (`src/import/gba/versions_text.lua:1233`, `:1229`) by the player's gender, read through the script cache so the mod's rows reach it, and still prints nothing when both strings are empty, as on the US cart (one commit on top of `dev` at v0.3.51, in `thibautbus/gen1recomp`'s `fix/frlg-honorific-placeholder`, separate from the Emerald branch, pull request not yet opened). Nothing changes on this project's side.
+
 #### Inventory: game3 files flagged by the hardcoded-text scan
 
 Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/audit.py`) at the pinned revision: every string literal under `src/{core,ui,battle,world}/game3` that looks like text, is not a `Strings()` argument and is not a value the runtime passes to `Strings()` through a variable from that same file (tables and lists `pipeline/gen3/engine_scope.py` reads), minus the files reviewed as never reaching the screen (`NON_DISPLAY_FILES`: identifiers, quest-log keys, log lines, name fallbacks for a missing pack, each with its reason). This is a heuristic inventory of raw-text candidates: inclusion alone does not confirm that the text appears onscreen or represents a translation gap. Files without a reviewed explanation are left marked as candidates for manual review. Reviewing a file as non-display hides any literal added to it later, so a pin bump should re-read the reasons of the files it touches. `tests/frlg/test_frlg.py` fails if the scan finds a candidate file this table does not list, so the inventory stays complete across pin bumps. At `2c0f3ac0` (v0.2.64) the same scan, without the scope filter, found 74 files and 2,028 literals.
@@ -1913,6 +1917,8 @@ Summary of what a translation mod can and cannot reach at the pinned revision:
 | game3's own text: its menus and prompts, the options it adds, the move and ability descriptions, Easy Chat (2,645 `Strings()` keys) | Yes, except 7 engine rows (entry 2) | `strings` registry, keys listed in `config/rse/engine_scope.json` |
 | Ability names, Pokédex categories and descriptions, contest categories and effect descriptions, map section names | **No** at the pinned revision (entry 1); the mod already ships them | `strings` registry once the screens look them up |
 | Cart text some screens print from their own pack: the party menu's actions, the Pokédex search screen, the Battle Frontier's records, Dome, Arena, Apprentice, S.S. Tidal menu and Pyramid bag, the Frontier Pass, the Trainer Hill records, the Battle Pyramid's floor names, Ever Grande City's fly destinations, the Berry Blender | **No** at the pinned revision (entry 4); the mod already ships them | `text` overrides once the screens read the script cache |
+| The rival's name (`{RIVAL}`) and the Japanese honorific (`{KUN}`) | **No** at the pinned revision (entry 6); the mod already ships them | `text` overrides once the placeholders read the script cache |
+| Official rows that print a buffer the runtime does not fill (party menu prompt in de/ja, Spikes, Shadow Tag in ja, secret base names) | **No** (entry 7) | the runtime filling the buffer |
 | Cart text the script cache does not carry: berry names and descriptions, decorations, the Frontier lounges' messages, the Battle Tower multi battle partners' lines, the Pyramid's rest and retire prompts and hints | **No** (entry 5) | needs extraction, then the same lookup |
 | Japanese | Yes (the cart's own Japanese fonts) | as for FireRed |
 
@@ -1938,6 +1944,12 @@ A gen1recomp change reads each of them from the script cache, by the pret symbol
 
 The Berry Blender is in the same situation but not in that change: the script cache holds its messages (`sText_BerryBlenderStart` and 26 more of the 28) and its opponents' names (`sBlenderOpponentsNames`), but the screen and the blender's logic read them from the `rse/berry_blender` pack under keys of their own (`src/ui/game3/rse/berry_blender.lua:57-58`, `src/core/game3/rse/berry_blender.lua:885-934`), plain strings included, so the lookup has to be threaded through both.
 
+#### 6. The rival's name and the Japanese honorific come from the US cart
+
+The runtime expands `{RIVAL}` and `{KUN}` from `text/placeholders.lua`, the values the extractor reads from the US cart (`src/ui/game3/message.lua:66`, `src/import/gba/text_placeholders_extract.lua`): MAY or BRENDAN, and an empty honorific. Every European language keeps the English names in the 13 lines that name the rival through the placeholder (Birch's lab, the rival's house, Route 110, the Champion's room: "Mais où peut bien se trouver MAY?"), and Japanese drops くん/ちゃん after the player's name in 414 lines (336 distinct texts). The script cache holds each value under its pret label (`gText_ExpandedPlaceholder_May`, `_Brendan`, `_Kun`, `_Chan`) and the mod ships them (FLORA/BRICE, MAIKE/BRIX, AURA/BRUNO, VERA/BRENDON, ハルカ/ユウキ, くん/ちゃん; the honorifics through `overrides/ja-Hrkt/rse/dialogue.json`, since the US cart's rows are empty).
+
+The same `feat/emerald-translation-runtime` branch resolves each placeholder through the script cache by that label, with the extract's value as the fallback. Nothing else changes on this project's side.
+
 ### Required upstream capabilities
 
 #### 2. Engine rows with no Emerald cart row
@@ -1962,6 +1974,28 @@ Some screens print cart strings that only their own pack holds: the script cache
 
 Fix: have the import plan put these strings in the script cache's text table (pret's `TEXT_TABLES`/`NAMED_TEXTS` in `src/import/gba/versions_text_emerald.lua` already list most Emerald tables) and the screens read them through entry 4's helpers (`RomText.refIr`), so this project's extract emits their keys; the join then picks up their corpus rows with no new work.
 
+#### 7. Buffers the runtime does not fill
+
+Some official rows print a value the US line does not, which the runtime never fills, so their English stays:
+
+- the party menu's prompt "Do what with this PKMN?" in German and Japanese, whose rows name the POKéMON with `STR_VAR_1`, while the menu draws `RomText.plain("gText_DoWhatWithPokemon")` with no variables (`src/ui/game3/party_menu.lua:2764`);
+- 22 Japanese lines (36 keys) that name a trainer, the rival or Kiri with a `STR_VAR` buffer where the US script prints the name in the text or names nobody (`Route104_Text_GinaPostBattle`, `LittlerootTown_Text_YouSavedBirch`, `SootopolisCity_Text_*Kiri*`, `BattleDome_Text_TrainerBecameChamp`...); the rows that only add the player's name or the honorific after it are not among them, since the runtime always fills those (`ALWAYS_FILLED`, `pipeline/gen3/join.py`);
+- the Shadow Tag / Arena Trap message in Japanese, whose row also names the POKéMON trying to switch with `B_BUFF2`, which pret buffers (`pokeemerald/src/pokemon.c:6664`) and the runtime does not (`src/core/game3/battle/engine.lua:2131`);
+- the Spikes message in German, Spanish and Japanese, whose rows name the target side with `B_DEF_PREFIX1`, while the runtime calls `sayText("STRINGID_SPIKESSCATTERED")` with no target (`src/core/game3/battle/effects/hazards.lua:51`);
+- a secret base's name in French, German, Spanish and Italian, which the runtime builds as the owner's name followed by `gText_ApostropheSBase` (`src/core/game3/rse/secret_base.lua:586`), while those rows put the name inside ("BASE DE [STR_VAR_1]"), so the European line ends in the English "'s BASE".
+
+The TM shop's prompt is not one of them: its rows name the move with `STR_VAR_2`, which the runtime does buffer (`src/ui/game3/rse/shop_menu.lua:240`), so `overrides/<language>/rse/dialogue.json` ships the official rows with `runtime_fills`.
+
+Fix: fill the buffers the official rows use, as pret does, and let the secret base read its whole name from one row.
+
+#### 8. Descriptions are keyed by their English
+
+The move and ability descriptions go through `Strings()` by their English text, and some moves or abilities share one English text the carts word for each of them: Seismic Toss and Night Shade (Japanese: "いんりょくを　りようして　なげる" against "おそろしい　まぼろしを　みせ"), Absorb and Leech Life, Eruption and Water Spout in FireRed's Japanese. One key carries one row, so the other move shows the first one's wording. Most shared texts read the same for every entry; where one row fits all of them and the automatic one does not, `REVIEWED`/`REVIEWED_RSE` in `pipeline/gen3/engine_scope.py` pick it (Cloud Nine's "Keine Wetter-Effekte" over Air Lock's "Kehrt Wetter-Effekte um", Sludge's Spanish row over Sludge Bomb's "Explosión de lodo"). The Pokédex categories several species share read the same in every language. Fix: look the text up by move or ability id, as the cart does.
+
+#### 9. Italian lines that spell out a glyph run
+
+The Italian cart draws `POKéMELLA`/`POKéMELLE` (POKéBLOCK) as a glyph run, which the rows spell out as letters, wider than the cart's glyphs: seven Italian lines (11 keys) exceed the 216-pixel message box by 1 to 11 pixels (`LilycoveCity_ContestLobby_Text_LadyGaveMePokeblockCase`, 227 pixels). Fix: draw the glyph run as the cart does.
+
 ### Verified working, not a gap
 
 - **Dialogue overrides reach Emerald's text.** `mod.content.text` writes into the live `Space.bundle.text` exactly as for FireRed, and `RomText.ir`/`RomText.box`, `BattleText.get` (the `STRINGID_*` keys) and `SummaryData.NATURES` read it back; the gate checks each. Emerald's 15,000 IR lists exceed LuaJIT's 65,536 constants per chunk, so the mod writes them in several files (`lang/dialogue.lua`, `lang/dialogue_2.lua`, ...), and its `main.lua` fails loudly on a file it cannot load instead of skipping it.
@@ -1973,6 +2007,10 @@ Fix: have the import plan put these strings in the script cache's text table (pr
 
 ### Translated via a compromise (`engine-contract-gap`)
 
+- **The move-use line in Japanese.** The cart's row is `[B_ATK_NAME_WITH_PREFIX][B_BUFF1]\n[B_BUFF2]`, whose particle and ending depend on the move (`ChooseMoveUsedParticle`, `ChooseTypeOfMoveUsedString`, `pokeemerald/src/battle_message.c:2882`, `:2922`); the runtime fills no particle and always appends `sText_ExclamationMark` (`src/core/game3/battle/battle_text.lua:249`), whose Japanese row ("を　つかった！") is the ending of a small group of moves. `overrides/ja-Hrkt/rse/dialogue.json` gives both the values of the moves outside `sGrammarMoveUsedTable`, most of them: the particle `sText_ApostropheS` ("の") and the ending `sText_ExclamationMark5` ("！"), so the line reads "ポチエナの\nたいあたり！" as the cart prints it for those moves; the 114 moves of the table read the same instead of their own ending, and 67 of them take の where the cart has は. The Japanese FireRed mod does the same (`overrides/ja-Hrkt/frlg/dialogue.json`).
+- **The continue window in Japanese.** The cart's rows print their value themselves ("しゅじんこう　[STR_VAR_1]"); the runtime draws the value in its own column (`src/ui/game3/rse/main_menu_rse.lua:509`), so the Japanese overrides ship the label part only.
+- **Japanese labels with an empty row.** The Easy Chat footer (DEL. ALL, OK, QUIZ, ANSWER), the Pokédex's HT/WT and the Battle Frontier's list joiners (" and ", ", ", `pokeemerald/src/frontier_util.c:1949`) have an empty Japanese row. `overrides/ja-Hrkt/rse/dialogue.json` takes the cart's own words where it has them (たかさ/おもさ from FireRed's `gText_HT`/`gText_WT`, けってい from `gText_Confirm2`, クイズ and こたえ from `gText_TheQuizColon`/`gText_TheAnswer`), joins a list with と and ・ (the Japanese font has no comma) and words DEL. ALL ぜんけし. The Birch intro's YES/NO takes the cart's other YES/NO row (`sUnusedText_YesNo`).
+- **Option values a corpus row says in another sense.** The screen position's UPPER (the naming keyboard's upper case in `gText_Upper`), the SPEED group label (the SPEED stat, abbreviated `INIT.` in German, `VELOCID.` in Spanish and `VELOC.` in Italian) and Japanese ON/OFF (the battle scene's みる/みない) take the FireRed, Gold/Silver or Red/Blue overrides' wording, in both game3 families.
 - **Glyph runs.** The cart draws `{POKEBLOCK}` and `{LV}` as glyph runs the `rse` dialect reads as tags. A translation keeps the tag the English row has, so the French, German and Spanish rows' `[POKEBLOCK]` show the US cart's run; the Italian carts' own runs are spelled out (`[POKEMELLA]` as POKéMELLA, like the French Battle Points symbol `[Pco]` as Pco, which the French rows also write in letters).
 - **A section name that holds a placeholder.** `MAPSEC_AQUA_HIDEOUT_OLD` holds the team's name as a placeholder, which the map section extractor drops (" HIDEOUT" in English); its translation drops it the same way.
 

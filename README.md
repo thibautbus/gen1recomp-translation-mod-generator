@@ -406,7 +406,8 @@ provenance. Future unresolved entries will keep their original English text.
   `POKéBLOCK CASE` item's name and description are left out of the
   aggregate: the item cannot be obtained in FireRed, and the extractor loses
   its name even in English. Three kinds of row are left out the same way:
-  157 that carry no text at all (a lone control code, an empty string), 21
+  157 that carry no text at all (a lone control code, an empty string; 155
+  in Japanese, which ships the honorifics the US cart leaves empty), 21
   the extractor cannot read (the battle HUD's status strings and the Union
   Room's activity list are drawn from tiles, not from charmap bytes) and 61
   whose only corpus line is Japanese -- the Ruby/Sapphire leftovers the US
@@ -414,9 +415,13 @@ provenance. Future unresolved entries will keep their original English text.
   comparison. What is left unshipped is five fragments the cart
   concatenates between two buffers (`'s level rose to`, ` was used on`): the
   European carts reword the whole sentence and the engine cannot reorder it.
-  German, Spanish and Italian each leave a seventh row for the same reason.
-  Japanese leaves 85: 30 whose phrasing names the player where the English
-  does not, and 50 lines the collection has no Japanese text for at all.
+  German and Spanish each leave a seventh row for the same reason. Japanese
+  leaves 63: 8 whose phrasing prints a buffer the English line does not, 50
+  lines the collection has no Japanese text for at all, and 5 written with a
+  token the join does not encode. (Rows that only add the player's name or
+  the honorific after it ship: the runtime always fills the name, and
+  prints the honorific once it expands it in FireRed; see
+  [docs/upstream-fixes.md](docs/upstream-fixes.md), FireRed entry 18.)
 - `LeafGreen ROM aggregate` measures the same way over the LeafGreen cart's
   own extract, joined through `pokeleafgreen.sym`. It lands on the same
   figures in every language: the two carts differ in where their script
@@ -441,8 +446,8 @@ provenance. Future unresolved entries will keep their original English text.
 | `fr` | 10921/10929 (99.93%) | 10921/10929 (99.93%) | 1894/1906 (99.37%) |
 | `de` | 10919/10929 (99.91%) | 10919/10929 (99.91%) | 1894/1906 (99.37%) |
 | `es` | 10919/10929 (99.91%) | 10919/10929 (99.91%) | 1894/1906 (99.37%) |
-| `it` | 10919/10929 (99.91%) | 10919/10929 (99.91%) | 1894/1906 (99.37%) |
-| `ja-Hrkt` | 10844/10929 (99.22%) | 10844/10929 (99.22%) | 1894/1906 (99.37%) |
+| `it` | 10920/10929 (99.92%) | 10920/10929 (99.92%) | 1894/1906 (99.37%) |
+| `ja-Hrkt` | 10868/10931 (99.42%) | 10868/10931 (99.42%) | 1894/1906 (99.37%) |
 
 These measure what the mod ships, not what the current runtime displays; see
 "Pokémon FireRed and LeafGreen support" above for the runtime limits. The
@@ -456,13 +461,15 @@ FireRed section of [docs/upstream-fixes.md](docs/upstream-fixes.md).
   messages and the 10,010 rows the runtime reads by label or through a
   pointer table, with the named catalogs (species, move and item names, item
   descriptions, trainer names and class names). It leaves out 162 rows that
-  carry no text and 49 whose only corpus line is Japanese. What is left
-  unshipped is the fragments the cart concatenates around a buffer, whose
-  European rows reword the whole sentence or print a value the English line
-  does not have (7 in French and Italian, 9 in Spanish, 13 in German), and,
-  in Japanese, 113 lines the collection has no Japanese text for, 54 whose
-  placeholders differ from the English, three written with a token or
-  escape the join does not encode (`[DAKUTEN]`, `\e`) and one with no row.
+  carry no text (160 in Japanese, which ships the honorifics くん/ちゃん the
+  US cart leaves empty) and 49 whose only corpus line is Japanese. What is
+  left unshipped is the fragments the cart concatenates around a buffer,
+  whose European rows reword the whole sentence or print a value the
+  runtime does not fill (6 in French and Italian, 8 in Spanish, 12 in
+  German), and, in Japanese, 104 lines the collection has no Japanese text
+  for, 36 whose placeholders differ from the English, three written with a
+  token or escape the join does not encode (`[DAKUTEN]`, `\e`) and one with
+  no row.
 - `Emerald engine strings` covers the 2,645 `Strings()` keys the game3
   runtime reaches for Emerald: its menus and options, the move and ability
   descriptions, the 1,030 Easy Chat words and group names, and the ability
@@ -473,11 +480,11 @@ FireRed section of [docs/upstream-fixes.md](docs/upstream-fixes.md).
 
 | Target | Emerald ROM aggregate | Emerald engine strings |
 | --- | ---: | ---: |
-| `fr` | 17714/17721 (99.96%) | 2638/2645 (99.74%) |
-| `de` | 17708/17721 (99.93%) | 2638/2645 (99.74%) |
-| `es` | 17712/17721 (99.95%) | 2638/2645 (99.74%) |
-| `it` | 17714/17721 (99.96%) | 2638/2645 (99.74%) |
-| `ja-Hrkt` | 17550/17721 (99.04%) | 2638/2645 (99.74%) |
+| `fr` | 17715/17721 (99.97%) | 2638/2645 (99.74%) |
+| `de` | 17709/17721 (99.93%) | 2638/2645 (99.74%) |
+| `es` | 17713/17721 (99.95%) | 2638/2645 (99.74%) |
+| `it` | 17715/17721 (99.97%) | 2638/2645 (99.74%) |
+| `ja-Hrkt` | 17579/17723 (99.19%) | 2638/2645 (99.74%) |
 
 As for FireRed, these measure what the mod ships, not what the current
 runtime displays.
