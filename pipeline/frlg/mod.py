@@ -7,7 +7,7 @@ editions at once:
 
 * ``text``: every dialogue key is overridden with its IR segment list, the
   only value form that keeps the runtime's placeholders and page breaks
-  (pipeline.frlg.text).  The named text both carts share is one layer; the
+  (pipeline.gen3.text).  The named text both carts share is one layer; the
   script text, keyed by ROM address, is one layer per edition, since the two
   carts lay it out differently;
 * ``pokemon`` (name), ``moves`` (name), ``items`` (name, description) and
@@ -22,35 +22,44 @@ game3 draws every string with the cart's own Latin font.
 from __future__ import annotations
 
 import json
-import os
-import re
 import shutil
-from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable, Mapping
 
 from ..shared.builder import BuildError, _run
 from ..shared.corpus import canonical_language
 from ..shared.dependencies import DependencyError, fetch_files
-from .join import (
+from ..gen3.family import FRLG
+from ..gen3.join import (
     SHIPPED,
     CatalogResult,
     dialogue_catalog,
-    join_frlg_dialogue,
-    join_frlg_engine_strings,
+    join_gen3_dialogue,
+    join_gen3_engine_strings,
     join_indexed_catalog,
     join_item_descriptions,
-    join_start_menu,
-    load_frlg_corpus,
-    load_frlg_dialogue_decisions,
-    load_frlg_dialogue_overrides,
-    load_frlg_engine_scope,
+    join_trainer_class_names,
+    load_dialogue_decisions,
+    load_dialogue_overrides,
+    load_engine_scope,
+    load_gen3_corpus,
     registry_ids,
 )
-from .text import ir_plain, load_charmap, load_symbols, text_key_address
+from ..gen3.mod import (
+    CATALOG_HOOKS,
+    dialogue_label_rows,
+    gen3_coverage,
+    lua_ir,
+    package_gen3_mod,
+    rom_label_strings,
+    rom_text_cache,
+    unresolved_entries,
+)
+from ..gen3.text import load_charmap, load_symbols, text_key_address
+from .start_menu import join_start_menu
 from ..shared.generate import lua_string
 from ..shared.mod_assets import TRANSLATION_MOD_PRIORITY
-from ..shared.project import is_frozen, project_config, project_version, resource_root, which_luajit
+from ..shared.project import project_config, project_version, resource_root
 from ..shared.roms import import_frlg_rom, verify_firered_rom, verify_leafgreen_rom
 from ..shared.specs import game_spec, languages_for_collection, release_profile
 
@@ -100,19 +109,6 @@ _START_MENU_REGISTRATION = '''  local startMenu = catalog("start_menu")
   end
 '''
 
-# Catalog name -> the registry call applying one value.
-FRLG_CATALOG_HOOKS: Mapping[str, str] = {
-    "species_names": "mod.content.pokemon:patch(id, { name = value })",
-    "move_names": "mod.content.moves:patch(id, { name = value })",
-    "item_names": "mod.content.items:patch(id, { name = value })",
-    "item_descriptions": "mod.content.items:patch(id, { description = value })",
-    "trainer_names": "mod.content.trainers:patch(id, { name = value })",
-    "trainer_class_names": "mod.content.trainers:patch(id, { className = value })",
-    "strings": "mod.content.strings:override(id, value)",
-    # The same registry: only the file is separate (ENGLISH_LOOKUP_SITES).
-    "strings_by_english": "mod.content.strings:override(id, value)",
-}
-
 GATE_REPORT_NAME = "gate_report.json"
 
 
@@ -122,34 +118,6 @@ def frlg_mod_id(language: str) -> str:
 
 def frlg_archive_name(language: str, version: str) -> str:
     return f"translation-{canonical_language(language).lower()}-gen3-{version}.zip"
-
-
-def _lua_value(value) -> str:
-    if isinstance(value, str):
-        return lua_string(value)
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if isinstance(value, int):
-        return str(value)
-    if isinstance(value, (list, tuple)):
-        return "{ " + ", ".join(_lua_value(item) for item in value) + " }"
-    raise TypeError(f"unsupported IR value {value!r}")
-
-
-def lua_ir(segments: list[Mapping]) -> str:
-    """One IR list as a Lua table literal, fields in a fixed order.
-
-    Every field the runtime reads back is written: a tag segment is drawn
-    from its ``tag`` (``{PKMN}``, ``{A_BUTTON}``; text_ir.lua expand_seg) and
-    an ``ext`` carries the arguments the Easy Chat keyboard and the Battle
-    Records screen take their column from.
-    """
-    parts = []
-    for segment in segments:
-        fields = [f"{key} = {_lua_value(segment[key])}"
-                  for key in ("t", "s", "n", "code", "cmd", "tag", "args") if key in segment]
-        parts.append("{ " + ", ".join(fields) + " }")
-    return "{ " + ", ".join(parts) + " }"
 
 
 def split_frlg_dialogue(
@@ -188,7 +156,7 @@ def generate_frlg_mod(
     language = canonical_language(language)
     destination = Path(destination)
     destination.mkdir(parents=True, exist_ok=True)
-    unknown = set(catalogs) - set(FRLG_CATALOG_HOOKS) - {"start_menu"}
+    unknown = set(catalogs) - set(CATALOG_HOOKS) - {"start_menu"}
     if unknown:
         raise ValueError(f"no registry hook for catalog(s): {sorted(unknown)}")
     lang_dir = destination / "lang"
@@ -215,7 +183,7 @@ def generate_frlg_mod(
         lines.extend(f"  [{lua_string(id_)}] = {lua_string(value)}," for id_, value in sorted(start_menu.items()))
         lines.append("}")
         (lang_dir / "start_menu.lua").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    for name in FRLG_CATALOG_HOOKS:
+    for name in CATALOG_HOOKS:
         values = catalogs.get(name) or {}
         if not values:
             continue
@@ -223,7 +191,7 @@ def generate_frlg_mod(
         lines.extend(f"  [{lua_string(id_)}] = {lua_string(value)}," for id_, value in sorted(values.items()))
         lines.append("}")
         (lang_dir / f"{name}.lua").write_text("\n".join(lines) + "\n", encoding="utf-8")
-        registration += f'  each("{name}", function(id, value) {FRLG_CATALOG_HOOKS[name]} end)\n'
+        registration += f'  each("{name}", function(id, value) {CATALOG_HOOKS[name]} end)\n'
     main = MAIN.replace("__CATALOG_REGISTRATION__", registration).replace(
         "__START_MENU_REGISTRATION__", _START_MENU_REGISTRATION if start_menu else "")
     (destination / "main.lua").write_text(main, encoding="utf-8")
@@ -299,13 +267,13 @@ def join_frlg(
     language = canonical_language(language)
     charmap = load_charmap(charmap_path)
     symbols = load_symbols(symbols_path)
-    corpus = load_frlg_corpus(corpus_dir, language)
+    corpus = load_gen3_corpus(corpus_dir, language, FRLG)
 
     text = json.loads((extracted / "frlg_text.json").read_text(encoding="utf-8"))
-    entries, dialogue_stats = join_frlg_dialogue(
+    entries, dialogue_stats = join_gen3_dialogue(
         text, corpus, symbols, charmap,
-        overrides=load_frlg_dialogue_overrides(language),
-        decisions=load_frlg_dialogue_decisions(edition=edition),
+        overrides=load_dialogue_overrides(language, FRLG),
+        decisions=load_dialogue_decisions(FRLG, edition=edition),
     )
 
     species = _numbered(extracted / "frlg_species.json")
@@ -331,14 +299,15 @@ def join_frlg(
             "frlg.common.trainers.gTrainers.", charmap),
         # A trainer's class name is patched on the trainer row itself
         # (Trainers.get reads row.className first), keyed by trainer id.
-        "trainer_class_names": _trainer_class_names(trainers, trainer_ids, corpus, charmap),
+        "trainer_class_names": join_trainer_class_names(trainers, trainer_ids, corpus, charmap),
         "start_menu": join_start_menu(corpus, charmap),
     }
-    scope = load_frlg_engine_scope()
-    strings, engine_stats = join_frlg_engine_strings(scope, corpus, charmap)
+    scope = load_engine_scope(FRLG)
+    strings, engine_stats = join_gen3_engine_strings(scope, corpus, charmap)
     by_english: dict[str, str] = {}
     if gen1recomp is not None:
-        strings, by_english = rom_label_strings(strings, gen1recomp, scope, luajit)
+        strings, by_english = rom_label_strings(strings, gen1recomp, scope, luajit, ENGLISH_LOOKUP_SITES,
+                                                 dialogue_label_rows(entries))
     catalogs = {name: result.values for name, result in results.items()}
     catalogs["strings"] = strings
     if by_english:
@@ -357,17 +326,6 @@ def join_frlg(
 
 # ---------------------------------------------------------------- ROM labels
 
-def _modkit(gen1recomp: Path):
-    """The pinned engine's own Modkit, imported for its ROM text harvest."""
-    import importlib.util
-
-    path = Path(gen1recomp) / "tools" / "modkit.py"
-    spec = importlib.util.spec_from_file_location("gen1recomp_modkit", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
 # The three places where the runtime reads a cart string by its English text
 # and by nothing else: the label it also has is never looked up for them, so
 # an entry moved onto that label would simply stop being found.  Checked at
@@ -384,109 +342,6 @@ ENGLISH_LOOKUP_SITES = (
     "src/ui/game3/map_name_popup.lua",
     "src/ui/game3/region_map.lua",
 )
-
-
-def rom_label_strings(values: Mapping[str, str], gen1recomp: str | Path,
-                      scope: Mapping[str, Mapping] | None = None,
-                      luajit: str | None = None) -> tuple[dict[str, str], dict[str, str]]:
-    """Key every cart string of the engine catalog by its ROM label.
-
-    Since gen1recomp v0.3.0 the runtime looks a cart string up by its label
-    first (``Strings.translateLabel``), and ``modkit pack`` refuses a
-    ``lang/strings.lua`` that still keys one by its English (MK306).  This is
-    Modkit's own migration (``migrate_rom_text``), run on the catalog before
-    it is written: an entry whose key is the English of a ROM label moves
-    onto that label, and only the literals the engine passes to ``Strings()``
-    itself stay keyed by their English.
-
-    Returns the migrated catalog and, separately, the entries of
-    ``ENGLISH_LOOKUP_SITES`` the migration took away: the runtime reads those
-    by their English, so they are written to a catalog of their own and
-    registered exactly the same way (``mod.content.strings:override``), which
-    is the only key the screens that draw them will find.
-    """
-    gen1recomp = Path(gen1recomp)
-    modkit = _modkit(gen1recomp)
-    repo = str(gen1recomp.resolve())
-    # rom_text_caches also looks in the LOVE user data root, where this
-    # machine may hold its own FireRed import: a build reads the extract it
-    # was given and nothing else.
-    caches = [row for row in modkit.rom_text_caches(repo)
-              if os.path.abspath(row[0]).startswith(repo + os.sep)]
-    if not caches:
-        raise BuildError(
-            "no imported FireRed cache to read the cart's ROM labels from; "
-            "the extract must be mounted before the catalogs are written"
-        )
-    # harvest_rom_text runs $LUA, or else the luajit on PATH, and a standalone
-    # build carries its own LuaJIT where no PATH looks: hand Modkit that one.
-    luajit = luajit or which_luajit()
-    if luajit is None:
-        raise BuildError("LuaJIT is required to read the cart's ROM labels; see MODKIT_LUAJIT")
-    previous = os.environ.get("LUA")
-    os.environ["LUA"] = str(luajit)
-    try:
-        rom_text = modkit.harvest_rom_text(repo, caches)
-    finally:
-        if previous is None:
-            os.environ.pop("LUA", None)
-        else:
-            os.environ["LUA"] = previous
-    engine_literals = {literal for literal, _site in modkit.harvest_engine_strings(repo)}
-    done = {lua_string(key): lua_string(value) for key, value in values.items()}
-    modkit.migrate_rom_text(done, rom_text, engine_literals)
-    # A key whose label already carried a translation is left behind by the
-    # migration, and pack refuses it all the same: the cart's own text is
-    # translated on the label, so the English key goes.
-    for key in modkit.rom_english_keys(rom_text) - engine_literals:
-        done.pop(key, None)
-    catalog = {_unlua(key): _unlua(value) for key, value in done.items()}
-    scope = scope or {}
-    by_english = {
-        key: value for key, value in values.items()
-        if key not in catalog
-        and str(scope.get(key, {}).get("callsite", "")).startswith(ENGLISH_LOOKUP_SITES)
-    }
-    return catalog, by_english
-
-
-_LUA_ESCAPE = re.compile(r"\\(\d{1,3}|.)", re.S)
-_LUA_CONTROL = {"n": "\n", "r": "\r", "t": "\t", "a": "\a", "b": "\b", "f": "\f", "v": "\v"}
-
-
-def _unlua(literal: str) -> str:
-    """The plain string a Lua literal Modkit handed back stands for."""
-    def replace(match: re.Match) -> str:
-        token = match.group(1)
-        if token.isdigit():
-            return chr(int(token))
-        return _LUA_CONTROL.get(token, token)
-
-    return _LUA_ESCAPE.sub(replace, literal[1:-1])
-
-
-def _trainer_class_names(trainers, trainer_ids, corpus, charmap) -> CatalogResult:
-    """Join each trainer class once, then fan it out to its trainers.
-
-    Every class is translated since gen1recomp v0.3.4: the runtime reads a
-    trainer's class by id (gen1recomp#2398), so RIVAL, LEADER, ELITE FOUR
-    and CHAMPION no longer have to stay in English for the rival's name, the
-    quest log and the battle transition to work.
-    """
-    per_class = join_indexed_catalog(
-        {row["class"]: row["className"] for row in trainers.values()
-         if isinstance(row.get("class"), int) and row.get("className")},
-        {row["class"]: str(row["class"]) for row in trainers.values() if isinstance(row.get("class"), int)},
-        corpus, "frlg.common.trainer_class_names.gTrainerClassNames.", charmap,
-    )
-    result = CatalogResult()
-    result.stats.update(per_class.stats)
-    result.issues = per_class.issues
-    for number, row in trainers.items():
-        value = per_class.values.get(str(row.get("class")))
-        if row.get("className") and value:
-            result.values[trainer_ids[number]] = value
-    return result
 
 
 # ---------------------------------------------------------------- gate
@@ -545,6 +400,15 @@ def write_gate_expectations(path: Path, joined: dict, *,
     sample = _sample(catalogs.get("strings", {}), "YES")
     if sample:
         expectations["strings"] = {"id": sample[0], "value": sample[1]}
+    # The samples the gate must find: one for every catalog that has rows.
+    expectations["required"] = sorted(
+        name for name in ("species_names", "move_names", "item_names", "item_descriptions",
+                          "trainer_names", "trainer_class_names", "start_menu", "strings")
+        if catalogs.get(name))
+    if any(entry.status in SHIPPED and entry.translation and (dialogue_keys is None or entry.key in dialogue_keys)
+           and any(segment.get("t") == "player" for segment in entry.translation)
+           for entry in joined["entries"]):
+        expectations["required"].append("dialogue")
     path.write_text(json.dumps(expectations, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return expectations
 
@@ -570,51 +434,18 @@ def run_frlg_gate(
 
 # ---------------------------------------------------------------- coverage
 
-def frlg_coverage(joined: dict) -> dict:
-    stats = joined["dialogue_stats"]
-    catalog_stats = joined["catalog_stats"]
-    named_total = sum(row["total"] for row in catalog_stats.values())
-    named_covered = sum(row["translated"] + row["same_as_english"] for row in catalog_stats.values())
-    total = stats["total"] + named_total
-    covered = stats["covered"] + named_covered
-    engine = joined["engine_stats"]
-    return {
-        "rom": {
-            "translated": covered, "total": total,
-            "percent": round(100.0 * covered / total, 2) if total else 100.0,
-            "ignored_markup_only": stats["ignored_markup_only"],
-            "ignored_undecodable": stats["ignored_undecodable"],
-            "ignored_japanese_source": stats["ignored_japanese_source"],
-        },
-        "dialogue": {key: stats[key] for key in
-                     ("total", "covered", "shipped", "percent", "by_status",
-                      "ignored_markup_only", "ignored_undecodable", "ignored_japanese_source")},
-        "named_catalogs": catalog_stats,
-        "engine_gen3": {key: engine[key] for key in ("translated", "total", "percent", "fallback_english")},
-        "policy": "english-fallback",
-    }
-
-
-def _unresolved(joined: dict) -> list[dict]:
-    return [
-        {"key": entry.key, "status": entry.status, "qid": entry.qid,
-         "english": ir_plain(entry.english), "detail": entry.detail}
-        for entry in joined["entries"] if entry.status not in SHIPPED and entry.status != "same_as_english"
-    ]
-
-
 def write_frlg_report(path: Path, joined: dict, coverage: dict, gate: dict, *,
                       leafgreen: dict | None = None, leafgreen_gate: dict | None = None) -> None:
     """Private per-key report (it quotes ROM text: never packaged)."""
     report = {
         "coverage": coverage,
-        "dialogue_unresolved": _unresolved(joined),
+        "dialogue_unresolved": unresolved_entries(joined),
         "catalog_issues": joined["catalog_issues"],
         "engine_details": joined["engine_stats"]["details"],
         "gate": gate,
     }
     if leafgreen is not None:
-        report["leafgreen_dialogue_unresolved"] = _unresolved(leafgreen)
+        report["leafgreen_dialogue_unresolved"] = unresolved_entries(leafgreen)
         report["leafgreen_gate"] = leafgreen_gate
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
@@ -652,96 +483,6 @@ def edition_guards(firered: Mapping[str, list[dict]],
 
 
 # ---------------------------------------------------------------- build
-
-def _is_link(path: Path) -> bool:
-    """A symlink, or the directory junction a Windows build links with."""
-    if path.is_symlink():
-        return True
-    if hasattr(os.path, "isjunction"):  # Python 3.12
-        return os.path.isjunction(path)
-    try:
-        tag = getattr(os.lstat(path), "st_reparse_tag", 0)
-    except OSError:
-        return False
-    return tag == 0xA0000003  # IO_REPARSE_TAG_MOUNT_POINT
-
-
-def _link_directory(link: Path, target: Path) -> None:
-    """Point ``link`` at the directory ``target``.
-
-    Windows only lets an elevated prompt or Developer Mode make a symlink, so
-    a build there makes a directory junction instead, which needs neither and
-    which Modkit reads through the same way.
-    """
-    if os.name == "nt":
-        import _winapi
-        _winapi.CreateJunction(str(target), str(link))
-    else:
-        link.symlink_to(target, target_is_directory=True)
-
-
-def _unlink_directory(link: Path) -> None:
-    """Remove a link made by _link_directory, never what it points at."""
-    try:
-        link.unlink()
-    except OSError:
-        if not _is_link(link):
-            raise
-        os.rmdir(link)  # a junction, where unlink refuses a directory
-
-
-@contextmanager
-def _rom_text_cache(gen1recomp: Path, extracted: Path):
-    """Let Modkit read the imported cart text while the mod is built.
-
-    ``modkit pack`` checks that a strings catalog never keys a ROM English
-    text (MK306), and both that check and the ROM labels the catalogs are
-    keyed by come from the imported cache Modkit looks for under
-    ``<repo>/firered/data/generated/gba`` (``rom_text_caches``).  The extract
-    itself stays private, in the build workspace; only a link points at it,
-    and only for this build: a Red/Blue or Gold build that shares the engine
-    checkout must not find a FireRed cache, or its own scaffold would list
-    the cart's text too.
-    """
-    link = gen1recomp / "firered"
-    target = (extracted / "cache").resolve()
-    if not (target / "data" / "generated" / "gba" / "scripts" / "text.lua").is_file():
-        raise BuildError(f"the FireRed extract has no script text cache: {target}")
-    if _is_link(link):
-        _unlink_directory(link)
-    elif link.is_file():
-        link.unlink()
-    elif link.is_dir():
-        # A real import lives there (Modkit documents <repo>/firered as the
-        # place it reads the cart's text from): the build never removes one.
-        raise BuildError(f"{link} is a directory, not this build's link to its extract")
-    _link_directory(link, target)
-    try:
-        yield link
-    finally:
-        if _is_link(link):
-            _unlink_directory(link)
-
-
-def package_frlg_mod(
-    mod_dir: Path, gen1recomp: Path, build_root: Path, destination: Path, language: str,
-    luajit: str | None = None, log_fn: Callable[[str], None] | None = None,
-) -> Path:
-    from ..shared.orchestration import package_release
-
-    env = None
-    if luajit is not None:
-        env = dict(os.environ)
-        env["MODKIT_LUAJIT"] = str(luajit)
-        env["LUA"] = str(luajit)
-        env["PYTHONUTF8"] = "1"
-        if is_frozen():
-            env["PATH"] = str(Path(luajit).resolve().parent) + os.pathsep + env.get("PATH", "")
-    return package_release(
-        mod_dir, gen1recomp, gen1recomp / "tools" / "modkit.py", build_root, destination,
-        frlg_archive_name(language, project_version()), env=env, log_fn=log_fn,
-    )
-
 
 def build_frlg(
     firered_rom: str | Path,
@@ -794,7 +535,7 @@ def build_frlg(
         extracted[edition] = workspace / edition / "extracted"
         import_frlg_rom(rom, gen1recomp, extracted[edition], log_fn=log_fn, edition=edition)
 
-    with _rom_text_cache(gen1recomp, extracted["firered"]):
+    with rom_text_cache(gen1recomp, extracted["firered"]):
         log("\nJoining corpus and generating the mod...")
         status("Joining corpus and generating the mod")
         joined = join_frlg(extracted["firered"], corpus_dir, language, symbols["firered"], charmap,
@@ -808,8 +549,8 @@ def build_frlg(
             mod_dir, language=language, target_name=f"{language_name} translation for FireRed and LeafGreen",
             dialogue=joined["dialogue"], leafgreen_dialogue=leafgreen["dialogue"], catalogs=joined["catalogs"],
         )
-        coverage = frlg_coverage(joined)
-        coverage["rom_leafgreen"] = frlg_coverage(leafgreen)["rom"]
+        coverage = gen3_coverage(joined)
+        coverage["rom_leafgreen"] = gen3_coverage(leafgreen)["rom"]
 
         _shared, firered_layer, leafgreen_layer = split_frlg_dialogue(joined["dialogue"], leafgreen["dialogue"])
         guards = edition_guards(firered_layer, leafgreen_layer)
@@ -842,6 +583,7 @@ def build_frlg(
                 " (docs/upstream-fixes.md, FireRed)")
 
         status("Packaging translation mod")
-        published = package_frlg_mod(mod_dir, gen1recomp, build_root, destination, language, luajit, log_fn)
+        published = package_gen3_mod(mod_dir, gen1recomp, build_root, destination,
+                                     frlg_archive_name(language, project_version()), luajit, log_fn)
     status("Build complete")
     return published

@@ -87,16 +87,6 @@
       "reason": "engine-contract-gap",
       "provenance": "Battle:applyStatus()/tickStatus()'s mod-compatibility fallback path (Strings(\"%s%s\", monName, Strings(suffix))), reached only when a mod overrides this status's inflictText/residual suffix -- vanilla play always takes the %s-template branch instead. Corpus-inspired from poke-corpus GoldSilver gs.battle.WasPoisonedText, its own leading name reference dropped to leave a standalone no-placeholder suffix (verified to contain no stray %s)."
     },
-    "#MON Music": {
-      "override": "포켓몬 뮤직",
-      "reason": "engine-original",
-      "provenance": "No PokeCorpus row: Crystal was never localized to Korean, so this port's own automatic Crystal-corpus matcher (used for every other language on this key) has nothing to draw from. Composed instead, reusing this catalog's own established POKéMON/level/trade vocabulary."
-    },
-    "#MON Talk": {
-      "override": "포켓몬 토크",
-      "reason": "engine-original",
-      "provenance": "AI-generated Korean engine translation; requires in-game visual validation; poke-corpus has no Korean Crystal collection, so no official Crystal qid translation is available."
-    },
     "%d #MON seen\n%d #MON owned\fPROF.OAK's\nRating:": {
       "override": "본 포켓몬: %d\n잡은 포켓몬: %d\f오박사의\n평가:",
       "reason": "engine-contract-gap",
@@ -421,11 +411,6 @@
       "override": "%s는(은)\n얼어버려서 움직일 수 없다!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
-    "%s is getting pumped!": {
-      "override": "%s는(은)\n힘이 넘치고 있다",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.battle.GettingPumpedText)."
     },
     "%s is glowing!": {
       "override": "%s는(은)\n세찬 빛이 감싼다!",
@@ -753,9 +738,9 @@
       "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
     },
     "%s's %s fell!": {
-      "override": "%s의\n%s는(은)\u000b내려갔다!",
+      "override": "%s의\n%s(이)가 떨어졌다!",
       "reason": "engine-contract-gap",
-      "provenance": "No direct corpus match for this generic per-stat template; wording and \\n/\\x0b split reused verbatim from this catalog's own sibling entries for the same %s's %s ...! shape (\"%s's %s was reduced by %d!\", \"%s's %s won't rise/drop anymore!\"), which share this message's exact name-then-stat argument order."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.common_2.Text_BattleFoeEffectActivate + gs.common_2.BattleStatFellText, joined as the cart prints them: \"%s의／%s(이)가 떨어졌다!\" (the opening row names the POKéMON and the stat, then runs on into the stat change; the Korean \"sharply\" row prints its own verb)."
     },
     "%s's %s is DISABLED!": {
       "override": "%s의 %s는(은)\n헤롱헤롱 해서 펼칠 수 없었다!",
@@ -768,19 +753,19 @@
       "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
     },
     "%s's %s rose!": {
-      "override": "%s의\n%s는(은)\u000b올랐다!",
+      "override": "%s의\n%s(이)가 올랐다!",
       "reason": "engine-contract-gap",
-      "provenance": "No direct corpus match for this generic per-stat template; wording and \\n/\\x0b split reused verbatim from this catalog's own sibling entries for the same %s's %s ...! shape (\"%s's %s was reduced by %d!\", \"%s's %s won't rise/drop anymore!\"), which share this message's exact name-then-stat argument order."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.common_2.Text_BattleEffectActivate + gs.common_2.BattleStatWentUpText, joined as the cart prints them: \"%s의／%s(이)가 올랐다!\" (the opening row names the POKéMON and the stat, then runs on into the stat change; the Korean \"sharply\" row prints its own verb)."
     },
     "%s's %s sharply fell!": {
-      "override": "%s의\n%s는(은)\u000b큰 폭으로 내려갔다!",
+      "override": "%s의\n%s(이)가\u000b확 떨어졌다!",
       "reason": "engine-contract-gap",
-      "provenance": "No direct corpus match for this generic per-stat template; wording and \\n/\\x0b split reused verbatim from this catalog's own sibling entries for the same %s's %s ...! shape (\"%s's %s was reduced by %d!\", \"%s's %s won't rise/drop anymore!\"), which share this message's exact name-then-stat argument order."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.common_2.Text_BattleFoeEffectActivate + gs.common_2.BattleStatSharplyFellText, joined as the cart prints them: \"%s의／%s(이)가／확 떨어졌다!\" (the opening row names the POKéMON and the stat, then runs on into the stat change; the Korean \"sharply\" row prints its own verb)."
     },
     "%s's %s sharply rose!": {
-      "override": "%s의\n%s는(은)\u000b큰 폭으로 올랐다!",
+      "override": "%s의\n%s(이)가\u000b부쩍 올랐다!",
       "reason": "engine-contract-gap",
-      "provenance": "No direct corpus match for this generic per-stat template; wording and \\n/\\x0b split reused verbatim from this catalog's own sibling entries for the same %s's %s ...! shape (\"%s's %s was reduced by %d!\", \"%s's %s won't rise/drop anymore!\"), which share this message's exact name-then-stat argument order."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.common_2.Text_BattleEffectActivate + gs.common_2.BattleStatWentWayUpText, joined as the cart prints them: \"%s의／%s(이)가／부쩍 올랐다!\" (the opening row names the POKéMON and the stat, then runs on into the stat change; the Korean \"sharply\" row prints its own verb)."
     },
     "%s's %s was disabled!": {
       "override": "%s의\n%s를(을)\u000b봉해버렸다!",
@@ -917,11 +902,6 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
-    "%s's shrouded in MIST!": {
-      "override": "%s는(은)\n흰안개에 둘러싸였다!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
     "%s,\nis that OK?": {
       "override": "%s(으)로\n괜찮습니까?",
       "reason": "engine-original",
@@ -966,6 +946,11 @@
       "override": "{ID}№.",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "<PK><MN>": {
+      "override": "포켓몬",
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.menu.BattleMenuHeader.Text, the battle menu's own row (src/ui/gen2/BattleState.lua:196, FIGHT / <PK><MN> / PACK / RUN). This language's cart lists the options in its own order, 싸우다@가방@포켓몬@도망치다@, so the POKéMON option is the third segment, 포켓몬, not the second. The automatic match took gs.text.PlacePKMNText instead, the charmap's <PK><MN> control code, whose row is not the menu's label (it keeps the English ligature, which the Korean menu does not print)."
     },
     "<PK><MN> are listed": {
       "override": "포켓몬을",
@@ -1096,11 +1081,6 @@
       "override": "자동",
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The PERFORMANCE row's auto-detect tier; French/German/Spanish/Italian already use \"AUTO\" as a common abbreviation identical to the English source."
-    },
-    "AZALEA TOWN": {
-      "override": "고동마을",
-      "reason": "engine-original",
-      "provenance": "No PokeCorpus row: Crystal was never localized to Korean, so this port's own automatic Crystal-corpus matcher (used for every other language on this key) has nothing to draw from. Korean Pokémon town names are localized by meaning rather than transliterated, like Japanese's own convention; used the official Korean name (Bulbapedia's \"In other languages\" section), not a transliteration."
     },
     "Aargh! Almost had it!": {
       "override": "분하다!\n조금만 더하면 잡을 수 있었는데!",
@@ -1287,11 +1267,6 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. A colour-palette theme name."
     },
-    "BUG": {
-      "override": "벌레",
-      "reason": "engine-original",
-      "provenance": "No PokeCorpus row: Crystal was never localized to Korean, so this port's own automatic Crystal-corpus matcher (used for every other language on this key) has nothing to draw from. Composed instead, reusing this catalog's own established POKéMON/level/trade vocabulary."
-    },
     "BUY": {
       "override": "사러 오다",
       "reason": "engine-corpus",
@@ -1386,11 +1361,6 @@
       "override": "\n채널!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
-    "CHERRYGROVE CITY": {
-      "override": "무궁시티",
-      "reason": "engine-original",
-      "provenance": "No PokeCorpus row: Crystal was never localized to Korean, so this port's own automatic Crystal-corpus matcher (used for every other language on this key) has nothing to draw from. Korean Pokémon town names are localized by meaning rather than transliterated, like Japanese's own convention; used the official Korean name (Bulbapedia's \"In other languages\" section), not a transliteration."
     },
     "CLASSIC": {
       "override": "클래식",
@@ -1782,11 +1752,6 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.names.MoveNames.19; FLY_MAP_CARD reuses the FLY move's own real cart name as this card's title."
     },
-    "FLYING": {
-      "override": "비행",
-      "reason": "engine-original",
-      "provenance": "No PokeCorpus row: Crystal was never localized to Korean, so this port's own automatic Crystal-corpus matcher (used for every other language on this key) has nothing to draw from. Composed instead, reusing this catalog's own established POKéMON/level/trade vocabulary."
-    },
     "FNT": {
       "override": "기절",
       "reason": "engine-original",
@@ -1866,11 +1831,6 @@
       "override": "그래픽",
       "reason": "engine-original",
       "provenance": "AI-generated Korean translation of the port-added grouped Gen 2 Options label; requires in-game visual validation."
-    },
-    "GRASS": {
-      "override": "풀",
-      "reason": "engine-original",
-      "provenance": "No PokeCorpus row: Crystal was never localized to Korean, so this port's own automatic Crystal-corpus matcher (used for every other language on this key) has nothing to draw from. Composed instead, reusing this catalog's own established POKéMON/level/trade vocabulary."
     },
     "GREEN": {
       "override": "초록",
@@ -2152,10 +2112,15 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_2.BreedAppearsToCareForText."
     },
+    "It didn't affect\n%s!": {
+      "override": "그러나 %s에는\n듣지 않았다!",
+      "reason": "engine-contract-gap",
+      "provenance": "This language's poke-corpus GoldSilver gs.battle.DidntAffect1Text row, verbatim (\"그러나 <TARGET>에는<LINE>듣지 않았다!\"), the line SKETCH prints when it fails (pokecrystal engine/battle/move_effects/sketch.asm, PrintDidntAffect)."
+    },
     "It didn't affect %s!": {
       "override": "그러나 %s에는\n듣지 않았다!",
       "reason": "engine-contract-gap",
-      "provenance": "Corpus-derived from poke-corpus GoldSilver gs.battle.DidntAffect1Text. Fixed for one language whose own corpus row diverges from the engine's exact %s-argument contract; see the composed override for details."
+      "provenance": "This language's poke-corpus GoldSilver gs.battle.DidntAffect1Text row, verbatim (\"그러나 <TARGET>에는<LINE>듣지 않았다!\")."
     },
     "It doesn't affect %s...": {
       "override": "%s에게는\n효과가 없는 듯 하다……",
@@ -2302,6 +2267,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver gs.pocket_names.ItemPocketNames.Key, the real cart's Key Item Pocket tab label."
     },
+    "LANDSCAPE": {
+      "override": "가로",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; engine-only orientation value with no compatible PokeCorpus qid, which gen1recomp v0.3.51 also prints as the value of Gold and Silver's ORIENTATION option (src/ui/gen2/OptionsMenu.lua:242, Orientation.modeLabel; Android and iOS only); worded after this language's ORIENTATION row (화면 방향); ko has no RBY release to copy from; requires in-game visual validation."
+    },
     "LEECH SEED saps %s!": {
       "override": "기생목이 %s의\n체력을 빼앗았다!",
       "reason": "engine-corpus",
@@ -2366,11 +2336,6 @@
       "override": "이곳에는 아무것도\n없는 것 같다",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_2.UnusedNothingHereText."
-    },
-    "Lucky Channel": {
-      "override": "럭키 채널",
-      "reason": "engine-original",
-      "provenance": "No PokeCorpus row: Crystal was never localized to Korean, so this port's own automatic Crystal-corpus matcher (used for every other language on this key) has nothing to draw from. Composed instead, reusing this catalog's own established POKéMON/level/trade vocabulary."
     },
     "L▶BEFORE": {
       "override": "L▶이전",
@@ -2531,11 +2496,6 @@
       "override": "신형",
       "reason": "engine-original",
       "provenance": "Reuses the leading word of this catalog's own \"NEW POKéDEX MODE\" translation (added in this same pass) as a compact mode-id label; no separate one-word corpus row exists for this specific short form."
-    },
-    "NEW BARK TOWN": {
-      "override": "연두마을",
-      "reason": "engine-original",
-      "provenance": "No PokeCorpus row: Crystal was never localized to Korean, so this port's own automatic Crystal-corpus matcher (used for every other language on this key) has nothing to draw from. Korean Pokémon town names are localized by meaning rather than transliterated, like Japanese's own convention; used the official Korean name (Bulbapedia's \"In other languages\" section), not a transliteration."
     },
     "NEW GAME": {
       "override": "새로운 모험을 시작하다",
@@ -2762,6 +2722,11 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. A colour-palette theme name. French/German already spell this identically to the English source."
     },
+    "ORIENTATION": {
+      "override": "화면 방향",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row gen1recomp v0.3.51 adds to Gold and Silver's Options menu, worded after this language's VIDEO MODE row (화면 모드); ko has no RBY release to copy from; no compatible PokeCorpus qid; requires in-game visual validation."
+    },
     "OT/": {
       "override": "어버이/",
       "reason": "engine-contract-gap",
@@ -2931,6 +2896,11 @@
       "override": "포케러스",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "PORTRAIT": {
+      "override": "세로",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; engine-only orientation value with no compatible PokeCorpus qid, which gen1recomp v0.3.51 also prints as the value of Gold and Silver's ORIENTATION option (src/ui/gen2/OptionsMenu.lua:242, Orientation.modeLabel; Android and iOS only); worded after this language's ORIENTATION row (화면 방향); ko has no RBY release to copy from; requires in-game visual validation."
     },
     "PORYGON": {
       "override": "폴리곤",
@@ -3106,6 +3076,11 @@
       "override": "스프레이의 효과가 떨어졌다",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_1.RepelWoreOffText."
+    },
+    "REVERSE LANDSCAPE": {
+      "override": "가로 반전",
+      "reason": "engine-original",
+      "provenance": "AI-generated engine-original translation; engine-only orientation value with no compatible PokeCorpus qid, which gen1recomp v0.3.51 also prints as the value of Gold and Silver's ORIENTATION option (src/ui/gen2/OptionsMenu.lua:242, Orientation.modeLabel; Android and iOS only); worded after this language's ORIENTATION row (화면 방향); ko has no RBY release to copy from; requires in-game visual validation."
     },
     "RIGHT SIDE": {
       "override": "오른쪽",

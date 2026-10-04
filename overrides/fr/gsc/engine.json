@@ -87,16 +87,6 @@
       "reason": "engine-contract-gap",
       "provenance": "Battle:applyStatus()/tickStatus()'s mod-compatibility fallback path (Strings(\"%s%s\", monName, Strings(suffix))), reached only when a mod overrides this status's inflictText/residual suffix -- vanilla play always takes the %s-template branch instead. Corpus-inspired from poke-corpus GoldSilver gs.battle.WasPoisonedText, its own leading name reference dropped to leave a standalone no-placeholder suffix (verified to contain no stray %s)."
     },
-    "#MON Music": {
-      "override": "Musique POKéMON",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."
-    },
-    "#MON Talk": {
-      "override": "CHRONIQUE POKéMON CHEN",
-      "reason": "engine-original",
-      "provenance": "Corpus-confirmed from Crystal c.buenas_passwords.BuenasPasswordTable.RadioStations; the engine exposes the first compound-table segment as a standalone Strings key."
-    },
     "%d #MON seen\n%d #MON owned\fPROF.OAK's\nRating:": {
       "override": "%d POKéMON vus\n%d POKéMON pris\fÉvaluation du\nPROF. CHEN :",
       "reason": "engine-contract-gap",
@@ -416,11 +406,6 @@
       "override": "%s\nest gelé!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
-    "%s is getting pumped!": {
-      "override": "%s\nse concentre!",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.battle.GettingPumpedText)."
     },
     "%s is glowing!": {
       "override": "%s\nbrille!",
@@ -912,11 +897,6 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
-    "%s's shrouded in MIST!": {
-      "override": "%s\ns'entoure d'une\u000bBRUME!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
     "%s,\nis that OK?": {
       "override": "%s,\nc'est bien ça?",
       "reason": "engine-original",
@@ -1066,11 +1046,6 @@
       "override": "FOR/",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
-    "AZALEA TOWN": {
-      "override": "ECORCIA",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."
     },
     "Aargh! Almost had it!": {
       "override": "Aaaaaah!\nPresque!",
@@ -1252,11 +1227,6 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. A colour-palette theme name."
     },
-    "BUG": {
-      "override": "INSECTE",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."
-    },
     "BUY": {
       "override": "ACHETER",
       "reason": "engine-corpus",
@@ -1346,11 +1316,6 @@
       "override": "\nMUSIQUE PKMN!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
-    "CHERRYGROVE CITY": {
-      "override": "VILLE GRIOTTE",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."
     },
     "CLASSIC": {
       "override": "CLASSIQUE",
@@ -1717,11 +1682,6 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.names.MoveNames.19; FLY_MAP_CARD reuses the FLY move's own real cart name as this card's title."
     },
-    "FLYING": {
-      "override": "VOL",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."
-    },
     "FNT": {
       "override": "KO",
       "reason": "engine-corpus",
@@ -1796,11 +1756,6 @@
       "override": "GRAPHISMES",
       "reason": "engine-original",
       "provenance": "AI-generated French translation of the port-added grouped Gen 2 Options label; requires in-game visual validation."
-    },
-    "GRASS": {
-      "override": "PLANTE",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."
     },
     "GREEN": {
       "override": "VERT",
@@ -2237,6 +2192,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver gs.pocket_names.ItemPocketNames.Key, the real cart's Key Item Pocket tab label."
     },
+    "LANDSCAPE": {
+      "override": "PAYSAGE",
+      "reason": "engine-original",
+      "provenance": "Already carried by overrides/fr/rby/engine.json (user-validated 2026-08-05) for the same shared engine-only orientation value, which gen1recomp v0.3.51 also prints as the value of Gold and Silver's ORIENTATION option (src/ui/gen2/OptionsMenu.lua:242, Orientation.modeLabel; Android and iOS only); no compatible PokeCorpus qid."
+    },
     "LEECH SEED saps %s!": {
       "override": "VAMPIGRAINE draine\n%s!",
       "reason": "engine-corpus",
@@ -2301,11 +2261,6 @@
       "override": "Il n'y a rien\ndans le coin.",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_2.UnusedNothingHereText."
-    },
-    "Lucky Channel": {
-      "override": "Antenne Chance",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."
     },
     "L▶BEFORE": {
       "override": "L▶RETOUR",
@@ -2451,11 +2406,6 @@
       "override": "NOUVEAU",
       "reason": "engine-original",
       "provenance": "Reuses the leading word of this catalog's own \"NEW POKéDEX MODE\" translation (added in this same pass) as a compact mode-id label; no separate one-word corpus row exists for this specific short form."
-    },
-    "NEW BARK TOWN": {
-      "override": "BOURG GEON",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."
     },
     "NEW GAME": {
       "override": "NOUVEAU JEU",
@@ -2956,6 +2906,11 @@
       "override": "Effet du REPOUSSE\nterminé.",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_1.RepelWoreOffText."
+    },
+    "REVERSE LANDSCAPE": {
+      "override": "PAYSAGE INVERSE",
+      "reason": "engine-original",
+      "provenance": "Already carried by overrides/fr/rby/engine.json (user-validated 2026-08-05) for the same shared engine-only orientation value, which gen1recomp v0.3.51 also prints as the value of Gold and Silver's ORIENTATION option (src/ui/gen2/OptionsMenu.lua:242, Orientation.modeLabel; Android and iOS only); no compatible PokeCorpus qid."
     },
     "RIGHT SIDE": {
       "override": "À DROITE",

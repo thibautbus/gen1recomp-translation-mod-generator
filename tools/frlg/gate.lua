@@ -64,6 +64,14 @@ local function check(condition, message)
   end
 end
 
+-- Every check below runs on a sample the build hands over: a sample the build
+-- names as required (its catalog is not empty) and does not hand over would
+-- skip its check, so it fails here instead.
+for _, name in ipairs(expectations.required or {}) do
+  local sample = expectations[name]
+  check(type(sample) == "table" and next(sample) ~= nil, "the build provides a " .. name .. " sample")
+end
+
 local function eq(actual, expected, message)
   check(actual == expected,
     ("%s (got %q, want %q)"):format(message, tostring(actual), tostring(expected)))
@@ -218,7 +226,7 @@ if row then
   eq(data.strings and data.strings[row.id], row.value, "strings registry " .. row.id)
   local Strings = require("src.core.Strings")
   local game3 = readFile(engineRoot .. "/src/core/Game3.lua") or ""
-  local loadsCatalog = game3:find('require%("src%.core%.Strings"%)%.load%(self%.data%)') ~= nil
+  local loadsCatalog = game3:find('"src%.core%.Strings"%)%.load%(self%.data%)') ~= nil
   if loadsCatalog then Strings.load(data) end
   stringsLive = { key = row.id, resolves = Strings(row.id) == row.value, game3_loads_catalog = loadsCatalog }
 end
@@ -275,7 +283,25 @@ local function countBlanks(catalogName, text)
     end
   end
 end
-for _, catalogName in ipairs({ "dialogue", "species_names", "move_names", "item_names",
+
+-- A label the mod ships as dialogue is read through RomText, which takes the
+-- label's strings entry first (RomText.translate): an entry there would show
+-- another screen's wording instead of the label's own row.
+local shadowed = {}
+for _, name in ipairs({ "dialogue", "dialogue_" .. edition }) do
+  local body = readFile(modDir .. "/lang/" .. name .. ".lua")
+  local chunk = body and loadstring(body)
+  for key in pairs(chunk and chunk() or {}) do
+    if not key:match("^g3:") and data.strings and data.strings[key] ~= nil then
+      shadowed[#shadowed + 1] = key
+    end
+  end
+end
+table.sort(shadowed)
+check(#shadowed == 0, ("no dialogue label is shadowed by a strings entry%s"):format(
+  #shadowed > 0 and (" (" .. table.concat(shadowed, ", ", 1, math.min(#shadowed, 10)) .. ")") or ""))
+
+for _, catalogName in ipairs({ "dialogue", "dialogue_" .. edition, "species_names", "move_names", "item_names",
     "item_descriptions", "trainer_names", "trainer_class_names", "start_menu", "strings",
     "strings_by_english" }) do
   local body = readFile(modDir .. "/lang/" .. catalogName .. ".lua")

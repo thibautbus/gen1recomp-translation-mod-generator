@@ -1,8 +1,9 @@
-"""Build config/frlg/engine_scope.json from a gen1recomp checkout.
+"""Build config/<family>/engine_scope.json from a gen1recomp checkout.
 
-The scope lists every ``Strings()`` key the game3 (FireRed) runtime can look
-up, and for each one the FireRed corpus row that says it, when the cart has
-one.  Keys come from four places:
+The scope lists every ``Strings()`` key the game3 runtime can look up for one
+family (FireRed/LeafGreen or Emerald, pipeline.gen3.family), and for each one
+the family's corpus row that says it, when the cart has one.  The examples
+below are FireRed's.  Keys come from four places:
 
 * literal ``Strings("...")`` and ``Strings.source("...")`` callsites under
   ``src/*/game3`` (a ``Strings.source`` table is translated where it is read);
@@ -11,8 +12,9 @@ one.  Keys come from four places:
 * local tables and literal lists passed the same way, read from the source
   text (``LOCAL_SOURCES``), since no module exposes them;
 * the ROM's move and ability descriptions, which the summary passes to
-  ``Strings()``; they are ROM text, so they come from the headless
-  extraction, not from the engine source.
+  ``Strings()``, and Emerald's Pokédex entries and contest texts, which its
+  screens pass the same way; they are ROM text, so they come from the
+  headless extraction, not from the engine source.
 
 A key is matched to a corpus row when the English row reads as the key, with
 runtime values (buffers, battle placeholders) standing where the key has
@@ -32,19 +34,24 @@ from typing import Iterable, Mapping
 
 from ..shared.strings_harvest import iter_literal_strings_callsites
 from .join import (
-    FRLG_ENGINE_SCOPE_SCHEMA,
     _corpus_parts,
     _key_parts,
     _loose,
     apply_fills,
     engine_template,
     is_battle_qid,
-    load_frlg_corpus,
+    load_gen3_corpus,
 )
+from .family import FAMILIES, FRLG, Gen3Family
 from .text import PretCharmap, load_charmap
 
 ROOT = Path(__file__).resolve().parents[2]
 SCOPE_PATH = ROOT / "config" / "frlg" / "engine_scope.json"
+
+
+def scope_path(family: Gen3Family) -> Path:
+    return ROOT / "config" / family.id / "engine_scope.json"
+
 GAME3_DIRS = ("src/core/game3", "src/ui/game3", "src/battle/game3", "src/world/game3")
 
 # Tables that reach Strings() through a variable and that a module exposes.
@@ -88,15 +95,7 @@ local SummaryData = require("src.core.game3.summary_data")
 each("src/core/game3/summary_data.lua (SummaryData.NATURES)", SummaryData.NATURES)
 local Storage = require("src.core.game3.storage")
 each("src/ui/game3/box_storage_ui.lua (Storage.WALLPAPERS)", Storage.WALLPAPERS)
-local Region = require("src.import.gba.region_map_extract")
-each("src/ui/game3/region_map.lua (RegionExtract.SECTION_NAMES)", Region.SECTION_NAMES)
-each("src/ui/game3/region_map.lua (RegionExtract.DUNGEON_DESCRIPTIONS)", Region.DUNGEON_DESCRIPTIONS)
-local Sections = require("src.import.gba.map_sections_extract")
-each("src/ui/game3/map_name_popup.lua (MapSectionsExtract.SECTIONS name)", Sections.SECTIONS, "name")
-add("src/ui/game3/map_name_popup.lua (MapSectionsExtract.getInfo)", "CELADON DEPT.")
-for floor = 1, 11 do add("src/ui/game3/map_name_popup.lua (floor label)", floor .. "F") end
-for floor = 1, 4 do add("src/ui/game3/map_name_popup.lua (floor label)", "B" .. floor .. "F") end
-add("src/ui/game3/map_name_popup.lua (floor label)", "ROOFTOP")
+--[[FAMILY_MAPS]]
 local ItemsData = require("src.core.game3.items_data")
 each("src/ui/game3/bag_menu.lua (ItemsData.POCKET_LABEL)", ItemsData.POCKET_LABEL)
 local Shop = require("src.ui.game3.shop_menu")
@@ -113,8 +112,7 @@ each("src/core/game3/link/union_room.lua (Union.INVITE_ITEMS key)", Union.INVITE
 local LinkStatus = require("src.core.game3.link.status")
 each("src/core/game3/link/status.lua (Status.LABELS)", LinkStatus.LABELS)
 add("src/core/game3/link/status.lua (Status.TITLE)", LinkStatus.TITLE)
-local TowerRecords = require("src.ui.game3.trainer_tower_records")
-each("src/ui/game3/trainer_tower_records.lua (Records.MODE_TEXT)", TowerRecords.MODE_TEXT)
+--[[FAMILY_RECORDS]]
 -- the nine in-game trades: their nickname and OT name are printed through
 -- Strings() (src/core/game3/scripting/natives_trade.lua:244, :260, :424)
 local Trade = require("src.core.game3.scripting.natives_trade")
@@ -150,21 +148,28 @@ LOCAL_SOURCES: tuple[tuple[str, str, str], ...] = (
     ("src/ui/game3/mod_manager.lua", "lines", r"^\s*(?:and|or|return) \"\{"),
 )
 
-# Corpus families to prefer when several rows read as the same key.  Rows
-# from _QID_LAST_RESORT are never used: Easy Chat words, quest-log phrases
-# ("la CAVERNE AZUREE") and Pokédex categories share English with menu
-# labels but not their translation.
+# Corpus families to prefer when several rows read as the same key, after
+# the collection's own prefix ("frlg.", "e.").  Rows from _QID_LAST_RESORT
+# are never used: Easy Chat words, quest-log phrases ("la CAVERNE AZUREE")
+# and Pokédex categories share English with menu labels but not their
+# translation.
 _QID_PREFERENCE = (
-    "frlg.common.strings.",
-    "frlg.common.region_map_entries.",
-    "frlg.common.battle_main.",
-    "frlg.common.battle_message.",
-    "frlg.common.",
-    "frlg.script.",
+    "common.strings.",
+    "common.region_map_entries.",
+    "common.battle_main.",
+    "common.battle_message.",
+    "common.",
+    "script.",
 )
 # Context keys whose sense a corpus family pins down: a name choice is the
 # cart's gNameChoice_* row, not the type or Easy Chat word it spells.
 CONTEXT_FAMILIES: Mapping[str, str] = {"intro.nameChoice": ".gNameChoice_"}
+# Callsites whose values are one corpus family's rows, the last-resort ones
+# included: Emerald's Pokédex prints an entry's own category, which is the
+# gPokedexEntries row, never the menu label or Easy Chat word it spells.
+SITE_FAMILIES: Mapping[str, str] = {
+    "src/ui/game3/rse/pokedex.lua (Pokédex entry category)": ".gPokedexEntries.",
+}
 
 # Keys whose automatic row is the wrong sense of the word, reviewed by hand:
 # the row the cart uses in that spot, or None when no single row says the
@@ -189,7 +194,24 @@ REVIEWED: Mapping[str, str | None] = {
     "SHIFT": "frlg.common.strings.gText_Shift",
     "option.battleStyle|SHIFT": "frlg.common.strings.gText_BattleStyleShift",
     "option.battleStyle|SET": "frlg.common.strings.gText_BattleStyleSet",
+    # Descriptions several abilities or moves share in English, which one key
+    # renders with a single row: the row whose wording fits all of them
+    # (Air Lock's German row reverses the weather, Cloud Nine's ignores it).
+    "Negates weather effects.": "frlg.common.abilities.sCloudNineDescription",
 }
+# Emerald's reviewed rows (see REVIEWED).
+REVIEWED_RSE: Mapping[str, str | None] = {
+    # shared descriptions, the row that fits every entry (see REVIEWED):
+    # Cloud Nine's, and Sludge's (Sludge Bomb's Spanish row names a bomb)
+    "Negates weather effects.": "e.common.abilities.sCloudNineDescription",
+    "Sludge is hurled to inflict\ndamage. May also poison.": "e.common.move_descriptions.sSludgeDescription",
+    # the FireRed bag's register action, not the battle style (see REVIEWED)
+    "SET": None,
+    # the in-game trade's nickname for Seedot, not the contest opponent of
+    # the same English name (gContestOpponents)
+    "DOTS": "e.common.trade.sIngameTrades.0",
+}
+REVIEWED_BY_FAMILY: Mapping[str, Mapping[str, str | None]] = {"frlg": REVIEWED, "rse": REVIEWED_RSE}
 _QID_LAST_RESORT = (".easy_chat_", ".gEasyChatGroupName_", ".quest_log.", ".gPokedexEntries.", ".fame_checker.")
 
 _LITERAL = re.compile(r'"((?:[^"\\\n]|\\.)*)"|\'((?:[^\'\\\n]|\\.)*)\'')
@@ -285,10 +307,27 @@ def reachable_by_file(engine: Path, extracted: Path | None = None) -> dict[str, 
     return found
 
 
+# The tables only one family's screens print: FireRed's region map, map name
+# popup and Trainer Tower records, Emerald's map sections (the region map,
+# the map name popup and the Pokénav print Mapsec.name).
+_PROBE_FAMILY: Mapping[str, Mapping[str, str]] = {
+    "frlg": {"FAMILY_MAPS": 'local Region = require("src.import.gba.region_map_extract")\neach("src/ui/game3/region_map.lua (RegionExtract.SECTION_NAMES)", Region.SECTION_NAMES)\neach("src/ui/game3/region_map.lua (RegionExtract.DUNGEON_DESCRIPTIONS)", Region.DUNGEON_DESCRIPTIONS)\nlocal Sections = require("src.import.gba.map_sections_extract")\neach("src/ui/game3/map_name_popup.lua (MapSectionsExtract.SECTIONS name)", Sections.SECTIONS, "name")\nadd("src/ui/game3/map_name_popup.lua (MapSectionsExtract.getInfo)", "CELADON DEPT.")\nfor floor = 1, 11 do add("src/ui/game3/map_name_popup.lua (floor label)", floor .. "F") end\nfor floor = 1, 4 do add("src/ui/game3/map_name_popup.lua (floor label)", "B" .. floor .. "F") end\nadd("src/ui/game3/map_name_popup.lua (floor label)", "ROOFTOP")\n', "FAMILY_RECORDS": 'local TowerRecords = require("src.ui.game3.trainer_tower_records")\neach("src/ui/game3/trainer_tower_records.lua (Records.MODE_TEXT)", TowerRecords.MODE_TEXT)\n'},
+    "rse": {
+        "FAMILY_MAPS": (
+            'local Mapsec = require("src.ui.game3.rse.mapsec")\n'
+            'for sec = 0, Mapsec.count() - 1 do '
+            'add("src/ui/game3/rse/mapsec.lua (Mapsec.name)", Mapsec.name(sec)) end\n'
+        ),
+        "FAMILY_RECORDS": "",
+    },
+}
+
 # The option rows and the other probed tables name their labels by the
-# cart's own text since gen1recomp v0.3.0, so the probe reads them out of a
-# FireRed extract the way tools/frlg/gate.lua does.
+# cart's own text since gen1recomp v0.3.0, so the probe reads them out of the
+# family's extract the way its release gate does.
 _PROBE_EXTRACT = """
+local GameVersion = require("src.core.GameVersion")
+GameVersion.set({edition})
 local FileIO = require("src.import.gba.file_io")
 local cache = FileIO.makeCache({path})
 package.loaded["src.core.game3.dataset"] = {{
@@ -298,27 +337,38 @@ package.loaded["src.core.game3.dataset"] = {{
 local Space = require("src.core.game3.scripting.space")
 Space.bundle = require("src.import.gba.extract_scripts")
   .loadBundle(cache, "data/generated/gba", {{ allowIncomplete = true }})
--- The map section names and the dungeon descriptions are the cart's, read
--- from the extract the way RegionMapExtract.ensureGenerated does (without
--- its layouts, which this probe never draws).
+"""
+
+# FireRed's map section names and dungeon descriptions are the cart's, read
+# from the extract the way RegionMapExtract.ensureGenerated does (without its
+# layouts, which this probe never draws).  Emerald's are read by Mapsec from
+# the cache itself.
+_PROBE_EXTRACT_FAMILY: Mapping[str, str] = {
+    "frlg": """
 local MapPreview = require("src.import.gba.map_preview_extract")
 local Sections = require("src.import.gba.map_sections_extract")
 local names = assert(MapPreview.loadNames(cache), "region_map/names.lua")
 local dungeons = assert(MapPreview.loadDungeonInfo(cache), "region_map/dungeon_info.lua")
 Sections.installNames(names)
 require("src.import.gba.region_map_extract").applyGeneratedText(names, dungeons, Sections.SECTIONS)
-"""
+""",
+    "rse": "",
+}
 
 
 def probe_rows(engine: Path, luajit: str | None = None,
-               extracted: Path | None = None) -> list[tuple[str, str]]:
+               extracted: Path | None = None, family: Gen3Family = FRLG) -> list[tuple[str, str]]:
     """Every (site, value) the probe reads, a value once per table holding it."""
     luajit = luajit or shutil.which("luajit")
     if not luajit:
         raise RuntimeError("LuaJIT is needed to read the engine's tables")
     if extracted is None:
         raise ValueError("the probe needs a FireRed extract to read the cart's labels")
-    probe = _PROBE.replace("--[[EXTRACT]]", _PROBE_EXTRACT.format(path=json.dumps(str(Path(extracted).resolve()))))
+    setup = _PROBE_EXTRACT.format(path=json.dumps(str(Path(extracted).resolve())),
+                                  edition=json.dumps(family.editions[0]))
+    probe = _PROBE.replace("--[[EXTRACT]]", setup + _PROBE_EXTRACT_FAMILY[family.id])
+    for marker, lines in _PROBE_FAMILY[family.id].items():
+        probe = probe.replace(f"--[[{marker}]]\n", lines)
     out = subprocess.run([luajit, "-e", probe], cwd=engine, capture_output=True,
                          text=True, check=True).stdout
     rows = []
@@ -330,9 +380,9 @@ def probe_rows(engine: Path, luajit: str | None = None,
 
 
 def probe_values(engine: Path, luajit: str | None = None,
-                 extracted: Path | None = None) -> dict[str, str]:
+                 extracted: Path | None = None, family: Gen3Family = FRLG) -> dict[str, str]:
     found: dict[str, str] = {}
-    for site, value in probe_rows(engine, luajit, extracted):
+    for site, value in probe_rows(engine, luajit, extracted, family):
         found.setdefault(value, site)
     return found
 
@@ -361,6 +411,53 @@ def rom_description_values(extracted: Path, luajit: str | None = None) -> dict[s
     for value in out.split("\n"):
         if value:
             found.setdefault(value, "src/core/game3/battle/abilities.lua (Abilities.name; ROM ability name)")
+    return found
+
+
+# Emerald's Pokédex entries and contest texts: its Pokédex prints an entry's
+# category and description, and its summary and move relearner print a contest
+# move's category and effect description, all through Strings() keyed by the
+# cart's English (gen1recomp's Emerald display hooks).
+_RSE_ROM_PROBE = r"""
+local function rows(path)
+  local f = io.open(path, "rb")
+  if not f then return nil end
+  local body = f:read("*a")
+  f:close()
+  return assert(load(body, "@" .. path, "t", {}))()
+end
+local out = {}
+local function add(site, v)
+  if type(v) == "string" and v ~= "" then out[#out + 1] = site .. "\t" .. (v:gsub("\n", "\\n")) end
+end
+for _, e in pairs(rows(__ENTRIES__) or {}) do
+  add("src/ui/game3/rse/pokedex.lua (Pokédex entry category)", e.category)
+  add("src/ui/game3/rse/pokedex.lua (Pokédex entry description)", e.description)
+end
+local contest = rows(__CONTEST__) or {}
+for _, name in pairs(contest.categories or {}) do
+  add("src/core/game3/summary_data.lua (SummaryData.contestCategoryName)", name)
+end
+for _, effect in pairs(contest.effects or {}) do
+  add("src/core/game3/summary_data.lua (SummaryData.contestEffectDescription)", effect.description)
+end
+io.write(table.concat(out, "\n"))
+"""
+
+
+def rse_rom_values(extracted: Path, luajit: str | None = None) -> dict[str, str]:
+    """Emerald's Pokédex categories/descriptions and contest texts, as shown."""
+    luajit = luajit or shutil.which("luajit")
+    base = Path(extracted) / "data" / "generated" / "gba"
+    probe = (_RSE_ROM_PROBE
+             .replace("__ENTRIES__", json.dumps(str(base / "pokemon" / "pokedex" / "entries.lua")))
+             .replace("__CONTEST__", json.dumps(str(base / "pokemon" / "contest_moves.lua"))))
+    out = subprocess.run([luajit, "-e", probe], capture_output=True, text=True, check=True).stdout
+    found: dict[str, str] = {}
+    for line in out.split("\n"):
+        if "\t" in line:
+            site, value = line.split("\t", 1)
+            found.setdefault(value.replace("\\n", "\n"), site)
     return found
 
 
@@ -464,6 +561,14 @@ def context_family(context: str) -> str | None:
     return None
 
 
+def required_family(key: str, site: str) -> str | None:
+    """The corpus family a key's row must come from, if its context key or
+    its callsite names one."""
+    if key != context_source(key):
+        return context_family(key.split("|", 1)[0])
+    return SITE_FAMILIES.get(site)
+
+
 def _identifier(value: str) -> bool:
     return bool(re.fullmatch(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*|[a-z]+(?:[A-Z][a-z0-9]*)+", value))
 
@@ -484,14 +589,15 @@ def fallback_values(engine: Path) -> dict[str, str]:
     return found
 
 
-def collect_keys(engine: Path, extracted: Path | None = None) -> dict[str, dict]:
+def collect_keys(engine: Path, extracted: Path | None = None, family: Gen3Family = FRLG) -> dict[str, dict]:
     keys: dict[str, dict] = {}
     for row in iter_literal_strings_callsites(engine / "src"):
         path = "src/" + row["path"] if not row["path"].startswith("src/") else row["path"]
         if not any(path.startswith(directory) for directory in GAME3_DIRS):
             continue
         keys.setdefault(row["source"], {"callsite": f"{path}:{row['line']}", "kind": "literal"})
-    for value, site in {**local_source_values(engine), **probe_values(engine, extracted=extracted)}.items():
+    for value, site in {**local_source_values(engine), **probe_values(engine, extracted=extracted,
+                                                                     family=family)}.items():
         if "floor label" in site:
             # A floor label stays a floor even when a literal saw it first (the
             # elevator menu spells "1F", "B1F"... out in natives_listmenu.lua):
@@ -509,6 +615,9 @@ def collect_keys(engine: Path, extracted: Path | None = None) -> dict[str, dict]
     if extracted is not None:
         for value, site in rom_description_values(extracted).items():
             keys.setdefault(value, {"callsite": site, "kind": "rom"})
+        if family.id == "rse":
+            for value, site in rse_rom_values(extracted).items():
+                keys.setdefault(value, {"callsite": site, "kind": "rom"})
     # Floors and Easy Chat words are kept even when they read as neutral: the
     # carts word "3F" and the VOICES group's "…" or "-" their own way (the
     # Spanish "…" is "¡QUÉ PLAN!"), and "A"/"I" are words of their groups.
@@ -539,13 +648,15 @@ def corpus_index(corpus, charmap: PretCharmap) -> tuple[dict[str, list[str]], di
 
 def _rank(qid: str) -> tuple[int, int, str]:
     last = any(family in qid for family in _QID_LAST_RESORT)
+    local = qid.split(".", 1)[-1]
     for rank, prefix in enumerate(_QID_PREFERENCE):
-        if qid.startswith(prefix):
+        if local.startswith(prefix):
             return int(last), rank, qid
     return int(last), len(_QID_PREFERENCE), qid
 
 
-def match_qids(key: str, index, corpora: Mapping[str, object], charmap: PretCharmap) -> list[str]:
+def match_qids(key: str, index, corpora: Mapping[str, object], charmap: PretCharmap,
+               site: str = "") -> list[str]:
     """Corpus rows that read as ``key`` and translate cleanly in every language.
 
     Rows of the last-resort families never stand for a key on their own (an
@@ -559,7 +670,7 @@ def match_qids(key: str, index, corpora: Mapping[str, object], charmap: PretChar
     exact, loose = index
     chunks, _directives = _key_parts(context_source(key))
     candidates = exact.get(_shape(chunks, False)) or loose.get(_shape(chunks, True)) or []
-    family = context_family(key.split("|", 1)[0]) if key != context_source(key) else None
+    family = required_family(key, site)
     if family:
         candidates = [qid for qid in candidates if family in qid]
     values: dict[str, tuple[str, ...]] = {}
@@ -662,26 +773,33 @@ def derive_fills(unmatched: Iterable[str], corpora: Mapping[str, object], charma
 
 
 def build_scope(engine: Path, corpus_dir: Path, charmap: PretCharmap, *, extracted: Path | None,
-                previous: Mapping[str, Mapping] | None = None, revision: str = "") -> dict:
-    keys = collect_keys(engine, extracted)
-    corpora = {language: load_frlg_corpus(corpus_dir, language) for language in ("fr", "de", "es", "it")}
+                previous: Mapping[str, Mapping] | None = None, revision: str = "",
+                family: Gen3Family = FRLG) -> dict:
+    keys = collect_keys(engine, extracted, family)
+    corpora = {language: load_gen3_corpus(corpus_dir, language, family) for language in ("fr", "de", "es", "it")}
     index = corpus_index(corpora["fr"], charmap)
     previous = previous or {}
     for key, row in keys.items():
         old = previous.get(key, {})
+        # A row kept from an earlier scope must still come from the family its
+        # context or callsite names: a rule added since then applies to it too.
+        family_of_key = required_family(key, row["callsite"])
+        if old.get("qid") and family_of_key and family_of_key not in old["qid"]:
+            old = {}
         if old.get("qid"):
             row["qid"] = old["qid"]
-            if old.get("fill"):
-                row["fill"] = old["fill"]
+            for field in ("alternatives", "fill"):
+                if old.get(field):
+                    row[field] = old[field]
             continue
         if old.get("fill"):
             continue
-        found = match_qids(key, index, corpora, charmap)
+        found = match_qids(key, index, corpora, charmap, row["callsite"])
         if found:
             row["qid"] = found[0]
             if len(found) > 1:
                 row["alternatives"] = found[1:]
-    for key, qid in REVIEWED.items():
+    for key, qid in REVIEWED_BY_FAMILY[family.id].items():
         if key in keys:
             for field in ("qid", "alternatives", "fill"):
                 keys[key].pop(field, None)
@@ -691,40 +809,58 @@ def build_scope(engine: Path, corpus_dir: Path, charmap: PretCharmap, *, extract
     unmatched = [key for key, row in keys.items() if not row.get("qid") and not row.get("reviewed")]
     for key, match in derive_fills(unmatched, corpora, charmap).items():
         keys[key].update(match)
+    rom_text = ("the ROM's move and ability descriptions" if family.id == "frlg" else
+                "the ROM's move and ability descriptions, Pokédex entries and contest texts")
+    fallback = ("" if not family.shared_engine_families else
+                " or by the overrides of the game3 families it shares the runtime with ("
+                + ", ".join(f"overrides/<language>/{other}/engine.json" for other in family.shared_engine_families)
+                + ")")
     return {
-        "schema": FRLG_ENGINE_SCOPE_SCHEMA,
+        "schema": family.schema("engine-scope"),
         "version": 1,
         "source_revision": revision,
         "description": (
-            "Strings() keys reachable from gen1recomp's game3 (FireRed) runtime, generated by "
-            "pipeline/frlg/engine_scope.py: literal Strings()/Strings.source() callsites under "
+            f"Strings() keys reachable from gen1recomp's game3 ({family.game}) runtime, generated by "
+            "pipeline/gen3/engine_scope.py: literal Strings()/Strings.source() callsites under "
             "src/*/game3, tables and lists the runtime passes to Strings() through a variable, and "
-            "the ROM's move and ability descriptions.  Language-neutral values (numbers, "
-            "multipliers, refresh rates) are left out.  A qid names the FireRed cart's own row for "
+            f"{rom_text}.  Language-neutral values (numbers, "
+            f"multipliers, refresh rates) are left out.  A qid names the {family.game} cart's own row for "
             "the key; runtime values in that row fill the key's directives, renumbered when the "
             "translation orders them differently.  Keys without a qid are port-added or have no "
-            "clean corpus row, and are covered by overrides/<language>/frlg/engine.json."
+            f"clean corpus row, and are covered by overrides/<language>/{family.id}/engine.json{fallback}."
         ),
         "keys": dict(sorted(keys.items())),
     }
 
 
+# Where a build leaves each family's pinned charmap (pipeline.toml [pret.*]).
+CHARMAP_DEPENDENCY: Mapping[str, str] = {"frlg": "charmap", "rse": "emerald_charmap"}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
+    parser.add_argument("--family", choices=sorted(FAMILIES), default="frlg")
     parser.add_argument("--engine", type=Path, default=ROOT / ".cache" / "dependencies" / "gen1recomp")
-    parser.add_argument("--extracted", type=Path, default=ROOT / ".cache" / "firered" / "extracted" / "cache")
-    parser.add_argument("--corpus", type=Path,
-                        default=ROOT / ".cache" / "dependencies" / "poke-corpus" / "corpus" / "FireRedLeafGreen")
-    parser.add_argument("--charmap", type=Path, default=ROOT / ".cache" / "dependencies" / "pret" / "charmap" / "charmap.txt")
+    parser.add_argument("--extracted", type=Path, help="the family's private extract cache "
+                        "(default: .cache/<first edition>/extracted/cache)")
+    parser.add_argument("--corpus", type=Path, help="the family's corpus collection "
+                        "(default: the pinned PokeCorpus checkout)")
+    parser.add_argument("--charmap", type=Path, help="the family's pinned pret charmap")
     parser.add_argument("--revision", required=True, help="the gen1recomp commit --engine is checked out at")
-    parser.add_argument("--out", type=Path, default=SCOPE_PATH)
+    parser.add_argument("--out", type=Path)
     args = parser.parse_args(argv)
+    family = FAMILIES[args.family]
+    extracted = args.extracted or ROOT / ".cache" / family.editions[0] / "extracted" / "cache"
+    corpus = args.corpus or ROOT / ".cache" / "dependencies" / "poke-corpus" / "corpus" / family.collection
+    charmap = args.charmap or (ROOT / ".cache" / "dependencies" / "pret" / CHARMAP_DEPENDENCY[family.id]
+                               / "charmap.txt")
+    out = args.out or scope_path(family)
     previous = {}
-    if args.out.is_file():
-        previous = json.loads(args.out.read_text(encoding="utf-8")).get("keys", {})
-    scope = build_scope(args.engine, args.corpus, load_charmap(args.charmap), extracted=args.extracted,
-                        previous=previous, revision=args.revision)
-    args.out.write_text(json.dumps(scope, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if out.is_file():
+        previous = json.loads(out.read_text(encoding="utf-8")).get("keys", {})
+    scope = build_scope(args.engine, corpus, load_charmap(charmap, family.dialect), extracted=extracted,
+                        previous=previous, revision=args.revision, family=family)
+    out.write_text(json.dumps(scope, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     matched = sum(1 for row in scope["keys"].values() if row.get("qid"))
     print(f"{len(scope['keys'])} keys, {matched} matched to a corpus row")
     return 0

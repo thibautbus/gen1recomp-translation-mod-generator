@@ -64,6 +64,7 @@ GAME_SPECS: Mapping[str, GameSpec] = {
     "crystal": GameSpec("crystal", 2, "Crystal"),
     "firered": GameSpec("firered", 3, "FireRedLeafGreen"),
     "leafgreen": GameSpec("leafgreen", 3, "FireRedLeafGreen"),
+    "emerald": GameSpec("emerald", 3, "Emerald"),
 }
 
 RELEASE_PROFILES: Mapping[str, ReleaseProfile] = {
@@ -83,6 +84,7 @@ RELEASE_PROFILES: Mapping[str, ReleaseProfile] = {
     # at different addresses, so LeafGreen's dialogue can only be keyed from
     # its own ROM (pipeline/frlg/mod.py's build_frlg()).
     "frlg": ReleaseProfile("frlg", 3, ("firered", "leafgreen")),
+    "rse": ReleaseProfile("rse", 3, ("emerald",)),
 }
 
 # The collection is the source of truth for the UI language domain.  Keeping
@@ -101,6 +103,8 @@ COLLECTION_LANGUAGES: Mapping[str, tuple[tuple[str, str], ...]] = {
     # (gen1recomp#2406), so FireRed has a Japanese release like the rest.
     "FireRedLeafGreen": (("fr", "French"), ("de", "German"), ("es", "Spanish"),
                          ("it", "Italian"), ("ja-Hrkt", "Japanese")),
+    "Emerald": (("fr", "French"), ("de", "German"), ("es", "Spanish"),
+                ("it", "Italian"), ("ja-Hrkt", "Japanese")),
 }
 
 
@@ -124,6 +128,13 @@ def release_profile_for_generation(generation: int) -> ReleaseProfile:
         if profile.generation == int(generation):
             return profile
     raise ValueError(f"unsupported generation: {generation!r}")
+
+
+def release_profile_for_selection(selection: int) -> ReleaseProfile:
+    """Resolve the CLI/GUI choice while keeping both generation-3 profiles distinct."""
+    if int(selection) == 4:
+        return release_profile("rse")
+    return release_profile_for_generation(selection)
 
 
 def languages_for_collection(collection: str) -> tuple[tuple[str, str], ...]:

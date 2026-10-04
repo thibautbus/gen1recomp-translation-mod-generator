@@ -1,16 +1,8 @@
 {
   "schema": "gen1recomp-translation-mods/gs-engine-scope-exclusions",
   "version": 2,
-  "source_revision": "591bf4d6d605b15a0f2990efa8e024aece3c54b5",
+  "source_revision": "a729af2364e1677222f22b1d3ba0fc6bce5c4dac",
   "excluded_keys": {
-    "#MON Music": {
-      "reason": "crystal-only-feature",
-      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
-    },
-    "#MON Talk": {
-      "reason": "crystal-only-feature",
-      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
-    },
     "%s is\nnot compatible\u000bwith %s.": {
       "reason": "crystal-only-feature",
       "source": "MoveTutor (move_tutor.asm)"
@@ -31,21 +23,9 @@
       "reason": "crystal-only-feature",
       "source": "Battle Tower (mobile_46.asm)"
     },
-    "AZALEA TOWN": {
-      "reason": "crystal-only-feature",
-      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
-    },
     "Are you a boy?\nOr are you a girl?": {
       "reason": "crystal-only-feature",
       "source": "GenderSelect (init_gender.asm)"
-    },
-    "BUG": {
-      "reason": "crystal-only-feature",
-      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
-    },
-    "CHERRYGROVE CITY": {
-      "reason": "crystal-only-feature",
-      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
     },
     "Cancel your BATTLE\nROOM challenge?": {
       "reason": "crystal-only-feature",
@@ -67,15 +47,7 @@
       "reason": "crystal-only-feature",
       "source": "Battle Tower (battle_tower.asm)"
     },
-    "FLYING": {
-      "reason": "crystal-only-feature",
-      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
-    },
     "Fufufu! I saw that\nyou'd do nothing!": {
-      "reason": "crystal-only-feature",
-      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
-    },
-    "GRASS": {
       "reason": "crystal-only-feature",
       "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
     },
@@ -119,15 +91,7 @@
       "reason": "crystal-only-feature",
       "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
     },
-    "Lucky Channel": {
-      "reason": "crystal-only-feature",
-      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
-    },
     "Morning": {
-      "reason": "crystal-only-feature",
-      "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
-    },
-    "NEW BARK TOWN": {
       "reason": "crystal-only-feature",
       "source": "PokeSeer/Buena (poke_seer.asm, buena.asm)"
     },

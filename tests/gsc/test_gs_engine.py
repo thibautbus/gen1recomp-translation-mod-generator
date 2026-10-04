@@ -90,24 +90,61 @@ class GoldEngineCatalogTests(unittest.TestCase):
 
     def test_engine_string_keys_defaults_to_the_real_exclusions_file(self):
         exclusions = load_gs_engine_scope_exclusions()
-        self.assertIn("#MON Talk", exclusions)
-        self.assertGreaterEqual(len(exclusions), 40)
+        self.assertIn("Cancel your BATTLE\nROOM challenge?", exclusions)
+        self.assertGreaterEqual(len(exclusions), 39)
 
-    def test_all_languages_translate_new_gen2_options_and_crystal_talk_label(self):
+    def test_all_languages_translate_new_gen2_options(self):
         keys = {
             "AUDIO", "BACK", "BATTLE OPTIONS", "BATTLE SIZE", "EXTRAS",
-            "GRAPHICS", "KEY BAR", "UI LETTERBOX", "UNAVAILABLE", "VIDEO",
-            "VSYNC", "#MON Talk",
+            "GRAPHICS", "KEY BAR", "ORIENTATION", "UI LETTERBOX", "UNAVAILABLE", "VIDEO",
+            "VSYNC",
+            # The ORIENTATION row's values (Orientation.modeLabel), dynamic keys
+            # the Gen 2 callsite metric does not count.
+            "AUTO", "PORTRAIT", "LANDSCAPE", "REVERSE LANDSCAPE",
         }
         root = Path(__file__).resolve().parents[2]
         for language in ("fr", "de", "es", "it", "ja-Hrkt", "ko"):
             overrides = load_engine_overrides(root / "overrides" / language / "gsc" / "engine.json")
             no_op = load_engine_no_op_entries(language)
             available = {**no_op, **overrides}
-            self.assertEqual(keys <= set(available), True, language)
-            for key in keys:
+            identities = load_gs_engine_reviewed_identities(language)
+            self.assertEqual(sorted(keys - set(available) - identities), [], language)
+            for key in keys & set(available):
                 self.assertTrue(available[key]["override"].strip(), f"{language}: {key}")
                 self.assertTrue(available[key]["provenance"].strip(), f"{language}: {key}")
+
+    def test_the_battle_menu_pokemon_option_follows_each_carts_menu_order(self):
+        # gs.menu.BattleMenuHeader.Text is "FIGHT@<PK><MN>@PACK@RUN@" in
+        # English but lists POKéMON third in Japanese and Korean; the charmap
+        # row gs.text.PlacePKMNText is no label (Japanese: the particle が).
+        root = Path(__file__).resolve().parents[2]
+        for language, value in (("ja-Hrkt", "ポケモン"), ("ko", "포켓몬")):
+            overrides = load_engine_overrides(root / "overrides" / language / "gsc" / "engine.json")
+            self.assertEqual(overrides["<PK><MN>"]["override"], value, language)
+            self.assertIn("BattleMenuHeader", overrides["<PK><MN>"]["provenance"], language)
+
+    def test_stat_changes_join_the_carts_rows(self):
+        # the opening row ("<USER>の<LINE><STAT>が") runs on into the change;
+        # the Japanese "sharply" row stops at its adverb
+        root = Path(__file__).resolve().parents[2]
+        expected = {
+            "ja-Hrkt": {
+                "%s's %s rose!": "%sの\n%sが　あがった！",
+                "%s's %s sharply rose!": "%sの\n%sが\vぐーんと　あがった！",
+                "%s's %s fell!": "%sの\n%sが　さがった！",
+                "%s's %s sharply fell!": "%sの\n%sが\vがくっと　さがった！",
+            },
+            "ko": {
+                "%s's %s rose!": "%s의\n%s(이)가 올랐다!",
+                "%s's %s sharply rose!": "%s의\n%s(이)가\v부쩍 올랐다!",
+                "%s's %s fell!": "%s의\n%s(이)가 떨어졌다!",
+                "%s's %s sharply fell!": "%s의\n%s(이)가\v확 떨어졌다!",
+            },
+        }
+        for language, lines in expected.items():
+            overrides = load_engine_overrides(root / "overrides" / language / "gsc" / "engine.json")
+            for key, value in lines.items():
+                self.assertEqual(overrides[key]["override"], value, (language, key))
 
     def test_japanese_crystal_shape_gaps_have_explicit_overrides(self):
         root = Path(__file__).resolve().parents[2]
@@ -133,7 +170,7 @@ class GoldEngineCatalogTests(unittest.TestCase):
                 load_gs_engine_scope_exclusions(path)
             path.write_text(
                 '{"schema": "gen1recomp-translation-mods/gs-engine-scope-exclusions", '
-                '"version": 2, "source_revision": "591bf4d6d605b15a0f2990efa8e024aece3c54b5", '
+                '"version": 2, "source_revision": "a729af2364e1677222f22b1d3ba0fc6bce5c4dac", '
                 '"excluded_keys": {"X": {"reason": ""}}}',
                 encoding="utf-8",
             )

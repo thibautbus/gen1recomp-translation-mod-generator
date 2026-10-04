@@ -445,7 +445,7 @@
           "original_provenance": "Corpus-derived from poke-corpus GoldSilver (gs.trainer_card.TrainerCard_PrintTopHalfOfCard.Name_Money); the German cart's trainer card prints no label here at all; an empty override is not expressible, so the English label stays."
         }
       },
-      "no_op_total": 20
+      "no_op_total": 24
     },
     "es": {
       "total": 30,
@@ -753,7 +753,7 @@
           "original_provenance": "Corpus-derived from poke-corpus GoldSilver (gs.start_menu.StartMenu.PokegearString); the cart's own start-menu label, keeping the engine's <PO><KE> glyph pair for the western spellings."
         }
       },
-      "no_op_total": 13
+      "no_op_total": 16
     },
     "fr": {
       "total": 42,
@@ -1045,6 +1045,20 @@
           "original_reason": "engine-original",
           "original_provenance": "Invariant level token used by the engine renderer."
         },
+        "ORIENTATION": {
+          "override": "ORIENTATION",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: overrides/fr/rby/engine.json, user-validated manual translation (2026-08-05) of the same shared Options label, identical to the English source.",
+          "original_reason": "engine-original",
+          "original_provenance": "overrides/fr/rby/engine.json: user-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
+        },
+        "PORTRAIT": {
+          "override": "PORTRAIT",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: overrides/fr/rby/engine.json, user-validated manual translation (2026-08-05) of the same shared orientation value, identical to the English source.",
+          "original_reason": "engine-original",
+          "original_provenance": "overrides/fr/rby/engine.json: user-validated manual translation (2026-08-05); engine-only orientation value, which gen1recomp v0.3.51 also prints as the value of Gold and Silver's ORIENTATION option (src/ui/gen2/OptionsMenu.lua:242, Orientation.modeLabel; Android and iOS only)."
+        },
         "{STRBUF}.": {
           "override": "{STRBUF}.",
           "reason": "engine-fallback",
@@ -1193,7 +1207,7 @@
           "original_provenance": "Corpus-derived from poke-corpus GoldSilver (gs.pokedex.Pokedex_DrawSearchScreenBG.Types); the French cart's own Pokédex search label is identical."
         }
       },
-      "no_op_total": 19
+      "no_op_total": 26
     },
     "it": {
       "total": 34,
@@ -1551,7 +1565,7 @@
           "original_provenance": "Corpus-derived from poke-corpus GoldSilver (gs.pokedex.Pokedex_DrawOptionScreenBG.Modes); the short Pokédex mode label; the cart's own long mode names (\"A bis Z\", \"Dalla A alla Z\") keep A and Z, so the short form is identical."
         }
       },
-      "no_op_total": 16
+      "no_op_total": 20
     },
     "ja-Hrkt": {
       "total": 10,
@@ -1689,10 +1703,10 @@
           "original_provenance": "AI-generated Japanese translation; a generic name-plus-fragment concatenation Battle.lua uses for mod-defined status text; the fragment itself is translated separately and Strings() cannot reorder the two arguments, so identity is the only correct value; requires in-game visual validation."
         }
       },
-      "no_op_total": 9
+      "no_op_total": 10
     },
     "ko": {
-      "total": 11,
+      "total": 10,
       "entries": {
         "%dX": {
           "override": "%dX",
@@ -1729,14 +1743,6 @@
           "reason": "engine-fallback",
           "status": "reviewed-identity",
           "provenance": "Explicit English fallback: a technical multiplier notation, kept identical in every language (matching 1X/2X/3X)."
-        },
-        "<PK><MN>": {
-          "override": "<PK><MN>",
-          "reason": "engine-fallback",
-          "status": "reviewed-identity",
-          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated.",
-          "original_reason": "engine-corpus",
-          "original_provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
         },
         "DMG": {
           "override": "DMG",
@@ -1849,7 +1855,7 @@
           "original_provenance": "AI-generated Korean translation; the Korean trainer card keeps the Latin ID No label; requires in-game visual validation."
         }
       },
-      "no_op_total": 11
+      "no_op_total": 12
     }
   }
 }

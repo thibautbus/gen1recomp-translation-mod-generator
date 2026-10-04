@@ -6,7 +6,7 @@ literals that look like text and are not handed to ``Strings()``, then
 separates the files whose literals reach the screen from the files whose
 literals are internal (identifiers, asset paths, log lines, mod-API errors).
 A literal the runtime passes to ``Strings()`` through a variable (a table or
-list pipeline/frlg/engine_scope.py reads from that same file) is reachable
+list pipeline/gen3/engine_scope.py reads from that same file) is reachable
 too, so it is not counted; the same text drawn raw elsewhere still is.
 The second list is reviewed by hand and lives in ``NON_DISPLAY_FILES`` with
 its reason; any other file the scan flags is player-visible and must be
@@ -44,6 +44,7 @@ NON_DISPLAY_FILES: Mapping[str, str] = {
     "src/core/game3/battle/abilities.lua": "status and weather identifiers",
     "src/core/game3/battle/adapter.lua": "status identifiers",
     "src/core/game3/battle/ai.lua": "cache paths",
+    "src/core/game3/battle/ai_cmds.lua": "assertion messages",
     "src/core/game3/battle/ai_items.lua": "status identifiers",
     "src/core/game3/battle/ai_vm.lua": "log lines",
     "src/core/game3/battle/anim.lua": "animation identifiers",
@@ -132,7 +133,6 @@ NON_DISPLAY_FILES: Mapping[str, str] = {
     "src/core/game3/runtime.lua": "log lines",
     "src/core/game3/save_schema_firered.lua": "default save names",
     "src/core/game3/scripting/adapters.lua": "default rival name, quest-log keys and log lines",
-    "src/core/game3/scripting/collision.lua": "collision identifiers",
     "src/core/game3/scripting/ctx.lua": "fallback placeholder names",
     "src/core/game3/scripting/flags.lua": "flag identifiers",
     "src/core/game3/scripting/gfx_ids.lua": "graphics identifiers",
@@ -149,7 +149,6 @@ NON_DISPLAY_FILES: Mapping[str, str] = {
     "src/core/game3/storage.lua": "quest-log event keys",
     "src/core/game3/summary_data.lua": "cache error messages",
     "src/core/game3/teachy_tv.lua": "lesson identifiers (the lessons themselves go through Strings())",
-    "src/core/game3/tileset_anim.lua": "asset paths and log lines",
     "src/core/game3/tileset_native.lua": "asset paths and log lines",
     "src/core/game3/trainer_fan_club.lua": "the rival's placeholder name",
     "src/core/game3/trainer_sight.lua": "movement identifiers",
@@ -302,7 +301,7 @@ def scan_hardcoded_literals(checkout: str | Path, reachable: Mapping[str, frozen
 def reachable_keys(checkout: str | Path, extracted: str | Path | None = None) -> dict[str, frozenset[str]]:
     """Text the runtime passes to Strings() through a variable -> the files
     holding it, read from the engine the way the scope generator reads it."""
-    from .engine_scope import reachable_by_file
+    from ..gen3.engine_scope import reachable_by_file
     return {key: frozenset(paths)
             for key, paths in reachable_by_file(Path(checkout), _extract(extracted)).items()}
 

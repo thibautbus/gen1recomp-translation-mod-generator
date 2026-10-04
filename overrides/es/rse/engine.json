@@ -1,0 +1,41 @@
+{
+  "schema": "gen1recomp-translation-mods/engine-overrides",
+  "version": 1,
+  "entries": {
+    "EVENT TICKETS": {
+      "override": "TICKETS DE EVENTO",
+      "reason": "engine-original",
+      "provenance": "Option row added by gen1recomp for Emerald's event islands (src/core/game3/rse/event_islands.lua:101); no cart text. Worded after the cart's ticket item names (gItems.275, gItems.371)."
+    },
+    "It is for use at LILYCOVE CITY port.": {
+      "override": "Úsalo en el puerto de CIUDAD CALAGUA.",
+      "reason": "engine-original",
+      "provenance": "Wonder Card body line gen1recomp composes for Emerald's event ticket cards (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (sMapName_LILYCOVE_CITY, gift_*_ticket.sText_*UseAtPort) to follow the lines FireRed's overrides give the rest of the card; requires in-game visual validation."
+    },
+    "SPEED": {
+      "override": "VELOCIDAD",
+      "reason": "engine-original",
+      "provenance": "Same value as overrides/es/gsc/engine.json; Options group label (src/ui/game3/option_rows.lua, Rows.GROUPS), the game speed settings, not the SPEED stat the corpus row battle_message.sText_Speed abbreviates."
+    },
+    "UPPER": {
+      "override": "ARRIBA",
+      "reason": "engine-original",
+      "provenance": "Same value as overrides/es/frlg/engine.json; Options SCREEN POS value (src/ui/game3/option_rows.lua, ScreenPosition.label: TOP / UPPER / CENTER), the screen's position, not the naming keyboard's upper case the corpus row gText_Upper says."
+    },
+    "We received this OLD SEA MAP": {
+      "override": "Hemos recibido un MAPA VIEJO",
+      "reason": "engine-original",
+      "provenance": "Wonder Card body line gen1recomp composes for Emerald's OLD SEA MAP card (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (gItems.376, gift_old_sea_map.sText_MysteryGiftOldSeaMapForYou) to follow the lines FireRed's overrides give the rest of the card; requires in-game visual validation."
+    },
+    "addressed to you.": {
+      "override": "a tu nombre.",
+      "reason": "engine-original",
+      "provenance": "Wonder Card body line gen1recomp composes for Emerald's OLD SEA MAP card (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (gItems.376, gift_old_sea_map.sText_MysteryGiftOldSeaMapForYou) to follow the lines FireRed's overrides give the rest of the card; requires in-game visual validation."
+    },
+    "on ROUTE 103.": {
+      "override": "en la RUTA 103.",
+      "reason": "engine-original",
+      "provenance": "Wonder Card body line gen1recomp composes for Emerald's ALTERING CAVE card (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (sMapName_ROUTE_103, gift_altering_cave.sText_MysteryGiftAlteringCave) to follow the lines FireRed's overrides give the rest of the card; requires in-game visual validation."
+    }
+  }
+}

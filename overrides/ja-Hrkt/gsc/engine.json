@@ -87,16 +87,6 @@
       "reason": "engine-contract-gap",
       "provenance": "Battle:applyStatus()/tickStatus()'s mod-compatibility fallback path (Strings(\"%s%s\", monName, Strings(suffix))), reached only when a mod overrides this status's inflictText/residual suffix -- vanilla play always takes the %s-template branch instead. Corpus-inspired from poke-corpus GoldSilver gs.battle.WasPoisonedText, its own leading name reference dropped to leave a standalone no-placeholder suffix (verified to contain no stray %s)."
     },
-    "#MON Music": {
-      "override": "ポケモンミュージック",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."
-    },
-    "#MON Talk": {
-      "override": "ポケモンこうざ",
-      "reason": "engine-original",
-      "provenance": "Corpus-confirmed from Crystal c.buenas_passwords.BuenasPasswordTable.RadioStations; the engine exposes the first compound-table segment as a standalone Strings key."
-    },
     "%d #MON seen\n%d #MON owned\fPROF.OAK's\nRating:": {
       "override": "みつけたかず %d\nつかまえたかず %d\fオーキドはかせの\nひょうか:",
       "reason": "engine-contract-gap",
@@ -421,11 +411,6 @@
       "override": "%sは\nこおって　しまって　うごかない！",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
-    "%s is getting pumped!": {
-      "override": "%sは\nはりきっている！",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.battle.GettingPumpedText)."
     },
     "%s is glowing!": {
       "override": "%sを\nはげしい　ひかりが　つつむ！",
@@ -753,9 +738,9 @@
       "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
     },
     "%s's %s fell!": {
-      "override": "%sの\n%sは　さがった！",
+      "override": "%sの\n%sが　さがった！",
       "reason": "engine-contract-gap",
-      "provenance": "No direct corpus match for this generic per-stat template; wording and \\n/\\x0b split reused verbatim from this catalog's own sibling entries for the same %s's %s ...! shape (\"%s's %s was reduced by %d!\", \"%s's %s won't rise/drop anymore!\"), which share this message's exact name-then-stat argument order."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.common_2.Text_BattleFoeEffectActivate + gs.common_2.BattleStatFellText, joined as the cart prints them: \"%sの／%sが　さがった！\" (the opening row names the POKéMON and the stat, then runs on into the stat change; the Japanese \"sharply\" row stops at its adverb (\"ぐーんと@\", \"がくっと@\") and the plain row prints the verb). Crystal's rows are identical."
     },
     "%s's %s is DISABLED!": {
       "override": "%sは　かなしばりで\n%sがだせない！",
@@ -768,19 +753,19 @@
       "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
     },
     "%s's %s rose!": {
-      "override": "%sの\n%sは　あがった！",
+      "override": "%sの\n%sが　あがった！",
       "reason": "engine-contract-gap",
-      "provenance": "No direct corpus match for this generic per-stat template; wording and \\n/\\x0b split reused verbatim from this catalog's own sibling entries for the same %s's %s ...! shape (\"%s's %s was reduced by %d!\", \"%s's %s won't rise/drop anymore!\"), which share this message's exact name-then-stat argument order."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.common_2.Text_BattleEffectActivate + gs.common_2.BattleStatWentUpText, joined as the cart prints them: \"%sの／%sが　あがった！\" (the opening row names the POKéMON and the stat, then runs on into the stat change; the Japanese \"sharply\" row stops at its adverb (\"ぐーんと@\", \"がくっと@\") and the plain row prints the verb). Crystal's rows are identical."
     },
     "%s's %s sharply fell!": {
-      "override": "%sの\n%sは　ぐーんと　さがった！",
+      "override": "%sの\n%sが\u000bがくっと　さがった！",
       "reason": "engine-contract-gap",
-      "provenance": "No direct corpus match for this generic per-stat template; wording and \\n/\\x0b split reused verbatim from this catalog's own sibling entries for the same %s's %s ...! shape (\"%s's %s was reduced by %d!\", \"%s's %s won't rise/drop anymore!\"), which share this message's exact name-then-stat argument order."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.common_2.Text_BattleFoeEffectActivate + gs.common_2.BattleStatSharplyFellText + gs.common_2.BattleStatFellText, joined as the cart prints them: \"%sの／%sが／がくっと　さがった！\" (the opening row names the POKéMON and the stat, then runs on into the stat change; the Japanese \"sharply\" row stops at its adverb (\"ぐーんと@\", \"がくっと@\") and the plain row prints the verb). Crystal's rows are identical."
     },
     "%s's %s sharply rose!": {
-      "override": "%sの\n%sは　ぐーんと　あがった！",
+      "override": "%sの\n%sが\u000bぐーんと　あがった！",
       "reason": "engine-contract-gap",
-      "provenance": "No direct corpus match for this generic per-stat template; wording and \\n/\\x0b split reused verbatim from this catalog's own sibling entries for the same %s's %s ...! shape (\"%s's %s was reduced by %d!\", \"%s's %s won't rise/drop anymore!\"), which share this message's exact name-then-stat argument order."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.common_2.Text_BattleEffectActivate + gs.common_2.BattleStatWentWayUpText + gs.common_2.BattleStatWentUpText, joined as the cart prints them: \"%sの／%sが／ぐーんと　あがった！\" (the opening row names the POKéMON and the stat, then runs on into the stat change; the Japanese \"sharply\" row stops at its adverb (\"ぐーんと@\", \"がくっと@\") and the plain row prints the verb). Crystal's rows are identical."
     },
     "%s's %s was disabled!": {
       "override": "%sの\n%sを　ふうじこめた！",
@@ -863,9 +848,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "%s's attack missed!": {
-      "override": "%sの\nこうげきは　はずれた！",
+      "override": "しかし　%sの\nこうげきは　はずれた！",
       "reason": "engine-contract-gap",
-      "provenance": "Corpus-derived from poke-corpus GoldSilver gs.battle.AttackMissed2Text, not the plain AttackMissedText this key's own qid citation might suggest: AttackMissedText's ja-Hrkt row is a bare \"しかし　\" (\"however\") fragment from a differently-segmented cart sentence, with the complete translation living in the corpus's own \"2Text\" sibling instead."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.battle.AttackMissedText (\"しかし　\") and gs.battle.AttackMissed2Text, joined: on the Japanese cart AttackMissedText is only the \"しかし　\" opening of the sentence and runs on into AttackMissed2Text, so the line it prints is \"しかし　<USER>の／こうげきは　はずれた！\". Crystal's rows (c.battle.*) are identical."
     },
     "%s's attack!": {
       "override": "%sの　こうげき！",
@@ -917,11 +902,6 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
-    "%s's shrouded in MIST!": {
-      "override": "%sは\nしろいきりに　つつまれた！",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
     "%s,\nis that OK?": {
       "override": "%sで\nよろしいですか？",
       "reason": "engine-original",
@@ -968,9 +948,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "<PK><MN>": {
-      "override": "が　",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "override": "ポケモン",
+      "reason": "engine-corpus-cart-order",
+      "provenance": "poke-corpus GoldSilver gs.menu.BattleMenuHeader.Text, the battle menu's own row (src/ui/gen2/BattleState.lua:196, FIGHT / <PK><MN> / PACK / RUN). This language's cart lists the options in its own order, たたかう@リュック@#@にげる@, so the POKéMON option is the third segment, \"#\", the character the Japanese cart prints as ポケモン (gs.text.PlacePOKeText), not the second. The automatic match took gs.text.PlacePKMNText instead, the charmap's <PK><MN> control code, whose row is not the menu's label (the Japanese cart uses that code for the particle が, which the menu showed alone)."
     },
     "<PK><MN> are listed": {
       "override": "ポケモンを",
@@ -1101,11 +1081,6 @@
       "override": "オート",
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The PERFORMANCE row's auto-detect tier; French/German/Spanish/Italian already use \"AUTO\" as a common abbreviation identical to the English source."
-    },
-    "AZALEA TOWN": {
-      "override": "ヒワダタウン",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."
     },
     "Aargh! Almost had it!": {
       "override": "ざんねん！\nもうすこしで　つかまえられたのに！",
@@ -1292,11 +1267,6 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. A colour-palette theme name."
     },
-    "BUG": {
-      "override": "むしポケモン",
-      "reason": "engine-original",
-      "provenance": "Corpus-confirmed from Crystal c.buenas_passwords.BuenasPasswordTable.Types segment 1."
-    },
     "BUY": {
       "override": "かいに　きた",
       "reason": "engine-corpus",
@@ -1333,9 +1303,9 @@
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "But it failed!": {
-      "override": "しかし　",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+      "override": "しかし　うまく　きまらなかった！",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.battle.ButItFailedText (\"しかし　\") and gs.battle.ItFailedText, joined: on the Japanese cart ButItFailedText is only the \"しかし　\" opening of the sentence and runs on into ItFailedText, so the line it prints is \"しかし　うまく　きまらなかった！\". Crystal's rows (c.battle.*) are identical."
     },
     "But nothing\nhappened.": {
       "override": "しかし　なにもおこらない",
@@ -1391,11 +1361,6 @@
       "override": "\nチャンネル！",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
-    "CHERRYGROVE CITY": {
-      "override": "ヨシノシティ",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."
     },
     "CLASSIC": {
       "override": "クラシック",
@@ -1787,11 +1752,6 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.names.MoveNames.19; FLY_MAP_CARD reuses the FLY move's own real cart name as this card's title."
     },
-    "FLYING": {
-      "override": "とりポケモン",
-      "reason": "engine-original",
-      "provenance": "Corpus-confirmed from Crystal c.buenas_passwords.BuenasPasswordTable.Types segment 0."
-    },
     "FNT": {
       "override": "ひんし",
       "reason": "engine-corpus",
@@ -1871,11 +1831,6 @@
       "override": "グラフィック",
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of the port-added grouped Gen 2 Options label; requires in-game visual validation."
-    },
-    "GRASS": {
-      "override": "くさポケモン",
-      "reason": "engine-original",
-      "provenance": "Corpus-confirmed from Crystal c.buenas_passwords.BuenasPasswordTable.Types segment 2."
     },
     "GREEN": {
       "override": "グリーン",
@@ -2162,10 +2117,15 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_2.BreedAppearsToCareForText."
     },
-    "It didn't affect %s!": {
-      "override": "%sには\nきかなかった！",
+    "It didn't affect\n%s!": {
+      "override": "しかし　%sには\nきかなかった！",
       "reason": "engine-contract-gap",
-      "provenance": "Corpus-derived from poke-corpus GoldSilver gs.battle.DidntAffect1Text. Fixed for one language whose own corpus row diverges from the engine's exact %s-argument contract; see the composed override for details."
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.battle.DidntAffect1Text (\"しかし　\") and gs.battle.DidntAffect2Text, joined: on the Japanese cart DidntAffect1Text is only the \"しかし　\" opening of the sentence and runs on into DidntAffect2Text, so the line it prints is \"しかし　<TARGET>には／きかなかった！\". Crystal's rows (c.battle.*) are identical. Also the line SKETCH prints when it fails (pokecrystal engine/battle/move_effects/sketch.asm, PrintDidntAffect)."
+    },
+    "It didn't affect %s!": {
+      "override": "しかし　%sには\nきかなかった！",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus rows poke-corpus GoldSilver gs.battle.DidntAffect1Text (\"しかし　\") and gs.battle.DidntAffect2Text, joined: on the Japanese cart DidntAffect1Text is only the \"しかし　\" opening of the sentence and runs on into DidntAffect2Text, so the line it prints is \"しかし　<TARGET>には／きかなかった！\". Crystal's rows (c.battle.*) are identical."
     },
     "It doesn't affect %s...": {
       "override": "%sには\nこうかが　ない　みたいだ……",
@@ -2312,6 +2272,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver gs.pocket_names.ItemPocketNames.Key, the real cart's Key Item Pocket tab label."
     },
+    "LANDSCAPE": {
+      "override": "よこ",
+      "reason": "engine-original",
+      "provenance": "Already carried by overrides/ja-Hrkt/rby/engine.json (user-validated 2026-08-05) for the same shared engine-only orientation value, which gen1recomp v0.3.51 also prints as the value of Gold and Silver's ORIENTATION option (src/ui/gen2/OptionsMenu.lua:242, Orientation.modeLabel; Android and iOS only); no compatible PokeCorpus qid."
+    },
     "LEECH SEED saps %s!": {
       "override": "やどりぎが　%sの\nたいりょくを　うばう！",
       "reason": "engine-corpus",
@@ -2376,11 +2341,6 @@
       "override": "ここには　なにも\nいないようだ",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_2.UnusedNothingHereText."
-    },
-    "Lucky Channel": {
-      "override": "ラッキーチャンネル",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."
     },
     "L▶BEFORE": {
       "override": "L▶まえ",
@@ -2541,11 +2501,6 @@
       "override": "しんがた　ずかん　モード",
       "reason": "engine-original",
       "provenance": "Reuses the leading word of this catalog's own \"NEW POKéDEX MODE\" translation (added in this same pass) as a compact mode-id label; no separate one-word corpus row exists for this specific short form."
-    },
-    "NEW BARK TOWN": {
-      "override": "ワカバタウン",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."
     },
     "NEW GAME": {
       "override": "さいしょから　はじめる",
@@ -2772,6 +2727,11 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. A colour-palette theme name. French/German already spell this identically to the English source."
     },
+    "ORIENTATION": {
+      "override": "むき",
+      "reason": "engine-original",
+      "provenance": "Already carried by overrides/ja-Hrkt/rby/engine.json for the same shared OptionsMenu/LauncherSettings label, which gen1recomp v0.3.51 adds to Gold and Silver's Options menu; missing here would leave that row showing the raw English label."
+    },
     "OT/": {
       "override": "おや/",
       "reason": "engine-contract-gap",
@@ -2941,6 +2901,11 @@
       "override": "ポケルス",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "PORTRAIT": {
+      "override": "たて",
+      "reason": "engine-original",
+      "provenance": "Already carried by overrides/ja-Hrkt/rby/engine.json (user-validated 2026-08-05) for the same shared engine-only orientation value, which gen1recomp v0.3.51 also prints as the value of Gold and Silver's ORIENTATION option (src/ui/gen2/OptionsMenu.lua:242, Orientation.modeLabel; Android and iOS only); no compatible PokeCorpus qid."
     },
     "PORYGON": {
       "override": "ポリゴン",
@@ -3116,6 +3081,11 @@
       "override": "スプレーの　こうかがきれた",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_1.RepelWoreOffText."
+    },
+    "REVERSE LANDSCAPE": {
+      "override": "よこぎゃく",
+      "reason": "engine-original",
+      "provenance": "Already carried by overrides/ja-Hrkt/rby/engine.json (user-validated 2026-08-05) for the same shared engine-only orientation value, which gen1recomp v0.3.51 also prints as the value of Gold and Silver's ORIENTATION option (src/ui/gen2/OptionsMenu.lua:242, Orientation.modeLabel; Android and iOS only); no compatible PokeCorpus qid."
     },
     "RIGHT SIDE": {
       "override": "みぎがわ",

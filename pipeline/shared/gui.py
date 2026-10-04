@@ -13,7 +13,7 @@ from . import builder
 from .mod_assets import FONT_PROFILES
 from .project import is_frozen, project_version, work_root
 from .orchestration import build_request
-from .specs import BuildRequest, release_profile_for_generation
+from .specs import BuildRequest, release_profile_for_selection
 
 
 @dataclass(frozen=True)
@@ -31,12 +31,21 @@ GENERATIONS = (
     (1, "Red, Blue and Yellow"),
     (2, "Gold, Silver and Crystal"),
     (3, "FireRed and LeafGreen"),
+    (4, "Emerald"),
 )
+# The generation each selection belongs to: Emerald is a generation-3 game
+# with a release of its own.
+GENERATION_OF_SELECTION = {4: 3}
 
-ROMS_BY_GENERATION = {1: ("rb", "yellow"), 2: ("gs", "crystal"), 3: ("firered", "leafgreen")}
+ROMS_BY_GENERATION = {
+    1: ("rb", "yellow"), 2: ("gs", "crystal"),
+    3: ("firered", "leafgreen"), 4: ("emerald",),
+}
 
 # Where each release leaves its coverage report (pipeline/*_mod.py).
-BUILD_CACHE_BY_GENERATION = {1: "interactive", 2: "interactive-gs", 3: "interactive-gen3"}
+BUILD_CACHE_BY_GENERATION = {
+    1: "interactive", 2: "interactive-gs", 3: "interactive-gen3", 4: "interactive-rse",
+}
 
 
 def gui_workspace_root() -> Path:
@@ -57,14 +66,14 @@ def generation_label(value: int) -> str:
     value = int(value)
     for code, name in GENERATIONS:
         if code == value:
-            return f"{name} (generation {code})"
+            return f"{name} (generation {GENERATION_OF_SELECTION.get(code, code)})"
     raise builder.BuildError(f"Invalid games selection: {value!r}")
 
 
 def generation_code(value: str) -> int:
     raw = value.strip()
     for code, name in GENERATIONS:
-        if raw == str(code) or raw == f"{name} (generation {code})":
+        if raw == str(code) or raw == generation_label(code):
             return code
     raise builder.BuildError(f"Invalid games selection: {value!r}")
 
@@ -152,7 +161,7 @@ def validate_inputs(
         raw = rom_paths.get(game)
         if not raw or not str(raw).strip():
             display = {"gs": "Gold or Silver", "rb": "Red or Blue", "firered": "FireRed",
-                       "leafgreen": "LeafGreen"}.get(game, game.capitalize())
+                       "leafgreen": "LeafGreen", "emerald": "Emerald"}.get(game, game.capitalize())
             raise builder.BuildError(f"A Pokemon {display} ROM path is required.")
         path = Path(raw).expanduser()
         if not path.is_file():
@@ -167,6 +176,8 @@ def validate_inputs(
             builder.verify_firered_rom(path)
         elif game == "leafgreen":
             builder.verify_leafgreen_rom(path)
+        elif game == "emerald":
+            builder.verify_emerald_rom(path)
         else:
             builder.verify_rom(path, game)
         resolved[game] = path.resolve()
@@ -177,11 +188,13 @@ def coverage_lines(path: str | Path, generation: int = 1) -> list[str]:
     """Return the compact coverage text shown after a successful build."""
     report = json.loads(Path(path).read_text(encoding="utf-8"))
     lines: list[str] = []
-    if generation == 3:
-        # pipeline/frlg_mod.write_frlg_report nests the metrics.
+    if generation in {3, 4}:
+        # pipeline/frlg/mod.py write_frlg_report and pipeline/rse/mod.py
+        # write_rse_report nest the metrics.
         coverage = report.get("coverage") or {}
-        for key, label in (("rom", "FireRed ROM aggregate"), ("rom_leafgreen", "LeafGreen ROM aggregate"),
-                           ("engine_gen3", "FireRed engine strings")):
+        game = "FireRed" if generation == 3 else "Emerald"
+        for key, label in (("rom", f"{game} ROM aggregate"), ("rom_leafgreen", "LeafGreen ROM aggregate"),
+                           ("engine_gen3", f"{game} engine strings")):
             section = coverage.get(key)
             if section is None:
                 continue
@@ -283,7 +296,8 @@ class TranslationBuilderApp:
     def _build_widgets(self):
         tk, ttk = self.tk, self.ttk
         self.generation_var = tk.StringVar(value=generation_label(1))
-        self.rom_vars = {game: tk.StringVar() for game in ("rb", "yellow", "gs", "crystal", "firered", "leafgreen")}
+        self.rom_vars = {game: tk.StringVar() for game in
+                         ("rb", "yellow", "gs", "crystal", "firered", "leafgreen", "emerald")}
         self.language_var = tk.StringVar(value=language_label("fr"))
         self.font_profile_var = tk.StringVar(value=font_profile_label("fusion"))
         self.output_var = tk.StringVar()
@@ -312,6 +326,7 @@ class TranslationBuilderApp:
             ("rb", 2, "Required to extract shared Pokémon Red/Blue game text and data. Either ROM works: Red and Blue share identical text.", "Pokemon Red or Blue ROM (US)"),
             ("gs", 2, "Required to extract Pokémon Gold and Silver game text and data. Either ROM works: Gold and Silver share identical text.", "Pokemon Gold or Silver ROM (US)"),
             ("firered", 2, "Required to extract Pokémon FireRed game text and data.", "Pokemon FireRed ROM (US)"),
+            ("emerald", 2, "Required to extract Pokémon Emerald game text and data.", "Pokemon Emerald ROM (US)"),
             ("crystal", 4, "Required to extract Pokémon Crystal-specific game text and data.", "Pokemon Crystal ROM (US)"),
             ("leafgreen", 4, "Required to extract Pokémon LeafGreen game text and data.", "Pokemon LeafGreen ROM (US)"),
             ("yellow", 6, "Required to extract Pokémon Yellow-specific game text and data.", "Pokemon Yellow ROM (US)"),
@@ -393,6 +408,13 @@ class TranslationBuilderApp:
                 "ROMs below. Both print every string with the cart's own "
                 "font, so no font profile applies."
             )
+        elif generation == 4:
+            self.games_hint_var.set(
+                "Which games do you want to translate?\n"
+                "Emerald is a mod of its own, built from the Emerald ROM alone. "
+                "It prints every string with the cart's own font, so no font "
+                "profile applies."
+            )
         else:
             self.games_hint_var.set("Which games do you want to translate?")
         for game, widgets in self.rom_widgets.items():
@@ -441,7 +463,7 @@ class TranslationBuilderApp:
             values=[font_profile_label(profile, language) for profile in profiles],
         )
         # FireRed registers no font (Schemas.GEN3 gates the font registry).
-        if generation == 3:
+        if generation in {3, 4}:
             self.font_profile_box.configure(values=[GEN3_FONT_LABEL])
             self.font_profile_var.set(GEN3_FONT_LABEL)
             self.font_profile_box.configure(state="disabled")
@@ -509,7 +531,7 @@ class TranslationBuilderApp:
             language_name = dict(languages_for_generation(inputs.generation))[inputs.language]
             request = BuildRequest(
                 inputs.rom_paths,
-                release_profile_for_generation(inputs.generation),
+                release_profile_for_selection(inputs.generation),
                 inputs.language, inputs.output_dir, inputs.font_profile,
             )
             # The workspace (gen1recomp/poke-corpus checkouts, LuaJIT-driven

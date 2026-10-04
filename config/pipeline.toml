@@ -5,7 +5,7 @@ source = "https://github.com/abcboy101/poke-corpus.git"
 revision = "aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
 # Standalone mode downloads only these exact files from the pinned commit.
 archive_base_url = "https://raw.githubusercontent.com/abcboy101/poke-corpus/aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
-format = "corpus/{RedBlue,Yellow,GoldSilver,Crystal,FireRedLeafGreen}/{qid,en,<target_lang>}_msg.txt (UTF-8 parallel lines)"
+format = "corpus/{RedBlue,Yellow,GoldSilver,Crystal,FireRedLeafGreen,Emerald}/{qid,en,<target_lang>}_msg.txt (UTF-8 parallel lines)"
 target_lang = "fr"
 
 [corpus.archive_files]
@@ -47,23 +47,30 @@ target_lang = "fr"
 "corpus/FireRedLeafGreen/es_msg.txt" = "18009bc336531bf0e4db55fec672272e66218593a872c7d2a07baf2b311a35e6"
 "corpus/FireRedLeafGreen/it_msg.txt" = "3ce905edc8f27a86b98675118670a1acc95baaffd06245d3899edf4ffa392166"
 "corpus/FireRedLeafGreen/ja-Hrkt_msg.txt" = "0ae96fca59e05315de5d0b5964775d443199f4e529a6938b397dc86cf8412c5c"
+"corpus/Emerald/qid_msg.txt" = "d5709dc683466670909a65c7580bd17a3dd671da409ab29853bdbfddbc65d521"
+"corpus/Emerald/en_msg.txt" = "5df6faf2521336394f543e3844681f2fa557819a1dfab3a748fe331dc07b0376"
+"corpus/Emerald/fr_msg.txt" = "e1c31ca2a8160095550eeb6764e2f939b0613ea793d6024b17e5b53587cea9f5"
+"corpus/Emerald/de_msg.txt" = "2e0ef7f79c8bdd782af43aec7bd68caf88aa83b5d730aac87112b2505e55a609"
+"corpus/Emerald/es_msg.txt" = "31ac8254ed548dcb2fdab57ed65276f46c1b1f5410a1faafafbb91d38b580b9a"
+"corpus/Emerald/it_msg.txt" = "dc30da55faf2c1d13af31cb6609ec5e561859b1aad8604dcaa3c822857f4e950"
+"corpus/Emerald/ja-Hrkt_msg.txt" = "ed00b7e7721a3b0186080767b8524dbe50143095cdd3e5f4d009da03dfe11948"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
-# Pinned at v0.3.14, the upstream release used to validate and package the
-# RBY, Gold/Silver, Crystal and FireRed translation mods.  Since v0.3.4,
-# FireRed draws most of its own text from the cart instead of English
-# literals (option menu, summary pages, intro, Pokedex, region map, battle
-# messages, stat names...), so a mod translates them through the cart's
+# Pinned at v0.3.51, the upstream release used to validate and package the
+# RBY, Gold/Silver, Crystal, FireRed/LeafGreen and Emerald translation mods.
+# Since v0.3.4, FireRed draws most of its own text from the cart instead of
+# English literals (option menu, summary pages, intro, Pokedex, region map,
+# battle messages, stat names...), so a mod translates them through the cart's
 # rows; the engine also names an egg by the language's EGG (gen1recomp#2396),
 # recognises trainer classes by id so the class names can be translated
 # (gen1recomp#2398), takes Unicode braille cells (gen1recomp#2400) and draws
 # Japanese with the cart's own fonts (gen1recomp#2406).
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "591bf4d6d605b15a0f2990efa8e024aece3c54b5"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/591bf4d6d605b15a0f2990efa8e024aece3c54b5"
-archive_sha256 = "6964a8802ce3ed0e52efa4adea746d61a9e97c0ce9e935b1e630b5c1be400006"
-archive_tree_sha256 = "03f65a2b75bb36137a56086694a08f40e546d391239a83839ad82966ed40db0f"
+revision = "a729af2364e1677222f22b1d3ba0fc6bce5c4dac"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/a729af2364e1677222f22b1d3ba0fc6bce5c4dac"
+archive_sha256 = "d40a3feec07e76332e52f6e131900781e1445148afbb19802369ce6cc1661fdc"
+archive_tree_sha256 = "daf091d730266b7515110feb7a62a8d34be9608e176c6549139c32f4a8435d41"
 
 # pret's FireRed/LeafGreen decompilation data the generation-3 release joins
 # through (never code, never game text): the symbol tables name every ROM
@@ -88,6 +95,25 @@ archive_base_url = "https://raw.githubusercontent.com/pret/pokefirered/c75f35230
 
 [pret.charmap.archive_files]
 "charmap.txt" = "4da662317b3b5109a52064f9012d85b644d1dbf0f3f24243374aeef4cf25f061"
+
+# The same two inputs for Emerald: the pret "symbols" branch build of
+# Emerald (US) v1.0, the ROM fingerprinted under [rom.emerald], and
+# the charmap of the pokeemerald revision that build was made from.
+[pret.emerald_symbols]
+source = "https://github.com/pret/pokeemerald.git"
+revision = "dba968c67d85caf9595abe12a51ff739d4dc5937"
+archive_base_url = "https://raw.githubusercontent.com/pret/pokeemerald/dba968c67d85caf9595abe12a51ff739d4dc5937"
+
+[pret.emerald_symbols.archive_files]
+"pokeemerald.sym" = "a0a134789ca3dda4ae677a91a10fbe5f0d72008b83382ed56a5713d4131807cc"
+
+[pret.emerald_charmap]
+source = "https://github.com/pret/pokeemerald.git"
+revision = "c65e93f20a5275ab03b07d6f6411096a82a60ffd"
+archive_base_url = "https://raw.githubusercontent.com/pret/pokeemerald/c65e93f20a5275ab03b07d6f6411096a82a60ffd"
+
+[pret.emerald_charmap.archive_files]
+"charmap.txt" = "9a074605da8e215c0ff455c0f53a5c9ba9a415c1d2797b0ccdd26693c39ead86"
 
 [fonts.pokemon]
 revision = "81b60805150c75ebfdfcec6d8352c67e491f8a6c"
@@ -158,6 +184,9 @@ sha1 = "41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc"
 
 [rom.leafgreen]
 sha1 = "574fa542ffebb14be69902d1d36f1ec0a4afd71e"
+
+[rom.emerald]
+sha1 = "f3ae088181bf583e55daf962a92bb46f4f1d07b7"
 
 [output]
 language_dir = "lang"

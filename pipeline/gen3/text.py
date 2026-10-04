@@ -1,4 +1,4 @@
-"""FireRed text model: pret charmap, runtime text IR and pret symbols.
+"""Generation-3 text model: pret charmap, runtime text IR and pret symbols.
 
 gen1recomp's game3 runtime keeps every script message as an IR segment list
 (``src/core/game3/scripting/text_ir.lua``), keyed by the message's ROM
@@ -15,6 +15,12 @@ the PokeCorpus text is encoded to GBA bytes through pret's own
 reproduce the extracted ROM IR exactly, which proves the encoder and the
 port agree with the cart before any translation is trusted.
 
+The runtime decodes each game family with its own dialect
+(``TextIR.DIALECTS``): FireRed and LeafGreen use the default one, Emerald
+(``rse``) names its placeholders and fonts on the segment and reads a few more
+charmap bytes as tags.  :class:`Dialect` mirrors those tables, and a
+:class:`PretCharmap` carries the dialect of the cart it was loaded for.
+
 The one deliberate difference from the runtime decoder is the glyph table
 used for translated text: ``TextIR.CHARMAP`` only lists the characters US
 FireRed prints (``é``/``É`` are its only accented letters), while pret's
@@ -26,7 +32,7 @@ lookup learns them (docs/upstream-fixes.md, FireRed section).
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable, Mapping
 
@@ -179,6 +185,12 @@ LANGUAGE_FOLDS: Mapping[str, Mapping[str, str]] = {
 TRANSLATION_TOKEN_TEXT: Mapping[str, str] = {
     "SUPER_E": "e", "SUPER_ER": "er", "SUPER_RE": "re",
     "POKEBLOCK": "POKéBLOCK",
+    # The Italian and French carts' own glyph runs (pokeemerald's
+    # multi-language charmap.txt: POKEMELLA, POKEMELLE, MELLA, and Pco, the
+    # French Battle Points symbol, which the French rows also write as "Pco"),
+    "POKEMELLA": "POKéMELLA", "POKEMELLE": "POKéMELLE", "MELLA": "MELLA", "Pco": "Pco",
+    # the first two glyphs of the POKéBLOCK run (the German "[POKE]NAV")
+    "POKE": "POKé",
 }
 
 # FC 0B (PLAY_BGM) and FC 10 (PLAY_SE) take a 16-bit song id.
@@ -196,24 +208,87 @@ class EncodeError(ValueError):
 
 
 @dataclass(frozen=True)
+class Dialect:
+    """One family's decoding tables (``TextIR.DIALECTS``).
+
+    ``ph_names`` and ``font_ids`` are written on the ``ph`` and ``FC 06``
+    segments of a named dialect; ``charmap_extra`` and ``charmap_runs`` are
+    bytes the runtime reads as tags; ``token_aliases`` are corpus tokens the
+    cart's charmap spells under another name for the same bytes.
+    """
+    name: str
+    ph_names: Mapping[int, str] = field(default_factory=dict)
+    font_ids: Mapping[int, str] = field(default_factory=dict)
+    charmap_extra: Mapping[int, str] = field(default_factory=dict)
+    charmap_runs: Mapping[int, tuple[bytes, str]] = field(default_factory=dict)
+    token_aliases: Mapping[str, str] = field(default_factory=dict)
+
+    @property
+    def named(self) -> bool:
+        return self.name != FRLG_DIALECT_NAME
+
+
+FRLG_DIALECT_NAME = "frlg"
+FRLG_DIALECT = Dialect(FRLG_DIALECT_NAME)
+
+# src/core/game3/scripting/text_ir.lua, TextIR.DIALECTS.rse.
+RSE_DIALECT = Dialect(
+    "rse",
+    # pokeemerald/include/constants/characters.h:251
+    ph_names={
+        0x00: "UNKNOWN", 0x01: "PLAYER", 0x02: "STR_VAR_1", 0x03: "STR_VAR_2",
+        0x04: "STR_VAR_3", 0x05: "KUN", 0x06: "RIVAL", 0x07: "VERSION",
+        0x08: "AQUA", 0x09: "MAGMA", 0x0A: "ARCHIE", 0x0B: "MAXIE",
+        0x0C: "KYOGRE", 0x0D: "GROUDON",
+    },
+    # pokeemerald/include/text.h:12
+    font_ids={
+        0: "FONT_SMALL", 1: "FONT_NORMAL", 2: "FONT_SHORT", 3: "FONT_SHORT_COPY_1",
+        4: "FONT_SHORT_COPY_2", 5: "FONT_SHORT_COPY_3", 6: "FONT_BRAILLE",
+        7: "FONT_NARROW", 8: "FONT_SMALL_NARROW", 9: "FONT_BOLD",
+    },
+    # pokeemerald/charmap.txt:45
+    charmap_extra={
+        0x34: "{LV}",
+        0x55: "{POKEBLOCK}", 0x56: "", 0x57: "", 0x58: "", 0x59: "",
+        0x77: "{UNK_SPACER}",
+        0x79: "{UP_ARROW}", 0x7A: "{DOWN_ARROW}", 0x7B: "{LEFT_ARROW}", 0x7C: "{RIGHT_ARROW}",
+    },
+    # pokeemerald/charmap.txt:52
+    charmap_runs={0x55: (bytes((0x55, 0x56, 0x57, 0x58, 0x59)), "{POKEBLOCK}")},
+    # PokeCorpus keeps Ruby/Sapphire's version-dependent names, which
+    # Emerald's charmap spells after the Sapphire strings it uses
+    # (pokeemerald/charmap.txt:339): the same FD bytes.
+    token_aliases={
+        "EVIL_TEAM": "AQUA", "GOOD_TEAM": "MAGMA", "EVIL_LEADER": "ARCHIE",
+        "GOOD_LEADER": "MAXIE", "EVIL_LEGENDARY": "KYOGRE", "GOOD_LEGENDARY": "GROUDON",
+    },
+)
+DIALECTS: Mapping[str, Dialect] = {FRLG_DIALECT.name: FRLG_DIALECT, RSE_DIALECT.name: RSE_DIALECT}
+
+
+@dataclass(frozen=True)
 class PretCharmap:
     chars: Mapping[str, bytes]
     names: Mapping[str, bytes]
     glyphs: Mapping[int, str]
     japanese: frozenset[str] = frozenset()
+    dialect: Dialect = FRLG_DIALECT
 
     @property
     def translation_glyphs(self) -> dict[int, str]:
         """RUNTIME_CHARMAP plus the Latin glyphs pret defines on top of it."""
         table = dict(RUNTIME_CHARMAP)
         for byte, char in self.glyphs.items():
-            if byte not in table and byte not in _CONTROL_BYTES and byte not in (0x53, 0x54):
+            if (byte not in table and byte not in _CONTROL_BYTES and byte not in (0x53, 0x54)
+                    and byte not in self.dialect.charmap_extra):
                 table[byte] = char
         return table
 
 
-def load_charmap(path: str | Path) -> PretCharmap:
-    """Parse pret's ``charmap.txt`` (the pinned pokefirered revision).
+def load_charmap(path: str | Path, dialect: Dialect | str = FRLG_DIALECT) -> PretCharmap:
+    """Parse pret's ``charmap.txt`` (the pinned pokefirered or pokeemerald
+    revision), for the cart whose ``dialect`` the runtime decodes.
 
     Only the first definition of a character is kept: the Latin block comes
     first in the file and the Japanese block reuses the same byte values.
@@ -251,7 +326,9 @@ def load_charmap(path: str | Path) -> PretCharmap:
     for required in ("\\n", "\\p", "\\l", "PLAYER", "COLOR"):
         if required not in chars and required not in names:
             raise ValueError(f"pret charmap is missing {required!r}: {path}")
-    return PretCharmap(chars, names, glyphs, frozenset(japanese))
+    if isinstance(dialect, str):
+        dialect = DIALECTS[dialect]
+    return PretCharmap(chars, names, glyphs, frozenset(japanese), dialect)
 
 
 def load_symbols(path: str | Path) -> dict[int, list[str]]:
@@ -278,14 +355,16 @@ def encode(text: str, charmap: PretCharmap, *, language: str = "en") -> bytes:
     for match in _TOKEN_RE.finditer(text):
         token, escape, char = match.groups()
         if token is not None:
-            if language != "en" and token in TRANSLATION_TOKEN_TEXT:
+            if (language != "en" and token in TRANSLATION_TOKEN_TEXT
+                    and not _dialect_tag(token, charmap)):
                 out += encode(TRANSLATION_TOKEN_TEXT[token], charmap, language=language)
                 continue
             value = _encode_token(token, charmap)
-            if language != "en" and value[0] < 0xF7 and value != b"\x53\x54":
+            if (language != "en" and value[0] < 0xF7 and value != b"\x53\x54"
+                    and not _dialect_tag(token, charmap)):
                 glyphs = charmap.translation_glyphs
                 if any(byte not in glyphs for byte in value):
-                    raise EncodeError(f"[{token}] has no glyph FireRed can draw")
+                    raise EncodeError(f"[{token}] has no glyph the cart's font can draw")
             out += value
         elif escape is not None:
             key = _CORPUS_ESCAPES.get(escape)
@@ -296,7 +375,7 @@ def encode(text: str, charmap: PretCharmap, *, language: str = "en") -> bytes:
             char = folds.get(char, char)
             value = charmap.chars.get(char)
             if value is None or len(value) != 1 or value[0] in _CONTROL_BYTES:
-                raise EncodeError(f"character {char!r} has no FireRed glyph")
+                raise EncodeError(f"character {char!r} has no glyph in the cart's font")
             out += value
     return bytes(out)
 
@@ -307,12 +386,21 @@ def encode(text: str, charmap: PretCharmap, *, language: str = "en") -> bytes:
 _CORPUS_TOKEN_ALIASES = {"ROUND_LEFT_PAREN": "LEFT_PAREN", "ROUND_RIGHT_PAREN": "RIGHT_PAREN"}
 
 
+def _dialect_tag(token: str, charmap: PretCharmap) -> bool:
+    """A token whose bytes the cart's dialect reads as a tag the runtime draws
+    itself (Emerald's {LV}, {POKEBLOCK} and arrows), kept as in English."""
+    value = charmap.names.get(token)
+    extra = charmap.dialect.charmap_extra
+    return bool(value) and value[0] in extra and all(byte in extra for byte in value)
+
+
 def _encode_token(token: str, charmap: PretCharmap) -> bytes:
     parts = token.split()
     if not parts:
         raise EncodeError("empty [] token")
     name, args = parts[0], parts[1:]
     name = _CORPUS_TOKEN_ALIASES.get(name, name)
+    name = charmap.dialect.token_aliases.get(name, name)
     prefix = charmap.names.get(name)
     if prefix is None:
         raise EncodeError(f"unknown charmap token [{token}]")
@@ -335,7 +423,7 @@ def _encode_token(token: str, charmap: PretCharmap) -> bytes:
 
 
 def decode(data: bytes, glyphs: Mapping[int, str] = RUNTIME_CHARMAP,
-           *, battle: bool = False) -> list[dict]:
+           *, battle: bool = False, dialect: Dialect = FRLG_DIALECT) -> list[dict]:
     """Port of ``TextIR.decode`` (src/core/game3/scripting/text_ir.lua).
 
     An ``ext`` segment carries its command and its argument bytes, as the
@@ -344,7 +432,9 @@ def decode(data: bytes, glyphs: Mapping[int, str] = RUNTIME_CHARMAP,
     from ``seg.args[1]`` (src/ui/game3/easy_chat.lua:57,
     src/ui/game3/trainer_tower_records.lua:390).  In
     ``battle`` mode every ``FD xx`` escape is a battle placeholder (``bph``),
-    as the battle string table is decoded (``opts.battle``).
+    as the battle string table is decoded (``opts.battle``).  A named
+    ``dialect`` (Emerald's) writes each placeholder's and font's name on its
+    segment and reads its extra charmap bytes as tags.
     """
     out: list[dict] = []
     buf: list[str] = []
@@ -376,6 +466,8 @@ def decode(data: bytes, glyphs: Mapping[int, str] = RUNTIME_CHARMAP,
                 out.append({"t": "rival"})
             elif 0x02 <= nn <= 0x04:
                 out.append({"t": "strvar", "n": nn - 1})
+            elif dialect.named and nn in dialect.ph_names:
+                out.append({"t": "ph", "code": nn, "name": dialect.ph_names[nn]})
             else:
                 out.append({"t": "ph", "code": nn})
             i += 2
@@ -402,6 +494,8 @@ def decode(data: bytes, glyphs: Mapping[int, str] = RUNTIME_CHARMAP,
             count = _EXT_ARGS.get(cmd, 0)
             args = [data[i + 2 + k] if i + 2 + k < n else 0 for k in range(count)]
             out.append({"t": "ext", "cmd": cmd, "args": args})
+            if dialect.named and cmd == 0x06 and args and args[0] in dialect.font_ids:
+                out[-1]["font"] = dialect.font_ids[args[0]]
             i += 2 + count
         else:
             glyph = glyphs.get(c)
@@ -416,6 +510,14 @@ def decode(data: bytes, glyphs: Mapping[int, str] = RUNTIME_CHARMAP,
                 else:
                     out.append({"t": "tag", "tag": LIGATURE[c]})
                     i += 1
+            elif c in dialect.charmap_extra:
+                run = dialect.charmap_runs.get(c)
+                length = len(run[0]) if run and data[i:i + len(run[0])] == run[0] else 0
+                tag = run[1] if length else dialect.charmap_extra[c]
+                if tag:
+                    flush()
+                    out.append({"t": "tag", "tag": tag})
+                i += max(length, 1)
             else:
                 buf.append("?")
                 i += 1
@@ -443,7 +545,8 @@ def corpus_ir(text: str, charmap: PretCharmap, *, language: str = "en",
     if language == JAPANESE:
         return japanese_ir(text, charmap, battle=battle)
     glyphs = RUNTIME_CHARMAP if language == "en" else charmap.translation_glyphs
-    return decode(encode(text, charmap, language=language) + b"\xff", glyphs, battle=battle)
+    return decode(encode(text, charmap, language=language) + b"\xff", glyphs, battle=battle,
+                  dialect=charmap.dialect)
 
 
 def japanese_ir(text: str, charmap: PretCharmap, *, battle: bool = False) -> list[dict]:
@@ -471,7 +574,8 @@ def japanese_ir(text: str, charmap: PretCharmap, *, battle: bool = False) -> lis
             run.append(char)
             continue
         source = f"[{token}]" if token is not None else "\\" + escape
-        for segment in decode(encode(source, charmap, language=JAPANESE), RUNTIME_CHARMAP, battle=battle):
+        for segment in decode(encode(source, charmap, language=JAPANESE), RUNTIME_CHARMAP, battle=battle,
+                              dialect=charmap.dialect):
             # a token that draws a character of its own (① in the help text,
             # № before a Pokédex number) belongs to the text run
             if segment["t"] == "text":
@@ -488,7 +592,8 @@ def normalise_ir(segments: Iterable[Mapping]) -> list[dict]:
     """Canonical form of an extracted IR list, for equality checks."""
     result = []
     for segment in segments:
-        row = {key: segment[key] for key in ("t", "s", "n", "code", "cmd", "tag", "args") if key in segment}
+        row = {key: segment[key] for key in ("t", "s", "n", "code", "name", "cmd", "font", "tag", "args")
+               if key in segment}
         result.append(row)
     return result
 
