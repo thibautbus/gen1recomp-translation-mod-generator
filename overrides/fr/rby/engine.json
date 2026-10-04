@@ -202,6 +202,11 @@
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
+    "EXIT GAME": {
+      "override": "QUITTER",
+      "reason": "engine-contract-gap",
+      "provenance": "Not on the cart (a real console is turned off, not exited from a menu); this port's own added row on the title menu (src/ui/TitleState.lua:564), worded as the Gold/Silver/Crystal mod words the same row (overrides/fr/gsc/engine.json)."
+    },
     "EXTENDED": {
       "override": "ETENDU",
       "reason": "engine-original",
