@@ -15,8 +15,10 @@ LANGUAGES = ("fr", "de", "es", "it", "ja-Hrkt", "ko")
 # forgot %s!" carrying the two printf args the combined key used to). Both
 # now stand in for that one original batch slot in
 # config/gsc/engine_launch_batch.json, so the frozen count grows by
-# exactly the one key this split actually added.
-NEW_ENTRY_COUNT = 551
+# exactly the one key this split actually added.  v0.3.51 rewords two of
+# them to the cart's own line breaks ("%s is getting pumped!", "%s's
+# shrouded in MIST!"), whose old keys the engine no longer reaches: 549.
+NEW_ENTRY_COUNT = 549
 # The corpus confirms AM/PM as the English source in these locales.  They are
 # intentionally omitted from those override tables so the runtime does not
 # carry a pointless identity override; the complete-set check accounts for

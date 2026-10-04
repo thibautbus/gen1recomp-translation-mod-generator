@@ -44,6 +44,7 @@ NON_DISPLAY_FILES: Mapping[str, str] = {
     "src/core/game3/battle/abilities.lua": "status and weather identifiers",
     "src/core/game3/battle/adapter.lua": "status identifiers",
     "src/core/game3/battle/ai.lua": "cache paths",
+    "src/core/game3/battle/ai_cmds.lua": "assertion messages",
     "src/core/game3/battle/ai_items.lua": "status identifiers",
     "src/core/game3/battle/ai_vm.lua": "log lines",
     "src/core/game3/battle/anim.lua": "animation identifiers",

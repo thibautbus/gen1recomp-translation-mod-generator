@@ -777,8 +777,9 @@ def build_scope(engine: Path, corpus_dir: Path, charmap: PretCharmap, *, extract
             old = {}
         if old.get("qid"):
             row["qid"] = old["qid"]
-            if old.get("fill"):
-                row["fill"] = old["fill"]
+            for field in ("alternatives", "fill"):
+                if old.get(field):
+                    row[field] = old[field]
             continue
         if old.get("fill"):
             continue

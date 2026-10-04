@@ -57,21 +57,20 @@ target_lang = "fr"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
-# Pinned at v0.3.47.
-# Existing translation coverage figures were measured at v0.3.14 and
-# must be re-audited before publishing mods against this revision. Since v0.3.4,
-# FireRed draws most of its own text from the cart instead of English
-# literals (option menu, summary pages, intro, Pokedex, region map, battle
-# messages, stat names...), so a mod translates them through the cart's
+# Pinned at v0.3.51, the upstream release used to validate and package the
+# RBY, Gold/Silver, Crystal, FireRed/LeafGreen and Emerald translation mods.
+# Since v0.3.4, FireRed draws most of its own text from the cart instead of
+# English literals (option menu, summary pages, intro, Pokedex, region map,
+# battle messages, stat names...), so a mod translates them through the cart's
 # rows; the engine also names an egg by the language's EGG (gen1recomp#2396),
 # recognises trainer classes by id so the class names can be translated
 # (gen1recomp#2398), takes Unicode braille cells (gen1recomp#2400) and draws
 # Japanese with the cart's own fonts (gen1recomp#2406).
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "8fd45152d3917a1ac9541ea520ae2b661a21f066"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/8fd45152d3917a1ac9541ea520ae2b661a21f066"
-archive_sha256 = "4e766f1ae1683b9d2b2e45e5186d7ce425ec506d578085d59a9274d70aaa5805"
-archive_tree_sha256 = "0b93fe1a1fd23307bbaf0ca1c5b427b82722a2b635fdd4bc833671f69f2a83a4"
+revision = "a729af2364e1677222f22b1d3ba0fc6bce5c4dac"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/a729af2364e1677222f22b1d3ba0fc6bce5c4dac"
+archive_sha256 = "d40a3feec07e76332e52f6e131900781e1445148afbb19802369ce6cc1661fdc"
+archive_tree_sha256 = "daf091d730266b7515110feb7a62a8d34be9608e176c6549139c32f4a8435d41"
 
 # pret's FireRed/LeafGreen decompilation data the generation-3 release joins
 # through (never code, never game text): the symbol tables name every ROM

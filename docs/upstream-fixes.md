@@ -678,39 +678,9 @@ buckets:
 
 ### Required upstream capabilities
 
-Still genuinely out of reach: no hook, no catalog entry can fix these
-from the translation mod without gen1recomp itself changing.
+None at v0.3.51. The last entry this list held is fixed:
 
-- **Silph Co. 9F's nurse, the one label the manifest regeneration didn't close:**
-  was "not fixable from this project without gen1recomp vendoring the real,
-  unmodified `pokered` ASM source" -- the actual cause turned out to be a
-  stale committed manifest, not a source bug (see "Fixed upstream: pokered
-  dialogue labels were missing from data/generated/text.lua" above, now
-  resolved for every other site that sweep found). Silph Co. 9F's nurse
-  (`SilphCo9FNurseDontGiveUpText`/`ThankYouText`/`YouLookTiredText`,
-  found by the same sweep, never previously documented) needs more than
-  that regeneration alone: `data/scripts/flavor/silph_co_9f.lua`'s
-  `TEXT_SILPHCO9F_NURSE` is a static command table
-  (`face_player`/`check_flag`/`heal_party`/`fade`/`wait`/`show_text`
-  rows), not a function, with its three lines as bare literals -- no
-  `game.data.text` lookup at all, so even a fresh manifest doesn't help
-  until that script itself is rewritten. Two ways to close it, neither
-  done yet: an upstream gen1recomp rewrite of that script (needs live
-  testing this project can't do), or a `config/rby/literal_handlers.json`
-  entry the same way as the now-obsolete Youngster2 handler used to (see
-  "Verified working, not a gap" above) -- blocked on extending
-  `pipeline/rby/literals.py`'s flow DSL with `heal_party`/`fade`/`wait`
-  operations, which it doesn't support yet
-  (only `say`/`choice`/`if`/`set_flag`/`inventory`/`money`/
-  `script_move`/`done`/`engage_trainer`). Those three primitives already
-  exist as ordinary script commands in gen1recomp
-  (`src/script/Commands.lua`), so the DSL extension would call/mirror
-  existing engine behavior rather than invent new mechanics -- but
-  `map_scripts:register` is a single-winner override per TEXT constant
-  (`src/script/MapScripts.lua:3-8`), so a handler that only translated
-  the text and dropped `heal_party`/`fade` would be a real gameplay
-  regression (the nurse would stop healing the party), not just an
-  incomplete translation.
+- **Silph Co. 9F's nurse -- fixed upstream.** Her three lines (`SilphCo9FNurseDontGiveUpText`/`ThankYouText`/`YouLookTiredText`) used to be bare literals in `data/scripts/flavor/silph_co_9f.lua`'s `TEXT_SILPHCO9F_NURSE` command table, so no `game.data.text` lookup reached them and a literal handler that only translated them would have dropped her `heal_party`/`fade` steps. At v0.3.51 the table names the labels instead (`{ "show_text", "SilphCo9FNurseYouLookTiredText" }`, `data/scripts/flavor/silph_co_9f.lua:14-21`) and keeps the healing steps, so the lines come from the mod's dialogue catalog like every other label ("Tu as l'air très\nfatigué! ..." in French).
 
 ## Gold and Silver
 
@@ -912,11 +882,12 @@ roster, verified against real builds, plus a dedicated
 `pipeline/gsc/crystal_registries.py` for the handful of records genuinely
 Crystal-exclusive (item names, trainer class names, a landmarks subset).
 Crystal-exclusive content (MoveTutor, GenderSelect, Battle Tower, Buena's
-Password -- the 48 keys catalogued as `"crystal-only-feature"` in
-`config/gsc/engine_scope_exclusions.json`, excluded from Gold/Silver's own
+prize exchange -- the 39 keys catalogued as `"crystal-only-feature"` in
+`config/gsc/engine_scope_exclusions.json` at v0.3.51, excluded from Gold/Silver's own
 engine-string metric precisely because they're Crystal's to translate, not
-Gold/Silver's) is now translated for fr/de/es/it (48/48) and ja-Hrkt (47/48);
-`ko` has no Crystal corpus and stays untranslated. A dedicated release gate
+Gold/Silver's) is now translated for fr/de/es/it/ja-Hrkt (39/39);
+`ko` has no Crystal corpus, and its 38 hand-composed values leave only the
+English-identical "???". A dedicated release gate
 (`tools/gsc/gate_dialogue.lua`'s `hasCrystal` path) now verifies Crystal's own
 dialogue and registries are selected only under a Crystal save and never
 leak onto Gold or Silver, alongside Gold/Silver's existing gates. Crystal's
@@ -1335,6 +1306,18 @@ principle. This is why Gold's remaining gaps below are not a small mirror
 of the RBY fixes: introducing the pattern for Gold is new engine work, not
 a matter of wiring a few missed callsites.
 
+- **Buena's Password words (Crystal), lost at v0.3.51.** Up to v0.3.47 the
+  radio password table was a local table whose town, type and station words
+  (`NEW BARK TOWN`, `BUG`, `#MON Talk`...) went through `Strings()`, and
+  this project translated them from Crystal's own rows. v0.3.51 reads the
+  table from the cart instead (`src/core/gen2/Buena.lua`, `Buena.word`, from
+  `gen2EventTables.buenaPassword`): the species, item and move words still
+  come from the translated registries, but a `string` word is returned as
+  the cart's English, with no registry or `Strings()` lookup on the way. The
+  nine words have left the engine's `Strings()` keys, so their overrides,
+  Crystal exclusions and anchors are gone; translating them again needs the
+  engine to pass a `string` word through `Strings()` (or the named
+  registries) where it is drawn.
 - **PC and storage dialogue -- fixed upstream, not attempted yet in a prior
   version of this doc.** `CenterPcMenu:buildEntries()` used to build its
   "which PC" list and free-form prompts directly, with no hook at all. Not
@@ -1393,26 +1376,9 @@ a matter of wiring a few missed callsites.
   messages, including the ones still named above, need the same
   treatment -- wrapping each one in `Strings(...)`, message by message. A
   real chunk of work by volume, but not a design gap.
-- **Status condition abbreviations (Gold):** unlike RBY (pending fix
-  above), all three Gold screens that draw a status abbreviation
-  (`ui/gen2/PartyMenu.lua:672-678`, `ui/gen2/SummaryMenu.lua:208`,
-  `ui/gen2/BattleState.lua:3401-3402`) each derive it their own way --
-  `ItemEffects.STATUS_CLASS` lookups or a hardcoded local table -- none
-  reads `hudLabel`/`label` from the merged `statuses` registry the way
-  RBY's fix will. Not a small mirror of the RBY fix: it needs all
-  three call sites rewritten, not one lookup swapped in. This project's own
-  `status_labels` catalog (`pipeline/gsc/mod.py`'s `status_label_catalog()`,
-  patched via `mod.content.statuses:patch(id, { label = value })`, same
-  mechanism as RBY's) already exists and ships translated -- the gap is
-  entirely upstream, waiting on those three Gold call sites to read from the
-  merged registry the way RBY's fixed screens now do.
-- **Gen2 Pokédex screen:** expose the Gen2 Pokédex text and its `START` /
-  `SELECT` / `OPTION` / `SEARCH` labels through a public registry. The mod can
-  generate species and Pokédex catalogs, but the current screen reads a
-  separate internal `data.gen2Pokedex` table, which is why the in-game entry
-  can be blank.
-- **Pokegear "Press any button to exit":** still needs a public hook -- this
-  one line is not covered by the fix below.
+- **Status condition abbreviations (Gold) -- fixed upstream.** The three Gold screens that draw a status abbreviation used to derive it their own way (`ItemEffects.STATUS_CLASS` lookups or a hardcoded local table), never through the merged `statuses` registry. At v0.3.51 the party menu and the summary pass `Status.hudLabelFor(statuses, ...)` to `Strings()` (`src/ui/gen2/PartyMenu.lua:967`, `src/ui/gen2/SummaryMenu.lua:237`) and the battle HUD passes the authored `hudLabel`/`label` to `Strings()` (`src/ui/gen2/BattleState.lua:4405`), so the abbreviations come from this project's catalog (`BRN` reads `BRU` and `SLP` reads `SOM` in French).
+- **Gen2 Pokédex screen -- fixed upstream.** The screen still reads `data.gen2Pokedex`, but `PokedexText.apply` (`src/core/gen2/PokedexText.lua:21`, called from `src/core/Game2.lua:1215`) copies the merged `pokemon` registry's `dexEntry` (kind, text, text2) into it after the mod merge, and its labels go through `Strings()` (`src/ui/gen2/PokedexMenu.lua:688-1512`, the OPTION and SEARCH screens included). The mod's species kinds and #DEX texts reach the entry.
+- **Pokegear "Press any button to exit" -- fixed upstream.** `src/ui/gen2/Pokegear.lua:1244` prints `Strings(entry.body)`, and the catalog ships the line ("Presser un bouton\npour sortir." in French).
 - **Gold in-game Options menu (from gen1recomp#1642, fixed upstream):**
   `src/ui/gen2/OptionsMenu.lua` had zero `Strings()` calls anywhere in the
   file -- confirmed directly against a real v0.2.19 checkout. Every row
@@ -1511,10 +1477,7 @@ a matter of wiring a few missed callsites.
   merged as PR #37 (`fix/gold-strbuf-buffer-number-token`). No gen1recomp
   change needed, and no pin bump either -- this fix lives entirely in this
   project's own Python pipeline.
-- **Item descriptions and summary/stat labels:** expose the bag item
-  descriptions and the remaining Pokémon summary labels (`Level up`, `EXP
-  Points`, `Type`, `Item`, `Move`, `OT`, `Attack`, `Defense`, and related
-  screens) through public data or hooks.
+- **Item descriptions:** the PACK prints an item's description, or a TM's move description, straight from the extracted item and move records (`PackMenu:description`, `src/ui/gen2/PackMenu.lua:1047`), and the Gen 2 `items` registry has no `description` field (`src/mods/Schemas.lua`, `gen3Fields` alone has one), so a mod cannot reach them. The summary's labels are no longer part of this gap: `TYPE/`, `EXP POINTS`, `LEVEL UP`, `ITEM` and `OT/` go through `Strings()` at v0.3.51 (`src/ui/gen2/SummaryMenu.lua:507-584`) and the catalog translates them.
 
 The entries in `config/gsc/literal_handlers.json` record known stable corpus
 matches for menu screens exposed through `ui.pc.items`/`ui.start_menu.items`/
@@ -1742,11 +1705,13 @@ Five rows are fragments the cart prints between two buffers -- `gText_LevelRoseT
 
 Fix: give those five lookups the cart's own row instead of the fragment, as `Strings()` already does elsewhere with numbered directives (`%2$s ... %1$s`), so a translation can put the buffers where the language needs them.
 
+#### 17. Engine rows with no FireRed cart row
+
+At Gen1Recomp v0.3.47, 12 newly reachable dynamic keys have no reviewed FireRed corpus row (still the case at v0.3.51), so all five FRLG language catalogs retain their natural English fallback for them. The join report keeps these keys in `fallback_english`; they are not represented by identity overrides as translated. `test_reviewed_qids_exist_in_the_pinned_corpus` pins the reviewed fallback set so future engine or corpus changes require an explicit review.
+
 #### Inventory: game3 files flagged by the hardcoded-text scan
 
 Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/audit.py`) at the pinned revision: every string literal under `src/{core,ui,battle,world}/game3` that looks like text, is not a `Strings()` argument and is not a value the runtime passes to `Strings()` through a variable from that same file (tables and lists `pipeline/gen3/engine_scope.py` reads), minus the files reviewed as never reaching the screen (`NON_DISPLAY_FILES`: identifiers, quest-log keys, log lines, name fallbacks for a missing pack, each with its reason). This is a heuristic inventory of raw-text candidates: inclusion alone does not confirm that the text appears onscreen or represents a translation gap. Files without a reviewed explanation are left marked as candidates for manual review. Reviewing a file as non-display hides any literal added to it later, so a pin bump should re-read the reasons of the files it touches. `tests/frlg/test_frlg.py` fails if the scan finds a candidate file this table does not list, so the inventory stays complete across pin bumps. At `2c0f3ac0` (v0.2.64) the same scan, without the scope filter, found 74 files and 2,028 literals.
-
-At Gen1Recomp v0.3.47, 12 newly reachable dynamic keys have no reviewed FireRed corpus row, so all five FRLG language catalogs retain their natural English fallback for them. The join report keeps these keys in `fallback_english`; they are not represented by identity overrides as translated. `test_reviewed_qids_exist_in_the_pinned_corpus` pins the reviewed fallback set so future engine or corpus changes require an explicit review.
 
 | File | Literals | What the player sees | Entry |
 | --- | ---: | --- | --- |
@@ -1874,21 +1839,21 @@ At Gen1Recomp v0.3.47, 12 newly reachable dynamic keys have no reviewed FireRed 
 | `src/ui/game3/battle_transition_chrome.lua` | 4 | Raw-text candidate; review needed | — |
 | `src/ui/game3/boot_modules.lua` | 3 | Raw-text candidate; review needed | — |
 | `src/ui/game3/chrome.lua` | 3 | Raw-text candidate; review needed | — |
-| `src/ui/game3/controls_menu.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/ui/game3/controls_menu.lua` | 3 | Its help bar, which does go through `Strings()` (`Strings(helpText(bm))`, a call the scan does not follow); `PRESS A BUTTON` has no cart row | Emerald 2 |
 | `src/ui/game3/diploma.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/ui/game3/help_system.lua` | 3 | `{PLAYER}`/`{RIVAL}` fallbacks inside the (untranslated) help text | 5 |
 | `src/ui/game3/minigames/berry_crush/pouch.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/ui/game3/mod_manager.lua` | 17 | Its tab headers, its screen titles and the states it prints for a mod | 13 |
 | `src/ui/game3/naming.lua` | 22 | Naming keyboard rows and page names | 8 |
 | `src/ui/game3/rse/bag_menu.lua` | 19 | Raw-text candidate; review needed | — |
-| `src/ui/game3/rse/berry_blender.lua` | 15 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/berry_blender.lua` | 15 | Two link messages written in English (`has no BERRIES to put in the BERRY BLENDER.`, `'s POKEBLOCK CASE is full.`); the rest are register names and error messages | Emerald 5 |
 | `src/ui/game3/rse/birch_speech.lua` | 36 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/cable_car.lua` | 32 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/condition_graph.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/contest.lua` | 11 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/contest_image_fx.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/contest_painting.lua` | 4 | Raw-text candidate; review needed | — |
-| `src/ui/game3/rse/contest_results.lua` | 14 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/contest_results.lua` | 14 | The link save error (`Save failed. A: retry`); the rest are register names and error messages | Emerald 5 |
 | `src/ui/game3/rse/contest_vram.lua` | 4 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/credits.lua` | 24 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/decoration.lua` | 2 | Raw-text candidate; review needed | — |
@@ -1904,7 +1869,7 @@ At Gen1Recomp v0.3.47, 12 newly reachable dynamic keys have no reviewed FireRed 
 | `src/ui/game3/rse/player_pc.lua` | 3 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/pokeblock_case.lua` | 5 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/pokeblock_gfx.lua` | 6 | Raw-text candidate; review needed | — |
-| `src/ui/game3/rse/pokedex.lua` | 11 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/pokedex.lua` | 11 | The weight in pounds (` lbs.`); the rest are identifiers and error messages | Emerald 5 |
 | `src/ui/game3/rse/pokedex_gfx.lua` | 7 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/pokenav/condition.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/pokenav/condition_search.lua` | 1 | Raw-text candidate; review needed | — |
@@ -1937,7 +1902,7 @@ At Gen1Recomp v0.3.47, 12 newly reachable dynamic keys have no reviewed FireRed 
 
 ## Emerald
 
-Emerald (US, v1.0) runs on the same game3 runtime as FireRed, as its own game family: `GameVersion` id `emerald`, the `rse` text dialect of `src/core/game3/scripting/text_ir.lua` (named `ph` placeholders, named `FC 06` fonts, the `{POKEBLOCK}`, `{LV}` and arrow glyph runs), and its own screens under `src/ui/game3/rse/`. The pinned revision is `8fd45152` (v0.3.47); file:line citations refer to it. The translation mod (`translation-<lang>-gen3-emerald`, fr/de/es/it/ja-Hrkt) is a mod of its own, built from the Emerald ROM alone, and goes through the same joins as FireRed (`pipeline/gen3/`) with the Emerald family (`pipeline/gen3/family.py`): the Emerald PokeCorpus collection, pret's `pokeemerald.sym` (`symbols` branch) and `charmap.txt`, and its own reviewed configuration under `config/rse/`. `tools/rse/extract.lua` runs the text steps of the engine's own Emerald import plan (`src/import/gba/plans/rse/`), and `tools/rse/gate.lua` loads the mod through the real generation-3 loader on top of the game3 data modules built from that extract, so the statements below are measured, not inferred.
+Emerald (US, v1.0) runs on the same game3 runtime as FireRed, as its own game family: `GameVersion` id `emerald`, the `rse` text dialect of `src/core/game3/scripting/text_ir.lua` (named `ph` placeholders, named `FC 06` fonts, the `{POKEBLOCK}`, `{LV}` and arrow glyph runs), and its own screens under `src/ui/game3/rse/`. The pinned revision is `a729af23` (v0.3.51); file:line citations refer to it. The translation mod (`translation-<lang>-gen3-emerald`, fr/de/es/it/ja-Hrkt) is a mod of its own, built from the Emerald ROM alone, and goes through the same joins as FireRed (`pipeline/gen3/`) with the Emerald family (`pipeline/gen3/family.py`): the Emerald PokeCorpus collection, pret's `pokeemerald.sym` (`symbols` branch) and `charmap.txt`, and its own reviewed configuration under `config/rse/`. `tools/rse/extract.lua` runs the text steps of the engine's own Emerald import plan (`src/import/gba/plans/rse/`), and `tools/rse/gate.lua` loads the mod through the real generation-3 loader on top of the game3 data modules built from that extract, so the statements below are measured, not inferred.
 
 Summary of what a translation mod can and cannot reach at the pinned revision:
 
@@ -1947,6 +1912,8 @@ Summary of what a translation mod can and cannot reach at the pinned revision:
 | Species, move, item names; item descriptions; trainer names and class names | Yes | `pokemon`/`moves`/`items`/`trainers` patches |
 | game3's own text: its menus and prompts, the options it adds, the move and ability descriptions, Easy Chat (2,645 `Strings()` keys) | Yes, except 7 engine rows (entry 2) | `strings` registry, keys listed in `config/rse/engine_scope.json` |
 | Ability names, Pokédex categories and descriptions, contest categories and effect descriptions, map section names | **No** at the pinned revision (entry 1); the mod already ships them | `strings` registry once the screens look them up |
+| Cart text some screens print from their own pack: the party menu's actions, the Pokédex search screen, the Battle Frontier's records, Dome, Arena, Apprentice, S.S. Tidal menu and Pyramid bag, the Frontier Pass, the Trainer Hill records, the Battle Pyramid's floor names, Ever Grande City's fly destinations, the Berry Blender | **No** at the pinned revision (entry 4); the mod already ships them | `text` overrides once the screens read the script cache |
+| Cart text the script cache does not carry: berry names and descriptions, decorations, the Frontier lounges' messages, the Battle Tower multi battle partners' lines, the Pyramid's rest and retire prompts and hints | **No** (entry 5) | needs extraction, then the same lookup |
 | Japanese | Yes (the cart's own Japanese fonts) | as for FireRed |
 
 ### In progress
@@ -1955,7 +1922,21 @@ Summary of what a translation mod can and cannot reach at the pinned revision:
 
 The Emerald summary and battle messages print `Pokemon.abilityName()`, the Pokédex entry, the starter selection and the Battle Factory print the entry's category and description, the summary, the move relearner and the contest move window print the contest category and effect description, and the region map, the PokéNav, the map name popup, Match Call and TV print `Mapsec.name()` (`src/ui/game3/rse/mapsec.lua:46`): all straight from the extracted packs, with no registry or `Strings()` lookup on the way. FireRed's own screens already pass the same kinds of text through `Strings()`.
 
-A gen1recomp change routes all four through `Strings()`, keyed by the cart's English as FireRed's are, and keeps the battle adapter's ability key on the ROM name (two commits prepared on top of v0.3.51, "Route Emerald text through the translation registry" and "Translate Emerald map-section names", not yet proposed). On this project's side the keys are already in `config/rse/engine_scope.json`: `pipeline/gen3/engine_scope.py` reads the Pokédex entries and contest texts from the extract (`rse_rom_values`) and the map sections through `Mapsec`, and joins a Pokédex category to its own `gPokedexEntries` row (`SITE_FAMILIES`, which also overrides a row kept from an earlier scope), never to the type, move or menu label with the same English (DARK is SOMBRE, not the TENEBR type). The keys the ROM-label migration would move onto a label ship in `lang/strings_by_english.lua`, the others in `lang/strings.lua`. The release gate measures each of the four (`hooks` in the gate report): `routed: false` at the pinned revision, `routed: true` with the change, each showing the official row (the contest effect "A highly appealing move." reads "Une démonstration qui\nplaît énormément." in French).
+A gen1recomp change routes all four through `Strings()`, keyed by the cart's English as FireRed's are, and keeps the battle adapter's ability key on the ROM name (four commits on top of `dev` at v0.3.51, one per kind of text, in `thibautbus/gen1recomp`'s `feat/emerald-translation-runtime` with entry 4's change, pull request not yet opened). On this project's side the keys are already in `config/rse/engine_scope.json`: `pipeline/gen3/engine_scope.py` reads the Pokédex entries and contest texts from the extract (`rse_rom_values`) and the map sections through `Mapsec`, and joins a Pokédex category to its own `gPokedexEntries` row (`SITE_FAMILIES`, which also overrides a row kept from an earlier scope), never to the type, move or menu label with the same English (DARK is SOMBRE, not the TENEBR type). The keys the ROM-label migration would move onto a label ship in `lang/strings_by_english.lua`, the others in `lang/strings.lua`. The release gate measures each of the four (`hooks` in the gate report): `routed: false` at the pinned revision, `routed: true` with the change, each showing the official row (the contest effect "A highly appealing move." reads "Une démonstration qui\nplaît énormément." in French).
+
+#### 4. Emerald screens print their own pack's copy of cart text
+
+Several Emerald screens print a cart string from the pack their screen's extractor wrote, decoded from the ROM, instead of reading it from the script cache's text table, where the mod's `text` overrides land. The script cache holds the strings below under their pret labels, and the mod ships their official rows, so the screens show English only because of where they read them:
+
+- the party menu's actions (`src/ui/game3/party_menu.lua:84`, the `rse/menus` pack's `cursorOptions`, plain English strings): SUMMARY, SWITCH, ITEM and the others, and the field moves;
+- the Pokédex search screen's option titles and descriptions and its help lines (`src/ui/game3/rse/pokedex.lua:1513`, the `rse/pokedex` chrome pack's `search` tables);
+- the Battle Frontier: the records window (`src/ui/game3/rse/frontier_records.lua:341-346`), the S.S. Tidal destination menu (`src/core/game3/scripting/natives_frontier.lua:309`), the Battle Dome's tourney title, match numbers, win texts, rounds and trainer cards (`src/core/game3/rse/frontier/dome.lua:623`, `:1036`, `:1064`, `src/ui/game3/rse/dome_tourney.lua:283`, `:428`, `:433`), the Battle Arena's referee lines and judgment window (`src/core/game3/battle/facility_arena.lua:231`, `:525-531`), the Apprentice's lines (`src/core/game3/rse/frontier/apprentice.lua:596`) and the Battle Pyramid bag's "Return to" line (`src/ui/game3/rse/pyramid_bag.lua:470`);
+- the Frontier Pass's area descriptions and map (`src/ui/game3/rse/frontier_pass.lua:155`, `:547-549`), the Trainer Hill's records (`src/ui/game3/rse/trainer_hill_records.lua:35`) and Ever Grande City's two fly destinations on the region map (`src/ui/game3/rse/region_map.lua:348`);
+- the Battle Pyramid's floor names (entry 3).
+
+A gen1recomp change reads each of them from the script cache, by the pret symbol or ROM address the pack keeps next to its copy (`RomText.refIr`) or by the label of the table it comes from (`RomText.irOr`, `sBattleDomePotentialTexts[i]`), and keeps the pack's copy as the fallback; the party menu's field moves print the move's name, as `sCursorOptions` does. It is the second half of the same `feat/emerald-translation-runtime` branch as entry 1 (four commits: the Battle Frontier, the Pyramid's floor names and Ever Grande City's fly destinations, the Pokédex search screen, the party menu). Nothing changes on this project's side.
+
+The Berry Blender is in the same situation but not in that change: the script cache holds its messages (`sText_BerryBlenderStart` and 26 more of the 28) and its opponents' names (`sBlenderOpponentsNames`), but the screen and the blender's logic read them from the `rse/berry_blender` pack under keys of their own (`src/ui/game3/rse/berry_blender.lua:57-58`, `src/core/game3/rse/berry_blender.lua:885-934`), plain strings included, so the lookup has to be threaded through both.
 
 ### Required upstream capabilities
 
@@ -1967,7 +1948,19 @@ The Wonder Cards gen1recomp composes for Emerald's events (`src/core/game3/myste
 
 #### 3. The Battle Pyramid's floor names
 
-The map name popup decodes the Battle Pyramid's floor names from the pyramid's map headers (`src/ui/game3/map_name_popup.lua:156`, `TextIR.toPlain(ref.ir)`) instead of looking them up by key, so no registry reaches them.
+The map name popup decodes the Battle Pyramid's floor names from the pyramid's map headers (`src/ui/game3/map_name_popup.lua:156`, `TextIR.toPlain(ref.ir)`) instead of looking them up by key, so no registry reaches them. The script cache holds them as `sText_PyramidFloor1`–`7` and the mod ships them; entry 4's change reads them from there.
+
+#### 5. Cart text the Emerald script cache does not carry
+
+Some screens print cart strings that only their own pack holds: the script cache has no key for them, so a text override cannot reach them even through entry 4's lookup, and this project's extract has no row to join. Entry 4's change leaves these screens reading their copy. The Emerald corpus has the official rows for most of them.
+
+- Berries: the name and both description lines on the berry tag and in the berry tree messages (`src/core/game3/rse/berry_trees.lua:46`, `gBerries`, corpus `e.common.berry.*`).
+- Decorations: names and descriptions in the PC and the secret base (`src/ui/game3/rse/decoration.lua:940`, `:959`, `gDecorations`).
+- The Battle Pyramid's rest and retire prompts (`src/ui/game3/save_menu.lua:323`, `src/ui/game3/rse/pyramid_retire.lua:23`, `gText_BattlePyramidConfirmRest`/`Retire`) and its post-battle hints.
+- The Battle Frontier lounges: the Frontier Maniac's, the nature girl's and the gambler's messages (`src/core/game3/scripting/natives_frontier.lua:387-415`, `BattleFrontier_Lounge2_Text_*`, `Lounge3`, `Lounge5`), and the Battle Tower multi battle partners' lines (`src/core/game3/rse/frontier/tower.lua:490`). The script cache does key the partners' lines by their table's label (`sPartnerTextsHiker[0]`), but the pack keeps only each line's own symbol, which the cache does not hold, so the partners need their table's name in the pack rather than a new extraction.
+- Strings gen1recomp writes itself in Lua: the contest results' link save error (`src/ui/game3/rse/contest_results.lua:483`), which has no cart row, and the Pokédex's weight in pounds (`src/ui/game3/rse/pokedex.lua:888`), as for FireRed. The Berry Blender's two link messages are written in Lua too (`src/ui/game3/rse/berry_blender.lua:1005-1007`), although the cache holds the cart's own `sText_HasNoBerriesToPut` and `sText_ApostropheSPokeblockCaseIsFull`.
+
+Fix: have the import plan put these strings in the script cache's text table (pret's `TEXT_TABLES`/`NAMED_TEXTS` in `src/import/gba/versions_text_emerald.lua` already list most Emerald tables) and the screens read them through entry 4's helpers (`RomText.refIr`), so this project's extract emits their keys; the join then picks up their corpus rows with no new work.
 
 ### Verified working, not a gap
 

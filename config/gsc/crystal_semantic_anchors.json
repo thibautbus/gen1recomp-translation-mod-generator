@@ -3,10 +3,6 @@
   "version": 1,
   "description": "Crystal-only engine strings resolved from the official Crystal corpus. Anchors select corpus rows and segments; they contain no translated prose.",
   "anchors": {
-    "#MON Talk": {
-      "qid": "c.buenas_passwords.BuenasPasswordTable.RadioStations",
-      "extraction": {"kind": "segment", "index": 0}
-    },
     "%s is\nnot compatible\u000bwith %s.": {
       "qid": "c.common_2.TMHMNotCompatibleText",
       "extraction": {"kind": "parts", "parts": [0, 1, 2], "separators": ["\n", "\u000b"]}

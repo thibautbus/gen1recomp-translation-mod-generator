@@ -128,9 +128,9 @@ ROM catalogs (species/moves/items/trainer classes) as-is where the roster is
 identical across editions, and ships its own dedicated registries
 (`pipeline/gsc/crystal_registries.py`) for the handful of records that are genuinely
 Crystal-exclusive (item names, trainer class names and a landmarks subset).
-It also carries its own translated engine strings for the 48 keys reachable
+It also carries its own translated engine strings for the 39 keys reachable
 only from a Crystal-exclusive feature (Move Tutor, gender selection, the
-"PokeSeer"/Buena's Password radio special, Battle Tower); see
+PokeSeer, Buena's prize exchange, Battle Tower); see
 [`config/gsc/engine_scope_exclusions.json`](config/gsc/engine_scope_exclusions.json).
 Korean has no Crystal corpus in poke-corpus, unlike Gold/Silver -- Crystal's
 own dialogue simply stays in English for that language. Missing or ambiguous
@@ -154,7 +154,7 @@ dialogue through `mod.content.text`, species, move and item names, item
 descriptions, trainer names and class names through their record registries,
 the start menu through the public `ui.start_menu.items` hook, and game3's own
 text (its own menus, the mod manager, the options it adds) through
-`Strings()`. The pipeline is pinned to gen1recomp v0.3.47, whose FireRed
+`Strings()`. The pipeline is pinned to gen1recomp v0.3.51, whose FireRed
 draws most of its text from the cart itself: the option menu,
 the summary pages, the intro, the Pokédex, the region map, the battle
 messages and the lists all read the cart's rows through `RomText`, so the
@@ -346,10 +346,10 @@ actual Crystal save:
   blank rather than left to the English ROM's own. `ko` falls short of 100%
   because poke-corpus has no Korean Crystal collection (Crystal's own #DEX
   text and trainer names).
-- `Gold and Silver-related engine strings` covers the 940 engine keys used by
-  at least one production Gen 2 callsite. 48 keys reachable only from a
-  Crystal-exclusive feature (Move Tutor, gender selection, the "PokeSeer"/
-  Buena's Password radio special, Battle Tower) are excluded from this
+- `Gold and Silver-related engine strings` covers the 957 engine keys used by
+  at least one production Gen 2 callsite. 39 keys reachable only from a
+  Crystal-exclusive feature (Move Tutor, gender selection, the PokeSeer,
+  Buena's prize exchange, Battle Tower) are excluded from this
   specific scope, since none of it exists on a real Gold or Silver cart -- but
   they are translated and shipped, tracked separately under Crystal's own
   `engine_crystal` metric below; see
@@ -368,12 +368,12 @@ actual Crystal save:
   the same catalog as the aggregate above). Its denominator excludes 16
   markup-only records, same convention as the ROM aggregate. Crystal's own
   named catalogs (the Crystal-exclusive item names, trainer class names and
-  landmarks subset) and its 48 Crystal-exclusive engine strings are also
-  translated (fr/de/es/it: 48/48 engine strings and 6/6 named registries;
-  ja-Hrkt: 47/48 and 6/6; `ko` has no Crystal corpus, but both its 47/48
-  engine strings and all 6/6 named registries -- the Crystal-exclusive
+  landmarks subset) and its 39 Crystal-exclusive engine strings are also
+  translated (fr/de/es/it/ja-Hrkt: 39/39 engine strings and 6/6 named
+  registries; `ko` has no Crystal corpus, but both its 38/39 engine strings
+  and all 6/6 named registries -- the Crystal-exclusive
   item/trainer-class/landmark names -- are hand-composed anyway. The
-  missing 48th engine string, "???", is a genuine English-identical
+  missing 39th engine string, "???", is a genuine English-identical
   no-op).
   The shared `Gold and Silver-related engine strings` catalog and the shared
   named ROM catalogs (species/moves/items/trainer classes) also apply
@@ -387,12 +387,12 @@ provenance. Future unresolved entries will keep their original English text.
 
 | Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings | Crystal dialogue coverage |
 | --- | ---: | ---: | ---: |
-| `fr` | 6839/6839 (100%) | 951/951 (100%) | 3994/3994 (100%) |
-| `de` | 6839/6839 (100%) | 951/951 (100%) | 3994/3994 (100%) |
-| `es` | 6839/6839 (100%) | 951/951 (100%) | 3994/3994 (100%) |
-| `it` | 6839/6839 (100%) | 951/951 (100%) | 3994/3994 (100%) |
-| `ja-Hrkt` | 6839/6839 (100%) | 951/951 (100%) | 3994/3994 (100%) |
-| `ko` | 5796/6839 (84.75%) | 951/951 (100%) | 0/3994 (0%) |
+| `fr` | 6839/6839 (100%) | 957/957 (100%) | 3994/3994 (100%) |
+| `de` | 6839/6839 (100%) | 957/957 (100%) | 3994/3994 (100%) |
+| `es` | 6839/6839 (100%) | 957/957 (100%) | 3994/3994 (100%) |
+| `it` | 6839/6839 (100%) | 957/957 (100%) | 3994/3994 (100%) |
+| `ja-Hrkt` | 6839/6839 (100%) | 957/957 (100%) | 3994/3994 (100%) |
+| `ko` | 5796/6839 (84.75%) | 957/957 (100%) | 0/3994 (0%) |
 
 ### FireRed and LeafGreen
 
@@ -422,7 +422,7 @@ provenance. Future unresolved entries will keep their original English text.
   figures in every language: the two carts differ in where their script
   text sits and in the naming screen's choices, not in what can be
   translated.
-- `FireRed engine strings` covers the 1,891 `Strings()` keys the game3
+- `FireRed engine strings` covers the 1,906 `Strings()` keys the game3
   runtime reaches on its own: its menus and prompts, the ability names, the
   move and ability descriptions, the map section names and the region map's
   guide text, and the 1,028 Easy Chat words and group names (the species and
@@ -486,35 +486,30 @@ runtime displays.
 
 The remaining engine keys are reported separately below. They are keys used by
 neither RBY nor Gold and Silver, so their denominator is the residual scope:
-`2468 - (419 + 951 - 86) = 1184`. The numerator counts keys translated in at
+`2480 - (419 + 957 - 89) = 1193`. The numerator counts keys translated in at
 least one of the RBY and Gold/Silver/Crystal artifacts, the RBY release's
 Yellow layer included; this is a project-level metric, not a claim that
 every key is present in both games.
-The FireRed-reachable keys are measured separately above ("FireRed engine
-strings"), so this residual scope and its numerators leave the FireRed
-artifact out.
+The FireRed- and Emerald-reachable keys are measured separately above
+("FireRed engine strings", "Emerald engine strings"), so this residual scope
+and its numerators leave the generation-3 artifacts out.
 
 | Target | Other engine strings |
 | --- | ---: |
-| `fr` | 118/1184 (9.97%) |
-| `de` | 118/1184 (9.97%) |
-| `es` | 116/1184 (9.80%) |
-| `it` | 117/1184 (9.88%) |
-| `ja-Hrkt` | 116/1184 (9.80%) |
-| `ko` | 55/1184 (4.65%) |
+| `fr` | 165/1193 (13.83%) |
+| `de` | 165/1193 (13.83%) |
+| `es` | 163/1193 (13.66%) |
+| `it` | 164/1193 (13.75%) |
+| `ja-Hrkt` | 163/1193 (13.66%) |
+| `ko` | 97/1193 (8.13%) |
 
-The denominator is calculated as follows: `2468` total engine keys, minus the
-`419` RBY-related keys and the `951` Gold and Silver-related keys, plus back the `86` keys
+The denominator is calculated as follows: `2480` total engine keys, minus the
+`419` RBY-related keys and the `957` Gold and Silver-related keys, plus back the `89` keys
 shared by both scopes so they are subtracted only once. The resulting residual
-scope is `1184` keys. Both figures fell when FireRed
-stopped passing the cart's own text through `Strings()`: those keys are
-measured in the FireRed tables above instead.
+scope is `1193` keys.
 
-The FireRed/LeafGreen and Emerald figures use Gen1Recomp revision `8fd45152`
-(v0.3.47). The Red/Blue/Yellow, Gold/Silver/Crystal and residual figures
-were measured at `591bf4d6` (v0.3.14) and have not yet been regenerated at
-the new pin. All use the pinned ROMs and corpus snapshots; regenerate them
-whenever one of those inputs changes.
+All figures use Gen1Recomp revision `a729af23` (v0.3.51) and the pinned ROMs
+and corpus snapshots; regenerate them whenever one of those inputs changes.
 
 ## Translation provenance
 
@@ -621,7 +616,7 @@ language overrides follow the same split under `overrides/<language>/`.
 | `config/gsc/engine_fallbacks.json` | Audited ledger of Gold/Silver engine keys deliberately left in English. |
 | `config/gsc/engine_scope_exclusions.json` | Crystal-exclusive engine keys excluded from the Gold/Silver engine-string coverage metric (translated separately; see "Gold, Silver and Crystal support" above). |
 | `config/gsc/literal_handlers.json` | Reviewed corpus picks for the Gold menu screens exposed through public list hooks (`ui.pc.items` and similar). |
-| `config/gsc/engine_launch_batch.json` | The frozen ~551-key batch the original Gold/Silver engine-string work added, kept for exhaustive coverage auditing as the catalog keeps growing. |
+| `config/gsc/engine_launch_batch.json` | The frozen batch of keys the original Gold/Silver engine-string work added (549 since v0.3.51, which no longer reaches two of them), kept for exhaustive coverage auditing as the catalog keeps growing. |
 | `config/gsc/status_anchors.json` | Evidence for the Gold/Silver status-label registry (`mod.content.statuses`). |
 | `config/gsc/type_search_indices.json` | Gen 2 type ids mapped to the Pokédex type-search corpus row. |
 | `config/gsc/crystal_pointer_decisions.json` | Human-reviewed picks for ambiguous Crystal dialogue pointers. |

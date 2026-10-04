@@ -90,22 +90,26 @@ class GoldEngineCatalogTests(unittest.TestCase):
 
     def test_engine_string_keys_defaults_to_the_real_exclusions_file(self):
         exclusions = load_gs_engine_scope_exclusions()
-        self.assertIn("#MON Talk", exclusions)
-        self.assertGreaterEqual(len(exclusions), 40)
+        self.assertIn("Cancel your BATTLE\nROOM challenge?", exclusions)
+        self.assertGreaterEqual(len(exclusions), 39)
 
-    def test_all_languages_translate_new_gen2_options_and_crystal_talk_label(self):
+    def test_all_languages_translate_new_gen2_options(self):
         keys = {
             "AUDIO", "BACK", "BATTLE OPTIONS", "BATTLE SIZE", "EXTRAS",
-            "GRAPHICS", "KEY BAR", "UI LETTERBOX", "UNAVAILABLE", "VIDEO",
-            "VSYNC", "#MON Talk",
+            "GRAPHICS", "KEY BAR", "ORIENTATION", "UI LETTERBOX", "UNAVAILABLE", "VIDEO",
+            "VSYNC",
+            # The ORIENTATION row's values (Orientation.modeLabel), dynamic keys
+            # the Gen 2 callsite metric does not count.
+            "AUTO", "PORTRAIT", "LANDSCAPE", "REVERSE LANDSCAPE",
         }
         root = Path(__file__).resolve().parents[2]
         for language in ("fr", "de", "es", "it", "ja-Hrkt", "ko"):
             overrides = load_engine_overrides(root / "overrides" / language / "gsc" / "engine.json")
             no_op = load_engine_no_op_entries(language)
             available = {**no_op, **overrides}
-            self.assertEqual(keys <= set(available), True, language)
-            for key in keys:
+            identities = load_gs_engine_reviewed_identities(language)
+            self.assertEqual(sorted(keys - set(available) - identities), [], language)
+            for key in keys & set(available):
                 self.assertTrue(available[key]["override"].strip(), f"{language}: {key}")
                 self.assertTrue(available[key]["provenance"].strip(), f"{language}: {key}")
 
@@ -133,7 +137,7 @@ class GoldEngineCatalogTests(unittest.TestCase):
                 load_gs_engine_scope_exclusions(path)
             path.write_text(
                 '{"schema": "gen1recomp-translation-mods/gs-engine-scope-exclusions", '
-                '"version": 2, "source_revision": "8fd45152d3917a1ac9541ea520ae2b661a21f066", '
+                '"version": 2, "source_revision": "a729af2364e1677222f22b1d3ba0fc6bce5c4dac", '
                 '"excluded_keys": {"X": {"reason": ""}}}',
                 encoding="utf-8",
             )

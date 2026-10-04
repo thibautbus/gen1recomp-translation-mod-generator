@@ -330,6 +330,21 @@ class LabelRowTests(unittest.TestCase):
         self.assertEqual(required_family("easyChat.GREETINGS|HELLO", "x"), ".easy_chat_group_greetings.")
         self.assertIsNone(required_family("DARK", "src/core/game3/battle/ui.lua (Types.get)"))
 
+    def test_a_kept_row_keeps_its_reviewed_alternatives(self):
+        from pipeline.gen3 import engine_scope
+        keys = {"TEXT SPEED": {"callsite": "src/ui/game3/rse/options.lua (option label)"}}
+        previous = {"TEXT SPEED": {"qid": "e.common.strings.gText_TextSpeed",
+                                   "alternatives": ["e.common.strings.gText_TextSpeed2"]}}
+        with unittest.mock.patch.object(engine_scope, "collect_keys", return_value=keys), \
+                unittest.mock.patch.object(engine_scope, "load_gen3_corpus", return_value=None), \
+                unittest.mock.patch.object(engine_scope, "corpus_index", return_value={}), \
+                unittest.mock.patch.object(engine_scope, "derive_fills", return_value={}):
+            scope = engine_scope.build_scope(Path("engine"), Path("corpus"), None, extracted=None,
+                                             previous=previous, family=EMERALD)
+        row = scope["keys"]["TEXT SPEED"]
+        self.assertEqual(row["qid"], "e.common.strings.gText_TextSpeed")
+        self.assertEqual(row["alternatives"], ["e.common.strings.gText_TextSpeed2"])
+
 
 class EmeraldConfigTests(unittest.TestCase):
     def test_release_profile_and_selection(self):
