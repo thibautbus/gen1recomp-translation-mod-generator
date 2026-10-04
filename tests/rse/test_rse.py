@@ -402,6 +402,10 @@ class EmeraldConfigTests(unittest.TestCase):
         self.assertGreater(len(categories), 200)
         self.assertEqual({key: qid for key, qid in categories.items() if ".gPokedexEntries." not in qid}, {})
         self.assertTrue(all(row.get("qid", "e.").startswith("e.") for row in scope.values()))
+        # shared descriptions take the row whose wording fits every entry
+        self.assertEqual(scope["Negates weather effects."]["qid"], "e.common.abilities.sCloudNineDescription")
+        self.assertEqual(scope["Sludge is hurled to inflict\ndamage. May also poison."]["qid"],
+                         "e.common.move_descriptions.sSludgeDescription")
         for language in ("fr", "de", "es", "it", "ja-Hrkt"):
             with self.subTest(language=language):
                 engine = json.loads((ROOT / "overrides" / language / "rse" / "engine.json").read_text(encoding="utf-8"))

@@ -194,11 +194,22 @@ REVIEWED: Mapping[str, str | None] = {
     "SHIFT": "frlg.common.strings.gText_Shift",
     "option.battleStyle|SHIFT": "frlg.common.strings.gText_BattleStyleShift",
     "option.battleStyle|SET": "frlg.common.strings.gText_BattleStyleSet",
+    # Descriptions several abilities or moves share in English, which one key
+    # renders with a single row: the row whose wording fits all of them
+    # (Air Lock's German row reverses the weather, Cloud Nine's ignores it).
+    "Negates weather effects.": "frlg.common.abilities.sCloudNineDescription",
 }
 # Emerald's reviewed rows (see REVIEWED).
 REVIEWED_RSE: Mapping[str, str | None] = {
+    # shared descriptions, the row that fits every entry (see REVIEWED):
+    # Cloud Nine's, and Sludge's (Sludge Bomb's Spanish row names a bomb)
+    "Negates weather effects.": "e.common.abilities.sCloudNineDescription",
+    "Sludge is hurled to inflict\ndamage. May also poison.": "e.common.move_descriptions.sSludgeDescription",
     # the FireRed bag's register action, not the battle style (see REVIEWED)
     "SET": None,
+    # the in-game trade's nickname for Seedot, not the contest opponent of
+    # the same English name (gContestOpponents)
+    "DOTS": "e.common.trade.sIngameTrades.0",
 }
 REVIEWED_BY_FAMILY: Mapping[str, Mapping[str, str | None]] = {"frlg": REVIEWED, "rse": REVIEWED_RSE}
 _QID_LAST_RESORT = (".easy_chat_", ".gEasyChatGroupName_", ".quest_log.", ".gPokedexEntries.", ".fame_checker.")

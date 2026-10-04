@@ -2099,7 +2099,8 @@
     "DOTS": {
       "callsite": "src/core/game3/scripting/natives_trade.lua (Trade.entry nickname)",
       "kind": "dynamic",
-      "qid": "e.common.contest_opponents.gContestOpponents.6"
+      "qid": "e.common.trade.sIngameTrades.0",
+      "reviewed": true
     },
     "DOTTED HOLE": {
       "callsite": "src/ui/game3/rse/mapsec.lua (Mapsec.name)",
@@ -4746,7 +4747,8 @@
     "Negates weather effects.": {
       "callsite": "src/core/game3/summary_data.lua (ROM abilitie description)",
       "kind": "rom",
-      "qid": "e.common.abilities.sAirLockDescription"
+      "qid": "e.common.abilities.sCloudNineDescription",
+      "reviewed": true
     },
     "No special ability.": {
       "callsite": "src/core/game3/summary_data.lua (ROM abilitie description)",
@@ -6559,7 +6561,8 @@
     "Sludge is hurled to inflict\ndamage. May also poison.": {
       "callsite": "src/core/game3/summary_data.lua (ROM move description)",
       "kind": "rom",
-      "qid": "e.common.move_descriptions.sSludgeBombDescription"
+      "qid": "e.common.move_descriptions.sSludgeDescription",
+      "reviewed": true
     },
     "Solar energy is the source of this \nPOKéMON's power. On sunny days, groups of\nSOLROCK line up facing the sun and absorb\nits light.": {
       "callsite": "src/ui/game3/rse/pokedex.lua (Pokédex entry description)",

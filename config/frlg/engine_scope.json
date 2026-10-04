@@ -1945,7 +1945,8 @@
     "Negates weather effects.": {
       "callsite": "src/core/game3/summary_data.lua (ROM abilitie description)",
       "kind": "rom",
-      "qid": "frlg.common.abilities.sAirLockDescription"
+      "qid": "frlg.common.abilities.sCloudNineDescription",
+      "reviewed": true
     },
     "No special ability.": {
       "callsite": "src/core/game3/summary_data.lua (ROM abilitie description)",
