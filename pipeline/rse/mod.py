@@ -58,6 +58,7 @@ from ..gen3.mod import (
     unresolved_entries,
 )
 from ..gen3.text import load_charmap, load_symbols
+from .european import apply_european_trainer_text
 from ..shared.generate import lua_string
 from ..shared.mod_assets import TRANSLATION_MOD_PRIORITY
 from ..shared.project import project_config, project_version, resource_root
@@ -296,6 +297,8 @@ def join_rse(
             prefix + "trainers.gTrainers.", charmap),
         "trainer_class_names": join_trainer_class_names(trainers, trainer_ids, corpus, charmap),
     }
+    european = apply_european_trainer_text(results["trainer_names"].values, results["trainer_class_names"].values,
+                                           trainers, trainer_ids, corpus, charmap)
     scope = load_engine_scope(EMERALD)
     strings, engine_stats = join_gen3_engine_strings(scope, corpus, charmap)
     by_english: dict[str, str] = {}
@@ -313,6 +316,7 @@ def join_rse(
         "catalogs": catalogs,
         "catalog_stats": {name: result.summary() for name, result in results.items()},
         "catalog_issues": {name: result.issues for name, result in results.items()},
+        "european_trainer_text": dict(european),
         "engine_stats": engine_stats,
         "numbers": {"species": species_ids, "items": item_ids, "moves": registry_ids(moves)},
         "scope": scope,

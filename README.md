@@ -245,6 +245,19 @@ own vocabulary (`overrides/<lang>/rse/engine.json`), and the one French line
 the corpus lacks is the French cart's own, read from pret's multi-language
 decompilation (`overrides/fr/rse/dialogue.json`).
 
+The trainers of the cart's trainer table are named as the European carts
+name them, which their own code does differently from the US one (pret's multi-language decompilation,
+`#if EUROPE`, reviewed in
+[`config/rse/european_trainer_text.json`](config/rse/european_trainer_text.json)):
+the French and Spanish carts put a Team Aqua or Team Magma grunt's name
+before its class (SBIRE TEAM AQUA, SOLDADO EQUIPO AQUA), and the French,
+Italian and Spanish carts have their own words for a girl's School Kid class,
+the female rival's class and Tate and Liza's plural Leader class. The
+runtime reads each trainer's name and class from the mod, so the mod ships
+them in the cart's order and words; German, which that decompilation does
+not cover, keeps its corpus rows. The Battle Frontier's, Trainer Hill's and
+secret bases' trainers do not come from that table, and keep the US words.
+
 Before packaging, `tools/rse/gate.lua` loads the mod through gen1recomp's
 real generation-3 loader over the extracted Emerald data and checks that the
 dialogue, the battle string table, the nature names, the name catalogs, the

@@ -233,7 +233,8 @@ stage("export_trainers", function()
   local out = {}
   for num, row in pairs(pack.trainers or {}) do
     if type(num) == "number" and type(row) == "table" then
-      out[tostring(num)] = { name = row.name, class = row.class, className = row.className }
+      out[tostring(num)] = { name = row.name, class = row.class, className = row.className,
+                             encounterMusic = row.encounterMusic }
     end
   end
   writeJson("rse_trainers.json", out)

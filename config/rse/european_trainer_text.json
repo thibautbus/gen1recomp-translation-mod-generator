@@ -1,0 +1,33 @@
+{
+  "schema": "gen1recomp-translation-mods/rse-european-trainer-text",
+  "version": 1,
+  "source": "pret/pokeemerald, branch multi-language (8baea5602), which builds the French, Italian and Spanish carts byte for byte; the European code paths are its `#if EUROPE` blocks.",
+  "class_variants": [
+    {
+      "label": "gText_SchoolKidFemale",
+      "classes": [33],
+      "when": "encounter_music",
+      "values": {"fr": "ELEVE", "it": "SCOLARA", "es": "ESCOLAR"},
+      "provenance": "GetTrainerClassNameGenderSpecific (src/international_string_util.c:284) names a SCHOOL KID whose encounter music is not the male one with gText_SchoolKidFemale (src/strings.c:6689 fr, :6857 it, :7025 es)."
+    },
+    {
+      "label": "gText_TrainerFemale",
+      "classes": [50, 65],
+      "when": "encounter_music",
+      "values": {"fr": "DRESSEUR", "it": "ALLENATORE", "es": "ENTRENADORA"},
+      "provenance": "GetTrainerClassNameGenderSpecific (src/international_string_util.c:288) names a RIVAL or RS_PROTAG trainer whose encounter music is not the male one with gText_TrainerFemale (src/strings.c:6690 fr, :6858 it, :7026 es)."
+    },
+    {
+      "label": "gText_LeaderPlural",
+      "classes": [32],
+      "when": {"trainer_name": "TATE&LIZA"},
+      "values": {"fr": "CHAMPION", "it": "CAPIPALESTRA", "es": "LÍDERES"},
+      "provenance": "GetTrainerClassNameGenderSpecific (src/international_string_util.c:293) names the LEADER called gText_TateLiza with gText_LeaderPlural (src/strings.c:6691 fr, :6859 it, :7027 es)."
+    }
+  ],
+  "class_name_swap": {
+    "classes": [3, 9],
+    "languages": ["fr", "es"],
+    "provenance": "BufferStringBattle (src/battle_message.c:3937), on the French and Spanish carts only, swaps a TEAM AQUA or TEAM MAGMA trainer's class and name placeholders in every battle string that names both (\"Sbire Team Aqua\", \"Soldado Equipo Aqua\"); no battle string names such a trainer without the class."
+  }
+}
