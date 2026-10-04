@@ -18,6 +18,7 @@ from pipeline.rse.mod import (
     DIALOGUE_FILE_ENTRIES, dialogue_files, generate_rse_mod, rse_archive_name, rse_mod_id,
     text_aliases, write_gate_expectations,
 )
+from pipeline.rse.european import apply_european_trainer_text, load_european_trainer_text
 from pipeline.shared.gui import generation_code, generation_label
 from pipeline.shared.roms import verify_emerald_rom
 from pipeline.shared.specs import (
@@ -30,6 +31,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CHARMAP = """\
 ' '         = 00
 'é'         = 1B
+'Í'         = 5A
 '!'         = AB
 '.'         = AD
 '“'         = B1
@@ -128,6 +130,62 @@ class EmeraldJoinTests(unittest.TestCase):
 
     def corpus(self, rows, language="fr"):
         return load_gen3_corpus(write_corpus(self.tmp / language, language, rows), language, EMERALD)
+
+    # pret pokeemerald multi-language: src/battle_message.c:3937 and
+    # src/international_string_util.c:280
+    EUROPEAN_TRAINERS = {
+        10: {"name": "GRUNT", "class": 3, "className": "TEAM AQUA", "encounterMusic": 6},
+        273: {"name": "JERRY", "class": 33, "className": "SCHOOL KID", "encounterMusic": 0},
+        280: {"name": "KAREN", "class": 33, "className": "SCHOOL KID", "encounterMusic": 2},
+        520: {"name": "BRENDAN", "class": 50, "className": "TRAINER", "encounterMusic": 0},
+        529: {"name": "MAY", "class": 50, "className": "TRAINER", "encounterMusic": 1},
+        271: {"name": "TATE&LIZA", "class": 32, "className": "LEADER", "encounterMusic": 1},
+    }
+
+    def european(self, language, rows, names=None, classes=None):
+        corpus = self.corpus(rows, language)
+        names, classes = dict(names or {}), dict(classes or {})
+        ids = {number: str(number) for number in self.EUROPEAN_TRAINERS}
+        stats = apply_european_trainer_text(names, classes, self.EUROPEAN_TRAINERS, ids, corpus, self.charmap)
+        return names, classes, stats
+
+    def test_french_and_spanish_grunts_take_their_name_before_their_class(self):
+        # French: the class row is the English one, so the catalog has no
+        # entry for it and the swap reads it from the corpus
+        names, classes, _ = self.european("fr", [
+            ("e.common.trainer_class_names.gTrainerClassNames.3", "TEAM AQUA", "TEAM AQUA"),
+            ("e.common.trainers.gTrainers.10", "GRUNT", "SBIRE"),
+        ], names={"10": "SBIRE"})
+        self.assertEqual((classes["10"], names["10"]), ("SBIRE", "TEAM AQUA"))
+        names, classes, _ = self.european("es", [], names={"10": "SOLDADO"}, classes={"10": "EQUIPO AQUA"})
+        self.assertEqual((classes["10"], names["10"]), ("SOLDADO", "EQUIPO AQUA"))
+        # Italian and German keep the US order
+        names, classes, _ = self.european("it", [], names={"10": "RECLUTA"}, classes={"10": "TEAM IDRO"})
+        self.assertEqual((classes["10"], names["10"]), ("TEAM IDRO", "RECLUTA"))
+        # a grunt whose rows cannot be read is left as joined
+        names, classes, _ = self.european("fr", [], names={"10": "SBIRE"})
+        self.assertEqual((classes.get("10"), names["10"]), (None, "SBIRE"))
+
+    def test_european_carts_name_some_trainers_with_their_own_class_words(self):
+        names, classes, stats = self.european("it", [], classes={
+            "273": "SCOLARO", "280": "SCOLARO", "520": "ALLENATORE", "529": "ALLENATORE", "271": "CAPOPALESTRA"})
+        # the cart reads the encounter music, not the trainer's gender
+        self.assertEqual((classes["273"], classes["280"]), ("SCOLARO", "SCOLARA"))
+        self.assertEqual(classes["271"], "CAPIPALESTRA")
+        self.assertEqual((classes["520"], classes["529"]), ("ALLENATORE", "ALLENATORE"))
+        self.assertEqual(stats, {"gText_SchoolKidFemale": 1, "gText_LeaderPlural": 1})
+        _, classes, _ = self.european("es", [], classes={"520": "ENTRENADOR", "529": "ENTRENADOR"})
+        self.assertEqual((classes["520"], classes["529"]), ("ENTRENADOR", "ENTRENADORA"))
+        # German has no European word to take: nothing changes
+        _, classes, stats = self.european("de", [], classes={"280": "SCHULKIND"})
+        self.assertEqual((classes, stats), ({"280": "SCHULKIND"}, {}))
+
+    def test_the_european_trainer_words_are_reviewed_with_their_source(self):
+        config = load_european_trainer_text()
+        for variant in config["class_variants"]:
+            self.assertEqual(set(variant["values"]), {"fr", "it", "es"}, variant["label"])
+            self.assertIn("src/strings.c", variant["provenance"])
+        self.assertEqual(config["class_name_swap"]["languages"], ["fr", "es"])
 
     def test_a_pointer_table_slot_joins_through_the_symbol_it_points_at(self):
         corpus = self.corpus([("e.common.pokemon_summary_screen.sHardyNatureName", "HARDY", "HARDI")])
