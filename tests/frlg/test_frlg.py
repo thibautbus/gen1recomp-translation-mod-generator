@@ -882,6 +882,23 @@ io.write(tostring(applied["g3:08000010"]), "|", tostring(applied["g3:08000020"])
 
 
 class FrlgConfigTests(unittest.TestCase):
+    def test_japanese_battle_menus_split_into_the_four_options_the_engine_draws(self):
+        # gen1recomp splits a battle menu row into its options at each line
+        # break and CLEAR_TO (src/core/game3/battle/ui.lua:2097); the
+        # Japanese cart aligns them with ideographic spaces instead
+        japanese = load_dialogue_overrides("ja-Hrkt")
+        menus = {"gText_BattleMenu": ["たたかう", "バッグ", "ポケモン", "にげる"],
+                 "gText_SafariZoneMenu": ["ボール", "エサだま", "いしころ", "にげる"]}
+        for label, options in menus.items():
+            text = re.sub(r"^(\[[A-Z_]+[^\]]*\])+", "", japanese[label]["text"])
+            self.assertEqual(re.split(r"\[CLEAR_TO 56\]|\\n", text), options, label)
+        # the link battle records place each header at the last CLEAR_TO
+        headers = japanese["gString_BattleRecords_ColumnHeaders"]["text"]
+        self.assertEqual(re.split(r"\[CLEAR_TO \d+\]", headers), ["かち", "まけ", "ひきわけ"])
+        # the action prompt breaks after は, as every other cart's row does
+        for label in ("gText_WhatWillPkmnDo", "gText_WhatWillOldManDo"):
+            self.assertRegex(japanese[label]["text"], r"は\\nどうする？$", label)
+
     def test_release_profile(self):
         profile = release_profile("frlg")
         # LeafGreen is required alongside FireRed, the way Crystal is for Gold.

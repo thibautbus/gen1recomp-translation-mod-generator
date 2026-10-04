@@ -1,4 +1,5 @@
 import json
+import re
 import shutil
 import tempfile
 import unittest
@@ -489,6 +490,23 @@ class EmeraldConfigTests(unittest.TestCase):
         self.assertEqual(japanese["sText_ExclamationMark"]["text"], "！")
         self.assertEqual((japanese["gText_ExpandedPlaceholder_Kun"]["text"],
                           japanese["gText_ExpandedPlaceholder_Chan"]["text"]), ("くん", "ちゃん"))
+
+    def test_japanese_battle_menus_split_into_the_four_options_the_engine_draws(self):
+        # gen1recomp splits a battle menu row into its options at each line
+        # break and CLEAR_TO (src/core/game3/battle/ui.lua:2097); the
+        # Japanese cart aligns them with ideographic spaces instead
+        japanese = load_dialogue_overrides("ja-Hrkt", EMERALD)
+        menus = {"gText_BattleMenu": ["たたかう", "バッグ", "ポケモン", "にげる"],
+                 "gText_SafariZoneMenu": ["ボール", "ポロック", "ちかづく", "にげる"]}
+        for label, options in menus.items():
+            text = re.sub(r"^(\[[A-Z_]+[^\]]*\])+", "", japanese[label]["text"])
+            self.assertEqual(re.split(r"\[CLEAR_TO 56\]|\\n", text), options, label)
+        # the link battle records place each header at the last CLEAR_TO
+        headers = japanese["gText_WinLoseDraw"]["text"]
+        self.assertEqual(re.split(r"\[CLEAR_TO \d+\]", headers), ["", "かち", "まけ", "ひきわけ"])
+        # the action prompt breaks after は, as every other cart's row does
+        for label in ("gText_WhatWillPkmnDo", "gText_WhatWillPkmnDo2", "gText_WhatWillWallyDo"):
+            self.assertRegex(japanese[label]["text"], r"は\\nどうする？$", label)
 
     def test_engine_scope_matches_the_pinned_engine(self):
         engine = ROOT / ".cache" / "dependencies" / "gen1recomp"
