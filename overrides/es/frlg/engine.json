@@ -342,6 +342,11 @@
       "reason": "engine-original",
       "provenance": "Screen-position value shown while a device skin is active; same word as the Options row itself in every language."
     },
+    "SPEED": {
+      "override": "VELOCIDAD",
+      "reason": "engine-original",
+      "provenance": "Same value as overrides/es/gsc/engine.json; Options group label (src/ui/game3/option_rows.lua, Rows.GROUPS), the game speed settings, not the SPEED stat the corpus row strings.gText_LevelUp_Speed names."
+    },
     "STAMP CARD": {
       "override": "TARJETA SELLOS",
       "reason": "engine-corpus",

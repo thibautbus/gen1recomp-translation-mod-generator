@@ -17,10 +17,30 @@
       "reason": "engine-original",
       "provenance": "Wonder Card body line gen1recomp composes for Emerald's event ticket cards (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (sMapName_LILYCOVE_CITY, gift_*_ticket.sText_*UseAtPort) to follow the lines FireRed's overrides give the rest of the card; requires in-game visual validation."
     },
+    "OFF": {
+      "override": "オフ",
+      "reason": "engine-original",
+      "provenance": "Same value as overrides/ja-Hrkt/rby/engine.json and gsc/engine.json; generic switch value of port-added Options rows (src/ui/game3/option_rows.lua: VSync, KEY BAR, music filter...), not the battle scene's watch / don't watch the corpus rows gText_BattleSceneOn/Off say."
+    },
+    "ON": {
+      "override": "オン",
+      "reason": "engine-original",
+      "provenance": "Same value as overrides/ja-Hrkt/rby/engine.json and gsc/engine.json; generic switch value of port-added Options rows (src/ui/game3/option_rows.lua: VSync, KEY BAR, music filter...), not the battle scene's watch / don't watch the corpus rows gText_BattleSceneOn/Off say."
+    },
+    "SPEED": {
+      "override": "スピード",
+      "reason": "engine-original",
+      "provenance": "Same value as overrides/ja-Hrkt/gsc/engine.json; Options group label (src/ui/game3/option_rows.lua, Rows.GROUPS), the game speed settings, not the SPEED stat the corpus row battle_message.sText_Speed abbreviates."
+    },
     "The POKéMON living in ALTERING": {
       "override": "へんげのどうくつに　すむ",
       "reason": "engine-original",
       "provenance": "Wonder Card body line gen1recomp composes for Emerald's ALTERING CAVE card (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (sMapName_ROUTE_103, gift_altering_cave.sText_MysteryGiftAlteringCave) with the Emerald cart's name for the cave (FireRed's override names it otherwise); requires in-game visual validation."
+    },
+    "UPPER": {
+      "override": "やや　うえ",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation, between ちゅうおう (CENTER) and うえ (TOP) of the same row; Options SCREEN POS value (src/ui/game3/option_rows.lua, ScreenPosition.label: TOP / UPPER / CENTER), the screen's position, not the naming keyboard's upper case the corpus row gText_Upper says; requires in-game visual validation."
     },
     "We received this OLD SEA MAP": {
       "override": "ふるびたかいずが",

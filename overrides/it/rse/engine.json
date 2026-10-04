@@ -12,6 +12,16 @@
       "reason": "engine-original",
       "provenance": "Wonder Card body line gen1recomp composes for Emerald's event ticket cards (src/core/game3/mystery_gift.lua, rseBuiltins); no cart row reads as it. Worded from the Emerald cart's own vocabulary (sMapName_LILYCOVE_CITY, gift_*_ticket.sText_*UseAtPort) to follow the lines FireRed's overrides give the rest of the card; requires in-game visual validation."
     },
+    "SPEED": {
+      "override": "VELOCITÀ",
+      "reason": "engine-original",
+      "provenance": "Same value as overrides/it/gsc/engine.json; Options group label (src/ui/game3/option_rows.lua, Rows.GROUPS), the game speed settings, not the SPEED stat the corpus row battle_message.sText_Speed abbreviates."
+    },
+    "UPPER": {
+      "override": "ALTO",
+      "reason": "engine-original",
+      "provenance": "Same value as overrides/it/frlg/engine.json; Options SCREEN POS value (src/ui/game3/option_rows.lua, ScreenPosition.label: TOP / UPPER / CENTER), the screen's position, not the naming keyboard's upper case the corpus row gText_Upper says."
+    },
     "We received this OLD SEA MAP": {
       "override": "Abbiamo ricevuto una MAPPA STINTA",
       "reason": "engine-original",

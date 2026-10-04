@@ -247,10 +247,20 @@
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
     },
+    "OFF": {
+      "override": "オフ",
+      "reason": "engine-original",
+      "provenance": "Same value as overrides/ja-Hrkt/rby/engine.json and gsc/engine.json; generic switch value of port-added Options rows (src/ui/game3/option_rows.lua: VSync, KEY BAR, music filter...), not the battle scene's watch / don't watch the corpus rows gText_BattleSceneOn/Off say."
+    },
     "OK, LET'S BATTLE!": {
       "override": "よし　しょうぶだ！",
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "ON": {
+      "override": "オン",
+      "reason": "engine-original",
+      "provenance": "Same value as overrides/ja-Hrkt/rby/engine.json and gsc/engine.json; generic switch value of port-added Options rows (src/ui/game3/option_rows.lua: VSync, KEY BAR, music filter...), not the battle scene's watch / don't watch the corpus rows gText_BattleSceneOn/Off say."
     },
     "OPTION %s": {
       "override": "せんたく%s",
@@ -321,6 +331,11 @@
       "override": "SH",
       "reason": "engine-original",
       "provenance": "Read the same way in Japanese: the cart's Japanese fonts draw the Latin block's characters in their full-width form."
+    },
+    "SPEED": {
+      "override": "スピード",
+      "reason": "engine-original",
+      "provenance": "Same value as overrides/ja-Hrkt/gsc/engine.json; Options group label (src/ui/game3/option_rows.lua, Rows.GROUPS), the game speed settings, not the SPEED stat the corpus row strings.gText_LevelUp_Speed names."
     },
     "STAMP CARD": {
       "override": "スタンプカード",
@@ -461,6 +476,11 @@
       "override": "ほかのトレーナーと　こうかんして",
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "UPPER": {
+      "override": "やや　うえ",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation, between ちゅうおう (CENTER) and うえ (TOP) of the same row; Options SCREEN POS value (src/ui/game3/option_rows.lua, ScreenPosition.label: TOP / UPPER / CENTER), the screen's position, not the naming keyboard's upper case the corpus row gText_Upper says; requires in-game visual validation."
     },
     "Unknown item.": {
       "override": "ふめいな　どうぐ。",
