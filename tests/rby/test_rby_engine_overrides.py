@@ -75,6 +75,15 @@ class RbyEngineOverrideTests(unittest.TestCase):
             value = self._pinned(language)["AREA UNKNOWN"]["override"]
             self.assertEqual(value, value.strip(), language)
 
+    def test_the_title_menu_exit_row_is_worded_as_in_the_gold_mods(self):
+        # gen1recomp's own EXIT GAME row closes the RBY title menu (and the
+        # Gold one): every language words it the same in both games
+        scope = json.loads((ROOT / "config" / "rby" / "engine_scope.json").read_text(encoding="utf-8"))
+        self.assertNotIn("EXIT GAME", scope["key_scope_overrides"])
+        for language in LANGUAGES:
+            gold = load_engine_overrides(ROOT / "overrides" / language / "gsc" / "engine.json")
+            self.assertEqual(self._pinned(language)["EXIT GAME"]["override"], gold["EXIT GAME"]["override"], language)
+
     def test_files_keep_engine_override_schema(self):
         for language in LANGUAGES:
             data = json.loads((ROOT / "overrides" / language / "rby" / "engine_upstream.json").read_text(encoding="utf-8"))

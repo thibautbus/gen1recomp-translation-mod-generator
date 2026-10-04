@@ -327,11 +327,11 @@ engine's English fallback.
 
 | Target | Red Blue ROM aggregate | Yellow ROM aggregate | RBY-related engine strings |
 | --- | ---: | ---: | ---: |
-| `fr` | 3286/3286 (100%) | 3400/3400 (100%) | 419/419 (100%) |
-| `de` | 3286/3286 (100%) | 3400/3400 (100%) | 419/419 (100%) |
-| `es` | 3286/3286 (100%) | 3400/3400 (100%) | 419/419 (100%) |
-| `it` | 3286/3286 (100%) | 3400/3400 (100%) | 419/419 (100%) |
-| `ja-Hrkt` | 3286/3286 (100%) | 3397/3400 (99.91%) | 419/419 (100%) |
+| `fr` | 3286/3286 (100%) | 3400/3400 (100%) | 420/420 (100%) |
+| `de` | 3286/3286 (100%) | 3400/3400 (100%) | 420/420 (100%) |
+| `es` | 3286/3286 (100%) | 3400/3400 (100%) | 420/420 (100%) |
+| `it` | 3286/3286 (100%) | 3400/3400 (100%) | 420/420 (100%) |
+| `ja-Hrkt` | 3286/3286 (100%) | 3397/3400 (99.91%) | 420/420 (100%) |
 
 The ROM aggregates exclude extracted labels that do not render visible text.
 Reviewed exceptions are recorded in
@@ -506,7 +506,7 @@ runtime displays.
 
 The remaining engine keys are reported separately below. They are keys used by
 neither RBY nor Gold and Silver, so their denominator is the residual scope:
-`2480 - (419 + 957 - 89) = 1193`. The numerator counts keys translated in at
+`2480 - (420 + 957 - 90) = 1193`. The numerator counts keys translated in at
 least one of the RBY and Gold/Silver/Crystal artifacts, the RBY release's
 Yellow layer included; this is a project-level metric, not a claim that
 every key is present in both games.
@@ -524,7 +524,7 @@ and its numerators leave the generation-3 artifacts out.
 | `ko` | 97/1193 (8.13%) |
 
 The denominator is calculated as follows: `2480` total engine keys, minus the
-`419` RBY-related keys and the `957` Gold and Silver-related keys, plus back the `89` keys
+`420` RBY-related keys and the `957` Gold and Silver-related keys, plus back the `90` keys
 shared by both scopes so they are subtracted only once. The resulting residual
 scope is `1193` keys.
 

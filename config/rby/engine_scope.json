@@ -141,11 +141,6 @@
       "eligibility": "ineligible",
       "reason": "defensive"
     },
-    "EXIT GAME": {
-      "category": "modern",
-      "eligibility": "ineligible",
-      "reason": "modern"
-    },
     "Level %d": {
       "category": "core",
       "eligibility": "ineligible",
