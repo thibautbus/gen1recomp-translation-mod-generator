@@ -51,7 +51,10 @@ def _applies(variant: Mapping, row: Mapping) -> bool:
     # src/battle_message.c:4329 passes encounterMusic_gender & 0x7F, the
     # music alone: any music but TRAINER_ENCOUNTER_MUSIC_MALE (0) counts.
     if when == "encounter_music":
-        return (row.get("encounterMusic") or 0) != 0
+        if not isinstance(row.get("encounterMusic"), int):
+            raise ValueError(f"trainer {row.get('name')!r} has no encounterMusic; re-extract the Emerald ROM "
+                             "(tools/rse/extract.lua exports it)")
+        return row["encounterMusic"] != 0
     return row.get("name") == when["trainer_name"]
 
 

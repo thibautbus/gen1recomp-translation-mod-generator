@@ -176,9 +176,16 @@ class EmeraldJoinTests(unittest.TestCase):
         self.assertEqual(stats, {"gText_SchoolKidFemale": 1, "gText_LeaderPlural": 1})
         _, classes, _ = self.european("es", [], classes={"520": "ENTRENADOR", "529": "ENTRENADOR"})
         self.assertEqual((classes["520"], classes["529"]), ("ENTRENADOR", "ENTRENADORA"))
+        _, classes, _ = self.european("es", [], classes={"271": "LÍDER"})
+        self.assertEqual(classes["271"], "LÍDERES")
         # German has no European word to take: nothing changes
         _, classes, stats = self.european("de", [], classes={"280": "SCHULKIND"})
         self.assertEqual((classes, stats), ({"280": "SCHULKIND"}, {}))
+        # an extract from before tools/rse/extract.lua exported the music
+        # would silently skip the gendered words: it stops the build instead
+        stale = {280: {"name": "KAREN", "class": 33, "className": "SCHOOL KID"}}
+        with self.assertRaisesRegex(ValueError, "encounterMusic"):
+            apply_european_trainer_text({}, {}, stale, {280: "280"}, self.corpus([], "it"), self.charmap)
 
     def test_the_european_trainer_words_are_reviewed_with_their_source(self):
         config = load_european_trainer_text()
