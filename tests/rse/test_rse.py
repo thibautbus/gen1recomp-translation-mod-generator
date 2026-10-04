@@ -501,6 +501,9 @@ class EmeraldConfigTests(unittest.TestCase):
         for label, options in menus.items():
             text = re.sub(r"^(\[[A-Z_]+[^\]]*\])+", "", japanese[label]["text"])
             self.assertEqual(re.split(r"\[CLEAR_TO 56\]|\\n", text), options, label)
+        # the link battle records place each header at the last CLEAR_TO
+        headers = japanese["gText_WinLoseDraw"]["text"]
+        self.assertEqual(re.split(r"\[CLEAR_TO \d+\]", headers), ["", "かち", "まけ", "ひきわけ"])
         # the action prompt breaks after は, as every other cart's row does
         for label in ("gText_WhatWillPkmnDo", "gText_WhatWillPkmnDo2", "gText_WhatWillWallyDo"):
             self.assertRegex(japanese[label]["text"], r"は\\nどうする？$", label)
