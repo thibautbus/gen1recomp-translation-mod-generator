@@ -210,6 +210,9 @@ REVIEWED_RSE: Mapping[str, str | None] = {
     # the in-game trade's nickname for Seedot, not the contest opponent of
     # the same English name (gContestOpponents)
     "DOTS": "e.common.trade.sIngameTrades.0",
+    # the Ruby/Sapphire link lobby's choice that starts the activity, not
+    # the START button's name (gText_Start reads スタートボタン in Japanese)
+    "START": None,
 }
 REVIEWED_BY_FAMILY: Mapping[str, Mapping[str, str | None]] = {"frlg": REVIEWED, "rse": REVIEWED_RSE}
 _QID_LAST_RESORT = (".easy_chat_", ".gEasyChatGroupName_", ".quest_log.", ".gPokedexEntries.", ".fame_checker.")

@@ -52,10 +52,20 @@
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
     },
-    "A:OK": {
-      "override": "A：けってい",
+    "A:OK  B:BACK": {
+      "override": "A：けってい　B：もどる",
       "reason": "engine-original",
-      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+      "provenance": "Button hint of the game3 SHADER FX menu (src/ui/game3/shaderfx_menu.lua:202); BACK as overrides/<language>/gsc/engine.json words the menus' BACK row."
+    },
+    "A:OK  B:CANCEL": {
+      "override": "A：けってい　B：やめる",
+      "reason": "engine-original",
+      "provenance": "Button hint of the game3 SHADER FX menu while a choice is pending (src/ui/game3/shaderfx_menu.lua:197); CANCEL as the carts' own CANCEL rows word it (rs.common.strings.gOtherText_CancelNoTerminator, e.common.strings.gText_Cancel2)."
+    },
+    "ADD %s?": {
+      "override": "%sを　メンバーに　しますか？",
+      "reason": "engine-corpus",
+      "provenance": "Title of the Ruby/Sapphire link lobby when a player asks to join the leader's group (src/core/game3/rs/link_entry.lua:154); shortened from the cart's own question (e.common.union_room.sText_PlayerContactedYouAddToMembers, \"Add to the members?\")."
     },
     "AURORA TICKET": {
       "override": "オーロラチケット",
@@ -71,6 +81,11 @@
       "override": "タマゴには　つかえない。",
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "B: CANCEL": {
+      "override": "B：やめる",
+      "reason": "engine-original",
+      "provenance": "Button hint of the Ruby/Sapphire link lobby added by gen1recomp (src/ui/game3/rs/cable_lobby.lua:50); CANCEL as the Ruby/Sapphire cart words it (rs.common.strings.gOtherText_CancelNoTerminator)."
     },
     "BATTLE COUNT CARD": {
       "override": "たいせんカウントカード",
@@ -111,6 +126,11 @@
       "override": "えらぶ",
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "CREATE GROUP": {
+      "override": "リーダーになる",
+      "reason": "engine-corpus",
+      "provenance": "First choice of the Ruby/Sapphire link lobby added by gen1recomp (src/core/game3/rs/link_entry.lua:49), paired with JOIN GROUP: the choice the generation-3 carts name BECOME LEADER (e.common.strings.gText_BecomeLeader, frlg.common.strings.gText_BecomeLeader)."
     },
     "CREDIT": {
       "override": "クレジット",
@@ -332,6 +352,16 @@
       "reason": "engine-original",
       "provenance": "Read the same way in Japanese: the cart's Japanese fonts draw the Latin block's characters in their full-width form."
     },
+    "SHADER FX": {
+      "override": "シェーダーエフェクト",
+      "reason": "engine-original",
+      "provenance": "Title of the game3 SHADER FX menu (src/ui/game3/shaderfx_menu.lua:67-70), the same option gen1recomp names SHADER FX in its Gen 1/2 options; worded as overrides/<language>/rby and gsc/engine.json already translate it."
+    },
+    "SHADER FX 2": {
+      "override": "シェーダーエフェクト2",
+      "reason": "engine-original",
+      "provenance": "Second shader slot of the game3 SHADER FX menu (src/ui/game3/shaderfx_menu.lua:68); worded as overrides/<language>/rby and gsc/engine.json translate it."
+    },
     "SPEED": {
       "override": "スピード",
       "reason": "engine-original",
@@ -342,6 +372,11 @@
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
     },
+    "START": {
+      "override": "スタート",
+      "reason": "engine-original",
+      "provenance": "Leader's choice that starts the activity in the Ruby/Sapphire link lobby added by gen1recomp (src/core/game3/rs/link_entry.lua:58); the carts ask the leader to press START when everyone is ready and keep the button's name (e.common.union_room.sText_AwaitingLinkPressStart), the Japanese cart writes it スタート (e.common.easy_chat_group_time.gEasyChatWord_Start)."
+    },
     "STRONG": {
       "override": "つよい",
       "reason": "engine-original",
@@ -349,11 +384,6 @@
     },
     "SURFING PICHU EGG": {
       "override": "なみのりピチューのタマゴ",
-      "reason": "engine-original",
-      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
-    },
-    "SWITCH BOX": {
-      "override": "ボックスをかえる",
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
     },
@@ -562,11 +592,6 @@
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
     },
-    "{A_BUTTON}OK {B_BUTTON}CANCEL": {
-      "override": "{A_BUTTON}けってい {B_BUTTON}やめる",
-      "reason": "engine-original",
-      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
-    },
     "{A_BUTTON}{B_BUTTON}OK": {
       "override": "{A_BUTTON}{B_BUTTON}けってい",
       "reason": "engine-original",
@@ -576,6 +601,11 @@
       "override": "{DPAD_UPDOWN}えらぶ {A_BUTTON}けってい {B_BUTTON}もどる",
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of a key hint gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "{DPAD_UPDOWN}PICK {A_BUTTON}OK {B_BUTTON}CANCEL": {
+      "override": "{DPAD_UPDOWN}えらぶ　{A_BUTTON}けってい　{B_BUTTON}もどる",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-backed from poke-corpus FireRedLeafGreen frlg.common.strings.gText_PickOKExit, the FireRed cart's own Japanese row for the same English (\"[DPAD_UPDOWN]PICK [A_BUTTON]OK [B_BUTTON]CANCEL\"): the button hint of gen1recomp's game3 mod manager (src/ui/game3/mod_manager.lua), a screen no cart has. The scope's own row, gText_HelpSystemControls_PickOkCancel, is empty in the Japanese corpus ([NULL]), and so is Emerald's gText_PickOKCancel, which falls back on this override."
     },
     "{DPAD_UPDOWN}PICK {DPAD_LEFTRIGHT}SWITCH {B_BUTTON}DONE": {
       "override": "{DPAD_UPDOWN}えらぶ {DPAD_LEFTRIGHT}きりかえ {B_BUTTON}おわり",

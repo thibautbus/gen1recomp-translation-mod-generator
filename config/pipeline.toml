@@ -57,8 +57,11 @@ target_lang = "fr"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
-# Pinned at v0.3.51, the upstream release used to validate and package the
-# RBY, Gold/Silver, Crystal, FireRed/LeafGreen and Emerald translation mods.
+# Pinned at v0.3.54, which carries Ruby and Sapphire (gen1recomp 67748895,
+# released in v0.3.52) and the Emerald screens translation mods reach
+# (gen1recomp#2678, released in v0.3.53), used to validate and package the
+# RBY, Gold/Silver, Crystal, FireRed/LeafGreen and Ruby/Sapphire/Emerald
+# translation mods.
 # Since v0.3.4, FireRed draws most of its own text from the cart instead of
 # English literals (option menu, summary pages, intro, Pokedex, region map,
 # battle messages, stat names...), so a mod translates them through the cart's
@@ -67,10 +70,10 @@ target_lang = "fr"
 # (gen1recomp#2398), takes Unicode braille cells (gen1recomp#2400) and draws
 # Japanese with the cart's own fonts (gen1recomp#2406).
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "a729af2364e1677222f22b1d3ba0fc6bce5c4dac"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/a729af2364e1677222f22b1d3ba0fc6bce5c4dac"
-archive_sha256 = "d40a3feec07e76332e52f6e131900781e1445148afbb19802369ce6cc1661fdc"
-archive_tree_sha256 = "daf091d730266b7515110feb7a62a8d34be9608e176c6549139c32f4a8435d41"
+revision = "c116459047d45293ef490662d07287f80835141f"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/c116459047d45293ef490662d07287f80835141f"
+archive_sha256 = "eb691bf61494357d7792f95f9435acaadbbca9d169e1ca768b8de3dc737c03fc"
+archive_tree_sha256 = "a6dc1d45a749319d27cb0a8e5edcd3f7e11266b8387a91f88723900386cef40a"
 
 # pret's FireRed/LeafGreen decompilation data the generation-3 release joins
 # through (never code, never game text): the symbol tables name every ROM

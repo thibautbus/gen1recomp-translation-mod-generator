@@ -670,7 +670,7 @@ class FrlgModTests(unittest.TestCase):
         if not (engine / "src").is_dir():
             self.skipTest("pinned gen1recomp checkout unavailable")
         reads = {
-            "src/core/game3/battle/abilities.lua": ("src/ui/game3/summary_menu.lua", r"Strings\(tostring\(ability\)\)"),
+            "src/core/game3/battle/abilities.lua": ("src/core/game3/pokemon.lua", r"if n and n ~= \"\" then return Strings\(n\) end"),
             "src/ui/game3/map_name_popup.lua": ("src/ui/game3/map_name_popup.lua", r"Strings\(label\)"),
             "src/ui/game3/region_map.lua": ("src/ui/game3/region_map.lua", r"Strings\(RegionExtract\.SECTION_NAMES"),
         }
@@ -912,7 +912,7 @@ class FrlgConfigTests(unittest.TestCase):
         scope = load_engine_scope()
         self.assertIn("TEXT SPEED", scope)
         # a value the runtime reaches through a table, not a literal callsite
-        self.assertIn("SWITCH BOX", scope)
+        self.assertIn("WITHDRAW", scope)
         # the option menu's help text comes from the cart since v0.3.0
         self.assertNotIn("Go back to the\nprevious menu.", scope)
         decisions = load_dialogue_decisions()

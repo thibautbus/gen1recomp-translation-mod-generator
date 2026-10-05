@@ -170,7 +170,7 @@ class GoldEngineCatalogTests(unittest.TestCase):
                 load_gs_engine_scope_exclusions(path)
             path.write_text(
                 '{"schema": "gen1recomp-translation-mods/gs-engine-scope-exclusions", '
-                '"version": 2, "source_revision": "a729af2364e1677222f22b1d3ba0fc6bce5c4dac", '
+                '"version": 2, "source_revision": "c116459047d45293ef490662d07287f80835141f", '
                 '"excluded_keys": {"X": {"reason": ""}}}',
                 encoding="utf-8",
             )
