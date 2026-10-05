@@ -64,6 +64,10 @@ GAME_SPECS: Mapping[str, GameSpec] = {
     "crystal": GameSpec("crystal", 2, "Crystal"),
     "firered": GameSpec("firered", 3, "FireRedLeafGreen"),
     "leafgreen": GameSpec("leafgreen", 3, "FireRedLeafGreen"),
+    # Ruby and Sapphire, either one (like "gs" and "rb"): the build reads
+    # whichever cart it is given and keys the other's text through pret's
+    # symbols (pipeline/rse/join.py).
+    "rs": GameSpec("rs", 3, "RubySapphire"),
     "emerald": GameSpec("emerald", 3, "Emerald"),
 }
 
@@ -84,7 +88,9 @@ RELEASE_PROFILES: Mapping[str, ReleaseProfile] = {
     # at different addresses, so LeafGreen's dialogue can only be keyed from
     # its own ROM (pipeline/frlg/mod.py's build_frlg()).
     "frlg": ReleaseProfile("frlg", 3, ("firered", "leafgreen")),
-    "rse": ReleaseProfile("rse", 3, ("emerald",)),
+    # Emerald is a mandatory companion ROM, like Crystal is for "gsc": one
+    # mod covers ruby/sapphire/emerald, gated at runtime by GameVersion.
+    "rse": ReleaseProfile("rse", 3, ("rs", "emerald")),
 }
 
 # The collection is the source of truth for the UI language domain.  Keeping
@@ -103,6 +109,8 @@ COLLECTION_LANGUAGES: Mapping[str, tuple[tuple[str, str], ...]] = {
     # (gen1recomp#2406), so FireRed has a Japanese release like the rest.
     "FireRedLeafGreen": (("fr", "French"), ("de", "German"), ("es", "Spanish"),
                          ("it", "Italian"), ("ja-Hrkt", "Japanese")),
+    "RubySapphire": (("fr", "French"), ("de", "German"), ("es", "Spanish"),
+                     ("it", "Italian"), ("ja-Hrkt", "Japanese")),
     "Emerald": (("fr", "French"), ("de", "German"), ("es", "Spanish"),
                 ("it", "Italian"), ("ja-Hrkt", "Japanese")),
 }

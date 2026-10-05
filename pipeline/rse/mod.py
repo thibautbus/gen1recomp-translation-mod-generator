@@ -1,27 +1,28 @@
-"""Emerald (generation 3) translation mod: join, generation, release gate,
-build.
+"""The rse release: one translation mod for Ruby, Sapphire and Emerald.
 
-Emerald runs on the same game3 runtime as FireRed and goes through the same
-joins (pipeline.gen3), with its own family (pipeline.gen3.family.EMERALD):
-the Emerald PokeCorpus collection, pret's pokeemerald symbol table and
-charmap, the runtime's ``rse`` text dialect, and its own reviewed
-configuration as the companion edition of the ``rse`` release
-(``config/rse/emerald_*.json``, ``overrides/<language>/rse/emerald_*.json``).  The
-mod ships:
+The three Hoenn games run on gen1recomp's game3 runtime, and one mod covers
+them all, the way one covers Gold, Silver and Crystal (pipeline/gsc) or Red,
+Blue and Yellow (pipeline/rby).  Ruby and Sapphire are the release's base
+game (pipeline/rse/join.py), Emerald its companion edition
+(pipeline/rse/emerald.py); a build reads the Emerald ROM and one Ruby or
+Sapphire ROM, of any English revision.
 
-* ``text``: every dialogue and named-text key, overridden with its IR
-  segment list (the Emerald extract keys script text by ROM address and the
-  cart's own tables by label; a pointer table's slot is joined through the
-  symbol its pointer reaches);
-* ``pokemon``, ``moves``, ``items`` and ``trainers`` name, description and
-  class-name patches, keyed as ``G3.idOf`` and ``G3.trainerIds`` key them;
-* ``strings`` for the game3 interface strings that go through ``Strings()``
-  (config/rse/emerald_engine_scope.json): Emerald's corpus rows first, then the
-  reviewed overrides of this family and of FireRed for the port-added rows
-  both runtimes share.
+The mod ships one layer per game, which main.lua picks by ``GameVersion``:
 
-It is a mod of its own, apart from the FireRed/LeafGreen one: an Emerald
-build needs only the Emerald ROM.
+* ``lang/emerald/``: Emerald's text, catalogs and engine strings;
+* ``lang/rs/``: the catalogs and engine strings Ruby and Sapphire share, and
+  ``layouts.lua``, the guards that tell revision 1.0 from 1.1/1.2;
+* ``lang/ruby/``, ``lang/sapphire/``: each edition's named text (labels,
+  pointer tables, battle strings);
+* ``lang/ruby_1_0/``, ``lang/ruby_1_1/``, ``lang/sapphire_1_0/``,
+  ``lang/sapphire_1_1/``: the script text, keyed by ROM address, of each
+  edition's two text layouts.
+
+In each layer, ``text`` overrides every dialogue key with its IR segment
+list; ``pokemon``, ``moves``, ``items`` and ``trainers`` take name,
+description and class-name patches keyed as ``G3.idOf`` and
+``G3.trainerIds`` key them; ``strings`` holds the game3 interface strings
+that go through ``Strings()``.
 """
 from __future__ import annotations
 
@@ -31,42 +32,29 @@ import shutil
 from pathlib import Path
 from typing import Callable, Mapping
 
-from ..shared.builder import BuildError, _run
-from ..shared.corpus import canonical_language
-from ..shared.dependencies import DependencyError, fetch_files
-from ..gen3.family import EMERALD
-from ..gen3.join import (
-    dialogue_catalog,
-    join_gen3_dialogue,
-    join_gen3_engine_strings,
-    join_indexed_catalog,
-    join_item_descriptions,
-    join_trainer_class_names,
-    load_dialogue_decisions,
-    load_dialogue_overrides,
-    load_engine_scope,
-    load_gen3_corpus,
-    registry_ids,
-)
 from ..gen3.mod import (
     CATALOG_HOOKS,
-    dialogue_label_rows,
     gen3_coverage,
     lua_ir,
     package_gen3_mod,
-    rom_label_strings,
     rom_text_cache,
     unresolved_entries,
 )
-from ..gen3.text import load_charmap, load_symbols
-from .european import apply_european_trainer_text
+from ..shared.builder import BuildError, _run
+from ..shared.corpus import canonical_language
 from ..shared.generate import lua_string
 from ..shared.mod_assets import TRANSLATION_MOD_PRIORITY
 from ..shared.project import project_config, project_version, resource_root
-from ..shared.roms import import_rse_rom, verify_emerald_rom
+from ..shared.roms import (
+    RS_EDITIONS, import_rse_rom, rs_revision_for_sha1, verify_emerald_rom, verify_rs_rom,
+)
 from ..shared.specs import game_spec, languages_for_collection, release_profile
+from .emerald import join_emerald, prepare_emerald_pret_inputs
+from .join import join_rs, layer_name, prepare_rs_pret_inputs
 
-MAIN = '''-- Generated Emerald translation mod.
+GAMES = ("ruby", "sapphire", "emerald")
+
+MAIN = '''-- Generated Ruby, Sapphire and Emerald translation mod.
 local function dialogueFile(part)
   return part == 1 and "dialogue" or ("dialogue_" .. part)
 end
@@ -81,19 +69,53 @@ return function(mod)
     assert(type(value) == "table", "lang/" .. name .. ".lua is not a table")
     return value
   end
-  -- Dialogue values are text IR segment lists (src/core/game3/scripting/
-  -- text_ir.lua, Emerald's dialect), keyed by the extractor's ROM-pointer
-  -- text keys and the cart's own table labels, in as many files as LuaJIT's
-  -- per-chunk constant limit needs (dialogue, dialogue_2, ...).
-  local part = 1
-  while mod:read("lang/" .. dialogueFile(part) .. ".lua") do
-    for key, ir in pairs(catalog(dialogueFile(part))) do
-      if type(ir) == "table" and #ir > 0 then mod.content.text:override(key, ir) end
+  local okGame, GameVersion = pcall(require, "src.core.GameVersion")
+  local game = okGame and type(GameVersion) == "table" and type(GameVersion.get) == "function"
+    and GameVersion.get() or nil
+  -- Each game reads its own layers: Emerald one; Ruby and Sapphire the
+  -- catalogs they share, their edition's named text and the script text of
+  -- their revision's layout.  Script text is keyed by ROM address, and
+  -- revision 1.0 lays it out apart from 1.1 and 1.2: a guard address starts
+  -- another text in each, which the cart's own text there tells apart.
+  local layers, shared
+  if game == "ruby" or game == "sapphire" then
+    layers, shared = { game }, "rs"
+    local function plain(ir)
+      if type(ir) == "string" then return ir end
+      local out = {}
+      for _, segment in ipairs(type(ir) == "table" and ir or {}) do
+        if type(segment) == "table" and segment.t == "text" then out[#out + 1] = segment.s end
+      end
+      return table.concat(out)
     end
-    part = part + 1
+    local layouts, chosen = catalog("rs/layouts")[game] or {}, nil
+    for _, layout in ipairs(layouts) do
+      if plain(mod.content.text:get(layout.key)) == layout.text then
+        chosen = layout.dir
+        break
+      end
+    end
+    -- no guard matched (another mod rewrote the guard's text): the first
+    -- layout, 1.1/1.2, the revisions most carts are
+    layers[#layers + 1] = chosen or (layouts[1] and layouts[1].dir)
+  else
+    -- Emerald, the manifest's only other game
+    layers, shared = { "emerald" }, "emerald"
+  end
+  -- Dialogue values are text IR segment lists (src/core/game3/scripting/
+  -- text_ir.lua, the game's dialect), in as many files as LuaJIT's per-chunk
+  -- constant limit needs (dialogue, dialogue_2, ...).
+  for _, layer in ipairs(layers) do
+    local part = 1
+    while mod:read("lang/" .. layer .. "/" .. dialogueFile(part) .. ".lua") do
+      for key, ir in pairs(catalog(layer .. "/" .. dialogueFile(part))) do
+        if type(ir) == "table" and #ir > 0 then mod.content.text:override(key, ir) end
+      end
+      part = part + 1
+    end
   end
   local function each(name, apply)
-    for id, value in pairs(catalog(name)) do
+    for id, value in pairs(catalog(shared .. "/" .. name)) do
       if type(value) == "string" and value ~= "" then apply(id, value) end
     end
   end
@@ -117,29 +139,35 @@ def dialogue_files(dialogue: Mapping[str, list[dict]]) -> dict[str, dict[str, li
         files[name] = {key: dialogue[key] for key in keys[start:start + DIALOGUE_FILE_ENTRIES]}
     return files
 
-# The places where the Emerald runtime reads a string by its English text and
-# by nothing else, once gen1recomp's Emerald display hooks route them through
-# Strings(): the ability names, the summary's descriptions and contest texts,
-# the map sections and the Pokédex entries.  Their entries are kept under
-# their English (rom_label_strings) in a file of their own.
-ENGLISH_LOOKUP_SITES = (
-    "src/core/game3/battle/abilities.lua",
-    "src/core/game3/summary_data.lua",
-    "src/ui/game3/rse/mapsec.lua",
-    "src/ui/game3/rse/pokedex.lua",
-)
-
-# pret's symbol table and charmap for Emerald, in [pret.emerald_symbols] and
-# [pret.emerald_charmap].
-EMERALD_SYMBOL_FILE = "pokeemerald.sym"
-
 
 def rse_mod_id(language: str) -> str:
-    return f"translation-{canonical_language(language).lower()}-gen3-emerald"
+    return f"translation-{canonical_language(language).lower()}-gen3-rse"
 
 
 def rse_archive_name(language: str, version: str) -> str:
-    return f"translation-{canonical_language(language).lower()}-gen3-emerald-{version}.zip"
+    return f"{rse_mod_id(language)}-{version}.zip"
+
+
+def _write_table(path: Path, title: str, values: Mapping[str, object], render) -> None:
+    lines = [f"-- Generated by the Ruby, Sapphire and Emerald pipeline ({title})", "return {"]
+    lines.extend(f"  [{lua_string(key)}] = {render(value)}," for key, value in sorted(values.items()))
+    lines.append("}")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _write_layouts(path: Path, guards: Mapping[str, list[Mapping[str, str]]]) -> None:
+    lines = ["-- Generated by the Ruby, Sapphire and Emerald pipeline: each edition's text",
+             "-- layouts, and the guard address that tells them apart (main.lua)", "return {"]
+    for edition, layouts in sorted(guards.items()):
+        lines.append(f"  {edition} = {{")
+        for row in layouts:
+            lines.append(f"    {{ dir = {lua_string(row['dir'])}, key = {lua_string(row['key'])}, "
+                         f"text = {lua_string(row['text'])} }},")
+        lines.append("  },")
+    lines.append("}")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def generate_rse_mod(
@@ -147,44 +175,67 @@ def generate_rse_mod(
     *,
     language: str,
     target_name: str,
-    dialogue: Mapping[str, list[dict]],
-    catalogs: Mapping[str, Mapping[str, str]],
+    emerald: Mapping | None = None,
+    rs: Mapping | None = None,
     mod_id: str | None = None,
 ) -> Path:
-    """Write a deterministic manifest, entry point and catalogs."""
+    """Write a deterministic manifest, entry point and layers.
+
+    ``emerald`` is join_emerald's result (its ``dialogue`` and ``catalogs``),
+    ``rs`` join_rs's (``named``, ``script``, ``catalogs`` and ``guards``).
+    """
     language = canonical_language(language)
     destination = Path(destination)
     destination.mkdir(parents=True, exist_ok=True)
-    unknown = set(catalogs) - set(CATALOG_HOOKS)
-    if unknown:
-        raise ValueError(f"no registry hook for catalog(s): {sorted(unknown)}")
     lang_dir = destination / "lang"
     if lang_dir.exists():
         shutil.rmtree(lang_dir)
     lang_dir.mkdir(parents=True)
 
-    for name, entries in dialogue_files(dialogue).items():
-        lines = [f"-- Generated by the Emerald pipeline ({language}): {name}", "return {"]
-        lines.extend(f"  [{lua_string(key)}] = {lua_ir(ir)}," for key, ir in sorted(entries.items()))
-        lines.append("}")
-        (lang_dir / f"{name}.lua").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    dialogue_layers: dict[str, Mapping[str, list[dict]]] = {}
+    catalog_layers: dict[str, Mapping[str, Mapping[str, str]]] = {}
+    if emerald is not None:
+        dialogue_layers["emerald"] = emerald["dialogue"]
+        catalog_layers["emerald"] = emerald["catalogs"]
+    if rs is not None:
+        dialogue_layers.update(rs["named"])
+        dialogue_layers.update(rs["script"])
+        catalog_layers["rs"] = rs["catalogs"]
+        _write_layouts(lang_dir / "rs" / "layouts.lua", rs["guards"])
 
-    registration = ""
-    for name in CATALOG_HOOKS:
-        values = catalogs.get(name) or {}
-        if not values:
-            continue
-        lines = [f"-- Generated by the Emerald pipeline ({language}): {name}", "return {"]
-        lines.extend(f"  [{lua_string(id_)}] = {lua_string(value)}," for id_, value in sorted(values.items()))
-        lines.append("}")
-        (lang_dir / f"{name}.lua").write_text("\n".join(lines) + "\n", encoding="utf-8")
-        registration += f'  each("{name}", function(id, value) {CATALOG_HOOKS[name]} end)\n'
+    for layer, dialogue in sorted(dialogue_layers.items()):
+        for name, entries in dialogue_files(dialogue).items():
+            _write_table(lang_dir / layer / f"{name}.lua", f"{language}, {layer}/{name}", entries, lua_ir)
+    registered: set[str] = set()
+    for layer, catalogs in sorted(catalog_layers.items()):
+        unknown = set(catalogs) - set(CATALOG_HOOKS)
+        if unknown:
+            raise ValueError(f"no registry hook for catalog(s): {sorted(unknown)}")
+        for name in CATALOG_HOOKS:
+            values = catalogs.get(name) or {}
+            if values:
+                _write_table(lang_dir / layer / f"{name}.lua", f"{language}, {layer}/{name}", values, lua_string)
+                registered.add(name)
+    # The launcher fills its pre-boot Strings() catalog from each mod's
+    # top-level lang/strings.lua alone, before a game is chosen
+    # (src/mods/LauncherMods.lua, STRINGS_CATALOG): the entries every game's
+    # layer agrees on, its own options among them.  The game's layer
+    # replaces it once the game boots.
+    layer_strings = [dict(catalogs.get("strings") or {}) for catalogs in catalog_layers.values()]
+    if layer_strings:
+        launcher = {key: value for key, value in layer_strings[0].items()
+                    if all(other.get(key) == value for other in layer_strings[1:])}
+        if launcher:
+            _write_table(lang_dir / "strings.lua", f"{language}, strings", launcher, lua_string)
+    registration = "".join(
+        f'  each("{name}", function(id, value) {CATALOG_HOOKS[name]} end)\n'
+        for name in CATALOG_HOOKS if name in registered)
     (destination / "main.lua").write_text(MAIN.replace("__CATALOG_REGISTRATION__", registration),
                                           encoding="utf-8")
 
     manifest = {
         "id": mod_id or rse_mod_id(language), "name": target_name, "version": project_version(),
-        "api": 2, "entry": "main.lua", "profile": "content", "games": list(EMERALD.editions),
+        "api": 2, "entry": "main.lua", "profile": "content", "games": list(GAMES),
         "game_version": ">=0.0.0-dev <1.0.0", "category": "LANGUAGE",
         "priority": TRANSLATION_MOD_PRIORITY, "dependencies": [], "optional_dependencies": [],
         "conflicts": [], "permissions": [],
@@ -200,128 +251,6 @@ def attach_rse_validation(mod_dir: str | Path, validation: dict) -> None:
     manifest = json.loads(path.read_text(encoding="utf-8"))
     manifest["validation"] = validation
     path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-
-# ---------------------------------------------------------------- inputs
-
-def prepare_emerald_pret_inputs(workspace: str | Path, config: Mapping) -> tuple[Path, Path]:
-    """Download the pinned pret Emerald symbol table and charmap."""
-    root = Path(workspace) / "dependencies" / "pret"
-    pret = config.get("pret") or {}
-    folders = {}
-    for name in ("emerald_symbols", "emerald_charmap"):
-        section = pret.get(name) or {}
-        try:
-            folders[name] = fetch_files(
-                str(section["archive_base_url"]), dict(section["archive_files"]),
-                root / name, revision=str(section.get("revision", "")),
-            )
-        except (DependencyError, KeyError, TypeError, ValueError, OSError) as error:
-            raise BuildError(f"Unable to download pinned pret {name}: {error}") from error
-    return folders["emerald_symbols"] / EMERALD_SYMBOL_FILE, folders["emerald_charmap"] / "charmap.txt"
-
-
-def _numbered(path: Path) -> dict[int, object]:
-    return {int(key): value for key, value in json.loads(path.read_text(encoding="utf-8")).items()}
-
-
-def text_aliases(extracted: Path, symbols: Mapping[int, list[str]]) -> dict[str, tuple[str, ...]]:
-    """The pret symbols each pointer-table key reaches (rse_text_pointers.json)."""
-    pointers = json.loads((Path(extracted) / "rse_text_pointers.json").read_text(encoding="utf-8"))
-    return {key: tuple(symbols.get(int(address), ())) for key, address in pointers.items()
-            if symbols.get(int(address))}
-
-
-def _description_qids(items: Mapping[int, Mapping], symbols: Mapping[int, list[str]],
-                      corpus) -> dict[int, list[str]]:
-    """Each item's own description rows, named after the string its
-    description pointer reaches (sMasterBallDesc)."""
-    out: dict[int, list[str]] = {}
-    for number, row in items.items():
-        pointer = row.get("description_pointer") if isinstance(row, Mapping) else None
-        if not isinstance(pointer, int):
-            continue
-        qids = [corpus.qids[index] for label in symbols.get(pointer, ())
-                for index in corpus.by_label.get(label, ())
-                if corpus.qids[index].startswith(f"{EMERALD.qid_prefix}common.item_descriptions.")]
-        if qids:
-            out[number] = qids
-    return out
-
-
-# ---------------------------------------------------------------- join
-
-def join_rse(
-    extracted: str | Path,
-    corpus_dir: str | Path,
-    language: str,
-    symbols_path: str | Path,
-    charmap_path: str | Path,
-    gen1recomp: str | Path | None = None,
-    luajit: str | None = None,
-) -> dict:
-    """Run every Emerald join for one language; return catalogs and stats."""
-    extracted = Path(extracted)
-    language = canonical_language(language)
-    charmap = load_charmap(charmap_path, EMERALD.dialect)
-    symbols = load_symbols(symbols_path)
-    corpus = load_gen3_corpus(corpus_dir, language, EMERALD)
-
-    text = json.loads((extracted / "rse_text.json").read_text(encoding="utf-8"))
-    entries, dialogue_stats = join_gen3_dialogue(
-        text, corpus, symbols, charmap,
-        overrides=load_dialogue_overrides(language, EMERALD),
-        decisions=load_dialogue_decisions(EMERALD),
-        aliases=text_aliases(extracted, symbols),
-    )
-
-    species = _numbered(extracted / "rse_species.json")
-    moves = _numbered(extracted / "rse_moves.json")
-    items = _numbered(extracted / "rse_items.json")
-    trainers = _numbered(extracted / "rse_trainers.json")
-
-    species_ids = registry_ids(species)
-    item_names = {number: row.get("name") for number, row in items.items()}
-    item_ids = registry_ids(item_names)
-    trainer_ids = {number: str(number) for number in trainers}
-    prefix = f"{EMERALD.qid_prefix}common."
-    results = {
-        "species_names": join_indexed_catalog(
-            species, species_ids, corpus, prefix + "species_names.gSpeciesNames.", charmap),
-        "move_names": join_indexed_catalog(
-            moves, registry_ids(moves), corpus, prefix + "move_names.gMoveNames.", charmap),
-        "item_names": join_indexed_catalog(item_names, item_ids, corpus, prefix + "items.gItems.", charmap),
-        "item_descriptions": join_item_descriptions(
-            items, item_ids, corpus, charmap, own_qids=_description_qids(items, symbols, corpus)),
-        "trainer_names": join_indexed_catalog(
-            {number: row.get("name") for number, row in trainers.items()}, trainer_ids, corpus,
-            prefix + "trainers.gTrainers.", charmap),
-        "trainer_class_names": join_trainer_class_names(trainers, trainer_ids, corpus, charmap),
-    }
-    european = apply_european_trainer_text(results["trainer_names"].values, results["trainer_class_names"].values,
-                                           trainers, trainer_ids, corpus, charmap)
-    scope = load_engine_scope(EMERALD)
-    strings, engine_stats = join_gen3_engine_strings(scope, corpus, charmap)
-    by_english: dict[str, str] = {}
-    if gen1recomp is not None:
-        strings, by_english = rom_label_strings(strings, gen1recomp, scope, luajit, ENGLISH_LOOKUP_SITES,
-                                                 dialogue_label_rows(entries))
-    catalogs = {name: result.values for name, result in results.items()}
-    catalogs["strings"] = strings
-    if by_english:
-        catalogs["strings_by_english"] = by_english
-    return {
-        "entries": entries,
-        "dialogue": dialogue_catalog(entries),
-        "dialogue_stats": dialogue_stats,
-        "catalogs": catalogs,
-        "catalog_stats": {name: result.summary() for name, result in results.items()},
-        "catalog_issues": {name: result.issues for name, result in results.items()},
-        "european_trainer_text": dict(european),
-        "engine_stats": engine_stats,
-        "numbers": {"species": species_ids, "items": item_ids, "moves": registry_ids(moves)},
-        "scope": scope,
-    }
 
 
 # ---------------------------------------------------------------- gate
@@ -340,13 +269,25 @@ def _plain_text(ir: list[dict]) -> str | None:
     return "".join(segment.get("s", "") for segment in ir)
 
 
-def write_gate_expectations(path: Path, joined: dict) -> dict:
-    """One sample per shipped catalog and Emerald consumer, read back by
+def _layers(joined: dict, game: str) -> tuple[list[str], str]:
+    """The dialogue layers and the catalog layer main.lua reads for ``game``
+    from the cart that was read."""
+    if game == "emerald":
+        return ["emerald"], "emerald"
+    source = joined["source"]
+    return [layer_name(source.edition), layer_name(source.edition, source.layout)], "rs"
+
+
+def write_gate_expectations(path: Path, joined: dict, game: str = "emerald") -> dict:
+    """One sample per shipped catalog and consumer of one game, read back by
     tools/rse/gate.lua."""
     catalogs = joined["catalogs"]
     numbers = joined["numbers"]
     dialogue = joined["dialogue"]
-    expectations: dict[str, object] = {}
+    dialogue_layers, catalog_layer = _layers(joined, game)
+    expectations: dict[str, object] = {
+        "game": game, "dialogue_layers": dialogue_layers, "catalog_layer": catalog_layer,
+    }
 
     for key in sorted(dialogue):
         ir = dialogue[key]
@@ -354,6 +295,15 @@ def write_gate_expectations(path: Path, joined: dict) -> dict:
             probe = max((segment.get("s", "") for segment in ir if segment.get("t") == "text"), key=len)
             expectations["dialogue"] = {"key": key, "ir": ir, "probe": probe.strip()}
             break
+    # Ruby and Sapphire: the guard address holds the translation of the
+    # layout this cart's revision uses, not the other's
+    if game != "emerald":
+        source = joined["source"]
+        guard = next(row for row in joined["guards"][source.edition]
+                     if row["dir"] == layer_name(source.edition, source.layout))
+        own = joined["script"][guard["dir"]].get(guard["key"])
+        if own:
+            expectations["layout"] = {"key": guard["key"], "ir": own}
     # the battle string table, read back by STRINGID through BattleText.get
     for key in sorted(dialogue):
         value = _plain_text(dialogue[key]) if key.startswith("STRINGID_") else None
@@ -403,20 +353,21 @@ def write_gate_expectations(path: Path, joined: dict) -> dict:
             break
     # The display hooks gen1recomp's Emerald screens gain upstream: measured,
     # not failed, until the pinned engine carries them.
-    by_english = catalogs.get("strings_by_english", {})
-    english = {**strings, **by_english}
-    hooks = {}
-    for site, label in (("src/core/game3/battle/abilities.lua", "ability_name"),
-                        ("src/ui/game3/rse/pokedex.lua", "pokedex"),
-                        ("src/core/game3/summary_data.lua (SummaryData.contest", "contest"),
-                        ("src/ui/game3/rse/mapsec.lua", "map_section")):
-        for key, row in sorted(joined.get("scope", {}).items()):
-            if (str(row.get("callsite", "")).startswith(site) and "{" not in key and key == key.strip()
-                    and key in english and english[key] != key):
-                hooks[label] = {"source": key, "value": english[key]}
-                break
-    if hooks:
-        expectations["hooks"] = hooks
+    if game == "emerald":
+        by_english = catalogs.get("strings_by_english", {})
+        english = {**strings, **by_english}
+        hooks = {}
+        for site, label in (("src/core/game3/battle/abilities.lua", "ability_name"),
+                            ("src/ui/game3/rse/pokedex.lua", "pokedex"),
+                            ("src/core/game3/summary_data.lua (SummaryData.contest", "contest"),
+                            ("src/ui/game3/rse/mapsec.lua", "map_section")):
+            for key, row in sorted(joined.get("scope", {}).items()):
+                if (str(row.get("callsite", "")).startswith(site) and "{" not in key and key == key.strip()
+                        and key in english and english[key] != key):
+                    hooks[label] = {"source": key, "value": english[key]}
+                    break
+        if hooks:
+            expectations["hooks"] = hooks
     # The samples the gate must find: one for every catalog that has rows.
     sources = {
         "dialogue": any(key.startswith("g3:") for key in dialogue),
@@ -429,40 +380,62 @@ def write_gate_expectations(path: Path, joined: dict) -> dict:
     for name in ("species_names", "move_names", "item_names", "item_descriptions",
                  "trainer_names", "trainer_class_names"):
         sources[name] = bool(catalogs.get(name))
+    if game != "emerald":
+        sources["layout"] = True
     expectations["required"] = sorted(name for name, present in sources.items() if present)
     path.write_text(json.dumps(expectations, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return expectations
 
 
 def run_rse_gate(mod_dir: Path, extracted: Path, joined: dict, gen1recomp: Path, luajit: str,
-                 *, log_fn: Callable[[str], None] | None = None) -> dict:
-    expectation_path = mod_dir.parent / f".{mod_dir.name}.gate.json"
-    report_path = mod_dir.parent / f".{mod_dir.name}.{GATE_REPORT_NAME}"
-    write_gate_expectations(expectation_path, joined)
+                 *, game: str = "emerald", rom_sha1: str | None = None,
+                 log_fn: Callable[[str], None] | None = None) -> dict:
+    """Load the mod through the real generation-3 loader on top of one
+    game's extract (tools/rse/gate.lua)."""
+    expectation_path = mod_dir.parent / f".{mod_dir.name}.{game}.gate.json"
+    report_path = mod_dir.parent / f".{mod_dir.name}.{game}.{GATE_REPORT_NAME}"
+    write_gate_expectations(expectation_path, joined, game)
     script = resource_root() / "tools" / "rse" / "gate.lua"
     try:
         _run([luajit, str(script), str(gen1recomp), str(extracted / "cache"), str(mod_dir),
-              str(expectation_path), str(report_path)], cwd=gen1recomp, log_fn=log_fn)
+              str(expectation_path), str(report_path), game, rom_sha1 or game],
+             cwd=gen1recomp, log_fn=log_fn)
         return json.loads(report_path.read_text(encoding="utf-8"))
     finally:
         expectation_path.unlink(missing_ok=True)
 
 
-def write_rse_report(path: Path, joined: dict, coverage: dict, gate: dict) -> None:
-    """Private per-key report (it quotes ROM text: never packaged)."""
-    report = {
-        "coverage": coverage,
-        "dialogue_unresolved": unresolved_entries(joined),
-        "catalog_issues": joined["catalog_issues"],
-        "engine_details": joined["engine_stats"]["details"],
-        "gate": gate,
+def rs_coverage(joined: dict) -> dict:
+    """gen3_coverage for the cart that was read, with each layout's
+    dialogue."""
+    coverage = gen3_coverage(joined)
+    coverage["layouts"] = {
+        layer_name(*layout): {"read": data["read"], **{key: data["stats"][key]
+                                                      for key in ("total", "covered", "percent")}}
+        for layout, data in joined["layouts"].items()
     }
+    return coverage
+
+
+def write_rse_report(path: Path, games: Mapping[str, tuple[dict, dict, dict]]) -> None:
+    """Private per-key report (it quotes ROM text: never packaged): for each
+    game, its coverage, unresolved rows and gate."""
+    report = {}
+    for game, (joined, coverage, gate) in games.items():
+        report[game] = {
+            "coverage": coverage,
+            "dialogue_unresolved": unresolved_entries(joined),
+            "catalog_issues": joined["catalog_issues"],
+            "engine_details": joined["engine_stats"]["details"],
+            "gate": gate,
+        }
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 # ---------------------------------------------------------------- build
 
 def build_rse(
+    rs_rom: str | Path,
     emerald_rom: str | Path,
     language: str,
     language_name: str,
@@ -472,7 +445,8 @@ def build_rse(
     log_fn: Callable[[str], None] | None = None,
     status_fn: Callable[[str], None] | None = None,
 ) -> Path:
-    """Extract, join, gate and package the Emerald mod."""
+    """Extract, join, gate and package the Ruby, Sapphire and Emerald mod
+    from one Ruby or Sapphire ROM and the Emerald ROM."""
 
     def status(message: str) -> None:
         if status_fn:
@@ -485,56 +459,85 @@ def build_rse(
 
     language = canonical_language(language)
     profile = release_profile("rse")
-    spec = game_spec("emerald")
-    supported = {code for code, _name in languages_for_collection(spec.corpus_collection)}
+    supported = set.intersection(*({code for code, _name in languages_for_collection(game_spec(game).corpus_collection)}
+                                   for game in profile.games))
     if language not in supported:
-        raise BuildError(f"Emerald has no {language} release.")
-    status("Validating ROM")
+        raise BuildError(f"Ruby, Sapphire and Emerald have no {language} release.")
+    status("Validating ROMs")
+    rs_info = verify_rs_rom(rs_rom)
     verify_emerald_rom(emerald_rom)
+    edition = rs_info["version"]
+    edition_name = RS_EDITIONS[edition]
 
     from ..shared.orchestration import prepare_build_context
     context = prepare_build_context(
         workspace_root, output_dir, profile=profile, language=language, font_profile=None,
     )
     workspace, destination, gen1recomp = context.workspace, context.destination, context.gen1recomp
-    corpus_dir = context.corpus / "corpus" / spec.corpus_collection
+    corpora = context.corpus / "corpus"
     status("Preparing dependencies")
-    symbols, charmap = prepare_emerald_pret_inputs(workspace, project_config())
+    config = project_config()
+    emerald_symbols, emerald_charmap = prepare_emerald_pret_inputs(workspace, config)
+    rs_symbols, rs_charmap = prepare_rs_pret_inputs(workspace, config)
 
+    extracted = {"emerald": workspace / "emerald" / "extracted", "rs": workspace / edition / "extracted"}
+    log(f"\nExtracting private {edition_name} {rs_info['revision']} ROM data...")
+    status(f"Extracting private {edition_name} ROM data")
+    import_rse_rom(rs_rom, gen1recomp, extracted["rs"], log_fn=log_fn, game="rs")
     log("\nExtracting private Emerald ROM data...")
     status("Extracting private Emerald ROM data")
-    extracted = workspace / "emerald" / "extracted"
-    import_rse_rom(emerald_rom, gen1recomp, extracted, log_fn=log_fn)
+    import_rse_rom(emerald_rom, gen1recomp, extracted["emerald"], log_fn=log_fn)
 
-    with rom_text_cache(gen1recomp, extracted, "emerald"):
-        log("\nJoining corpus and generating the mod...")
-        status("Joining corpus and generating the mod")
-        joined = join_rse(extracted, corpus_dir, language, symbols, charmap, gen1recomp, luajit)
-        build_root = workspace / "interactive-rse" / language
-        mod_dir = build_root / rse_mod_id(language)
-        generate_rse_mod(mod_dir, language=language, target_name=f"{language_name} translation for Emerald",
-                         dialogue=joined["dialogue"], catalogs=joined["catalogs"])
-        coverage = gen3_coverage(joined)
-        status("Running Emerald release gate")
-        gate = run_rse_gate(mod_dir, extracted, joined, gen1recomp, luajit, log_fn=log_fn)
-        attach_rse_validation(mod_dir, {
-            "schema": 1, "policy": "english-fallback", "coverage": coverage,
-            "runtime_limits": {
-                "blank_glyphs": gate.get("blank_glyphs", {}).get("total", 0),
-                "strings_resolve_in_game": bool((gate.get("strings_live") or {}).get("resolves")),
-                "display_hooks": gate.get("hooks", {}),
-            },
-        })
-        write_rse_report(build_root / "coverage.json", joined, coverage, gate)
-        for key, label in (("rom", "Emerald ROM aggregate"), ("engine_gen3", "Emerald engine strings")):
-            section = coverage[key]
-            log(f"  {label}: {section['translated']}/{section['total']} ({section['percent']:.2f}%)")
-        blank = gate.get("blank_glyphs", {})
-        if blank.get("total"):
-            log(f"  runtime limit: {blank['total']} shipped characters have no glyph in FrlgFont yet"
-                " (docs/upstream-fixes.md, Emerald)")
+    log("\nJoining corpus and generating the mod...")
+    status("Joining corpus and generating the mod")
+    with rom_text_cache(gen1recomp, extracted["emerald"], "emerald"):
+        emerald = join_emerald(extracted["emerald"], corpora / game_spec("emerald").corpus_collection, language,
+                               emerald_symbols, emerald_charmap, gen1recomp, luajit)
+    with rom_text_cache(gen1recomp, extracted["rs"], edition):
+        rs = join_rs(extracted["rs"], corpora / game_spec("rs").corpus_collection, language, rs_symbols,
+                     rs_charmap, rs_revision_for_sha1(rs_info["sha1"]), gen1recomp, luajit,
+                     companion_strings=emerald["engine_values"])
+    build_root = workspace / "interactive-rse" / language
+    mod_dir = build_root / rse_mod_id(language)
+    generate_rse_mod(mod_dir, language=language,
+                     target_name=f"{language_name} translation for Ruby, Sapphire and Emerald",
+                     emerald=emerald, rs=rs)
+    coverage = {"rs": rs_coverage(rs), "emerald": gen3_coverage(emerald)}
+    status("Running the release gate")
+    gates = {
+        edition: run_rse_gate(mod_dir, extracted["rs"], rs, gen1recomp, luajit, game=edition,
+                              rom_sha1=rs_info["sha1"], log_fn=log_fn),
+        "emerald": run_rse_gate(mod_dir, extracted["emerald"], emerald, gen1recomp, luajit, log_fn=log_fn),
+    }
+    attach_rse_validation(mod_dir, {
+        "schema": 1, "policy": "english-fallback", "coverage": coverage,
+        "runtime_limits": {
+            "blank_glyphs": sum(gate.get("blank_glyphs", {}).get("total", 0) for gate in gates.values()),
+            "strings_resolve_in_game": all(bool((gate.get("strings_live") or {}).get("resolves"))
+                                           for gate in gates.values()),
+            "display_hooks": gates["emerald"].get("hooks", {}),
+        },
+    })
+    write_rse_report(build_root / "coverage.json", {
+        edition: (rs, coverage["rs"], gates[edition]),
+        "emerald": (emerald, coverage["emerald"], gates["emerald"]),
+    })
+    for key, label in (("rs", f"{edition_name} {rs_info['revision']}"), ("emerald", "Emerald")):
+        for part, what in (("rom", "ROM aggregate"), ("engine_gen3", "engine strings")):
+            section = coverage[key][part]
+            log(f"  {label} {what}: {section['translated']}/{section['total']} ({section['percent']:.2f}%)")
+    for name, layout in sorted(coverage["rs"]["layouts"].items()):
+        how = "read from the ROM" if layout["read"] else "keyed through pret's symbols"
+        log(f"  {name} dialogue ({how}): {layout['covered']}/{layout['total']} ({layout['percent']:.2f}%)")
+    blank = sum(gate.get("blank_glyphs", {}).get("total", 0) for gate in gates.values())
+    if blank:
+        log(f"  runtime limit: {blank} shipped characters have no glyph in FrlgFont yet"
+            " (docs/upstream-fixes.md, Emerald)")
 
-        status("Packaging translation mod")
+    status("Packaging translation mod")
+    # modkit pack checks lang/strings.lua against both carts' text (MK306)
+    with rom_text_cache(gen1recomp, extracted["emerald"], "emerald"), \
+            rom_text_cache(gen1recomp, extracted["rs"], edition):
         published = package_gen3_mod(mod_dir, gen1recomp, build_root, destination,
                                      rse_archive_name(language, project_version()), luajit, log_fn)
     status("Build complete")

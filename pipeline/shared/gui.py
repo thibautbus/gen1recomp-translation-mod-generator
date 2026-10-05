@@ -31,15 +31,15 @@ GENERATIONS = (
     (1, "Red, Blue and Yellow"),
     (2, "Gold, Silver and Crystal"),
     (3, "FireRed and LeafGreen"),
-    (4, "Emerald"),
+    (4, "Ruby, Sapphire and Emerald"),
 )
-# The generation each selection belongs to: Emerald is a generation-3 game
-# with a release of its own.
+# The generation each selection belongs to: Ruby, Sapphire and Emerald are
+# generation-3 games with a release of their own.
 GENERATION_OF_SELECTION = {4: 3}
 
 ROMS_BY_GENERATION = {
     1: ("rb", "yellow"), 2: ("gs", "crystal"),
-    3: ("firered", "leafgreen"), 4: ("emerald",),
+    3: ("firered", "leafgreen"), 4: ("rs", "emerald"),
 }
 
 # Where each release leaves its coverage report (pipeline/*_mod.py).
@@ -161,7 +161,8 @@ def validate_inputs(
         raw = rom_paths.get(game)
         if not raw or not str(raw).strip():
             display = {"gs": "Gold or Silver", "rb": "Red or Blue", "firered": "FireRed",
-                       "leafgreen": "LeafGreen", "emerald": "Emerald"}.get(game, game.capitalize())
+                       "leafgreen": "LeafGreen", "rs": "Ruby or Sapphire",
+                       "emerald": "Emerald"}.get(game, game.capitalize())
             raise builder.BuildError(f"A Pokemon {display} ROM path is required.")
         path = Path(raw).expanduser()
         if not path.is_file():
@@ -176,6 +177,8 @@ def validate_inputs(
             builder.verify_firered_rom(path)
         elif game == "leafgreen":
             builder.verify_leafgreen_rom(path)
+        elif game == "rs":
+            builder.verify_rs_rom(path)
         elif game == "emerald":
             builder.verify_emerald_rom(path)
         else:
@@ -189,19 +192,21 @@ def coverage_lines(path: str | Path, generation: int = 1) -> list[str]:
     report = json.loads(Path(path).read_text(encoding="utf-8"))
     lines: list[str] = []
     if generation in {3, 4}:
-        # pipeline/frlg/mod.py write_frlg_report and pipeline/rse/mod.py
-        # write_rse_report nest the metrics.
-        coverage = report.get("coverage") or {}
-        game = "FireRed" if generation == 3 else "Emerald"
-        for key, label in (("rom", f"{game} ROM aggregate"), ("rom_leafgreen", "LeafGreen ROM aggregate"),
-                           ("engine_gen3", f"{game} engine strings")):
-            section = coverage.get(key)
-            if section is None:
-                continue
-            lines.append(
-                f"{label}: {int(section.get('translated', 0))}/{int(section.get('total', 0))} "
-                f"({float(section.get('percent', 0.0)):.2f}%)"
-            )
+        # pipeline/frlg/mod.py write_frlg_report nests the metrics, and
+        # pipeline/rse/mod.py write_rse_report nests them per game.
+        games = ({"FireRed": report} if generation == 3 else
+                 {name.capitalize(): report[name] for name in ("ruby", "sapphire", "emerald") if name in report})
+        for game, section_report in games.items():
+            coverage = section_report.get("coverage") or {}
+            for key, label in (("rom", f"{game} ROM aggregate"), ("rom_leafgreen", "LeafGreen ROM aggregate"),
+                               ("engine_gen3", f"{game} engine strings")):
+                section = coverage.get(key)
+                if section is None:
+                    continue
+                lines.append(
+                    f"{label}: {int(section.get('translated', 0))}/{int(section.get('total', 0))} "
+                    f"({float(section.get('percent', 0.0)):.2f}%)"
+                )
         return lines
     # ROM aggregates first (broad Red/Blue or Gold/Silver, then narrower
     # Yellow), then engine-authored-text metrics from most to least
@@ -297,7 +302,7 @@ class TranslationBuilderApp:
         tk, ttk = self.tk, self.ttk
         self.generation_var = tk.StringVar(value=generation_label(1))
         self.rom_vars = {game: tk.StringVar() for game in
-                         ("rb", "yellow", "gs", "crystal", "firered", "leafgreen", "emerald")}
+                         ("rb", "yellow", "gs", "crystal", "firered", "leafgreen", "rs", "emerald")}
         self.language_var = tk.StringVar(value=language_label("fr"))
         self.font_profile_var = tk.StringVar(value=font_profile_label("fusion"))
         self.output_var = tk.StringVar()
@@ -321,12 +326,16 @@ class TranslationBuilderApp:
         # is a flat form, not a wizard). Crystal takes row 4 (formerly
         # Blue's own field, free since Red and Blue share byte-identical
         # game text and only need one field between them), and so does
-        # LeafGreen, FireRed's companion the way Crystal is Gold's.
+        # LeafGreen, FireRed's companion the way Crystal is Gold's, and
+        # Emerald, Ruby and Sapphire's.
         rom_fields = (
             ("rb", 2, "Required to extract shared Pokémon Red/Blue game text and data. Either ROM works: Red and Blue share identical text.", "Pokemon Red or Blue ROM (US)"),
             ("gs", 2, "Required to extract Pokémon Gold and Silver game text and data. Either ROM works: Gold and Silver share identical text.", "Pokemon Gold or Silver ROM (US)"),
             ("firered", 2, "Required to extract Pokémon FireRed game text and data.", "Pokemon FireRed ROM (US)"),
-            ("emerald", 2, "Required to extract Pokémon Emerald game text and data.", "Pokemon Emerald ROM (US)"),
+            ("rs", 2, "Required to extract Pokémon Ruby and Sapphire game text and data. Either ROM works, "
+                      "from any English revision (1.0, 1.1 or 1.2): the other edition's and revisions' text is "
+                      "keyed through pret's symbol tables.", "Pokemon Ruby or Sapphire ROM (US/EU)"),
+            ("emerald", 4, "Required to extract Pokémon Emerald game text and data.", "Pokemon Emerald ROM (US)"),
             ("crystal", 4, "Required to extract Pokémon Crystal-specific game text and data.", "Pokemon Crystal ROM (US)"),
             ("leafgreen", 4, "Required to extract Pokémon LeafGreen game text and data.", "Pokemon LeafGreen ROM (US)"),
             ("yellow", 6, "Required to extract Pokémon Yellow-specific game text and data.", "Pokemon Yellow ROM (US)"),
@@ -411,9 +420,10 @@ class TranslationBuilderApp:
         elif generation == 4:
             self.games_hint_var.set(
                 "Which games do you want to translate?\n"
-                "Emerald is a mod of its own, built from the Emerald ROM alone. "
-                "It prints every string with the cart's own font, so no font "
-                "profile applies."
+                "Ruby, Sapphire and Emerald share one translation: select the "
+                "two ROMs below (Ruby or Sapphire, whichever you own, plus "
+                "Emerald). They print every string with the cart's own font, "
+                "so no font profile applies."
             )
         else:
             self.games_hint_var.set("Which games do you want to translate?")

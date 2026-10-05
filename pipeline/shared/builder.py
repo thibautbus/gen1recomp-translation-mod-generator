@@ -21,7 +21,7 @@ from .project import (
 from .dependencies import DependencyError, fetch_archive, fetch_files
 from .roms import (
     verify_crystal_rom, verify_emerald_rom, verify_firered_rom, verify_gs_rom,
-    verify_leafgreen_rom, verify_rb_rom, verify_rom,
+    verify_leafgreen_rom, verify_rb_rom, verify_rom, verify_rs_rom,
 )
 from .subprocess_run import run_streamed
 from .rom_paths import configured_path, load_rom_paths
@@ -331,7 +331,7 @@ def _prompt_generation(input_fn: Callable[[str], str]) -> int:
     print("  1 - Red, Blue and Yellow      (generation 1)")
     print("  2 - Gold, Silver and Crystal  (generation 2)")
     print("  3 - FireRed and LeafGreen     (generation 3)")
-    print("  4 - Emerald                   (generation 3)")
+    print("  4 - Ruby, Sapphire and Emerald (generation 3)")
     raw = input_fn("Games number [1]: ").strip()
     if raw in {"", "1"}:
         return 1
@@ -449,6 +449,17 @@ def main(
         elif generation not in (1, 2, 3, 4):
             raise BuildError(f"Invalid games selection: {generation!r}")
         if generation == 4:
+            # Either Ruby or Sapphire, of any English revision: the other
+            # edition's text is keyed through pret's symbols.  Emerald is
+            # required alongside, like Crystal for Gold and Silver.
+            rs_prompt = (
+                "Please specify the location of your Pokemon Ruby or Sapphire ROM "
+                "(full path, e.g. C:\\Games\\PokemonRuby.gba): "
+            )
+            rs_rom = _prompt_configured_path(
+                rs_prompt, configured_path(rom_paths, "rom", "ruby") or configured_path(rom_paths, "rom", "sapphire"),
+                input_fn,
+            )
             emerald_prompt = (
                 "Please specify the location of your Pokemon Emerald ROM "
                 "(full path, e.g. C:\\Games\\PokemonEmerald.gba): "
@@ -458,7 +469,9 @@ def main(
             )
             language, language_name = _prompt_language(input_fn, generation=generation)
             if font_profile:
-                print("Note: Emerald prints strings with the cart's own font; --font-profile is ignored.")
+                print("Note: Ruby, Sapphire and Emerald print strings with the cart's own font; "
+                      "--font-profile is ignored.")
+            verify_rs_rom(rs_rom)
             verify_emerald_rom(emerald_rom)
             if not _confirm(input_fn):
                 if is_frozen():
@@ -468,7 +481,7 @@ def main(
                 return 0
             from .orchestration import build_request
             output = build_request(
-                BuildRequest({"emerald": emerald_rom}, release_profile("rse"), language, None),
+                BuildRequest({"rs": rs_rom, "emerald": emerald_rom}, release_profile("rse"), language, None),
                 language_name=language_name, luajit=luajit,
             )
         elif generation == 3:

@@ -6,7 +6,9 @@ import tomllib
 from typing import Mapping
 
 
-ROM_PATH_KEYS = frozenset(("red", "blue", "yellow", "gold", "silver", "crystal", "firered", "leafgreen", "emerald"))
+ROM_PATH_KEYS = frozenset((
+    "red", "blue", "yellow", "gold", "silver", "crystal", "firered", "leafgreen", "ruby", "sapphire", "emerald",
+))
 _SECTIONS = frozenset(("rom",))
 
 

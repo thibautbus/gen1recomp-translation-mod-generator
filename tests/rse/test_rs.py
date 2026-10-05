@@ -1,6 +1,7 @@
 """Ruby and Sapphire, the rse release's base game (pipeline/rse/join.py)."""
 import json
 import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -14,8 +15,10 @@ from pipeline.gen3.text import RS_DIALECT, corpus_ir, encode, load_charmap
 from pipeline.rse.join import (
     derive_layout_text, japanese_single_page_entries, keyed_by_layout, layout_guards, other_edition_script_text,
 )
+from pipeline.rse.mod import generate_rse_mod, write_gate_expectations
 from pipeline.shared.project import project_config
 from pipeline.shared.roms import CANONICAL, RS_REVISIONS, rs_revision_for_sha1, verify_rs_rom
+from pipeline.shared.specs import game_spec, release_profile
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -182,6 +185,102 @@ class RubySapphireTextTests(unittest.TestCase):
         self.assertEqual(stats["details"], {"YES": "corpus", "JOIN GROUP": "companion", "VSYNC": "fallback_english"})
 
 
+class RubySapphireModTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def joined(self):
+        source = next(revision for revision in RS_REVISIONS if revision.section == "ruby_rev2")
+        guards = {edition: [{"dir": f"{edition}_1_1", "key": "g3:08000010", "text": "Bee"},
+                            {"dir": f"{edition}_1_0", "key": "g3:08000010", "text": "Ay"}]
+                  for edition in ("ruby", "sapphire")}
+        script = {f"{edition}_{layout}": {"g3:08000010": [text("Abeille "), {"t": "player"}, EOS]}
+                  for edition in ("ruby", "sapphire") for layout in ("1_0", "1_1")}
+        named = {edition: {"STRINGID_ATTACKMISSED": [text("Raté !"), EOS]} for edition in ("ruby", "sapphire")}
+        return {"source": source, "guards": guards, "script": script, "named": named,
+                "dialogue": {**named["ruby"], **script["ruby_1_1"]},
+                "catalogs": {"species_names": {"TREECKO": "ARCKO"}, "strings": {"YES": "OUI"}},
+                "numbers": {"species": {252: "TREECKO"}, "items": {}, "moves": {}}, "scope": {}}
+
+    def test_one_mod_carries_every_games_layers(self):
+        mod = generate_rse_mod(self.tmp / "mod", language="fr", target_name="French", rs=self.joined(),
+                               emerald={"dialogue": {"g3:08100000": [text("x"), EOS]},
+                                        "catalogs": {"strings": {"YES": "OUI"}}})
+        for path in ("rs/layouts.lua", "rs/species_names.lua", "rs/strings.lua", "ruby/dialogue.lua",
+                     "sapphire/dialogue.lua", "ruby_1_0/dialogue.lua", "sapphire_1_1/dialogue.lua",
+                     "emerald/dialogue.lua", "emerald/strings.lua"):
+            self.assertTrue((mod / "lang" / path).is_file(), path)
+        layouts = (mod / "lang" / "rs" / "layouts.lua").read_text(encoding="utf-8")
+        self.assertIn('dir = "ruby_1_1", key = "g3:08000010", text = "Bee"', layouts)
+        main = (mod / "main.lua").read_text(encoding="utf-8")
+        self.assertIn('mod.content.text:get(layout.key)', main)
+        self.assertIn('each("species_names"', main)
+
+    def test_the_launcher_reads_the_strings_every_game_agrees_on(self):
+        joined = self.joined()
+        joined["catalogs"] = {"strings": {"YES": "OUI", "WINDOWED": "FENÊTRE", "RS ONLY": "R"}}
+        mod = generate_rse_mod(self.tmp / "mod", language="fr", target_name="French", rs=joined,
+                               emerald={"dialogue": {}, "catalogs": {"strings": {
+                                   "YES": "OUI", "WINDOWED": "FENÊTRE", "RS ONLY": "E"}}})
+        launcher = (mod / "lang" / "strings.lua").read_text(encoding="utf-8")
+        self.assertIn('["WINDOWED"] = "FENÊTRE"', launcher)
+        self.assertNotIn("RS ONLY", launcher)
+
+    def test_main_lua_picks_each_games_layers(self):
+        luajit = shutil.which("luajit")
+        if not luajit:
+            self.skipTest("LuaJIT unavailable")
+        joined = self.joined()
+        joined["script"] = {f"{edition}_{layout}": {f"g3:0800{layout}": [text("x"), EOS]}
+                            for edition in ("ruby", "sapphire") for layout in ("1_0", "1_1")}
+        mod = generate_rse_mod(self.tmp / "mod", language="fr", target_name="French", rs=joined,
+                               emerald={"dialogue": {"g3:08100000": [text("x"), EOS]}, "catalogs": {}})
+        probe = """
+local dir, game, guard = ...
+package.preload["src.core.GameVersion"] = function() return { get = function() return game end } end
+local applied = {}
+local mod = {
+  read = function(_, path)
+    local f = io.open(dir .. "/" .. path, "rb"); if not f then return nil end
+    local body = f:read("*a"); f:close(); return body
+  end,
+  content = setmetatable({ text = {
+    get = function(_, key) return guard ~= "" and { { t = "text", s = guard }, { t = "eos" } } or nil end,
+    override = function(_, key, ir) applied[#applied + 1] = key end,
+  } }, { __index = function() return { override = function() end, patch = function() end } end }),
+}
+local f = io.open(dir .. "/main.lua", "rb"); local main = assert(loadstring(f:read("*a"))); f:close()
+main()(mod)
+table.sort(applied)
+io.write(table.concat(applied, ","))
+"""
+        script = self.tmp / "probe.lua"
+        script.write_text(probe, encoding="utf-8")
+
+        def applied(game, guard):
+            out = subprocess.run([luajit, str(script), str(mod), game, guard], capture_output=True, text=True,
+                                 check=True).stdout
+            return out.split(",")
+
+        # the guard's text picks the layout; none matching picks 1.1/1.2's
+        self.assertEqual(applied("ruby", "Ay"), ["STRINGID_ATTACKMISSED", "g3:08001_0"])
+        self.assertEqual(applied("sapphire", "Bee"), ["STRINGID_ATTACKMISSED", "g3:08001_1"])
+        self.assertEqual(applied("ruby", "something else"), ["STRINGID_ATTACKMISSED", "g3:08001_1"])
+        self.assertEqual(applied("emerald", ""), ["g3:08100000"])
+        self.assertEqual(applied("firered", ""), ["g3:08100000"])
+
+    def test_gate_expectations_name_the_layers_of_the_cart_read(self):
+        expectations = write_gate_expectations(self.tmp / "gate.json", self.joined(), "ruby")
+        self.assertEqual((expectations["dialogue_layers"], expectations["catalog_layer"]),
+                         (["ruby", "ruby_1_1"], "rs"))
+        self.assertEqual(expectations["layout"]["key"], "g3:08000010")
+        self.assertIn("layout", expectations["required"])
+        self.assertNotIn("hooks", expectations)
+
+
 class RubySapphireConfigTests(unittest.TestCase):
     def test_every_english_revision_is_accepted(self):
         sections = {revision.section: revision for revision in RS_REVISIONS}
@@ -196,6 +295,10 @@ class RubySapphireConfigTests(unittest.TestCase):
             rom.write_bytes(b"not a rom")
             with self.assertRaisesRegex(ValueError, "not an English Ruby or Sapphire ROM"):
                 verify_rs_rom(rom)
+
+    def test_release_profile(self):
+        self.assertEqual(release_profile("rse").games, ("rs", "emerald"))
+        self.assertEqual(game_spec("rs").corpus_collection, "RubySapphire")
 
     def test_family_files(self):
         # the base game's files carry no prefix, the companion's are named
