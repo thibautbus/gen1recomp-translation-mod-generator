@@ -1,6 +1,7 @@
 """Canonical ROM verification and gen1recomp import orchestration."""
 from __future__ import annotations
 
+from dataclasses import dataclass
 import hashlib
 import json
 from pathlib import Path
@@ -20,7 +21,10 @@ from .subprocess_run import run_streamed
 # Product support is intentionally limited to the canonical US games; this
 # allowlist is independent of whatever sections a config may contain.
 SUPPORTED_VERSIONS = frozenset(("red", "blue", "yellow"))
-CONFIGURED_VERSIONS = SUPPORTED_VERSIONS | {"gold", "silver", "crystal", "firered", "leafgreen", "emerald"}
+CONFIGURED_VERSIONS = SUPPORTED_VERSIONS | {
+    "gold", "silver", "crystal", "firered", "leafgreen", "emerald",
+    "ruby", "ruby_rev1", "ruby_rev2", "sapphire", "sapphire_rev1", "sapphire_rev2",
+}
 _SHA1 = re.compile(r"[0-9a-f]{40}\Z")
 _MANIFESTS = {
     "red": "rom_manifest.json",
@@ -420,6 +424,54 @@ def verify_emerald_rom(path: str | Path) -> dict[str, Any]:
     return {"version": "emerald", "path": str(path.resolve()), "sha1": actual, "size": path.stat().st_size}
 
 
+@dataclass(frozen=True)
+class RsRevision:
+    """One English Ruby or Sapphire cart gen1recomp imports."""
+    # its [rom.<section>] in pipeline.toml, after pret's build name
+    section: str
+    edition: str
+    revision: str
+    # the revisions that lay their text out at the same addresses share a
+    # layout: 1.1 and 1.2 do (pret's rev1 and rev2 symbol tables are
+    # identical), 1.0 does not
+    layout: str
+
+
+# src/import/gba/rs_builds.lua
+RS_REVISIONS: tuple[RsRevision, ...] = (
+    RsRevision("ruby", "ruby", "1.0", "1_0"),
+    RsRevision("ruby_rev1", "ruby", "1.1", "1_1"),
+    RsRevision("ruby_rev2", "ruby", "1.2", "1_1"),
+    RsRevision("sapphire", "sapphire", "1.0", "1_0"),
+    RsRevision("sapphire_rev1", "sapphire", "1.1", "1_1"),
+    RsRevision("sapphire_rev2", "sapphire", "1.2", "1_1"),
+)
+RS_EDITIONS = {"ruby": "Ruby", "sapphire": "Sapphire"}
+
+
+def rs_revision_for_sha1(digest: str) -> RsRevision | None:
+    for revision in RS_REVISIONS:
+        if CANONICAL.get(revision.section) == digest:
+            return revision
+    return None
+
+
+def verify_rs_rom(path: str | Path) -> dict[str, Any]:
+    """Accept any English Ruby or Sapphire ROM gen1recomp imports; report
+    which edition and revision it is."""
+    if not any(revision.section in CANONICAL for revision in RS_REVISIONS):
+        raise ValueError("missing [rom.ruby*]/[rom.sapphire*] configuration: Ruby/Sapphire ROM "
+                         "verification requires those sections")
+    path = Path(path)
+    actual = sha1(path)
+    revision = rs_revision_for_sha1(actual)
+    if revision is None:
+        raise ValueError(f"not an English Ruby or Sapphire ROM (1.0, 1.1 or 1.2): SHA-1 {actual}")
+    return {"version": revision.edition, "revision": revision.revision, "layout": revision.layout,
+            "section": revision.section, "path": str(path.resolve()), "sha1": actual,
+            "size": path.stat().st_size}
+
+
 RSE_REQUIRED_JSON = (
     "rse_text.json", "rse_text_pointers.json", "rse_species.json", "rse_moves.json",
     "rse_items.json", "rse_trainers.json", "rse_trainer_classes.json",
@@ -428,26 +480,34 @@ RSE_REQUIRED_JSON = (
 
 def import_rse_rom(
     rom: str | Path, gen1recomp: str | Path, out: str | Path,
-    log_fn: Callable[[str], None] | None = None,
-) -> None:
-    """Extract and atomically publish Emerald's JSON tables.
+    log_fn: Callable[[str], None] | None = None, *, game: str = "emerald",
+) -> dict[str, Any]:
+    """Extract and atomically publish an Emerald, Ruby or Sapphire ROM's JSON
+    tables; return what the ROM was verified as.
 
-    tools/rse/extract.lua runs the text steps of gen1recomp's own Emerald
-    import plan under the headless LÖVE stub; the extractor's cache (the
+    tools/rse/extract.lua runs the text steps of gen1recomp's own import plan
+    for the game under the headless LÖVE stub; the extractor's cache (the
     layout a game3 boot reads) is kept under ``out/cache`` for the release
-    gate and the engine scope generator.
+    gate and the engine scope generator.  ``game`` is ``emerald`` or ``rs``
+    (a Ruby or Sapphire ROM of any revision).
     """
-    info = verify_emerald_rom(rom)
+    if game == "emerald":
+        info = verify_emerald_rom(rom)
+    elif game == "rs":
+        info = verify_rs_rom(rom)
+    else:
+        raise ValueError(f"unsupported generation-3 Hoenn game {game!r}")
+    game_name = "Emerald" if game == "emerald" else RS_EDITIONS[info["version"]]
     root = Path(gen1recomp).resolve()
     rom = Path(rom).resolve()
     out = Path(out).resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
     luajit = which_luajit()
     if luajit is None:
-        raise RuntimeError("LuaJIT is required to import an Emerald ROM; see MODKIT_LUAJIT")
+        raise RuntimeError(f"LuaJIT is required to import a {game_name} ROM; see MODKIT_LUAJIT")
     script = resource_root() / "tools" / "rse" / "extract.lua"
     temporary = Path(tempfile.mkdtemp(prefix=f".{out.name}-", dir=out.parent))
-    command = [luajit, str(script), str(root), str(rom), str(temporary), info["sha1"]]
+    command = [luajit, str(script), str(root), str(rom), str(temporary), info["sha1"], info["version"]]
     try:
         run_streamed(command, log_fn=log_fn)
         stages = json.loads((temporary / "rse_stages.json").read_text(encoding="utf-8"))
@@ -458,7 +518,7 @@ def import_rse_rom(
         ]
         if failed or missing:
             raise RuntimeError(
-                "Emerald extraction did not complete: "
+                f"{game_name} extraction did not complete: "
                 + "; ".join(filter(None, (
                     ("failed stages: " + ", ".join(f"{name} ({stages[name]})" for name in failed)) if failed else "",
                     ("missing outputs: " + ", ".join(missing)) if missing else "",
@@ -479,6 +539,7 @@ def import_rse_rom(
     finally:
         if temporary.exists():
             shutil.rmtree(temporary, ignore_errors=True)
+    return info
 
 
 def import_frlg_rom(
@@ -507,7 +568,7 @@ def import_frlg_rom(
         raise RuntimeError(f"LuaJIT is required to import a {name} ROM; see MODKIT_LUAJIT")
     script = resource_root() / "tools" / "frlg" / "extract.lua"
     temporary = Path(tempfile.mkdtemp(prefix=f".{out.name}-", dir=out.parent))
-    command = [luajit, str(script), str(root), str(rom), str(temporary), info["sha1"]]
+    command = [luajit, str(script), str(root), str(rom), str(temporary), info["sha1"], info["version"]]
     try:
         run_streamed(command, log_fn=log_fn)
         stages = json.loads((temporary / "frlg_stages.json").read_text(encoding="utf-8"))

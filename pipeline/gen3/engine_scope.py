@@ -73,7 +73,9 @@ local function each(site, t, field)
 end
 local Rows = require("src.ui.game3.option_rows")
 for _, g in ipairs(Rows.GROUPS) do add("src/ui/game3/option_rows.lua (Rows.GROUPS label)", g.label) end
-for _, row in ipairs(Rows.build({ options = {} })) do add("src/ui/game3/option_rows.lua (row label)", row.label) end
+local rowSkip
+--[[FAMILY_ROWS]]
+for _, row in ipairs(Rows.build({ options = {} }, rowSkip)) do add("src/ui/game3/option_rows.lua (row label)", row.label) end
 local L = require("src.render.Letterbox"); for _, m in ipairs(L.MODES) do add("src/ui/game3/option_rows.lua (Letterbox.label)", L.label(m)) end
 local V = require("src.core.VideoMode"); for _, m in ipairs({ "windowed", "borderless" }) do add("src/ui/game3/option_rows.lua (VideoMode.modeLabel)", V.modeLabel(m)) end
 local O = require("src.core.Orientation"); for _, m in ipairs(O.MODES) do add("src/ui/game3/option_rows.lua (Orientation.modeLabel)", O.modeLabel(m)) end
@@ -214,7 +216,10 @@ REVIEWED_RSE: Mapping[str, str | None] = {
     # the START button's name (gText_Start reads スタートボタン in Japanese)
     "START": None,
 }
-REVIEWED_BY_FAMILY: Mapping[str, Mapping[str, str | None]] = {"frlg": REVIEWED, "emerald": REVIEWED_RSE}
+# Ruby and Sapphire's reviewed rows (see REVIEWED).
+REVIEWED_RS: Mapping[str, str | None] = {}
+REVIEWED_BY_FAMILY: Mapping[str, Mapping[str, str | None]] = {
+    "frlg": REVIEWED, "rs": REVIEWED_RS, "emerald": REVIEWED_RSE}
 _QID_LAST_RESORT = (".easy_chat_", ".gEasyChatGroupName_", ".quest_log.", ".gPokedexEntries.", ".fame_checker.")
 
 _LITERAL = re.compile(r'"((?:[^"\\\n]|\\.)*)"|\'((?:[^\'\\\n]|\\.)*)\'')
@@ -324,6 +329,19 @@ _PROBE_FAMILY: Mapping[str, Mapping[str, str]] = {
         "FAMILY_RECORDS": "",
     },
 }
+# Ruby and Sapphire run Emerald's screens (src/ui/game3/rse/), but their
+# option menu draws its own cart rows and leaves the shared builder only the
+# port's (src/ui/game3/rs/option_menu.lua portRows).
+_PROBE_FAMILY["rs"] = {
+    **_PROBE_FAMILY["emerald"],
+    "FAMILY_ROWS": (
+        'local RsOptions = require("src.ui.game3.rs.option_menu")\n'
+        'rowSkip = {}\n'
+        'for _, key in ipairs({ "textSpeed", "battleScene", "battleStyle", "sound", "buttonMode", '
+        '"frameType" }) do rowSkip[key] = true end\n'
+        'for key in pairs(RsOptions.EXCLUDE or {}) do rowSkip[key] = true end\n'
+    ),
+}
 
 # The option rows and the other probed tables name their labels by the
 # cart's own text since gen1recomp v0.3.0, so the probe reads them out of the
@@ -355,6 +373,7 @@ local dungeons = assert(MapPreview.loadDungeonInfo(cache), "region_map/dungeon_i
 Sections.installNames(names)
 require("src.import.gba.region_map_extract").applyGeneratedText(names, dungeons, Sections.SECTIONS)
 """,
+    "rs": "",
     "emerald": "",
 }
 
@@ -560,8 +579,17 @@ def context_family(context: str) -> str | None:
     if context == "easyChat.group":
         return ".gEasyChatGroupName_"
     if context.startswith("easyChat."):
-        return ".easy_chat_group_" + re.sub(r"[^a-z0-9]+", "_", context[len("easyChat."):].lower()).strip("_") + "."
+        group = context[len("easyChat."):]
+        group = _EASY_CHAT_GROUP_SPELLINGS.get(group, group)
+        return ".easy_chat_group_" + re.sub(r"[^a-z0-9]+", "_", group.lower()).strip("_") + "."
     return None
+
+
+# Group names a cart abbreviates where PokeCorpus names the group in full:
+# Ruby and Sapphire's EVENTS group is titled EVENT. (pokeruby
+# data/text/easy_chat/group_name_strings.inc:53), its words are
+# easy_chat_group_events.
+_EASY_CHAT_GROUP_SPELLINGS: Mapping[str, str] = {"EVENT.": "EVENTS"}
 
 
 def required_family(key: str, site: str) -> str | None:
@@ -618,7 +646,7 @@ def collect_keys(engine: Path, extracted: Path | None = None, family: Gen3Family
     if extracted is not None:
         for value, site in rom_description_values(extracted).items():
             keys.setdefault(value, {"callsite": site, "kind": "rom"})
-        if family.id == "emerald":
+        if family.id in ("rs", "emerald"):
             for value, site in rse_rom_values(extracted).items():
                 keys.setdefault(value, {"callsite": site, "kind": "rom"})
     # Floors and Easy Chat words are kept even when they read as neutral: the
@@ -839,7 +867,8 @@ def build_scope(engine: Path, corpus_dir: Path, charmap: PretCharmap, *, extract
 
 
 # Where a build leaves each family's pinned charmap (pipeline.toml [pret.*]).
-CHARMAP_DEPENDENCY: Mapping[str, str] = {"frlg": "charmap", "emerald": "emerald_charmap"}
+CHARMAP_DEPENDENCY: Mapping[str, str] = {"frlg": "charmap", "rs": "ruby_sapphire_charmap",
+                                         "emerald": "emerald_charmap"}
 
 
 def main(argv: list[str] | None = None) -> int:

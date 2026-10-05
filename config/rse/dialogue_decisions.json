@@ -1,0 +1,54 @@
+{
+  "schema": "gen1recomp-translation-mods/rs-dialogue-decisions",
+  "version": 1,
+  "entries": {
+    "DecorDesc_TOGEPI_DOLL": {
+      "qid": "rs.common.decoration.DecorDesc_TOGEPI_DOLL",
+      "reason": "The TOGEPI DOLL's description: the row of the revision PokeCorpus reads (1.1 and later); revision 1.0 prints an earlier wording of the same message, misspelled TOPGEPI (pokeruby src/decoration.c:413, #if REVISION >= 1)."
+    },
+    "DexDescription_Mawile_1": {
+      "qid": "rs.common.pokedex_entries^R.DexDescription_Mawile_1",
+      "reason": "Ruby's entry: the row of the revision PokeCorpus reads (1.1 and later); revision 1.0 prints an earlier wording of the same message (pokeruby src/data/pokedex_entries_en.h:3813, #if REVISION >= 1).",
+      "sapphire": {
+        "qid": "rs.common.pokedex_entries^S.DexDescription_Mawile_1",
+        "reason": "Sapphire's own entry, unchanged between revisions; the decision only carries Ruby's revision note."
+      }
+    },
+    "DexDescription_Mawile_2": {
+      "qid": "rs.common.pokedex_entries^R.DexDescription_Mawile_2",
+      "reason": "Ruby's entry: the row of the revision PokeCorpus reads (1.1 and later); revision 1.0 prints an earlier wording of the same message (pokeruby src/data/pokedex_entries_en.h:3813, #if REVISION >= 1).",
+      "sapphire": {
+        "qid": "rs.common.pokedex_entries^S.DexDescription_Mawile_2",
+        "reason": "Sapphire's own entry, unchanged between revisions; the decision only carries Ruby's revision note."
+      }
+    },
+    "DexDescription_Paras_1": {
+      "qid": "rs.common.pokedex_entries^R.DexDescription_Paras_1",
+      "reason": "Ruby's entry: the row of the revision PokeCorpus reads (1.1 and later); revision 1.0 prints an earlier wording of the same message (pokeruby src/data/pokedex_entries_en.h:542, #if REVISION >= 1).",
+      "sapphire": {
+        "qid": "rs.common.pokedex_entries^S.DexDescription_Paras_1",
+        "reason": "Sapphire's entry: the row of the revision PokeCorpus reads (1.1 and later); revision 1.0 prints an earlier wording of the same message (pokeruby src/data/pokedex_entries_en.h:523, #if REVISION >= 1)."
+      }
+    },
+    "DexDescription_Paras_2": {
+      "qid": "rs.common.pokedex_entries^R.DexDescription_Paras_2",
+      "reason": "Ruby's entry: the row of the revision PokeCorpus reads (1.1 and later); revision 1.0 prints an earlier wording of the same message (pokeruby src/data/pokedex_entries_en.h:542, #if REVISION >= 1).",
+      "sapphire": {
+        "qid": "rs.common.pokedex_entries^S.DexDescription_Paras_2",
+        "reason": "Sapphire's entry: the row of the revision PokeCorpus reads (1.1 and later); revision 1.0 prints an earlier wording of the same message (pokeruby src/data/pokedex_entries_en.h:523, #if REVISION >= 1)."
+      }
+    },
+    "OldaleTown_PokemonCenter_2F_Text_1A45FE": {
+      "qid": "rs.script.cable_club.OldaleTown_PokemonCenter_2F_Text_1A45FE",
+      "reason": "The Record Corner's welcome: the row of the revision PokeCorpus reads (1.1 and later); revision 1.0 prints an earlier wording of the same message, RECORD CENTER for RECORD CORNER (pokeruby data/text/cable_club.inc:16, .if REVISION >= 1)."
+    },
+    "gOtherText_CantUseOnPoke": {
+      "qid": "rs.common.strings.gOtherText_CantUseOnPoke",
+      "reason": "The bag's refusal: the row of the revision PokeCorpus reads (1.1 and later); revision 1.0 prints an earlier wording of the same message, \"This item can't be used\" (pokeruby src/strings.c:324, #if REVISION >= 1)."
+    },
+    "gTVSmartShopperText1": {
+      "qid": "rs.script.tv.gTVSmartShopperText1",
+      "reason": "TODAY'S SMART SHOPPER's opening: the row of the revision PokeCorpus reads (1.1 and later); revision 1.0 prints an earlier wording of the same message, \"visiting the POKéMON MART\" for \"visiting a shop\" (pokeruby data/text/tv.inc:908, .if REVISION >= 1)."
+    }
+  }
+}

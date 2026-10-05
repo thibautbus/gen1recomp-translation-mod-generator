@@ -127,8 +127,15 @@ def load_gen3_corpus(corpus_dir: str | Path, language: str, family: Gen3Family =
     if not (len(qids) == len(english) == len(target)):
         raise ValueError(f"{family.collection} corpus files for {language} are not parallel")
     by_label: dict[str, list[int]] = defaultdict(list)
+    markers = {marker for _edition, marker in family.edition_markers}
     for index, qid in enumerate(qids):
-        by_label[qid.rsplit(".", 1)[-1]].append(index)
+        label = qid.rsplit(".", 1)[-1]
+        by_label[label].append(index)
+        # one edition's row of a label (gDefaultBoyName1^S) is also a row of
+        # the label itself, which the join tells apart by edition
+        base, sep, marker = label.rpartition("^")
+        if sep and marker in markers:
+            by_label[base].append(index)
         # A ROM text table: the extractor keys its rows "gTypeNames[0]" and
         # "sFlavorTextOriginLocationTexts[3][1]" (RomText.key), the corpus
         # writes the same rows as "<family>.gTypeNames.0".
@@ -191,7 +198,8 @@ def load_dialogue_overrides(language: str, family: Gen3Family = FRLG,
 
 
 FRLG_EDITIONS = FRLG.editions
-EDITION_NAMES: Mapping[str, str] = {"firered": "FireRed", "leafgreen": "LeafGreen", "emerald": "Emerald"}
+EDITION_NAMES: Mapping[str, str] = {"firered": "FireRed", "leafgreen": "LeafGreen", "emerald": "Emerald",
+                                    "ruby": "Ruby", "sapphire": "Sapphire"}
 
 
 def load_dialogue_decisions(family: Gen3Family = FRLG, path: str | Path | None = None,
@@ -303,7 +311,7 @@ def _has_prose(segments: Iterable[Mapping]) -> bool:
 # the pret symbol each one points at, so they are joined on their English
 # text instead of on a label.  Their FD escapes are battle placeholders.
 def battle_qid_prefix(family: Gen3Family) -> str:
-    return f"{family.qid_prefix}common.battle_message."
+    return f"{family.qid_prefix}common.{family.battle_group}."
 
 
 BATTLE_QID_PREFIX = battle_qid_prefix(FRLG)
@@ -410,6 +418,25 @@ def _join_braille(entry: "Gen3DialogueEntry", spelled: str, target: str,
     entry.status = TRANSLATED
 
 
+# An edition's group (pokedex_entries^R.) or label (Text_Version^S).
+_EDITION_MARKER = re.compile(r"\^([A-Za-z]+)(?=\.|$)")
+
+
+def edition_rows(indices: Iterable[int], corpus: Gen3Corpus, marker: str | None) -> list[int]:
+    """Leave out the rows another edition owns (pokedex_entries^S or
+    Text_Version^S for Ruby): a collection that covers two carts keeps both
+    lines under one label."""
+    indices = list(indices)
+    if marker is None:
+        return indices
+    kept = []
+    for index in indices:
+        found = _EDITION_MARKER.search(corpus.qids[index])
+        if found is None or found.group(1) == marker:
+            kept.append(index)
+    return kept
+
+
 def join_gen3_dialogue(
     text: Mapping[str, list[dict]],
     corpus: Gen3Corpus,
@@ -419,13 +446,17 @@ def join_gen3_dialogue(
     overrides: Mapping[str, Mapping] | None = None,
     decisions: Mapping[str, str] | None = None,
     aliases: Mapping[str, Iterable[str]] | None = None,
+    edition: str | None = None,
 ) -> tuple[list[Gen3DialogueEntry], dict]:
     """Join every extracted text key to one corpus row and translate it.
 
-    ``aliases`` names the pret symbols a table key's pointer reaches.
+    ``aliases`` names the pret symbols a table key's pointer reaches;
+    ``edition`` is the cart the text was read from, for a collection that
+    marks some of its rows as one edition's (Gen3Family.edition_markers).
     """
     overrides = overrides or {}
     decisions = decisions or {}
+    marker = corpus.family.edition_marker(edition)
     battle_index = _battle_index(corpus, charmap)
     content_index = _content_index(corpus, charmap)
     entries: list[Gen3DialogueEntry] = []
@@ -433,6 +464,7 @@ def join_gen3_dialogue(
         rom_ir = normalise_ir(text[key])
         battle = is_battle_key(key, rom_ir)
         labels, indices = _candidates(key, symbols, corpus, aliases)
+        indices = edition_rows(indices, corpus, marker)
         if battle and not indices:
             indices = list(battle_index.get(json.dumps(rom_ir, sort_keys=True), ()))
         matched_on_text = False
@@ -452,7 +484,7 @@ def join_gen3_dialogue(
                 raise ValueError(f"{corpus.family.game} dialogue decision {key!r}: unknown qid {reviewed}")
             indices = [corpus.by_qid[reviewed]]
         if not indices and reviewed is None:
-            rows = content_index.get(json.dumps(rom_ir, sort_keys=True), ())
+            rows = edition_rows(content_index.get(json.dumps(rom_ir, sort_keys=True), ()), corpus, marker)
             if _is_undecodable(rom_ir):
                 # Text the extractor could not read matches only another row
                 # it could not read: neither says anything about the other.
@@ -536,11 +568,17 @@ def join_gen3_dialogue(
         entry.translation = target_ir
         entry.status = (OVERRIDE if override else REVIEWED if reviewed
                         else CONTENT_MATCH if matched_on_text else TRANSLATED)
+    return entries, dialogue_stats(entries)
+
+
+def dialogue_stats(entries: Iterable[Gen3DialogueEntry]) -> dict:
+    """The coverage of a set of joined entries."""
+    entries = list(entries)
     stats = Counter(entry.status for entry in entries)
     ignored = sum(stats[status] for status in IGNORED)
     total = len(entries) - ignored
     covered = sum(stats[status] for status in COVERED)
-    return entries, {
+    return {
         "total": total,
         "covered": covered,
         "shipped": sum(stats[status] for status in SHIPPED),
@@ -700,6 +738,7 @@ _ITEM_DESCRIPTION_FAMILIES: Mapping[str, tuple[tuple[str, ...], str | None]] = {
     "frlg": (("frlg.common.items.gItemDescription_", "frlg.common.move_descriptions."),
              "frlg.common.items.gItemDescription_ITEM_"),
     "emerald": (("e.common.item_descriptions.", "e.common.move_descriptions."), None),
+    "rs": (("rs.common.item_descriptions.", "rs.common.move_descriptions."), None),
 }
 
 
@@ -852,6 +891,10 @@ def _engine_value(text: str, charmap: PretCharmap, language: str) -> str:
             parts.append("\n")
         elif kind == "para":
             parts.append("\n\n")
+        elif kind == "ext" and segment.get("cmd") == 0x00:
+            # NAME_END: where a Ruby/Sapphire map name's short form ends; the
+            # screens that look the name up print all of it
+            continue
         elif kind != "eos":
             raise EncodeError("engine string carries a runtime placeholder")
     return "".join(parts)
@@ -1073,12 +1116,16 @@ def join_gen3_engine_strings(
     charmap: PretCharmap,
     *,
     root: str | Path | None = None,
+    companion: Mapping[str, str] | None = None,
 ) -> tuple[dict[str, str], dict]:
     """Resolve each ``Strings()`` key the family's runtime can reach.
 
     Order: this language's overrides for the family, then the reviewed corpus
     row named in the scope (the cart's own wording for its original menus),
-    then the reviewed overrides of the other game3 families for the port-added
+    then ``companion``, the values another game of the same release resolved
+    for the same runtime (Ruby and Sapphire take Emerald's for the screens
+    their own carts never had: the link lobby, the Union Room words, Mystery
+    Gift), then the reviewed overrides of the other game3 families for the port-added
     rows they share (Emerald falls back on FireRed's), then the project's
     existing Gold/Silver and Red/Blue overrides for port-added rows the
     runtimes share (same key, same Strings() registry), then English.
@@ -1126,6 +1173,8 @@ def join_gen3_engine_strings(
                     origin = "corpus"
                 except ValueError:
                     value = None
+        if value is None and companion and key in companion:
+            value, origin = companion[key], "companion"
         if value is None and key in game3:
             value, origin = game3[key], "game3_override"
         if value is None and key in shared:

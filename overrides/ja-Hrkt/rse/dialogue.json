@@ -1,0 +1,24 @@
+{
+  "schema": "gen1recomp-translation-mods/rs-dialogue-overrides",
+  "version": 1,
+  "entries": {
+    "BattleText_MenuOptions": {
+      "qid": "rs.common.battle_strings.BattleText_MenuOptions",
+      "text": "[PALETTE 5][COLOR_HIGHLIGHT_SHADOW SKY_BLUE LIGHT_BLUE WHITE2]たたかう[CLEAR_TO 46]バッグ\\nポケモン[CLEAR_TO 46]にげる",
+      "reason": "engine-contract-gap",
+      "provenance": "The Japanese cart's own words; only the alignment changes. The cart lines the two columns up with ideographic spaces (\"たたかう　　バッグ / ポケモン　　にげる\"), where every other cart uses the CLEAR_TO layout code (\"FIGHT[CLEAR_TO 46]BAG / POKéMON[CLEAR_TO 46]RUN\"); gen1recomp splits the battle menu into its four options on the line breaks and CLEAR_TO codes (src/core/game3/battle/ui.lua menu_labels), so the ideographic spaces would leave two options on one label."
+    },
+    "BattleText_MenuOptionsSafari": {
+      "qid": "rs.common.battle_strings.BattleText_MenuOptionsSafari",
+      "text": "[PALETTE 5][COLOR_HIGHLIGHT_SHADOW SKY_BLUE LIGHT_BLUE WHITE2]ボール[CLEAR_TO 46]ポロック\\nちかづく[CLEAR_TO 46]にげる",
+      "reason": "engine-contract-gap",
+      "provenance": "The Japanese cart's own words; only the alignment changes. The cart lines the two columns up with ideographic spaces (\"ボール　　　ポロック / ちかづく　　にげる\"), where every other cart uses the CLEAR_TO layout code (\"BALL[CLEAR_TO 46][POKEBLOCK] / GO NEAR[CLEAR_TO 46]RUN\"); see BattleText_MenuOptions."
+    },
+    "BattleText_OpponentUsedMove": {
+      "qid": "rs.common.battle_strings.BattleText_OpponentUsedMove",
+      "text": "[B_ATK_NAME_WITH_PREFIX]の\\n[B_BUFF2]",
+      "reason": "engine-contract-gap",
+      "provenance": "The cart's row is \"[B_ATK_NAME_WITH_PREFIX][B_BUFF1]\\n[B_BUFF2]\": the particle and the ending appended to the move's name depend on the move (ChooseMoveUsedParticle and ChooseTypeOfMoveUsedString, pokeruby/src/battle_message.c:976, :1016). gen1recomp fills B_BUFF2 with the move's name and the cart's BattleText_Exclamation row (\"！\") and has no particle buffer, so the line takes the particle the cart prints for most moves (の, with the ！ ending); the same choice as Emerald's sText_AttackerUsedX (overrides/ja-Hrkt/rse/emerald_dialogue.json)."
+    }
+  }
+}

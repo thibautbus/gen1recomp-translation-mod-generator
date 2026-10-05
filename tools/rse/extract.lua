@@ -1,11 +1,14 @@
--- Headless Emerald text extraction under LuaJIT (no LÖVE, no ROM in git).
+-- Headless Emerald, Ruby or Sapphire text extraction under LuaJIT (no LÖVE,
+-- no ROM in git).
 --
--- Usage: luajit tools/rse/extract.lua <gen1recomp_root> <rom_path> <out_dir> <rom_sha1>
+-- Usage: luajit tools/rse/extract.lua <gen1recomp_root> <rom_path> <out_dir> <rom_sha1> [game]
 --
--- Runs the text-bearing steps of the engine's own Emerald import plan
--- (src/import/gba/plans/rse/*.lua) into <out_dir>/cache -- the same packs a
--- game3 boot reads, which the release gate and the engine scope generator
--- load back -- and writes the join's inputs next to it:
+-- <game> is emerald (the default), ruby or sapphire.  Runs the text-bearing
+-- steps of the engine's own import plan for that game
+-- (src/import/gba/plans/rse/*.lua, src/import/gba/plans/rs.lua) into
+-- <out_dir>/cache -- the same packs a game3 boot reads, which the release
+-- gate and the engine scope generator load back -- and writes the join's
+-- inputs next to it:
 --   rse_text.json           every text key as the runtime holds it
 --                           (ExtractScripts.loadBundle: the script BFS text,
 --                           with the label-keyed tables, plus the object
@@ -19,9 +22,11 @@
 --   rse_stages.json         each stage's status.
 -- The graphics stages are never run.
 
-local root, romPath, outDir, sha1 = ...
+local root, romPath, outDir, sha1, game = ...
 assert(root and romPath and outDir and sha1,
-  "usage: luajit tools/rse/extract.lua <gen1recomp_root> <rom> <out_dir> <rom_sha1>")
+  "usage: luajit tools/rse/extract.lua <gen1recomp_root> <rom> <out_dir> <rom_sha1> [game]")
+game = game or "emerald"
+assert(game == "emerald" or game == "ruby" or game == "sapphire", "unsupported game " .. game)
 
 package.path = table.concat({
   root .. "/?.lua",
@@ -60,12 +65,14 @@ if not pcall(require, "lfs") then
   end
 end
 
--- Emerald has its own map, script and text contract: select the game and the
--- GBA version family before any of those modules is loaded.
+-- Each game has its own map, script and text contract: select the game and
+-- the GBA version before any of those modules is loaded.  Ruby and Sapphire
+-- are selected by the ROM's SHA-1, which names the revision (1.0, 1.1 or
+-- 1.2, src/import/gba/rs_builds.lua) whose addresses the engine reads.
 local GameVersion = require("src.core.GameVersion")
-GameVersion.set("emerald")
+GameVersion.set(game)
 local Versions = require("src.import.gba.versions")
-Versions.select("emerald")
+Versions.select(game == "emerald" and "emerald" or sha1)
 
 local Json = require("src.link.Json")
 local FileIO = require("src.import.gba.file_io")
@@ -73,7 +80,7 @@ local Rom = require("src.import.gba.rom")
 local Plans = require("src.import.gba.plans.registry")
 
 local CACHE_ROOT = "data/generated/gba"
-local imports = FileIO.makeImports(romPath, sha1, "emerald")
+local imports = FileIO.makeImports(romPath, sha1, game)
 local cache = FileIO.makeCache(outDir .. "/cache")
 
 local stages = {}
@@ -99,12 +106,12 @@ local function loadCached(rel)
   return assert(load(body, "@" .. rel, "t", {}))()
 end
 
-assert(GameVersion.get() == "emerald", "the Emerald game version was not selected")
-assert(Versions.active() == "emerald", "the Emerald ROM family was not selected")
-local version = assert(Versions.lookup(sha1), "unsupported Emerald ROM " .. sha1)
-local rom = assert(Rom.open(imports, "emerald"))
+assert(GameVersion.get() == game, "the " .. game .. " game version was not selected")
+assert(Versions.active() == game, "the " .. game .. " ROM family was not selected")
+local version = assert(Versions.lookup(sha1), "unsupported " .. game .. " ROM " .. sha1)
+local rom = assert(Rom.open(imports, game))
 
--- One step of the engine's Emerald import plan, run the way
+-- One step of the engine's import plan for the game, run the way
 -- RomExtractorGen3:runStepsTask runs it.
 local function planStep(name, opts)
   local step = { cacheRoot = CACHE_ROOT }
@@ -120,7 +127,7 @@ local censusOk = stage("census", function()
   local census = assert(MapTree.walk(rom, version))
   local mapOrder, byEngine = MapCatalog.allOrder(census, {})
   MapCatalog.registerOrder(rom, version, mapOrder, byEngine)
-  assert(census.map_count and census.map_count > 0, "the Emerald map census is empty")
+  assert(census.map_count and census.map_count > 0, "the " .. game .. " map census is empty")
   rom:clearCache()
 end)
 
@@ -137,6 +144,18 @@ end
 -- plans/rse/pokemon_gfx.lua (its data part only: names, move names, ability
 -- names, move and ability descriptions), plans/rse/data.lua, text.lua,
 -- ui.lua and uc.lua: every other pack whose text a translation reaches.
+-- Ruby and Sapphire read their map sections and Easy Chat words with their
+-- own native steps, and lay messages out with their native fonts
+-- (plans/rs.lua).
+local regionSteps = game == "emerald" and {
+  { "map_sections", "src.import.gba.rse.map_sections_extract" },
+  { "easy_chat", "easy_chat_extract" },
+} or {
+  { "map_sections", "src.import.gba.rs.extract_region_map" },
+  { "easy_chat", "src.import.gba.rs.extract_easy_chat" },
+  -- the native fonts' manifest, which lays a message box out (RomText.box)
+  { "text_chrome", "src.import.gba.rs.text_chrome_extract" },
+}
 for _, step in ipairs({
   { "pokemon", "pokemon_extract", { part = "data" } },
   { "battle_moves", "battle_moves_extract" },
@@ -146,8 +165,9 @@ for _, step in ipairs({
   { "pokedex_entries", "pokedex_entries_extract" },
   { "trainers", "trainer_extract" },
   { "text_placeholders", "text_placeholders_extract" },
-  { "map_sections", "src.import.gba.rse.map_sections_extract" },
-  { "easy_chat", "easy_chat_extract" },
+  regionSteps[1],
+  regionSteps[2],
+  regionSteps[3],
 }) do
   stage(step[1], function() planStep(step[2], step[3]) end)
 end
@@ -178,14 +198,14 @@ stage("text_pointers", function()
     local pointer = rom:u32(Versions.STD_STRING_PTRS + i * 4)
     if pointer ~= 0 and rom:ptrOffset(pointer) then out["stdstring:" .. i] = pointer end
   end
-  assert(next(out), "no Emerald text table pointer was read")
+  assert(next(out), "no " .. game .. " text table pointer was read")
   writeJson("rse_text_pointers.json", out)
 end)
 
 local itemDescriptionPointers = {}
 stage("item_description_pointers", function()
-  -- pokeemerald/include/item.h: struct Item's description pointer, as
-  -- items_extract.lua reads it.
+  -- pokeemerald/include/item.h (pokeruby/include/item.h is the same):
+  -- struct Item's description pointer, as items_extract.lua reads it.
   for id = 0, Versions.ITEMS_COUNT - 1 do
     local pointer = rom:u32(Versions.ITEMS + id * Versions.ITEM_STRIDE + 20)
     if pointer ~= 0 and rom:ptrOffset(pointer) then itemDescriptionPointers[id] = pointer end
@@ -199,7 +219,7 @@ stage("export_text", function()
   local text = assert(loadCached("scripts/text.lua"), "scripts/text.lua missing")
   local objects = loadCached("objects/pack.lua")
   for key, value in pairs(objects and objects.text or {}) do text[key] = value end
-  assert(next(text), "the Emerald text extraction is empty")
+  assert(next(text), "the " .. game .. " text extraction is empty")
   writeJson("rse_text.json", text)
 end)
 

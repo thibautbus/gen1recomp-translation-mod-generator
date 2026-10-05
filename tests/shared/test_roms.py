@@ -45,7 +45,8 @@ class RomConfigTests(unittest.TestCase):
         config = project_config()
         self.assertEqual(set(config["rom"]),
                          {"red", "blue", "yellow", "gold", "silver", "crystal",
-                          "firered", "leafgreen", "emerald"})
+                          "firered", "leafgreen", "emerald", "ruby", "ruby_rev1", "ruby_rev2",
+                          "sapphire", "sapphire_rev1", "sapphire_rev2"})
         for section in config["rom"].values():
             self.assertNotIn("path", section)
 
