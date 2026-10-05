@@ -50,7 +50,7 @@ SCOPE_PATH = ROOT / "config" / "frlg" / "engine_scope.json"
 
 
 def scope_path(family: Gen3Family) -> Path:
-    return ROOT / "config" / family.id / "engine_scope.json"
+    return family.config_path(ROOT, "engine_scope.json")
 
 GAME3_DIRS = ("src/core/game3", "src/ui/game3", "src/battle/game3", "src/world/game3")
 
@@ -214,7 +214,7 @@ REVIEWED_RSE: Mapping[str, str | None] = {
     # the START button's name (gText_Start reads スタートボタン in Japanese)
     "START": None,
 }
-REVIEWED_BY_FAMILY: Mapping[str, Mapping[str, str | None]] = {"frlg": REVIEWED, "rse": REVIEWED_RSE}
+REVIEWED_BY_FAMILY: Mapping[str, Mapping[str, str | None]] = {"frlg": REVIEWED, "emerald": REVIEWED_RSE}
 _QID_LAST_RESORT = (".easy_chat_", ".gEasyChatGroupName_", ".quest_log.", ".gPokedexEntries.", ".fame_checker.")
 
 _LITERAL = re.compile(r'"((?:[^"\\\n]|\\.)*)"|\'((?:[^\'\\\n]|\\.)*)\'')
@@ -315,7 +315,7 @@ def reachable_by_file(engine: Path, extracted: Path | None = None) -> dict[str, 
 # the map name popup and the Pokénav print Mapsec.name).
 _PROBE_FAMILY: Mapping[str, Mapping[str, str]] = {
     "frlg": {"FAMILY_MAPS": 'local Region = require("src.import.gba.region_map_extract")\neach("src/ui/game3/region_map.lua (RegionExtract.SECTION_NAMES)", Region.SECTION_NAMES)\neach("src/ui/game3/region_map.lua (RegionExtract.DUNGEON_DESCRIPTIONS)", Region.DUNGEON_DESCRIPTIONS)\nlocal Sections = require("src.import.gba.map_sections_extract")\neach("src/ui/game3/map_name_popup.lua (MapSectionsExtract.SECTIONS name)", Sections.SECTIONS, "name")\nadd("src/ui/game3/map_name_popup.lua (MapSectionsExtract.getInfo)", "CELADON DEPT.")\nfor floor = 1, 11 do add("src/ui/game3/map_name_popup.lua (floor label)", floor .. "F") end\nfor floor = 1, 4 do add("src/ui/game3/map_name_popup.lua (floor label)", "B" .. floor .. "F") end\nadd("src/ui/game3/map_name_popup.lua (floor label)", "ROOFTOP")\n', "FAMILY_RECORDS": 'local TowerRecords = require("src.ui.game3.trainer_tower_records")\neach("src/ui/game3/trainer_tower_records.lua (Records.MODE_TEXT)", TowerRecords.MODE_TEXT)\n'},
-    "rse": {
+    "emerald": {
         "FAMILY_MAPS": (
             'local Mapsec = require("src.ui.game3.rse.mapsec")\n'
             'for sec = 0, Mapsec.count() - 1 do '
@@ -355,7 +355,7 @@ local dungeons = assert(MapPreview.loadDungeonInfo(cache), "region_map/dungeon_i
 Sections.installNames(names)
 require("src.import.gba.region_map_extract").applyGeneratedText(names, dungeons, Sections.SECTIONS)
 """,
-    "rse": "",
+    "emerald": "",
 }
 
 
@@ -618,7 +618,7 @@ def collect_keys(engine: Path, extracted: Path | None = None, family: Gen3Family
     if extracted is not None:
         for value, site in rom_description_values(extracted).items():
             keys.setdefault(value, {"callsite": site, "kind": "rom"})
-        if family.id == "rse":
+        if family.id == "emerald":
             for value, site in rse_rom_values(extracted).items():
                 keys.setdefault(value, {"callsite": site, "kind": "rom"})
     # Floors and Easy Chat words are kept even when they read as neutral: the
@@ -816,7 +816,8 @@ def build_scope(engine: Path, corpus_dir: Path, charmap: PretCharmap, *, extract
                 "the ROM's move and ability descriptions, Pokédex entries and contest texts")
     fallback = ("" if not family.shared_engine_families else
                 " or by the overrides of the game3 families it shares the runtime with ("
-                + ", ".join(f"overrides/<language>/{other}/engine.json" for other in family.shared_engine_families)
+                + ", ".join(FAMILIES[other].overrides_path("", "<language>", "engine.json").as_posix()
+                    for other in family.shared_engine_families)
                 + ")")
     return {
         "schema": family.schema("engine-scope"),
@@ -830,14 +831,15 @@ def build_scope(engine: Path, corpus_dir: Path, charmap: PretCharmap, *, extract
             f"multipliers, refresh rates) are left out.  A qid names the {family.game} cart's own row for "
             "the key; runtime values in that row fill the key's directives, renumbered when the "
             "translation orders them differently.  Keys without a qid are port-added or have no "
-            f"clean corpus row, and are covered by overrides/<language>/{family.id}/engine.json{fallback}."
+            f"clean corpus row, and are covered by "
+            f"{family.overrides_path('', '<language>', 'engine.json').as_posix()}{fallback}."
         ),
         "keys": dict(sorted(keys.items())),
     }
 
 
 # Where a build leaves each family's pinned charmap (pipeline.toml [pret.*]).
-CHARMAP_DEPENDENCY: Mapping[str, str] = {"frlg": "charmap", "rse": "emerald_charmap"}
+CHARMAP_DEPENDENCY: Mapping[str, str] = {"frlg": "charmap", "emerald": "emerald_charmap"}
 
 
 def main(argv: list[str] | None = None) -> int:

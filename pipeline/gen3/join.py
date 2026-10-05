@@ -39,7 +39,7 @@ from pathlib import Path
 from typing import Iterable, Mapping
 
 from ..shared.corpus import CORPUS_NULL, canonical_language, corpus_target_text
-from .family import FRLG, Gen3Family
+from .family import FAMILIES, FRLG, Gen3Family
 from .text import (
     LANGUAGE_FOLDS,
     EncodeError,
@@ -170,7 +170,7 @@ def load_dialogue_overrides(language: str, family: Gen3Family = FRLG,
     """
     language = canonical_language(language)
     base = Path(root) if root else Path(__file__).resolve().parents[2]
-    path = base / "overrides" / language / family.id / "dialogue.json"
+    path = family.overrides_path(base, language, "dialogue.json")
     if not path.is_file():
         return {}
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -212,7 +212,7 @@ def load_dialogue_decisions(family: Gen3Family = FRLG, path: str | Path | None =
     if edition not in family.editions:
         raise ValueError(f"unsupported {family.game} edition: {edition!r}")
     if path is None:
-        path = Path(__file__).resolve().parents[2] / "config" / family.id / "dialogue_decisions.json"
+        path = family.config_path(Path(__file__).resolve().parents[2], "dialogue_decisions.json")
     path = Path(path)
     if not path.is_file():
         return {}
@@ -699,7 +699,7 @@ def join_indexed_catalog(
 _ITEM_DESCRIPTION_FAMILIES: Mapping[str, tuple[tuple[str, ...], str | None]] = {
     "frlg": (("frlg.common.items.gItemDescription_", "frlg.common.move_descriptions."),
              "frlg.common.items.gItemDescription_ITEM_"),
-    "rse": (("e.common.item_descriptions.", "e.common.move_descriptions."), None),
+    "emerald": (("e.common.item_descriptions.", "e.common.move_descriptions."), None),
 }
 
 
@@ -812,7 +812,7 @@ FRLG_ENGINE_OVERRIDES_SCHEMA = "gen1recomp-translation-mods/engine-overrides"
 
 def load_engine_scope(family: Gen3Family = FRLG, path: str | Path | None = None) -> dict[str, dict]:
     if path is None:
-        path = Path(__file__).resolve().parents[2] / "config" / family.id / "engine_scope.json"
+        path = family.config_path(Path(__file__).resolve().parents[2], "engine_scope.json")
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     if data.get("schema") != family.schema("engine-scope") or data.get("version") != 1:
         raise ValueError(f"unsupported {family.game} engine scope: {path}")
@@ -1086,10 +1086,10 @@ def join_gen3_engine_strings(
     language = corpus.language
     family = corpus.family
     base = Path(root) if root else Path(__file__).resolve().parents[2]
-    own = _override_values(base / "overrides" / language / family.id / "engine.json")
+    own = _override_values(family.overrides_path(base, language, "engine.json"))
     game3 = {}
     for other in reversed(family.shared_engine_families):
-        game3.update(_override_values(base / "overrides" / language / other / "engine.json"))
+        game3.update(_override_values(FAMILIES[other].overrides_path(base, language, "engine.json")))
     shared = {**_override_values(base / "overrides" / language / "rby" / "engine.json"),
               **_override_values(base / "overrides" / language / "gsc" / "engine.json")}
     where = f"{family.game} engine scope row"

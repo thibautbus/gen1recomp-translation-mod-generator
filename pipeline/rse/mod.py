@@ -5,7 +5,8 @@ Emerald runs on the same game3 runtime as FireRed and goes through the same
 joins (pipeline.gen3), with its own family (pipeline.gen3.family.EMERALD):
 the Emerald PokeCorpus collection, pret's pokeemerald symbol table and
 charmap, the runtime's ``rse`` text dialect, and its own reviewed
-configuration under ``config/rse/`` and ``overrides/<language>/rse/``.  The
+configuration as the companion edition of the ``rse`` release
+(``config/rse/emerald_*.json``, ``overrides/<language>/rse/emerald_*.json``).  The
 mod ships:
 
 * ``text``: every dialogue and named-text key, overridden with its IR
@@ -15,7 +16,7 @@ mod ships:
 * ``pokemon``, ``moves``, ``items`` and ``trainers`` name, description and
   class-name patches, keyed as ``G3.idOf`` and ``G3.trainerIds`` key them;
 * ``strings`` for the game3 interface strings that go through ``Strings()``
-  (config/rse/engine_scope.json): Emerald's corpus rows first, then the
+  (config/rse/emerald_engine_scope.json): Emerald's corpus rows first, then the
   reviewed overrides of this family and of FireRed for the port-added rows
   both runtimes share.
 

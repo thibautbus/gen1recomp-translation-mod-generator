@@ -234,21 +234,21 @@ lists a label twice, the row whose English reproduces the ROM wins. Every
 translation is the official row, shipped as the runtime's text IR once its
 English has reproduced the ROM's own text exactly. The game3 interface
 strings (`Strings()`) are listed in
-[`config/rse/engine_scope.json`](config/rse/engine_scope.json) and joined to
+[`config/rse/emerald_engine_scope.json`](config/rse/emerald_engine_scope.json) and joined to
 Emerald's own cart rows. A cart label the dialogue already translates keeps
 its own row: the engine catalog never lends it another screen's wording.
 What has no Emerald row is reviewed and carries its provenance: the
 interface rows gen1recomp added to both games reuse FireRed's reviewed
 overrides (and the Red/Blue and Gold ones before English), the Wonder Card
 lines gen1recomp composes for Emerald's events are worded from the cart's
-own vocabulary (`overrides/<lang>/rse/engine.json`), and the one French line
+own vocabulary (`overrides/<lang>/rse/emerald_engine.json`), and the one French line
 the corpus lacks is the French cart's own, read from pret's multi-language
-decompilation (`overrides/fr/rse/dialogue.json`).
+decompilation (`overrides/fr/rse/emerald_dialogue.json`).
 
 The trainers of the cart's trainer table are named as the European carts
 name them, which their own code does differently from the US one (pret's multi-language decompilation,
 `#if EUROPE`, reviewed in
-[`config/rse/european_trainer_text.json`](config/rse/european_trainer_text.json)):
+[`config/rse/emerald_european_trainer_text.json`](config/rse/emerald_european_trainer_text.json)):
 the French and Spanish carts put a Team Aqua or Team Magma grunt's name
 before its class (SBIRE TEAM AQUA, SOLDADO EQUIPO AQUA), and the French,
 Italian and Spanish carts have their own words for a girl's School Kid class,
@@ -644,7 +644,7 @@ language overrides follow the same split under `overrides/<language>/`.
 | `config/gsc/crystal_semantic_anchors.json` | Evidence for Crystal engine-string corpus matches. |
 | `config/frlg/dialogue_decisions.json` | Reviewed corpus rows for FireRed standard-script lines gen1recomp reworded, with LeafGreen's own pick where its tables differ. |
 | `config/frlg/engine_scope.json` | FireRed-reachable `Strings()` keys, their callsites and reviewed cart rows. |
-| `config/rse/engine_scope.json` | Emerald-reachable `Strings()` keys, their callsites and Emerald cart rows (`python -m pipeline.gen3.engine_scope --family rse`). |
+| `config/rse/emerald_engine_scope.json` | Emerald-reachable `Strings()` keys, their callsites and Emerald cart rows (`python -m pipeline.gen3.engine_scope --family emerald`). |
 | `config/gsc/crystal_string_selectors.json` | Reviewed qid/segment picks for Crystal corpus rows whose list boundaries or placeholder count don't fit the shared semantic-anchor grammar. |
 
 The semantic anchors and reviewed decisions are described in the

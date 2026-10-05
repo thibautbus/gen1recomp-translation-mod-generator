@@ -253,9 +253,9 @@ class EmeraldJoinTests(unittest.TestCase):
     def test_engine_strings_fall_back_on_firereds_reviewed_overrides(self):
         corpus = self.corpus([("e.common.strings.gText_Yes", "YES", "OUI")])
         base = self.tmp / "repo"
-        for family, entries in (("rse", {"EMERALD ONLY": "EMERAUDE"}),
-                                ("frlg", {"MUSIC VOL": "VOL. MUSIQUE", "EMERALD ONLY": "PERDU"})):
-            path = base / "overrides" / "fr" / family / "engine.json"
+        for family, entries in ((EMERALD, {"EMERALD ONLY": "EMERAUDE"}),
+                                (FRLG, {"MUSIC VOL": "VOL. MUSIQUE", "EMERALD ONLY": "PERDU"})):
+            path = family.overrides_path(base, "fr", "engine.json")
             path.parent.mkdir(parents=True)
             path.write_text(json.dumps({"entries": {key: {"override": value} for key, value in entries.items()}}),
                             encoding="utf-8")
@@ -264,11 +264,12 @@ class EmeraldJoinTests(unittest.TestCase):
         values, stats = join_gen3_engine_strings(scope, corpus, self.charmap, root=base)
         self.assertEqual(values, {"YES": "OUI", "MUSIC VOL": "VOL. MUSIQUE", "EMERALD ONLY": "EMERAUDE"})
         self.assertEqual(stats["details"], {"YES": "corpus", "MUSIC VOL": "game3_override",
-                                            "EMERALD ONLY": "rse_override", "VSYNC": "fallback_english"})
+                                            "EMERALD ONLY": "emerald_override", "VSYNC": "fallback_english"})
 
     def test_family_configuration_is_read_from_its_own_directories(self):
         base = self.tmp / "repo"
-        path = base / "overrides" / "fr" / "rse" / "dialogue.json"
+        # the companion edition's files sit in its release's directory
+        path = base / "overrides" / "fr" / "rse" / "emerald_dialogue.json"
         path.parent.mkdir(parents=True)
         path.write_text(json.dumps({"schema": EMERALD.schema("dialogue-overrides"), "version": 1,
                                     "entries": {"k": {"qid": "e.script.x", "text": "t", "reason": "r"}}}),
@@ -299,7 +300,7 @@ class EmeraldJoinTests(unittest.TestCase):
         self.assertFalse(placeholders_supported(target, english))
         self.assertTrue(placeholders_supported(target, english, ["STR_VAR_2"]))
         base = self.tmp / "repo"
-        path = base / "overrides" / "fr" / "rse" / "dialogue.json"
+        path = EMERALD.overrides_path(base, "fr", "dialogue.json")
         path.parent.mkdir(parents=True)
         path.write_text(json.dumps({"schema": EMERALD.schema("dialogue-overrides"), "version": 1, "entries": {
             "k": {"qid": "e.script.x", "text": "t", "reason": "r", "runtime_fills": ["PLAYER"]}}}), encoding="utf-8")
@@ -474,7 +475,7 @@ class EmeraldConfigTests(unittest.TestCase):
                          "e.common.move_descriptions.sSludgeDescription")
         for language in ("fr", "de", "es", "it", "ja-Hrkt"):
             with self.subTest(language=language):
-                engine = json.loads((ROOT / "overrides" / language / "rse" / "engine.json").read_text(encoding="utf-8"))
+                engine = json.loads(EMERALD.overrides_path(ROOT, language, "engine.json").read_text(encoding="utf-8"))
                 for key, row in engine["entries"].items():
                     self.assertIn(key, scope)
                     self.assertTrue(row.get("reason") and row.get("provenance"), key)
