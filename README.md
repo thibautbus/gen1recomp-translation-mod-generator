@@ -526,11 +526,11 @@ FireRed section of [docs/upstream-fixes.md](docs/upstream-fixes.md).
 ### Ruby and Sapphire
 
 - `Ruby/Sapphire ROM aggregate` measures the cart the build reads the same
-  way as FireRed's: its script messages and the 9,149 rows the runtime reads
+  way as FireRed's: its script messages and the 9,158 rows the runtime reads
   by label or through a pointer table, with the named catalogs (species, move
   and item names, item descriptions, trainer names and class names). It
   leaves out 88 rows that carry no text, 23 the extractor cannot read (the
-  Sealed Chamber's and the ancient tombs' braille) and 19 whose only corpus
+  Sealed Chamber's and the ancient tombs' braille) and 10 whose only corpus
   line is Japanese. Built from Ruby 1.2 or from Sapphire 1.0, it lands on the same
   figures, and so does each of the four script layouts the mod carries
   (`ruby_1_0`, `ruby_1_1`, `sapphire_1_0`, `sapphire_1_1`), measured on the
@@ -551,11 +551,11 @@ FireRed section of [docs/upstream-fixes.md](docs/upstream-fixes.md).
 
 | Target | Ruby/Sapphire ROM aggregate | Ruby/Sapphire engine strings |
 | --- | ---: | ---: |
-| `fr` | 15262/15363 (99.34%) | 2512/2518 (99.76%) |
-| `de` | 15244/15363 (99.23%) | 2512/2518 (99.76%) |
-| `es` | 15294/15363 (99.55%) | 2512/2518 (99.76%) |
-| `it` | 15259/15363 (99.32%) | 2512/2518 (99.76%) |
-| `ja-Hrkt` | 15231/15363 (99.14%) | 2512/2518 (99.76%) |
+| `fr` | 15271/15372 (99.34%) | 2512/2518 (99.76%) |
+| `de` | 15253/15372 (99.23%) | 2512/2518 (99.76%) |
+| `es` | 15303/15372 (99.55%) | 2512/2518 (99.76%) |
+| `it` | 15268/15372 (99.32%) | 2512/2518 (99.76%) |
+| `ja-Hrkt` | 15240/15372 (99.14%) | 2512/2518 (99.76%) |
 
 These are measured at the pinned revision v0.3.54; like the others,
 they measure what the mod ships, not what the current runtime displays.

@@ -311,6 +311,11 @@ RS_DIALECT = Dialect(
         # and ATK_PREFIX2 (the English rows' names for them).
         "B_COPY_VAR_1": b"\xfd\x02", "B_COPY_VAR_2": b"\xfd\x03", "B_COPY_VAR_3": b"\xfd\x04",
         "B_TRAINER1_WIN_TEXT": b"\xfd\x25", "B_26": b"\xfd\x26",
+        # The battle rows that wait for a sound effect (BattleText_GrewLevel,
+        # BattleText_LearnedMove...) name the escape as pokeemerald does
+        # (charmap.txt:422, WAIT_SE = FC 0A); pokeruby's charmap calls the
+        # same bytes UNKNOWN_A (charmap.txt:373).
+        "WAIT_SE": b"\xfc\x0a",
     },
 )
 DIALECTS: Mapping[str, Dialect] = {dialect.name: dialect for dialect in (FRLG_DIALECT, RSE_DIALECT, RS_DIALECT)}
