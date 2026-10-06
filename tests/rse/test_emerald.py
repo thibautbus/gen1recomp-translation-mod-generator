@@ -15,9 +15,10 @@ from pipeline.gen3.join import (
 from pipeline.gen3.join import Gen3DialogueEntry
 from pipeline.gen3.mod import dialogue_label_rows
 from pipeline.gen3.text import RSE_DIALECT, corpus_ir, decode, encode, load_charmap
+from pipeline.rse.join import text_aliases
 from pipeline.rse.mod import (
     DIALOGUE_FILE_ENTRIES, dialogue_files, generate_rse_mod, rse_archive_name, rse_mod_id,
-    text_aliases, write_gate_expectations,
+    write_gate_expectations,
 )
 from pipeline.rse.european import apply_european_trainer_text, load_european_trainer_text
 from pipeline.shared.gui import generation_code, generation_label
@@ -253,9 +254,9 @@ class EmeraldJoinTests(unittest.TestCase):
     def test_engine_strings_fall_back_on_firereds_reviewed_overrides(self):
         corpus = self.corpus([("e.common.strings.gText_Yes", "YES", "OUI")])
         base = self.tmp / "repo"
-        for family, entries in (("rse", {"EMERALD ONLY": "EMERAUDE"}),
-                                ("frlg", {"MUSIC VOL": "VOL. MUSIQUE", "EMERALD ONLY": "PERDU"})):
-            path = base / "overrides" / "fr" / family / "engine.json"
+        for family, entries in ((EMERALD, {"EMERALD ONLY": "EMERAUDE"}),
+                                (FRLG, {"MUSIC VOL": "VOL. MUSIQUE", "EMERALD ONLY": "PERDU"})):
+            path = family.overrides_path(base, "fr", "engine.json")
             path.parent.mkdir(parents=True)
             path.write_text(json.dumps({"entries": {key: {"override": value} for key, value in entries.items()}}),
                             encoding="utf-8")
@@ -264,11 +265,12 @@ class EmeraldJoinTests(unittest.TestCase):
         values, stats = join_gen3_engine_strings(scope, corpus, self.charmap, root=base)
         self.assertEqual(values, {"YES": "OUI", "MUSIC VOL": "VOL. MUSIQUE", "EMERALD ONLY": "EMERAUDE"})
         self.assertEqual(stats["details"], {"YES": "corpus", "MUSIC VOL": "game3_override",
-                                            "EMERALD ONLY": "rse_override", "VSYNC": "fallback_english"})
+                                            "EMERALD ONLY": "emerald_override", "VSYNC": "fallback_english"})
 
     def test_family_configuration_is_read_from_its_own_directories(self):
         base = self.tmp / "repo"
-        path = base / "overrides" / "fr" / "rse" / "dialogue.json"
+        # the companion edition's files sit in its release's directory
+        path = base / "overrides" / "fr" / "rse" / "emerald_dialogue.json"
         path.parent.mkdir(parents=True)
         path.write_text(json.dumps({"schema": EMERALD.schema("dialogue-overrides"), "version": 1,
                                     "entries": {"k": {"qid": "e.script.x", "text": "t", "reason": "r"}}}),
@@ -299,7 +301,7 @@ class EmeraldJoinTests(unittest.TestCase):
         self.assertFalse(placeholders_supported(target, english))
         self.assertTrue(placeholders_supported(target, english, ["STR_VAR_2"]))
         base = self.tmp / "repo"
-        path = base / "overrides" / "fr" / "rse" / "dialogue.json"
+        path = EMERALD.overrides_path(base, "fr", "dialogue.json")
         path.parent.mkdir(parents=True)
         path.write_text(json.dumps({"schema": EMERALD.schema("dialogue-overrides"), "version": 1, "entries": {
             "k": {"qid": "e.script.x", "text": "t", "reason": "r", "runtime_fills": ["PLAYER"]}}}), encoding="utf-8")
@@ -324,23 +326,25 @@ class EmeraldModTests(unittest.TestCase):
         self.assertEqual(list(files), ["dialogue", "dialogue_2", "dialogue_3"])
         self.assertEqual(sum(len(rows) for rows in files.values()), len(dialogue))
 
-    def test_generated_mod_targets_emerald_and_loads_every_dialogue_file(self):
+    def test_generated_mod_ships_emeralds_layer_and_loads_every_dialogue_file(self):
         dialogue = {f"k{index:05d}": [text("x"), EOS] for index in range(DIALOGUE_FILE_ENTRIES + 1)}
         mod = generate_rse_mod(self.tmp / "mod", language="fr", target_name="French",
-                               dialogue=dialogue, catalogs={"strings": {"YES": "OUI"}})
+                               emerald={"dialogue": dialogue, "catalogs": {"strings": {"YES": "OUI"}}})
         manifest = json.loads((mod / "manifest.json").read_text(encoding="utf-8"))
-        self.assertEqual((manifest["id"], manifest["games"]), ("translation-fr-gen3-emerald", ["emerald"]))
-        self.assertTrue((mod / "lang" / "dialogue_2.lua").is_file())
+        self.assertEqual((manifest["id"], manifest["games"]),
+                         ("translation-fr-gen3-rse", ["ruby", "sapphire", "emerald"]))
+        self.assertTrue((mod / "lang" / "emerald" / "dialogue_2.lua").is_file())
+        self.assertTrue((mod / "lang" / "emerald" / "strings.lua").is_file())
         main = (mod / "main.lua").read_text(encoding="utf-8")
         self.assertIn('dialogueFile(part)', main)
         self.assertIn("mod.content.strings:override(id, value)", main)
         with self.assertRaises(ValueError):
-            generate_rse_mod(self.tmp / "bad", language="fr", target_name="French", dialogue={},
-                             catalogs={"start_menu": {"bag": "SAC"}})
+            generate_rse_mod(self.tmp / "bad", language="fr", target_name="French",
+                             emerald={"dialogue": {}, "catalogs": {"start_menu": {"bag": "SAC"}}})
 
     def test_names(self):
-        self.assertEqual(rse_mod_id("ja-Hrkt"), "translation-ja-hrkt-gen3-emerald")
-        self.assertEqual(rse_archive_name("fr", "1.0"), "translation-fr-gen3-emerald-1.0.zip")
+        self.assertEqual(rse_mod_id("ja-Hrkt"), "translation-ja-hrkt-gen3-rse")
+        self.assertEqual(rse_archive_name("fr", "1.0"), "translation-fr-gen3-rse-1.0.zip")
 
     def test_text_aliases_name_each_pointer_with_pret_symbols(self):
         (self.tmp / "rse_text_pointers.json").write_text(
@@ -441,14 +445,14 @@ class LabelRowTests(unittest.TestCase):
 class EmeraldConfigTests(unittest.TestCase):
     def test_release_profile_and_selection(self):
         profile = release_profile("rse")
-        self.assertEqual((profile.generation, profile.games), (3, ("emerald",)))
+        self.assertEqual((profile.generation, profile.games), (3, ("rs", "emerald")))
         self.assertEqual(game_spec("emerald").corpus_collection, "Emerald")
         self.assertEqual([code for code, _ in languages_for_collection("Emerald")],
                          ["fr", "de", "es", "it", "ja-Hrkt"])
         self.assertEqual(release_profile_for_selection(3).id, "frlg")
         self.assertEqual(release_profile_for_selection(4).id, "rse")
-        self.assertEqual(generation_label(4), "Emerald (generation 3)")
-        self.assertEqual(generation_code("Emerald (generation 3)"), 4)
+        self.assertEqual(generation_label(4), "Ruby, Sapphire and Emerald (generation 3)")
+        self.assertEqual(generation_code("Ruby, Sapphire and Emerald (generation 3)"), 4)
 
     def test_only_the_canonical_rom_is_accepted(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -474,7 +478,7 @@ class EmeraldConfigTests(unittest.TestCase):
                          "e.common.move_descriptions.sSludgeDescription")
         for language in ("fr", "de", "es", "it", "ja-Hrkt"):
             with self.subTest(language=language):
-                engine = json.loads((ROOT / "overrides" / language / "rse" / "engine.json").read_text(encoding="utf-8"))
+                engine = json.loads(EMERALD.overrides_path(ROOT, language, "engine.json").read_text(encoding="utf-8"))
                 for key, row in engine["entries"].items():
                     self.assertIn(key, scope)
                     self.assertTrue(row.get("reason") and row.get("provenance"), key)

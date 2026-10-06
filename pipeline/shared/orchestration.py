@@ -125,7 +125,7 @@ def build_request(
         from ..rse.mod import build_rse
 
         return build_rse(
-            request.source_for("emerald"), request.language, language_name, luajit,
+            request.source_for("rs"), request.source_for("emerald"), request.language, language_name, luajit,
             workspace_root=workspace_root, output_dir=output_dir,
             log_fn=log_fn, status_fn=status_fn,
         )

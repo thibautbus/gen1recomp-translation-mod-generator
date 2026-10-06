@@ -50,7 +50,7 @@ SCOPE_PATH = ROOT / "config" / "frlg" / "engine_scope.json"
 
 
 def scope_path(family: Gen3Family) -> Path:
-    return ROOT / "config" / family.id / "engine_scope.json"
+    return family.config_path(ROOT, "engine_scope.json")
 
 GAME3_DIRS = ("src/core/game3", "src/ui/game3", "src/battle/game3", "src/world/game3")
 
@@ -73,7 +73,9 @@ local function each(site, t, field)
 end
 local Rows = require("src.ui.game3.option_rows")
 for _, g in ipairs(Rows.GROUPS) do add("src/ui/game3/option_rows.lua (Rows.GROUPS label)", g.label) end
-for _, row in ipairs(Rows.build({ options = {} })) do add("src/ui/game3/option_rows.lua (row label)", row.label) end
+local rowSkip
+--[[FAMILY_ROWS]]
+for _, row in ipairs(Rows.build({ options = {} }, rowSkip)) do add("src/ui/game3/option_rows.lua (row label)", row.label) end
 local L = require("src.render.Letterbox"); for _, m in ipairs(L.MODES) do add("src/ui/game3/option_rows.lua (Letterbox.label)", L.label(m)) end
 local V = require("src.core.VideoMode"); for _, m in ipairs({ "windowed", "borderless" }) do add("src/ui/game3/option_rows.lua (VideoMode.modeLabel)", V.modeLabel(m)) end
 local O = require("src.core.Orientation"); for _, m in ipairs(O.MODES) do add("src/ui/game3/option_rows.lua (Orientation.modeLabel)", O.modeLabel(m)) end
@@ -210,8 +212,14 @@ REVIEWED_RSE: Mapping[str, str | None] = {
     # the in-game trade's nickname for Seedot, not the contest opponent of
     # the same English name (gContestOpponents)
     "DOTS": "e.common.trade.sIngameTrades.0",
+    # the Ruby/Sapphire link lobby's choice that starts the activity, not
+    # the START button's name (gText_Start reads スタートボタン in Japanese)
+    "START": None,
 }
-REVIEWED_BY_FAMILY: Mapping[str, Mapping[str, str | None]] = {"frlg": REVIEWED, "rse": REVIEWED_RSE}
+# Ruby and Sapphire's reviewed rows (see REVIEWED).
+REVIEWED_RS: Mapping[str, str | None] = {}
+REVIEWED_BY_FAMILY: Mapping[str, Mapping[str, str | None]] = {
+    "frlg": REVIEWED, "rs": REVIEWED_RS, "emerald": REVIEWED_RSE}
 _QID_LAST_RESORT = (".easy_chat_", ".gEasyChatGroupName_", ".quest_log.", ".gPokedexEntries.", ".fame_checker.")
 
 _LITERAL = re.compile(r'"((?:[^"\\\n]|\\.)*)"|\'((?:[^\'\\\n]|\\.)*)\'')
@@ -312,7 +320,7 @@ def reachable_by_file(engine: Path, extracted: Path | None = None) -> dict[str, 
 # the map name popup and the Pokénav print Mapsec.name).
 _PROBE_FAMILY: Mapping[str, Mapping[str, str]] = {
     "frlg": {"FAMILY_MAPS": 'local Region = require("src.import.gba.region_map_extract")\neach("src/ui/game3/region_map.lua (RegionExtract.SECTION_NAMES)", Region.SECTION_NAMES)\neach("src/ui/game3/region_map.lua (RegionExtract.DUNGEON_DESCRIPTIONS)", Region.DUNGEON_DESCRIPTIONS)\nlocal Sections = require("src.import.gba.map_sections_extract")\neach("src/ui/game3/map_name_popup.lua (MapSectionsExtract.SECTIONS name)", Sections.SECTIONS, "name")\nadd("src/ui/game3/map_name_popup.lua (MapSectionsExtract.getInfo)", "CELADON DEPT.")\nfor floor = 1, 11 do add("src/ui/game3/map_name_popup.lua (floor label)", floor .. "F") end\nfor floor = 1, 4 do add("src/ui/game3/map_name_popup.lua (floor label)", "B" .. floor .. "F") end\nadd("src/ui/game3/map_name_popup.lua (floor label)", "ROOFTOP")\n', "FAMILY_RECORDS": 'local TowerRecords = require("src.ui.game3.trainer_tower_records")\neach("src/ui/game3/trainer_tower_records.lua (Records.MODE_TEXT)", TowerRecords.MODE_TEXT)\n'},
-    "rse": {
+    "emerald": {
         "FAMILY_MAPS": (
             'local Mapsec = require("src.ui.game3.rse.mapsec")\n'
             'for sec = 0, Mapsec.count() - 1 do '
@@ -320,6 +328,19 @@ _PROBE_FAMILY: Mapping[str, Mapping[str, str]] = {
         ),
         "FAMILY_RECORDS": "",
     },
+}
+# Ruby and Sapphire run Emerald's screens (src/ui/game3/rse/), but their
+# option menu draws its own cart rows and leaves the shared builder only the
+# port's (src/ui/game3/rs/option_menu.lua portRows).
+_PROBE_FAMILY["rs"] = {
+    **_PROBE_FAMILY["emerald"],
+    "FAMILY_ROWS": (
+        'local RsOptions = require("src.ui.game3.rs.option_menu")\n'
+        'rowSkip = {}\n'
+        'for _, key in ipairs({ "textSpeed", "battleScene", "battleStyle", "sound", "buttonMode", '
+        '"frameType" }) do rowSkip[key] = true end\n'
+        'for key in pairs(RsOptions.EXCLUDE or {}) do rowSkip[key] = true end\n'
+    ),
 }
 
 # The option rows and the other probed tables name their labels by the
@@ -352,7 +373,8 @@ local dungeons = assert(MapPreview.loadDungeonInfo(cache), "region_map/dungeon_i
 Sections.installNames(names)
 require("src.import.gba.region_map_extract").applyGeneratedText(names, dungeons, Sections.SECTIONS)
 """,
-    "rse": "",
+    "rs": "",
+    "emerald": "",
 }
 
 
@@ -557,8 +579,17 @@ def context_family(context: str) -> str | None:
     if context == "easyChat.group":
         return ".gEasyChatGroupName_"
     if context.startswith("easyChat."):
-        return ".easy_chat_group_" + re.sub(r"[^a-z0-9]+", "_", context[len("easyChat."):].lower()).strip("_") + "."
+        group = context[len("easyChat."):]
+        group = _EASY_CHAT_GROUP_SPELLINGS.get(group, group)
+        return ".easy_chat_group_" + re.sub(r"[^a-z0-9]+", "_", group.lower()).strip("_") + "."
     return None
+
+
+# Group names a cart abbreviates where PokeCorpus names the group in full:
+# Ruby and Sapphire's EVENTS group is titled EVENT. (pokeruby
+# data/text/easy_chat/group_name_strings.inc:53), its words are
+# easy_chat_group_events.
+_EASY_CHAT_GROUP_SPELLINGS: Mapping[str, str] = {"EVENT.": "EVENTS"}
 
 
 def required_family(key: str, site: str) -> str | None:
@@ -615,7 +646,7 @@ def collect_keys(engine: Path, extracted: Path | None = None, family: Gen3Family
     if extracted is not None:
         for value, site in rom_description_values(extracted).items():
             keys.setdefault(value, {"callsite": site, "kind": "rom"})
-        if family.id == "rse":
+        if family.id in ("rs", "emerald"):
             for value, site in rse_rom_values(extracted).items():
                 keys.setdefault(value, {"callsite": site, "kind": "rom"})
     # Floors and Easy Chat words are kept even when they read as neutral: the
@@ -813,7 +844,8 @@ def build_scope(engine: Path, corpus_dir: Path, charmap: PretCharmap, *, extract
                 "the ROM's move and ability descriptions, Pokédex entries and contest texts")
     fallback = ("" if not family.shared_engine_families else
                 " or by the overrides of the game3 families it shares the runtime with ("
-                + ", ".join(f"overrides/<language>/{other}/engine.json" for other in family.shared_engine_families)
+                + ", ".join(FAMILIES[other].overrides_path("", "<language>", "engine.json").as_posix()
+                    for other in family.shared_engine_families)
                 + ")")
     return {
         "schema": family.schema("engine-scope"),
@@ -827,14 +859,16 @@ def build_scope(engine: Path, corpus_dir: Path, charmap: PretCharmap, *, extract
             f"multipliers, refresh rates) are left out.  A qid names the {family.game} cart's own row for "
             "the key; runtime values in that row fill the key's directives, renumbered when the "
             "translation orders them differently.  Keys without a qid are port-added or have no "
-            f"clean corpus row, and are covered by overrides/<language>/{family.id}/engine.json{fallback}."
+            f"clean corpus row, and are covered by "
+            f"{family.overrides_path('', '<language>', 'engine.json').as_posix()}{fallback}."
         ),
         "keys": dict(sorted(keys.items())),
     }
 
 
 # Where a build leaves each family's pinned charmap (pipeline.toml [pret.*]).
-CHARMAP_DEPENDENCY: Mapping[str, str] = {"frlg": "charmap", "rse": "emerald_charmap"}
+CHARMAP_DEPENDENCY: Mapping[str, str] = {"frlg": "charmap", "rs": "ruby_sapphire_charmap",
+                                         "emerald": "emerald_charmap"}
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -5,7 +5,7 @@ code never prints, and French and Spanish put a Team Aqua or Team Magma
 grunt's name before its class (pret pokeemerald, branch ``multi-language``,
 ``#if EUROPE``). The runtime runs the US code, but it reads each trainer's
 name and class from the mod by trainer id, so the mod ships them as the cart
-prints them: ``config/rse/european_trainer_text.json`` lists the reviewed
+prints them: ``config/rse/emerald_european_trainer_text.json`` lists the reviewed
 words and where the carts take them from.
 """
 
@@ -16,11 +16,12 @@ from collections import Counter
 from pathlib import Path
 from typing import Mapping, MutableMapping
 
+from ..gen3.family import EMERALD
 from ..gen3.join import Gen3Corpus, _plain
 from ..gen3.text import EncodeError, PretCharmap
 
-CONFIG = Path(__file__).resolve().parents[2] / "config" / "rse" / "european_trainer_text.json"
-SCHEMA = "gen1recomp-translation-mods/rse-european-trainer-text"
+CONFIG = EMERALD.config_path(Path(__file__).resolve().parents[2], "european_trainer_text.json")
+SCHEMA = EMERALD.schema("european-trainer-text")
 
 
 def load_european_trainer_text(path: str | Path = CONFIG) -> dict:

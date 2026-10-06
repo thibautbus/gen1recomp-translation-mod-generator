@@ -11,6 +11,9 @@ silver = "/absolute/path/to/PokemonSilver.gbc"
 crystal = "/absolute/path/to/PokemonCrystal.gbc"
 firered = "/absolute/path/to/PokemonFireRed.gba"
 leafgreen = "/absolute/path/to/PokemonLeafGreen.gba"
+# Ruby or Sapphire (either one), and Emerald
+ruby = "/absolute/path/to/PokemonRuby.gba"
+emerald = "/absolute/path/to/PokemonEmerald.gba"
 # On Windows, TOML literal strings keep backslashes readable:
 # red = 'C:\Games\PokemonRed.gb'
 # blue = 'D:\Games\PokemonBlue.gb'
@@ -20,3 +23,5 @@ leafgreen = "/absolute/path/to/PokemonLeafGreen.gba"
 # crystal = 'D:\Games\PokemonCrystal.gbc'
 # firered = 'D:\Games\PokemonFireRed.gba'
 # leafgreen = 'D:\Games\PokemonLeafGreen.gba'
+# sapphire = 'D:\Games\PokemonSapphire.gba'
+# emerald = 'D:\Games\PokemonEmerald.gba'

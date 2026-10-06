@@ -5,7 +5,7 @@ source = "https://github.com/abcboy101/poke-corpus.git"
 revision = "aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
 # Standalone mode downloads only these exact files from the pinned commit.
 archive_base_url = "https://raw.githubusercontent.com/abcboy101/poke-corpus/aa2885972ce76d29bcc18a5179f6ee411a60c8f8"
-format = "corpus/{RedBlue,Yellow,GoldSilver,Crystal,FireRedLeafGreen,Emerald}/{qid,en,<target_lang>}_msg.txt (UTF-8 parallel lines)"
+format = "corpus/{RedBlue,Yellow,GoldSilver,Crystal,FireRedLeafGreen,Emerald,RubySapphire}/{qid,en,<target_lang>}_msg.txt (UTF-8 parallel lines)"
 target_lang = "fr"
 
 [corpus.archive_files]
@@ -54,11 +54,21 @@ target_lang = "fr"
 "corpus/Emerald/es_msg.txt" = "31ac8254ed548dcb2fdab57ed65276f46c1b1f5410a1faafafbb91d38b580b9a"
 "corpus/Emerald/it_msg.txt" = "dc30da55faf2c1d13af31cb6609ec5e561859b1aad8604dcaa3c822857f4e950"
 "corpus/Emerald/ja-Hrkt_msg.txt" = "ed00b7e7721a3b0186080767b8524dbe50143095cdd3e5f4d009da03dfe11948"
+"corpus/RubySapphire/qid_msg.txt" = "bafdfb4540e8b766e7cbc947890b12164234d81f1ca039f2bdfadc8dd1d5d1b8"
+"corpus/RubySapphire/en_msg.txt" = "c3deee1a461c71d19b9dbeb5e119d477ee9b10cbbcf59c1b045ebd2b2407ab55"
+"corpus/RubySapphire/fr_msg.txt" = "1f5db566639334c15f3005ee760d0a6889a89d22d7d1deb2de520c1b7c9d7f4f"
+"corpus/RubySapphire/de_msg.txt" = "f38d88cfc429c8e8d3b6463cdef55c7b0f024ee3a7d1e652ecef533468a14e0d"
+"corpus/RubySapphire/es_msg.txt" = "5b21ea29c833f3049609e500d932f79715c3c2d709771514172108160d3586a9"
+"corpus/RubySapphire/it_msg.txt" = "330005ba64c69fc8a766458854d44656e10888630b460cf16e3e9f84fcab724d"
+"corpus/RubySapphire/ja-Hrkt_msg.txt" = "8bc1ba84bd6fba37071f9082a63fcbabcf84f66ee5dfce8e71428cf1a032e038"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
-# Pinned at v0.3.51, the upstream release used to validate and package the
-# RBY, Gold/Silver, Crystal, FireRed/LeafGreen and Emerald translation mods.
+# Pinned at v0.3.54, which carries Ruby and Sapphire (gen1recomp 67748895,
+# released in v0.3.52) and the Emerald screens translation mods reach
+# (gen1recomp#2678, released in v0.3.53), used to validate and package the
+# RBY, Gold/Silver, Crystal, FireRed/LeafGreen and Ruby/Sapphire/Emerald
+# translation mods.
 # Since v0.3.4, FireRed draws most of its own text from the cart instead of
 # English literals (option menu, summary pages, intro, Pokedex, region map,
 # battle messages, stat names...), so a mod translates them through the cart's
@@ -67,10 +77,10 @@ target_lang = "fr"
 # (gen1recomp#2398), takes Unicode braille cells (gen1recomp#2400) and draws
 # Japanese with the cart's own fonts (gen1recomp#2406).
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "a729af2364e1677222f22b1d3ba0fc6bce5c4dac"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/a729af2364e1677222f22b1d3ba0fc6bce5c4dac"
-archive_sha256 = "d40a3feec07e76332e52f6e131900781e1445148afbb19802369ce6cc1661fdc"
-archive_tree_sha256 = "daf091d730266b7515110feb7a62a8d34be9608e176c6549139c32f4a8435d41"
+revision = "c116459047d45293ef490662d07287f80835141f"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/c116459047d45293ef490662d07287f80835141f"
+archive_sha256 = "eb691bf61494357d7792f95f9435acaadbbca9d169e1ca768b8de3dc737c03fc"
+archive_tree_sha256 = "a6dc1d45a749319d27cb0a8e5edcd3f7e11266b8387a91f88723900386cef40a"
 
 # pret's FireRed/LeafGreen decompilation data the generation-3 release joins
 # through (never code, never game text): the symbol tables name every ROM
@@ -114,6 +124,31 @@ archive_base_url = "https://raw.githubusercontent.com/pret/pokeemerald/c65e93f20
 
 [pret.emerald_charmap.archive_files]
 "charmap.txt" = "9a074605da8e215c0ff455c0f53a5c9ba9a415c1d2797b0ccdd26693c39ead86"
+
+# And for Ruby and Sapphire: the pret "symbols" branch builds of pokeruby,
+# one per edition and revision whose text addresses differ.  1.0 has its
+# own layout; the rev1 (1.1) and rev2 (1.2) builds are byte-identical
+# symbol tables, so pokeruby_rev1.sym and pokesapphire_rev1.sym name every
+# 1.1 and 1.2 address.  The charmap is the one those builds were made with
+# (unchanged on master since 2020).
+[pret.ruby_sapphire_symbols]
+source = "https://github.com/pret/pokeruby.git"
+revision = "78b19905a760095bc45eab2e36906c6e8c208dce"
+archive_base_url = "https://raw.githubusercontent.com/pret/pokeruby/78b19905a760095bc45eab2e36906c6e8c208dce"
+
+[pret.ruby_sapphire_symbols.archive_files]
+"pokeruby.sym" = "a1f84fc44670fc8ae3937a1aec6f39a4eb1ac49f6b429b68082d4bcbe9b45128"
+"pokeruby_rev1.sym" = "b78e6ae48600b704041c54c6220951568b1a922555ce758158f7d219f5393de1"
+"pokesapphire.sym" = "ee3dc96e7c38a285e12d159e0bd72299eb3750b893f9c130b47d2c31969affe8"
+"pokesapphire_rev1.sym" = "8f5cbc4943b21108e5f65070537acf53b30cf24a434e92a24b15529bb49f0612"
+
+[pret.ruby_sapphire_charmap]
+source = "https://github.com/pret/pokeruby.git"
+revision = "5784633ce4ef7ade1a7f2d2d0c288e3d5e6cdd7f"
+archive_base_url = "https://raw.githubusercontent.com/pret/pokeruby/5784633ce4ef7ade1a7f2d2d0c288e3d5e6cdd7f"
+
+[pret.ruby_sapphire_charmap.archive_files]
+"charmap.txt" = "8c1db143d4f5f8186a6853d076b8b5dbd5d505b64e3c04ed79fe75afa54b7e9c"
 
 [fonts.pokemon]
 revision = "81b60805150c75ebfdfcec6d8352c67e491f8a6c"
@@ -187,6 +222,26 @@ sha1 = "574fa542ffebb14be69902d1d36f1ec0a4afd71e"
 
 [rom.emerald]
 sha1 = "f3ae088181bf583e55daf962a92bb46f4f1d07b7"
+
+# Ruby and Sapphire, every English revision gen1recomp imports
+# (src/import/gba/rs_builds.lua): 1.0 (USA), 1.1 and 1.2 (USA, Europe).
+[rom.ruby]
+sha1 = "f28b6ffc97847e94a6c21a63cacf633ee5c8df1e"
+
+[rom.ruby_rev1]
+sha1 = "610b96a9c9a7d03d2bafb655e7560ccff1a6d894"
+
+[rom.ruby_rev2]
+sha1 = "5b64eacf892920518db4ec664e62a086dd5f5bc8"
+
+[rom.sapphire]
+sha1 = "3ccbbd45f8553c36463f13b938e833f652b793e4"
+
+[rom.sapphire_rev1]
+sha1 = "4722efb8cd45772ca32555b98fd3b9719f8e60a9"
+
+[rom.sapphire_rev2]
+sha1 = "89b45fb172e6b55d51fc0e61989775187f6fe63c"
 
 [output]
 language_dir = "lang"

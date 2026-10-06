@@ -1,5 +1,5 @@
 {
-  "schema": "gen1recomp-translation-mods/rse-european-trainer-text",
+  "schema": "gen1recomp-translation-mods/emerald-european-trainer-text",
   "version": 1,
   "source": "pret/pokeemerald, branch multi-language (8baea5602), which builds the French, Italian and Spanish carts byte for byte; the European code paths are its `#if EUROPE` blocks.",
   "class_variants": [

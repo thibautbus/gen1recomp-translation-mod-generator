@@ -1,12 +1,16 @@
--- Proof the Emerald translation mod reaches what the game3 runtime reads,
--- through gen1recomp's real generation-3 mod loader (tests.modkit's SDK, the
--- seam its own Gen 3 registry tests use), on top of the real game3 data
--- modules loaded from the private Emerald extract -- not a fixture.  It
--- follows tools/frlg/gate.lua; what differs is Emerald's own consumers.
+-- Proof the Ruby, Sapphire and Emerald translation mod reaches what the
+-- game3 runtime reads, through gen1recomp's real generation-3 mod loader
+-- (tests.modkit's SDK, the seam its own Gen 3 registry tests use), on top of
+-- the real game3 data modules loaded from one game's private extract -- not
+-- a fixture.  It follows tools/frlg/gate.lua; what differs is these games'
+-- own consumers.  The build runs it once per extract (Emerald's, and the
+-- Ruby or Sapphire one it read).
 --
 -- Checks, for one sample per catalog the build hands over in <expectations>:
---   * the mod loads with no error under GameVersion "emerald", and does not
---     load under "firered" (its manifest names Emerald only);
+--   * the mod loads with no error under the game's GameVersion, and does not
+--     load under "firered" (its manifest names the three Hoenn games);
+--   * Ruby and Sapphire: the guard address holds the translation of this
+--     revision's text layout (main.lua tells 1.0 from 1.1/1.2 apart);
 --   * dialogue: data.gen3Text (the live Space.bundle.text a game3 boot
 --     exposes) holds the translated IR, and RomText.box renders it;
 --   * the battle string table reaches BattleText.get, the nature names
@@ -20,15 +24,19 @@
 -- itself (docs/upstream-fixes.md, Emerald section):
 --   * glyphs: how many characters of the shipped catalogs FrlgFont.glyphId
 --     maps to glyph 0 (a blank);
---   * strings: whether Strings() answers from the merged catalog at all;
---   * hooks: whether the Emerald screens that print the cart's English
---     through Strings() (ability names, Pokédex entries, contest texts, map
---     sections) do so at the pinned revision.
+--   * strings: whether Strings() answers from the merged catalog at all.
+-- and checks that the Emerald screens that print the cart's English through
+-- Strings() (ability names, Pokédex entries, contest texts, map sections,
+-- gen1recomp#2678) print the mod's text (hooks).
 --
 -- Usage: luajit tools/rse/gate.lua <gen1recomp_root> <extract_cache_dir> <mod_dir>
---                                  <expectations.json> <report.json>
+--                                  <expectations.json> <report.json> [game] [rom_sha1]
+-- <game> is emerald (the default), ruby or sapphire; Ruby and Sapphire also
+-- take the ROM's SHA-1, which names the revision whose addresses the
+-- engine reads (src/import/gba/rs_builds.lua).
 
-local engineRoot, cacheDir, modDir, expectationPath, reportPath = ...
+local engineRoot, cacheDir, modDir, expectationPath, reportPath, game, romSha1 = ...
+game = game or "emerald"
 if not (engineRoot and cacheDir and modDir and expectationPath and reportPath) then
   io.stderr:write("usage: luajit tools/rse/gate.lua <gen1recomp_root> <extract_cache_dir> "
     .. "<mod_dir> <expectations.json> <report.json>\n")
@@ -41,8 +49,8 @@ love = require("tests.love_stub")
 local Json = require("src.link.Json")
 local FileIO = require("src.import.gba.file_io")
 local GameVersion = require("src.core.GameVersion")
-GameVersion.set("emerald")
-require("src.import.gba.versions").select("emerald")
+GameVersion.set(game)
+require("src.import.gba.versions").select(game == "emerald" and "emerald" or romSha1)
 
 local function readFile(path)
   local file = io.open(path, "rb")
@@ -85,6 +93,9 @@ package.loaded["src.core.game3.dataset"] = {
   cache = function() return cache end,
   mountExtractRoots = function() end,
 }
+-- and the screens that read the active game's cache directly (Ruby and
+-- Sapphire's native fonts, which lay a message box out) at it too
+require("src.import.CacheFs").readActive = function(rel) return cache:read(rel) end
 
 local Pokemon = require("src.core.game3.pokemon")
 Pokemon.install(cache)
@@ -115,7 +126,7 @@ local T = require("tests.modkit")
 local modParent, modName = modDir:match("^(.*)[/\\]([^/\\]*)$")
 if not modParent then modParent, modName = ".", modDir end
 local result = T.sdk.loadMod(modName, { generation = 3, root = modParent, data = data })
-check(#result.errors == 0, "the mod loads with no errors under GameVersion=emerald")
+check(#result.errors == 0, "the mod loads with no errors under GameVersion=" .. game)
 for _, err in ipairs(result.errors or {}) do
   io.stderr:write("  loader error: " .. tostring(err.message or err) .. "\n")
 end
@@ -146,6 +157,12 @@ if sample then
   local rendered = RomText.box(sample.key, { playerName = "BRENDAN" })
   check(type(rendered) == "string" and rendered:find(sample.probe, 1, true) ~= nil,
     "dialogue " .. sample.key .. " renders through RomText.box")
+end
+
+local layout = expectations.layout
+if layout then
+  check(sameIr(data.gen3Text[layout.key], layout.ir),
+    "the guard address " .. layout.key .. " holds this revision's translation")
 end
 
 local row = expectations.battle
@@ -212,12 +229,13 @@ if row and loadsCatalog then
   if id then eq(EasyChatText.word(id), row.value, "EasyChatText.word(" .. tostring(row.word or id) .. ")") end
 end
 
--- The Emerald screens that print the cart's English through Strings() once
--- gen1recomp routes them there: measured against the pinned engine.
+-- The Emerald screens that print the cart's English through Strings()
+-- (gen1recomp#2678).
 local hooks = {}
 local function measure(name, fn, want)
   local ok, got = pcall(fn)
   hooks[name] = { routed = ok and got == want, got = ok and got or nil }
+  check(hooks[name].routed, "the Emerald " .. name .. " screen prints the mod's text: " .. tostring(hooks[name].got))
 end
 local wanted = expectations.hooks or {}
 if wanted.ability_name then
@@ -248,6 +266,12 @@ if wanted.map_section then
 end
 if wanted.pokedex then
   measure("pokedex", function()
+    -- the extract carries text only; the entry page reads its layout from
+    -- the Pokédex graphics manifest
+    local Gfx = require("src.ui.game3.rse.pokedex_gfx")
+    if not pcall(Gfx.manifest) then
+      Gfx.manifest = function() return { assetLayout = "emerald", tenDashes = "----------" } end
+    end
     local Pokedex = require("src.ui.game3.rse.pokedex")
     local entries = assert(load(assert(cache:read("data/generated/gba/pokemon/pokedex/entries.lua")),
       "@entries", "t", {}))()
@@ -261,6 +285,12 @@ if wanted.pokedex then
       end
     end
   end, wanted.pokedex.value)
+end
+
+if game == "emerald" then
+  for _, name in ipairs({ "ability_name", "pokedex", "contest", "map_section" }) do
+    check(hooks[name] ~= nil, "the Emerald " .. name .. " screen is checked")
+  end
 end
 
 -- Characters of every shipped catalog that FrlgFont draws as glyph 0.
@@ -281,20 +311,29 @@ local function countBlanks(catalogName, text)
     end
   end
 end
-local shippedCatalogs = { "species_names", "move_names", "item_names", "item_descriptions",
-  "trainer_names", "trainer_class_names", "strings", "strings_by_english" }
-local part = 1
-while readFile(modDir .. "/lang/" .. (part == 1 and "dialogue" or ("dialogue_" .. part)) .. ".lua") do
-  table.insert(shippedCatalogs, part, part == 1 and "dialogue" or ("dialogue_" .. part))
-  part = part + 1
+-- the files main.lua reads for this game: its catalog layer and its
+-- dialogue layers
+local catalogLayer = expectations.catalog_layer or "emerald"
+local shippedCatalogs = {}
+for _, name in ipairs({ "species_names", "move_names", "item_names", "item_descriptions",
+    "trainer_names", "trainer_class_names", "strings", "strings_by_english" }) do
+  shippedCatalogs[#shippedCatalogs + 1] = catalogLayer .. "/" .. name
 end
+local dialogueFiles = {}
+for _, layer in ipairs(expectations.dialogue_layers or { "emerald" }) do
+  local part = 1
+  while readFile(modDir .. "/lang/" .. layer .. "/" .. (part == 1 and "dialogue" or ("dialogue_" .. part)) .. ".lua") do
+    dialogueFiles[#dialogueFiles + 1] = layer .. "/" .. (part == 1 and "dialogue" or ("dialogue_" .. part))
+    part = part + 1
+  end
+end
+for index, name in ipairs(dialogueFiles) do table.insert(shippedCatalogs, index, name) end
 
 -- A label the mod ships as dialogue is read through RomText, which takes the
 -- label's strings entry first (RomText.translate): an entry there would show
 -- another screen's wording instead of the label's own row.
 local shadowed = {}
-for index = 1, part - 1 do
-  local name = index == 1 and "dialogue" or ("dialogue_" .. index)
+for _, name in ipairs(dialogueFiles) do
   local body = readFile(modDir .. "/lang/" .. name .. ".lua")
   local chunk = body and loadstring(body)
   for key in pairs(chunk and chunk() or {}) do
@@ -323,8 +362,9 @@ end
 
 if result.release then result.release() end
 
--- The manifest names Emerald only: under a FireRed session the loader must
--- leave the mod out, so its Emerald text never reaches FireRed's addresses.
+-- The manifest names the Hoenn games only: under a FireRed session the
+-- loader must leave the mod out, so their text never reaches FireRed's
+-- addresses.
 GameVersion.set("firered")
 local other = T.sdk.loadMod(modName, { generation = 3, root = modParent, data = { gen3Text = {} } })
 check(not other.mod or other.mod.state ~= "loaded", "the mod stays out of a FireRed session")

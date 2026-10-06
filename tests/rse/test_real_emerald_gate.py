@@ -7,7 +7,8 @@ import unittest
 from pathlib import Path
 
 from pipeline.gen3.mod import gen3_coverage
-from pipeline.rse.mod import generate_rse_mod, join_rse, run_rse_gate
+from pipeline.rse.emerald import join_emerald
+from pipeline.rse.mod import generate_rse_mod, run_rse_gate
 from pipeline.shared.project import which_luajit
 from pipeline.shared.rom_paths import configured_path, load_rom_paths
 from pipeline.shared.roms import import_rse_rom
@@ -36,7 +37,7 @@ class RealEmeraldTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             extracted = Path(directory) / "extracted"
             import_rse_rom(rom, ENGINE, extracted)
-            joined = join_rse(extracted, CORPUS, "fr", SYMBOLS, CHARMAP)
+            joined = join_emerald(extracted, CORPUS, "fr", SYMBOLS, CHARMAP)
             coverage = gen3_coverage(joined)
             # nearly every extracted line has its official French row
             self.assertGreater(coverage["rom"]["percent"], 99.0)
@@ -44,9 +45,8 @@ class RealEmeraldTests(unittest.TestCase):
             pointers = json.loads((extracted / "rse_text_pointers.json").read_text(encoding="utf-8"))
             self.assertIn("STRINGID_ATTACKMISSED", pointers)
             self.assertIn("gNatureNamePointers[24]", pointers)
-            mod_dir = Path(directory) / "mods" / "translation-fr-gen3-emerald"
-            generate_rse_mod(mod_dir, language="fr", target_name="French", dialogue=joined["dialogue"],
-                             catalogs=joined["catalogs"])
+            mod_dir = Path(directory) / "mods" / "translation-fr-gen3-rse"
+            generate_rse_mod(mod_dir, language="fr", target_name="French", emerald=joined)
             gate = run_rse_gate(mod_dir, extracted, joined, ENGINE, luajit)
             self.assertEqual(gate["failures"], 0)
             self.assertEqual(gate["blank_glyphs"]["total"], 0)

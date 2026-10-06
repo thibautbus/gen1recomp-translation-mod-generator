@@ -18,7 +18,8 @@ port agree with the cart before any translation is trusted.
 The runtime decodes each game family with its own dialect
 (``TextIR.DIALECTS``): FireRed and LeafGreen use the default one, Emerald
 (``rse``) names its placeholders and fonts on the segment and reads a few more
-charmap bytes as tags.  :class:`Dialect` mirrors those tables, and a
+charmap bytes as tags, and Ruby and Sapphire (``rs``) do the same with their
+own placeholder and font names.  :class:`Dialect` mirrors those tables, and a
 :class:`PretCharmap` carries the dialect of the cart it was loaded for.
 
 The one deliberate difference from the runtime decoder is the glyph table
@@ -214,7 +215,8 @@ class Dialect:
     ``ph_names`` and ``font_ids`` are written on the ``ph`` and ``FC 06``
     segments of a named dialect; ``charmap_extra`` and ``charmap_runs`` are
     bytes the runtime reads as tags; ``token_aliases`` are corpus tokens the
-    cart's charmap spells under another name for the same bytes.
+    cart's charmap spells under another name for the same bytes, and
+    ``extra_names`` the escapes the cart's charmap has no name for at all.
     """
     name: str
     ph_names: Mapping[int, str] = field(default_factory=dict)
@@ -222,6 +224,7 @@ class Dialect:
     charmap_extra: Mapping[int, str] = field(default_factory=dict)
     charmap_runs: Mapping[int, tuple[bytes, str]] = field(default_factory=dict)
     token_aliases: Mapping[str, str] = field(default_factory=dict)
+    extra_names: Mapping[str, bytes] = field(default_factory=dict)
 
     @property
     def named(self) -> bool:
@@ -264,7 +267,53 @@ RSE_DIALECT = Dialect(
         "GOOD_LEADER": "MAXIE", "EVIL_LEGENDARY": "KYOGRE", "GOOD_LEGENDARY": "GROUDON",
     },
 )
-DIALECTS: Mapping[str, Dialect] = {FRLG_DIALECT.name: FRLG_DIALECT, RSE_DIALECT.name: RSE_DIALECT}
+# pokeruby/include/battle_message.h:21, the battle string placeholders of
+# Ruby and Sapphire.  pokeruby writes them as bare FD escapes ({STRING 3}),
+# so its charmap has no name for them; PokeCorpus names them as the later
+# carts do, and TextIR.DIALECTS.rs reads them back under the same names.
+_RS_BATTLE_PLACEHOLDERS = (
+    "B_BUFF1", "B_BUFF2", "B_PLAYER_MON1_NAME", "B_OPPONENT_MON1_NAME", "B_PLAYER_MON2_NAME",
+    "B_OPPONENT_MON2_NAME", "B_LINK_PLAYER_MON1_NAME", "B_LINK_OPPONENT_MON1_NAME",
+    "B_LINK_PLAYER_MON2_NAME", "B_LINK_OPPONENT_MON2_NAME", "B_ATK_NAME_WITH_PREFIX_MON1",
+    "B_ATK_PARTNER_NAME", "B_ATK_NAME_WITH_PREFIX", "B_DEF_NAME_WITH_PREFIX", "B_EFF_NAME_WITH_PREFIX",
+    "B_ACTIVE_NAME_WITH_PREFIX", "B_SCR_ACTIVE_NAME_WITH_PREFIX", "B_CURRENT_MOVE", "B_LAST_MOVE",
+    "B_LAST_ITEM", "B_LAST_ABILITY", "B_ATK_ABILITY", "B_DEF_ABILITY", "B_SCR_ACTIVE_ABILITY",
+    "B_EFF_ABILITY", "B_TRAINER1_CLASS", "B_TRAINER1_NAME", "B_LINK_PLAYER_NAME", "B_LINK_PARTNER_NAME",
+    "B_LINK_OPPONENT1_NAME", "B_LINK_OPPONENT2_NAME", "B_LINK_SCR_TRAINER_NAME", "B_PLAYER_NAME",
+    "B_TRAINER1_LOSE_TEXT", "B_22", "B_PC_CREATOR_NAME", "B_ATK_PREFIX1", "B_DEF_PREFIX1",
+    "B_ATK_PREFIX2", "B_DEF_PREFIX2", "B_ATK_PREFIX3", "B_DEF_PREFIX3", "B_BUFF3",
+)
+
+# src/core/game3/scripting/text_ir.lua, TextIR.DIALECTS.rs.
+RS_DIALECT = Dialect(
+    "rs",
+    # pokeruby/src/string_util.c:476
+    ph_names={
+        0x00: "UNKNOWN", 0x01: "PLAYER", 0x02: "STR_VAR_1", 0x03: "STR_VAR_2",
+        0x04: "STR_VAR_3", 0x05: "KUN", 0x06: "RIVAL", 0x07: "VERSION",
+        0x08: "EVIL_TEAM", 0x09: "GOOD_TEAM", 0x0A: "EVIL_LEADER", 0x0B: "GOOD_LEADER",
+        0x0C: "EVIL_LEGENDARY", 0x0D: "GOOD_LEGENDARY",
+    },
+    # pokeruby/src/text.c:419
+    font_ids={
+        0: "FONT_RS_0", 1: "FONT_RS_1", 2: "FONT_RS_2", 3: "FONT_RS_3",
+        4: "FONT_RS_4", 5: "FONT_RS_5", 6: "FONT_BRAILLE",
+    },
+    # the runtime reads Ruby and Sapphire's glyph runs as Emerald's
+    charmap_extra=RSE_DIALECT.charmap_extra,
+    charmap_runs=RSE_DIALECT.charmap_runs,
+    extra_names={
+        **{name: bytes((0xFD, code)) for code, name in enumerate(_RS_BATTLE_PLACEHOLDERS)},
+        # The Japanese rows name some of the cart's escapes after the
+        # FireRed/Emerald table (pokeemerald charmap.txt:353, B_COPY_VAR_1 = FD 02,
+        # to :389, B_26 = FD 26): the same bytes, which Ruby and Sapphire's table calls
+        # PLAYER_MON1_NAME, OPPONENT_MON1_NAME, PLAYER_MON2_NAME, DEF_PREFIX1
+        # and ATK_PREFIX2 (the English rows' names for them).
+        "B_COPY_VAR_1": b"\xfd\x02", "B_COPY_VAR_2": b"\xfd\x03", "B_COPY_VAR_3": b"\xfd\x04",
+        "B_TRAINER1_WIN_TEXT": b"\xfd\x25", "B_26": b"\xfd\x26",
+    },
+)
+DIALECTS: Mapping[str, Dialect] = {dialect.name: dialect for dialect in (FRLG_DIALECT, RSE_DIALECT, RS_DIALECT)}
 
 
 @dataclass(frozen=True)
@@ -287,7 +336,7 @@ class PretCharmap:
 
 
 def load_charmap(path: str | Path, dialect: Dialect | str = FRLG_DIALECT) -> PretCharmap:
-    """Parse pret's ``charmap.txt`` (the pinned pokefirered or pokeemerald
+    """Parse pret's ``charmap.txt`` (the pinned pokefirered, pokeemerald or pokeruby
     revision), for the cart whose ``dialect`` the runtime decodes.
 
     Only the first definition of a character is kept: the Latin block comes
@@ -328,6 +377,8 @@ def load_charmap(path: str | Path, dialect: Dialect | str = FRLG_DIALECT) -> Pre
             raise ValueError(f"pret charmap is missing {required!r}: {path}")
     if isinstance(dialect, str):
         dialect = DIALECTS[dialect]
+    for name, value in dialect.extra_names.items():
+        names.setdefault(name, value)
     return PretCharmap(chars, names, glyphs, frozenset(japanese), dialect)
 
 
@@ -383,7 +434,11 @@ def encode(text: str, charmap: PretCharmap, *, language: str = "en") -> bytes:
 # Names PokeCorpus spells its own way: the cart's parentheses are the F9 13
 # and F9 14 escapes, which pret's charmap calls LEFT_PAREN and RIGHT_PAREN
 # (the help system's EXP and Level entries are the only rows that use them).
-_CORPUS_TOKEN_ALIASES = {"ROUND_LEFT_PAREN": "LEFT_PAREN", "ROUND_RIGHT_PAREN": "RIGHT_PAREN"}
+# PokeCorpus also writes NAME_END (FC 00), the mark Ruby and Sapphire's map
+# names carry where their short form ends ("LITTLEROOT{NAME_END} TOWN"), as
+# NOP.
+_CORPUS_TOKEN_ALIASES = {"ROUND_LEFT_PAREN": "LEFT_PAREN", "ROUND_RIGHT_PAREN": "RIGHT_PAREN",
+                         "NOP": "NAME_END"}
 
 
 def _dialect_tag(token: str, charmap: PretCharmap) -> bool:

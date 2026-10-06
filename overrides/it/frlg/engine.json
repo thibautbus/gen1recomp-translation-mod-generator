@@ -52,10 +52,20 @@
       "reason": "engine-original",
       "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
-    "A:OK": {
-      "override": "A:OK",
+    "A:OK  B:BACK": {
+      "override": "A:OK  B:INDIETRO",
       "reason": "engine-original",
-      "provenance": "Key hint of the mod manager's message box (src/ui/game3/mod_manager.lua); the button letter and OK read the same in this language."
+      "provenance": "Button hint of the game3 SHADER FX menu (src/ui/game3/shaderfx_menu.lua:202); BACK as overrides/<language>/gsc/engine.json words the menus' BACK row."
+    },
+    "A:OK  B:CANCEL": {
+      "override": "A:OK  B:ESCI",
+      "reason": "engine-original",
+      "provenance": "Button hint of the game3 SHADER FX menu while a choice is pending (src/ui/game3/shaderfx_menu.lua:197); CANCEL as the carts' own CANCEL rows word it (rs.common.strings.gOtherText_CancelNoTerminator, e.common.strings.gText_Cancel2)."
+    },
+    "ADD %s?": {
+      "override": "AGGIUNGI %s?",
+      "reason": "engine-corpus",
+      "provenance": "Title of the Ruby/Sapphire link lobby when a player asks to join the leader's group (src/core/game3/rs/link_entry.lua:154); shortened from the cart's own question (e.common.union_room.sText_PlayerContactedYouAddToMembers, \"Add to the members?\")."
     },
     "AUDIO": {
       "override": "AUDIO",
@@ -76,6 +86,11 @@
       "override": "Non si può usare\nsu un UOVO.",
       "reason": "engine-contract-gap",
       "provenance": "Worded after strings.gText_EggCantBeTradedNow (gen1recomp's own English is cut short)."
+    },
+    "B: CANCEL": {
+      "override": "B: ESCI",
+      "reason": "engine-original",
+      "provenance": "Button hint of the Ruby/Sapphire link lobby added by gen1recomp (src/ui/game3/rs/cable_lobby.lua:50); CANCEL as the Ruby/Sapphire cart words it (rs.common.strings.gOtherText_CancelNoTerminator)."
     },
     "BATTLE COUNT CARD": {
       "override": "SCHEDA CONTALOTTE",
@@ -111,6 +126,11 @@
       "override": "SCEGLI",
       "reason": "engine-original",
       "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
+    },
+    "CREATE GROUP": {
+      "override": "CAPOGRUPPO",
+      "reason": "engine-corpus",
+      "provenance": "First choice of the Ruby/Sapphire link lobby added by gen1recomp (src/core/game3/rs/link_entry.lua:49), paired with JOIN GROUP: the choice the generation-3 carts name BECOME LEADER (e.common.strings.gText_BecomeLeader, frlg.common.strings.gText_BecomeLeader)."
     },
     "CREDIT": {
       "override": "CREDITO",
@@ -332,6 +352,16 @@
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; two-letter stand-in for a slot reel icon when the ROM's graphics are missing (src/ui/game3/slot_machine.lua PLACEHOLDER): the first letters of this language's name for it (PIKACHU, PSYDUCK, cherries, MAGNEMITE, SHELLDER)."
     },
+    "SHADER FX": {
+      "override": "FX SHADER",
+      "reason": "engine-original",
+      "provenance": "Title of the game3 SHADER FX menu (src/ui/game3/shaderfx_menu.lua:67-70), the same option gen1recomp names SHADER FX in its Gen 1/2 options; worded as overrides/<language>/rby and gsc/engine.json already translate it."
+    },
+    "SHADER FX 2": {
+      "override": "FX SHADER 2",
+      "reason": "engine-original",
+      "provenance": "Second shader slot of the game3 SHADER FX menu (src/ui/game3/shaderfx_menu.lua:68); worded as overrides/<language>/rby and gsc/engine.json translate it."
+    },
     "SKIN": {
       "override": "SKIN",
       "reason": "engine-original",
@@ -342,15 +372,15 @@
       "reason": "engine-corpus",
       "provenance": "From mystery_event_msg.sText_MysteryGiftStampCard; the card's name as the cart's message spells it."
     },
+    "START": {
+      "override": "START",
+      "reason": "engine-original",
+      "provenance": "Leader's choice that starts the activity in the Ruby/Sapphire link lobby added by gen1recomp (src/core/game3/rs/link_entry.lua:58); the carts ask the leader to press START when everyone is ready and keep the button's name (e.common.union_room.sText_AwaitingLinkPressStart), the Japanese cart writes it スタート (e.common.easy_chat_group_time.gEasyChatWord_Start). Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
+    },
     "SURFING PICHU EGG": {
       "override": "UOVO PICHU SURFISTA",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; the Mystery Gift list label of the port's built-in Pichu egg (src/core/game3/mystery_gift.lua)."
-    },
-    "SWITCH BOX": {
-      "override": "CAMBIA BOX",
-      "reason": "engine-original",
-      "provenance": "Box menu action added by gen1recomp; BOX as strings.gText_Box names it."
     },
     "Save failed.": {
       "override": "Errore di salvataggio.",
@@ -561,11 +591,6 @@
       "override": "{A_BUTTON}AVANTI   {B_BUTTON}SALTA",
       "reason": "engine-corpus",
       "provenance": "Quest log hint; NEXT from strings.gText_ABUTTONNext, SKIP worded for this port."
-    },
-    "{A_BUTTON}OK {B_BUTTON}CANCEL": {
-      "override": "{A_BUTTON}OK {B_BUTTON}ESCI",
-      "reason": "engine-corpus",
-      "provenance": "CANCEL as strings.gText_UPDOWNPick_ABUTTONBBUTTONCancel words it; the mod manager's quantity box hint (src/ui/game3/mod_manager.lua)."
     },
     "{A_BUTTON}{B_BUTTON}OK": {
       "override": "{A_BUTTON}{B_BUTTON}OK",

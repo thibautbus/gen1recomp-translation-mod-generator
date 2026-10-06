@@ -1,6 +1,6 @@
 # Translation: upstream engine gaps
 
-All four mods use only the public `gen1recomp` content and hook APIs. Each game's section (RBY, then Gold, then FireRed, then Emerald) tracks these kinds of entries:
+All four mods use only the public `gen1recomp` content and hook APIs. Each game's section (RBY, then Gold, then FireRed, then Ruby and Sapphire, then Emerald) tracks these kinds of entries:
 
 - **Required upstream capabilities**: strings that render in English with no
   override reaching them at all -- no hook, no catalog entry can fix these
@@ -1709,9 +1709,9 @@ Fix: give those five lookups the cart's own row instead of the fragment, as `Str
 
 At Gen1Recomp v0.3.47, 12 newly reachable dynamic keys have no reviewed FireRed corpus row (still the case at v0.3.51), so all five FRLG language catalogs retain their natural English fallback for them. The join report keeps these keys in `fallback_english`; they are not represented by identity overrides as translated. `test_reviewed_qids_exist_in_the_pinned_corpus` pins the reviewed fallback set so future engine or corpus changes require an explicit review.
 
-#### 18. The honorific after the player's name is never printed
+#### 18. The honorific after the player's name -- fixed upstream in v0.3.52
 
-The Japanese cart writes くん or ちゃん after the player's name, by the player's gender (`{KUN}`, `pokefirered/src/string_util.c:386`). The `frlg` text dialect has no placeholder source (`src/core/game3/scripting/text_ir.lua`, which gives Emerald's `rse` dialect one), so `expand_seg` prints nothing for it. The Japanese FireRed mod ships the rows that add the honorific where the English line has none (Daisy's, Mr. Fuji's and the fishing guru's greetings, about twenty lines), since the rest of each line is the cart's, and ships the honorific itself from the Japanese rows (`gExpandedPlaceholder_Kun`/`_Chan` in `overrides/ja-Hrkt/frlg/dialogue.json`; the US cart's rows are empty); the honorific stays missing from those lines until the runtime expands it. A gen1recomp change expands `{KUN}` in FireRed from the cart's `gExpandedPlaceholder_Kun`/`_Chan` strings (`src/import/gba/versions_text.lua:1233`, `:1229`) by the player's gender, read through the script cache so the mod's rows reach it, and still prints nothing when both strings are empty, as on the US cart (one commit on top of `dev` at v0.3.51, in `thibautbus/gen1recomp`'s `fix/frlg-honorific-placeholder`, separate from the Emerald branch, pull request not yet opened). Nothing changes on this project's side.
+The Japanese cart writes くん or ちゃん after the player's name, by the player's gender (`{KUN}`, `pokefirered/src/string_util.c:386`). The `frlg` text dialect has no placeholder source (`src/core/game3/scripting/text_ir.lua`, which gives Emerald's `rse` dialect one), so `expand_seg` prints nothing for it. The Japanese FireRed mod ships the rows that add the honorific where the English line has none (Daisy's, Mr. Fuji's and the fishing guru's greetings, about twenty lines), since the rest of each line is the cart's, and ships the honorific itself from the Japanese rows (`gExpandedPlaceholder_Kun`/`_Chan` in `overrides/ja-Hrkt/frlg/dialogue.json`; the US cart's rows are empty); gen1recomp#2679, released in v0.3.52, expands `{KUN}` in FireRed from the cart's `gExpandedPlaceholder_Kun`/`_Chan` strings (`src/import/gba/versions_text.lua:1233`, `:1229`) by the player's gender, read through the script cache so the mod's rows reach it, and still prints nothing when both strings are empty, as on the US cart; the honorific now prints in those lines. Nothing changes on this project's side.
 
 #### Inventory: game3 files flagged by the hardcoded-text scan
 
@@ -1721,16 +1721,23 @@ Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/
 | --- | ---: | --- | --- |
 | `src/core/game3/asset_decode.lua` | 6 | Raw-text candidate; review needed | — |
 | `src/core/game3/asset_stream.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/audio_policy_rs.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/audio_policy_rse.lua` | 9 | Raw-text candidate; review needed | — |
 | `src/core/game3/battle/builtin_moves.lua` | 860 | Raw-text candidate; review needed | — |
+| `src/core/game3/battle/effect_chance_rs.lua` | 29 | Raw-text candidate; review needed | — |
+| `src/core/game3/battle/env_rs.lua` | 9 | Raw-text candidate; review needed | — |
 | `src/core/game3/battle/env_rse.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/battle/facility_arena.lua` | 26 | Raw-text candidate; review needed | — |
 | `src/core/game3/battle/facility_palace.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/battle/healthbox.lua` | 3 | Raw-text candidate; review needed | — |
 | `src/core/game3/battle/kinds.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/battle/move_end_rs.lua` | 8 | Raw-text candidate; review needed | — |
 | `src/core/game3/battle/pic_coords.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/battle/prize.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/battle/profile.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/battle/results_rs.lua` | 34 | Raw-text candidate; review needed | — |
 | `src/core/game3/battle_transition.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/braille_field_rs.lua` | 6 | Raw-text candidate; review needed | — |
 | `src/core/game3/constants.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/constants/emerald/map_groups.lua` | 96 | Raw-text candidate; review needed | — |
 | `src/core/game3/constants/emerald/script_cmds.lua` | 44 | Raw-text candidate; review needed | — |
@@ -1738,6 +1745,9 @@ Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/
 | `src/core/game3/constants/firered/map_groups.lua` | 46 | Raw-text candidate; review needed | — |
 | `src/core/game3/constants/firered/script_cmds.lua` | 40 | Raw-text candidate; review needed | — |
 | `src/core/game3/constants/firered/specials.lua` | 415 | Raw-text candidate; review needed | — |
+| `src/core/game3/constants/ruby/map_groups.lua` | 77 | Raw-text candidate; review needed | — |
+| `src/core/game3/constants/ruby/script_cmds.lua` | 38 | Raw-text candidate; review needed | — |
+| `src/core/game3/constants/ruby/specials.lua` | 236 | Raw-text candidate; review needed | — |
 | `src/core/game3/dex.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/dive.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/encounter_rules/rse.lua` | 2 | Raw-text candidate; review needed | — |
@@ -1754,6 +1764,11 @@ Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/
 | `src/core/game3/link/contest_link.lua` | 3 | Raw-text candidate; review needed | — |
 | `src/core/game3/link/family.lua` | 53 | Raw-text candidate; review needed | — |
 | `src/core/game3/link/record_mix.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/link/rs.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/link/rs_record_cross.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/link/rs_record_cross_bytes.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/link/rs_record_cross_text.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/link/rs_record_mix.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/link/rse_groups.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/link/tower_link.lua` | 3 | Raw-text candidate; review needed | — |
 | `src/core/game3/link/union_plaza_map.lua` | 6 | Raw-text candidate; review needed | — |
@@ -1768,22 +1783,54 @@ Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/
 | `src/core/game3/profiles/emerald/coreSpecials.lua` | 14 | Raw-text candidate; review needed | — |
 | `src/core/game3/profiles/emerald_rules.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/profiles/firered_rules.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/rs.lua` | 8 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/rs/bag.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/rs/battle_tower.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/rs/clock.lua` | 10 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/rs/coreSpecials.lua` | 7 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/rs/mail_write.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/rs/save_state.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/rs/ui.lua` | 18 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/rs_rules.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/ruby.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/profiles/sapphire.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/roamer.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/rotating_tile_puzzle.lua` | 12 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/battle_text_policy.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/berry_blender_policy.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/daycare.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/daycare_mail.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/dewford_trend.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/easy_chat_contracts.lua` | 19 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/easy_chat_message.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/gameplay_specials.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/link_entry.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/mystery_event.lua` | 9 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/ram_script.lua` | 7 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/rematch.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/room_decorations.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/secret_base_policy.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/size_records.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/tv_daily.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/tv_playback.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/core/game3/rs/tv_queries.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/battle_tower_rs.lua` | 13 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/berry_blender.lua` | 3 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/berry_blender_link.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/berry_trees.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/cable_car.lua` | 1 | Raw-text candidate; review needed | — |
-| `src/core/game3/rse/contest.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/contest.lua` | 4 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/contest_ai.lua` | 3 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/contest_ai_disasm.lua` | 2 | Raw-text candidate; review needed | — |
-| `src/core/game3/rse/contest_util.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/contest_util.lua` | 5 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/daily_events.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/decoration.lua` | 4 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/decoration_inventory.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/dewford_trend.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/easy_chat_types.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/event_islands.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/fan_club_lifecycle_rs.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/fan_club_rs.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/frontier/apprentice.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/frontier/dome.lua` | 5 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/frontier/f2_data.lua` | 1 | Raw-text candidate; review needed | — |
@@ -1792,20 +1839,24 @@ Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/
 | `src/core/game3/rse/frontier/pyramid.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/frontier/tower.lua` | 5 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/frontier/trainers.lua` | 1 | Raw-text candidate; review needed | — |
-| `src/core/game3/rse/frontier/util.lua` | 5 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/frontier/util.lua` | 10 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/init.lua` | 5 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/lilycove_lady.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/lottery.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/match_call.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/orb_effect_rs.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/pokeblock.lua` | 5 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/rematch.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/ribbons.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/roulette.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/secret_base.lua` | 31 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/secret_base_battle_rs.lua` | 3 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/slot_machine.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/story_specials_rs.lua` | 16 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/town_common.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/rse/trainer_hill.lua` | 2 | Raw-text candidate; review needed | — |
-| `src/core/game3/rse/tv.lua` | 6 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/tv.lua` | 7 | Raw-text candidate; review needed | — |
+| `src/core/game3/rse/weather_flash_rs.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/safari.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/save_sections.lua` | 4 | Raw-text candidate; review needed | — |
 | `src/core/game3/scripting/collision_frlg.lua` | 23 | Raw-text candidate; review needed | — |
@@ -1822,12 +1873,29 @@ Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/
 | `src/core/game3/scripting/natives_frontier.lua` | 7 | Raw-text candidate; review needed | — |
 | `src/core/game3/scripting/natives_frontier_story.lua` | 3 | Raw-text candidate; review needed | — |
 | `src/core/game3/scripting/natives_lilycove_lady.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_link_rs.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/scripting/natives_match_call.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/scripting/natives_old_man.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/scripting/natives_palace.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/scripting/natives_pc_rse.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/scripting/natives_pike.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/scripting/natives_pyramid.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_rs.lua` | 39 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_rs_base_lifecycle.lua` | 16 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_rs_contest.lua` | 8 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_rs_daycare.lua` | 5 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_rs_dewford.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_rs_easy_chat.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_rs_easy_chat_message.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_rs_fan_club.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_rs_gameplay.lua` | 18 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_rs_gym.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_rs_old_man.lua` | 16 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_rs_rematch.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_rs_secret_base.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_rs_tower.lua` | 6 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_rs_tower_records.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/natives_rs_tv_routes.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/scripting/natives_shared_rse.lua` | 11 | Raw-text candidate; review needed | — |
 | `src/core/game3/scripting/natives_tents.lua` | 5 | Raw-text candidate; review needed | — |
 | `src/core/game3/scripting/natives_tower_rse.lua` | 1 | Raw-text candidate; review needed | — |
@@ -1836,28 +1904,87 @@ Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/
 | `src/core/game3/scripting/natives_walda_rse.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/scripting/opcodes.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/scripting/opcodes_emerald.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/core/game3/scripting/opcodes_rs.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/core/game3/scripting/ops_rse.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/core/game3/step_callbacks_rse.lua` | 18 | Raw-text candidate; review needed | — |
 | `src/core/game3/time_events.lua` | 15 | Raw-text candidate; review needed | — |
 | `src/core/game3/weather.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/ui/game3/battle_transition_chrome.lua` | 4 | Raw-text candidate; review needed | — |
 | `src/ui/game3/boot_modules.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/ui/game3/box_storage_ui.lua` | 22 | Raw-text candidate; review needed | — |
 | `src/ui/game3/chrome.lua` | 3 | Raw-text candidate; review needed | — |
 | `src/ui/game3/controls_menu.lua` | 3 | Its help bar, which does go through `Strings()` (`Strings(helpText(bm))`, a call the scan does not follow); `PRESS A BUTTON` has no cart row | Emerald 2 |
 | `src/ui/game3/diploma.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/ui/game3/help_system.lua` | 3 | `{PLAYER}`/`{RIVAL}` fallbacks inside the (untranslated) help text | 5 |
+| `src/ui/game3/link_menu.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/ui/game3/minigames/berry_crush/pouch.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/ui/game3/mod_manager.lua` | 17 | Its tab headers, its screen titles and the states it prints for a mod | 13 |
-| `src/ui/game3/naming.lua` | 22 | Naming keyboard rows and page names | 8 |
+| `src/ui/game3/naming.lua` | 24 | Naming keyboard rows and page names | 8 |
+| `src/ui/game3/release_seq.lua` | 6 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/bag_menu.lua` | 12 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/bag_menu_data.lua` | 18 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/battle_tower_records.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/berry_blender.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/berry_tag.lua` | 9 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/birch_speech.lua` | 41 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/contest.lua` | 13 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/contest_painting.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/contest_results.lua` | 5 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/credits_scenery.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/decoration.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/diploma.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/easy_chat_editor.lua` | 11 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/egg_hatch.lua` | 14 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/field_auto_scroll_message.lua` | 11 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/font_faces.lua` | 9 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/intro.lua` | 40 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/intro_battle.lua` | 20 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/intro_credits_scenery.lua` | 11 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/link_records.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/mail_composer.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/mail_composer_frames.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/mail_reader.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/main_menu.lua` | 7 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/menu_cursor.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/move_relearner.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/mystery_events.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/option_menu.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/party_chrome.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/party_menu_data.lua` | 15 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/pokeblock_case.lua` | 7 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/pokedex_policy.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/pokenav/condition_data.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/pokenav/condition_graph.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/pokenav/data.lua` | 7 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/pokenav/eyes.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/pokenav/gfx.lua` | 5 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/pokenav/ribbons.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/pokenav/tidal.lua` | 5 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/roulette.lua` | 11 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/scroll_arrow.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/shop_menu.lua` | 7 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/slot_machine.lua` | 19 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/storage_markings.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/storage_policy.lua` | 58 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/storage_release.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/storage_visuals.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/summary_menu.lua` | 10 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/summary_policy.lua` | 1 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/title.lua` | 42 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/trade_scene_chrome.lua` | 3 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/trainer_card.lua` | 4 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/trainer_card_policy.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/trendy_phrase.lua` | 7 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rs/use_pokeblock.lua` | 3 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/bag_menu.lua` | 19 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/berry_blender.lua` | 15 | Two link messages written in English (`has no BERRIES to put in the BERRY BLENDER.`, `'s POKEBLOCK CASE is full.`); the rest are register names and error messages | Emerald 5 |
 | `src/ui/game3/rse/birch_speech.lua` | 36 | Raw-text candidate; review needed | — |
-| `src/ui/game3/rse/cable_car.lua` | 32 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/cable_car.lua` | 33 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/condition_graph.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/contest.lua` | 11 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/contest_image_fx.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/contest_painting.lua` | 4 | Raw-text candidate; review needed | — |
-| `src/ui/game3/rse/contest_results.lua` | 14 | The link save error (`Save failed. A: retry`); the rest are register names and error messages | Emerald 5 |
+| `src/ui/game3/rse/contest_results.lua` | 15 | The link save error (`Save failed. A: retry`); the rest are register names and error messages | Emerald 5 |
 | `src/ui/game3/rse/contest_vram.lua` | 4 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/credits.lua` | 24 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/decoration.lua` | 2 | Raw-text candidate; review needed | — |
@@ -1873,8 +2000,8 @@ Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/
 | `src/ui/game3/rse/player_pc.lua` | 3 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/pokeblock_case.lua` | 5 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/pokeblock_gfx.lua` | 6 | Raw-text candidate; review needed | — |
-| `src/ui/game3/rse/pokedex.lua` | 11 | The weight in pounds (` lbs.`); the rest are identifiers and error messages | Emerald 5 |
-| `src/ui/game3/rse/pokedex_gfx.lua` | 7 | Raw-text candidate; review needed | — |
+| `src/ui/game3/rse/pokedex.lua` | 19 | The weight in pounds (` lbs.`); the rest are identifiers and error messages | Emerald 5 |
+| `src/ui/game3/rse/pokedex_gfx.lua` | 9 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/pokenav/condition.lua` | 2 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/pokenav/condition_search.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/pokenav/gfx.lua` | 1 | Raw-text candidate; review needed | — |
@@ -1891,6 +2018,8 @@ Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/
 | `src/ui/game3/rse/slot_machine.lua` | 32 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/summary_menu.lua` | 1 | Raw-text candidate; review needed | — |
 | `src/ui/game3/rse/title_rse.lua` | 44 | Raw-text candidate; review needed | — |
+| `src/ui/game3/shaderfx_menu.lua` | 2 | Raw-text candidate; review needed | — |
+| `src/ui/game3/storage_presentation.lua` | 3 | Raw-text candidate; review needed | — |
 ### Translated via a compromise (`engine-contract-gap`)
 
 - **TM/HM pickup** (`Text_FoundTMHMContainsMove`): gen1recomp's item-ball script buffers only the TM's name and prints `"[PLAYER] found\n[STR_VAR_2]!"`, while the cart's line also names the move from `STR_VAR_1`. Each language keeps the first clause of its own cart row (`overrides/<lang>/frlg/dialogue.json`); German, whose cart line names only the move, is reworded around the TM name.
@@ -1904,9 +2033,70 @@ Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/
 - **Context-dependent shared keys**: `UPPER` (screen position) and `LIGHT` (vibration strength) reuse the Red/Blue/Gold keys, whose wording there is the naming keyboard's upper case and the light/lamp sense; FireRed overrides give them the Options meaning.
 - **Port-added Options rows** (group labels, OVERWORLD/BATTLE/MENU SPEED, RETURN TO MAIN MENU?) have no cart text; they are AI-composed per language following the project's existing wording (`overrides/<lang>/frlg/engine.json`, `reason: "engine-original"`).
 
+## Ruby and Sapphire
+
+Ruby and Sapphire run on the same game3 runtime as Emerald, as gen1recomp's latest generation-3 games (`GameVersion` ids `ruby` and `sapphire`, added by 67748895 and released in v0.3.52): the `rs` text dialect of `src/core/game3/scripting/text_ir.lua` (named placeholders such as `EVIL_TEAM` and `GOOD_LEADER`, the `FONT_RS_*` fonts, pokeruby's own battle placeholder numbers), Emerald's screens under `src/ui/game3/rse/` with the native Ruby/Sapphire ones under `src/ui/game3/rs/`, and the six English revisions `src/import/gba/rs_builds.lua` lists. The translation mod covers them with Emerald in one `translation-<lang>-gen3-rse` release (README, "Pokémon Ruby, Sapphire and Emerald support"). This section was reviewed at the `dev` commit `160895c6`, and its file:line citations refer to it; the pin is now v0.3.54 (`c1164590`).
+
+Summary of what a translation mod can and cannot reach at the pinned revision:
+
+| Surface | Reachable | Mechanism |
+| --- | --- | --- |
+| Cart text (13,327 rows: script messages, menus, battle messages, lists, the Pokédex entries' text, PokéNav, contests) | Yes, 99.1–99.5% of it in every language | `mod.content.text:override(key, ir)`, by ROM address or label, each edition's and revision's layer |
+| Species, move, item names; item descriptions; trainer names and class names | Yes | `pokemon`/`moves`/`items`/`trainers` patches |
+| game3's own text (2,518 `Strings()` keys) | Yes, except 6 engine rows (entry 6) | `strings` registry, keys listed in `config/rse/engine_scope.json` |
+| The version placeholders: the teams, leaders and legendaries, the rival's name, the version name and the Japanese honorific | **No** at the pinned revision (entry 1); the mod already ships them | `text` overrides once the placeholders read the script cache |
+| The native Pokédex screen's entry, category and labels | **No** (entry 2) | `text` overrides once the screen reads the script cache |
+| Cart text the native screens print from their own pack: party menu actions, shop, decoration, move relearner, secret base, roulette, trainer card, contest paintings, diploma, Battle Tower records, Easy Chat editors | **No** (entry 3); the mod ships most of them | `text` overrides once the screens read the script cache |
+| A secret base's name in the European languages | **No** (entry 4) | the runtime filling the row's `[PLAYER]` |
+| Heights and weights in metric units, as the European and Japanese carts print them | **No** (entry 8) | a metric printer in the runtime |
+| Japanese | Yes (the cart's own Japanese fonts) | as for FireRed |
+
+### In progress
+
+#### 1. The version placeholders come from the US cart
+
+The runtime expands `{EVIL_TEAM}`, `{GOOD_TEAM}`, `{EVIL_LEADER}`, `{GOOD_LEADER}`, `{EVIL_LEGENDARY}`, `{GOOD_LEGENDARY}`, `{VERSION}`, `{RIVAL}` and `{KUN}` from `text/placeholders.lua` (`src/ui/game3/message.lua:72`), the values the extractor reads from the US cart's `gExpandedPlaceholder_*` strings, Ruby's or Sapphire's set by edition (`src/import/gba/games/rs/text.lua:20-34`). The script cache holds those strings under the same labels and the mod ships their official rows (French MAX and ARTHUR, FLORA and BRICE, RUBIS; German MARC and ADRIAN; Japanese くん and ちゃん), but every line that names a team leader, the rival or the version through a placeholder keeps the English. gen1recomp#2678, released in v0.3.53, makes Emerald's placeholders read the script cache (`gText_ExpandedPlaceholder_*`, `src/import/gba/text_placeholders_extract.lua` `SYMBOLS`); Ruby and Sapphire need the same lookup with their own labels and the edition's evil/good mapping: the gen1recomp branch `feat/rs-translation-runtime` (on `dev` since gen1recomp#2678 merged) reads them from the script cache by their `gExpandedPlaceholder_*` labels.
+
+#### 2. The native Pokédex screen prints its pack's copy
+
+On Ruby and Sapphire, the Pokédex entry page prints the entry's category and both pages of its description from the `pokemon/pokedex/entries.lua` pack (`src/ui/game3/rse/pokedex.lua:920`, `:925`), and its Cry Of, Size Compared To and search messages from the chrome pack's `strings` (`:12-15`, `rsTextNames`). gen1recomp#2678 routes Emerald's entry page through `Strings()`, but not this native path. The script cache holds every entry under its `DexDescription_<Species>_1`/`_2` labels, each edition its own, and the mod ships them (in Japanese, the second page blank, as the Japanese carts print an entry on one page). `feat/rs-translation-runtime` reads the entry, its labels and the search screen by those labels, with the pack as the fallback, and prints the category as each cart does (followed by POKéMON only in English).
+
+#### 3. Native screens print their own pack's copy of cart text
+
+Several Ruby/Sapphire screens print a cart string their extractor copied into their pack (`src/import/gba/rs/extract_*.lua`, `textBytes` and `strings`) instead of reading the script cache, where the mod's `text` overrides land: the party menu's actions (`src/ui/game3/rs/party_menu_data.lua:15`, the `rse/menus` pack's `cursorOptions`), the shop (`src/ui/game3/rs/shop_menu.lua:21`), the decoration menus (`src/ui/game3/rs/decoration.lua:33-36`), the move relearner (`src/ui/game3/rs/move_relearner.lua:18`, `:22`), the contest paintings' captions (`src/ui/game3/rs/contest_painting.lua:24`), and the secret base, roulette, trainer card, diploma and Battle Tower records screens; the Easy Chat editors and the mail composer print each word's cart text (`Easy.rawWord`, `src/ui/game3/rs/easy_chat_editor.lua:350`, `:363`, `src/ui/game3/rs/mail_composer.lua:262`), not its translation. The script cache holds most of those strings under the labels the packs copy them from (all 24 of the shop's, 29 of the secret base's, 12 of the roulette's, 11 of the move relearner's, 8 of the trainer card's), and the mod ships them. The change is the one gen1recomp#2678 made for Emerald's screens (`RomText.irOr`, `RomText.refIr`, with the pack's copy as the fallback); `feat/rs-translation-runtime` does the same for the party menu (by the labels `sPokemonMenuActions` points at, a field move by its move's name), the shop, the decoration menus, the move relearner, the contest paintings and the Easy Chat screens (and the TV's words); the secret base, roulette, trainer card, diploma and Battle Tower records packs keep their strings under local names and need their extractors to record the labels first. Strings no cache key holds (the Pokédex search options, the PokéNav's help lines, the option menu) need the import plan to add them first, as Emerald entry 5 describes.
+
+### Required upstream capabilities
+
+#### 4. A secret base's name ends in the English row
+
+The TV and the region map name a secret base as the owner's name followed by `gOtherText_PlayersBase` (`src/core/game3/rs/tv_playback.lua:151`), the US row "'s BASE". The European rows put the owner inside instead, through the player placeholder ("BASE DE [PLAYER]", "BASIS v. [PLAYER]"), so the European line prints the owner's name before the row and then the player's own name. gen1recomp#2680, released in v0.3.52, fills the `STR_VAR_1` of Emerald's `gText_ApostropheSBase`; Ruby and Sapphire's row has the player placeholder instead, which the gen1recomp branch `fix/rs-secret-base-owner-name` fills with the owner, the way the German cart does (pokeruby `src/secret_base.c:642`).
+
+#### 5. The starter's category is cut by bytes
+
+The starter selection prints the species' category cut to its first 11 bytes (`src/ui/game3/rs/starter_choose_policy.lua:23`, `category:sub(1, 11)`). Once the category is translated (gen1recomp#2678 looks it up through `Strings()`), a Japanese category, three bytes per character, is cut in the middle of a character. The gen1recomp branch `fix/rs-starter-category-utf8` (on `dev` since gen1recomp#2678 merged) cuts it by character (`FrlgFont.truncate`).
+
+#### 6. Engine rows with no cart row
+
+Six `Strings()` keys keep their English in every language, the same as Emerald's (Emerald entry 2): the controls screen's three rows, the bag actions `CHECK_TAG` and `OPEN`, and the Easy Chat word `{POKEBLOCK}`. The keys Ruby and Sapphire's carts never had (the link lobby, the Union Room's words, Mystery Gift) take Emerald's resolved value.
+
+#### 7. Buffers the runtime does not fill
+
+As for Emerald (entry 7), a few official rows print a value the US line does not: four European fragments (`BattleText_Berry`, `PCText_WasReleased`, `gOtherText_Berry`, `gOtherText_PokeBlockMade`) and 29 Japanese lines that name a trainer, the rival or Kiri with a `STR_VAR` buffer the US script leaves empty. Their English stays.
+
+#### 8. Heights and weights are printed in US units
+
+The native Pokédex prints a caught entry's height in feet and inches and its weight in pounds (`src/ui/game3/rse/pokedex.lua:874`, `Pokedex.heightText`; `src/ui/game3/rs/pokedex_policy.lua:28`, `weightText`), as pokeruby's US build does (`include/config.h:53`, `UNITS_IMPERIAL`; `src/pokedex.c:4335`, `:4375`). The European carts print metres and kilograms (the `#else` printers, `src/pokedex.c:4368`, `:4438`), and so do their unknown-entry rows (`???,?  m`, `???,?  kg`; Japanese `？？？．？ｍ`). The mod ships the unknown height row as the corpus has it, so with a European or Japanese mod an unseen entry's height reads `???,?  m` while a caught entry's reads `2'04"`. The unknown weight keeps the US row (`????.? lbs.`) in every language: the US cart's string ends with an extra terminator (`????.? lbs.$`, pokeruby `src/strings.c:79`), which the join reports as `undecodable`. A metric printer in the runtime, chosen by the mod's language, would make the three agree; the mod would then ship the unknown weight row too.
+
+### Verified working, not a gap
+
+- **Every revision.** A build reads one Ruby or Sapphire cart and keys the other edition's and revision's script text through pokeruby's symbol tables (`pipeline/rse/join.py`). Built from Ruby 1.2 and from Sapphire 1.0, the other edition's layers equal the ones read from its own cart, except 8 or 9 lines only that edition prints whose label has no corpus row; the mod tells 1.0 from 1.1/1.2 at runtime by a guard address (`lang/rs/layouts.lua`), which the release gate checks on the cart it reads.
+- **European name order.** The European Ruby/Sapphire rows have the same shape as Emerald's: the wild and foe words follow the name (" sauvage", " (Wild)", pokeruby's German `HANDLE_NICKNAME_STRING_CASE`, `src/battle_message.c:505`) and the "sharply" rows carry the whole change ("monte beaucoup!", `:851`), so gen1recomp#2680's changes apply to them as they are.
+- **European trainer classes.** Ruby and Sapphire's trainer classes come in a male and a female form (TUBER, PLAYERO and PLAYERA), and the corpus's trainer names and classes are the European carts' own: no review is needed, unlike Emerald's.
+- **Japanese battle placeholders.** The Japanese rows name five battle escapes after the Emerald table (`[B_COPY_VAR_2]` for the opponent's POKéMON, `[B_26]` for the attacker's prefix); they are the same bytes, which the `rs` dialect encodes under both names.
+
 ## Emerald
 
-Emerald (US, v1.0) runs on the same game3 runtime as FireRed, as its own game family: `GameVersion` id `emerald`, the `rse` text dialect of `src/core/game3/scripting/text_ir.lua` (named `ph` placeholders, named `FC 06` fonts, the `{POKEBLOCK}`, `{LV}` and arrow glyph runs), and its own screens under `src/ui/game3/rse/`. The pinned revision is `a729af23` (v0.3.51); file:line citations refer to it. The translation mod (`translation-<lang>-gen3-emerald`, fr/de/es/it/ja-Hrkt) is a mod of its own, built from the Emerald ROM alone, and goes through the same joins as FireRed (`pipeline/gen3/`) with the Emerald family (`pipeline/gen3/family.py`): the Emerald PokeCorpus collection, pret's `pokeemerald.sym` (`symbols` branch) and `charmap.txt`, and its own reviewed configuration under `config/rse/`. `tools/rse/extract.lua` runs the text steps of the engine's own Emerald import plan (`src/import/gba/plans/rse/`), and `tools/rse/gate.lua` loads the mod through the real generation-3 loader on top of the game3 data modules built from that extract, so the statements below are measured, not inferred.
+Emerald (US, v1.0) runs on the same game3 runtime as FireRed, as its own game family: `GameVersion` id `emerald`, the `rse` text dialect of `src/core/game3/scripting/text_ir.lua` (named `ph` placeholders, named `FC 06` fonts, the `{POKEBLOCK}`, `{LV}` and arrow glyph runs), and its own screens under `src/ui/game3/rse/`. This section was reviewed at `a729af23` (v0.3.51), and its file:line citations refer to it; the pin is now v0.3.54 (`c1164590`), which carries gen1recomp#2678 (released in v0.3.53), #2679 to #2681 and Ruby and Sapphire (released in v0.3.52; see their section). Emerald ships with Ruby and Sapphire in one translation mod (`translation-<lang>-gen3-rse`, fr/de/es/it/ja-Hrkt), as the release's companion edition: built from the Emerald ROM, it goes through the same joins as FireRed (`pipeline/gen3/`) with the Emerald family (`pipeline/gen3/family.py`): the Emerald PokeCorpus collection, pret's `pokeemerald.sym` (`symbols` branch) and `charmap.txt`, and its own reviewed configuration (`config/rse/emerald_*.json`). `tools/rse/extract.lua` runs the text steps of the engine's own Emerald import plan (`src/import/gba/plans/rse/`), and `tools/rse/gate.lua` loads the mod through the real generation-3 loader on top of the game3 data modules built from that extract, so the statements below are measured, not inferred.
 
 Summary of what a translation mod can and cannot reach at the pinned revision:
 
@@ -1914,21 +2104,21 @@ Summary of what a translation mod can and cannot reach at the pinned revision:
 | --- | --- | --- |
 | Cart text (15,444 rows: script messages, menus, battle messages, lists, the Pokédex screens, PokéNav, contests, the Battle Frontier, the intro) | Yes, 99.9% of it | `mod.content.text:override(key, ir)`, by ROM address or label |
 | Species, move, item names; item descriptions; trainer names and class names | Yes | `pokemon`/`moves`/`items`/`trainers` patches |
-| game3's own text: its menus and prompts, the options it adds, the move and ability descriptions, Easy Chat (2,645 `Strings()` keys) | Yes, except 7 engine rows (entry 2) | `strings` registry, keys listed in `config/rse/engine_scope.json` |
-| Ability names, Pokédex categories and descriptions, contest categories and effect descriptions, map section names | **No** at the pinned revision (entry 1); the mod already ships them | `strings` registry once the screens look them up |
-| Cart text some screens print from their own pack: the party menu's actions, the Pokédex search screen, the Battle Frontier's records, Dome, Arena, Apprentice, S.S. Tidal menu and Pyramid bag, the Frontier Pass, the Trainer Hill records, the Battle Pyramid's floor names, Ever Grande City's fly destinations, the Berry Blender | **No** at the pinned revision (entry 4); the mod already ships them | `text` overrides once the screens read the script cache |
-| The rival's name (`{RIVAL}`) and the Japanese honorific (`{KUN}`) | **No** at the pinned revision (entry 6); the mod already ships them | `text` overrides once the placeholders read the script cache |
-| Official rows that print a buffer the runtime does not fill (party menu prompt in de/ja, Spikes, Shadow Tag in ja, secret base names) | **No** (entry 7) | the runtime filling the buffer |
+| game3's own text: its menus and prompts, the options it adds, the move and ability descriptions, Easy Chat (2,651 `Strings()` keys) | Yes, except 7 engine rows (entry 2) | `strings` registry, keys listed in `config/rse/emerald_engine_scope.json` |
+| Ability names, Pokédex categories and descriptions, contest categories and effect descriptions, map section names | Yes since v0.3.53 (entry 1) | `strings` registry |
+| Cart text some screens print from their own pack: the party menu's actions, the Pokédex search screen, the Battle Frontier's records, Dome, Arena, Apprentice, S.S. Tidal menu and Pyramid bag, the Frontier Pass, the Trainer Hill records, the Battle Pyramid's floor names, Ever Grande City's fly destinations | Yes since v0.3.53 (entry 4); the Berry Blender still prints English | `text` overrides, which the screens read from the script cache |
+| The rival's name (`{RIVAL}`) and the Japanese honorific (`{KUN}`) | Yes since v0.3.53 (entry 6) | `text` overrides, which the placeholders read from the script cache |
+| Official rows that print a buffer the runtime does not fill (party menu prompt in de/ja, Spikes, Shadow Tag in ja) | **No** (entry 7) | the runtime filling the buffer |
 | Cart text the script cache does not carry: berry names and descriptions, decorations, the Frontier lounges' messages, the Battle Tower multi battle partners' lines, the Pyramid's rest and retire prompts and hints | **No** (entry 5) | needs extraction, then the same lookup |
 | Japanese | Yes (the cart's own Japanese fonts) | as for FireRed |
 
-### In progress
+### Fixed upstream in v0.3.53 (gen1recomp#2678)
 
 #### 1. Emerald screens print the cart's English names and descriptions as they are
 
 The Emerald summary and battle messages print `Pokemon.abilityName()`, the Pokédex entry, the starter selection and the Battle Factory print the entry's category and description, the summary, the move relearner and the contest move window print the contest category and effect description, and the region map, the PokéNav, the map name popup, Match Call and TV print `Mapsec.name()` (`src/ui/game3/rse/mapsec.lua:46`): all straight from the extracted packs, with no registry or `Strings()` lookup on the way. FireRed's own screens already pass the same kinds of text through `Strings()`.
 
-A gen1recomp change routes all four through `Strings()`, keyed by the cart's English as FireRed's are, and keeps the battle adapter's ability key on the ROM name (four commits on top of `dev` at v0.3.51, one per kind of text, in `thibautbus/gen1recomp`'s `feat/emerald-translation-runtime` with entry 4's change, pull request not yet opened). On this project's side the keys are already in `config/rse/engine_scope.json`: `pipeline/gen3/engine_scope.py` reads the Pokédex entries and contest texts from the extract (`rse_rom_values`) and the map sections through `Mapsec`, and joins a Pokédex category to its own `gPokedexEntries` row (`SITE_FAMILIES`, which also overrides a row kept from an earlier scope), never to the type, move or menu label with the same English (DARK is SOMBRE, not the TENEBR type). The keys the ROM-label migration would move onto a label ship in `lang/strings_by_english.lua`, the others in `lang/strings.lua`. The release gate measures each of the four (`hooks` in the gate report): `routed: false` at the pinned revision, `routed: true` with the change, each showing the official row (the contest effect "A highly appealing move." reads "Une démonstration qui\nplaît énormément." in French).
+gen1recomp#2678, released in v0.3.53, routes all four through `Strings()`, keyed by the cart's English as FireRed's are, and keeps the battle adapter's ability key on the ROM name (four commits, one per kind of text, with entry 4's and entry 6's changes). On this project's side the keys are already in `config/rse/emerald_engine_scope.json`: `pipeline/gen3/engine_scope.py` reads the Pokédex entries and contest texts from the extract (`rse_rom_values`) and the map sections through `Mapsec`, and joins a Pokédex category to its own `gPokedexEntries` row (`SITE_FAMILIES`, which also overrides a row kept from an earlier scope), never to the type, move or menu label with the same English (DARK is SOMBRE, not the TENEBR type). The keys the ROM-label migration would move onto a label ship in `lang/emerald/strings_by_english.lua`, the others in `lang/emerald/strings.lua`. The release gate checks each of the four (`hooks` in the gate report) and fails when one of them prints the cart's English; at v0.3.54 each shows its official row (the contest effect "A highly appealing move." reads "Une démonstration qui\nplaît énormément." in French).
 
 #### 4. Emerald screens print their own pack's copy of cart text
 
@@ -1940,15 +2130,15 @@ Several Emerald screens print a cart string from the pack their screen's extract
 - the Frontier Pass's area descriptions and map (`src/ui/game3/rse/frontier_pass.lua:155`, `:547-549`), the Trainer Hill's records (`src/ui/game3/rse/trainer_hill_records.lua:35`) and Ever Grande City's two fly destinations on the region map (`src/ui/game3/rse/region_map.lua:348`);
 - the Battle Pyramid's floor names (entry 3).
 
-A gen1recomp change reads each of them from the script cache, by the pret symbol or ROM address the pack keeps next to its copy (`RomText.refIr`) or by the label of the table it comes from (`RomText.irOr`, `sBattleDomePotentialTexts[i]`), and keeps the pack's copy as the fallback; the party menu's field moves print the move's name, as `sCursorOptions` does. It is the second half of the same `feat/emerald-translation-runtime` branch as entry 1 (four commits: the Battle Frontier, the Pyramid's floor names and Ever Grande City's fly destinations, the Pokédex search screen, the party menu). Nothing changes on this project's side.
+gen1recomp#2678 (v0.3.53) reads each of them from the script cache, by the pret symbol or ROM address the pack keeps next to its copy (`RomText.refIr`) or by the label of the table it comes from (`RomText.irOr`, `sBattleDomePotentialTexts[i]`), and keeps the pack's copy as the fallback; the party menu's field moves print the move's name, as `sCursorOptions` does. Nothing changes on this project's side.
 
-The Berry Blender is in the same situation but not in that change: the script cache holds its messages (`sText_BerryBlenderStart` and 26 more of the 28) and its opponents' names (`sBlenderOpponentsNames`), but the screen and the blender's logic read them from the `rse/berry_blender` pack under keys of their own (`src/ui/game3/rse/berry_blender.lua:57-58`, `src/core/game3/rse/berry_blender.lua:885-934`), plain strings included, so the lookup has to be threaded through both.
+The Berry Blender is in the same situation but not in that change, and still prints English: the script cache holds its messages (`sText_BerryBlenderStart` and 26 more of the 28) and its opponents' names (`sBlenderOpponentsNames`), but the screen and the blender's logic read them from the `rse/berry_blender` pack under keys of their own (`src/ui/game3/rse/berry_blender.lua:57-58`, `src/core/game3/rse/berry_blender.lua:885-934`), plain strings included, so the lookup has to be threaded through both.
 
 #### 6. The rival's name and the Japanese honorific come from the US cart
 
-The runtime expands `{RIVAL}` and `{KUN}` from `text/placeholders.lua`, the values the extractor reads from the US cart (`src/ui/game3/message.lua:66`, `src/import/gba/text_placeholders_extract.lua`): MAY or BRENDAN, and an empty honorific. Every European language keeps the English names in the 13 lines that name the rival through the placeholder (Birch's lab, the rival's house, Route 110, the Champion's room: "Mais où peut bien se trouver MAY?"), and Japanese drops くん/ちゃん after the player's name in 414 lines (336 distinct texts). The script cache holds each value under its pret label (`gText_ExpandedPlaceholder_May`, `_Brendan`, `_Kun`, `_Chan`) and the mod ships them (FLORA/BRICE, MAIKE/BRIX, AURA/BRUNO, VERA/BRENDON, ハルカ/ユウキ, くん/ちゃん; the honorifics through `overrides/ja-Hrkt/rse/dialogue.json`, since the US cart's rows are empty).
+The runtime expands `{RIVAL}` and `{KUN}` from `text/placeholders.lua`, the values the extractor reads from the US cart (`src/ui/game3/message.lua:66`, `src/import/gba/text_placeholders_extract.lua`): MAY or BRENDAN, and an empty honorific. Every European language keeps the English names in the 13 lines that name the rival through the placeholder (Birch's lab, the rival's house, Route 110, the Champion's room: "Mais où peut bien se trouver MAY?"), and Japanese drops くん/ちゃん after the player's name in 414 lines (336 distinct texts). The script cache holds each value under its pret label (`gText_ExpandedPlaceholder_May`, `_Brendan`, `_Kun`, `_Chan`) and the mod ships them (FLORA/BRICE, MAIKE/BRIX, AURA/BRUNO, VERA/BRENDON, ハルカ/ユウキ, くん/ちゃん; the honorifics through `overrides/ja-Hrkt/rse/emerald_dialogue.json`, since the US cart's rows are empty).
 
-The same `feat/emerald-translation-runtime` branch resolves each placeholder through the script cache by that label, with the extract's value as the fallback. Nothing else changes on this project's side.
+gen1recomp#2678 (v0.3.53) resolves each placeholder through the script cache by that label, with the extract's value as the fallback. Nothing else changes on this project's side.
 
 ### Required upstream capabilities
 
@@ -1956,7 +2146,7 @@ The same `feat/emerald-translation-runtime` branch resolves each placeholder thr
 
 Seven `Strings()` keys have neither an Emerald corpus row nor a reviewed override, in every language, and keep their English: the controls screen's `ESC/2ND CANCELS`, `PRESS A BUTTON` and `RELEASE TO SET`, FireRed's bag actions `CHECK_TAG` and `OPEN` (shared code), the `SPECIAL AREA` map section (an empty row in every European cart) and the Easy Chat word `{POKEBLOCK}`, whose European rows are each cart's own glyph run. FireRed leaves the controls screen's three and `CHECK_TAG` in English too (`test_reviewed_qids_exist_in_the_pinned_corpus`); `test_engine_strings_resolve_in_every_language` pins Emerald's set.
 
-The Wonder Cards gen1recomp composes for Emerald's events (`src/core/game3/mystery_gift.lua`, `rseBuiltins`) have no cart row either: FireRed's reviewed overrides cover most of their lines, and `overrides/<language>/rse/engine.json` covers the rest (`It is for use at LILYCOVE CITY port.`, `We received this OLD SEA MAP`, `addressed to you.`, `on ROUTE 103.`) and the `EVENT TICKETS` option (`src/core/game3/rse/event_islands.lua:101`), worded from the Emerald cart's own names (NENUCRIQUE, VIEILLECARTE, ROUTE 103). In Japanese, the ALTERING CAVE card names the cave as Emerald does (へんげのどうくつ) instead of FireRed's override.
+The Wonder Cards gen1recomp composes for Emerald's events (`src/core/game3/mystery_gift.lua`, `rseBuiltins`) have no cart row either: FireRed's reviewed overrides cover most of their lines, and `overrides/<language>/rse/emerald_engine.json` covers the rest (`It is for use at LILYCOVE CITY port.`, `We received this OLD SEA MAP`, `addressed to you.`, `on ROUTE 103.`) and the `EVENT TICKETS` option (`src/core/game3/rse/event_islands.lua:101`), worded from the Emerald cart's own names (NENUCRIQUE, VIEILLECARTE, ROUTE 103). In Japanese, the ALTERING CAVE card names the cave as Emerald does (へんげのどうくつ) instead of FireRed's override.
 
 #### 3. The Battle Pyramid's floor names
 
@@ -1981,12 +2171,13 @@ Some official rows print a value the US line does not, which the runtime never f
 - the party menu's prompt "Do what with this PKMN?" in German and Japanese, whose rows name the POKéMON with `STR_VAR_1`, while the menu draws `RomText.plain("gText_DoWhatWithPokemon")` with no variables (`src/ui/game3/party_menu.lua:2764`);
 - 22 Japanese lines (36 keys) that name a trainer, the rival or Kiri with a `STR_VAR` buffer where the US script prints the name in the text or names nobody (`Route104_Text_GinaPostBattle`, `LittlerootTown_Text_YouSavedBirch`, `SootopolisCity_Text_*Kiri*`, `BattleDome_Text_TrainerBecameChamp`...); the rows that only add the player's name or the honorific after it are not among them, since the runtime always fills those (`ALWAYS_FILLED`, `pipeline/gen3/join.py`);
 - the Shadow Tag / Arena Trap message in Japanese, whose row also names the POKéMON trying to switch with `B_BUFF2`, which pret buffers (`pokeemerald/src/pokemon.c:6664`) and the runtime does not (`src/core/game3/battle/engine.lua:2131`);
-- the Spikes message in German, Spanish and Japanese, whose rows name the target side with `B_DEF_PREFIX1`, while the runtime calls `sayText("STRINGID_SPIKESSCATTERED")` with no target (`src/core/game3/battle/effects/hazards.lua:51`);
-- a secret base's name in French, German, Spanish and Italian, which the runtime builds as the owner's name followed by `gText_ApostropheSBase` (`src/core/game3/rse/secret_base.lua:586`), while those rows put the name inside ("BASE DE [STR_VAR_1]"), so the European line ends in the English "'s BASE".
+- the Spikes message in German, Spanish and Japanese, whose rows name the target side with `B_DEF_PREFIX1`, while the runtime calls `sayText("STRINGID_SPIKESSCATTERED")` with no target (`src/core/game3/battle/effects/hazards.lua:51`).
 
-The TM shop's prompt is not one of them: its rows name the move with `STR_VAR_2`, which the runtime does buffer (`src/ui/game3/rse/shop_menu.lua:240`), so `overrides/<language>/rse/dialogue.json` ships the official rows with `runtime_fills`.
+A secret base's name is no longer one of them: its French, German, Spanish and Italian rows put the owner inside ("BASE DE [STR_VAR_1]"), which gen1recomp#2680 (v0.3.52) fills with the owner (`src/core/game3/rse/secret_base.lua:602` at v0.3.54), so `overrides/<language>/rse/emerald_dialogue.json` ships them with `runtime_fills`.
 
-Fix: fill the buffers the official rows use, as pret does, and let the secret base read its whole name from one row.
+The TM shop's prompt is not one of them: its rows name the move with `STR_VAR_2`, which the runtime does buffer (`src/ui/game3/rse/shop_menu.lua:240`), so `overrides/<language>/rse/emerald_dialogue.json` ships the official rows with `runtime_fills`.
+
+Fix: fill the buffers the official rows use, as pret does.
 
 #### 8. Descriptions are keyed by their English
 
@@ -2002,14 +2193,14 @@ The Italian cart draws `POKéMELLA`/`POKéMELLE` (POKéBLOCK) as a glyph run, wh
 - **Pointer tables join exactly.** The extractor keys a ROM pointer table by its name and index (`gNatureNamePointers[3]`, `sMenuTexts[25]`, `gStdStrings[18]`, the `stdstring:<n>` script menu entries) and the battle string table by `STRINGID_*`; the corpus names the strings those pointers reach (`sHardyNatureName`). `tools/rse/extract.lua` writes each slot's pointer (`rse_text_pointers.json`) and the join names it with pret's symbol table, so these rows join on a symbol like any script message.
 - **Lines left in English by every European cart are unused.** Outside the credits, the rows that read the same as English in every European corpus (`gText_Birch_Pokemon`, the Battle Tent rules variants, the `*2` Union Room and trade-center lines, `gText_HOFDexRating`...) are almost all lines pokeemerald never references and gen1recomp's Emerald screens never draw; the mod ships no stand-in for them.
 - **A label keeps its own row.** The engine catalog's ROM-label migration copies an English entry onto every label with that English, and `RomText.translate` reads a label's catalog entry before the label's text: the French cart's SORTIR menu would have read the RETOUR of another one. A label the dialogue join has its own row for keeps it (`dialogue_label_rows`), for FireRed too, and both release gates fail if a shipped dialogue label also has a catalog entry.
-- **One French corpus row is empty.** `Route119_Text_StayAwayFromWeatherInstitute` is empty in the French corpus only; `overrides/fr/rse/dialogue.json` ships the French cart's own line, read from pret's multi-language decompilation (`data/maps/Route119/text_fr.inc`), which builds the French cart byte for byte.
+- **One French corpus row is empty.** `Route119_Text_StayAwayFromWeatherInstitute` is empty in the French corpus only; `overrides/fr/rse/emerald_dialogue.json` ships the French cart's own line, read from pret's multi-language decompilation (`data/maps/Route119/text_fr.inc`), which builds the French cart byte for byte.
 - **The start menu needs no hook.** Emerald's start menu prints the cart's `gText_Menu*` rows through `RomText` (`src/ui/game3/rse/start_menu_data.lua:8`), which the named text join translates.
 
 ### Translated via a compromise (`engine-contract-gap`)
 
-- **The move-use line in Japanese.** The cart's row is `[B_ATK_NAME_WITH_PREFIX][B_BUFF1]\n[B_BUFF2]`, whose particle and ending depend on the move (`ChooseMoveUsedParticle`, `ChooseTypeOfMoveUsedString`, `pokeemerald/src/battle_message.c:2882`, `:2922`); the runtime fills no particle and always appends `sText_ExclamationMark` (`src/core/game3/battle/battle_text.lua:249`), whose Japanese row ("を　つかった！") is the ending of a small group of moves. `overrides/ja-Hrkt/rse/dialogue.json` gives both the values of the moves outside `sGrammarMoveUsedTable`, most of them: the particle `sText_ApostropheS` ("の") and the ending `sText_ExclamationMark5` ("！"), so the line reads "ポチエナの\nたいあたり！" as the cart prints it for those moves; the 114 moves of the table read the same instead of their own ending, and 67 of them take の where the cart has は. The Japanese FireRed mod does the same (`overrides/ja-Hrkt/frlg/dialogue.json`).
+- **The move-use line in Japanese.** The cart's row is `[B_ATK_NAME_WITH_PREFIX][B_BUFF1]\n[B_BUFF2]`, whose particle and ending depend on the move (`ChooseMoveUsedParticle`, `ChooseTypeOfMoveUsedString`, `pokeemerald/src/battle_message.c:2882`, `:2922`); the runtime fills no particle and always appends `sText_ExclamationMark` (`src/core/game3/battle/battle_text.lua:249`), whose Japanese row ("を　つかった！") is the ending of a small group of moves. `overrides/ja-Hrkt/rse/emerald_dialogue.json` gives both the values of the moves outside `sGrammarMoveUsedTable`, most of them: the particle `sText_ApostropheS` ("の") and the ending `sText_ExclamationMark5` ("！"), so the line reads "ポチエナの\nたいあたり！" as the cart prints it for those moves; the 114 moves of the table read the same instead of their own ending, and 67 of them take の where the cart has は. The Japanese FireRed mod does the same (`overrides/ja-Hrkt/frlg/dialogue.json`).
 - **The continue window in Japanese.** The cart's rows print their value themselves ("しゅじんこう　[STR_VAR_1]"); the runtime draws the value in its own column (`src/ui/game3/rse/main_menu_rse.lua:509`), so the Japanese overrides ship the label part only.
-- **Japanese labels with an empty row.** The Easy Chat footer (DEL. ALL, OK, QUIZ, ANSWER), the Pokédex's HT/WT and the Battle Frontier's list joiners (" and ", ", ", `pokeemerald/src/frontier_util.c:1949`) have an empty Japanese row. `overrides/ja-Hrkt/rse/dialogue.json` takes the cart's own words where it has them (たかさ/おもさ from FireRed's `gText_HT`/`gText_WT`, けってい from `gText_Confirm2`, クイズ and こたえ from `gText_TheQuizColon`/`gText_TheAnswer`), joins a list with と and ・ (the Japanese font has no comma) and words DEL. ALL ぜんけし. The Birch intro's YES/NO takes the cart's other YES/NO row (`sUnusedText_YesNo`).
+- **Japanese labels with an empty row.** The Easy Chat footer (DEL. ALL, OK, QUIZ, ANSWER), the Pokédex's HT/WT and the Battle Frontier's list joiners (" and ", ", ", `pokeemerald/src/frontier_util.c:1949`) have an empty Japanese row. `overrides/ja-Hrkt/rse/emerald_dialogue.json` takes the cart's own words where it has them (たかさ/おもさ from FireRed's `gText_HT`/`gText_WT`, けってい from `gText_Confirm2`, クイズ and こたえ from `gText_TheQuizColon`/`gText_TheAnswer`), joins a list with と and ・ (the Japanese font has no comma) and words DEL. ALL ぜんけし. The Birch intro's YES/NO takes the cart's other YES/NO row (`sUnusedText_YesNo`).
 - **Option values a corpus row says in another sense.** The screen position's UPPER (the naming keyboard's upper case in `gText_Upper`), the SPEED group label (the SPEED stat, abbreviated `INIT.` in German, `VELOCID.` in Spanish and `VELOC.` in Italian) and Japanese ON/OFF (the battle scene's みる/みない) take the FireRed, Gold/Silver or Red/Blue overrides' wording, in both game3 families.
 - **Glyph runs.** The cart draws `{POKEBLOCK}` and `{LV}` as glyph runs the `rse` dialect reads as tags. A translation keeps the tag the English row has, so the French, German and Spanish rows' `[POKEBLOCK]` show the US cart's run; the Italian carts' own runs are spelled out (`[POKEMELLA]` as POKéMELLA, like the French Battle Points symbol `[Pco]` as Pco, which the French rows also write in letters).
 - **A section name that holds a placeholder.** `MAPSEC_AQUA_HIDEOUT_OLD` holds the team's name as a placeholder, which the map section extractor drops (" HIDEOUT" in English); its translation drops it the same way.
