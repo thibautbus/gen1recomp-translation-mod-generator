@@ -481,7 +481,7 @@ def build_rse(
     rs_symbols, rs_charmap = prepare_rs_pret_inputs(workspace, config)
 
     extracted = {"emerald": workspace / "emerald" / "extracted", "rs": workspace / edition / "extracted"}
-    log(f"\nExtracting private {edition_name} {rs_info['revision']} ROM data...")
+    log(f"\nExtracting private {edition_name} ROM data...")
     status(f"Extracting private {edition_name} ROM data")
     import_rse_rom(rs_rom, gen1recomp, extracted["rs"], log_fn=log_fn, game="rs")
     log("\nExtracting private Emerald ROM data...")
@@ -522,13 +522,10 @@ def build_rse(
         edition: (rs, coverage["rs"], gates[edition]),
         "emerald": (emerald, coverage["emerald"], gates["emerald"]),
     })
-    for key, label in (("rs", f"{edition_name} {rs_info['revision']}"), ("emerald", "Emerald")):
+    for key, label in (("rs", edition_name), ("emerald", "Emerald")):
         for part, what in (("rom", "ROM aggregate"), ("engine_gen3", "engine strings")):
             section = coverage[key][part]
             log(f"  {label} {what}: {section['translated']}/{section['total']} ({section['percent']:.2f}%)")
-    for name, layout in sorted(coverage["rs"]["layouts"].items()):
-        how = "read from the ROM" if layout["read"] else "keyed through pret's symbols"
-        log(f"  {name} dialogue ({how}): {layout['covered']}/{layout['total']} ({layout['percent']:.2f}%)")
     blank = sum(gate.get("blank_glyphs", {}).get("total", 0) for gate in gates.values())
     if blank:
         log(f"  runtime limit: {blank} shipped characters have no glyph in FrlgFont yet"

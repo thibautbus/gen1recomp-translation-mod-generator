@@ -332,9 +332,7 @@ class TranslationBuilderApp:
             ("rb", 2, "Required to extract shared Pokémon Red/Blue game text and data. Either ROM works: Red and Blue share identical text.", "Pokemon Red or Blue ROM (US)"),
             ("gs", 2, "Required to extract Pokémon Gold and Silver game text and data. Either ROM works: Gold and Silver share identical text.", "Pokemon Gold or Silver ROM (US)"),
             ("firered", 2, "Required to extract Pokémon FireRed game text and data.", "Pokemon FireRed ROM (US)"),
-            ("rs", 2, "Required to extract Pokémon Ruby and Sapphire game text and data. Either ROM works, "
-                      "from any English revision (1.0, 1.1 or 1.2): the other edition's and revisions' text is "
-                      "keyed through pret's symbol tables.", "Pokemon Ruby or Sapphire ROM (US/EU)"),
+            ("rs", 2, "Required to extract Pokémon Ruby and Sapphire game text and data. Either ROM works: Ruby and Sapphire share one translation.", "Pokemon Ruby or Sapphire ROM (US)"),
             ("emerald", 4, "Required to extract Pokémon Emerald game text and data.", "Pokemon Emerald ROM (US)"),
             ("crystal", 4, "Required to extract Pokémon Crystal-specific game text and data.", "Pokemon Crystal ROM (US)"),
             ("leafgreen", 4, "Required to extract Pokémon LeafGreen game text and data.", "Pokemon LeafGreen ROM (US)"),
