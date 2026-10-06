@@ -287,6 +287,12 @@ io.write(table.concat(applied, ","))
 
 
 class RubySapphireConfigTests(unittest.TestCase):
+    def test_japanese_ships_the_honorifics_the_us_cart_leaves_empty(self):
+        entries = json.loads((ROOT / "overrides" / "ja-Hrkt" / "rse" / "dialogue.json").read_text(encoding="utf-8"))["entries"]
+        for label, honorific in (("gExpandedPlaceholder_Kun", "くん"), ("gExpandedPlaceholder_Chan", "ちゃん")):
+            self.assertEqual(entries[label]["text"], honorific)
+            self.assertEqual(entries[label]["qid"], f"rs.common.strings.{label}")
+
     def test_every_english_revision_is_accepted(self):
         sections = {revision.section: revision for revision in RS_REVISIONS}
         self.assertEqual(sorted(sections), ["ruby", "ruby_rev1", "ruby_rev2", "sapphire", "sapphire_rev1",
