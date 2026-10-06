@@ -1,8 +1,8 @@
 """The official Pokédex heights and weights in metric units.
 
 The European and Japanese carts print a Pokémon's height in metres and its
-weight in kilograms; the US Generation 1 and 2 carts store and print feet,
-inches and pounds instead, and gen1recomp reads the US cart.  pret's
+weight in kilograms; the US carts print feet, inches and pounds instead,
+and gen1recomp reads the US cart.  pret's
 pokeemerald keeps every species' official metric values (decimetres and
 hectograms, ``src/data/pokemon/pokedex_entries.h``), pinned under
 ``[pret.pokedex_metrics]`` in ``config/pipeline.toml``.
@@ -18,6 +18,23 @@ from .builder import BuildError
 from .dependencies import DependencyError, fetch_files
 
 POKEDEX_ENTRIES_FILE = "pokedex_entries.h"
+
+# The main.lua loop patching every species with its metric height and
+# weight; ``catalog`` is the generated main's own catalog reader.  An engine
+# without src/core/game3/pokedex_units.lua prints feet, inches and pounds
+# whatever a species carries (and nothing at all on a Red/Blue entry seen
+# but not caught), so the mod leaves its species alone there.
+SPECIES_METRICS_HOOK = """  -- Pokedex heights and weights in metres and kilograms, as the European
+  -- and Japanese carts print them: the Pokedex prints a species'
+  -- dexEntry.heightM and weightKg instead of feet, inches and pounds.
+  if pcall(require, "src.core.game3.pokedex_units") then
+    for id, value in pairs(catalog("species_metrics")) do
+      if type(value) == "table" and value[1] and value[2] then
+        mod.content.pokemon:patch(id, { dexEntry = { heightM = value[1], weightKg = value[2] } })
+      end
+    end
+  end
+"""
 
 _ENTRY = re.compile(r"\[NATIONAL_DEX_(\w+)\]\s*=\s*\{(.*?)\n\s*\}", re.S)
 _FIELD = re.compile(r"\.(height|weight)\s*=\s*(\d+)")
@@ -49,14 +66,20 @@ def parse_pokedex_metrics(text: str) -> dict[str, tuple[int, int]]:
     return out
 
 
+def _bare(name: str) -> str:
+    return re.sub(r"[^A-Z0-9]", "", name.upper())
+
+
 def species_metrics(path: str | Path, species_ids: Iterable[str]) -> dict[str, tuple[float, float]]:
-    """``{species id: (metres, kilograms)}`` for the given engine ids, which
-    are pret's species constants, the same names as ``NATIONAL_DEX_*``."""
-    metrics = parse_pokedex_metrics(Path(path).read_text(encoding="utf-8"))
+    """``{species id: (metres, kilograms)}`` for the given engine ids, the
+    species' English names as ``NATIONAL_DEX_*`` spells them, give or take
+    an underscore (Gold's ``FARFETCH_D`` and ``MR__MIME``)."""
+    metrics = {_bare(name): value
+               for name, value in parse_pokedex_metrics(Path(path).read_text(encoding="utf-8")).items()}
     out: dict[str, tuple[float, float]] = {}
     missing = []
     for species in species_ids:
-        value = metrics.get(species)
+        value = metrics.get(_bare(species))
         if value is None:
             missing.append(species)
             continue

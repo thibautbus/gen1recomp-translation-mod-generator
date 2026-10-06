@@ -508,12 +508,15 @@ guess.
   patches every species with its official metric values
   (`lang/species_metrics.lua`, from pret pokeemerald's
   `src/data/pokemon/pokedex_entries.h`, pinned as `[pret.pokedex_metrics]`)
-  and translates both formats with the cart's own labels. Two engine
-  details remain: the metric branch prints nothing for an entry seen but
-  not caught (the cart prints `???m` / `???kg`), which the gen1recomp
-  branch `feat/metric-pokedex-units` prints as `Strings("GR. ???m")` and
-  `Strings("GEW. ???kg")`, and it always writes the decimal with a comma
-  (`:274`), which the Japanese carts do not use.
+  and translates both formats with the cart's own labels. At the pinned
+  revision the metric branch prints nothing for an entry seen but not
+  caught (the cart prints `???m` / `???kg`); the gen1recomp branch
+  `feat/metric-pokedex-units` prints it as `Strings("GR. ???m")` and
+  `Strings("GEW. ???kg")`, and adds the Gen 2 and Gen 3 printers along
+  with `src/core/game3/pokedex_units.lua`. main.lua patches the species
+  only when that module loads, so until a release carries the branch the
+  Pokédex keeps feet, inches and pounds. The metric branch always writes
+  the decimal with a comma (`:274`), which the Japanese carts do not use.
 
 ### Fixed: Surfing Pikachu/Hall of Fame HUD text rewritten upstream
 
@@ -1304,6 +1307,8 @@ Fixed on `fix/gsc-stat-message-word-order`.
 
 ### Required upstream capabilities
 
+- **Pokédex heights and weights in metres and kilograms.** The #DEX page prints the US cart's height in feet and inches and its weight, in tenths of a pound, after the `lb` label (`ui/gen2/PokedexMenu.lua:1045`, `:1062`); the localized carts print metres and kilograms (`gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight`). The translations label that weight `kg`, so until the engine prints metric values the number is a pound value under a kilogram label (Bulbasaur's 15.2 for 6.9 kg). The gen1recomp branch `feat/metric-pokedex-units` prints a species' `dexEntry.heightM` and `weightKg` before `Strings("m")` and `Strings("kg")`; the mod already ships every species' official values (`lang/species_metrics.lua`, as for Red/Blue) and patches them in once the engine carries `src/core/game3/pokedex_units.lua`. The new `m` and `kg` keys are the same as the English in the European languages; the Japanese and Korean carts' full-width `ｍ` and `ｋｇ` need overrides once the pin carries the keys.
+
 Still genuinely out of reach: these have no public hook at all, only a
 hardcoded local table or a `self:say(...)`/`:drawBottomLines(...)` call, so
 they must not be implemented by reaching into private UI classes.
@@ -2040,7 +2045,7 @@ Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/
 
 - **TM/HM pickup** (`Text_FoundTMHMContainsMove`): gen1recomp's item-ball script buffers only the TM's name and prints `"[PLAYER] found\n[STR_VAR_2]!"`, while the cart's line also names the move from `STR_VAR_1`. Each language keeps the first clause of its own cart row (`overrides/<lang>/frlg/dialogue.json`); German, whose cart line names only the move, is reworded around the TM name.
 - **Corrupted-save warning**: `src/ui/game3/boot.lua` prints the cart's `gText_SaveFileCorrupted` as two `Strings()` pages. The official translation is split at its sentence (Italian: paragraph) boundary.
-- **Imperial units**: the Pokédex and its size page print weights and heights gen1recomp computes in pounds and feet (`pokedex_data.lua`); the European carts print kilograms and metres. A template cannot convert the number, so the translations keep `lbs.` and feet/inches and only localise the labels (HAUT./POIDS…) and the decimal comma.
+- **Imperial units**: the Pokédex and its size page print weights and heights gen1recomp computes in pounds and feet (`pokedex_data.lua`); the European carts print kilograms and metres. A template cannot convert the number, so the translations keep feet/inches and only localise the labels (HAUT./POIDS…) and the decimal comma; the weight's unit is the cart row `gText_Lbs` (`pokedex_data.lua:210`), whose localized rows are the kilogram, a pound value under a kilogram label. The gen1recomp branch `feat/metric-pokedex-units` prints a species' metric height and weight when a mod gives them (`dexEntry.heightM`/`weightKg`, `src/core/game3/pokedex_units.lua`); the mod already ships every species' official values (`lang/species_metrics.lua`, as for Red/Blue) and patches them in once the engine carries that module. The Japanese cart's full-width `ｍ` and `ｋｇ` then need overrides of the new `m` and `kg` keys.
 - **Trainer names**: gen1recomp composes "<class> <name>" (`battle/init.lua`, `switch_seq.lua`, `trainers.lua`) and passes it as one argument to messages such as "%s defeated\n%s!". The Italian cart writes "<name>, <class>"; the Italian lines keep gen1recomp's order.
 - **Lines gen1recomp words its own way**: 290 French keys (similar in de/es/it) have no cart row that reads as them. They are either English the port added (PC item storage, Hall of Fame banner, bicycle, repel reuse, release, OAK's refusal without the player's name…) or cart messages gen1recomp rewords or splits (the stat-change lines the cart builds from `sText_AttackersStatRose` and a verb row, "gained a boosted", the double send-out, the berry flavour lines). They are worded from the nearest cart row, named in each entry's `provenance` (`overrides/<lang>/frlg/engine.json`, `reason: "engine-corpus"`, `"engine-contract-gap"` or `"engine-original"`).
 - **One English label, several cart wordings**: FireRed words the same English differently from menu to menu (CANCEL is RETOUR in most French menus, ANNUL. in the PC). A `Strings()` key has one value, so the scope keeps the wording most cart rows share for that English (a `REVIEWED` pin where the majority is the wrong sense: FIGHT is the battle menu's ATTAQUE, not the FIGHT type).
@@ -2065,7 +2070,7 @@ Summary of what a translation mod can and cannot reach at the pinned revision:
 | Cart text the native screens print from their own pack: party menu actions and prompts, shop, decoration, move relearner, contest paintings, Easy Chat editors and words, the summary's contest effect descriptions | Yes since v0.3.58 (entry 3) | `text` overrides by label, `strings` for the contest descriptions |
 | The same for the secret base, roulette, trainer card, diploma, berry tag, PokéNav and Battle Tower records screens | **No** (entry 3) | `text` overrides once their extractors record the labels |
 | A secret base's name in the European languages | Yes since v0.3.61 (entry 4) | the runtime fills the row's `[PLAYER]` with the owner |
-| Heights and weights in metric units, as the European and Japanese carts print them | **No** (entry 8) | a metric printer in the runtime |
+| Heights and weights in metric units, as the European and Japanese carts print them | Yes since v0.3.61 (entry 8) | `pokemon` patches (`dexEntry.heightM`/`weightKg`) |
 | Japanese | Yes (the cart's own Japanese fonts) | as for FireRed |
 
 ### Fixed upstream in v0.3.58 (gen1recomp#2724)
@@ -2104,7 +2109,7 @@ As for Emerald (entry 7), a few official rows print a value the US line does not
 
 #### 8. Heights and weights are printed in US units
 
-The native Pokédex prints a caught entry's height in feet and inches and its weight in pounds (`src/ui/game3/rse/pokedex.lua:874`, `Pokedex.heightText`; `src/ui/game3/rs/pokedex_policy.lua:28`, `weightText`), as pokeruby's US build does (`include/config.h:53`, `UNITS_IMPERIAL`; `src/pokedex.c:4335`, `:4375`). The European carts print metres and kilograms (the `#else` printers, `src/pokedex.c:4368`, `:4438`), and so do their unknown-entry rows (`???,?  m`, `???,?  kg`; Japanese `？？？．？ｍ`). The mod ships both unknown rows as the corpus has them, so with a European or Japanese mod an unseen entry's height and weight read `???,?  m` and `???,?  kg` while a caught entry's read `1'04"` and `5.5 lbs.` (Torchic). The cart's unknown weight string ends with an extra terminator (`????.? lbs.$`, pokeruby `src/strings.c:79`), so PokeCorpus splits its label into `gDexText_UnknownWeight.0` and an empty `.1`; a reviewed decision (`config/rse/dialogue_decisions.json`) joins the first. A metric printer in the runtime, chosen by the mod's language, would make the caught entries agree.
+The native Pokédex prints a caught entry's height in feet and inches and its weight in pounds (`src/ui/game3/rse/pokedex.lua:874`, `Pokedex.heightText`; `src/ui/game3/rs/pokedex_policy.lua:28`, `weightText`), as pokeruby's US build does (`include/config.h:53`, `UNITS_IMPERIAL`; `src/pokedex.c:4335`, `:4375`). The European carts print metres and kilograms (the `#else` printers, `src/pokedex.c:4368`, `:4438`), and so do their unknown-entry rows (`???,?  m`, `???,?  kg`; Japanese `？？？．？ｍ`). The mod ships both unknown rows as the corpus has them, so with a European or Japanese mod an unseen entry's height and weight read `???,?  m` and `???,?  kg` while a caught entry's read `1'04"` and `5.5 lbs.` (Torchic). The cart's unknown weight string ends with an extra terminator (`????.? lbs.$`, pokeruby `src/strings.c:79`), so PokeCorpus splits its label into `gDexText_UnknownWeight.0` and an empty `.1`; a reviewed decision (`config/rse/dialogue_decisions.json`) joins the first. The gen1recomp branch `feat/metric-pokedex-units` prints a caught species' metric height and weight when a mod gives them (`dexEntry.heightM`/`weightKg`, `src/core/game3/pokedex_units.lua`), on the native screen as on Emerald's, and keeps the cart's unknown rows for a seen one; the mod already ships every species' official values (`lang/species_metrics.lua`, shared by the three games) and patches them in once the engine carries that module.
 
 ### Verified working, not a gap
 

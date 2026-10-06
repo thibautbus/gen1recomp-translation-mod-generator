@@ -769,7 +769,7 @@ the same split.
 | `pipeline/shared/` | `corpus.py`, `model.py`, `align.py`, `worksheet.py`, `tokens.py`, `generate.py` | Parse parallel corpora, align qids, preserve control-token contracts and write Lua. |
 | `pipeline/shared/` | `engine_manifest.py`, `strings_harvest.py`, `engine.py` | The pinned engine string universe, the `Strings()`/RomText callsite harvester, and the engine-string join Red/Blue and Gold share. |
 | `pipeline/shared/` | `mod_assets.py`, `validate.py`, `leak_audit.py` | What every mod ships besides its catalogs (fonts, load priority), and the release gates. |
-| `pipeline/shared/` | `pokedex_metrics.py` | The official Pokédex heights and weights in metres and kilograms (pret pokeemerald's `pokedex_entries.h`, pinned as `[pret.pokedex_metrics]`), which the Red/Blue/Yellow mods patch into each species. |
+| `pipeline/shared/` | `pokedex_metrics.py` | The official Pokédex heights and weights in metres and kilograms (pret pokeemerald's `pokedex_entries.h`, pinned as `[pret.pokedex_metrics]`), which every mod patches into each species once the engine prints them. |
 | `pipeline/rby/` | `build.py`, `join.py`, `mod.py`, `yellow.py`, `yellow_audit.py`, `literals.py` | Build the Red/Blue and Yellow mod: join the catalogs, resolve literal handlers, write the mod and its Yellow layer. |
 | `pipeline/rby/` | `engine_scope.py`, `engine_backlog.py`, `disassembly_audit.py` | Classify the engine strings for Red/Blue, report the private backlog and audit the localized disassemblies. |
 | `pipeline/gsc/` | `text.py`, `join.py`, `index_join.py`, `localized_registries.py`, `trainer_names.py`, `engine.py`, `mod.py` | Join GoldSilver to pointer/index catalogs and engine strings, and emit the Gen 2 artifact. |

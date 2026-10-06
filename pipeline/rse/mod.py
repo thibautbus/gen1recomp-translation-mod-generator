@@ -43,6 +43,7 @@ from ..gen3.mod import (
 from ..shared.builder import BuildError, _run
 from ..shared.corpus import canonical_language
 from ..shared.generate import lua_string
+from ..shared.pokedex_metrics import SPECIES_METRICS_HOOK, lua_catalog, prepare_pokedex_metrics, species_metrics
 from ..shared.mod_assets import TRANSLATION_MOD_PRIORITY
 from ..shared.project import project_config, project_version, resource_root
 from ..shared.roms import (
@@ -178,11 +179,14 @@ def generate_rse_mod(
     emerald: Mapping | None = None,
     rs: Mapping | None = None,
     mod_id: str | None = None,
+    species_metrics: Mapping[str, tuple[float, float]] | None = None,
 ) -> Path:
     """Write a deterministic manifest, entry point and layers.
 
     ``emerald`` is join_emerald's result (its ``dialogue`` and ``catalogs``),
     ``rs`` join_rs's (``named``, ``script``, ``catalogs`` and ``guards``).
+    ``species_metrics`` is every species' height and weight in metres and
+    kilograms (pipeline.shared.pokedex_metrics), the same in all three games.
     """
     language = canonical_language(language)
     destination = Path(destination)
@@ -230,6 +234,10 @@ def generate_rse_mod(
     registration = "".join(
         f'  each("{name}", function(id, value) {CATALOG_HOOKS[name]} end)\n'
         for name in CATALOG_HOOKS if name in registered)
+    if species_metrics:
+        (lang_dir / "species_metrics.lua").write_text(
+            lua_catalog(species_metrics, "species_metrics"), encoding="utf-8")
+        registration += SPECIES_METRICS_HOOK
     (destination / "main.lua").write_text(MAIN.replace("__CATALOG_REGISTRATION__", registration),
                                           encoding="utf-8")
 
@@ -501,7 +509,10 @@ def build_rse(
     mod_dir = build_root / rse_mod_id(language)
     generate_rse_mod(mod_dir, language=language,
                      target_name=f"{language_name} translation for Ruby, Sapphire and Emerald",
-                     emerald=emerald, rs=rs)
+                     emerald=emerald, rs=rs,
+                     species_metrics=species_metrics(
+                         prepare_pokedex_metrics(workspace, project_config()),
+                         {*rs["numbers"]["species"].values(), *emerald["numbers"]["species"].values()}))
     coverage = {"rs": rs_coverage(rs), "emerald": gen3_coverage(emerald)}
     status("Running the release gate")
     gates = {

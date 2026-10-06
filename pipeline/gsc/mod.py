@@ -5,7 +5,7 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Mapping
 
 from ..shared.builder import BuildError, _run
 from ..shared.corpus import canonical_language
@@ -14,6 +14,7 @@ from .crystal_mod import (
 )
 from ..shared.roms import GS_REQUIRED_TSV, gs_required_tsv, import_crystal_rom, import_gs_rom, verify_crystal_rom, verify_gs_rom
 from ..shared.generate import lua_string
+from ..shared.pokedex_metrics import SPECIES_METRICS_HOOK, lua_catalog, prepare_pokedex_metrics, species_metrics
 from .engine import match_gs_engine_strings
 from .index_join import (
     join_by_index, join_dex_entries, join_dex_entries_pages, join_landmarks,
@@ -359,8 +360,13 @@ def generate_gs_mod(
     crystal_dex_text2_catalog: dict[str, str] | None = None,
     trainer_name_catalog: dict[str, str] | None = None,
     crystal_trainer_name_catalog: dict[str, str] | None = None,
+    species_metrics: Mapping[str, tuple[float, float]] | None = None,
 ) -> Path:
     """Write a deterministic Gold manifest, entry point, and catalogs.
+
+    ``species_metrics`` is every species' official height and weight in
+    metres and kilograms (pipeline.shared.pokedex_metrics), which the #DEX
+    page prints instead of feet, inches and pounds.
 
     ``trainer_name_catalog``/``crystal_trainer_name_catalog`` rename each
     class's named trainers (pipeline.gsc.trainer_names ids); see
@@ -429,6 +435,11 @@ def generate_gs_mod(
             catalog_registration += _UI_LABEL_REGISTRATION
         if GS_OAK_SPEECH_CATALOG in catalogs:
             catalog_registration += _OAK_SPEECH_REGISTRATION
+    if species_metrics:
+        lang_dir.mkdir(parents=True, exist_ok=True)
+        (lang_dir / "species_metrics.lua").write_text(
+            lua_catalog(species_metrics, "species_metrics"), encoding="utf-8")
+        catalog_registration = (catalog_registration or _CATALOG_HELPER) + SPECIES_METRICS_HOOK
 
     crystal_registration = ""
     if crystal_text_catalog:
@@ -1092,8 +1103,12 @@ def build_gs_dialogue_mod(
     crystal_coverage: dict | None = None,
     engine_profile: str | None = None,
     crystal_out_dir: str | Path | None = None,
+    pokedex_entries: str | Path | None = None,
 ) -> tuple[Path, list[GsJoinEntry], dict]:
     """Join extracted Gold catalogs to the corpus and generate the mod.
+
+    ``pokedex_entries`` is pret's pokedex_entries.h, the species' metric
+    heights and weights (pipeline.shared.pokedex_metrics).
 
     ``crystal_out_dir`` is Crystal's own extraction, whose trainer rosters
     (gs_trainer_names.tsv) differ from Gold/Silver's and are joined against
@@ -1337,6 +1352,8 @@ def build_gs_dialogue_mod(
         crystal_dex_text2_catalog=crystal_text2,
         trainer_name_catalog=trainer_names,
         crystal_trainer_name_catalog=crystal_trainer_names,
+        species_metrics=(species_metrics(pokedex_entries, [entry.id for entry in species])
+                         if pokedex_entries else None),
     )
     return mod_dir, entries, stats
 
@@ -1455,6 +1472,7 @@ def build_gs(
         crystal_catalogs=crystal_catalogs, crystal_coverage=crystal_coverage,
         overrides=load_gs_dialogue_overrides(language),
         crystal_out_dir=crystal_out,
+        pokedex_entries=prepare_pokedex_metrics(workspace, project_config()),
     )
     log(
         f"  text: {stats['unique'] + stats['harmless_ambiguous'] + stats['override'] + stats['reviewed_qid']}/{stats['total']} pointers"

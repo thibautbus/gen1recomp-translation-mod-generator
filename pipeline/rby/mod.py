@@ -6,6 +6,7 @@ from typing import Iterable, Mapping
 
 from ..shared.model import Alignment
 from ..shared.generate import lua_string
+from ..shared.pokedex_metrics import SPECIES_METRICS_HOOK
 from .join import read_worksheets, join_catalogs, require_worksheets
 from ..shared.engine import read_engine_catalog, match_engine_catalog, load_engine_overrides, ROM_CATALOGS
 from ..shared.corpus import canonical_language
@@ -33,17 +34,6 @@ YELLOW_CATALOG_HOOKS: dict[str, str] = {
     "trainer_names": 'each("trainer_names_yellow", function(id, value) mod.content.trainers:patch(id, { name = value }) end)',
     "status_labels": 'each("status_labels_yellow", function(id, value) mod.content.statuses:patch(id, { label = value }) end)',
 }
-
-
-SPECIES_METRICS_HOOK = """  -- Pokedex heights and weights in metres and kilograms, as the European
-  -- and Japanese carts print them: ui/DexEntryMenu.lua prints a species'
-  -- dexEntry.heightM and weightKg instead of feet, inches and pounds.
-  for id, value in pairs(catalog("species_metrics")) do
-    if type(value) == "table" and value[1] and value[2] then
-      mod.content.pokemon:patch(id, { dexEntry = { heightM = value[1], weightKg = value[2] } })
-    end
-  end
-"""
 
 
 def yellow_isyellow_guard_lines() -> str:
