@@ -2041,7 +2041,7 @@ Summary of what a translation mod can and cannot reach at the pinned revision:
 
 | Surface | Reachable | Mechanism |
 | --- | --- | --- |
-| Cart text (13,327 rows: script messages, menus, battle messages, lists, the Pokédex entries' text, PokéNav, contests) | Yes, 99.1–99.5% of it in every language | `mod.content.text:override(key, ir)`, by ROM address or label, each edition's and revision's layer |
+| Cart text (13,336 rows: script messages, menus, battle messages, lists, the Pokédex entries' text, PokéNav, contests) | Yes, 99.1–99.5% of it in every language | `mod.content.text:override(key, ir)`, by ROM address or label, each edition's and revision's layer |
 | Species, move, item names; item descriptions; trainer names and class names | Yes | `pokemon`/`moves`/`items`/`trainers` patches |
 | game3's own text (2,518 `Strings()` keys) | Yes, except 6 engine rows (entry 6) | `strings` registry, keys listed in `config/rse/engine_scope.json` |
 | The version placeholders: the teams, leaders and legendaries, the rival's name, the version name and the Japanese honorific | **No** at the pinned revision (entry 1); the mod already ships them | `text` overrides once the placeholders read the script cache |

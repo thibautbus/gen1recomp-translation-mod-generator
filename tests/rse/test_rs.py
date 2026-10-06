@@ -115,6 +115,11 @@ class RubySapphireTextTests(unittest.TestCase):
                                   ("B_26", "B_ATK_PREFIX2")):
             self.assertEqual(encode(f"[{japanese}]", self.charmap), encode(f"[{english}]", self.charmap))
 
+    def test_the_sound_effect_wait_is_pokerubys_unknown_a(self):
+        self.assertEqual(encode("[WAIT_SE]", self.charmap), bytes((0xFC, 0x0A)))
+        self.assertEqual(encode("[B_BUFF1] grew to\\nLV. [B_BUFF2]![WAIT_SE]\\c", self.charmap)[-3:],
+                         bytes((0xFC, 0x0A, 0xFB)))
+
     def test_a_japanese_pokedex_entry_is_one_page(self):
         corpus = japanese_single_page_entries(self.corpus([
             ("rs.common.pokedex_entries^R.DexDescription_Treecko_1", "First half.", "ぜんぶ"),
