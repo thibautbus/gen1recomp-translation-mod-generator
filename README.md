@@ -529,7 +529,8 @@ FireRed section of [docs/upstream-fixes.md](docs/upstream-fixes.md).
   way as FireRed's: its script messages and the 9,158 rows the runtime reads
   by label or through a pointer table, with the named catalogs (species, move
   and item names, item descriptions, trainer names and class names). It
-  leaves out 88 rows that carry no text, 23 the extractor cannot read (the
+  leaves out 88 rows that carry no text (86 in Japanese, which ships the
+  honorifics くん and ちゃん the US cart leaves empty), 23 the extractor cannot read (the
   Sealed Chamber's and the ancient tombs' braille) and 10 whose only corpus
   line is Japanese. Built from Ruby 1.2 or from Sapphire 1.0, it lands on the same
   figures, and so does each of the four script layouts the mod carries
@@ -555,7 +556,7 @@ FireRed section of [docs/upstream-fixes.md](docs/upstream-fixes.md).
 | `de` | 15253/15372 (99.23%) | 2512/2518 (99.76%) |
 | `es` | 15303/15372 (99.55%) | 2512/2518 (99.76%) |
 | `it` | 15268/15372 (99.32%) | 2512/2518 (99.76%) |
-| `ja-Hrkt` | 15240/15372 (99.14%) | 2512/2518 (99.76%) |
+| `ja-Hrkt` | 15242/15374 (99.14%) | 2512/2518 (99.76%) |
 
 These are measured at the pinned revision v0.3.54; like the others,
 they measure what the mod ships, not what the current runtime displays.

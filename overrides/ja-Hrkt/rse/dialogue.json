@@ -19,6 +19,18 @@
       "text": "[B_ATK_NAME_WITH_PREFIX]の\\n[B_BUFF2]",
       "reason": "engine-contract-gap",
       "provenance": "The cart's row is \"[B_ATK_NAME_WITH_PREFIX][B_BUFF1]\\n[B_BUFF2]\": the particle and the ending appended to the move's name depend on the move (ChooseMoveUsedParticle and ChooseTypeOfMoveUsedString, pokeruby/src/battle_message.c:976, :1016). gen1recomp fills B_BUFF2 with the move's name and the cart's BattleText_Exclamation row (\"！\") and has no particle buffer, so the line takes the particle the cart prints for most moves (の, with the ！ ending); the same choice as Emerald's sText_AttackerUsedX (overrides/ja-Hrkt/rse/emerald_dialogue.json)."
+    },
+    "gExpandedPlaceholder_Chan": {
+      "qid": "rs.common.strings.gExpandedPlaceholder_Chan",
+      "text": "ちゃん",
+      "reason": "us-cart-empty",
+      "provenance": "The Japanese cart's own row, verbatim: the honorific {KUN} expands to after the player's name (pokeruby/src/string_util.c, ExpandPlaceholder_KunChan, by the player's gender). The US cart's row is empty, so the join, which needs an English line, never ships it."
+    },
+    "gExpandedPlaceholder_Kun": {
+      "qid": "rs.common.strings.gExpandedPlaceholder_Kun",
+      "text": "くん",
+      "reason": "us-cart-empty",
+      "provenance": "The Japanese cart's own row, verbatim: the honorific {KUN} expands to after the player's name (pokeruby/src/string_util.c, ExpandPlaceholder_KunChan, by the player's gender). The US cart's row is empty, so the join, which needs an English line, never ships it."
     }
   }
 }
