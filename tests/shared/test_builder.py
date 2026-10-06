@@ -954,6 +954,36 @@ class BuilderTests(unittest.TestCase):
             )
             self.assertLess(main.index("counts.species_kinds"), main.rfind("\nend"))
 
+    def test_scaffold_species_metrics_injection_patches_heights_and_weights(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            scaffold = root / "scaffold"
+            mod = root / "mod"
+            (scaffold / "lang").mkdir(parents=True)
+            (scaffold / "assets" / "font").mkdir(parents=True)
+            (mod / "lang").mkdir(parents=True)
+            (scaffold / "main.lua").write_text(
+                "return function(mod)\n"
+                '  counts.statuses = each("status_labels", function(id, value)\n'
+                "    mod.content.statuses:patch(id, { label = value })\n"
+                "  end)\n"
+                "end\n",
+                encoding="utf-8",
+            )
+            for name in ("font.lua", "charmap.lua", "naming.lua"):
+                (scaffold / "lang" / name).write_text("return {}", encoding="utf-8")
+            (mod / "lang" / "species_metrics.lua").write_text(
+                'return {\n  ["ABRA"] = { 0.9, 19.5 },\n}\n', encoding="utf-8"
+            )
+
+            rby_build.preserve_scaffold_support(scaffold, mod)
+
+            main = (mod / "main.lua").read_text(encoding="utf-8")
+            self.assertIn('for id, value in pairs(catalog("species_metrics")) do', main)
+            self.assertIn("dexEntry = { heightM = value[1], weightKg = value[2] }", main)
+            self.assertLess(main.index('catalog("species_metrics")'), main.rfind("\nend"))
+            self.assertIn("weightKg = value[2] } })\n    end\n  end\n", main)
+
     def test_scaffold_type_names_injection_falls_back_when_block_drifts(self):
         # The exact statuses block is scaffold-owned; if its spacing drifts
         # upstream, the injection must still land before the closing function

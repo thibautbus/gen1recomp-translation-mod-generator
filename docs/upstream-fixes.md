@@ -498,6 +498,23 @@ guess.
   related (302/302, unchanged) engine-string coverage, plus 100%
   ROM-aggregate coverage on every side, after these two fixes.
 
+- **Pokédex heights and weights in metres and kilograms.** The US cart
+  stores and prints feet, inches and pounds; every localized cart prints
+  metres and kilograms (poke-corpus RedBlue `rb.pokedex.HeightWeightText`:
+  `TAI  ???m` / `PDS  ???kg`, `GR.` / `GEW`, `AL` / `PE`, `h` / `P`,
+  `たかさ` / `おもさ`). `ui/DexEntryMenu.lua:249` prints a species'
+  `dexEntry.heightM` and `weightKg` through `Strings("GR. %.1fm")` and
+  `Strings("GEW. %.1fkg")` when the species carries them, so the mod
+  patches every species with its official metric values
+  (`lang/species_metrics.lua`, from pret pokeemerald's
+  `src/data/pokemon/pokedex_entries.h`, pinned as `[pret.pokedex_metrics]`)
+  and translates both formats with the cart's own labels. Two engine
+  details remain: the metric branch prints nothing for an entry seen but
+  not caught (the cart prints `???m` / `???kg`), which the gen1recomp
+  branch `feat/metric-pokedex-units` prints as `Strings("GR. ???m")` and
+  `Strings("GEW. ???kg")`, and it always writes the decimal with a comma
+  (`:274`), which the Japanese carts do not use.
+
 ### Fixed: Surfing Pikachu/Hall of Fame HUD text rewritten upstream
 
 Bumping this project's pin from v0.1.91 to v0.2.19 (`gen1recomp_revision`

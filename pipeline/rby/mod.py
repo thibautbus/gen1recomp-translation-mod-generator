@@ -35,6 +35,17 @@ YELLOW_CATALOG_HOOKS: dict[str, str] = {
 }
 
 
+SPECIES_METRICS_HOOK = """  -- Pokedex heights and weights in metres and kilograms, as the European
+  -- and Japanese carts print them: ui/DexEntryMenu.lua prints a species'
+  -- dexEntry.heightM and weightKg instead of feet, inches and pounds.
+  for id, value in pairs(catalog("species_metrics")) do
+    if type(value) == "table" and value[1] and value[2] then
+      mod.content.pokemon:patch(id, { dexEntry = { heightM = value[1], weightKg = value[2] } })
+    end
+  end
+"""
+
+
 def yellow_isyellow_guard_lines() -> str:
     """The shared ``GameVersion.isYellow()`` pcall guard, defining a local
     ``yellow_game_version`` boolean. Callers append their own
@@ -241,6 +252,7 @@ __YELLOW_DIALOGUE_REGISTRATION__
   each("species_kinds", function(id, value)
     mod.content.pokemon:patch(id, { dexEntry = { kind = value } })
   end)
+__SPECIES_METRICS__
   each("type_names", function(typeId, localized)
     if okType and TypeChart and type(TypeChart.displayName) == "function" then
       local canonical = TypeChart.displayName(typeId)
@@ -382,7 +394,7 @@ end
 '''
 
 
-def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: str = "translation-fr", language: str = "fr", modkit_worksheet: str | Path | None = None, report_path: str | Path | None = None, engine_catalog: str | Path | None = None, engine_overrides: str | Path | None = None, strict_engine: bool = False, semantic_anchors: str | Path | None = None, semantic_anchor_decisions: str | Path | None = None, target_name: str | None = None, literal_handlers: str | Path | None = None, target_description: str | None = None, engine_source: str | Path | None = None, engine_scope: str | Path | None = None, engine_manifest: str | Path | None = None, font_source: str | Path | None = None, font_profile: str = "fusion", yellow_dialogue: dict[str, str] | None = None, yellow_stats: dict | None = None, yellow_catalogs: dict[str, dict[str, str]] | None = None, yellow_engine_overrides: dict[str, str] | None = None, precomputed_join: tuple[dict, dict] | None = None, engine_profile: str = PINNED_PROFILE) -> Path:
+def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: str = "translation-fr", language: str = "fr", modkit_worksheet: str | Path | None = None, report_path: str | Path | None = None, engine_catalog: str | Path | None = None, engine_overrides: str | Path | None = None, strict_engine: bool = False, semantic_anchors: str | Path | None = None, semantic_anchor_decisions: str | Path | None = None, target_name: str | None = None, literal_handlers: str | Path | None = None, target_description: str | None = None, engine_source: str | Path | None = None, engine_scope: str | Path | None = None, engine_manifest: str | Path | None = None, font_source: str | Path | None = None, font_profile: str = "fusion", yellow_dialogue: dict[str, str] | None = None, yellow_stats: dict | None = None, yellow_catalogs: dict[str, dict[str, str]] | None = None, yellow_engine_overrides: dict[str, str] | None = None, precomputed_join: tuple[dict, dict] | None = None, engine_profile: str = PINNED_PROFILE, pokedex_entries: str | Path | None = None) -> Path:
     """Generate a mod; ``strict_engine`` requires scaffold/catalog presence only.
 
     It does not require complete engine translations: unresolved entries remain
@@ -560,6 +572,17 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
             grouped = [row for row in rows if catalog_for(row.qid) == name]
             body = _catalog(grouped, name, language)
         (destination / "lang" / f"{name}.lua").write_text(body, encoding="utf-8")
+    # The official metric height and weight of every species the mod names
+    # (pipeline/shared/pokedex_metrics.py).
+    metrics_path = destination / "lang" / "species_metrics.lua"
+    if pokedex_entries:
+        import re
+        from ..shared.pokedex_metrics import lua_catalog, species_metrics
+        names = (destination / "lang" / "species_names.lua").read_text(encoding="utf-8")
+        ids = re.findall(r'^  \["([A-Z0-9_]+)"\] = ', names, re.M)
+        metrics_path.write_text(lua_catalog(species_metrics(pokedex_entries, ids), "species_metrics"), encoding="utf-8")
+    else:
+        metrics_path.unlink(missing_ok=True)
     yellow_catalogs = dict(yellow_catalogs or {})
     if yellow_dialogue:
         yellow_catalogs["dialogue"] = yellow_dialogue
@@ -590,7 +613,7 @@ def generate_mod(items: Iterable[Alignment], destination: str | Path, mod_id: st
         _, generated_handlers = generate_handlers(rows, recipes, runtime)
     elif runtime.exists():
         runtime.unlink()
-    main_body = MAIN.replace(
+    main_body = MAIN.replace("__SPECIES_METRICS__\n", SPECIES_METRICS_HOOK).replace(
         "__TTF_REGISTRATION__",
         existing_registration or ttf_registration(language, font_source, font_profile),
     )
