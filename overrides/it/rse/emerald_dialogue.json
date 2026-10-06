@@ -2,6 +2,15 @@
   "schema": "gen1recomp-translation-mods/emerald-dialogue-overrides",
   "version": 1,
   "entries": {
+    "gText_ApostropheSBase": {
+      "qid": "e.common.strings.gText_ApostropheSBase",
+      "text": "BASE di [STR_VAR_1]",
+      "reason": "engine-contract-gap",
+      "runtime_fills": [
+        "STR_VAR_1"
+      ],
+      "provenance": "The cart's own row, verbatim. It names the secret base's owner with STR_VAR_1, where the English row \"'s BASE\" follows the owner's name; gen1recomp fills it with the owner (src/core/game3/rse/secret_base.lua:602-606, SB.name, gen1recomp#2680, released in v0.3.52), as pret pokeemerald multi-language src/secret_base.c:732 does."
+    },
     "gText_Var1CertainlyHowMany2": {
       "qid": "e.common.strings.gText_Var1CertainlyHowMany2",
       "text": "[STR_VAR_1]: [STR_VAR_2]?\\nCerto! In che quantità?",
