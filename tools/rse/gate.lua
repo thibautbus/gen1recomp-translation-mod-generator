@@ -24,10 +24,10 @@
 -- itself (docs/upstream-fixes.md, Emerald section):
 --   * glyphs: how many characters of the shipped catalogs FrlgFont.glyphId
 --     maps to glyph 0 (a blank);
---   * strings: whether Strings() answers from the merged catalog at all;
---   * hooks: whether the Emerald screens that print the cart's English
---     through Strings() (ability names, Pokédex entries, contest texts, map
---     sections) do so at the pinned revision.
+--   * strings: whether Strings() answers from the merged catalog at all.
+-- and checks that the Emerald screens that print the cart's English through
+-- Strings() (ability names, Pokédex entries, contest texts, map sections,
+-- gen1recomp#2678) print the mod's text (hooks).
 --
 -- Usage: luajit tools/rse/gate.lua <gen1recomp_root> <extract_cache_dir> <mod_dir>
 --                                  <expectations.json> <report.json> [game] [rom_sha1]
@@ -229,12 +229,13 @@ if row and loadsCatalog then
   if id then eq(EasyChatText.word(id), row.value, "EasyChatText.word(" .. tostring(row.word or id) .. ")") end
 end
 
--- The Emerald screens that print the cart's English through Strings() once
--- gen1recomp routes them there: measured against the pinned engine.
+-- The Emerald screens that print the cart's English through Strings()
+-- (gen1recomp#2678).
 local hooks = {}
 local function measure(name, fn, want)
   local ok, got = pcall(fn)
   hooks[name] = { routed = ok and got == want, got = ok and got or nil }
+  check(hooks[name].routed, "the Emerald " .. name .. " screen prints the mod's text: " .. tostring(hooks[name].got))
 end
 local wanted = expectations.hooks or {}
 if wanted.ability_name then
@@ -265,6 +266,12 @@ if wanted.map_section then
 end
 if wanted.pokedex then
   measure("pokedex", function()
+    -- the extract carries text only; the entry page reads its layout from
+    -- the Pokédex graphics manifest
+    local Gfx = require("src.ui.game3.rse.pokedex_gfx")
+    if not pcall(Gfx.manifest) then
+      Gfx.manifest = function() return { assetLayout = "emerald", tenDashes = "----------" } end
+    end
     local Pokedex = require("src.ui.game3.rse.pokedex")
     local entries = assert(load(assert(cache:read("data/generated/gba/pokemon/pokedex/entries.lua")),
       "@entries", "t", {}))()
@@ -278,6 +285,12 @@ if wanted.pokedex then
       end
     end
   end, wanted.pokedex.value)
+end
+
+if game == "emerald" then
+  for _, name in ipairs({ "ability_name", "pokedex", "contest", "map_section" }) do
+    check(hooks[name] ~= nil, "the Emerald " .. name .. " screen is checked")
+  end
 end
 
 -- Characters of every shipped catalog that FrlgFont draws as glyph 0.

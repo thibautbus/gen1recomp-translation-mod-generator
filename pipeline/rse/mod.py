@@ -351,8 +351,8 @@ def write_gate_expectations(path: Path, joined: dict, game: str = "emerald") -> 
             group, word = key[len("easyChat."):].split("|", 1)
             expectations["easy_chat"] = {"group": group, "word": word, "value": value}
             break
-    # The display hooks gen1recomp's Emerald screens gain upstream: measured,
-    # not failed, until the pinned engine carries them.
+    # The Emerald screens that print the cart's English through Strings()
+    # (gen1recomp#2678), which the gate checks.
     if game == "emerald":
         by_english = catalogs.get("strings_by_english", {})
         english = {**strings, **by_english}
