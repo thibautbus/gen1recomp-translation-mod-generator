@@ -8,7 +8,7 @@ from pathlib import Path
 
 from pipeline.gen3.family import EMERALD, RUBY_SAPPHIRE
 from pipeline.gen3.join import (
-    CART_EMPTY, TRANSLATED, join_gen3_dialogue, join_gen3_engine_strings, load_dialogue_decisions,
+    CART_EMPTY, REVIEWED, TRANSLATED, join_gen3_dialogue, join_gen3_engine_strings, load_dialogue_decisions,
     load_engine_scope, load_gen3_corpus,
 )
 from pipeline.gen3.text import RS_DIALECT, corpus_ir, encode, load_charmap
@@ -27,8 +27,10 @@ ROOT = Path(__file__).resolve().parents[2]
 CHARMAP = """\
 ' '         = 00
 '!'         = AB
+'?'         = AC
 '.'         = AD
 '-'         = AE
+','         = B8
 """ + "".join(f"'{chr(ord('A') + i)}'         = {0xBB + i:02X}\n" for i in range(26)) \
     + "".join(f"'{chr(ord('a') + i)}'         = {0xD5 + i:02X}\n" for i in range(26)) + """\
 'あ' = 01
@@ -108,6 +110,18 @@ class RubySapphireTextTests(unittest.TestCase):
         entries, _stats = join_gen3_dialogue({"Text_Version": [text("SAPPHIRE"), EOS]}, corpus, {},
                                              self.charmap, edition="sapphire")
         self.assertEqual(entries[0].translation, [text("SAPHIR"), EOS])
+
+    def test_the_unknown_weight_reads_the_first_row_of_its_split_label(self):
+        corpus = self.corpus([
+            ("rs.common.strings.gDexText_UnknownHeight", "??'??", "???,?  m"),
+            ("rs.common.strings.gDexText_UnknownWeight.0", "????.? lbs.", "???,?  kg"),
+            ("rs.common.strings.gDexText_UnknownWeight.1", "", ""),
+        ])
+        decisions = load_dialogue_decisions(RUBY_SAPPHIRE, edition="ruby")
+        entries, _stats = join_gen3_dialogue({"gDexText_UnknownWeight": [text("????.? lbs."), EOS]},
+                                             corpus, {}, self.charmap, decisions=decisions, edition="ruby")
+        self.assertEqual(entries[0].status, REVIEWED)
+        self.assertEqual(entries[0].translation, [text("???,?  kg"), EOS])
 
     def test_japanese_rows_name_some_escapes_after_emeralds_table(self):
         for japanese, english in (("B_COPY_VAR_1", "B_PLAYER_MON1_NAME"), ("B_COPY_VAR_2", "B_OPPONENT_MON1_NAME"),
