@@ -267,6 +267,16 @@
       "reason": "engine-contract-gap",
       "provenance": "Acronym retained; raw PaletteFX.modeLabel fallback value, no compatible PokeCorpus qid."
     },
+    "GEW. ???kg": {
+      "override": "GEW ???kg",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-backed from poke-corpus RedBlue rb.pokedex.HeightWeightText (the cart's own unknown height and weight): ui/DexEntryMenu.lua prints this mask instead of the imperial HT/WT/lb fields on an entry seen but not caught when the species carries dexEntry.heightM and weightKg; worded like the metric format beside it (GR. %.1fm, GEW. %.1fkg)."
+    },
+    "GR. ???m": {
+      "override": "GR. ???m",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-backed from poke-corpus RedBlue rb.pokedex.HeightWeightText (the cart's own unknown height and weight): ui/DexEntryMenu.lua prints this mask instead of the imperial HT/WT/lb fields on an entry seen but not caught when the species carries dexEntry.heightM and weightKg; worded like the metric format beside it (GR. %.1fm, GEW. %.1fkg)."
+    },
     "HEAL": {
       "override": "HEILEN",
       "reason": "engine-original",

@@ -158,7 +158,7 @@ dialogue through `mod.content.text`, species, move and item names, item
 descriptions, trainer names and class names through their record registries,
 the start menu through the public `ui.start_menu.items` hook, and game3's own
 text (its own menus, the mod manager, the options it adds) through
-`Strings()`. The pipeline is pinned to gen1recomp v0.3.58, whose FireRed
+`Strings()`. The pipeline is pinned to gen1recomp v0.3.61, whose FireRed
 draws most of its text from the cart itself: the option menu,
 the summary pages, the intro, the Pokédex, the region map, the battle
 messages and the lists all read the cart's rows through `RomText`, so the
@@ -385,11 +385,11 @@ engine's English fallback.
 
 | Target | Red Blue ROM aggregate | Yellow ROM aggregate | RBY-related engine strings |
 | --- | ---: | ---: | ---: |
-| `fr` | 3286/3286 (100%) | 3400/3400 (100%) | 421/421 (100%) |
-| `de` | 3286/3286 (100%) | 3400/3400 (100%) | 421/421 (100%) |
-| `es` | 3286/3286 (100%) | 3400/3400 (100%) | 421/421 (100%) |
-| `it` | 3286/3286 (100%) | 3400/3400 (100%) | 421/421 (100%) |
-| `ja-Hrkt` | 3286/3286 (100%) | 3397/3400 (99.91%) | 421/421 (100%) |
+| `fr` | 3286/3286 (100%) | 3400/3400 (100%) | 423/423 (100%) |
+| `de` | 3286/3286 (100%) | 3400/3400 (100%) | 423/423 (100%) |
+| `es` | 3286/3286 (100%) | 3400/3400 (100%) | 423/423 (100%) |
+| `it` | 3286/3286 (100%) | 3400/3400 (100%) | 423/423 (100%) |
+| `ja-Hrkt` | 3286/3286 (100%) | 3397/3400 (99.91%) | 423/423 (100%) |
 
 The ROM aggregates exclude extracted labels that do not render visible text.
 Reviewed exceptions are recorded in
@@ -417,7 +417,7 @@ actual Crystal save:
   blank rather than left to the English ROM's own. `ko` falls short of 100%
   because poke-corpus has no Korean Crystal collection (Crystal's own #DEX
   text and trainer names).
-- `Gold and Silver-related engine strings` covers the 957 engine keys used by
+- `Gold and Silver-related engine strings` covers the 989 engine keys used by
   at least one production Gen 2 callsite. 39 keys reachable only from a
   Crystal-exclusive feature (Move Tutor, gender selection, the PokeSeer,
   Buena's prize exchange, Battle Tower) are excluded from this
@@ -432,7 +432,9 @@ actual Crystal save:
   still recorded as having no corpus match are gaps (none today; the
   Pokédex entry bar the Japanese and Korean carts draw as tiles is laid out
   to the pixel in each language's bundled font so every word sits between
-  the bar's arrows).
+  the bar's arrows). The 30 keys of the cross-game Union Room gen1recomp
+  v0.3.61 added have no cart row and keep their English until a reviewed
+  translation lands (`docs/upstream-fixes.md`).
 - `Crystal dialogue coverage` is Crystal's own dialogue pointers, joined
   separately against poke-corpus's own `Crystal/` collection (different
   `bank:address` values from Gold/Silver almost throughout, so this is not
@@ -458,12 +460,12 @@ provenance. Future unresolved entries will keep their original English text.
 
 | Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings | Crystal dialogue coverage |
 | --- | ---: | ---: | ---: |
-| `fr` | 6839/6839 (100%) | 957/957 (100%) | 3994/3994 (100%) |
-| `de` | 6839/6839 (100%) | 957/957 (100%) | 3994/3994 (100%) |
-| `es` | 6839/6839 (100%) | 957/957 (100%) | 3994/3994 (100%) |
-| `it` | 6839/6839 (100%) | 957/957 (100%) | 3994/3994 (100%) |
-| `ja-Hrkt` | 6839/6839 (100%) | 957/957 (100%) | 3994/3994 (100%) |
-| `ko` | 5796/6839 (84.75%) | 957/957 (100%) | 0/3994 (0%) |
+| `fr` | 6839/6839 (100%) | 959/989 (96.97%) | 3994/3994 (100%) |
+| `de` | 6839/6839 (100%) | 959/989 (96.97%) | 3994/3994 (100%) |
+| `es` | 6839/6839 (100%) | 959/989 (96.97%) | 3994/3994 (100%) |
+| `it` | 6839/6839 (100%) | 959/989 (96.97%) | 3994/3994 (100%) |
+| `ja-Hrkt` | 6839/6839 (100%) | 959/989 (96.97%) | 3994/3994 (100%) |
+| `ko` | 5796/6839 (84.75%) | 959/989 (96.97%) | 0/3994 (0%) |
 
 ### FireRed and LeafGreen
 
@@ -498,7 +500,7 @@ provenance. Future unresolved entries will keep their original English text.
   figures in every language: the two carts differ in where their script
   text sits and in the naming screen's choices, not in what can be
   translated.
-- `FireRed engine strings` covers the 1,915 `Strings()` keys the game3
+- `FireRed engine strings` covers the 1,943 `Strings()` keys the game3
   runtime reaches on its own: its menus and prompts, the ability names, the
   move and ability descriptions, the map section names and the region map's
   guide text, and the 1,028 Easy Chat words and group names (the species and
@@ -514,11 +516,11 @@ provenance. Future unresolved entries will keep their original English text.
 
 | Target | FireRed ROM aggregate | LeafGreen ROM aggregate | FireRed engine strings |
 | --- | ---: | ---: | ---: |
-| `fr` | 10926/10934 (99.93%) | 10926/10934 (99.93%) | 1903/1915 (99.37%) |
-| `de` | 10924/10934 (99.91%) | 10924/10934 (99.91%) | 1903/1915 (99.37%) |
-| `es` | 10924/10934 (99.91%) | 10924/10934 (99.91%) | 1903/1915 (99.37%) |
-| `it` | 10925/10934 (99.92%) | 10925/10934 (99.92%) | 1903/1915 (99.37%) |
-| `ja-Hrkt` | 10873/10936 (99.42%) | 10873/10936 (99.42%) | 1903/1915 (99.37%) |
+| `fr` | 10926/10934 (99.93%) | 10926/10934 (99.93%) | 1906/1943 (98.10%) |
+| `de` | 10924/10934 (99.91%) | 10924/10934 (99.91%) | 1906/1943 (98.10%) |
+| `es` | 10924/10934 (99.91%) | 10924/10934 (99.91%) | 1906/1943 (98.10%) |
+| `it` | 10925/10934 (99.92%) | 10925/10934 (99.92%) | 1906/1943 (98.10%) |
+| `ja-Hrkt` | 10873/10936 (99.42%) | 10873/10936 (99.42%) | 1906/1943 (98.10%) |
 
 These measure what the mod ships, not what the current runtime displays; see
 "Pokémon FireRed and LeafGreen support" above for the runtime limits. The
@@ -547,7 +549,7 @@ FireRed section of [docs/upstream-fixes.md](docs/upstream-fixes.md).
   fill; in Japanese, 48 lines with no Japanese text, 47 with no row, 29 whose
   placeholders differ from the English and 7 written with a token the join
   does not encode.
-- `Ruby/Sapphire engine strings` covers the 2,521 `Strings()` keys the game3
+- `Ruby/Sapphire engine strings` covers the 2,549 `Strings()` keys the game3
   runtime reaches for Ruby and Sapphire, joined to their own cart rows, with
   Emerald's value for the screens their carts never had. Six stay in
   English, as in Emerald: the controls screen's three rows, the bag's
@@ -555,13 +557,13 @@ FireRed section of [docs/upstream-fixes.md](docs/upstream-fixes.md).
 
 | Target | Ruby/Sapphire ROM aggregate | Ruby/Sapphire engine strings |
 | --- | ---: | ---: |
-| `fr` | 15271/15372 (99.34%) | 2515/2521 (99.76%) |
-| `de` | 15253/15372 (99.23%) | 2515/2521 (99.76%) |
-| `es` | 15303/15372 (99.55%) | 2515/2521 (99.76%) |
-| `it` | 15268/15372 (99.32%) | 2515/2521 (99.76%) |
-| `ja-Hrkt` | 15242/15374 (99.14%) | 2515/2521 (99.76%) |
+| `fr` | 15272/15373 (99.34%) | 2518/2549 (98.78%) |
+| `de` | 15254/15373 (99.23%) | 2518/2549 (98.78%) |
+| `es` | 15304/15373 (99.55%) | 2518/2549 (98.78%) |
+| `it` | 15269/15373 (99.32%) | 2518/2549 (98.78%) |
+| `ja-Hrkt` | 15243/15375 (99.14%) | 2518/2549 (98.78%) |
 
-These are measured at the pinned revision v0.3.58; like the others,
+These are measured at the pinned revision v0.3.61; like the others,
 they measure what the mod ships, not what the current runtime displays.
 
 ### Emerald
@@ -579,7 +581,7 @@ they measure what the mod ships, not what the current runtime displays.
   for, 36 whose placeholders differ from the English, three written with a
   token or escape the join does not encode (`[DAKUTEN]`, `\e`) and one with
   no row.
-- `Emerald engine strings` covers the 2,654 `Strings()` keys the game3
+- `Emerald engine strings` covers the 2,682 `Strings()` keys the game3
   runtime reaches for Emerald: its menus and options, the move and ability
   descriptions, the 1,030 Easy Chat words and group names, and the ability
   names, Pokédex entries, contest texts and map section names the Emerald
@@ -589,11 +591,11 @@ they measure what the mod ships, not what the current runtime displays.
 
 | Target | Emerald ROM aggregate | Emerald engine strings |
 | --- | ---: | ---: |
-| `fr` | 17716/17721 (99.97%) | 2647/2654 (99.74%) |
-| `de` | 17710/17721 (99.94%) | 2647/2654 (99.74%) |
-| `es` | 17714/17721 (99.96%) | 2647/2654 (99.74%) |
-| `it` | 17716/17721 (99.97%) | 2647/2654 (99.74%) |
-| `ja-Hrkt` | 17579/17723 (99.19%) | 2647/2654 (99.74%) |
+| `fr` | 17716/17721 (99.97%) | 2650/2682 (98.81%) |
+| `de` | 17710/17721 (99.94%) | 2650/2682 (98.81%) |
+| `es` | 17714/17721 (99.96%) | 2650/2682 (98.81%) |
+| `it` | 17716/17721 (99.97%) | 2650/2682 (98.81%) |
+| `ja-Hrkt` | 17579/17723 (99.19%) | 2650/2682 (98.81%) |
 
 As for FireRed, these measure what the mod ships, not what the current
 runtime displays.
@@ -602,7 +604,7 @@ runtime displays.
 
 The remaining engine keys are reported separately below. They are keys used by
 neither RBY nor Gold and Silver, so their denominator is the residual scope:
-`2522 - (421 + 957 - 90) = 1234`. The numerator counts keys translated in at
+`2623 - (423 + 989 - 90) = 1301`. The numerator counts keys translated in at
 least one of the RBY and Gold/Silver/Crystal artifacts, the RBY release's
 Yellow layer included; this is a project-level metric, not a claim that
 every key is present in both games.
@@ -612,19 +614,19 @@ and its numerators leave the generation-3 artifacts out.
 
 | Target | Other engine strings |
 | --- | ---: |
-| `fr` | 166/1234 (13.45%) |
-| `de` | 166/1234 (13.45%) |
-| `es` | 164/1234 (13.29%) |
-| `it` | 165/1234 (13.37%) |
-| `ja-Hrkt` | 163/1234 (13.21%) |
-| `ko` | 97/1234 (7.86%) |
+| `fr` | 172/1301 (13.22%) |
+| `de` | 172/1301 (13.22%) |
+| `es` | 170/1301 (13.07%) |
+| `it` | 171/1301 (13.14%) |
+| `ja-Hrkt` | 168/1301 (12.91%) |
+| `ko` | 100/1301 (7.69%) |
 
-The denominator is calculated as follows: `2522` total engine keys, minus the
-`421` RBY-related keys and the `957` Gold and Silver-related keys, plus back the `90` keys
+The denominator is calculated as follows: `2623` total engine keys, minus the
+`423` RBY-related keys and the `989` Gold and Silver-related keys, plus back the `90` keys
 shared by both scopes so they are subtracted only once. The resulting residual
-scope is `1234` keys.
+scope is `1301` keys.
 
-All figures use Gen1Recomp revision `1def5995` (v0.3.58) and the pinned ROMs
+All figures use Gen1Recomp revision `7ac15ebb` (v0.3.61) and the pinned ROMs
 and corpus snapshots; regenerate them whenever one of those inputs changes.
 
 ## Translation provenance

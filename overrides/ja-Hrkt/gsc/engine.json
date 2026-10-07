@@ -4667,6 +4667,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "kg": {
+      "override": "ｋｇ",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight): the cart's full-width unit after a metric #DEX value (ui/gen2/PokedexMenu.lua)."
+    },
     "lb": {
       "override": "ｋｇ",
       "reason": "engine-contract-gap",
@@ -4686,6 +4691,11 @@
       "override": "かな",
       "reason": "engine-original",
       "provenance": "Corpus-confirmed from gs.name_input_chars.NameInputLower/NameInputUpper (real Gold ROM naming-screen keyboard's own case-switch/delete/end labels)."
+    },
+    "m": {
+      "override": "ｍ",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.pokedex.Pokedex_DrawDexEntryScreenBG.Height): the cart's full-width unit after a metric #DEX value (ui/gen2/PokedexMenu.lua)."
     },
     "maximized ATTACK!": {
       "override": "けずって\nパワーぜんかいに\nなった！",

@@ -64,10 +64,12 @@ target_lang = "fr"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
-# Pinned at v0.3.58, which carries Ruby and Sapphire (gen1recomp 67748895,
-# released in v0.3.52), the Emerald screens translation mods reach
-# (gen1recomp#2678, released in v0.3.53) and the Ruby and Sapphire screens
-# they reach (gen1recomp#2724, released in v0.3.58), used to validate and
+# Pinned at v0.3.61, which carries Ruby and Sapphire
+# (gen1recomp 67748895, released in v0.3.52), the Emerald screens translation
+# mods reach (gen1recomp#2678, released in v0.3.53), the Ruby and Sapphire
+# screens they reach (gen1recomp#2724, released in v0.3.58), Ruby and
+# Sapphire's starter category and secret base name (gen1recomp#2743, #2745)
+# and the metric Pokedex heights and weights (gen1recomp#2747), used to validate and
 # package the RBY, Gold/Silver, Crystal, FireRed/LeafGreen and
 # Ruby/Sapphire/Emerald translation mods.
 # Since v0.3.4, FireRed draws most of its own text from the cart instead of
@@ -78,10 +80,10 @@ target_lang = "fr"
 # (gen1recomp#2398), takes Unicode braille cells (gen1recomp#2400) and draws
 # Japanese with the cart's own fonts (gen1recomp#2406).
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "1def5995a42f348caa65b148ae373a808a5a1aed"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/1def5995a42f348caa65b148ae373a808a5a1aed"
-archive_sha256 = "17f10aede48706ccf691221e1a7365855c8b4fbb42dda0c32d35e192904c77e4"
-archive_tree_sha256 = "10922f41d1fe64208675c03e2be08cc55574cfcaeb8e76fe1d7f6d47a592a7eb"
+revision = "7ac15ebbf78b298344e15db72406ff37e94099f6"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/7ac15ebbf78b298344e15db72406ff37e94099f6"
+archive_sha256 = "d785c8ca1b4c58ed7a535cd213ee223003f332cd20539a1fb1e1c43c5979a179"
+archive_tree_sha256 = "e33c5dbe80ab07837a60db4fbcc24acbd792c6091d7538b8ab898726441a787d"
 
 # pret's FireRed/LeafGreen decompilation data the generation-3 release joins
 # through (never code, never game text): the symbol tables name every ROM
