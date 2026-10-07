@@ -8,6 +8,7 @@ from pathlib import Path, PurePosixPath
 import shutil
 import ssl
 import tempfile
+import urllib.error
 import urllib.request
 import zipfile
 
@@ -45,8 +46,43 @@ def _default_ssl_context() -> ssl.SSLContext:
     return ssl.create_default_context(cafile=certifi.where())
 
 
+# Seconds a download may stall before it fails, instead of hanging the build.
+DOWNLOAD_TIMEOUT = 60
+
+
 def _default_opener(url: str):
-    return urllib.request.urlopen(url, context=_default_ssl_context())
+    return urllib.request.urlopen(url, context=_default_ssl_context(), timeout=DOWNLOAD_TIMEOUT)
+
+
+# A dropped or stalled connection is tried again this many times in all.
+DOWNLOAD_ATTEMPTS = 3
+
+
+def _download(opener, url: str, target: Path, *, exclusive: bool = False) -> str:
+    """Write ``url`` to ``target`` and return its sha256.
+
+    A network failure (a timeout, a reset, a server error) starts the file
+    over, up to DOWNLOAD_ATTEMPTS times; a refused redirect, a missing file
+    and a name that already exists fail at once."""
+    for attempt in range(1, DOWNLOAD_ATTEMPTS + 1):
+        digest = hashlib.sha256()
+        try:
+            mode = "xb" if exclusive and attempt == 1 else "wb"
+            with opener(url) as response, target.open(mode) as output:
+                _assert_https_response(response)
+                while chunk := response.read(1024 * 1024):
+                    digest.update(chunk)
+                    output.write(chunk)
+            return digest.hexdigest()
+        except FileExistsError:
+            raise
+        except urllib.error.HTTPError as error:
+            if error.code < 500 or attempt == DOWNLOAD_ATTEMPTS:
+                raise
+        except OSError:
+            if attempt == DOWNLOAD_ATTEMPTS:
+                raise
+    raise AssertionError("unreachable")
 
 
 class DependencyError(RuntimeError):
@@ -202,14 +238,21 @@ def fetch_archive(
         temp_download = Path(temp_download_name)
         os.close(temp_fd)
         temp_extract = Path(tempfile.mkdtemp(prefix=f".{destination.name}-", dir=destination.parent))
-        digest = hashlib.sha256()
-        with opener(url) as response, temp_download.open("wb") as output:
-            _assert_https_response(response)
-            while chunk := response.read(1024 * 1024):
-                digest.update(chunk)
-                output.write(chunk)
-        if digest.hexdigest() != sha256.lower():
-            raise DependencyError(f"archive hash mismatch for {url}")
+        # The extracted tree drifted (a build wrote into it, a file was
+        # edited) but the archive it came from is still there and still
+        # matches the pin: extract that copy again rather than downloading.
+        archive_copy = destination / ".verified-archive.zip"
+        reused = False
+        if archive_copy.is_file():
+            try:
+                shutil.copy2(archive_copy, temp_download)
+                with temp_download.open("rb") as copied:
+                    reused = hashlib.file_digest(copied, "sha256").hexdigest() == sha256.lower()
+            except OSError:
+                reused = False
+        if not reused:
+            if _download(opener, url, temp_download) != sha256.lower():
+                raise DependencyError(f"archive hash mismatch for {url}")
         _extract_archive(temp_download, temp_extract, selective_prefix)
         if trusted_tree_sha256 and _tree_digest(temp_extract, immutable_prefixes) != trusted_tree_sha256.lower():
             raise DependencyError("trusted immutable source tree digest mismatch")
@@ -279,13 +322,7 @@ def fetch_files(
             target = temp_root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             url = f"{base_url.rstrip('/')}/{relative}"
-            computed = hashlib.sha256()
-            with opener(url) as response, target.open("xb") as output:
-                _assert_https_response(response)
-                while chunk := response.read(1024 * 1024):
-                    computed.update(chunk)
-                    output.write(chunk)
-            if computed.hexdigest() != digest.lower():
+            if _download(opener, url, target, exclusive=True) != digest.lower():
                 raise DependencyError(f"file hash mismatch for {url}")
         expected = {**expected, "tree_sha256": _tree_digest(temp_root)}
         (temp_root / ".archive-marker.json").write_text(json.dumps(expected, sort_keys=True) + "\n", encoding="utf-8")

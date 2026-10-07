@@ -17,6 +17,7 @@ from pipeline.shared import project
 from pipeline.shared.project import project_version
 from pipeline.shared.rom_paths import load_rom_paths
 from pipeline.shared.gui import GEN3_FONT_LABEL, available_font_profiles, coverage_lines, font_profile_code, font_profile_label, language_code, validate_inputs
+from pipeline.shared.mod_assets import FONT_PROFILES
 from pipeline.shared.specs import BuildRequest, ReleaseProfile, release_profile
 from pipeline.shared.engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE
 
@@ -121,12 +122,16 @@ class BuilderTests(unittest.TestCase):
             destination.mkdir(parents=True, exist_ok=True)
             if destination.name.endswith("japanese"):
                 (destination / "fusion-pixel-8px-proportional-ja.ttf").write_bytes(b"font")
+            else:
+                for relative in FONT_PROFILES["fusion"]["licenses"]:
+                    (destination / relative).parent.mkdir(parents=True, exist_ok=True)
+                    (destination / relative).write_text("Fusion Pixel Font", encoding="utf-8")
             return destination
         with tempfile.TemporaryDirectory() as directory, patch(
             "pipeline.shared.builder.fetch_archive", side_effect=fake_fetch
         ) as fetch_archive:
             source = builder._font_source(Path(directory), config, "fusion", "ja-Hrkt")
-            self.assertEqual(source, Path(directory) / "dependencies" / "fusion-pixel-font")
+            self.assertEqual(source, Path(directory) / "fonts" / "fusion-pixel-font-ja")
             self.assertEqual(fetch_archive.call_count, 2)
 
     def test_gui_language_and_coverage_helpers(self):
@@ -224,6 +229,37 @@ class BuilderTests(unittest.TestCase):
             with patch.object(builder, "verify_firered_rom"), \
                     self.assertRaisesRegex(builder.BuildError, "LeafGreen ROM path is required"):
                 validate_inputs(3, {"firered": firered}, "fr", root / "out", GEN3_FONT_LABEL)
+
+    def test_japanese_fonts_are_assembled_beside_the_verified_fusion_checkout(self):
+        # A Japanese build used to copy its font into fusion-pixel-font, so the
+        # next build saw a drifted tree and downloaded the archive again.
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            def fetch(url, digest, destination, **kwargs):
+                destination.mkdir(parents=True, exist_ok=True)
+                name = "fusion-pixel-8px-proportional-ja.ttf" if "japanese" in destination.name else "fusion-pixel-10px-proportional-latin.ttf"
+                (destination / name).write_bytes(b"ttf")
+                (destination / ".verified-archive.zip").write_bytes(b"zip")
+                if "japanese" not in destination.name:
+                    for relative in FONT_PROFILES["fusion"]["licenses"]:
+                        (destination / relative).parent.mkdir(parents=True, exist_ok=True)
+                        (destination / relative).write_text("Fusion Pixel Font", encoding="utf-8")
+                return destination
+            config = {"fonts": {"fusion": {"archive_url": "https://example/f.zip", "archive_sha256": "0" * 64},
+                                "fusion_japanese": {"archive_url": "https://example/j.zip", "archive_sha256": "1" * 64}}}
+            with patch.object(builder, "fetch_archive", side_effect=fetch):
+                source = builder._font_source(workspace, config, "fusion", "ja-Hrkt")
+                latin = builder._font_source(workspace, config, "fusion", "fr")
+            fusion = workspace / "dependencies" / "fusion-pixel-font"
+            self.assertEqual(latin, fusion)
+            self.assertNotEqual(source, fusion)
+            self.assertTrue((source / "fusion-pixel-8px-proportional-ja.ttf").is_file())
+            for relative in FONT_PROFILES["fusion"]["licenses"]:
+                self.assertTrue((source / relative).is_file(), relative)
+            self.assertFalse((source / "fusion-pixel-10px-proportional-latin.ttf").exists())
+            self.assertFalse((source / ".verified-archive.zip").exists())
+            self.assertEqual([path.name for path in source.parent.iterdir()], [source.name])
+            self.assertFalse((fusion / "fusion-pixel-8px-proportional-ja.ttf").exists())
 
     def test_gui_font_profile_is_fixed_for_japanese(self):
         self.assertIn("recommended", font_profile_label("fusion"))

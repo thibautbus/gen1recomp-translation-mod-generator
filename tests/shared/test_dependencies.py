@@ -14,6 +14,7 @@ import zipfile
 import tomllib
 from unittest.mock import patch
 
+from pipeline.shared import dependencies
 from pipeline.shared.dependencies import DependencyError, _default_ssl_context, _tree_digest, fetch_archive, fetch_files
 
 
@@ -455,11 +456,11 @@ class DependencyTests(unittest.TestCase):
             marker_data = json.loads(marker.read_text()); marker_data["tree_sha256"] = "0" * 64
             marker.write_text(json.dumps(marker_data))
             fetch_archive("https://example/repo.zip", digest, destination, revision="abc", opener=opener)
-            self.assertEqual(len(calls), 2)
+            self.assertEqual(len(calls), 1)
             self.assertEqual((destination / "src/main.lua").read_bytes(), b"ok")
             self.assertEqual(list(root.glob("dependency-*.zip")), [])
 
-    def test_archive_refetches_when_tools_or_tools_symlink_is_mutated(self):
+    def test_archive_restores_a_mutated_tools_or_tools_symlink_from_its_verified_copy(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); archive = root / "source.zip"
             with zipfile.ZipFile(archive, "w") as z:
@@ -478,7 +479,8 @@ class DependencyTests(unittest.TestCase):
                 "https://example/repo.zip", digest, destination, revision="abc",
                 immutable_prefixes=("src", "tools"), opener=opener,
             )
-            self.assertEqual(len(calls), 2)
+            self.assertEqual(len(calls), 1)
+            self.assertEqual((destination / "tools/run.py").read_bytes(), b"tool")
 
             # A symlink to an outside file with identical bytes must not be
             # mistaken for the original regular file by the tree digest.
@@ -493,9 +495,104 @@ class DependencyTests(unittest.TestCase):
                 "https://example/repo.zip", digest, destination, revision="abc",
                 immutable_prefixes=("src", "tools"), opener=opener,
             )
-            self.assertEqual(len(calls), 3)
+            self.assertEqual(len(calls), 1)
             self.assertFalse((destination / "tools/run.py").is_symlink())
             self.assertEqual((destination / "tools/run.py").read_bytes(), b"tool")
+
+    def test_archive_downloads_again_when_its_verified_copy_no_longer_matches(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); archive = root / "fonts.zip"
+            with zipfile.ZipFile(archive, "w") as z:
+                z.writestr("font.ttf", b"ttf")
+            digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+            calls = []
+            opener = lambda url: (calls.append(url) or _Response(archive.read_bytes()))
+            destination = fetch_archive("https://example/fonts.zip", digest, root / "fonts", opener=opener)
+            (destination / "font.ttf").write_bytes(b"drifted")
+            (destination / ".verified-archive.zip").write_bytes(b"not the pinned archive")
+            fetch_archive("https://example/fonts.zip", digest, destination, opener=opener)
+            self.assertEqual(len(calls), 2)
+            self.assertEqual((destination / "font.ttf").read_bytes(), b"ttf")
+            self.assertEqual(hashlib.sha256((destination / ".verified-archive.zip").read_bytes()).hexdigest(), digest)
+
+    def test_reused_copy_still_answers_to_the_pinned_source_tree(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); archive = root / "source.zip"
+            with zipfile.ZipFile(archive, "w") as z:
+                z.writestr("repo/src/main.lua", b"ok")
+            digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+            opener = lambda url: _Response(archive.read_bytes())
+            destination = fetch_archive("https://example/repo.zip", digest, root / "repo", revision="abc",
+                                        immutable_prefixes=("src",), opener=opener)
+            (destination / "src/main.lua").write_bytes(b"drifted")
+            with self.assertRaisesRegex(DependencyError, "tree digest mismatch"):
+                fetch_archive("https://example/repo.zip", digest, destination, revision="abc",
+                              immutable_prefixes=("src",), trusted_tree_sha256="0" * 64,
+                              opener=lambda url: self.fail("the verified copy should have been reused"))
+            self.assertEqual((destination / "src/main.lua").read_bytes(), b"drifted")
+
+    def test_download_tries_a_stalled_connection_again(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); archive = root / "fonts.zip"
+            with zipfile.ZipFile(archive, "w") as z:
+                z.writestr("font.ttf", b"ttf")
+            digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+            calls = []
+            def flaky(url):
+                calls.append(url)
+                if len(calls) < dependencies.DOWNLOAD_ATTEMPTS:
+                    raise TimeoutError("timed out")
+                return _Response(archive.read_bytes())
+            destination = fetch_archive("https://example/fonts.zip", digest, root / "fonts", opener=flaky)
+            self.assertEqual(len(calls), dependencies.DOWNLOAD_ATTEMPTS)
+            self.assertEqual((destination / "font.ttf").read_bytes(), b"ttf")
+
+            calls.clear()
+            def dead(url):
+                calls.append(url)
+                raise TimeoutError("timed out")
+            with self.assertRaises(TimeoutError):
+                fetch_archive("https://example/fonts.zip", digest, root / "other", opener=dead)
+            self.assertEqual(len(calls), dependencies.DOWNLOAD_ATTEMPTS)
+            self.assertFalse((root / "other").exists())
+            self.assertEqual(list(root.glob("dependency-*.zip")), [])
+
+    def test_download_does_not_retry_a_missing_file_or_a_wrong_archive(self):
+        import urllib.error
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            calls = []
+            def missing(url):
+                calls.append(url)
+                raise urllib.error.HTTPError(url, 404, "Not Found", {}, None)
+            with self.assertRaises(urllib.error.HTTPError):
+                fetch_archive("https://example/fonts.zip", "0" * 64, root / "fonts", opener=missing)
+            self.assertEqual(len(calls), 1)
+            calls.clear()
+            wrong = lambda url: (calls.append(url) or _Response(b"not the pinned archive"))
+            with self.assertRaisesRegex(DependencyError, "hash mismatch"):
+                fetch_archive("https://example/fonts.zip", "0" * 64, root / "fonts", opener=wrong)
+            self.assertEqual(len(calls), 1)
+
+    def test_file_manifest_tries_a_stalled_connection_again(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            payload = b"symbols"
+            calls = []
+            def flaky(url):
+                calls.append(url)
+                if len(calls) == 1:
+                    raise ConnectionResetError("reset")
+                return _Response(payload)
+            destination = fetch_files("https://example/pret", {"a.sym": hashlib.sha256(payload).hexdigest()},
+                                      root / "pret", opener=flaky)
+            self.assertEqual(len(calls), 2)
+            self.assertEqual((destination / "a.sym").read_bytes(), payload)
+
+    def test_default_download_gives_up_on_a_stalled_connection(self):
+        with patch("urllib.request.urlopen") as urlopen:
+            dependencies._default_opener("https://example/fonts.zip")
+        self.assertEqual(urlopen.call_args.kwargs["timeout"], dependencies.DOWNLOAD_TIMEOUT)
 
     def test_flat_archive_extracts_font_files_at_root_and_reuses_marker(self):
         with tempfile.TemporaryDirectory() as tmp:
