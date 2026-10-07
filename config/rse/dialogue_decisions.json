@@ -42,6 +42,10 @@
       "qid": "rs.script.cable_club.OldaleTown_PokemonCenter_2F_Text_1A45FE",
       "reason": "The Record Corner's welcome: the row of the revision PokeCorpus reads (1.1 and later); revision 1.0 prints an earlier wording of the same message, RECORD CENTER for RECORD CORNER (pokeruby data/text/cable_club.inc:16, .if REVISION >= 1)."
     },
+    "gDexText_UnknownWeight": {
+      "qid": "rs.common.strings.gDexText_UnknownWeight.0",
+      "reason": "The Pokédex's unknown weight: the cart's string ends with a second terminator (pokeruby src/strings.c:79, \"????.? lbs.$\"), so PokeCorpus splits the label into this row and an empty gDexText_UnknownWeight.1."
+    },
     "gOtherText_CantUseOnPoke": {
       "qid": "rs.common.strings.gOtherText_CantUseOnPoke",
       "reason": "The bag's refusal: the row of the revision PokeCorpus reads (1.1 and later); revision 1.0 prints an earlier wording of the same message, \"This item can't be used\" (pokeruby src/strings.c:324, #if REVISION >= 1)."
