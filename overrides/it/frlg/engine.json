@@ -518,14 +518,14 @@
       "provenance": "Options group label added by gen1recomp; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
     },
     "Which WONDER CARD\nwould you like?": {
-      "override": "Quale CARTA MERAVIGLIA\nvuoi?",
+      "override": "Quale SCHEDA SEGRETA\nvuoi?",
       "reason": "engine-original",
-      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation; named with the cart's own term (gText_WonderCards / gText_WonderNews)."
     },
     "Which WONDER NEWS\nwould you like to read?": {
-      "override": "Quale NOTIZIA MERAVIGLIA\nvuoi leggere?",
+      "override": "Quale NOTIZIA SEGRETA\nvuoi leggere?",
       "reason": "engine-original",
-      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation; named with the cart's own term (gText_WonderCards / gText_WonderNews)."
     },
     "Which move?": {
       "override": "Quale mossa?",
@@ -611,6 +611,21 @@
       "override": "{DPAD_UPDOWN}SCEGLI {DPAD_LEFTRIGHT}SCHEDA {A_BUTTON}APRI {START_BUTTON}APPLICA",
       "reason": "engine-original",
       "provenance": "Key hint of the mod manager's help bar, added by gen1recomp (src/ui/game3/mod_manager.lua:73); the button words follow strings.gText_UPDOWNPick_ABUTTONNext_BBUTTONBack."
+    },
+    "The WONDER NEWS was saved.": {
+      "override": "NOTIZIA SEGRETA salvata.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for Ruby and Sapphire's Mystery Events screen (src/ui/game3/rs/mystery_events.lua), which no cart row matches; worded from the cart's own Mystery Gift rows (gText_AlreadyHadNews, gText_WonderNewsThrownAway, gText_WonderNews); requires in-game visual validation."
+    },
+    "You already have this WONDER NEWS.": {
+      "override": "Hai già questa\nNOTIZIA SEGRETA.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for Ruby and Sapphire's Mystery Events screen (src/ui/game3/rs/mystery_events.lua), which no cart row matches; worded from the cart's own Mystery Gift rows (gText_AlreadyHadNews, gText_WonderNewsThrownAway, gText_WonderNews); requires in-game visual validation."
+    },
+    "This WONDER NEWS can't be read.": {
+      "override": "Impossibile leggere questa\nNOTIZIA SEGRETA.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for Ruby and Sapphire's Mystery Events screen (src/ui/game3/rs/mystery_events.lua), which no cart row matches; worded from the cart's own Mystery Gift rows (gText_AlreadyHadNews, gText_WonderNewsThrownAway, gText_WonderNews); requires in-game visual validation."
     }
   }
 }

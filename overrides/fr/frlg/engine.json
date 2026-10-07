@@ -533,9 +533,9 @@
       "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
     "Which WONDER NEWS\nwould you like to read?": {
-      "override": "Quelle NEWS MIRACLE\nvoulez-vous lire?",
+      "override": "Quelles INFOS MIRACLE\nvoulez-vous lire?",
       "reason": "engine-original",
-      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation; named with the cart's own term (gText_WonderCards / gText_WonderNews)."
     },
     "Which move?": {
       "override": "Quelle capacité?",
@@ -621,6 +621,21 @@
       "override": "{DPAD_UPDOWN}CHOIX {DPAD_LEFTRIGHT}ONGLET {A_BUTTON}OUVRIR {START_BUTTON}APPL.",
       "reason": "engine-original",
       "provenance": "Key hint of the mod manager's help bar, added by gen1recomp (src/ui/game3/mod_manager.lua:73); the button words follow strings.gText_UPDOWNPick_ABUTTONNext_BBUTTONBack."
+    },
+    "The WONDER NEWS was saved.": {
+      "override": "INFOS MIRACLE sauvegardées.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for Ruby and Sapphire's Mystery Events screen (src/ui/game3/rs/mystery_events.lua), which no cart row matches; worded from the cart's own Mystery Gift rows (gText_AlreadyHadNews, gText_WonderNewsThrownAway, gText_WonderNews); requires in-game visual validation."
+    },
+    "You already have this WONDER NEWS.": {
+      "override": "Vous avez déjà cet objet\nINFOS MIRACLE.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for Ruby and Sapphire's Mystery Events screen (src/ui/game3/rs/mystery_events.lua), which no cart row matches; worded from the cart's own Mystery Gift rows (gText_AlreadyHadNews, gText_WonderNewsThrownAway, gText_WonderNews); requires in-game visual validation."
+    },
+    "This WONDER NEWS can't be read.": {
+      "override": "Impossible de lire ces\nINFOS MIRACLE.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for Ruby and Sapphire's Mystery Events screen (src/ui/game3/rs/mystery_events.lua), which no cart row matches; worded from the cart's own Mystery Gift rows (gText_AlreadyHadNews, gText_WonderNewsThrownAway, gText_WonderNews); requires in-game visual validation."
     }
   }
 }

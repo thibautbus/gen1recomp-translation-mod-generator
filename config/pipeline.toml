@@ -64,11 +64,12 @@ target_lang = "fr"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
-# Pinned at v0.3.54, which carries Ruby and Sapphire (gen1recomp 67748895,
-# released in v0.3.52) and the Emerald screens translation mods reach
-# (gen1recomp#2678, released in v0.3.53), used to validate and package the
-# RBY, Gold/Silver, Crystal, FireRed/LeafGreen and Ruby/Sapphire/Emerald
-# translation mods.
+# Pinned at v0.3.58, which carries Ruby and Sapphire (gen1recomp 67748895,
+# released in v0.3.52), the Emerald screens translation mods reach
+# (gen1recomp#2678, released in v0.3.53) and the Ruby and Sapphire screens
+# they reach (gen1recomp#2724, released in v0.3.58), used to validate and
+# package the RBY, Gold/Silver, Crystal, FireRed/LeafGreen and
+# Ruby/Sapphire/Emerald translation mods.
 # Since v0.3.4, FireRed draws most of its own text from the cart instead of
 # English literals (option menu, summary pages, intro, Pokedex, region map,
 # battle messages, stat names...), so a mod translates them through the cart's
@@ -77,10 +78,10 @@ target_lang = "fr"
 # (gen1recomp#2398), takes Unicode braille cells (gen1recomp#2400) and draws
 # Japanese with the cart's own fonts (gen1recomp#2406).
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "c116459047d45293ef490662d07287f80835141f"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/c116459047d45293ef490662d07287f80835141f"
-archive_sha256 = "eb691bf61494357d7792f95f9435acaadbbca9d169e1ca768b8de3dc737c03fc"
-archive_tree_sha256 = "a6dc1d45a749319d27cb0a8e5edcd3f7e11266b8387a91f88723900386cef40a"
+revision = "1def5995a42f348caa65b148ae373a808a5a1aed"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/1def5995a42f348caa65b148ae373a808a5a1aed"
+archive_sha256 = "17f10aede48706ccf691221e1a7365855c8b4fbb42dda0c32d35e192904c77e4"
+archive_tree_sha256 = "10922f41d1fe64208675c03e2be08cc55574cfcaeb8e76fe1d7f6d47a592a7eb"
 
 # pret's FireRed/LeafGreen decompilation data the generation-3 release joins
 # through (never code, never game text): the symbol tables name every ROM
