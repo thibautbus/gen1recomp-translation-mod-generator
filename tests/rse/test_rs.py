@@ -287,6 +287,11 @@ io.write(table.concat(applied, ","))
 
 
 class RubySapphireConfigTests(unittest.TestCase):
+    def test_japanese_birch_lines_leave_the_paragraph_break_to_the_runtime(self):
+        entries = json.loads((ROOT / "overrides" / "ja-Hrkt" / "rse" / "dialogue.json").read_text(encoding="utf-8"))["entries"]
+        for label in ("gBirchSpeech_ThisIsPokemon", "gBirchSpeech_AhOkayYouArePlayer"):
+            self.assertFalse(entries[label]["text"].endswith("\\c"), label)
+
     def test_japanese_ships_the_honorifics_the_us_cart_leaves_empty(self):
         entries = json.loads((ROOT / "overrides" / "ja-Hrkt" / "rse" / "dialogue.json").read_text(encoding="utf-8"))["entries"]
         for label, honorific in (("gExpandedPlaceholder_Kun", "くん"), ("gExpandedPlaceholder_Chan", "ちゃん")):

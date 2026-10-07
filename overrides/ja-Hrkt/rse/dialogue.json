@@ -20,6 +20,18 @@
       "reason": "engine-contract-gap",
       "provenance": "The cart's row is \"[B_ATK_NAME_WITH_PREFIX][B_BUFF1]\\n[B_BUFF2]\": the particle and the ending appended to the move's name depend on the move (ChooseMoveUsedParticle and ChooseTypeOfMoveUsedString, pokeruby/src/battle_message.c:976, :1016). gen1recomp fills B_BUFF2 with the move's name and the cart's BattleText_Exclamation row (\"！\") and has no particle buffer, so the line takes the particle the cart prints for most moves (の, with the ！ ending); the same choice as Emerald's sText_AttackerUsedX (overrides/ja-Hrkt/rse/emerald_dialogue.json)."
     },
+    "gBirchSpeech_AhOkayYouArePlayer": {
+      "qid": "rs.script.birch_speech.gBirchSpeech_AhOkayYouArePlayer",
+      "text": "‥‥そうか！\\cきみが　こんど　わたしの　すむ　まち\\nミシロタウンに　ひっこして　くる\\r[PLAYER][KUN]　だったのか！",
+      "reason": "engine-contract-gap",
+      "provenance": "The Japanese cart's own row without its closing \\c. The US row ends without one, and the runtime, like the US cart, follows it with its own paragraph break (gSystemText_NewPara after Azurill's cry, src/ui/game3/rs/birch_speech.lua; the fade into the player's sprite after the second line), so the row's own \\c printed an empty box with the continue arrow before the next line."
+    },
+    "gBirchSpeech_ThisIsPokemon": {
+      "qid": "rs.script.birch_speech.gBirchSpeech_ThisIsPokemon",
+      "text": "ポケットモンスター\\n‥‥すなわち　ポケモン",
+      "reason": "engine-contract-gap",
+      "provenance": "The Japanese cart's own row without its closing \\c. The US row ends without one, and the runtime, like the US cart, follows it with its own paragraph break (gSystemText_NewPara after Azurill's cry, src/ui/game3/rs/birch_speech.lua; the fade into the player's sprite after the second line), so the row's own \\c printed an empty box with the continue arrow before the next line."
+    },
     "gExpandedPlaceholder_Chan": {
       "qid": "rs.common.strings.gExpandedPlaceholder_Chan",
       "text": "ちゃん",
