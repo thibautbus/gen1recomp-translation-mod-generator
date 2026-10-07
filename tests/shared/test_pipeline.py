@@ -595,6 +595,7 @@ class PipelineTests(unittest.TestCase):
             main = (root / "mod" / "main.lua").read_text(encoding="utf-8")
         self.assertIn('["BULBASAUR"] = { 0.7, 6.9 }', metrics)
         self.assertIn('for id, value in pairs(catalog("species_metrics")) do', main)
+        self.assertNotIn("src.core.game3", main)
 
     def test_generate_mod_reports_species_kind_coverage(self):
         catalog_names = (

@@ -23,8 +23,9 @@ POKEDEX_ENTRIES_FILE = "pokedex_entries.h"
 # weight; ``catalog`` is the generated main's own catalog reader.  Red/Blue's
 # and Gold/Silver's mods patch at every engine revision: their games may not
 # load a Gen 3 module (src/mods/Loader.lua, crossGenerationDenial), and an
-# engine without the metric printers takes the values all the same (Red/Blue's
-# page already prints a caught entry's, Gold/Silver's #DEX ignores them).
+# engine older than the metric printers (gen1recomp v0.3.61) takes the values
+# all the same (Red/Blue's page prints a caught entry's, Gold/Silver's #DEX
+# ignores them).
 SPECIES_METRICS_HOOK = """  -- Pokedex heights and weights in metres and kilograms, as the European
   -- and Japanese carts print them: the Pokedex prints a species'
   -- dexEntry.heightM and weightKg instead of feet, inches and pounds.
