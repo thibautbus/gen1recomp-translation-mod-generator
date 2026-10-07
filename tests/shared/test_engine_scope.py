@@ -228,9 +228,17 @@ class EngineScopeTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "archive source tree digest mismatch"):
                     verified_source(root, scope)
 
+    def test_game3_link_code_does_not_make_an_rby_key_a_link_key(self):
+        result = classify_callsites([
+            {"source": "YES", "path": "ui/SlotMachine.lua", "line": 670},
+            {"source": "YES", "path": "core/game3/link/cable_entry.lua", "line": 142},
+        ])
+        self.assertEqual(result["YES"]["eligibility"], "eligible")
+        self.assertEqual({site["category"] for site in result["YES"]["callsites"]}, {"rby", "core"})
+
     def test_manifest_and_lua_suffix_rules(self):
         scope = load_scope()
-        self.assertEqual(scope["gen1recomp_revision"], "c116459047d45293ef490662d07287f80835141f")
+        self.assertEqual(scope["gen1recomp_revision"], "1def5995a42f348caa65b148ae373a808a5a1aed")
         self.assertEqual(
             classify_callsites([{"source": "x", "path": "ui/BagMenu.lua", "line": 1}])["x"]["eligibility"],
             "eligible",

@@ -1,7 +1,7 @@
 {
   "schema": "gen1recomp-translation-mods/engine-manifest",
   "version": 1,
-  "gen1recomp_revision": "c116459047d45293ef490662d07287f80835141f",
+  "gen1recomp_revision": "1def5995a42f348caa65b148ae373a808a5a1aed",
   "source_subdir": "src",
   "forced_dynamic_keys": {},
   "engine_dynamic_values": {
@@ -146,7 +146,7 @@
       "eligibility": "ineligible",
       "reason": "engine-contract-gap",
       "provenance": "engine_dynamic",
-      "callsite": "src/ui/OptionsMenu.lua:41-47; src/ui/gen2/OptionsMenu.lua:226-233; src/import/LauncherSettings.lua:349; src/import/LauncherSettings.lua:355; src/import/LauncherSettings.lua:361; src/import/LauncherSettings.lua:621 (GameSpeed.levelLabel raw value)",
+      "callsite": "src/ui/OptionsMenu.lua:41-47; src/ui/gen2/OptionsMenu.lua:226-233; src/import/LauncherSettings.lua:349; src/import/LauncherSettings.lua:355; src/import/LauncherSettings.lua:361; src/import/LauncherSettings.lua:619 (GameSpeed.levelLabel raw value)",
       "qid": ""
     },
     "FAST": {

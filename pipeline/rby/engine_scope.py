@@ -104,6 +104,11 @@ def classify_path(path: str, key: str | None = None, scope: Mapping[str, Any] | 
         parts = parts[1:]
     lowered = path.casefold()
     module = _module(path)
+    # The game3 runtime's own link code (src/core/game3/link/) is no RBY
+    # link feature: like the rest of src/core/game3 it is core, so a key
+    # RBY prints elsewhere (YES, NO) keeps its RBY eligibility.
+    if "game3" in parts and "core" in parts:
+        return "core"
     if "link" in parts or "online" in lowered or "tournament" in lowered:
         return "link"
     if "import" in parts or "romimporter" in lowered:
