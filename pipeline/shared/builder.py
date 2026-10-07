@@ -7,11 +7,12 @@ from pathlib import Path
 import platform
 import shutil
 import sys
+import tempfile
 from typing import Callable
 import zipfile
 
 from .corpus import canonical_language
-from .mod_assets import font_profile_warning, validate_font_profile
+from .mod_assets import FONT_PROFILES, font_profile_warning, font_source_file, validate_font_profile
 from .project import (
     is_frozen,
     resource_root,
@@ -128,7 +129,7 @@ def _ensure_dependency(config: dict, destination: Path, *, selective_prefix: str
                     destination,
                     revision=str(config.get("revision", "")),
                 )
-            except (DependencyError, TypeError, ValueError) as error:
+            except (DependencyError, OSError, TypeError, ValueError) as error:
                 raise BuildError(f"Unable to download pinned dependency files: {error}") from error
         url = str(config.get("archive_url", ""))
         digest = str(config.get("archive_sha256", ""))
@@ -152,7 +153,7 @@ def _ensure_dependency(config: dict, destination: Path, *, selective_prefix: str
                 )
             single = prefixes[0] if prefixes else None
             return fetch_archive(url, digest, destination, revision=str(config.get("revision", "")), selective_prefix=single, immutable_prefixes=("src", "tools"), trusted_tree_sha256=str(config.get("archive_tree_sha256", "")))
-        except DependencyError as error:
+        except (DependencyError, OSError) as error:
             raise BuildError(f"Unable to download pinned dependency: {error}") from error
     ensure_checkout(config["source"], config["revision"], destination, sparse_paths=prefixes)
     return destination
@@ -188,10 +189,28 @@ def _font_source(workspace: Path, config: dict, font_profile: str = "fusion", la
                 root / "fusion-pixel-font-japanese",
                 revision=str(japanese.get("revision", "")),
             )
-            shutil.copy2(
-                japanese_source / "fusion-pixel-8px-proportional-ja.ttf",
-                source / "fusion-pixel-8px-proportional-ja.ttf",
-            )
+            # Assemble the Japanese set beside the verified checkouts rather
+            # than inside one: a file written into fusion-pixel-font would make
+            # the next build see a drifted tree and fetch the archive again.
+            merged = workspace / "fonts" / "fusion-pixel-font-ja"
+            merged.parent.mkdir(parents=True, exist_ok=True)
+            staging = Path(tempfile.mkdtemp(prefix=f".{merged.name}-", dir=merged.parent))
+            try:
+                for relative in FONT_PROFILES["fusion"]["licenses"]:
+                    target = staging / relative
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(font_source_file(source, relative), target)
+                shutil.copy2(
+                    japanese_source / "fusion-pixel-8px-proportional-ja.ttf",
+                    staging / "fusion-pixel-8px-proportional-ja.ttf",
+                )
+                if merged.exists():
+                    shutil.rmtree(merged)
+                os.replace(staging, merged)
+            except BaseException:
+                shutil.rmtree(staging, ignore_errors=True)
+                raise
+            return merged
         elif canonical_language(language) == "ko":
             # Korean is part of the pinned Fusion archive, unlike Japanese
             # which is fetched from its companion archive.

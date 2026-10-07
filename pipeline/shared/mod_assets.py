@@ -88,7 +88,7 @@ def ttf_registration(
     )
 
 
-def _font_source_file(source_root: Path, relative: Path) -> Path:
+def font_source_file(source_root: Path, relative: Path) -> Path:
     """Resolve a selected file from either a checkout or extracted archive."""
     direct = source_root / relative
     if direct.is_file():
@@ -121,11 +121,11 @@ def install_font_assets(
     profile = validate_font_profile(language, font_profile)
     variant = _font_variant(language)
     selected_files = [
-        (relative, _font_source_file(source_root, relative))
+        (relative, font_source_file(source_root, relative))
         for relative in FONT_PROFILES[profile]["licenses"]
     ]
     selected, _ = FONT_PROFILES[profile]["files"][variant]
-    selected_files.append((Path(selected), _font_source_file(source_root, Path(selected))))
+    selected_files.append((Path(selected), font_source_file(source_root, Path(selected))))
     destination.mkdir(parents=True, exist_ok=True)
     target_root = destination / "fonts"
     temporary = Path(tempfile.mkdtemp(prefix=".fonts-", dir=destination))
