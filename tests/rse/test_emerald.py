@@ -83,6 +83,37 @@ def text(value: str) -> dict:
 EOS = {"t": "eos"}
 
 
+
+# gen1recomp v0.3.61's cross-game Union Room rows: no cart has them, so they
+# keep their English until a reviewed translation lands (docs/upstream-fixes.md).
+UNION_ROOM_ROWS = frozenset({
+    '%s canceled the request.',
+    '%s from POKéMON %s is here.\nWhat would you like to do?',
+    '%s from POKéMON %s wants to battle!\nWill you accept?',
+    '%s from POKéMON %s wants to trade!\nWill you accept?',
+    '%s or %s',
+    '%s seems to be busy right now.',
+    '%s turned down the battle.',
+    '%s turned down the trade.',
+    "Battles and trades between different games aren't open yet. The request was canceled.",
+    'Getting ready to battle %s...',
+    'Getting ready to trade with %s...',
+    'Import POKéMON %s to see how %s really looks.',
+    'Please enjoy the UNION ROOM!',
+    'See you around!',
+    'The UNION ROOM is online.\nWould you like to connect?',
+    'The UNION ROOM server needs an update before trainers from other games can join you.',
+    'The link with %s was lost.',
+    'The request was canceled.',
+    'Waiting for %s to answer\nthe battle request...',
+    'Waiting for %s to answer\nthe trade request...',
+    'Welcome to the UNION ROOM!\x0cTrainers from every POKéMON game meet here to battle and trade.\x0cWould you like to go in?',
+    "You need at least two POKéMON that aren't EGGS to go in.",
+    'You turned down the request.',
+    "Your games can't link up for this. The request was canceled.",
+    'Your progress will be saved before you go in.',
+})
+
 class EmeraldTextTests(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
@@ -539,7 +570,7 @@ class EmeraldConfigTests(unittest.TestCase):
             with self.subTest(language=language):
                 loaded = load_gen3_corpus(corpus, language, EMERALD)
                 _values, stats = join_gen3_engine_strings(load_engine_scope(EMERALD), loaded, charmap)
-                self.assertEqual(stats["fallback_english"], sorted(expected))
+                self.assertEqual(stats["fallback_english"], sorted(expected | UNION_ROOM_ROWS))
 
 
 if __name__ == "__main__":

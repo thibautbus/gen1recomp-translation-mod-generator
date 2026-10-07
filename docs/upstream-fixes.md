@@ -2034,7 +2034,7 @@ Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/
 
 ## Ruby and Sapphire
 
-Ruby and Sapphire run on the same game3 runtime as Emerald, as gen1recomp's latest generation-3 games (`GameVersion` ids `ruby` and `sapphire`, added by 67748895 and released in v0.3.52): the `rs` text dialect of `src/core/game3/scripting/text_ir.lua` (named placeholders such as `EVIL_TEAM` and `GOOD_LEADER`, the `FONT_RS_*` fonts, pokeruby's own battle placeholder numbers), Emerald's screens under `src/ui/game3/rse/` with the native Ruby/Sapphire ones under `src/ui/game3/rs/`, and the six English revisions `src/import/gba/rs_builds.lua` lists. The translation mod covers them with Emerald in one `translation-<lang>-gen3-rse` release (README, "Pokémon Ruby, Sapphire and Emerald support"). This section was reviewed at the `dev` commit `160895c6`, and its file:line citations refer to it; the pin is now v0.3.58 (`1def5995`), which carries gen1recomp#2724 (entries 1 to 3).
+Ruby and Sapphire run on the same game3 runtime as Emerald, as gen1recomp's latest generation-3 games (`GameVersion` ids `ruby` and `sapphire`, added by 67748895 and released in v0.3.52): the `rs` text dialect of `src/core/game3/scripting/text_ir.lua` (named placeholders such as `EVIL_TEAM` and `GOOD_LEADER`, the `FONT_RS_*` fonts, pokeruby's own battle placeholder numbers), Emerald's screens under `src/ui/game3/rse/` with the native Ruby/Sapphire ones under `src/ui/game3/rs/`, and the six English revisions `src/import/gba/rs_builds.lua` lists. The translation mod covers them with Emerald in one `translation-<lang>-gen3-rse` release (README, "Pokémon Ruby, Sapphire and Emerald support"). This section was reviewed at the `dev` commit `160895c6`, and its file:line citations refer to it; the pin is now v0.3.61 (`7ac15ebb`), which carries gen1recomp#2724 (entries 1 to 3) and gen1recomp#2743 and #2745 (entries 4 and 5).
 
 Summary of what a translation mod can and cannot reach at the pinned revision:
 
@@ -2042,12 +2042,12 @@ Summary of what a translation mod can and cannot reach at the pinned revision:
 | --- | --- | --- |
 | Cart text (13,336 rows: script messages, menus, battle messages, lists, the Pokédex entries' text, PokéNav, contests) | Yes, 99.1–99.5% of it in every language | `mod.content.text:override(key, ir)`, by ROM address or label, each edition's and revision's layer |
 | Species, move, item names; item descriptions; trainer names and class names | Yes | `pokemon`/`moves`/`items`/`trainers` patches |
-| game3's own text (2,521 `Strings()` keys) | Yes, except 6 engine rows (entry 6) | `strings` registry, keys listed in `config/rse/engine_scope.json` |
+| game3's own text (2,549 `Strings()` keys) | Yes, except 6 engine rows (entry 6) and 25 Union Room rows | `strings` registry, keys listed in `config/rse/engine_scope.json` |
 | The version placeholders: the teams, leaders and legendaries, the rival's name, the version name and the Japanese honorific | Yes since v0.3.58 (entry 1) | `text` overrides, which the placeholders read from the script cache |
 | The native Pokédex screen's entry, category, labels and search screen | Yes since v0.3.58 (entry 2) | `text` overrides by the entries' and labels' pret names |
 | Cart text the native screens print from their own pack: party menu actions and prompts, shop, decoration, move relearner, contest paintings, Easy Chat editors and words, the summary's contest effect descriptions | Yes since v0.3.58 (entry 3) | `text` overrides by label, `strings` for the contest descriptions |
 | The same for the secret base, roulette, trainer card, diploma, berry tag, PokéNav and Battle Tower records screens | **No** (entry 3) | `text` overrides once their extractors record the labels |
-| A secret base's name in the European languages | **No** (entry 4) | the runtime filling the row's `[PLAYER]` |
+| A secret base's name in the European languages | Yes since v0.3.61 (entry 4) | the runtime fills the row's `[PLAYER]` with the owner |
 | Heights and weights in metric units, as the European and Japanese carts print them | **No** (entry 8) | a metric printer in the runtime |
 | Japanese | Yes (the cart's own Japanese fonts) | as for FireRed |
 
@@ -2065,19 +2065,21 @@ The Ruby/Sapphire entry page printed the entry's category and both pages of its 
 
 Several Ruby/Sapphire screens printed a cart string their extractor copied into their pack (`src/import/gba/rs/extract_*.lua`, `textBytes` and `strings`) instead of reading the script cache, where the mod's `text` overrides land. Since gen1recomp#2724 (v0.3.58), as gen1recomp#2678 did for Emerald's screens, they read the script cache by label with the pack's copy as the fallback: the party menu's actions (by the labels `sPokemonMenuActions` points at, a field move by its move's name) and its prompts (`PartyMenuPromptTexts`, with the POKéMON's name in `Do what with {STR_VAR_1}?`), the shop, the decoration menus, the move relearner, the contest paintings' captions, and the summary's contest effect descriptions (through `Strings()`, which the mod's `strings_by_english` catalog fills); the Easy Chat editors, the mail composer and reader, the trendy phrase, the trainer card's profile and the TV print each word translated (`EasyChatText.word`). The secret base, roulette, trainer card labels, diploma, berry tag, PokéNav and Battle Tower records packs keep their strings under local names and need their extractors to record the labels first; strings no cache key holds (the PokéNav's help lines, the option menu) need the import plan to add them first, as Emerald entry 5 describes. The summary screen's titles (CONTEST MOVES, EFFECT, DESCRIPTION...) are the US cart's graphics.
 
+### Fixed upstream in v0.3.61 (gen1recomp#2743, #2745)
+
+#### 4. A secret base's name ended in the English row
+
+The TV and the region map named a secret base as the owner's name followed by `gOtherText_PlayersBase`, the US row "'s BASE". The European rows put the owner inside instead, through the player placeholder ("BASE DE [PLAYER]", "BASIS v. [PLAYER]"), so the European line printed the owner's name before the row and then the player's own name. Since gen1recomp#2745, the secret base's name and the TV's map name (`SB.nameWith`, `src/core/game3/rse/secret_base.lua`) fill either placeholder with the owner, Emerald's `STR_VAR_1` (filled since gen1recomp#2680) or Ruby and Sapphire's player placeholder, the way the German cart does (pokeruby `src/secret_base.c:642`), and append a row that has neither.
+
+#### 5. The starter's category was cut by bytes
+
+The starter selection printed the species' category cut to its first 11 bytes (`category:sub(1, 11)`), so a translated Japanese category, three bytes per character, was cut in the middle of a character. Since gen1recomp#2743 it is cut by character (`FrlgFont.truncate`, `src/ui/game3/rs/starter_choose_policy.lua:23`).
+
 ### Required upstream capabilities
-
-#### 4. A secret base's name ends in the English row
-
-The TV and the region map name a secret base as the owner's name followed by `gOtherText_PlayersBase` (`src/core/game3/rs/tv_playback.lua:151`), the US row "'s BASE". The European rows put the owner inside instead, through the player placeholder ("BASE DE [PLAYER]", "BASIS v. [PLAYER]"), so the European line prints the owner's name before the row and then the player's own name. gen1recomp#2680, released in v0.3.52, fills the `STR_VAR_1` of Emerald's `gText_ApostropheSBase`; Ruby and Sapphire's row has the player placeholder instead, which the gen1recomp branch `fix/rs-secret-base-owner-name` fills with the owner, the way the German cart does (pokeruby `src/secret_base.c:642`).
-
-#### 5. The starter's category is cut by bytes
-
-The starter selection prints the species' category cut to its first 11 bytes (`src/ui/game3/rs/starter_choose_policy.lua:23`, `category:sub(1, 11)`). Once the category is translated (gen1recomp#2678 looks it up through `Strings()`), a Japanese category, three bytes per character, is cut in the middle of a character. The gen1recomp branch `fix/rs-starter-category-utf8` (on `dev` since gen1recomp#2678 merged) cuts it by character (`FrlgFont.truncate`).
 
 #### 6. Engine rows with no cart row
 
-Six `Strings()` keys keep their English in every language, the same as Emerald's (Emerald entry 2): the controls screen's three rows, the bag actions `CHECK_TAG` and `OPEN`, and the Easy Chat word `{POKEBLOCK}`. The keys Ruby and Sapphire's carts never had (the link lobby, the Union Room's words, Mystery Gift) take Emerald's resolved value.
+Six `Strings()` keys keep their English in every language, the same as Emerald's (Emerald entry 2): the controls screen's three rows, the bag actions `CHECK_TAG` and `OPEN`, and the Easy Chat word `{POKEBLOCK}`. The keys Ruby and Sapphire's carts never had (the link lobby, the Union Room's words, Mystery Gift) take Emerald's resolved value. The 25 cross-game Union Room keys gen1recomp v0.3.61 added have no row in any cart and keep their English (see "Not translated yet: the cross-game Union Room").
 
 #### 7. Buffers the runtime does not fill
 
@@ -2096,7 +2098,7 @@ The native Pokédex prints a caught entry's height in feet and inches and its we
 
 ## Emerald
 
-Emerald (US, v1.0) runs on the same game3 runtime as FireRed, as its own game family: `GameVersion` id `emerald`, the `rse` text dialect of `src/core/game3/scripting/text_ir.lua` (named `ph` placeholders, named `FC 06` fonts, the `{POKEBLOCK}`, `{LV}` and arrow glyph runs), and its own screens under `src/ui/game3/rse/`. This section was reviewed at `a729af23` (v0.3.51), and its file:line citations refer to it; the pin is now v0.3.58 (`1def5995`), which carries gen1recomp#2678 (released in v0.3.53), #2679 to #2681 and Ruby and Sapphire (released in v0.3.52; see their section). Emerald ships with Ruby and Sapphire in one translation mod (`translation-<lang>-gen3-rse`, fr/de/es/it/ja-Hrkt), as the release's companion edition: built from the Emerald ROM, it goes through the same joins as FireRed (`pipeline/gen3/`) with the Emerald family (`pipeline/gen3/family.py`): the Emerald PokeCorpus collection, pret's `pokeemerald.sym` (`symbols` branch) and `charmap.txt`, and its own reviewed configuration (`config/rse/emerald_*.json`). `tools/rse/extract.lua` runs the text steps of the engine's own Emerald import plan (`src/import/gba/plans/rse/`), and `tools/rse/gate.lua` loads the mod through the real generation-3 loader on top of the game3 data modules built from that extract, so the statements below are measured, not inferred.
+Emerald (US, v1.0) runs on the same game3 runtime as FireRed, as its own game family: `GameVersion` id `emerald`, the `rse` text dialect of `src/core/game3/scripting/text_ir.lua` (named `ph` placeholders, named `FC 06` fonts, the `{POKEBLOCK}`, `{LV}` and arrow glyph runs), and its own screens under `src/ui/game3/rse/`. This section was reviewed at `a729af23` (v0.3.51), and its file:line citations refer to it; the pin is now v0.3.61 (`7ac15ebb`), which carries gen1recomp#2678 (released in v0.3.53), #2679 to #2681 and Ruby and Sapphire (released in v0.3.52; see their section). Emerald ships with Ruby and Sapphire in one translation mod (`translation-<lang>-gen3-rse`, fr/de/es/it/ja-Hrkt), as the release's companion edition: built from the Emerald ROM, it goes through the same joins as FireRed (`pipeline/gen3/`) with the Emerald family (`pipeline/gen3/family.py`): the Emerald PokeCorpus collection, pret's `pokeemerald.sym` (`symbols` branch) and `charmap.txt`, and its own reviewed configuration (`config/rse/emerald_*.json`). `tools/rse/extract.lua` runs the text steps of the engine's own Emerald import plan (`src/import/gba/plans/rse/`), and `tools/rse/gate.lua` loads the mod through the real generation-3 loader on top of the game3 data modules built from that extract, so the statements below are measured, not inferred.
 
 Summary of what a translation mod can and cannot reach at the pinned revision:
 
@@ -2104,7 +2106,7 @@ Summary of what a translation mod can and cannot reach at the pinned revision:
 | --- | --- | --- |
 | Cart text (15,444 rows: script messages, menus, battle messages, lists, the Pokédex screens, PokéNav, contests, the Battle Frontier, the intro) | Yes, 99.9% of it | `mod.content.text:override(key, ir)`, by ROM address or label |
 | Species, move, item names; item descriptions; trainer names and class names | Yes | `pokemon`/`moves`/`items`/`trainers` patches |
-| game3's own text: its menus and prompts, the options it adds, the move and ability descriptions, Easy Chat (2,654 `Strings()` keys) | Yes, except 7 engine rows (entry 2) | `strings` registry, keys listed in `config/rse/emerald_engine_scope.json` |
+| game3's own text: its menus and prompts, the options it adds, the move and ability descriptions, Easy Chat (2,682 `Strings()` keys) | Yes, except 7 engine rows (entry 2) | `strings` registry, keys listed in `config/rse/emerald_engine_scope.json` |
 | Ability names, Pokédex categories and descriptions, contest categories and effect descriptions, map section names | Yes since v0.3.53 (entry 1) | `strings` registry |
 | Cart text some screens print from their own pack: the party menu's actions, the Pokédex search screen, the Battle Frontier's records, Dome, Arena, Apprentice, S.S. Tidal menu and Pyramid bag, the Frontier Pass, the Trainer Hill records, the Battle Pyramid's floor names, Ever Grande City's fly destinations | Yes since v0.3.53 (entry 4); the Berry Blender still prints English | `text` overrides, which the screens read from the script cache |
 | The rival's name (`{RIVAL}`) and the Japanese honorific (`{KUN}`) | Yes since v0.3.53 (entry 6) | `text` overrides, which the placeholders read from the script cache |
@@ -2144,7 +2146,7 @@ gen1recomp#2678 (v0.3.53) resolves each placeholder through the script cache by 
 
 #### 2. Engine rows with no Emerald cart row
 
-Seven `Strings()` keys have neither an Emerald corpus row nor a reviewed override, in every language, and keep their English: the controls screen's `ESC/2ND CANCELS`, `PRESS A BUTTON` and `RELEASE TO SET`, FireRed's bag actions `CHECK_TAG` and `OPEN` (shared code), the `SPECIAL AREA` map section (an empty row in every European cart) and the Easy Chat word `{POKEBLOCK}`, whose European rows are each cart's own glyph run. FireRed leaves the controls screen's three and `CHECK_TAG` in English too (`test_reviewed_qids_exist_in_the_pinned_corpus`); `test_engine_strings_resolve_in_every_language` pins Emerald's set.
+Seven `Strings()` keys have neither an Emerald corpus row nor a reviewed override, in every language, and keep their English: the controls screen's `ESC/2ND CANCELS`, `PRESS A BUTTON` and `RELEASE TO SET`, FireRed's bag actions `CHECK_TAG` and `OPEN` (shared code), the `SPECIAL AREA` map section (an empty row in every European cart) and the Easy Chat word `{POKEBLOCK}`, whose European rows are each cart's own glyph run. FireRed leaves the controls screen's three and `CHECK_TAG` in English too (`test_reviewed_qids_exist_in_the_pinned_corpus`); `test_engine_strings_resolve_in_every_language` pins Emerald's set. Both tests also accept the 25 cross-game Union Room keys of gen1recomp v0.3.61, which no cart has (see "Not translated yet: the cross-game Union Room").
 
 The Wonder Cards gen1recomp composes for Emerald's events (`src/core/game3/mystery_gift.lua`, `rseBuiltins`) have no cart row either: FireRed's reviewed overrides cover most of their lines, and `overrides/<language>/rse/emerald_engine.json` covers the rest (`It is for use at LILYCOVE CITY port.`, `We received this OLD SEA MAP`, `addressed to you.`, `on ROUTE 103.`) and the `EVENT TICKETS` option (`src/core/game3/rse/event_islands.lua:101`), worded from the Emerald cart's own names (NENUCRIQUE, VIEILLECARTE, ROUTE 103). In Japanese, the ALTERING CAVE card names the cave as Emerald does (へんげのどうくつ) instead of FireRed's override.
 
@@ -2204,6 +2206,10 @@ The Italian cart draws `POKéMELLA`/`POKéMELLE` (POKéBLOCK) as a glyph run, wh
 - **Option values a corpus row says in another sense.** The screen position's UPPER (the naming keyboard's upper case in `gText_Upper`), the SPEED group label (the SPEED stat, abbreviated `INIT.` in German, `VELOCID.` in Spanish and `VELOC.` in Italian) and Japanese ON/OFF (the battle scene's みる/みない) take the FireRed, Gold/Silver or Red/Blue overrides' wording, in both game3 families.
 - **Glyph runs.** The cart draws `{POKEBLOCK}` and `{LV}` as glyph runs the `rse` dialect reads as tags. A translation keeps the tag the English row has, so the French, German and Spanish rows' `[POKEBLOCK]` show the US cart's run; the Italian carts' own runs are spelled out (`[POKEMELLA]` as POKéMELLA, like the French Battle Points symbol `[Pco]` as Pco, which the French rows also write in letters).
 - **A section name that holds a placeholder.** `MAPSEC_AQUA_HIDEOUT_OLD` holds the team's name as a placeholder, which the map section extractor drops (" HIDEOUT" in English); its translation drops it the same way.
+
+## Not translated yet: the cross-game Union Room (gen1recomp v0.3.61)
+
+v0.3.61 adds a Union Room that trainers from every generation share: Gold and Silver reach it from the Pokémon Center (`src/ui/union`, `src/ui/gen2`, `src/world/gen2`), the generation-3 games through their own Union Room (`src/core/game3/link/union_room.lua`, `src/core/game3/rse/union_rs.lua`). Its 30 Gold/Silver keys (the welcome, the battle and trade requests, the connection errors) and 25 generation-3 keys are text no cart has, so no corpus row covers them; they keep their English in every language until a reviewed translation lands, and the coverage figures count them as English (Gold/Silver 959/989, FireRed 1906/1943, Ruby/Sapphire 2518/2549, Emerald 2650/2682 in French).
 
 ## Engine bugs surfaced by TTF mode (not translation gaps)
 

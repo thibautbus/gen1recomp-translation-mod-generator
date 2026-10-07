@@ -443,9 +443,23 @@
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-derived from poke-corpus GoldSilver (gs.trainer_card.TrainerCard_PrintTopHalfOfCard.Name_Money); the German cart's trainer card prints no label here at all; an empty override is not expressible, so the English label stays.",
           "original_reason": "engine-contract-gap",
           "original_provenance": "Corpus-derived from poke-corpus GoldSilver (gs.trainer_card.TrainerCard_PrintTopHalfOfCard.Name_Money); the German cart's trainer card prints no label here at all; an empty override is not expressible, so the English label stays."
+        },
+        "m": {
+          "override": "m",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Height: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"m\" in this language.",
+          "original_reason": "engine-contract-gap",
+          "original_provenance": "Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Height: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"m\" in this language."
+        },
+        "kg": {
+          "override": "kg",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"kg\" in this language.",
+          "original_reason": "engine-contract-gap",
+          "original_provenance": "Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"kg\" in this language."
         }
       },
-      "no_op_total": 24
+      "no_op_total": 26
     },
     "es": {
       "total": 30,
@@ -751,9 +765,23 @@
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-derived from poke-corpus GoldSilver (gs.start_menu.StartMenu.PokegearString); the cart's own start-menu label, keeping the engine's <PO><KE> glyph pair for the western spellings.",
           "original_reason": "engine-contract-gap",
           "original_provenance": "Corpus-derived from poke-corpus GoldSilver (gs.start_menu.StartMenu.PokegearString); the cart's own start-menu label, keeping the engine's <PO><KE> glyph pair for the western spellings."
+        },
+        "m": {
+          "override": "m",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Height: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"m\" in this language.",
+          "original_reason": "engine-contract-gap",
+          "original_provenance": "Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Height: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"m\" in this language."
+        },
+        "kg": {
+          "override": "kg",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"kg\" in this language.",
+          "original_reason": "engine-contract-gap",
+          "original_provenance": "Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"kg\" in this language."
         }
       },
-      "no_op_total": 16
+      "no_op_total": 18
     },
     "fr": {
       "total": 42,
@@ -1205,9 +1233,23 @@
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-derived from poke-corpus GoldSilver (gs.pokedex.Pokedex_DrawSearchScreenBG.Types); the French cart's own Pokédex search label is identical.",
           "original_reason": "engine-contract-gap",
           "original_provenance": "Corpus-derived from poke-corpus GoldSilver (gs.pokedex.Pokedex_DrawSearchScreenBG.Types); the French cart's own Pokédex search label is identical."
+        },
+        "m": {
+          "override": "m",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Height: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"m\" in this language.",
+          "original_reason": "engine-contract-gap",
+          "original_provenance": "Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Height: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"m\" in this language."
+        },
+        "kg": {
+          "override": "kg",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"kg\" in this language.",
+          "original_reason": "engine-contract-gap",
+          "original_provenance": "Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"kg\" in this language."
         }
       },
-      "no_op_total": 26
+      "no_op_total": 28
     },
     "it": {
       "total": 34,
@@ -1563,9 +1605,23 @@
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-derived from poke-corpus GoldSilver (gs.pokedex.Pokedex_DrawOptionScreenBG.Modes); the short Pokédex mode label; the cart's own long mode names (\"A bis Z\", \"Dalla A alla Z\") keep A and Z, so the short form is identical.",
           "original_reason": "engine-contract-gap",
           "original_provenance": "Corpus-derived from poke-corpus GoldSilver (gs.pokedex.Pokedex_DrawOptionScreenBG.Modes); the short Pokédex mode label; the cart's own long mode names (\"A bis Z\", \"Dalla A alla Z\") keep A and Z, so the short form is identical."
+        },
+        "m": {
+          "override": "m",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Height: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"m\" in this language.",
+          "original_reason": "engine-contract-gap",
+          "original_provenance": "Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Height: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"m\" in this language."
+        },
+        "kg": {
+          "override": "kg",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"kg\" in this language.",
+          "original_reason": "engine-contract-gap",
+          "original_provenance": "Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"kg\" in this language."
         }
       },
-      "no_op_total": 20
+      "no_op_total": 22
     },
     "ja-Hrkt": {
       "total": 10,

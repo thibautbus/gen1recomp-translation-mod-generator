@@ -41,7 +41,9 @@ class RealEmeraldTests(unittest.TestCase):
             coverage = gen3_coverage(joined)
             # nearly every extracted line has its official French row
             self.assertGreater(coverage["rom"]["percent"], 99.0)
-            self.assertGreater(coverage["engine_gen3"]["percent"], 99.0)
+            # 98.5, not 99: the 25 cross-game Union Room rows of gen1recomp
+            # v0.3.61 keep their English until a reviewed translation lands
+            self.assertGreater(coverage["engine_gen3"]["percent"], 98.5)
             pointers = json.loads((extracted / "rse_text_pointers.json").read_text(encoding="utf-8"))
             self.assertIn("STRINGID_ATTACKMISSED", pointers)
             self.assertIn("gNatureNamePointers[24]", pointers)

@@ -132,6 +132,7 @@ NON_DISPLAY_FILES: Mapping[str, str] = {
     "src/core/game3/quest_log_recorder.lua": "quest-log event keys",
     "src/core/game3/renewable_hidden_items.lua": "map identifiers",
     "src/core/game3/rom_text.lua": "cache error messages",
+    "src/core/game3/rse/union_rs.lua": "cache error messages (its dialogue goes through Strings())",
     "src/core/game3/runtime.lua": "log lines",
     "src/core/game3/save_schema_firered.lua": "default save names",
     "src/core/game3/scripting/adapters.lua": "default rival name, quest-log keys and log lines",

@@ -641,6 +641,11 @@
       "override": "Diese WUNDERNEWS können\nnicht gelesen werden.",
       "reason": "engine-original",
       "provenance": "AI-generated translation of a string gen1recomp writes itself for Ruby and Sapphire's Mystery Events screen (src/ui/game3/rs/mystery_events.lua), which no cart row matches; worded from the cart's own Mystery Gift rows (gText_AlreadyHadNews, gText_WonderNewsThrownAway, gText_WonderNews); requires in-game visual validation."
+    },
+    "kg": {
+      "override": "kg",
+      "reason": "engine-corpus",
+      "provenance": "Unit after a metric Pokédex weight (src/core/game3/pokedex_units.lua:23): the cart's own weight unit (frlg.common.strings.gText_Lbs, \"lbs.\" on the US cart)."
     }
   }
 }
