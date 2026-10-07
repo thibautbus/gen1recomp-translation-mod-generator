@@ -523,12 +523,12 @@
       "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
     },
     "Which WONDER CARD\nwould you like?": {
-      "override": "どの ふしぎなカードに\nしますか？",
+      "override": "どの　ふしぎなカードに\nしますか？",
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
     },
     "Which WONDER NEWS\nwould you like to read?": {
-      "override": "どの ふしぎなニュースを\nよみますか？",
+      "override": "どの　ふしぎなニュースを\nよみますか？",
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
     },

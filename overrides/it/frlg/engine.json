@@ -518,14 +518,14 @@
       "provenance": "Options group label added by gen1recomp; Identical to English in this language; recorded so the key counts as reviewed rather than as an English fallback."
     },
     "Which WONDER CARD\nwould you like?": {
-      "override": "Quale CARTA MERAVIGLIA\nvuoi?",
+      "override": "Quale SCHEDA SEGRETA\nvuoi?",
       "reason": "engine-original",
-      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation; named with the cart's own term (gText_WonderCards / gText_WonderNews)."
     },
     "Which WONDER NEWS\nwould you like to read?": {
-      "override": "Quale NOTIZIA MERAVIGLIA\nvuoi leggere?",
+      "override": "Quale NOTIZIA SEGRETA\nvuoi leggere?",
       "reason": "engine-original",
-      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation; named with the cart's own term (gText_WonderCards / gText_WonderNews)."
     },
     "Which move?": {
       "override": "Quale mossa?",

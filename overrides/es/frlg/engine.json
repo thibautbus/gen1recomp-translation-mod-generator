@@ -523,14 +523,14 @@
       "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
     },
     "Which WONDER CARD\nwould you like?": {
-      "override": "¿Qué CARTA MÁGICA\nquieres?",
+      "override": "¿Qué TARJETA MISTERIOSA\nquieres?",
       "reason": "engine-original",
-      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation; named with the cart's own term (gText_WonderCards / gText_WonderNews)."
     },
     "Which WONDER NEWS\nwould you like to read?": {
-      "override": "¿Qué NOTICIA MÁGICA\nquieres leer?",
+      "override": "¿Qué NOTICIAS MISTERIOSAS\nquieres leer?",
       "reason": "engine-original",
-      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation."
+      "provenance": "AI-generated translation of a string gen1recomp writes itself for its own link and Mystery Gift screens; worded from the cart's own vocabulary; requires in-game visual validation; named with the cart's own term (gText_WonderCards / gText_WonderNews)."
     },
     "Which move?": {
       "override": "¿Qué movimiento?",
