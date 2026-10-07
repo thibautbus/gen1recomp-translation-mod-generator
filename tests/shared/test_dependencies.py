@@ -531,6 +531,64 @@ class DependencyTests(unittest.TestCase):
                               opener=lambda url: self.fail("the verified copy should have been reused"))
             self.assertEqual((destination / "src/main.lua").read_bytes(), b"drifted")
 
+    def test_download_tries_a_stalled_connection_again(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); archive = root / "fonts.zip"
+            with zipfile.ZipFile(archive, "w") as z:
+                z.writestr("font.ttf", b"ttf")
+            digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+            calls = []
+            def flaky(url):
+                calls.append(url)
+                if len(calls) < dependencies.DOWNLOAD_ATTEMPTS:
+                    raise TimeoutError("timed out")
+                return _Response(archive.read_bytes())
+            destination = fetch_archive("https://example/fonts.zip", digest, root / "fonts", opener=flaky)
+            self.assertEqual(len(calls), dependencies.DOWNLOAD_ATTEMPTS)
+            self.assertEqual((destination / "font.ttf").read_bytes(), b"ttf")
+
+            calls.clear()
+            def dead(url):
+                calls.append(url)
+                raise TimeoutError("timed out")
+            with self.assertRaises(TimeoutError):
+                fetch_archive("https://example/fonts.zip", digest, root / "other", opener=dead)
+            self.assertEqual(len(calls), dependencies.DOWNLOAD_ATTEMPTS)
+            self.assertFalse((root / "other").exists())
+            self.assertEqual(list(root.glob("dependency-*.zip")), [])
+
+    def test_download_does_not_retry_a_missing_file_or_a_wrong_archive(self):
+        import urllib.error
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            calls = []
+            def missing(url):
+                calls.append(url)
+                raise urllib.error.HTTPError(url, 404, "Not Found", {}, None)
+            with self.assertRaises(urllib.error.HTTPError):
+                fetch_archive("https://example/fonts.zip", "0" * 64, root / "fonts", opener=missing)
+            self.assertEqual(len(calls), 1)
+            calls.clear()
+            wrong = lambda url: (calls.append(url) or _Response(b"not the pinned archive"))
+            with self.assertRaisesRegex(DependencyError, "hash mismatch"):
+                fetch_archive("https://example/fonts.zip", "0" * 64, root / "fonts", opener=wrong)
+            self.assertEqual(len(calls), 1)
+
+    def test_file_manifest_tries_a_stalled_connection_again(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            payload = b"symbols"
+            calls = []
+            def flaky(url):
+                calls.append(url)
+                if len(calls) == 1:
+                    raise ConnectionResetError("reset")
+                return _Response(payload)
+            destination = fetch_files("https://example/pret", {"a.sym": hashlib.sha256(payload).hexdigest()},
+                                      root / "pret", opener=flaky)
+            self.assertEqual(len(calls), 2)
+            self.assertEqual((destination / "a.sym").read_bytes(), payload)
+
     def test_default_download_gives_up_on_a_stalled_connection(self):
         with patch("urllib.request.urlopen") as urlopen:
             dependencies._default_opener("https://example/fonts.zip")
