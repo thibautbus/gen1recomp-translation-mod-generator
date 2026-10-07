@@ -514,8 +514,9 @@ guess.
   `feat/metric-pokedex-units` prints it as `Strings("GR. ???m")` and
   `Strings("GEW. ???kg")`, and adds the Gen 2 and Gen 3 printers along
   with `src/core/game3/pokedex_units.lua`. main.lua patches the species
-  only when that module loads, so until a release carries the branch the
-  Pokédex keeps feet, inches and pounds. The metric branch always writes
+  at every revision, since a Red/Blue game may not load a Gen 3 module, so
+  until a release carries the branch an entry seen but not caught prints
+  no height or weight. The metric branch always writes
   the decimal with a comma (`:274`), which the Japanese carts do not use.
 
 ### Fixed: Surfing Pikachu/Hall of Fame HUD text rewritten upstream
@@ -1307,7 +1308,7 @@ Fixed on `fix/gsc-stat-message-word-order`.
 
 ### Required upstream capabilities
 
-- **Pokédex heights and weights in metres and kilograms.** The #DEX page prints the US cart's height in feet and inches and its weight, in tenths of a pound, after the `lb` label (`ui/gen2/PokedexMenu.lua:1045`, `:1062`); the localized carts print metres and kilograms (`gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight`). The translations label that weight `kg`, so until the engine prints metric values the number is a pound value under a kilogram label (Bulbasaur's 15.2 for 6.9 kg). The gen1recomp branch `feat/metric-pokedex-units` prints a species' `dexEntry.heightM` and `weightKg` before `Strings("m")` and `Strings("kg")`; the mod already ships every species' official values (`lang/species_metrics.lua`, as for Red/Blue) and patches them in once the engine carries `src/core/game3/pokedex_units.lua`. The new `m` and `kg` keys are the same as the English in the European languages; the Japanese and Korean carts' full-width `ｍ` and `ｋｇ` need overrides once the pin carries the keys.
+- **Pokédex heights and weights in metres and kilograms.** The #DEX page prints the US cart's height in feet and inches and its weight, in tenths of a pound, after the `lb` label (`ui/gen2/PokedexMenu.lua:1045`, `:1062`); the localized carts print metres and kilograms (`gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight`). The translations label that weight `kg`, so until the engine prints metric values the number is a pound value under a kilogram label (Bulbasaur's 15.2 for 6.9 kg). The gen1recomp branch `feat/metric-pokedex-units` prints a species' `dexEntry.heightM` and `weightKg` before `Strings("m")` and `Strings("kg")`; the mod already ships every species' official values (`lang/species_metrics.lua`, as for Red/Blue) and patches them in at every revision, as a Gold/Silver game may not load a Gen 3 module: the #DEX page ignores them until a release carries the branch. The new `m` and `kg` keys are the same as the English in the European languages; the Japanese and Korean carts' full-width `ｍ` and `ｋｇ` need overrides once the pin carries the keys.
 
 Still genuinely out of reach: these have no public hook at all, only a
 hardcoded local table or a `self:say(...)`/`:drawBottomLines(...)` call, so

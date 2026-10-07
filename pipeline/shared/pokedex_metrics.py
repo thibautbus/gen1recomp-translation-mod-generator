@@ -20,11 +20,25 @@ from .dependencies import DependencyError, fetch_files
 POKEDEX_ENTRIES_FILE = "pokedex_entries.h"
 
 # The main.lua loop patching every species with its metric height and
-# weight; ``catalog`` is the generated main's own catalog reader.  An engine
-# without src/core/game3/pokedex_units.lua prints feet, inches and pounds
-# whatever a species carries (and nothing at all on a Red/Blue entry seen
-# but not caught), so the mod leaves its species alone there.
+# weight; ``catalog`` is the generated main's own catalog reader.  Red/Blue's
+# and Gold/Silver's mods patch at every engine revision: their games may not
+# load a Gen 3 module (src/mods/Loader.lua, crossGenerationDenial), and an
+# engine without the metric printers takes the values all the same (Red/Blue's
+# page already prints a caught entry's, Gold/Silver's #DEX ignores them).
 SPECIES_METRICS_HOOK = """  -- Pokedex heights and weights in metres and kilograms, as the European
+  -- and Japanese carts print them: the Pokedex prints a species'
+  -- dexEntry.heightM and weightKg instead of feet, inches and pounds.
+  for id, value in pairs(catalog("species_metrics")) do
+    if type(value) == "table" and value[1] and value[2] then
+      mod.content.pokemon:patch(id, { dexEntry = { heightM = value[1], weightKg = value[2] } })
+    end
+  end
+"""
+
+# The Gen 3 mods' loop.  A Gen 3 engine without
+# src/core/game3/pokedex_units.lua prints feet, inches and pounds whatever a
+# species carries, so the mod leaves its species alone there.
+GEN3_SPECIES_METRICS_HOOK = """  -- Pokedex heights and weights in metres and kilograms, as the European
   -- and Japanese carts print them: the Pokedex prints a species'
   -- dexEntry.heightM and weightKg instead of feet, inches and pounds.
   if pcall(require, "src.core.game3.pokedex_units") then

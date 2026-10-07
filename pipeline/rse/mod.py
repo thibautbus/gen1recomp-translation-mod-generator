@@ -43,7 +43,7 @@ from ..gen3.mod import (
 from ..shared.builder import BuildError, _run
 from ..shared.corpus import canonical_language
 from ..shared.generate import lua_string
-from ..shared.pokedex_metrics import SPECIES_METRICS_HOOK, lua_catalog, prepare_pokedex_metrics, species_metrics
+from ..shared.pokedex_metrics import GEN3_SPECIES_METRICS_HOOK, lua_catalog, prepare_pokedex_metrics, species_metrics
 from ..shared.mod_assets import TRANSLATION_MOD_PRIORITY
 from ..shared.project import project_config, project_version, resource_root
 from ..shared.roms import (
@@ -237,7 +237,7 @@ def generate_rse_mod(
     if species_metrics:
         (lang_dir / "species_metrics.lua").write_text(
             lua_catalog(species_metrics, "species_metrics"), encoding="utf-8")
-        registration += SPECIES_METRICS_HOOK
+        registration += GEN3_SPECIES_METRICS_HOOK
     (destination / "main.lua").write_text(MAIN.replace("__CATALOG_REGISTRATION__", registration),
                                           encoding="utf-8")
 

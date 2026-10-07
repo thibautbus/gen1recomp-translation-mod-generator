@@ -982,8 +982,8 @@ class BuilderTests(unittest.TestCase):
             self.assertIn('for id, value in pairs(catalog("species_metrics")) do', main)
             self.assertIn("dexEntry = { heightM = value[1], weightKg = value[2] }", main)
             self.assertLess(main.index('catalog("species_metrics")'), main.rfind("\nend"))
-            self.assertIn("weightKg = value[2] } })\n      end\n    end\n  end\n", main)
-            self.assertIn('if pcall(require, "src.core.game3.pokedex_units") then', main)
+            self.assertIn("weightKg = value[2] } })\n    end\n  end\n", main)
+            self.assertNotIn("src.core.game3", main)
 
     def test_scaffold_type_names_injection_falls_back_when_block_drifts(self):
         # The exact statuses block is scaffold-owned; if its spacing drifts

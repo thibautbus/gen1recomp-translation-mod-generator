@@ -9,7 +9,7 @@ from pipeline.gsc.mod import generate_gs_mod
 from pipeline.rse.mod import generate_rse_mod
 from pipeline.shared.builder import BuildError
 from pipeline.shared.pokedex_metrics import (
-    SPECIES_METRICS_HOOK, lua_catalog, parse_pokedex_metrics, species_metrics,
+    GEN3_SPECIES_METRICS_HOOK, SPECIES_METRICS_HOOK, lua_catalog, parse_pokedex_metrics, species_metrics,
 )
 
 
@@ -78,13 +78,15 @@ class SpeciesMetricsHookTest(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.tmp)
 
-    def assertShipsMetrics(self, mod):
+    def assertShipsMetrics(self, mod, hook=GEN3_SPECIES_METRICS_HOOK):
         self.assertIn('["BULBASAUR"] = { 0.7, 6.9 },',
                       (mod / "lang" / "species_metrics.lua").read_text(encoding="utf-8"))
-        self.assertIn(SPECIES_METRICS_HOOK, (mod / "main.lua").read_text(encoding="utf-8"))
+        self.assertIn(hook, (mod / "main.lua").read_text(encoding="utf-8"))
 
     def test_gold_silver_and_crystal(self):
-        self.assertShipsMetrics(generate_gs_mod(self.tmp / "mod", language="fr", species_metrics=METRICS))
+        mod = generate_gs_mod(self.tmp / "mod", language="fr", species_metrics=METRICS)
+        self.assertShipsMetrics(mod, SPECIES_METRICS_HOOK)
+        self.assertNotIn("src.core.game3", (mod / "main.lua").read_text(encoding="utf-8"))
 
     def test_firered_and_leafgreen(self):
         self.assertShipsMetrics(generate_frlg_mod(
@@ -96,18 +98,16 @@ class SpeciesMetricsHookTest(unittest.TestCase):
                                emerald={"dialogue": {}, "catalogs": {}}, species_metrics=METRICS)
         self.assertShipsMetrics(mod)
 
-    def test_patches_only_an_engine_that_prints_them(self):
+    def probe(self, mod):
         luajit = shutil.which("luajit")
         if not luajit:
             self.skipTest("LuaJIT unavailable")
-        mod = generate_frlg_mod(self.tmp / "mod", language="fr", target_name="French", dialogue={},
-                                catalogs={}, species_metrics=METRICS)
         probe = """
 local dir, units = ...
 if units == "yes" then package.preload["src.core.game3.pokedex_units"] = function() return {} end end
 local patched = {}
-local registry = { patch = function(_, id, value) patched[#patched + 1] = id .. "=" .. value.dexEntry.heightM .. "/" .. value.dexEntry.weightKg end,
-                   override = function() end }
+local registry = setmetatable({ patch = function(_, id, value) patched[#patched + 1] = id .. "=" .. value.dexEntry.heightM .. "/" .. value.dexEntry.weightKg end },
+                               { __index = function() return function() end end })
 local mod = { content = setmetatable({}, { __index = function() return registry end }),
               read = function(_, path) local f = io.open(dir .. "/" .. path) if not f then return nil end
                                        local body = f:read("*a") f:close() return body end }
@@ -116,10 +116,19 @@ io.write(table.concat(patched, ","))
 """
         script = self.tmp / "probe.lua"
         script.write_text(probe, encoding="utf-8")
-        run = lambda units: subprocess.run([luajit, str(script), str(mod), units], capture_output=True,
-                                           text=True, check=True).stdout
+        return lambda units: subprocess.run([luajit, str(script), str(mod), units], capture_output=True,
+                                            text=True, check=True).stdout
+
+    def test_gen3_patches_only_an_engine_that_prints_them(self):
+        run = self.probe(generate_frlg_mod(self.tmp / "mod", language="fr", target_name="French", dialogue={},
+                                           catalogs={}, species_metrics=METRICS))
         self.assertEqual(run("yes"), "BULBASAUR=0.7/6.9")
         self.assertEqual(run("no"), "")
+
+    def test_gold_and_silver_patch_without_probing_a_gen3_module(self):
+        run = self.probe(generate_gs_mod(self.tmp / "mod", language="fr", species_metrics=METRICS))
+        self.assertEqual(run("yes"), "BULBASAUR=0.7/6.9")
+        self.assertEqual(run("no"), "BULBASAUR=0.7/6.9")
 
 
 if __name__ == "__main__":

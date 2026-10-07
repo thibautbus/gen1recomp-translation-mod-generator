@@ -58,7 +58,7 @@ from ..gen3.mod import (
 from ..gen3.text import load_charmap, load_symbols, text_key_address
 from .start_menu import join_start_menu
 from ..shared.generate import lua_string
-from ..shared.pokedex_metrics import SPECIES_METRICS_HOOK, lua_catalog, prepare_pokedex_metrics, species_metrics
+from ..shared.pokedex_metrics import GEN3_SPECIES_METRICS_HOOK, lua_catalog, prepare_pokedex_metrics, species_metrics
 from ..shared.mod_assets import TRANSLATION_MOD_PRIORITY
 from ..shared.project import project_config, project_version, resource_root
 from ..shared.roms import import_frlg_rom, verify_firered_rom, verify_leafgreen_rom
@@ -199,7 +199,7 @@ def generate_frlg_mod(
     if species_metrics:
         (lang_dir / "species_metrics.lua").write_text(
             lua_catalog(species_metrics, "species_metrics"), encoding="utf-8")
-        registration += SPECIES_METRICS_HOOK
+        registration += GEN3_SPECIES_METRICS_HOOK
     main = MAIN.replace("__CATALOG_REGISTRATION__", registration).replace(
         "__START_MENU_REGISTRATION__", _START_MENU_REGISTRATION if start_menu else "")
     (destination / "main.lua").write_text(main, encoding="utf-8")
