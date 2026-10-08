@@ -1,0 +1,1713 @@
+# Translation: upstream fixes history
+
+This file keeps the investigations, pin-bump audits and fix narratives that used to sit in [upstream-fixes.md](upstream-fixes.md). That file says what a translation mod can and cannot reach at the pinned gen1recomp revision and lists each fixed item in one line; the detail behind each line is here, under the same game headings.
+
+Nothing here is the current state. Each section was written against the revision it names (or, when it names none, against the pin of its time), and its file:line citations and figures refer to that revision. Cross-references such as "above" or "below" refer to the single-file layout these sections were written in; the section titles here keep their old wording so they can still be found. For the current state, read [upstream-fixes.md](upstream-fixes.md).
+
+## RBY
+
+### RBY: verified-working investigations
+
+The SummaryMenu's own stat labels (`NAME`, `ATTACK`, `DEFENSE`, `SPEED`,
+`SPECIAL`) are **not** blocked, despite each needing a `forced_dynamic_keys`
+entry in `config/shared/engine_manifest.json` to be reachable at all: the
+callsite (`ui/SummaryMenu.lua:150-157`) reads them from a runtime table
+(`Strings(s[1])`), which a static literal scanner cannot see, so they must be
+force-added to the catalog by key -- but `Strings()` itself is an ordinary
+runtime lookup by string value, indifferent to whether the call site used a
+literal or a variable. `config/rby/semantic_anchors.json` already carries a
+working anchor for all five (`rb.stat_names.VitaminStats.2-5`,
+`rb.start_sub_menus.TrainerInfo_NameMoneyTimeText`), confirmed translated
+(`fr`: `FOR`/`DEF`/`VIT`/`SPE`/`NOM`) in a real build's generated
+`strings.lua`. (A prior version of this README's "Remaining limitations"
+listed these as English-only; that was stale.)
+
+If a future gen1recomp version rewrote this callsite to pass a literal
+(`Strings("ATTACK")` per case instead of `Strings(s[1])`), the scanner would
+discover it on its own and `forced_dynamic_keys` would no longer be needed
+to make the key reachable -- and the anchors themselves would likely become
+redundant too, not just the manual catalog entry. Two things confirm this
+rather than just the scanner gap: `corpus_to_engine("ATTACK@")` already
+strips the trailing `@` down to plain `"ATTACK"`, the same normalization
+ordinary aligned records get before exact/normalized auto-matching runs;
+and although `ATTACK@` appears at two RedBlue qids
+(`rb.stat_names.VitaminStats.2` and `rb.stat_mod_names.StatModTextStrings.0`),
+both carry the identical translation in every shipped language (`fr`: `FOR`
+for both), so the duplicate would not make an automatic match unsafe. The
+anchors would stay harmless to keep either way -- explicit anchors still
+win over auto-matching in the resolution order -- but the manual upkeep
+they represent could be dropped.
+
+Yellow's Melanie's House dialogue (`MelanieText1-5`, `MelanieBulbasaurText`,
+`MelanieOddishText`, `MelanieSandshrewText`) looked like the same "extractor
+skips labels without a leading underscore" gap as several RBY sites
+investigated below, since those labels don't have one either. It isn't a
+gap: `tools/make_yellow_manifest.py`'s `YELLOW_EXTRA_TEXT_LABELS` already
+force-includes all eight into the Yellow manifest, and a real built
+`dialogue_yellow.lua` already carries correct French translations for
+them. (A prior version of this doc listed this as still open; that was
+stale.)
+
+Poison/burn's two `Strings.source()` literals (`_HurtByPoisonText`/
+`_HurtByBurnText`'s defensive fallback in `damageOverTime()`) were
+reclassified from `engine-contract-gap` (a translated-but-compromise
+override) to `covered-by-rom` in `config/rby/engine_scope.json`'s
+`key_scope_overrides`: the fallback only ever renders if those ROM labels
+are missing from `data.text`, which they aren't in any real RB or Yellow
+build, so the AI-translated override was dead code with nothing upstream
+to wait on. Same shape as 15 other `covered-by-rom` keys already
+classified this way (`_OakSpeechText2A`, `"Welcome to our\nPOKéMON
+CENTER!"`, etc.) -- not written up individually here.
+
+**Reading `game.data.text` directly, not through `Strings()`, is not a
+gap.** A prior version of this doc claimed the opposite for a set of
+flavor NPCs, covering 6 `literal_handlers.json` handlers and a "no public
+API to give a Pokémon" blocker on Mt. Moon's Magikarp salesman. That did
+not hold: `src/core/Strings.lua`'s own header explains extracted dialogue
+(`Data.text`) has its own override path, `mod.content.text:override(id,
+value)`, independent of `Strings()`/`mod.content.strings` -- so a script
+reading `t[label]` is translatable regardless of whether it goes through
+`Strings()` first. Confirmed directly against a real build's
+`lang/dialogue.lua`: the Bike Shop's three NPCs and Route 24's
+Nugget-Bridge recruiter were already reading `game.data.text` correctly,
+with translations already present, via gen1recomp's own vanilla scripts
+(`data/scripts/story2.lua`, `story4.lua`,
+`data/scripts/flavor/bike_shop.lua`) -- which are also *more* complete
+than this project's former reimplementations (real bag-capacity checks
+via a `require` unrestricted for core engine code). Those 4 redundant
+handlers were removed from `config/rby/literal_handlers.json`; letting
+vanilla run is simpler and more correct. The same real-build check was
+repeated for every other flavor NPC reading `game.data.text` this way --
+Viridian City's `GAMBLER1`/`GIRL`, Pewter City's `SUPER_NERD1`/
+`SUPER_NERD2`, the 8-NPC `gift()` family in `data/scripts/story5.lua`,
+and Mt. Moon's Magikarp salesman (which also already calls
+`give_pokemon` natively, so "no public API to give a Pokémon" was never
+actually a blocker here) -- all confirmed already correctly translated,
+no config needed. The Pokédex "kind" classification
+(`src/ui/DexEntryMenu.lua:93`) looked like the same deep gap as the
+status-ailment abbreviations above, but isn't: `pipeline/rby/mod.py` already
+has a dedicated `species_kinds` catalog for it. Viridian City's second
+Youngster was the one genuine exception -- two of its three lines had no
+reachable label at all until `fix/text-extractor-underscore-requirement`
+(see "Fixed upstream" below), so it briefly needed its own
+`map_scripts:register` reimplementation. That handler has since been
+removed too: `config/rby/literal_handlers.json` now has 0 handlers, and
+this project's pin includes the fix as of v0.2.19, so a normal pinned
+build shows this NPC's real French text without any workaround.
+
+### RBY: fixed upstream (engine changes, not just this project's config)
+
+- **Pokédex heights and weights in metres and kilograms (gen1recomp#2747,
+  v0.3.61).** The US cart stores and prints feet, inches and pounds; every
+  localized cart prints metres and kilograms (poke-corpus RedBlue
+  `rb.pokedex.HeightWeightText`: `TAI  ???m` / `PDS  ???kg`, `GR.` /
+  `GEW`, `AL` / `PE`, `h` / `P`, `たかさ` / `おもさ`). `ui/DexEntryMenu.lua:250`
+  prints a species' `dexEntry.heightM` and `weightKg` through
+  `Strings("GR. %.1fm")` and `Strings("GEW. %.1fkg")` when the species
+  carries them, so the mod patches every species with its official metric
+  values (`lang/species_metrics.lua`, from pret pokeemerald's
+  `src/data/pokemon/pokedex_entries.h`, pinned as
+  `[pret.pokedex_metrics]`) and translates both formats with the cart's
+  own labels. Before v0.3.61 the metric branch printed nothing for an
+  entry seen but not caught (the cart prints `???m` / `???kg`); since
+  gen1recomp#2747 it prints `Strings("GR. ???m")` and `Strings("GEW.
+  ???kg")`, which the mod translates from the same row. main.lua patches
+  the species at every revision, since a Red/Blue game may not load the
+  Gen 3 module the generation-3 mods probe
+  (`src/core/game3/pokedex_units.lua`). The metric branch always writes
+  the decimal with a comma (`:279`), which the Japanese carts do not use.
+- **Stat-rise messages:** the X-item/vitamin `"rose!"` messages
+  substituted the raised stat's name as a raw Lua string, bypassing
+  `Strings()`. Fixed on gen1recomp `fix/stat-rise-message-translation`
+  (merged, PR #1439); the same bug was also fixed in `battle/TrainerAI.lua`
+  and, Gold-side, in two `battle/gen2/Battle.lua` messages (see Gold
+  below).
+- **Museum 1F's ticket clerk:** three of `museumClerk`'s five lines were
+  bare English literals, never routed through `game.data.text`. Fixed on
+  gen1recomp `fix/museum-1f-ticket-clerk-strings` (merged, PR #1492).
+  `config/rby/literal_handlers.json`'s `museum-1f-ticket-clerk` workaround
+  has been removed -- vanilla handles all five lines correctly on its own.
+- **Status condition abbreviations:** `PSN`/`PAR`/`BRN`/`FRZ`/`SLP` always rendered in English on the summary and party screens (`ui/SummaryMenu.lua:148`, `ui/PartyMenu.lua:824`), never passed through anything translatable. Fixed on gen1recomp `fix/status-abbreviation-translation` (merged, PR #1527). Not through `Strings()`, though: a status abbreviation is translated through the separate `statuses` content registry (`mod.content.statuses:patch(id, { label = value })`), the same one `BattleState.lua`'s in-combat status HUD already reads. This project's existing `status_labels` catalog was already patching it correctly before the merge -- it was just aimed at a callsite that ignored it, so nothing needed to change on this project's side once the fix landed. The same PR also fixed a second, independent bug: `Status.RECORDS`' five vanilla entries duplicated `hudLabel = label` for no reason, and the lookup reads `hudLabel` before `label` -- so even after the callsite fix, this project's `{ label = value }`-only patch was silently shadowed by the untouched vanilla `hudLabel` on every status. Confirmed live before the fix: SLP/BRN/FRZ stayed English, PSN/PAR only looked fine because French keeps the same three letters there. Both fixes shipped together; nothing to patch differently on this project's side.
+
+### RBY: more battle/overworld/menu messages routed through the real ROM text
+
+gen1recomp `fix/route-more-messages-through-romtext` (merged upstream as PR #1559, included in gen1recomp release v0.2.12; this project's pin now includes it as of v0.2.19). 21 real ROM labels that only ever had a `Strings()` call with an adapted/approximate source now call `romText()`/`self:romText()` with their real extracted ROM label instead, so they show the corpus's official localized phrasing rather than the AI-adapted compromise. `tests/engine/` gained 7 new regression tests, one per message family, each driving the real interactive flow (or faking `Game`/`TextBox` via `debug.setupvalue` where there's no state to drive directly) and asserting the routed text. Manually verified in-game (French mod, Windows build) for 9 of 11 distinct scenarios, comparing `dev` against the branch side by side -- the slot machine's 3-symbol match and a link battle were left uncovered live (both awkward to trigger on demand), relying instead on the automated/static checks. This live pass caught one real bug the automated tests missed (see `_ItemUseBallText00` below), now fixed on the same branch. The rows below name what each fixed call site retires from the compromise table below -- **not yet re-audited against the bumped pin**: several are explicitly partial (a row shared with another, untouched call site only loses one of its collapsed contexts), so the compromise table itself is left untouched here rather than edited without the same live-build verification the rest of this doc relies on:
+
+- `_PlayerBlackedOutText2` (`BattleState:enter()`): merges the two-line
+  black-out message into one `\f`-paged call (previously two separate
+  `Strings()` calls joined with `.. "\f" ..`).
+- `_TrainerSentOutText`/`_AIBattleWithdrawText` (4 call sites in
+  `BattleState.lua`): trainer send-out/withdraw lines.
+- `_ItemUseBallText06`/`_ItemUseBallText07`/`_ItemUseBallText08`
+  (`BattleState:storeCaughtMon`): the PokéDex-added message, and the
+  box-transfer message (previously one `Strings()` source manually
+  switched between "BILL's PC"/"someone's PC", now two real labels picked
+  on `EVENT_MET_BILL`); retires the `%s was\ntransferred to\n%s!` row.
+- `_ItemUseBallText00` (`BattleState:throwBall`): retires the
+  `This POKéMON\ncan't be caught!` row. Resolves the dodge +
+  can't-be-caught two-liner as one `\f`-paged `romText()` call, then
+  splits the result into two `sayNext()` pages itself -- confirmed live
+  that the battle queue's own `startMessage()` (unlike `TextBox.lua`)
+  does not page on `\f`, so a single `sayNext()` call with the raw
+  `\f` still inside it overflowed the second sentence off the box.
+- `_PlayerMonFaintedText`/`_EnemyMonFaintedText` (`BattleState:onFaint`) and
+  `_PokemonFaintedText` (`OverworldController:applyFieldPoison`): retires
+  the `%s\nfainted!` row's three collapsed contexts -- `_EnemyMonFaintedText`
+  already carries its own "Enemy " wording, so this passes the raw name
+  instead of `displayName`'s separate `Strings("Enemy %s", ...)`.
+- `_ItemUseNoEffectText`/`_PotionText`
+  (`OverworldController:useSoftboiledFieldMove`): retires this call site's
+  share of the `It won't have\nany effect.` row (still shared with
+  `ItemEffects.lua`/`PartyMenu.lua`'s own call sites, untouched here); the
+  healing message now also passes the real recovered-HP amount
+  `_PotionText` expects, which the `Strings()` fallback never showed.
+- `_FoundItemText`/`_FoundHiddenItemText` (4 call sites in
+  `OverworldController.lua`): retires the `%s found\n%s!` row's two
+  collapsed contexts.
+- `_OnceReleasedText` (`BoxMenu.lua`'s `release()`): retires the
+  `Once released,\n%s is\ngone forever. OK?` row. `_MonWasReleasedText`,
+  the "X was released outside. Bye X!" follow-up shown right after
+  confirming, was missed in an earlier pass and only caught testing the
+  flow live -- same `t._X or Strings(...)` pattern, fixed alongside it.
+- `_LinedUpText` (`SlotMachine:resolveWin`): retires the
+  `%s lined up!\nScored %d coins!` row.
+- `_PokemartTellBuyPriceText`/`_PokemartTellSellPriceText`
+  (`ShopMenu.lua`'s `buy()`/`sell()`): buy/sell price confirmations,
+  previously untracked in the compromise table.
+- `_TrainerWantsToFightText` (`LinkBattle.new`): link-battle opening line,
+  previously untracked in the compromise table.
+
+Two things this same sweep confirmed should **not** change:
+
+- **`_TrainerAboutToUseText`** (the SHIFT-switch prompt,
+  `BattleState:enemyMonFainted`): tried merging its `say()` + `sayChoice()`
+  pair into one `\f`-paged `romText()` + `sayChoice()` call, the same way
+  as `_ItemUseBallText00` above. `tests/engine/trainer_shift_prompt_bug565.lua`
+  caught it immediately (wrong line count, no `\f` paging) -- the battle
+  queue's own text renderer behind `sayChoice()` doesn't page `\f` the way
+  `TextBox.lua` does for `sayNext()`/`say()`. Left as the original two
+  separate `Strings()` calls, with a code comment recording why. Not a
+  translation gap either way: both fragments already render correctly
+  today via the compromise mechanism, confirmed in a real fr build
+  (`"%s is\nabout to use\n%s!"` -> `"%s\nva appeler...\n%s!"`,
+  `"Will %s\nchange POKéMON?"` -> `"%s va-t-il\nchanger de POKéMON?"`) --
+  this is purely about which mechanism serves it, not whether it's
+  translated.
+- **`MoveEffects.lua`'s stat-rise/fall messages** (`changeStage`'s four
+  rose/greatly-rose/fell/greatly-fell variants): already covered by the
+  reordered-arguments compromise table below (`%s's %s\nrose!` row) -- not
+  a new gap, just confirmed the existing entry already accounts for it.
+  Confirmed there is no upgrade available here even in principle: the
+  real ROM labels (`_MonsStatsRoseText`/`_MonsStatsFellText`) extract as
+  `"{USER}'s\n{RAM:wStringBuffer}"`/`"{TARGET}'s\n{RAM:wStringBuffer}"` --
+  the second line is just a pointer to a RAM buffer pokered fills at
+  runtime with the stat name and verb ("ATTACK rose!", "SPCL.DEF greatly
+  fell!", ...) via ASM logic the static text extractor never captures.
+  Routing through `romText()` here would show the exact same generic
+  template the compromise already shows, so there is nothing to retire.
+- **Argument-reordering/fragmentary-source compromise rows** (`%sBOX %2d`,
+  `PLAYER %s\nBADGES %d\nPOKéDEX %3d\nTIME %6d:%02d`, `HT`/`WT`/`BADGES`,
+  and the stat-rise row above): explicitly out of scope for this sweep --
+  these need the engine's callsite itself to change its `printf` argument
+  order or stop fragmenting the sentence, not just a `romText()` label
+  swap, so they stay as compromise entries until a template-level upstream
+  fix is worth doing.
+- **Swept for the same reversed-argument bug class found in GSC's
+  `overrides/<language>/gsc/engine.json`** (see "Stat-change and item/
+  move status messages" below): every `Strings()`/`S()` call outside
+  `gen2`/`link` with two or more `printf` directives was checked against
+  its real callsite argument order and poke-corpus RedBlue/Yellow text
+  in fr/de/es/it/ja-Hrkt (real build output,
+  `.cache/interactive/<language>/mod/lang/strings.lua`, not just this
+  file's ~1 explicit override -- most of RBY's translated content
+  resolves automatically through the semantic-anchor/corpus-match
+  mechanism rather than a manually-curated override, unlike GSC's
+  hand-curated compromise entries). Found clean: `"%s learned\n%s!"`,
+  `"%s is\nabout to use\v%s!"`, and the stat-rise/fall family above are
+  all already POKéMON/TRAINER-first in every language, matching their
+  callsite argument order. `"%s\nwas afflicted\nby %s!"` and the two
+  `"%s received..."` messages resolve to nothing in every language
+  checked (an untranslated coverage gap, not a wrong-order bug) --
+  out of scope for this sweep.
+
+### RBY: pokered dialogue labels were missing from data/generated/text.lua
+
+gen1recomp `fix/text-extractor-underscore-requirement` (merged upstream as PR #1598, included in gen1recomp release v0.2.12; this project's pin now includes it as of v0.2.19 -- see the "Required upstream capabilities" bullet below for what still isn't covered by this fix alone). Started from the same "extractor requires a leading underscore" theory as a prior version of this doc, but tracing it against a real `pret/pokered` checkout turned up a more precise picture -- there are two independent, differently-behaved label scanners in gen1recomp:
+
+- `tools/extract/text.py`'s `parse_text_file()` does require `_`, and that's a real bug in isolation -- but nothing in the codebase calls this function (no importer, no `__main__` entry point). It looks like dead code from an earlier version of the pipeline.
+- The function that actually produces the shipped label list is `text_metadata()` in `tools/make_rom_manifest.py`, feeding `manifest["text"]["labels"]`, which `build_rom_data.py`'s `extract_text()` decodes straight from a ROM. `text_metadata()` already uses the permissive regex (no `_` requirement) since gen1recomp commit `0f581e2f`.
+
+So the real blocker is that the *committed* `tools/rom_manifest.json` is stale relative to `text_metadata()`'s current code, not a source bug. Verified live: running `text_metadata()` today against a real pokered checkout returns 2595 labels including everything below; the committed manifest only has 2585. Cross-checked against a real built French `dialogue.lua`/`dialogue_yellow.lua` to see exactly what's actually missing from a shipped build today:
+
+- **Confirmed missing at the time** (10 labels): both of Viridian City's second Youngster's lines, `TMNotebookText`, the SS Anne kitchen cook's three dish lines, the Viridian fisher's pre-gift line, and three never-previously-documented lines at Silph Co. 9F's nurse (`SilphCo9FNurseDontGiveUpText`/`ThankYouText`/`YouLookTiredText`). **Since resolved for 7 of the 10**, re-verified against the current v0.2.51 pin's own committed manifest (now 2595 labels, matching `text_metadata()`'s live output) and a real built French `dialogue.lua`: the Youngster's two lines, `TMNotebookText`, the three SS Anne dish lines and the Viridian fisher's line all carry real French text today. Only Silph Co. 9F's nurse (3 lines) is still genuinely blocked -- see "Required upstream capabilities" below for why the manifest regeneration alone doesn't reach it.
+- **Confirmed already fine** (9 labels): `SilphCo2FSilphWorkerFPleaseTakeThisText` (likely hand-fixed for issue #393 without a full manifest regeneration) and all eight of Yellow's Melanie's House labels (see "Verified working, not a gap" above -- `YELLOW_EXTRA_TEXT_LABELS` already covers that one, it was never actually broken).
+
+`tools/extract/text.py`'s regex was relaxed anyway, for consistency with `text_metadata()` -- harmless since nothing calls it, but no reason to leave a dead copy of the same scanner out of sync. Four of gen1recomp's own hand-ported scripts were carrying the confirmed-missing labels' English text as inline literals (no `game.data.text` lookup at all) and got fixed to read the real label first, same `t[label] or fallback` pattern used everywhere else -- ready to pick up the real text as soon as someone with ROM access regenerates the manifest, which this contribution can't do itself:
+
+- `data/scripts/celadon_eevee.lua` (`TMNotebookText`, the TM pamphlet).
+- `data/scripts/flavor/ss_anne_kitchen.lua` (the cook's three dish lines).
+- `data/scripts/flavor/viridian_city.lua` (both of the second Youngster's caterpillar-description lines).
+- `data/scripts/story5.lua` (the SilphCo2F worker's and Viridian fisher's pre-gift lines -- these already read `t[label]` via the generic `gift()` helper, so only their stale comments needed correcting, plus a real English fallback added where the worker's was missing).
+
+Verified end-to-end ahead of the merge: built the branch's manifest for real against a ROM (see the branch's own commit message for the full byte-for-byte verification), then built this project's mod against that branch (bypassing the `config/pipeline.toml`/`engine_scope.py` pins programmatically, no committed config touched for that check) and confirmed a real French Windows build reads `ViridianCityYoungster2OkThenText`/`CaterpieAndWeedleDescriptionText` from `lang/dialogue.lua` instead of the `literal_handlers.json` override -- side by side against the still-pinned v0.1.91 build, only the fixed branch showed French, the pinned build still showed the hardcoded English literal, exactly as expected. `config/rby/literal_handlers.json`'s `viridian-city-youngster2` handler was removed on that strength, ahead of both the gen1recomp PR being opened and this project's pin catching up -- a deliberate call, not an oversight (see "Verified working, not a gap" above). The PR merged upstream in v0.2.12, and this project's pin was bumped to v0.2.19 (which contains it): a normal pinned build now shows this Youngster's real French text too, with no regression window left open. Silph Co. 9F's nurse needs more than the manifest regeneration alone -- see "Required upstream capabilities" below.
+
+### RBY: the compromise tables before numbered directives
+
+A snapshot from the v0.2.x pins, kept for its reasoning. It no longer matches `overrides/<language>/rby/engine.json`: several keys below (`%s's %s\nrose!`, `%sBOX %2d`, `HT %d′%02d″`, `WT %.1flb`) are gone from the engine, the counts differ, and since `Strings()` accepts numbered directives (gen1recomp#2346, v0.2.67) the stat-change rows ship the cart's own order where the language puts the stat first. Each override's `reason` and `provenance` are authoritative.
+
+Everything in "Required upstream capabilities" below renders in **English**
+with no override reaching it at all. This section is different: every entry
+here already shows **translated** text in-game today, through
+`overrides/<language>/rby/engine.json`. They are tracked here anyway because
+the override is a compromise, not the real localized phrasing -- the
+pipeline tags each one `"reason": "engine-contract-gap"` and records why in
+its `provenance` field. The goal is to retire this whole section over time:
+each row names the concrete engine change that would let the corpus's real,
+official localized text replace the compromise. Until then the compromise
+stays live and correct-enough, not broken.
+
+Two distinct shapes of compromise, both summarized below (fr shown; every
+shipped language carries its own compromise the same way, see each
+`overrides/<language>/rby/engine.json`):
+
+**Engine-authored settings/launcher labels** (31 entries,
+`config/shared/engine_manifest.json`'s `engine_dynamic_values`, each with a
+real callsite, `eligibility: "ineligible"`): these are modern
+launcher/options UI, not ROM text, so there is no PokeCorpus qid to match
+against at all -- the override is either an AI-generated translation
+(flagged `requires in-game visual validation` in its provenance) or the
+acronym/label kept as-is where translating it would lose meaning (`SGB`,
+`GBC`, `SGB INV`).
+
+| Source | fr override | Callsite |
+|---|---|---|
+| `OG RED` | `OG ROUGE` | `ui/OptionsMenu.lua:276`, `import/LauncherSettings.lua:118` (`PaletteFX.modeLabel`) |
+| `OG BLUE` | `OG BLEU` | same as above |
+| `OG YELLOW` | `OG JAUNE` | same as above |
+| `SGB` | `SGB` (kept) | same as above |
+| `ADVANCED` | `AVANCE` | same as above |
+| `OG INV` | `ORIG. INV` | same as above |
+| `SGB INV` | `SGB INV` (kept) | same as above |
+| `CLASSIC` | `CLASSIQUE` | same as above |
+| `GBC` | `GBC` (kept) | same as above |
+| `WINDOWED` | `FENETRE` | `ui/OptionsMenu.lua:346`, `import/LauncherSettings.lua:169` (`VideoMode.modeLabel`) |
+| `BORDERLESS` | `SANS BORD` | same as above |
+| `TREES` | `ARBRES` | `ui/OptionsMenu.lua:330`, `import/LauncherSettings.lua:154` (`TileRenderer.voidFillLabel`) |
+| `WATER` | `EAU` | same as above |
+| `OFF` | (per-context) | `ui/OptionsMenu.lua:251`, `import/LauncherSettings.lua:99` (`FILTERS`/`FaithfulRes`) |
+| `1X` / `2X` / `3X` | (per-context) | `ui/OptionsMenu.lua:251`, `import/LauncherSettings.lua:60` (`FILTERS`/`FaithfulRes`) |
+| `NORMAL` | (per-context) | `ui/OptionsMenu.lua:398`, `import/LauncherSettings.lua:218` (`GameSpeed.levelLabel`) |
+| `AUTO` / `LANDSCAPE` / `PORTRAIT` / `REVERSE LANDSCAPE` | (per-context) | `ui/OptionsMenu.lua:357` (`Orientation.modeLabel`) |
+| `FAST` / `MEDIUM` / `SLOW` | (per-context) | `ui/OptionsMenu.lua:126` (`SPEEDS` table) |
+| `HEAVY` / `LIGHT` | (per-context) | `ui/OptionsMenu.lua:447`, `import/LauncherSettings.lua:250` (`TouchControls.hapticLabel`) |
+| `auto` / `balanced` / `high` / `low` | (per-context) | `ui/OptionsMenu.lua:264` (`Performance.label`) |
+
+**Corpus translations adapted to the engine's argument order or a
+fragmentary source** (6 entries): the real localized ROM phrasing exists in
+the corpus, but the engine's `Strings()` callsite either reorders the
+`printf` arguments differently than the ROM script did, or only passes a
+fragment of the original sentence (a technical field like `HT`/`WT`, a
+standalone label like `BADGES`), so a literal per-fragment translation
+loses grammatical context a single upstream template change could restore.
+
+| Source | fr override | What's missing |
+|---|---|---|
+| `%s's %s\nrose!` | `%s voit son %s\naugmenter !` | Reordered stat arguments at shared callsites |
+| `%sBOX %2d` | `%sBOITE %2d` | Reordered box-name and numeric arguments |
+| `BADGES` | `BADGES` (kept) | Fragmentary standalone source |
+| `HT %d′%02d″` | `HT %d′%02d″` (kept) | Missing unit context around numeric arguments |
+| `WT %.1flb` | `WT %.1flb` (kept) | Missing unit-context argument |
+| `Once released,\n%s is\ngone forever. OK?` | `Une fois libéré,\n%s sera\nperdu à jamais. OK ?` | Reordered release-confirmation context around one argument |
+
+**Corpus translations shared across multiple, incompatible original
+contexts** (2 entries): the engine collapses several different ROM strings
+into one `Strings()` source key, so one override has to serve every context
+even though the original ROM script used different phrasing for each --
+only a callsite split upstream (one key per context) would let each one
+carry its real, distinct localized text.
+
+| Source | fr override | Original contexts collapsed together |
+|---|---|---|
+| `%s\nfainted!` | `%s\nest K.O. !` | `rb.text_2.EnemyMonFaintedText`, `rb.text_2.PlayerMonFaintedText`, `rb.text_4.PokemonFaintedText` |
+| `POKéDEX` | `POKéDEX` (kept) | `StartMenu.lua`, `PokedexMenu.lua`, `TitleState.lua`, `HallOfFame.lua` labels, no single upstream qid |
+
+### RBY: keys retired or renamed by the v0.2.19 to v0.2.26 pin bumps
+
+Two of the eight keys retired at v0.2.19, `%s found\n%s!` and `It won't have\nany effect.`, are engine keys again at v0.3.63 and ship as `engine-contract-gap` overrides (one reviewed row for several cart lines).
+
+**Retired by the v0.2.19 pin bump** (8 entries removed from every language's
+`overrides/<language>/rby/engine.json`): `%s lined up!\nScored %d coins!`,
+`%s was\ntransferred to\n%s!`, `This POKéMON\ncan't be caught!`,
+`PLAYER %s\nBADGES %d\nPOKéDEX %3d\nTIME %6d:%02d`, `evolving!`,
+`%s found\n%s!`, `%s's HP\nwas restored!`, and `It won't have\nany effect.`.
+The first five are named explicitly in "Fixed upstream" above
+(`fix/route-more-messages-through-romtext`, PR #1559); the last three are
+not -- discovered instead by running
+`pipeline.shared.engine_manifest.complete_engine_keys` (the same check
+`pipeline/rby/mod.py`'s real build uses to reject a stale override key) against
+a real v0.2.19 checkout and diffing it against every override file's key
+set. All eight came back with zero matching callsites anywhere in the
+engine, meaning they would have made the next real build fail outright
+with `engine overrides contain N unknown key(s)` had they been left in
+place. That check is only about whether the exact source string still
+exists as *some* callsite anywhere in the whole engine -- RBY or not,
+`romText()`-routed or not -- which is also why `%s\nfainted!` and
+`Once released,...` survive above despite RBY no longer needing either
+override: the former still has a genuine `Strings()` call in Gen2's own
+`world/gen2/World.lua` (unrelated to this project's RBY mod, but enough
+to keep the key valid), and the latter is still a live `Strings()` call
+inside `ui/BoxMenu.lua`'s `t._OnceReleasedText or Strings(...)` fallback
+idiom -- written by hand rather than through the `romText()` helper, so
+the scanner still counts it as a translatable `Strings()` source even
+though `t._OnceReleasedText` already wins whenever it resolves. Whichever exact commit
+fixed the last three wasn't tracked down -- v0.1.91..v0.2.19 spans close to
+200 merged upstream PRs and this project's local checkout of gen1recomp is
+shallow, so bisecting each one individually wasn't attempted.
+
+**Retired or renamed by the v0.2.24 pin bump**, discovered by CI rejecting
+a real build with `engine overrides contain N unknown key(s)` after that
+bump (v0.2.19..v0.2.24 was never audited commit-by-commit the way v0.2.19
+itself was):
+
+- **`GBC FX` renamed to `SHADER FX`** on `src/ui/OptionsMenu.lua`'s Options
+  menu row -- `src/core/Game2.lua`'s own comments confirm the rename
+  (`"...back when it was GBC FX"`). `src/import/LauncherSettings.lua`
+  didn't rename its own "GBC FX" row the same way: it dropped the row
+  entirely (both the Gen 1 and Gen 2 settings blocks), so it no longer
+  emits either literal and needs no override either way. Every language's
+  `overrides/<language>/rby/engine.json` entry was renamed to match, with
+  the translated value adapted from the prior user-validated `GBC FX`
+  wording by swapping the qualifier (not itself re-validated in-game yet).
+- **`Use on which one?` retired, not replaced by an override.**
+  `src/ui/PartyMenu.lua`'s single generic TM/item target-selection prompt
+  was split into two real cart-matching messages,
+  `Strings("Use TM on which\nPOKéMON?")` and `Strings("Use item on
+  which\nPOKéMON?")`. Unlike the old generic wording (an
+  `engine-contract-gap` AI-generated compromise, no compatible qid), both
+  new literals match real corpus rows in `corpus/RedBlue/en_msg.txt`
+  byte-for-byte and auto-translate via the normal exact-match path with no
+  override needed, in every one of fr/de/es/it/ja-Hrkt -- confirmed
+  directly against real corpus data before removing the old override entry.
+- **`It contained\n%s!` (`ui/BagMenu.lua`'s TM/HM "teach the move?" prompt)
+  moved off `Strings()` entirely**, folded into one `romText()` call
+  together with the confirmation prompt that used to be a separate
+  message: `romText(game.data, "_TeachMachineMoveText", "It
+  contained\n%s!\fTeach %s\nto a POKéMON?", moveName, moveName)`.
+  `_TeachMachineMoveText` is a real `pokered` ROM label already present in
+  `rom_manifest.json`, so `romText()` reads the actual imported ROM's own
+  text for it -- the same mechanism, and the same `data.text` table, as
+  every other RBY dialogue line, needing no `Strings()` catalog entry or
+  semantic anchor at all. `config/rby/semantic_anchor_decisions.json`'s
+  `It contained\n%s!` entry (qid `rb.text_6.TeachMachineMoveText`) is
+  retired: it can never match the real engine catalog again (that string
+  is no longer scanned as a `Strings()` callsite, and the new composite
+  fallback isn't in `iter_romtext_fallback_callsites`'s
+  `RENDERED_ROMTEXT_FALLBACKS` allowlist -- correctly so, since the
+  fallback never actually renders once the real ROM label resolves).
+
+**Retired or renamed by the v0.2.25 pin bump** (`gen1recomp_revision` in
+`config/pipeline.toml`/`config/shared/engine_manifest.json`, 24 commits
+ahead of v0.2.24, 101 files changed), found the same way: a real build
+against the bumped pin, not a source-diff guess.
+
+- **`%s got %s%d for winning! Sent some to MOM!`** (the Gold/Silver
+  "sent some money home" battle-prize message) had its `Strings.source()`
+  literal rewritten in `src/battle/gen2/Prize.lua` to bake in the same
+  `<LINE>`/`<CONT>` structure the real cart's own
+  `gs.battle.SentSomeToMomText` corpus row already carries (`%s got
+  %s%d\nfor winning!\x0bSent some to MOM!` instead of one flat sentence).
+  A real Gold/Silver/Crystal build against the bumped pin failed with
+  `Gold engine overrides contain 1 unknown key(s):
+  ['%s got %s%d for winning! Sent some to MOM!']`
+  (`pipeline/gsc/engine.py`'s `match_gs_engine_strings()`, the Gold/Silver
+  analogue of the RBY check above). Every one of the six languages'
+  `overrides/<language>/gsc/engine.json` had its entry renamed to the new
+  key and its own translation reformatted onto the new two-break structure
+  -- the original wording was kept verbatim in each language, only the
+  `\n`/`\x0b` positions moved, so no re-translation was needed, just
+  re-punctuation.
+- No other engine-string key broke: real builds for all six GoldSilver-
+  Crystal languages and a real universal RBY build (fr, Red + Yellow) all
+  reached their usual 100% Gold/Silver-related and RBY-related
+  engine-string coverage, plus 100% ROM-aggregate coverage on both sides,
+  after this one fix. `config/shared/engine_manifest.json`'s
+  `forced_dynamic_keys`/`engine_dynamic_values` free-text `callsite`
+  fields (documentation only, never read by the matching logic itself)
+  went stale for the entries pointing at `src/ui/OptionsMenu.lua` and
+  `src/import/LauncherSettings.lua` line numbers -- both files shifted in
+  this bump -- but weren't re-audited line-by-line, the same practical
+  call already made for the v0.1.91..v0.2.19 range above.
+
+**Retired by the v0.2.26 pin bump** (`gen1recomp_revision` in
+`config/pipeline.toml`/`config/shared/engine_manifest.json`, 15 commits
+ahead of v0.2.25, 63 files changed -- mostly mobile/Android/iOS bridge work,
+a battle-rule-hooks RFC and Yellow-specific fixes unrelated to translation),
+found the same way: a real build against the bumped pin, not a source-diff
+guess.
+
+- **`%s's\nhits will never\nmiss!` (X Accuracy's battle message) retired,
+  not replaced.** `src/inventory/ItemEffects.lua`'s item-use rewrite
+  (adding a shared `itemUseLine()` helper and an item-use jingle, #1635)
+  dropped the `Strings("%s's\nhits will never\nmiss!", b.name)` call
+  entirely: X Accuracy now prints only the generic "X ACCURACY used!" line,
+  matching Dire Hit and Guard Spec (whose own `Strings()`/`romText()` calls
+  for "getting pumped"/"protected against stat changes" were removed the
+  same way, but neither needed a fix: Dire Hit's was already a `romText()`
+  fallback with no engine.json entry, and Guard Spec's identical literal
+  has a second, untouched `Strings()` call site in
+  `src/battle/TrainerAI.lua` -- a coincidental duplicate kept alive by the
+  AI's own use of the same message, not an allowlist exclusion). A real
+  RBY build against the bumped pin failed with `engine overrides contain 1
+  unknown key(s):
+  ["%s's\nhits will never\nmiss!"]` (`pipeline/rby/mod.py`'s
+  `generate_mod()`). The entry was removed outright (not renamed) from all
+  five languages' `overrides/<language>/rby/engine.json` -- fr, de, es, it,
+  ja-Hrkt all had it; ko has no `rby/engine.json`.
+- **`%s used\n%s!` moved off `Strings()` without breaking anything, but
+  needed a fix of its own.** The same `itemUseLine()` refactor replaced
+  `ItemEffects.lua`'s other direct `Strings("%s used\n%s!", ...)` call
+  (Repel/X-item usage) with `romText(data, "_ItemUseText001", "%s
+  used\n%s!", ...)` -- the same ROM label and *rendered* fallback text
+  `BattleState.lua`'s held-item-use line already used, just reached from a
+  second call site. No override referenced this literal, so no build
+  broke, but `pipeline/shared/strings_harvest.py`'s `iter_romtext_fallback_callsites()`
+  only counts a romText fallback as a real (translatable) engine callsite
+  when its literal is in the hand-maintained `RENDERED_ROMTEXT_FALLBACKS`
+  allowlist -- and only the *other* `_ItemUseText001` fallback phrasing
+  (`%s\nused %s!`, `BattleState.lua`'s held-item-in-battle line) was listed.
+  Once `ItemEffects.lua` stopped calling `Strings()` on this exact literal
+  directly, it silently dropped out of the RBY-related engine-string scan
+  (242 -> 240 keys scanned, not just the 1 legitimately retired one) --
+  confirmed with a standalone before/after scan of both pinned revisions
+  via `pipeline.rby.engine_backlog`/`pipeline.rby.engine_scope`, not just the
+  build's pass/fail. Fixed by adding `"%s used\n%s!"` to
+  `RENDERED_ROMTEXT_FALLBACKS` alongside its sibling phrasing.
+- No other engine-string key broke or silently dropped out of scope: a
+  standalone `Strings()`/`romText()` callsite scan diffed against the
+  pinned v0.2.25 source found exactly these two keys affected (one
+  genuinely gone, one needing the allowlist fix above); real builds for
+  all five RBY languages (fr, de, es, it, ja-Hrkt; Red + Yellow) and a real
+  Gold/Silver/Crystal build (fr) all reached their usual 100% RBY-related
+  (241/241, down from 242/242 -- the one retired key) and Gold/Silver-
+  related (302/302, unchanged) engine-string coverage, plus 100%
+  ROM-aggregate coverage on every side, after these two fixes.
+
+### RBY: Surfing Pikachu/Hall of Fame HUD text rewritten upstream
+
+Bumping this project's pin from v0.1.91 to v0.2.19 (`gen1recomp_revision`
+in `config/pipeline.toml`/`config/shared/engine_manifest.json`) pulled in
+gen1recomp PR #1581 (`feat/pikachu-surf-and-gold-gamecorner`), which
+**rewrote** the existing Surfing Pikachu minigame's HUD in
+`src/ui/SurfingMinigame.lua` -- not a new file: this project already had
+`overrides/<language>/rby/yellow_engine.json` entries for its old HUD text
+(`A: done`, `HI    %d`, `New record!`, `SCORE %d`, tagged
+`yellow-only-engine-text`, "no PokeCorpus source"). The rewrite replaced
+those four with new text -- `Hi-Score!!`, `Pts`, `Radness`, `Total`,
+`HP Left` -- and also touched `src/ui/LeaguePC.lua`'s Hall of Fame screen,
+adding `HALL OF FAME No`.
+
+**Real build failure caught by this rewrite, now fixed:** a real Yellow mod
+build against the bumped pin failed with `Error: Yellow engine override
+contains unknown key: 'A: done'` (`pipeline/shared/builder.py`'s Yellow layer
+validates `overrides/<language>/rby/yellow_engine.json` against a real
+`strings.lua` worksheet dumped from the built game, the same kind of check
+`pipeline/rby/mod.py`'s RBY layer does with `complete_engine_keys`). All four
+old HUD strings were removed from all five languages' `yellow_engine.json`
+files once confirmed dead by the same `complete_engine_keys` check used for
+the RBY overrides cleanup above.
+
+**The six new strings, now investigated and covered:** checked each one
+against a real Yellow corpus checkout (`poke-corpus/corpus/Yellow`) rather
+than assuming AI-generated compromise was the only option:
+
+- `HALL OF FAME No` (`src/ui/LeaguePC.lua`) turned out to be **corpus-backed
+  after all** -- `y.league_pc.HallOfFameNoText` is a real ROM string
+  (`en_msg.txt:650`), with real official translations in every shipped
+  language. The engine draws this label and the team-index number as two
+  separate `Font.draw` calls at fixed columns (label at column 1, number at
+  column 16), so each language's corpus padding was kept verbatim rather
+  than re-measured for gen1recomp's layout -- flagged for in-game visual
+  validation like every padded corpus string in this doc, since a per-language
+  ROM's own padding was tuned for its own original column position, not
+  necessarily gen1recomp's fixed one.
+- The other five (`Hi-Score!!`, `Pts`, `Radness`, `Total`, `HP Left`) are
+  genuinely engine-authored, confirmed against the real
+  `pokeyellow/engine/minigame/surfing_pikachu.asm` disassembly: the
+  original ROM's surfing minigame HUD (`wSurfingMinigameRadnessScore` and
+  friends are real WRAM variables, so the concept is authentic Yellow, not
+  invented by gen1recomp) renders this HUD as fixed graphic tiles, not
+  encoded text -- there is no ROM string pointer to align to even in
+  principle, the same conclusion the old, now-removed HUD strings had
+  independently reached. AI-generated translations were added for all five
+  shipped languages, sized to the ~8-tile-wide label column
+  `src/ui/SurfingMinigame.lua` actually draws into, and grounded in two real
+  sources rather than invented from scratch: this project's own prior
+  (now-removed) translation of the very same minigame's old HUD, which
+  already established the register for this content per language ("new
+  record" phrasing -- `Neuer Rekord!`/`¡Nuevo récord!`/`Nuovo record!`/
+  `しんきろく！` -- and `PUNKTE`/`PUNTOS`/`PUNTI` for points); and the real
+  RedBlue corpus's `HP UP` item name, which gives the official per-language
+  Gen 1 HP abbreviation directly (`KP-PLUS`/`PV PLUS`/`MÁS PS`/`PS-SU`).
+  That check also caught German `Radness` drifting into the anglicism
+  `Style` where this project's own German conventions elsewhere in this
+  same file (`SPIELTEMPO`, `LEISTUNG`, `MUSIK-FILTER`) consistently
+  translate rather than borrow -- fixed to `Stil`. All flagged "requires
+  in-game visual validation", the same as every other AI-generated entry in
+  this project.
+
+**Same audit, applied to semantic anchors too -- now completed.** The same
+PR's `_ItemUseBallText00` merge (see "Fixed upstream" above) also orphaned
+`config/rby/semantic_anchor_decisions.json`'s `"It dodged the\nthrown BALL!"`
+entry, caught by `tests/shared/test_multilingual.py`'s
+`test_rby_anchor_callsites_are_unique_and_contextually_eligible` once
+`.cache/dependencies/gen1recomp` refreshed to the new pin. Semantic anchors
+have no equivalent of `pipeline/rby/mod.py`'s `stale_overrides` build-time
+check, so an orphaned one doesn't crash a build -- it just silently stops
+matching anything. Running the same "is this key still a real callsite"
+audit across the entire anchor/decision config (not just this one test's
+narrow probe list) initially found 15 anchor keys in that state; checking
+each one against *both* the old (v0.1.91) and new (v0.2.19) checkouts,
+rather than the new one alone, separated them into two very different
+buckets:
+
+- **12 were already unreachable in v0.1.91 too** -- not a regression from
+  this bump at all, and unrelated to it. Investigated individually rather
+  than left as a vague "future pass" note, since this project's own
+  convention is to verify against real source, not assume:
+  - **10 are `romText()` fallback literals**, confirmed one by one against
+    the real v0.1.91 source: `_GameCornerCoinCaseText`'s
+    `"A COIN CASE is\nrequired!"`, `_MimicLearnedMoveText`'s
+    `"%s\nlearned\n%s!"`, `_WokeUpText`'s `"%s\nwoke up!"`,
+    `_FluteWokeUpText`'s `"All sleeping\nPOKéMON woke up!"`,
+    `_ConfusedNoMoreText`'s `"%s\nsnapped out of\nconfusion!"`,
+    `_PPIncreasedText`'s `"%s's PP\nincreased!"`, `_TryingToLearnText`'s
+    two span-extracted halves, and two combined composites built from
+    *separate* `romText()` calls concatenated at runtime rather than one
+    static literal a scanner could ever find: `"1, 2 and... Poof!..."`
+    (`_OneTwoAndText`/`_PoofText`/`_ForgotAndText`/`_LearnedMove1Text` in
+    `MoveLearnMenu.lua`) and `"What?\n%s is\nevolving!\f..."` (described
+    under "genuinely alive" below, alongside the sibling anchor it shares
+    its fix with -- it belongs in this bucket by its own history, just
+    narrated there for continuity). None of these ten were ever going to
+    reach `pipeline.shared.engine_manifest.iter_callsites` in the first place:
+    `iter_romtext_fallback_callsites` only reports a fixed, audited
+    allowlist of 3 fallback strings (see its own docstring), on the theory
+    that every other `romText()` fallback resolves its real ROM label and
+    is covered by the dialogue catalog instead -- confirmed true for all
+    10, so the anchors were genuinely dead weight, safely retired.
+  - **1 (`"%s!"`, a `rb.text_2.PlayerMon1Text` "full" extraction) is
+    different again: not a `romText()` fallback at all, just never matched
+    by any real `Strings()` literal in RBY source, old or new.** The same
+    qid/extraction is still live via three unchanged, unrelated composite
+    anchors (`"Go! %s!"`, `"Do it! %s!"`, `"Get'm! %s!"`), so removing the
+    standalone `"%s!"` anchor doesn't touch anything those three depend
+    on -- confirmed with a dedicated test exercising one of them directly,
+    since the real-corpus test that used to incidentally cover this same
+    extraction shape only ever asserted on the now-removed key.
+  - **1 (`"SEEN %d  OWNED %d"`, Pokédex footer) turned out to be dead in a
+    third, different way: not superseded by `romText()`, but already
+    covered by an entirely separate, pre-existing mechanism.** First pass
+    at this treated it like `<Diploma>` -- traced the stale anchor's wrong
+    qid (`ui/PokedexMenu.lua`'s real callsite is
+    `Strings("SEEN %3d  OWN %3d", seen, owned)`; the anchor pointed at
+    `rb.text_2.DexSeenOwnedText`, but pokered actually has two standalone
+    corpus strings for this, `rb.pokedex.PokedexSeenText`/`PokedexOwnText`)
+    and rebuilt it as a "parts" anchor combining both real labels with the
+    engine's own `%3d` printf directives, verified end-to-end against the
+    real corpus for all five languages. An independent review then found
+    that fix was solving an already-solved problem:
+    `pipeline/rby/join.py`'s `pokedex_footer_catalog` -- pre-existing,
+    already tested in `tests/shared/test_pipeline.py`, using the exact same two
+    qids -- runs unconditionally in `pipeline/rby/mod.py` and overwrites
+    `engine_values["SEEN %3d  OWN %3d"]` via a plain `dict.update()` call
+    *after* the semantic-anchor matcher runs, regardless of whether the
+    anchor resolved, failed, or didn't exist at all. Confirmed directly:
+    calling `pokedex_footer_catalog` alone, with no anchor in the picture,
+    already produces the identical correct values for all five languages
+    (fr `VUS %3d  PRIS %3d`, de `GES %3d  BES %3d`, es `VIST %3d  TIEN
+    %3d`, it `VIST %3d  PRES %3d`, ja-Hrkt's longer
+    `みつけたかず`/`つかまえたかず` labels). So the original stale
+    `"SEEN %d  OWNED %d"` anchor was never actually blocking a real
+    translation the way `<Diploma>` was -- it was just dead weight, the
+    same as the other 11. The parts-based replacement anchor added real
+    verification value (confirming `pokedex_footer_catalog`'s qids are
+    correct) but zero runtime effect, so it was removed rather than kept:
+    a duplicate, unused code path is its own maintenance liability (a
+    future printf-width change on this field would need updating in two
+    places instead of one, and only one of them is actually load-bearing).
+- **3 were genuinely alive in v0.1.91 and went dead in v0.2.19.** All three
+  turned out to be superseded by a real upstream improvement, not broken by
+  one -- but one of them was hiding an actual bug:
+  - `"It dodged the\nthrown BALL!"` (`rb.text_6.ItemUseBallText00`): merged
+    into a combined `romText()` call by PR #1559 (see "Fixed upstream"
+    above). The real ROM label now supplies the translation directly, so
+    the anchor decision was retired (removed from
+    `semantic_anchor_decisions.json`), not repaired.
+  - `"Congratulations!\nYour %s\nevolved into\n%s!"` and the related
+    `"What?\n%s is\nevolving!\fCongratulations!..."` composite (the latter
+    was actually already dead pre-bump, but shares the same fix and was
+    retired alongside it): `src/pokemon/Evolution.lua` and
+    `src/ui/EvolutionState.lua` now call
+    `romText(game.data, "_IsEvolvingText", ...)` and
+    `romText(game.data, "_EvolvedText", ...)` directly, so both anchor
+    decisions -- and the test exercising their composition logic
+    (`test_evolution_messages_compose_original_flow`) -- were retired.
+  - `"<Diploma>"` (`rb.diploma.DiplomaText`): **this one was a real,
+    user-visible regression, not a beneficial retirement.** The engine
+    literal itself changed, unrelated to any `romText()` migration:
+    `src/ui/Diploma.lua`'s call went from `Strings("<Diploma>")` (v0.1.91,
+    line 32) to `Strings("Diploma")` (v0.2.19, line 113) -- the angle
+    brackets were simply dropped from the source string. No other matching
+    mechanism (auto-exact, structural, or the corpus's own
+    `\x70`-wrapped text) can bridge that gap on its own, so a real build
+    against the bumped pin would have silently shown English "Diploma"
+    instead of "Diplôme" (confirmed directly: replaying the same corpus
+    row through `match_engine_catalog` returns `"Diplôme"`/`semantic` under
+    the old key and empty/`unmatched` under the new one). Fixed by
+    re-keying the decision from `"<Diploma>"` to `"Diploma"` and correcting
+    its stale `Diploma.lua:32` callsite citation to `:113`; the now-redundant
+    `source_aliases: ["Diploma"]` (identical to the corrected key) was
+    dropped. `test_rby_anchor_callsites_are_unique_and_contextually_eligible`
+    now also asserts `"Diploma"` stays a real, eligible RBY callsite.
+
+### RBY: Silph Co. 9F's nurse
+
+Her three lines (`SilphCo9FNurseDontGiveUpText`/`ThankYouText`/`YouLookTiredText`) used to be bare literals in `data/scripts/flavor/silph_co_9f.lua`'s `TEXT_SILPHCO9F_NURSE` command table, so no `game.data.text` lookup reached them and a literal handler that only translated them would have dropped her `heal_party`/`fade` steps. At v0.3.51 the table names the labels instead (`{ "show_text", "SilphCo9FNurseYouLookTiredText" }`, `data/scripts/flavor/silph_co_9f.lua:14-21`) and keeps the healing steps, so the lines come from the mod's dialogue catalog like every other label ("Tu as l'air très\nfatigué! ..." in French).
+
+## Gold and Silver
+
+### Silver: supported by declaration, then by real dual-ROM extraction
+
+The mod's `manifest.json` declares `"games": ["gold", "silver"]` instead of
+just `["gold"]` (`pipeline/gsc/mod.py`'s `generate_gs_mod()`). The rest of
+this section (measurement, aliasing) predates a later change that added a
+real dual-ROM extraction path: `pipeline/shared/roms.py`'s `verify_gs_rom()` now
+accepts either a real Gold or a real Silver ROM (matching either SHA-1) and
+reports which one, `config/pipeline.toml` carries both `[rom.gold]` and
+`[rom.silver]`, and `tools/gsc/extract.lua` selects the matching import
+manifest (`rom_manifest_gold.json`/`rom_manifest_silver.json`) for whichever
+edition was detected. There is still no Silver-specific corpus join --
+Gold's own extracted text and corpus alignment are reused as-is for a
+Silver-sourced build too. The reasoning below for why that's safe (not why
+it was originally declared-only) is what's still current:
+
+- Gold and Silver share one `pokegold` source tree. gen1recomp's own
+  `tools/make_silver_manifest.py` derives Silver's import manifest from
+  Gold's, touching only `romSha1` and `symbols` -- and a scripted diff of
+  the two manifests' 2057 named symbols found only 818 actually differ,
+  every one of them a sprite (556), a `*PokedexEntry` symbol (241, which
+  doesn't even feed the dialogue text table -- resolved separately into
+  `pokedex.lua`), or misc graphics (21). **Zero of the 873 `*Text*` symbols
+  and zero of the 9 `*Script*` symbols differ.**
+- The dialogue text table this mod's `dialogue.lua` overrides
+  (`data.text`/`text.lua`, keyed `bank:address` via
+  `src/script/gen2/Opcodes.key`) is built the same way for both editions;
+  gen1recomp's own importer (`GameVersion.forSha1`) already picks the
+  correct manifest per ROM at runtime without any help from this project.
+- A mod override is a plain string-key match against whatever `data.text`
+  the *current* import produced (`Vm:showText`: `self.text[textKey]`,
+  folded on by `src/mods/Registry.lua`'s `override`). If a Gold-authored
+  key doesn't exist in a Silver import's own table, the override silently
+  never fires and the player sees Silver's own correct English text --
+  never garbled or wrong text, just occasionally untranslated.
+- `src/mods/ModTargets.lua`'s `specApplies()` already treats `"silver"` as
+  a first-class `games` token (same `GameVersion.VERSIONS` lookup as
+  `"gold"`), so declaring both is enough for the engine's own mod loader to
+  apply this mod to a Silver save with no further engine-side work.
+- This project's own automatic dialogue join
+  (`pipeline/gsc/join.py`'s `join_gs_pointers`) matches primarily by
+  normalized English text, not by pointer -- `bank:address` is only used
+  to look up the small set of hand-reviewed, Gold-sha1-pinned overrides in
+  `config/gsc/pointer_decisions.json`/`placeholder_decisions.json` and as
+  the final write-back key. Any of those specific entries that do differ
+  between editions degrade the same way: lose the hand-reviewed override,
+  fall back to automatic resolution or `UNRESOLVED`, never corrupt.
+
+**Measured, not just argued from the named-symbol proxy, and now closed to
+100%:** `tools/gsc/spike_text_overlap.lua` (a standalone
+measurement script, not wired into the pipeline) extracts the real
+`data.text` key set from a real Gold ROM and a real Silver ROM
+independently and compares them directly. Result: 3036 of 3044 keys
+(99.7%) matched exactly between the two ROMs out of the box. The 8 that
+didn't were all field-move prompts in bank `03` (Rock Smash/Strength:
+`"A POKéMON may be able to break it."`, `"{STRBUF} used STRENGTH!"`, and
+similar) -- paired up by content, every one shifted the same uniform -2
+bytes between editions while carrying byte-identical English text.
+`config/gsc/silver_pointer_aliases.json` records those 8 `{gold_pointer:
+silver_pointer}` pairs, and `gs_text_catalog_from_join()`
+(`pipeline/gsc/mod.py`) now aliases each Gold pointer's resolved
+translation onto its Silver pointer too. **Dialogue-pointer coverage
+between Gold and Silver is the full 3044/3044 (100%) when building from a
+Gold ROM,** verified by rebuilding a real French mod and confirming all 16
+pointers (8 Gold + 8 Silver) carry matching text in the generated
+`dialogue.lua`. This confirmed reusing Gold's own extraction and corpus
+join for Silver too was safe -- it's why the later dual-ROM extraction
+path (`[rom.silver]`, `verify_gs_rom()`, `tools/gsc/extract.lua`'s manifest
+selection, `.cache/interactive-gs/` as the shared cache dir for either
+edition) still doesn't need a separate Silver-specific corpus join: a real
+Silver ROM build resolves 3036/3051 pointers on its own (99.5%, one
+Silver-native pointer with no Gold-side alias), reusing the exact same
+Gold-sourced translation catalog.
+
+Crystal was a different, bigger question -- see the next section for how it
+was actually resolved.
+
+### Crystal: mandatory companion ROM, its own corpus join, shared engine strings
+
+Crystal uses a `pokegold`-derived but materially different codebase from
+Gold/Silver: of 2011 symbol names shared between Gold and Crystal, 1926
+(95.8%) resolve to a different `bank:address` -- essentially no free ride
+from Gold/Silver's own resolved dialogue catalog, unlike Silver's near-zero
+divergence from Gold. gen1recomp's own engine already has full Crystal
+support though: `tools/rom_manifest_crystal.json` is complete, and
+`src/import/RomExtractorGen2.lua` already has edition branches for
+`"crystal"` throughout (palettes, sprites, title screen, credits, music,
+text/opcodes, trade). This project's own `tools/gsc/extract.lua` (a headless
+LuaJIT wrapper around that extractor, not gen1recomp's) just needed the same
+treatment as its existing `"gold"`/`"silver"` branches, accepting
+`"crystal"` and selecting `rom_manifest_crystal.json`.
+
+poke-corpus has a separate `Crystal/` collection in the exact same file
+format as `GoldSilver/` (`{qid,en,<lang>}_msg.txt`, same `<LINE>`/`<CONT>`/
+`<PARA>`/`@`/`[NULL]`/`<PK><MN>` tokens), under a flat `c.text.*` qid
+namespace with zero qid overlap with `gs.*` -- but 86% of GoldSilver's own
+unique English text reappears somewhere in Crystal's, so a from-scratch join
+against Crystal's own corpus (not a cross-collection qid alias) resolves
+most of it automatically: `pipeline.gsc.join.join_gs_pointers()` already
+matches by normalized English text, not by pointer, so despite its "gs_"
+name it is edition-agnostic and needed no changes at all --
+`pipeline/gsc/crystal_mod.py`'s `join_crystal_dialogue()` just calls it against
+Crystal's own extracted TSVs and its own corpus collection. A real build
+resolved 3864/4010 dialogue pointers (96.4%) automatically with no manual
+help at all.
+
+Closing the rest took two further passes, both against real, verifiable
+ground truth rather than guesswork. First, Crystal's qid namespace turned
+out to mirror Gold/Silver's own per-location taxonomy exactly (same
+trailing symbol names, `c.` prefix instead of `gs.`), so Gold's own
+already-reviewed `config/gsc/pointer_decisions.json` (164 entries picking
+the real, reachable text over an unused duplicate) doubled as a lookup:
+whenever a Crystal pointer's ambiguous candidates included exactly one
+qid whose `gs.`-prefixed counterpart Gold's reviewers already confirmed
+was a real pointer's target, the same pick applied to Crystal -- resolving
+22 of 113 ambiguous pointers this way
+(`pipeline/gsc/crystal_mod.py`'s `load_crystal_pointer_decisions()`). Second,
+the [pokecrystal disassembly](https://github.com/pret/pokecrystal) (the
+user's own clone) was built from source with `rgbds`, confirmed to
+produce a ROM byte-for-byte identical to the real retail cartridge (both
+hash to `f4cd194bdee0d04ca4eac29e09b8e4e9d818c133`), and its own
+linker-generated `.sym` file -- an authoritative `bank:address` -> real
+ASM symbol name map for every one of Crystal's 4010 pointers, not just
+the 97 gen1recomp's own extractor already names -- resolved all but one
+of the remaining 91 ambiguous pointers outright; the one leftover (two
+distinct corpus qids sharing an identical trailing symbol name) was
+confirmed by grepping the real disassembly source directly. This closed
+French's own ambiguous-pointer gap completely (113 entries), but German,
+Spanish, Italian and Japanese each had their own, distinct residual
+ambiguous pointers (French's disambiguation only fixes a pointer for
+every language at once when the *same* pointer was ambiguous for all of
+them -- a language whose corpus text for a given English line happens to
+match only one candidate never shows up as ambiguous in the first place,
+so it needed no decision, while a language matching several still did).
+The same symbol-table method was re-run against each of their own
+remaining unresolved pointers, extending
+`config/gsc/crystal_pointer_decisions.json` to 210 entries in total --
+every decision re-verified against the real `.sym` file, not assumed from
+French's.
+
+The rest were never ambiguous, they simply had no corpus row at all --
+and the same real symbol table confirmed why: every one resolves to a
+genuine Mobile Adapter GB / PokeCom Center script (real, scripted content
+in pokecrystal's own `maps/PokecomCenterAdminOfficeMobile.asm` and
+related files), a peripheral never sold outside Japan. Spanish and
+Japanese poke-corpus data turned out to already carry real, official
+translations for every one of these lines -- so only French, German and
+Italian genuinely lacked corpus coverage here. Those three now carry
+hand-written, AI-generated text instead (`overrides/<lang>/gsc/
+crystal_dialogue.json`, loaded by `pipeline/gsc/crystal_mod.py`'s
+`load_crystal_dialogue_overrides()`): 17 pointers for French, 9 for
+German (a subset of French's own set -- Spanish/Japanese's corpus already
+covered the rest for German too, it turned out), and 16 for Italian
+(mostly the same set, plus one pointer -- `62:6532` -- that French's own
+corpus resolves but Italian's doesn't). Each entry's line/page-break
+structure is checked to match the English source's own `<LINE>`/`<PARA>`/
+`<CONT>` positions exactly (same count and order of breaks, not
+necessarily the same word-for-word segment boundaries) before being
+accepted.
+
+**Crystal dialogue resolution is 3994/3994 (100%) for all five
+translated languages (fr/de/es/it/ja-Hrkt)**: every pointer that carries
+any real, visible text. The 16 remaining pointers of the 4010 are
+markup-only entries ("…" alone, empty boxes) with nothing to translate,
+left out of the denominator the same way Gold/Silver's own coverage
+leaves out its markup-only records.
+For ja-Hrkt, 30 of those pointers are international-only texts (the EON
+MAIL and ODD EGG events, the international BATTLE TOWER, a few rewritten
+lines) whose Japanese corpus row is poke-corpus's `[NULL]` no-text marker;
+they are covered by `overrides/ja-Hrkt/gsc/crystal_dialogue.json`, from the
+official Gold/Silver Japanese line where the English is identical and
+composed otherwise.
+Korean stays at 0/3994 (no Crystal corpus exists for it at all, see
+below).
+
+Crystal ships as a mandatory companion ROM merged into the same
+`translation-<lang>-gen2` mod as Gold/Silver, the same way Yellow is a
+mandatory companion for the universal RBY mod: `pipeline/gsc/mod.py`'s
+`build_gs()` now always extracts and joins a Crystal ROM too, and
+`generate_gs_mod()` writes Crystal's own resolved dialogue to a separate
+`lang/dialogue_crystal.lua` layer, applied at runtime only when
+`GameVersion.get() == "crystal"` (there is no upstream `isCrystal()` helper
+the way there's an `isYellow()`, but `.get() == "crystal"` is exactly what
+`isGold()`/`isYellow()`/`isBlue()` do internally for their own edition, so
+this mirrors `pipeline/rby/mod.py`'s own `yellow_isyellow_guard_lines()`
+pattern for RBY's Yellow layer). The manifest declares `"gold"`, `"silver"`,
+and `"crystal"`. Korean has no Crystal corpus in poke-corpus (no
+`ko_msg.txt`, unlike GoldSilver's own six languages) -- rather than drop
+Korean from the whole generation-2 release, `join_crystal_dialogue()`
+detects the missing corpus file and returns an empty catalog instead of
+raising, so a Korean build still succeeds and still declares Crystal
+compatibility, it just leaves Crystal's own dialogue in English.
+
+Since resolved: Crystal's own named catalogs (species/moves/items/trainer
+classes) reuse Gold/Silver's own already-translated values for the shared
+roster, verified against real builds, plus a dedicated
+`pipeline/gsc/crystal_registries.py` for the handful of records genuinely
+Crystal-exclusive (item names, trainer class names, a landmarks subset).
+Crystal-exclusive content (MoveTutor, GenderSelect, Battle Tower, Buena's
+prize exchange -- the 39 keys catalogued as `"crystal-only-feature"` in
+`config/gsc/engine_scope_exclusions.json` at v0.3.51, excluded from Gold/Silver's own
+engine-string metric precisely because they're Crystal's to translate, not
+Gold/Silver's) is now translated for fr/de/es/it/ja-Hrkt (39/39);
+`ko` has no Crystal corpus, and its 38 hand-composed values leave only the
+English-identical "???". A dedicated release gate
+(`tools/gsc/gate_dialogue.lua`'s `hasCrystal` path) now verifies Crystal's own
+dialogue and registries are selected only under a Crystal save and never
+leak onto Gold or Silver, alongside Gold/Silver's existing gates. Crystal's
+own engine strings (the Options/Menu `Strings()` catalog) need no separate
+work at all: `ui/gen2/OptionsMenu.lua`/`MainMenu.lua` have no edition
+branches, so Gold/Silver's own `overrides/<lang>/gsc/engine.json` (937 keys
+when this was written, the Gold/Silver-related subset of the shared engine catalog) already applies
+unchanged on a Crystal save.
+
+### Gold: rows already reachable through an existing public hook
+
+`PcMenu`'s five storage-menu rows (`Withdraw Pokémon`, `Deposit Pokémon`,
+`Change box`, `Move Pokémon w/o mail`, `See ya!`) and the battle party
+submenu's `Switch`/`Stats` rows are *not* private-class reads: both already
+run through public list hooks (`ui.pc.items`, `ui.party.submenu`) that this
+mod already wraps for other rows (`Cancel`, item-PC actions, decoration,
+mail box). They were simply missing from `config/gsc/literal_handlers.json`.
+Likewise the START menu's two-line highlighted-entry description
+(`Pokémon database`, `Party Pokémon status`, `Contains items`, and five
+more) runs through `ui.start_menu.items`, whose `item.label` field this mod
+already localized -- `item.desc` just wasn't wired up yet. All now fixed;
+`Party <PK><MN>\nstatus`'s French translation is slightly longer than the
+original two-glyph line and should get an in-game width check.
+
+### Gold: PcMenu's own CHANGE BOX save flow
+
+`Strings()` already worked fine elsewhere in `src/ui/gen2/PcMenu.lua`
+(`self:notice({ Strings(MON_HOLDING_MAIL[1]), Strings(MON_HOLDING_MAIL[2]) })`,
+its one existing call site), it just hadn't been wired up for this one flow.
+(The five storage-menu row labels just above are already translated too,
+but through a different mechanism entirely -- a translation-mods-side hook
+into the public `ui.pc.items` list, not an engine-side `Strings()` call; see
+"Fixed: rows already reachable..." above. `entry.label` itself still
+reaches `Chrome.print` as a raw, unwrapped string,
+`Chrome.print(entry.label, 2, ty)`.)
+
+`PcMenu.lua`'s `savePrompt()` (`CHANGE BOX`'s own save confirmation --
+switching which box is the active one, not moving Pokémon between boxes;
+that's the separate `MOVE POKéMON W/O MAIL` entry) used to stay entirely in
+English: not just the overwrite/saving lines it shares with `SaveMenu.lua`
+(`OVERWRITE_PROMPT`/`SAVING_PROMPT`, previously plain untranslated tables),
+but also its own done messages (`{ name .. " saved", "the game." }`/
+`"Could not save."`, built by concatenation rather than `SaveMenu.lua`'s
+`"%s saved\nthe game."` format string) and its own `"YES"`/`"NO"` choice,
+none of which went through `Strings()` at all.
+
+Fixed on gen1recomp, merged as PR #1774 (`7d5856f9`): `SaveMenu.lua` now
+exports `OVERWRITE_PROMPT_SOURCE`/`SAVING_PROMPT_SOURCE` and its
+`twoLines()` helper (the plain `OVERWRITE_PROMPT`/`SAVING_PROMPT` tables
+they replaced are gone, along with the duplicate literal text that had to
+be kept in sync by hand), and `PcMenu:savePrompt()` calls through them the
+same way `SaveMenu:prompt()` does, plus wraps its own done/YES-NO messages
+in `Strings()` reusing `SaveMenu.lua`'s exact keys (`"%s saved\nthe
+game."`, `"Could not save."`, `"YES"`, `"NO"`) -- a translation covering
+`SaveMenu.lua`'s screen needs no `PcMenu`-specific fork for any of those.
+The confirm prompt itself gets one new key, `"#MON BOX, data\nwill be
+saved. OK?"` (see the truncation note below). Live as of gen1recomp
+v0.2.24 (`aea38240`), well within the project's current pin:
+this project's own `overrides/{fr,de,es,it,ja-Hrkt,ko}/gsc/engine.json`
+already carry the new confirm-prompt key (merged to `main` as PR #40).
+
+Previously deliberately left out of `fix/translate-gold-title-and-save-menus`:
+that branch's own scope was already widened once by a review finding a
+`PcMenu.lua` regression (an earlier version broke this exact screen by
+changing `OVERWRITE_PROMPT`'s type), so extending translation to a second
+screen was left for this follow-up rather than risking a second regression
+in the same PR.
+
+**The confirm prompt's own text is a truncation too, same underlying cause
+as the SAVE screen's overwrite prompt below.** `PcMenu.lua`'s own English
+source for `"#MON BOX, data\nwill be saved. OK?"` is itself a two-line
+truncation of the real three-line cart text (`gs.common_2.ChangeBoxSaveText`,
+poke-corpus `GoldSilver`): `"When you change a<LINE>#MON BOX,
+data<CONT>will be saved. OK?<DONE>"` -- but where the port keeps the
+*first* two lines of `AlreadyASaveFileText` for the overwrite prompt, here
+it keeps the *last* two of `ChangeBoxSaveText` instead (the same fixed
+2-line box, just a different pre-existing truncation choice this project
+didn't introduce). Every other shipped language's own cart text for this
+line runs one line longer than English's three (`fr`/`de`/`es`/`it` all
+have four segments, `ja-Hrkt`/`ko` have three like English), so the same
+"keep the cart's own last two lines" rule was applied uniformly rather than
+composing anything new -- and unlike the overwrite prompt, it happened to
+work out clean: every language's last two lines read as a complete,
+non-dangling sentence (`fr` "les données sont / sauvegardées. OK?", `de`
+"wird das Spiel / gesichert!", `es` "los datos se / guardarán. ¿Vale?",
+`it` "dati vengono / salvati. Va bene?", `ja-Hrkt` "どうじに　レポートが　
+かかれます / いいですか？", `ko` "동시에 레포트가 기록되어집니다 /
+괜찮습니까?") -- confirmed in-game for fr. Real corpus phrasing ships as-is
+here, no compromise needed, but it is still missing real cart content (the
+"when you change a POKéMON BOX" framing, and for `fr`/`de`/`es`/`it` also
+the literal mention of the box itself) for the same reason as the overwrite
+prompt: this port's fixed 2-line box has no pagination.
+
+Since v0.2.55 the engine's source for this prompt is the cart's last three lines (`"When you change a\n#MON BOX, data\vwill be saved. OK?"`), and each language keeps three lines of its own row (see that key's `provenance` in `overrides/<language>/gsc/engine.json`).
+
+### Gold: fixed upstream (engine changes, not just this project's config)
+
+- **Pokédex heights and weights in metres and kilograms (gen1recomp#2747, v0.3.61).** The #DEX page printed the US cart's height in feet and inches and its weight, in tenths of a pound, after the `lb` label; the localized carts print metres and kilograms (`gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight`), and the translations label that weight `kg`, so the number was a pound value under a kilogram label (Bulbasaur's 15.2 for 6.9 kg). Since v0.3.61 the page prints a species' `dexEntry.heightM` and `weightKg`, right-aligned before `Strings("m")` and `Strings("kg")`, and `???` until the species is caught. The mod patches every species with its official values (`lang/species_metrics.lua`, as for Red/Blue) at every revision, as a Gold/Silver game may not load a Gen 3 module; `m` and `kg` are the English in the European languages and the cart's full-width `ｍ` and `ｋｇ` in Japanese and Korean.
+- **Clock UI (weekdays, `o'clock`, `MORN`/`DAY`/`NITE`):** `DAYS`
+  (SUNDAY..SATURDAY), the `PrintHour` daytime word, and the `"%s
+  o'clock"`/`"%d min."` suffixes on InitClock's screens, the main menu
+  clock box and the Pokegear's own clock card were plain Lua literals with
+  no `Strings()` lookup at all -- reported from a real Spanish Gold build.
+  Fixed on gen1recomp `fix/translate-clock-and-day-of-week` (merged,
+  PR #1450): both now live in `Strings`-backed lookups in
+  `src/core/gen2/Clock.lua`. `SUNDAY`..`SATURDAY` and `MORN`/`DAY`/`NITE`
+  translate for free -- `pipeline/shared/engine.py`'s corpus alignment matches
+  them byte-for-byte against poke-corpus's own literal ROM text rows.
+  `"%s o'clock"`/`"%d min."` don't align automatically the same way (see
+  the compromise table below), but the real corpus text is still directly
+  available at `corpus/GoldSilver/{lang}_msg.txt` lines 904-905 (parallel
+  to `qid_msg.txt`'s `gs.timeset.String_oclock`/`String_min`) -- no longer
+  a `Strings()` gap either way. This PR didn't touch the separate `"AM"`/
+  `"PM"` marker each of these three screens also draws, but a later one
+  did -- see the next bullet.
+- **Clock "AM"/"PM" marker:** `src/ui/gen2/MainMenu.lua:174`,
+  `src/ui/gen2/Pokegear.lua:1963`, and `src/ui/gen2/Pokegear.lua:2377` now
+  all read `Strings(hour < 12 and "AM" or "PM")` -- fixed on gen1recomp as
+  part of `fix/translate-gold-title-and-save-menus` (`fad7443f`/
+  `654650e3`, merged as PR #1759, in v0.2.21). Verified against real
+  corpus text (`gs.print_hours_mins.String_AM`/`String_PM`, poke-corpus
+  `GoldSilver`): `fr`/`de`/`es`/`it`/`ko` all show plain `"AM@"`/`"PM@"`,
+  identical to the English source, so no override is needed -- matches
+  `overrides/{fr,de,es,it,ko}/gsc/engine.json`'s current state, which
+  correctly carries none. `ja-Hrkt`'s corpus row for this exact string is
+  `[NULL]` (absent), consistent with Japanese Gold's clock not using this
+  marker on the cart at all; left as English-identical no-op there too,
+  same as every other shipped language.
+
+### Gold: the compromise table before numbered directives
+
+A snapshot from the v0.2.x pins, kept for its reasoning. `overrides/<language>/gsc/engine.json` now carries about 150 to 180 `engine-contract-gap` entries per language, not 22; each override's `reason` and `provenance` are authoritative.
+
+Same pattern as RBY above -- these 22 entries (`overrides/<language>/gsc/engine.json`,
+common across fr/de/es/it/ja-Hrkt/ko) already show translated text in-game,
+adapted to the engine's split or reordered contract rather than the exact
+official phrasing:
+
+| Source | fr override | What's missing |
+|---|---|---|
+| `%d #MON seen\n%d #MON owned\n\nPROF.OAK's\nRating:` | `%d POKéMON vus\n%d POKéMON pris\fÉvaluation du\nPROF. CHEN :` | Adapted to the engine's two-`printf` contract |
+| `%s got %s%d for winning!` | `%s remporte %s%d !` | Currency/printf order follows the engine contract |
+| `%s got %s%d for winning! Sent some to MOM!` | `%s remporte %s%d ! Une partie est\nenvoyée à MAMAN !` | Currency/printf order follows the engine contract |
+| `%s o'clock` | `%sh` | Bare-suffix corpus source (`gs.timeset.String_oclock`), no placeholder to align against the engine's `%s` template; French drops the space to match `"20h"` |
+| `%d min.` | `%d min.` (identical to source) | Bare-suffix corpus source (`gs.timeset.String_min`); coincidentally the same word in English and French |
+| `A▶PRINT` / `B▶CANCEL` / `L▶BEFORE` / `R▶NEXT` | `A▶IMPRIMER` / `B▶ANNULER` / `L▶RETOUR` / `R▶SUITE` | Physical button glyph retained |
+| `Fly to %s?` | `Voler vers %s ?` | Adapted to the engine's printf contract |
+| `LEFT SIDE` / `RIGHT SIDE` | `À GAUCHE` / `À DROITE` | Decoration-menu labels, engine contract |
+| `START>CANCEL` | `START>ANNULER` | Physical button retained |
+| `Registered the` + `that item.` | `Objet enregistré :` + `d'enregistrer.` | One ROM sentence (`CantRegisterItemText`/`RegisteredItemText`) split across two engine fragments |
+| `You can't register` | `Impossible` | Split-contract half of `CantRegisterItemText` |
+| `You have no more\nPOKéMON that can\x0bfight!` | `Plus de POKéMON\napte au combat !` | Adapted from `gs.common_2.NoUsableMonText` |
+| `{PLAYER} used the` | `{PLAYER} utilise :` | Item-on-next-fragment order |
+| `OT/` | `DO/` | Compact engine label, slash retained |
+| `HP` | `PV` | `ui/gen2/PhotoStudio.lua:164`, fragmentary standalone source |
+| `№.` | `N°` | `ui/gen2/PhotoStudio.lua:157`, fragmentary standalone source (`HallOfFame.lua`/`SummaryMenu.lua` print the same glyph directly, outside `Strings()`) |
+| `{STRBUF}.` | `{STRBUF}.` (kept) | `ui/gen2/TradeAnim.lua:187`, runtime name fragment, punctuation-only and language-invariant |
+| `There is already a\nsave file. Is it` | `Il y a déjà une\nsauvegarde. La` | Missing the real ROM's third `<CONT>` page -- see below |
+
+Two more are per-language only, each documented individually in the relevant
+`overrides/<language>/gsc/engine.json`: German and Korean also override
+`"%s\nis about to use...\nWill %s\nchange POKéMON?"` (the German ROM omits
+the player-name printf the engine expects), and Japanese and Korean also
+override `"Congratulations!"` (the Japanese diploma folds that idea into the
+preceding line instead of a standalone sentence).
+
+### Gold: the SAVE overwrite prompt's missing third page
+
+Fixed since v0.2.55: `src/ui/gen2/SaveMenu.lua`'s `OVERWRITE_PROMPT_SOURCE` is the cart's whole three-line text (`"There is already a\nsave file. Is it\vOK to overwrite?"`, `:80` at v0.3.63), the same text `src/script/gen2/Specials.lua` already used, and every language ships its full row. The account below describes the truncated two-line prompt before that.
+
+`src/ui/gen2/SaveMenu.lua`'s
+own English source for this prompt (`OVERWRITE_PROMPT`/
+`OVERWRITE_PROMPT_SOURCE`) is itself a two-line truncation of the real
+three-line cart text (`gs.common_2.AlreadyASaveFileText`, poke-corpus
+`GoldSilver`): `"There is already a<LINE>save file. Is it<CONT>OK to
+overwrite?<DONE>"`. On the real cart, `<CONT>` advances to a second textbox
+page (a button press) before the YES/NO choice appears; this port's
+`SpeechTextbox` (18x4, `Chrome.textbox(0, 12, 18, 4)`) has no paging at all
+-- `drawPanel()` prints exactly two fixed lines and shows the YES/NO box
+alongside them immediately, so there is no way to display a third page even
+in principle. This is not a translation gap in the usual sense: **English
+itself is missing the same "OK to overwrite?" clause**, ending on the same
+kind of dangling "Is it" its own truncation leaves. Every shipped
+language's override here is the same mechanical quote of its own cart's
+first two lines, sharing that flaw to varying degrees depending on where
+each language's own sentence happens to break -- German's and Spanish's
+first two lines happen to already read as a complete standalone sentence
+(`"Es gibt bereits<LINE>einen Spielstand."`, `"Ya existe un<LINE>archivo
+guardado."`), while French's and Italian's don't (`"Il y a déjà
+une<LINE>sauvegarde. La"` dangles on a bare object pronoun with its verb
+"remplacer" stranded on the dropped third page; `"C'è già un
+gioco<LINE>salvato in"` cuts mid-preposition) -- confirmed against a real
+fr/it build screenshot. A composed, non-corpus paraphrase for French/
+Italian was tried and set aside rather than shipped
+(translation-mods branch `fix/gold-save-overwrite-prompt-truncation`): it
+isn't the corpus's own official phrasing, and singling out two languages
+for a bespoke rewrite when the underlying defect is the engine's own
+English source would just trade one inconsistency for another. All four
+languages keep the same plain corpus-truncation compromise as English for
+now, warts included, until the real fix below lands.
+
+A real upstream fix would need `SaveMenu.lua`'s "overwrite" phase to gain
+actual paging -- an intermediate state that shows the text and waits for an
+A-press before the YES/NO box appears, mirroring the cart's
+`AskOverwriteSaveFile` flow -- not just a `Strings()` wrap around the
+existing two fixed lines. That is a real interaction-flow change (an extra
+button press, for every language including English), materially bigger and
+riskier than `fix/translate-gold-title-and-save-menus`'s Strings()-wrapping
+scope, so it was deliberately left out of that branch. Not attempted yet.
+
+### Gold: stat-change and item/move status messages
+
+Superseded: since `Strings()` accepts numbered directives (gen1recomp#2346, v0.2.67), these keys ship the corpus's own word order as `engine-corpus-reordered` (French `"%s's %s fell!"` reads `"%2$s de\n%1$s\vdiminue!"`), or as `engine-corpus-cart-order` where the cart already names the POKéMON first. The account below is the word-order fix made before that, kept for its corpus checks.
+
+**Stat-change and item/move status messages (10 entries, `overrides/<language>/gsc/engine.json`
+for fr/es/it; 6 of the 10 also affected de) -- POKéMON name forced first by
+the engine, not by the corpus:** `Effects.stageMessage()` and
+`Battle:changeStage()`/`Battle.lua`'s disabled/activated/PP-reduction
+messages all call `Strings(source, name, label)` with the POKéMON's own
+name as the *first* `printf` argument, always -- but the real ROM's
+fr/es/it localizations put the stat/move/item name *first* instead, joined
+to the POKéMON name with "de"/"di" (`"<STAT> de <POKéMON> diminue !"`,
+confirmed against poke-corpus GoldSilver directly, e.g.
+`gs.common_2.BattleStatFellText`/`gs.battle.DisabledMoveText`). Lua's
+`string.format` (the implementation behind `Strings.get()`,
+`src/core/Strings.lua`) binds each `%s` to the *next* vararg in call order,
+not by where it's written in the template, so that word order can never be
+reproduced from a `Strings(source, name, label)` callsite -- only a
+`Strings(source, label, name)` callsite (an upstream engine change) could.
+
+An earlier revision of these entries assumed the wrong thing: that the
+corpus simply had no match at all, and that name-then-stat was this
+message's "own" argument order, matching engine siblings like `"%s's %s was
+reduced by %d!"`. Direct verification against the real corpus found the
+opposite: a real, validated match *does* exist, it's just unreachable given
+the engine's fixed argument order -- and the previously-shipped `"%s's %s
+won't rise anymore!"`/`"%s's %s won't drop anymore!"` entries (tagged
+`engine-corpus`, i.e. claimed validated) had silently inherited the same
+reversed word order from an automatic corpus match that only checks
+placeholder *count*, not which runtime argument each placeholder is
+semantically bound to -- shipping "POKéMON de STAT" instead of the corpus's
+real "STAT de POKéMON". Found via a player report of `"HERICENDRE de
+DEFENSE diminue!"` in a real French Gold/Silver build. All ten entries
+below were rephrased to keep the engine's forced POKéMON-first order while
+staying natural in each language, the same technique already used for
+`"%s's %s\nrose!"` in the RBY table above.
+
+German needed the smaller fix of the six: its real corpus phrasing for
+plain fell/rose already puts the POKéMON name first via an attached
+genitive `-s` (`"<POKéMON>s <STAT> sinkt!"`, matching the engine's argument
+order exactly and already used correctly by this file's own
+`"activated!"`/`"is DISABLED!"` entries) -- only `won't rise/drop anymore!`
+used a reversed `"von"` construction and needed the same genitive-s
+treatment. Japanese and Korean were never affected: their possessive
+grammar (`の`/`의`) is head-first, so the corpus's own word order already
+matches the engine's forced argument order.
+
+For the plain fell/sharply fell/rose/sharply rose entries specifically,
+checking RBY's own equivalent messages
+(`MoveEffects.lua`'s `changeStage`, `rb.text_3.RoseText`/`FellText`/
+`GreatlyRoseText`/`GreatlyFellText`) paid off differently per language:
+
+- **fr**: RBY's real official corpus phrasing for this exact same
+  semantic event is already POKéMON-first (`"<POKéMON>\ngagne <STAT>!"`/
+  `"...perd <STAT>!"`) -- reused verbatim instead of the invented
+  "voit sa ... diminuer/augmenter" phrasing from an earlier revision of
+  this entry, since real official text beats an authored compromise
+  whenever the two are compatible. Confirmed this project's own RBY build
+  already ships exactly this text (`.cache/interactive/fr/mod/lang/strings.lua`).
+- **es/it**: checked RBY's own es/it corpus for the same messages and
+  found it reverses the exact same way GoldSilver's does (`"<STAT>
+  de/di <POKéMON>..."`) -- so there is no compatible official phrasing to
+  borrow here either. Aligned instead with this project's own existing
+  editorial-compromise wording for the equivalent RBY messages
+  (`overrides/es/rby/engine.json`'s `"¡%s\nsu %s subió/bajó!"`,
+  `overrides/it/rby/engine.json`'s `"%s\n%s sale/cala!"`) rather than
+  inventing a third, inconsistent phrasing for the same underlying event.
+- **de**: unaffected by this reconsideration, already fixed above.
+
+| Source | fr override | it/es/de equivalent | Why |
+|---|---|---|---|
+| `%s's %s fell!` | `%s\nperd %s!` | it: `%s\n%s cala!` / es: `¡%s\nsu %s bajó!` / de: `%ss\n%s\x0bsinkt!` | fr/de: real official corpus phrasing for this event, already POKéMON-first (RBY's for fr, GSC's own for de); es/it: RBY's own corpus reverses the same way GSC's does, so aligned with this project's existing RBY editorial compromise instead |
+| `%s's %s sharply fell!` | `%s\nperd %s\nà fond!` | it: `%s\n%s\ncala molto!` / es: `¡%s\nsu %s\nbajó mucho!` / de: `%ss\n%s\x0bsinkt stark!` | Same as above |
+| `%s's %s rose!` | `%s\ngagne %s!` | it: `%s\n%s sale!` / es: `¡%s\nsu %s subió!` / de: `%ss\n%s\x0bsteigt!` | Same as above |
+| `%s's %s sharply rose!` | `%s\ngagne %s\nà fond!` | it: `%s\n%s\nsale molto!` / es: `¡%s\nsu %s\nsubió mucho!` / de: `%ss\n%s\x0bsteigt stark!` | Same as above |
+| `%s's %s won't rise anymore!` | `%s voit sa\n%s\x0bne plus augmenter!` | it: `%s non può più\nfar salire %s!` / es: `¡%s no puede subir\nmás su %s!` / de: `%ss\n%s\x0bsteigt nicht mehr!` | No RBY equivalent (Gen1 has no "won't rise/drop anymore" message); corpus puts the stat first, de's own corpus phrasing also reverses (`"von"`), unlike its plain fell/rose |
+| `%s's %s won't drop anymore!` | `%s voit sa\n%s\x0bne plus diminuer!` | it: `%s non può più\nfar calare %s!` / es: `¡%s no puede bajar\nmás su %s!` / de: `%ss\n%s\x0bsinkt nicht mehr!` | Same as above |
+| `%s's %s activated!` | `%s\nvoit %s\x0bs'activer!` | it: `%s vede\n%s attivarsi!` / es: `¡%s ve activarse\nsu %s!` | No RBY equivalent (item-activation message is Gen2-only); corpus puts the item first (`ITEM de/di POKéMON: activé!`); de already had the correct genitive-s order, unchanged |
+| `%s's %s is DISABLED!` | `%s ne peut plus\nutiliser %s:\x0bENTRAVE!` | it: `%s non può più\nusare %s:\nBLOCCATO!` / es: `¡%s ya no puede\nusar %s:\nBLOQUEADO!` | No RBY equivalent (move-disable message is Gen2-only); corpus puts the move first; de already had the correct genitive-s order, unchanged |
+| `%s's %s was disabled!` | (same as `is DISABLED!`) | (same as `is DISABLED!`) | Same as above |
+| `%s's %s was reduced by %d!` | `%s voit les PP de\n%s\x0bbaisser de %d!` | it: `%s perde PP di\n%s: -%d!` / es: `¡%s pierde PP de\n%s: -%d!` | No RBY equivalent (PP-reduction via Spite is Gen2-only); corpus puts the move first; de already had the correct order (`"%s's\n%s..."`), unchanged |
+
+Fixed on `fix/gsc-stat-message-word-order`.
+
+**A wider follow-up audit turned up five more instances of the same
+underlying bug class**, this time in messages whose two dynamic entities
+are attacker/target (not POKéMON/stat) -- confirming the automatic
+matcher's blind spot (checks placeholder count, not which runtime
+argument each one is semantically bound to) is not limited to the
+POKéMON's-name-forced-first shape:
+
+- **`"%s's hurt by %s!"`** (`Battle.lua:5126`, `Strings(source, monName,
+  moveName)`, POKéMON first): de and it's real corpus reverses (`"<MOVE>
+  schadet/ha effetto su <POKéMON>!"`, move first) -- previously shipped
+  literally, reading "POKéMON schadet MOVE!"/"POKéMON ha effetto su
+  MOVE!" (POKéMON hurts the move, backwards). Fixed to `de: "%s\nleidet
+  unter\x0b%s!"` / `it: "%s\nsubisce\x0b%s!"` (fr/es/ja-Hrkt/ko were
+  already POKéMON-first and correct).
+- **`"%s used BIND on %s!"`** (`Battle.lua:2659`, `Strings(source, user,
+  target)`, user first): de's real corpus reverses (`"<TARGET> erleidet
+  Schaden durch <USER>s KLAMMERGRIFF!"`, target first) -- previously
+  shipped literally, reading "<USER> erleidet Schaden durch <TARGET>s
+  KLAMMERGRIFF!" (implying the user, not the target, is the one being
+  bound). Fixed to `"%s\nhält %s\nmit KLAMMERGRIFF fest!"`.
+- **`"%s was WRAPPED by %s!"`/`"%s was CLAMPED by %s!"`**
+  (`Battle.lua:2662`/`2665`, `Strings(source, target, user)`, target
+  first): it's real corpus uses active voice with the user first
+  (`"<USER> ha usato AVVOLGIBOTTA/TENAGLIA su <TARGET>!"`) -- previously
+  shipped literally, reading "<TARGET> ha usato .../su <USER>!" (implying
+  the target, not the user, is doing the wrapping/clamping). Fixed to a
+  passive construction that keeps the target first, matching this
+  project's own fr/es/de overrides for the same messages:
+  `"%s\nè avvolto da\x0b%s!"` / `"%s\nè stretto da\x0b%s!"`.
+- **The Crystal PokéSeer trade-origin flavor line**
+  (`"Hm… %s\ncame from %s\x0bin a trade?\x0c%s\nwas where %s\x0bmet
+  %s!"`, `crystal_extras.lua:424`, `Strings(source, name, ot, place, ot,
+  name)`, five arguments in a fixed `nickname, OT, location, OT,
+  nickname` order): this is the worst instance found -- de/es/it's real
+  Crystal corpus text reorders all five dynamic segments differently
+  from English/fr (moving the location to the very end instead of the
+  middle, and doubling up the OT/nickname mentions in a different
+  sequence), so the previous overrides, which just quoted that reordered
+  text positionally, produced genuinely incoherent output: wrong names
+  and the wrong location in most of the five slots once substituted
+  through the engine's fixed argument order. No compatible official
+  phrasing existed to reuse (unlike the RBY-borrowing case above), so new
+  sentences were composed for de/es/it using the same
+  `nickname, OT, location, OT, nickname` order as English/fr:
+  `de: "Hm… %s\nkam von %s\x0cim Tausch?\x0c%s\nwar, wo %s\x0c%s
+  traf!"`, `es: "Hm… %s\nvino de %s\x0cen un intercambio?\x0c%s\nfue
+  donde %s\x0cconoció a %s!"`, `it: "Hm… %s\nè arrivato da %s\x0ccon uno
+  scambio?\x0c%s\nè dove %s\x0cha incontrato %s!"`.
+
+The rest of `overrides/<language>/gsc/engine.json`'s ~40 remaining
+two-or-more-argument entries were checked against poke-corpus GoldSilver/
+Crystal too (sequential-narration shapes like `"%s sent out %s!"`, `"%s
+identified %s!"`, `"%s TRANSFORMED into %s!"`, the PokéSeer's other
+lines, and currency/number-only shapes like `"%s got %s%d for
+winning!"`) and found already correctly ordered in every language --
+these are messages where the two entities appear in the same relative
+order across languages (an active-voice sentence with two different
+POKéMON, or a name next to a plain number), so there was nothing to
+translate incompatibly with the engine's fixed argument order in the
+first place.
+
+**A second pass extended the same corpus cross-referencing to
+ja-Hrkt/ko** (only spot-checked for the first batch, on the theory that
+their head-first possessive grammar makes them structurally immune --
+true for every POKéMON/stat and POKéMON/item message, but not for
+`"%s used BIND on %s!"`): both languages' real corpus phrasing for this
+move is the same target-topic-first passive construction used for the
+sibling WRAPPED/CLAMPED entries (`"<TARGET>は/는(은) <USER>に/에게
+しめつけられた/조이기를 당했다!"`), which happens to match WRAPPED/
+CLAMPED's `(target, user)` call order but not BIND's own `(user,
+target)` call order (`Battle.lua:2659`) -- so both previously shipped
+the attacker and the one being bound swapped, the same mistake as de's
+BIND entry above. Rewritten as active-voice sentences that keep the
+user first: `ja-Hrkt: "%sが %sに\nしめつけた！"`, `ko: "%s이(가)
+%s를(을)\n조였다!"`.
+
+Also checked (and found already correct) while this was open:
+ja-Hrkt's existing five-argument PokéSeer trade-line override, which
+turned out to already correctly adapt to the engine's `(nickname, OT,
+location, OT, nickname)` call order (`"ふむ……\nこの%sは %sと\x0cこう
+かんした POKéMONじゃな？\x0c%sで\n%sが %sと\x0bであった！"`,
+provenance already recorded this as a deliberate adaptation) -- ko has
+no override for that key at all yet (untranslated, a coverage gap
+rather than a wrong-order bug, left alone).
+
+Fixed on `fix/gsc-stat-message-word-order`.
+
+### Gold: formerly required upstream capabilities
+
+Entries this list held while they were open, as last written. The PC, battle menu and Options/naming entries were re-checked at v0.2.51, v0.2.24 and v0.2.19 respectively, the status and Pokédex entries at v0.3.51. At v0.3.63, `src/battle/gen2/Battle.lua` makes 170 `Strings()` calls and builds no message by concatenating English, and the opening paragraph's "no Gold equivalent at all" no longer holds everywhere: two Crystal screens read cart text by label through `RomText` (`src/ui/gen2/GenderSelect.lua`, `src/script/gen2/specials/battle_tower.lua`).
+
+Underlying most of the bullets below: RBY's `romText()`/`data.text[label]`
+pairing -- the mechanism "Fixed upstream: more battle/overworld/menu
+messages now routed through the real ROM text" above used to close 21
+RBY gaps by pointing an existing `Strings()` compromise at its real ROM
+label instead -- has **no Gold equivalent at all**. Confirmed directly:
+nothing under `src/*/gen2/` (~110 files, 80k lines) calls
+`romText()`/`require("src.core.RomText")` or reads `data.text[...]`, and
+Gold's own ROM-text extractor (`import/RomExtractorGen2.lua`) keys
+dialogue by bank:address (`Opcodes.key(bank, address)`), not by a named
+pokered-style label the way RBY's extractor does -- so there is no
+label-keyed table to route a Gold `Strings()` fallback through even in
+principle. This is why Gold's remaining gaps below are not a small mirror
+of the RBY fixes: introducing the pattern for Gold is new engine work, not
+a matter of wiring a few missed callsites.
+
+- **PC and storage dialogue -- fixed upstream, not attempted yet in a prior
+  version of this doc.** `CenterPcMenu:buildEntries()` used to build its
+  "which PC" list and free-form prompts directly, with no hook at all. Not
+  true anymore: re-checked directly against the v0.2.51 checkout,
+  `CenterPcMenu.lua` now wraps every one of these in `Strings()`/
+  `Strings.source()` -- `BILL's PC`, `PROF.OAK's PC`, `HALL OF FAME`, the
+  player-name template `%s's PC`, `TURN OFF`, `Access whose PC?`,
+  `Want to get your\n#DEX rated?`, the link-closed messages and the
+  `BILL's PC\naccessed....`/`PROF.OAK's PC\naccessed....` openings all now
+  reach `mod.content.strings:override`, the same general hook every other
+  engine string uses -- no `ui.pc.items`/`literal_handlers.json` special
+  case needed. Confirmed live: a real French build's `lang/strings.lua`
+  carries all of them translated (`"PC DE LEO"`, `"PC DE CHEN"`,
+  `"CELEBRITE"`, `"PC DE %s"`, `"DECONNEXION"`, ...), most resolved fully
+  automatically by the existing corpus matcher, same as any other engine
+  key. `BoxMenu.lua` is the same story: also fully `Strings()`-wrapped now,
+  and most of its rows already auto-translate (`Choose a <PK><MN>.`,
+  `CANCEL`, `PARTY <PK><MN>`, `MOVE`, `DEPOSIT`, `What's up?`,
+  `Move to where?`), but not all of them -- `Choose a BOX.`, `STATS`,
+  `WITHDRAW` and `RELEASE` remain unresolved gen2 engine keys as of this
+  writing, worth a dedicated pass. Box names (`BOX1`, `BOX2`, …) are still a
+  different case, unaffected by any of this: not a menu string at all, but
+  save data written once by `SetDefaultBoxNames` when a new save is created
+  (`core/gen2/Boxes.lua`'s `save.boxNames`), so they would still need a
+  save-init hook, not a menu-list one.
+- **Battle action menu -- fixed upstream.** The `FIGHT`/`<PK><MN>`/`PACK`/
+  `RUN` 2x2 grid used to be a hardcoded local table in `ui/gen2/BattleState.lua`
+  with no hook at all. Re-checked directly against v0.2.51: the table
+  (`local MENU = { Strings.source("FIGHT"), ... }`) is now built from
+  `Strings.source()`, and rendered through a real `Strings(MENU[i])` call
+  (`ui/gen2/BattleState.lua:4179-4184`) -- the same general `strings`
+  override hook as everything else. `PACK` was already auto-matching by the
+  time this was checked; `FIGHT` and `RUN` needed a manual pick because the
+  corpus packs all four labels into one segmented row
+  (`gs.menu.BattleMenuHeader.Text`, `@`-joined) rather than one row per
+  label -- closed this session by picking segment 0/3 directly (safe across
+  all six languages: only the interior `<PK><MN>`/`PACK` segment order
+  differs between languages, not the FIGHT/RUN endpoints), verified against
+  a real build (`fr`: `"ATTAQ"`/`"FUITE"`). `overrides/<lang>/gsc/
+  engine.json`'s `"FIGHT"`/`"RUN"` entries record the pick.
+
+  **Corrected from a prior version of this doc:** the rest of this bullet
+  used to list `Wild Pokémon appeared!`, `Pokémon's defense rose`,
+  `Pokémon learned …`, `Got away safely`, `Pokémon's attack missed`, `…
+  wants to battle`, `… sent out …`, `A critical hit`, and `You have no
+  more Pokémon` as needing a brand-new public string/event registry. That
+  doesn't hold: `src/battle/gen2/Battle.lua` already `require`s and uses
+  `Strings()` (e.g. `Strings("%s\nused %s!", ...)`) -- the hook exists.
+  The real gap is that the large majority of this file's combat messages
+  (100+ lines) build their text by raw string concatenation instead,
+  bypassing that existing hook one message at a time, not because a hook
+  is missing. `Pokémon's defense rose` (`EFFECT_REFLECT`) and its
+  undocumented `EFFECT_LIGHT_SCREEN` sibling (`SPCL.DEF rose!`) are fixed
+  upstream (gen1recomp branch `fix/stat-rise-message-translation`, merged,
+  PR #1439); the rest of `gen2/Battle.lua`'s
+  messages, including the ones still named above, need the same
+  treatment -- wrapping each one in `Strings(...)`, message by message. A
+  real chunk of work by volume, but not a design gap.
+- **Status condition abbreviations (Gold) -- fixed upstream.** The three Gold screens that draw a status abbreviation used to derive it their own way (`ItemEffects.STATUS_CLASS` lookups or a hardcoded local table), never through the merged `statuses` registry. At v0.3.51 the party menu and the summary pass `Status.hudLabelFor(statuses, ...)` to `Strings()` (`src/ui/gen2/PartyMenu.lua:967`, `src/ui/gen2/SummaryMenu.lua:237`) and the battle HUD passes the authored `hudLabel`/`label` to `Strings()` (`src/ui/gen2/BattleState.lua:4405`), so the abbreviations come from this project's catalog (`BRN` reads `BRU` and `SLP` reads `SOM` in French).
+- **Gen2 Pokédex screen -- fixed upstream.** The screen still reads `data.gen2Pokedex`, but `PokedexText.apply` (`src/core/gen2/PokedexText.lua:21`, called from `src/core/Game2.lua:1215`) copies the merged `pokemon` registry's `dexEntry` (kind, text, text2) into it after the mod merge, and its labels go through `Strings()` (`src/ui/gen2/PokedexMenu.lua:688-1512`, the OPTION and SEARCH screens included). The mod's species kinds and #DEX texts reach the entry.
+- **Pokegear "Press any button to exit" -- fixed upstream.** `src/ui/gen2/Pokegear.lua:1244` prints `Strings(entry.body)`, and the catalog ships the line ("Presser un bouton\npour sortir." in French).
+- **Gold in-game Options menu (from gen1recomp#1642, fixed upstream):**
+  `src/ui/gen2/OptionsMenu.lua` had zero `Strings()` calls anywhere in the
+  file -- confirmed directly against a real v0.2.19 checkout. Every row
+  label (`TEXT SPEED`, `BATTLE SCENE`, `BATTLE STYLE`, `SOUND`, `PRINT`,
+  `MENU ACCOUNT`, `FRAME`, `CONTROLS`, `MUSIC VOL`, `SFX VOL`, `MUSIC
+  FILTER`, `GAME SPEED`, `ZOOM`, `VOID FILL`, `TILT`, `COLOR`, `GBC FX`,
+  `VIDEO MODE`, `SCREEN POS`, `TOUCH PAD`, `TOUCH LAYOUT`, `VIBRATION`, and
+  each row's own value strings like `FAST`/`MID`/`SLOW`, `ON`/`OFF`,
+  `SHIFT`/`SET`, `MONO`/`STEREO`) was a plain Lua table field, drawn with
+  `Chrome.print(row.label, 2, labelY)` -- no hook for a mod to reach any of
+  it. This was the screen behind the issue's "the options... phrase"
+  report. Fixed upstream on gen1recomp branch
+  `fix/translate-gold-options-menu` (labels and cart-original values wrapped
+  in `Strings()`/`Strings.source()`, mirroring the Gen 1 OPTION screen's own
+  pattern), merged to `dev` as PR #1735 (`6b6b8f46`). This project's own
+  `overrides/{fr,de,es,it}/gsc/engine.json` already carry real corpus
+  values for every one of these labels and value ladders (branch
+  `feat/gold-options-menu-corpus-translations`, merged to `main` as PR #34)
+  -- checked directly against poke-corpus (`gs.options_menu.StringOptions`
+  and its `Options_*` rows) and they match the ROM's English source
+  character-for-character, padding included, so this is official localized
+  phrasing, not a compromise. Live as of gen1recomp v0.2.24 (`aea38240`):
+  that release includes PR #1735, so a build from the pin shows this screen
+  translated. **Corrected from a prior version of this doc:** ja-Hrkt/ko
+  were listed here as unresolved because their corpus rows supposedly used
+  `<NEXT>` instead of `<LF>`. Re-checked directly: none of the relevant
+  rows use `<NEXT>` at all, and `YOUR NAME?`/`RIVAL'S NAME?`/`MOTHER'S
+  NAME?`/`BOX NAME?` (naming screen, below) and the save-flow prompts all
+  now resolve automatically from real corpus text for both languages, no
+  override needed. `OPTION` is the one exception: without an explicit
+  override, ja-Hrkt/ko's own automatic match picks a different, truncated
+  corpus row (just "settings" as a noun, missing the verb half of the
+  packed CONTINUE/NEW GAME/OPTION/MYSTERY GIFT segment) -- `overrides/
+  {ja-Hrkt,ko}/gsc/engine.json` carry an explicit pick for that one key.
+  ja-Hrkt also needs one for two of the SAVE-screen prompts below: its own
+  automatic match substitutes a spelled-out "POKé" for the ROM's own
+  literal "#" glyph.
+
+  **Future architectural note:** every one of these labels and value ladders
+  is verbatim cart text, which argues for routing this screen through real
+  ROM extraction (a `game.data.text`-equivalent table gen1recomp's own
+  extractor would fill from *whatever* ROM is imported) rather than
+  `Strings()` plus a hand-maintained override per language -- the same shift
+  already made for RBY content that used to need this project's manual
+  overrides. Done that way, a player who imports their own localized Gold
+  cartridge would see this screen in their own language even with no
+  translation mod installed at all, and this project's override table above
+  would become unnecessary. That is a gen1recomp-side change (extending
+  `RomExtractorGen2.lua` plus rewriting `OptionsMenu.lua` to read from it),
+  materially bigger than the `Strings()`-wrapping fix already on
+  `fix/translate-gold-options-menu`; deferred for now.
+- **Gold naming/keyboard screen (from gen1recomp#1642, fixed upstream):**
+  `src/ui/gen2/NamingScreen.lua` also had zero `Strings()` calls. The
+  prompts (`YOUR NAME?`, `RIVAL'S NAME?`, `MOTHER'S NAME?`, `BOX NAME?`,
+  `NICKNAME?`), the on-screen keyboard's own letters, and the
+  `lower`/`UPPER`/`DEL`/`END` bottom row were all raw literals, drawn
+  directly (`Chrome.printThrough("NICKNAME?", 5, 4, pal)` and similar) with
+  no public hook. Matches the issue's "the writing custom game is empty"
+  report (the character/nickname naming screen). Fixed upstream on
+  gen1recomp branch `fix/translate-gold-naming-screen`, mirroring the Gen 1
+  naming screen's own `Strings(cell)`-per-keyboard-cell pattern, merged to
+  `dev` as PR #1738 (`41790637`). Also live as of gen1recomp v0.2.24, same
+  as the Options menu entry above.
+
+  A second, more severe bug turned up investigating this same report: with
+  a translation mod's TTF font active, this screen's on-screen keyboard
+  rendered *no text at all* (only a dashed placeholder line), independently
+  of the `Strings()` gap above -- see "Engine bugs surfaced by TTF mode"
+  below, which covers the real root cause and its fix.
+- **Received-item/system rewards: fixed, but on this project's own side, not
+  gen1recomp's.** Confirmed with a real in-game boot (fr): both the
+  Pokégear grant ("reçoit .", `gs.std_text.ReceivedItemText`) and the
+  Cyndaquil/Héricendre starter grant ("reçoit !",
+  `gs.ElmsLab.ReceivedStarterText`) showed an empty substituted name, with
+  the surrounding sentence correctly translated.
+
+  **Corrected from a prior version of this doc:** this used to be listed
+  here as needing an unmerged gen1recomp fix
+  (`fix/gold-empty-item-mon-name-fallback`, making `getMonName`/
+  `getItemName` in `src/world/gen2/World.lua` require `def.name ~= ""`
+  instead of a bare truth test). That branch, dated the day before the fix
+  below, was an initial, since-superseded theory of the root cause -- it is
+  still sitting unmerged on gen1recomp and is not needed to close this gap.
+  The actual root cause, found the next day by dumping the engine's own
+  cached extracted text at runtime: the raw pointer text for both events is
+  bare and correct, but the *generated translation* itself shipped a token
+  (`{RAM:wStringBuffer4}`/`{RAM:wStringBuffer3}`) that
+  `gen1recomp`'s own `TextBox.lua` `RAM` handler does not recognise (it only
+  matches the bare `wStringBuffer`/`wNameBuffer` spellings for Gold, not a
+  numbered one), which `Tokens.expand` then silently drops -- a pipeline
+  bug, not an engine one. Fixed entirely on this project's side:
+  `pipeline/shared/tokens.py`'s `corpus_to_engine` gained an opt-in
+  `bare_dynamic_tokens` flag that Gold's call sites now pass, collapsing
+  `{text_ram X}`/`{text_decimal X}`/`{text_bcd X}` to the bare
+  `{STRBUF}`/`{NUM}` markers Gold's engine-side decoder actually produces;
+  merged as PR #37 (`fix/gold-strbuf-buffer-number-token`). No gen1recomp
+  change needed, and no pin bump either -- this fix lives entirely in this
+  project's own Python pipeline.
+
+The entries in `config/gsc/literal_handlers.json` record known stable corpus
+matches for menu screens exposed through `ui.pc.items`/`ui.start_menu.items`/
+`ui.title_menu.items`/`ui.options.rows`/`ui.party.submenu` -- deliberately not
+a private-class monkey patch. **Already active, not merely recorded for
+later:** `pipeline/gsc/mod.py`'s `_gs_ui_labels()` reads this
+file and ships every entry through the `ui_labels` catalog today, wired into
+those five hooks -- this is not a future activation step. Some of the file's
+entries (`FIGHT`, `PACK`, `RUN`, `BILL's PC`, `PROF.OAK's PC`, `TURN OFF`,
+...) turned out to be redundant duplicates once the screens that actually
+render them (`CenterPcMenu`, `BoxMenu`, the battle action menu) were
+confirmed to route through a plain `Strings()` call instead -- reachable
+through the general `strings`/`engine.json` catalog on its own, with no need
+for the `ui_labels` path at all; see "PC and storage dialogue" and "Battle
+action menu" above. This keeps the release manifest permission-free either
+way and makes any screen still genuinely without a hook (the remaining
+bullets above) visible to the engine project.
+
+## FireRed
+
+### FireRed: fixed upstream in v0.2.67
+
+gen1recomp#2346 (eleven commits, in the pinned release) closes what this section used to list as "Game3 never loads the merged Strings catalog", "Battle messages are hardcoded English", "Menus and interface text are hardcoded English", "Option values are printed without Strings()", most of "Abilities and move descriptions", "Location names" for the map popup and the Town Map, and Oak's speech:
+
+- `Game3:_loadMods` hands the merged data to `Strings.load` after the mod merge, like `Game` and `Game2`. The gate's `strings_live` measurement now reads `resolves: true` (it checks the pinned `src/core/Game3.lua` for that call before measuring).
+- Battle, field, item, script, menu, Pokédex, intro and option text goes through `Strings()` as whole-sentence templates. Tables built at module load keep their English as `Strings.source()` and are translated where they are read. Values the engine stores or compares (menu action identifiers, box names, quest-log keys) stay English and are translated where they are drawn. Code that parsed English text back (the double-battle send-out, `AnimSeq`'s miss/faint/confusion probes) now matches the catalog wording.
+- `Strings()` accepts numbered directives (`%2$s de %1$s`, POSIX printf style). A translation can thus put two values in another order than English, which the official translations do in dozens of battle lines ("ATTAQUE du PIKACHU" for "PIKACHU's ATTACK"). It may leave an argument out, as the carts sometimes drop the player's name. This applies to every game, so the Red/Blue and Gold `engine-contract-gap` compromises could now be revisited.
+- Option values go through `Strings(value, "option.<key>")` (the BATTLE STYLE's SHIFT is CHOIX, not the party's ECHANGER), and the new-game name choices through `Strings(name, "intro.nameChoice")` (FIRE the name stays FIRE in French, FIRE the type is FEU).
+- Ability names (battle messages and summary) go through `Strings()`, since no registry renames abilities. The summary's move and ability descriptions are looked up by the ROM's English names (`Pokemon.romMoveName`): before, a mod that renamed moves made every description read "---".
+- The map popup and the forest preview translate the section name, and the popup the floor label as a whole ("3F", "B1F", "ROOFTOP"): the European carts number floors differently (3F is "2e" in French, "2S" in German), so no template around the number could say it.
+
+On this project's side, `pipeline/gen3/engine_scope.py` rebuilds `config/frlg/engine_scope.json` from the pinned engine. It collects every literal `Strings()`/`Strings.source()` key under `src/*/game3`, every table the runtime passes to `Strings()` through a variable (read with LuaJIT, or from the source for local tables), the `Strings(x or "fallback")` literals, and the ROM's move and ability descriptions and ability names from the private extract. Each key is then joined to the FireRed corpus row that reads as it (`engine_template` in `pipeline/gen3/join.py`):
+
+- the row's buffers and battle placeholders stand where the key has directives, and are renumbered when the translation orders them differently;
+- line breaks may differ, and the translation's own breaks are kept;
+- `{STR_VAR_1}`, `{PLAYER}` and keypad icons (`{A_BUTTON}`) stay the tokens the runtime substitutes;
+- a placeholder the engine spells out ("%s's DRIZZLE\nmade it rain!" for `[B_SCR_ACTIVE_ABILITY]`) is filled with the cart's own name row (`fill`);
+- when several rows read the same, the wording most of them share is kept, and Easy Chat words and group names, quest-log, Fame Checker and Pokédex-category rows are never used (they share English with menu labels, not their sense);
+- padding spaces the cart puts around a label ("NAME: ") are dropped unless the key has them.
+
+Rows picked the wrong way are pinned in `REVIEWED`. In French, 1,253 of the 1,598 keys come from a corpus row (43 of them with renumbered values), 220 from `overrides/fr/frlg/engine.json`, 43 from the Red/Blue and Gold overrides for rows the runtimes share, and 82 read the same as English (de/es/it are within a few rows of these figures). `join_gen3_engine_strings` refuses any value, from the corpus or an override, whose directives `Strings()` would reject (`check_engine_directives`: numbered all or none, each naming one of the key's arguments, otherwise the key's own directives in order), and formatting every value of the four languages through the pinned `Strings()` with typed arguments fell back for none.
+
+### FireRed: fixed upstream in v0.2.70
+
+Four FireRed fixes this project sent upstream are in the pinned release:
+
+- gen1recomp#2374 re-applies a mod's `pokemon` and `moves` patches after `Pokemon.install()` reloads the species pack (entry 2), so the `species_names` and `move_names` catalogs reach the party, the summary and battles.
+- gen1recomp#2375 routes the Easy Chat vocabulary through `Strings()` and reads its species and move groups from the dataset (entry 11); gen1recomp#2365 draws the word pages' fourth row, and gen1recomp#2376 gives the summary's move names the width the cart gives them.
+
+The release also brings a large batch of new FireRed screens: Mystery Gift, Teachy TV, the Union Room and the wireless status screen, the network link menu, the slot machine, the Trainer Tower records, the elevators, Safari battles. The engine catalog grows from 1,616 to 2,914 keys, 1,028 of them Easy Chat. On this project's side:
+
+- `pipeline/gen3/engine_scope.py` collects the Easy Chat keys from the engine's own table (`easyChat.group|<name>`, and `easyChat.<group>|<word>` for the 18 text groups; the species and move groups are left to `species_names` and `move_names`, which the engine reads for them), and joins each word to its own group's `easy_chat_group_*` row, the one case a last-resort family stands for a key. Words that read as neutral are kept, since the carts do not all keep them: the Spanish cart's "…" is ¡QUÉ PLAN!.
+- It reads the new tables the runtime passes to `Strings()` through a variable (the Union Room's labels and activities, the wireless status rows, the Trainer Tower modes, the in-game trade names, the elevator's floors) and the `require("src.core.Strings")(...)` call form, and the hardcoded-text audit sees every table a value sits in and leaves out exactly what a literal `Strings()` argument covers, multi-line ones included.
+- Keys that hand the runtime pret's own escapes (`\n`, `\l`, `\p`, as Teachy TV's lessons do) are matched and written back in that form (`_break_marks` in `pipeline/gen3/join.py`).
+- The elevator menu spells the floor labels out as literals, which the neutral-string filter would have dropped together with the map popup's floor naming; a floor label now stays a floor.
+- 75 keys with no clean corpus row are covered by `overrides/<language>/frlg/engine.json`: cart rows the engine words or splits its own way (the Wonder Card bodies from `mystery_event_msg`, OAK's first-battle advice, the POKé FLUTE and lure/repel lines, the Safari and Trainer Tower labels), and port-added text with no cart equivalent (the network link menu, the slot machine's fallback labels), worded per language (`engine-original`). The six overrides for keys the engine removed are gone.
+
+In French, 2,489 of the 2,914 keys come from a corpus row, 290 from `overrides/fr/frlg/engine.json`, 43 from the Red/Blue and Gold overrides for rows the runtimes share, and 92 read the same as English (German, Spanish and Italian take 2,503, 2,530 and 2,515 from the corpus); none falls back to English in any of the four languages.
+
+### FireRed 1: Accented letters were drawn blank
+
+`FrlgFont.glyphId` (`src/ui/game3/frlg_font.lua`) maps a UTF-8 character to a glyph through `buildRev`, which is built from `TextIR.CHARMAP` (`src/core/game3/scripting/text_ir.lua:8-33`). That table only lists what US FireRed prints: `é` and `É` are its only accented letters. Every other character falls through to glyph `0x00`, a blank. The ROM font the extractor bakes (`chrome/fonts/latin_normal_fg.rgba`, 512 glyphs in charmap order) does contain the whole European set -- checked pixel by pixel on both extracted sheets: `À Á Â Ç È Ê Ë Ì Í Î Ï Ò Ó Ô Œ Ù Ú Û Ñ ß à á â ç è ê ë ì í î ï ò ó ô œ ù ú û ñ º ª ; ¿ ¡ Ä Ö Ü ä ö ü` are all non-empty at their pret charmap positions.
+
+The mod already ships the correct characters; the gate counts the characters of every shipped catalog that `glyphId` turns into a blank: **fr 2,746** (2,249 of them in dialogue, 347 in `Strings()` values), **de 4,242**, **es 9,850** (`¡` and `¿` open every exclamation and question) and **it 2,322**.
+
+Fix: extend `TextIR.CHARMAP` with pret's Latin glyphs (`charmap.txt` lines 1-156: `0x01`–`0x2B`, `0x36` `;`, `0x51` `¿`, `0x52` `¡`, `0x5A` `Í`, `0x68` `â`, `0x6F` `í`, `0xF1`–`0xF6` `ÄÖÜäöü`), or build `buildRev` from a dedicated render table so `TextIR.decode`'s English behaviour is untouched. The small font (`latin_small`, party/summary names) is CHARMAP-ordered too and needs the same entries. Nothing changes on this project's side: the gate's `blank_glyphs` metric drops to 0.
+
+**Fixed upstream in v0.2.67** by gen1recomp#2342 (`FrlgFont.LATIN_GLYPHS`, render-only, `TextIR.CHARMAP` untouched, with `tests/game3_latin_glyphs_test.lua`). The figures above are the ones measured before it; at the pinned revision `tools/frlg/gate.lua` reports `blank_glyphs: 0` for fr, de, es and it.
+
+### FireRed 2: Name patches were reverted on entering the field
+
+`Game3:load` hydrates the dataset (`Dataset.hydrate`, which calls `Pokemon.install`) and then loads mods, whose `pokemon` and `moves` patches write into the species pack's `_names`/`_moveNames` tables. Starting or continuing a game then runs `Runtime.start`, which calls `Pokemon.install(cache)` again (`src/core/game3/runtime.lua:115`): the pack is reloaded from the cache and every name reverts to English. `Gen3Compat.applyMerged` registers a `Pokemon.onReload` callback, but it only reseeds sprite overrides. The `moves` registry write (`G3.moveWrite`) does re-run through `Moves.onReload(reapplyMoves)`, but that fires when the move pack reloads, not the species pack -- and move names are stored in the species pack (`Pokemon._moveNames`, read by `Pokemon.moveName`).
+
+Measured by the gate: `BULBIZARRE`/`BISASAM` and `ECRAS'FACE`/`PFUND`/`DESTRUCTOR`/`BOTTA` read back correctly after the mod loads and revert to `BULBASAUR`/`POUND` after the second `Pokemon.install`. Items and trainers are unaffected (their packs are loaded once).
+
+Fix: make the `Pokemon.onReload` callback re-apply the merged `pokemon` and `moves` registries (`spec.write` for both, exactly as `reapplyMoves` does for `Moves`), or skip `Pokemon.install` in `Runtime.start` when the pack is already installed from the same cache.
+
+**Fixed upstream in v0.2.70** by gen1recomp#2374: the `Pokemon.onReload` callback re-applies the `moves` and then the `pokemon` registry, in `Loader:_mergeOrder`'s order, since the species writer resolves learnsets through the move index the moves writer fills (`tests/engine/game3_mod_names_survive_reload_test.lua`). Base-stat patches were reverted the same way and come back with it.
+
+### FireRed 3: Japanese could not be rendered
+
+game3 drew every string with the cart's Latin font (`FrlgFont`), which has no kana, and `Schemas.GEN3` gates the `font` registry (`font = false`, `src/mods/Schemas.lua`), so a mod could not register the TTF the Red/Blue and Gold/Silver Japanese mods use. Every Japanese line printed blank, and the pipeline did not offer the collection's complete `ja-Hrkt` column.
+
+**Fixed upstream in v0.3.4** by gen1recomp#2406: the US cart carries its own Japanese fonts, which its text printer draws for a string in Japanese mode (`pokefirered/src/text.c:141`), so the extractor bakes the normal and small sheets with their width table and `FrlgFont` draws a Japanese character by the character itself (`FrlgFont.JAPANESE_GLYPHS`), letter spacing included. Nothing Japanese has to be shipped by a mod. Project side (this pin): `ja-Hrkt` joins the collection's languages, and a Japanese row keeps its characters instead of going through the cart's byte encoding, whose Japanese block reuses the Latin block's values -- only the tokens and escapes still go through the charmap (`japanese_ir` in `pipeline/gen3/text.py`). The release gate reports no character without a glyph, and each screen's own Japanese font (the battle box's 8px sheet, the male and female speech fonts) is a follow-up upstream, not a mod concern.
+
+### FireRed 6: Trainers were recognised by their English class name
+
+Two places compare the display class name a mod patches:
+
+- `Trainers.info` substitutes the player's chosen rival name only when `info.className == "RIVAL"` (`src/core/game3/scripting/trainers.lua`). German and Italian translate that class (`RIVALE`), and the rival would then battle as the ROM's placeholder `TERRY`.
+- The quest log records a win as a gym-leader, Elite Four or champion event from `class == "LEADER"`, `"ELITE FOUR"` and `"CHAMPION"` (`src/core/game3/quest_log_recorder.lua`, fed by `battle/init.lua`'s `trainerClassName`). With translated classes, every such win falls back to the generic trainer event, and in French, where LEADER reads CHAMPION, every gym win would be recorded as a champion battle.
+
+**Fixed upstream in v0.3.4** by gen1recomp#2398: every one of those places reads the class id, as pret does (`Trainers.info` names classes 81, 89 and 90 by the rival's name, `battle_message.c:2078`; the quest log switches on 84, 87 and 90, `quest_log_battle.c:25`; the battle transition follows `GetTrainerBattleTransition`, `battle_setup.c:624`, and ignores the facility classes of a Trainer Tower or e-Reader foe). The pipeline translates the four class names with all the others since this pin, and a test checks that no game3 file compares a class name any more.
+
+### FireRed 7: Braille and keypad icons in dialogue
+
+- **Braille: fixed upstream in v0.3.4** by gen1recomp#2400. `Braille.encode` draws a Unicode braille character (U+2800–U+283F) as that very cell (`Braille.unicodeCell` maps Unicode's dot bits onto the cart's `BRAILLE_CHAR_*` numbering), so the 39 braille lines (Dotted Hole, Ruin Valley and Mt. Ember's Ruby Path) ship as each cart's own braille, cells no Latin letter reaches included (German ä, `⠿`, dot 5 alone). The join checks an English braille row by spelling its cells back into the letters the extractor decoded from the cart (`decode_braille`), then ships the target row's cells unchanged (`_join_braille` in `pipeline/gen3/join.py`).
+- **Keypad icons: fixed upstream in v0.3.4** too. The keypad-icon and extra-symbol escapes of extracted text (`F8 xx`/`F9 xx`: A_BUTTON, DPAD_*, ①, №, the ones help and minigame texts use) fell through to `"?"` followed by the argument byte as a glyph; `TextIR.decode` now reads them as the `{A_BUTTON}` tags `FrlgFont` draws, or as the symbol's own character, and the `PK`/`MN` ligature as `{PKMN}`. The pipeline's port of the decoder follows, so a translated line carries the same icons as the English one.
+
+### FireRed 11: Easy Chat words were engine data, not a registry
+
+The Easy Chat screen (profile, questionnaire, battle-start message) picks its words from `src/core/game3/easy_chat_data.lua`, a transcription of pret's `src/data/easy_chat/` tables: 1,784 English literals (1,716 distinct) across 22 groups, plus the group names the picker lists down its left side. The screen draws them straight from that table, with no `Strings()` call and no registry a mod can reach, so every word the player composes with stays English. The screen's own text is not affected: its title, instructions, confirmations, YES/NO and footer go through `Strings()` at the pinned revision (gen1recomp#2346).
+
+The words split into two halves that need different fixes, measured against the corpus:
+
+| Groups | Words | Where their translation lives |
+| --- | ---: | --- |
+| The 18 vocabulary groups (TRAINER, STATUS, BATTLE, GREETINGS, PEOPLE, VOICES, SPEECH, ENDINGS, FEELINGS, CONDITIONS, ACTIONS, LIFESTYLE, HOBBIES, TIME, MISC., ADJECTIVES, EVENTS, TRENDY SAYING) | 974 | their own `frlg.common.easy_chat_group_*` rows, one per language |
+| `POKéMON`, `POKéMON (NAT)` | 452 | the species name table |
+| `MOVE 1`, `MOVE 2` | 354 | the move name table |
+
+Only the first half is missing text: the other 806 are species and move names duplicated into this table as literals, which the cart itself does not duplicate -- its Easy Chat groups point at the name tables. That duplication also costs more than translation: a mod that renames a species or a move through the `pokemon`/`moves` registries sees the old name in this picker.
+
+Fix, in two parts of very different size. The vocabulary groups can go through `Strings()` where the picker draws them, with a context per group: 155 of those words collide with keys this engine already uses elsewhere (ATTACK, BAG, CANCEL, BACK, BOY...), which one catalog entry cannot serve, and `Strings(source, context)` is what the engine already provides for exactly that (see the Contest status box's `contest.caught|None`). The species and move groups should instead read the ROM packs the rest of game3 reads, which fixes the renaming gap at the same time and needs no catalog work at all: those names are already translated in `lang/species_names.lua` and `lang/move_names.lua`.
+
+**Fixed upstream in v0.2.70** by gen1recomp#2375, along these lines: `src/core/game3/easy_chat_text.lua` looks each vocabulary word up as `Strings(word, "easyChat.<group>")` and each group name as `Strings(name, "easyChat.group")`, and resolves the species and move groups through `Pokemon.name`/`Pokemon.moveName`. `pipeline/gen3/engine_scope.py` emits the 1,028 keys (see the v0.2.70 section above), 1,025 of them joined to their group's corpus row; the `[POKEBLOCK]` and `[PK]RS` words and the POKéMON (NAT) group name, which the cart calls POKéMON2, are overrides.
+
+### FireRed 12: An EGG was named in English in the party
+
+`Party.giveMon` gives a new egg the nickname `"EGG"` (`src/core/game3/party.lua:288-292`, and `src/core/game3/breeding.lua:395` for the Day-Care's), and the party slots print a mon's nickname as it is (`Pokemon.displayName`, `src/ui/game3/party_menu.lua`). The cart stores its own `gText_EggNickname` there, which each European cart translates (OEUF, EI, HUEVO, UOVO), so a translated game still lists its eggs as EGG. The summary and the link trade screen are not affected: they print `Strings("EGG")` for an egg.
+
+Fix: store `Strings("EGG")` as the nickname when the egg is made, which is what the cart does (the save holds the translated word), or have `displayName` return `Strings("EGG")` for an egg, as the summary does.
+
+**Fixed upstream in v0.3.4** by gen1recomp#2396: `Pokemon.displayName`/`displayMonName` name any egg the way `GetMonData(MON_DATA_NICKNAME)` does (`pokefirered/src/pokemon.c:3020`), which also covers eggs saves already carry. The same PR draws an egg as an egg everywhere else (the menu icon from `MON_DATA_SPECIES_OR_EGG`, the PC panel, the summary's egg page, the trade scene, the party slot without level or HP). At this pin the name is the cart's own row, `RomText.plain("gText_EggNickname")` (`src/core/game3/pokemon.lua:1167`), so the mod translates it with the rest of the cart's text and no engine key is involved. The runtime still stores `"EGG"` as the nickname, as the cart stores its own word, so `breeding.lua` is reviewed as non-display and `party.lua` keeps only its `RED` fallback in the inventory below.
+
+### FireRed 18: The honorific after the player's name
+
+The Japanese cart writes くん or ちゃん after the player's name, by the player's gender (`{KUN}`, `pokefirered/src/string_util.c:386`). The `frlg` text dialect has no placeholder source (`src/core/game3/scripting/text_ir.lua`, which gives Emerald's `rse` dialect one), so `expand_seg` prints nothing for it. The Japanese FireRed mod ships the rows that add the honorific where the English line has none (Daisy's, Mr. Fuji's and the fishing guru's greetings, about twenty lines), since the rest of each line is the cart's, and ships the honorific itself from the Japanese rows (`gExpandedPlaceholder_Kun`/`_Chan` in `overrides/ja-Hrkt/frlg/dialogue.json`; the US cart's rows are empty); gen1recomp#2679, released in v0.3.52, expands `{KUN}` in FireRed from the cart's `gExpandedPlaceholder_Kun`/`_Chan` strings (`src/import/gba/versions_text.lua:1233`, `:1229`) by the player's gender, read through the script cache so the mod's rows reach it, and still prints nothing when both strings are empty, as on the US cart; the honorific now prints in those lines. Nothing changes on this project's side.
+
+### FireRed: the imperial-units compromise
+
+**Imperial units**: the Pokédex and its size page print weights and heights gen1recomp computes in pounds and feet (`pokedex_data.lua`); the European carts print kilograms and metres. A template cannot convert the number, so the translations keep feet/inches and only localise the labels (HAUT./POIDS…) and the decimal comma; the weight's unit is the cart row `gText_Lbs` (`pokedex_data.lua:210`), whose localized rows are the kilogram, a pound value under a kilogram label. Since gen1recomp#2747 (v0.3.61) the Pokédex prints a species' metric height and weight when a mod gives them (`dexEntry.heightM`/`weightKg`, `src/core/game3/pokedex_units.lua`), and the mod patches every species with its official values (`lang/species_metrics.lua`, as for Red/Blue) when the engine carries that module, as v0.3.61 does, so a caught Bulbasaur reads `0,7 m` and `6,9 kg`; the unit's `kg` key takes the cart's `gText_Lbs` row (`ｋｇ` in Japanese).
+
+## Ruby and Sapphire
+
+### Ruby and Sapphire 1: The version placeholders came from the US cart
+
+The runtime expanded `{EVIL_TEAM}`, `{GOOD_TEAM}`, `{EVIL_LEADER}`, `{GOOD_LEADER}`, `{EVIL_LEGENDARY}`, `{GOOD_LEGENDARY}`, `{VERSION}`, `{RIVAL}` and `{KUN}` from `text/placeholders.lua`, the values the extractor reads from the US cart's `gExpandedPlaceholder_*` strings, so every line that names a team leader, the rival or the version through a placeholder kept the English, and the Japanese honorific was empty. Since gen1recomp#2724 (v0.3.58), the message box reads them from the script cache by Ruby and Sapphire's own labels (`TextPlaceholders.rsSymbols`, `src/import/gba/text_placeholders_extract.lua`), the evil and good teams swapped by edition, and the mod's official rows print: French MAX and ARTHUR, FLORA and BRICE, RUBIS; German MARC and ADRIAN; Japanese くん and ちゃん (reviewed overrides, as the US cart's rows are empty).
+
+### Ruby and Sapphire 2: The native Pokédex screen printed its pack's copy
+
+The Ruby/Sapphire entry page printed the entry's category and both pages of its description from the entries pack, and its labels and search screen from the chrome packs' English copies. Since gen1recomp#2724 (v0.3.58) the entries pack keeps each description's pret label (`DexDescription_<Species>_1`/`_2`, each edition its own) and the Pokédex pack each search title's and description's (`DexText_*`); the screen reads them from the script cache by those labels, its own labels by their `gDexText_*` labels, and the category through `Strings()`, followed by POKéMON only in English, as each cart does. The mod ships them (in Japanese, the second page blank, as the Japanese carts print an entry on one page). The screen's titles (HT, WT, PAGE, the search screen's SEARCH, NAME, COLOR...) are the US cart's graphics, which no text override reaches.
+
+### Ruby and Sapphire 3: Native screens printed their own pack's copy of cart text
+
+Several Ruby/Sapphire screens printed a cart string their extractor copied into their pack (`src/import/gba/rs/extract_*.lua`, `textBytes` and `strings`) instead of reading the script cache, where the mod's `text` overrides land. Since gen1recomp#2724 (v0.3.58), as gen1recomp#2678 did for Emerald's screens, they read the script cache by label with the pack's copy as the fallback: the party menu's actions (by the labels `sPokemonMenuActions` points at, a field move by its move's name) and its prompts (`PartyMenuPromptTexts`, with the POKéMON's name in `Do what with {STR_VAR_1}?`), the shop, the decoration menus, the move relearner, the contest paintings' captions, and the summary's contest effect descriptions (through `Strings()`, which the mod's `strings_by_english` catalog fills); the Easy Chat editors, the mail composer and reader, the trendy phrase, the trainer card's profile and the TV print each word translated (`EasyChatText.word`). The secret base, roulette, trainer card labels, diploma, berry tag, PokéNav and Battle Tower records packs keep their strings under local names and need their extractors to record the labels first; strings no cache key holds (the PokéNav's help lines, the option menu) need the import plan to add them first, as Emerald entry 5 describes. The summary screen's titles (CONTEST MOVES, EFFECT, DESCRIPTION...) are the US cart's graphics.
+
+### Ruby and Sapphire 4: A secret base's name ended in the English row
+
+The TV and the region map named a secret base as the owner's name followed by `gOtherText_PlayersBase`, the US row "'s BASE". The European rows put the owner inside instead, through the player placeholder ("BASE DE [PLAYER]", "BASIS v. [PLAYER]"), so the European line printed the owner's name before the row and then the player's own name. Since gen1recomp#2745, the secret base's name and the TV's map name (`SB.nameWith`, `src/core/game3/rse/secret_base.lua`) fill either placeholder with the owner, Emerald's `STR_VAR_1` (filled since gen1recomp#2680) or Ruby and Sapphire's player placeholder, the way the German cart does (pokeruby `src/secret_base.c:642`), and append a row that has neither.
+
+### Ruby and Sapphire 5: The starter's category was cut by bytes
+
+The starter selection printed the species' category cut to its first 11 bytes (`category:sub(1, 11)`), so a translated Japanese category, three bytes per character, was cut in the middle of a character. Since gen1recomp#2743 it is cut by character (`FrlgFont.truncate`, `src/ui/game3/rs/starter_choose_policy.lua:23`).
+
+### Ruby and Sapphire 8: Heights and weights were printed in US units
+
+The native Pokédex printed a caught entry's height in feet and inches and its weight in pounds (`src/ui/game3/rse/pokedex.lua:900`, `Pokedex.heightText`; `src/ui/game3/rs/pokedex_policy.lua:28`, `weightText`), as pokeruby's US build does (`include/config.h:53`, `UNITS_IMPERIAL`; `src/pokedex.c:4335`, `:4375`). The European carts print metres and kilograms (the `#else` printers, `src/pokedex.c:4368`, `:4438`), and so do their unknown-entry rows (`???,?  m`, `???,?  kg`; Japanese `？？？．？ｍ`). The mod ships both unknown rows as the corpus has them, so with a European or Japanese mod an unseen entry's height and weight read `???,?  m` and `???,?  kg`. The cart's unknown weight string ends with an extra terminator (`????.? lbs.$`, pokeruby `src/strings.c:79`), so PokeCorpus splits its label into `gDexText_UnknownWeight.0` and an empty `.1`; a reviewed decision (`config/rse/dialogue_decisions.json`) joins the first. Since gen1recomp#2747 the native screen, as Emerald's, prints a caught species' metric height and weight when a mod gives them (`dexEntry.heightM`/`weightKg`, `src/core/game3/pokedex_units.lua`), padding a missing digit with two spaces as the European cart's printer shifts the number by a digit's width (pokeruby `src/pokedex.c:4300`), and keeps the cart's unknown rows for a seen one; the mod patches every species with its official values (`lang/species_metrics.lua`, shared by the three games).
+
+## Emerald
+
+### Emerald 1: Emerald screens printed the cart's English names and descriptions as they were
+
+The Emerald summary and battle messages print `Pokemon.abilityName()`, the Pokédex entry, the starter selection and the Battle Factory print the entry's category and description, the summary, the move relearner and the contest move window print the contest category and effect description, and the region map, the PokéNav, the map name popup, Match Call and TV print `Mapsec.name()` (`src/ui/game3/rse/mapsec.lua:46`): all straight from the extracted packs, with no registry or `Strings()` lookup on the way. FireRed's own screens already pass the same kinds of text through `Strings()`.
+
+gen1recomp#2678, released in v0.3.53, routes all four through `Strings()`, keyed by the cart's English as FireRed's are, and keeps the battle adapter's ability key on the ROM name (four commits, one per kind of text, with entry 4's and entry 6's changes). On this project's side the keys are already in `config/rse/emerald_engine_scope.json`: `pipeline/gen3/engine_scope.py` reads the Pokédex entries and contest texts from the extract (`rse_rom_values`) and the map sections through `Mapsec`, and joins a Pokédex category to its own `gPokedexEntries` row (`SITE_FAMILIES`, which also overrides a row kept from an earlier scope), never to the type, move or menu label with the same English (DARK is SOMBRE, not the TENEBR type). The keys the ROM-label migration would move onto a label ship in `lang/emerald/strings_by_english.lua`, the others in `lang/emerald/strings.lua`. The release gate checks each of the four (`hooks` in the gate report) and fails when one of them prints the cart's English; at v0.3.58 each shows its official row (the contest effect "A highly appealing move." reads "Une démonstration qui\nplaît énormément." in French).
+
+### Emerald 3: The Battle Pyramid's floor names
+
+The map name popup decodes the Battle Pyramid's floor names from the pyramid's map headers (`src/ui/game3/map_name_popup.lua:156`, `TextIR.toPlain(ref.ir)`) instead of looking them up by key, so no registry reaches them. The script cache holds them as `sText_PyramidFloor1`–`7` and the mod ships them; entry 4's change reads them from there.
+
+Fixed by gen1recomp#2678 (v0.3.53) with entry 4: the popup reads each floor name through `RomText.refIr(ref)` (`src/ui/game3/map_name_popup.lua:158` at v0.3.63).
+
+### Emerald 4: Emerald screens printed their own pack's copy of cart text
+
+Several Emerald screens print a cart string from the pack their screen's extractor wrote, decoded from the ROM, instead of reading it from the script cache's text table, where the mod's `text` overrides land. The script cache holds the strings below under their pret labels, and the mod ships their official rows, so the screens show English only because of where they read them:
+
+- the party menu's actions (`src/ui/game3/party_menu.lua:84`, the `rse/menus` pack's `cursorOptions`, plain English strings): SUMMARY, SWITCH, ITEM and the others, and the field moves;
+- the Pokédex search screen's option titles and descriptions and its help lines (`src/ui/game3/rse/pokedex.lua:1513`, the `rse/pokedex` chrome pack's `search` tables);
+- the Battle Frontier: the records window (`src/ui/game3/rse/frontier_records.lua:341-346`), the S.S. Tidal destination menu (`src/core/game3/scripting/natives_frontier.lua:309`), the Battle Dome's tourney title, match numbers, win texts, rounds and trainer cards (`src/core/game3/rse/frontier/dome.lua:623`, `:1036`, `:1064`, `src/ui/game3/rse/dome_tourney.lua:283`, `:428`, `:433`), the Battle Arena's referee lines and judgment window (`src/core/game3/battle/facility_arena.lua:231`, `:525-531`), the Apprentice's lines (`src/core/game3/rse/frontier/apprentice.lua:596`) and the Battle Pyramid bag's "Return to" line (`src/ui/game3/rse/pyramid_bag.lua:470`);
+- the Frontier Pass's area descriptions and map (`src/ui/game3/rse/frontier_pass.lua:155`, `:547-549`), the Trainer Hill's records (`src/ui/game3/rse/trainer_hill_records.lua:35`) and Ever Grande City's two fly destinations on the region map (`src/ui/game3/rse/region_map.lua:348`);
+- the Battle Pyramid's floor names (entry 3).
+
+gen1recomp#2678 (v0.3.53) reads each of them from the script cache, by the pret symbol or ROM address the pack keeps next to its copy (`RomText.refIr`) or by the label of the table it comes from (`RomText.irOr`, `sBattleDomePotentialTexts[i]`), and keeps the pack's copy as the fallback; the party menu's field moves print the move's name, as `sCursorOptions` does. Nothing changes on this project's side.
+
+The Berry Blender is in the same situation but not in that change, and still prints English: the script cache holds its messages (`sText_BerryBlenderStart` and 26 more of the 28) and its opponents' names (`sBlenderOpponentsNames`), but the screen and the blender's logic read them from the `rse/berry_blender` pack under keys of their own (`src/ui/game3/rse/berry_blender.lua:57-58`, `src/core/game3/rse/berry_blender.lua:885-934`), plain strings included, so the lookup has to be threaded through both.
+
+### Emerald 6: The rival's name and the Japanese honorific came from the US cart
+
+The runtime expands `{RIVAL}` and `{KUN}` from `text/placeholders.lua`, the values the extractor reads from the US cart (`src/ui/game3/message.lua:66`, `src/import/gba/text_placeholders_extract.lua`): MAY or BRENDAN, and an empty honorific. Every European language keeps the English names in the 13 lines that name the rival through the placeholder (Birch's lab, the rival's house, Route 110, the Champion's room: "Mais où peut bien se trouver MAY?"), and Japanese drops くん/ちゃん after the player's name in 414 lines (336 distinct texts). The script cache holds each value under its pret label (`gText_ExpandedPlaceholder_May`, `_Brendan`, `_Kun`, `_Chan`) and the mod ships them (FLORA/BRICE, MAIKE/BRIX, AURA/BRUNO, VERA/BRENDON, ハルカ/ユウキ, くん/ちゃん; the honorifics through `overrides/ja-Hrkt/rse/emerald_dialogue.json`, since the US cart's rows are empty).
+
+gen1recomp#2678 (v0.3.53) resolves each placeholder through the script cache by that label, with the extract's value as the fallback. Nothing else changes on this project's side.
+
+## The cross-game Union Room
+
+No fixed entries yet.
+
+## Engine bugs surfaced by TTF mode (not translation gaps)
+
+Three unrelated gen1recomp bugs, all only visible once a mod activates TTF
+text mode (`mod.content.font:register("ttf", ...)`), translated or not --
+none fixable from a mod, since none had a hook into the broken code. All
+three are merged upstream.
+
+- **ManagerState white-on-white:** reported by a user (fr, Fusion Pixel
+  profile): the in-game Mod Manager screen (`src/mods/ManagerState.lua`)
+  showed no text at all, everything white -- invisible on the vanilla
+  tile font, whose glyphs are always black-on-transparent regardless of
+  the current draw color. Root cause: `ManagerState:draw()`/
+  `drawOverlay()` set white before their `Font.drawBox` call and never
+  reset to black afterward, unlike every other screen that calls
+  `Font.drawBox` (`TitleState.lua`, `StartMenu.lua`, `HallOfFame.lua`,
+  `BoxMenu.lua`, `PartyMenu.lua`). Fixed on gen1recomp
+  `fix/manager-state-draw-color` (merged, PR #1426, `b20b1370`): both call
+  sites now reset to black right after `Font.drawBox`, matching every other
+  screen.
+- **Fragmented glyphs on Android:** a mod's custom TTF font rendered
+  correctly on Windows but came out fragmented (strokes dropped, doubled,
+  or interrupted) on Android, while ROM tile glyphs stayed sharp. Root
+  cause: the in-game renderer draws into a pixel-exact `dpiscale = 1`
+  canvas, but TTF fonts were created with no explicit DPI scale, so LÖVE
+  rasterized them at the Android window's (higher) density and the result
+  got resampled back down, distorting one-pixel strokes. Fixed on
+  gen1recomp `fix/android-ttf-dpi` (merged, PR #1042): TTF fonts are now
+  created with an explicit `dpiscale = 1`, matching the game canvas; the
+  existing ROM-tile fallback on load failure is unchanged. Verified with a
+  translation mod on an Android emulator: glyphs render cleanly after the
+  fix.
+- **Naming screen, Diploma and Pokegear text going blank:** reported and
+  reproduced against a real Gold build running this project's fr mod: with
+  the TTF font active, the naming/keyboard screen's on-screen keyboard
+  rendered no text at all (only a dashed placeholder line where the letters
+  should be); without the mod (vanilla, tile font), the same screen
+  rendered correctly. Traced to `Chrome.printThrough`
+  (`src/ui/gen2/Chrome.lua`), the shared routine every non-white-background
+  Gold screen (naming screen, Diploma, Pokegear, Credits) draws its text
+  through: it runs every glyph through a shader that recovers a shade from
+  the RED CHANNEL of an already-rasterized 2bpp tile pixel
+  (`src/render/GbcPalette.lua`'s `SHADER_SOURCE`), which assumes the
+  texture underneath is one of the four flat GB shades. A TTF glyph is not:
+  LÖVE's font rasterizer stores glyph coverage as alpha over a plain white
+  texture and lets the current tint carry the ink colour, so that same
+  red-channel read always comes back 1.0 -- shade 0 -- painting every TTF
+  character the exact colour of the paper rect `printThrough` had just
+  drawn behind it: invisible. Gen 1 has no such shader, which is why the
+  same mod draws fine there. Fixed upstream on gen1recomp branch
+  `fix/gold-ttf-printthrough-invisible-text` (a TTF glyph skips the shader
+  entirely and is tinted with the palette's own ink colour directly,
+  switched per glyph so a string that mixes tile-based ligatures like
+  `<PK>`/`<MN>` with TTF-drawn letters still gets both right), merged to
+  `dev` as PR #1736 (`4ab0ac43`).
+
+## Build tooling bugs in `tools/modkit.py` on Windows (not translation gaps)
+
+### Fixed upstream: dumped text crash when it isn't representable in the system codepage
+
+`dump_dataset()` (and two similar call sites, `run_loader()`'s loader
+driver and `check_data_dump()`'s dump check) called `subprocess.run(...,
+capture_output=True, text=True)` with no explicit `encoding=`, so Python
+fell back to the OS locale's default codepage -- on Windows, always a
+legacy single-byte codepage, never UTF-8. A LuaJIT dump byte with no
+mapping in that codepage (e.g. `”` U+201D, whose UTF-8 trailing byte
+`0x9D` is undefined in cp1252) crashed `subprocess.communicate()`'s
+internal reader thread silently, leaving `.stdout` as `None` and the
+caller crashing one line later with `AttributeError: 'NoneType' object
+has no attribute 'splitlines'`. Verified reproducible today: the real
+Yellow-imported dataset's `_ColosseumHeightText` row contains exactly
+this byte, so scaffolding/refreshing a Yellow-aware translation on
+Windows hit this reliably; the Red/Blue-only dump has zero occurrences.
+Fixed on gen1recomp `fix/modkit-dump-dataset-utf8-decode` (merged,
+PR #996): all three call sites now pass `encoding="utf-8"` explicitly,
+matching the UTF-8 the dumps are actually produced in.

@@ -27,8 +27,8 @@ used for translated text: ``TextIR.CHARMAP`` only lists the characters US
 FireRed prints (``é``/``É`` are its only accented letters), while pret's
 charmap and the US ROM font carry the whole European set (``à``, ``ç``,
 ``ß``, ``ñ``...).  Those bytes decode here to their real character, so the
-override text is correct today and renders as soon as the runtime's glyph
-lookup learns them (docs/upstream-fixes.md, FireRed section).
+override text is correct, and the runtime's glyph lookup draws them since
+gen1recomp v0.2.67 (docs/upstream-fixes.md, FireRed).
 """
 from __future__ import annotations
 

@@ -345,12 +345,13 @@ def join_frlg(
 # The three places where the runtime reads a cart string by its English text
 # and by nothing else: the label it also has is never looked up for them, so
 # an entry moved onto that label would simply stop being found.  Checked at
-# the pinned revision, and recorded as upstream entries 14 and 15:
-#   src/ui/game3/region_map.lua:384, :404  Strings(SECTION_NAMES[...]),
+# the pinned revision (v0.3.63), and recorded as upstream entries 14 and 15:
+#   src/ui/game3/region_map.lua:375, :395  Strings(SECTION_NAMES[...]),
 #       Strings(desc) -- the town names the map name popup prints too
-#   src/ui/game3/summary_menu.lua:652      Strings(tostring(ability)), whose
-#       name comes from src/core/game3/battle/abilities.lua's table
-#   src/ui/game3/map_name_popup.lua:83     Strings(label) for the floor
+#   src/ui/game3/summary_menu.lua:927      Strings(abilityText), for an
+#       ability name the mon record carries itself (Pokemon.abilityName
+#       reads the cart otherwise)
+#   src/ui/game3/map_name_popup.lua:299    Strings(label) for the floor
 # Every other value this catalog carries is drawn from the cart's own rows
 # (RomText), so its label is the key the runtime reads.
 ENGLISH_LOOKUP_SITES = (
