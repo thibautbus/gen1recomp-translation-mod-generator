@@ -577,6 +577,40 @@ class BuilderTests(unittest.TestCase):
             self.assertEqual(build_gs.call_args.args[3], "Japanese")
             self.assertEqual(build_gs.call_args.kwargs["font_profile"], "fusion")
 
+    def test_main_reads_a_configured_blue_or_silver_rom(self):
+        # rom_paths.toml documents blue and silver as alternatives to red and
+        # gold, as ruby/sapphire and firered/leafgreen are
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            roms = {name: root / f"{name}.rom" for name in ("blue", "yellow", "silver", "crystal")}
+            for rom in roms.values():
+                rom.write_bytes(b"rom")
+            configured = {"rom": dict(roms)}
+            with (
+                patch.object(builder, "check_prerequisites", return_value="luajit"),
+                patch.object(builder, "load_rom_paths", return_value=configured),
+                patch.object(builder, "verify_rb_rom") as verify_rb,
+                patch.object(builder, "verify_rom"),
+                patch.object(builder, "_confirm", return_value=True),
+                patch.object(rby_build, "build", return_value=root / "out.zip") as build,
+            ):
+                answers = iter(("", "", "2", ""))
+                self.assertEqual(builder.main(lambda prompt: next(answers), generation=1), 0)
+            verify_rb.assert_called_once_with(roms["blue"].resolve())
+            self.assertEqual(build.call_args.args[0], roms["blue"].resolve())
+            with (
+                patch.object(builder, "check_prerequisites", return_value="luajit"),
+                patch.object(builder, "load_rom_paths", return_value=configured),
+                patch.object(builder, "verify_gs_rom") as verify_gs,
+                patch.object(builder, "verify_crystal_rom"),
+                patch.object(builder, "_confirm", return_value=True),
+                patch("pipeline.gsc.mod.build_gs", return_value=root / "out.zip") as build_gs,
+            ):
+                answers = iter(("", "", "5"))
+                self.assertEqual(builder.main(lambda prompt: next(answers), generation=2), 0)
+            verify_gs.assert_called_once_with(roms["silver"].resolve())
+            self.assertEqual(build_gs.call_args.args[0], roms["silver"].resolve())
+
     def test_invalid_injected_generation_fails_cleanly(self):
         with (
             patch.object(builder, "check_prerequisites", return_value="luajit"),

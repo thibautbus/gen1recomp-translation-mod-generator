@@ -537,7 +537,7 @@ def main(
                 "(full path, e.g. C:\\Games\\PokemonRed.gb): "
             )
             rb_rom = _prompt_configured_path(
-                rb_prompt, configured_path(rom_paths, "rom", "red"), input_fn
+                rb_prompt, configured_path(rom_paths, "rom", "red") or configured_path(rom_paths, "rom", "blue"), input_fn
             )
             yellow_prompt = (
                 "Please specify the location of your Pokemon Yellow ROM "
@@ -572,7 +572,7 @@ def main(
                 "(full path, e.g. C:\\Games\\PokemonGold.gbc): "
             )
             gs_rom = _prompt_configured_path(
-                gs_prompt, configured_path(rom_paths, "rom", "gold"), input_fn
+                gs_prompt, configured_path(rom_paths, "rom", "gold") or configured_path(rom_paths, "rom", "silver"), input_fn
             )
             crystal_prompt = (
                 "Please specify the location of your Pokemon Crystal ROM "

@@ -15,7 +15,7 @@ Two things can make a corpus entry reachable today:
             overrides/<language>/rby/yellow_engine.json precedent).
 
 Neither does not mean untranslatable: it means nothing in this Gen1Recomp
-checkout reads that text yet (Phase 1 -- README.md:62), so shipping it
+checkout reads that text yet, so shipping it
 would be a silent no-op. This script only reports; step 8/11 decide what
 to wire up.
 

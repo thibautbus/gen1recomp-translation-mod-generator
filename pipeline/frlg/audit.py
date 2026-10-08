@@ -10,7 +10,7 @@ list pipeline/gen3/engine_scope.py reads from that same file) is reachable
 too, so it is not counted; the same text drawn raw elsewhere still is.
 The second list is reviewed by hand and lives in ``NON_DISPLAY_FILES`` with
 its reason; any other file the scan flags is player-visible and must be
-listed in docs/upstream-fixes.md (a test enforces it).
+listed in docs/game3-hardcoded-text-inventory.md (a test enforces it).
 
 The per-file counts are an upper bound: a player-visible file can still hold
 some internal identifiers next to its messages.  The report is written below

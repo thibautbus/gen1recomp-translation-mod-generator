@@ -170,7 +170,7 @@ def load_gold_silver_pointer_aliases(path: str | Path | None = None) -> dict[str
 
     The handful of Gold dialogue pointers whose bank:address shifts in Silver
     (see tools/gsc/spike_text_overlap.lua's measurement and
-    docs/upstream-fixes.md's "Silver: supported by declaration") but whose
+    docs/upstream-fixes-history.md's "Silver: supported by declaration") but whose
     text doesn't -- so a Gold pointer's own resolved translation can be
     reused verbatim under its Silver pointer too, rather than left to
     silently miss on a Silver save.

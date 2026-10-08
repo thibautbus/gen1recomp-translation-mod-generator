@@ -29,7 +29,7 @@ def row(qid, value):
 # Legacy prompt/yes/no recipe shape, used to be the real
 # viridian-city-youngster2 entry in config/rby/literal_handlers.json until it
 # was removed (vanilla now handles that NPC on its own -- see
-# docs/upstream-fixes.md). Kept here as a fixture so these tests exercise the
+# docs/upstream-fixes-history.md). Kept here as a fixture so these tests exercise the
 # legacy shape independent of whatever the production config currently
 # contains.
 LEGACY_RECIPE = [{

@@ -1094,7 +1094,7 @@ class FrlgConfigTests(unittest.TestCase):
         extracted = ROOT / ".cache" / "firered" / "extracted" / "cache"
         if not shutil.which("luajit") or not (extracted / "data").is_dir():
             self.skipTest("LuaJIT or FireRed extract unavailable")
-        doc = (ROOT / "docs" / "upstream-fixes.md").read_text(encoding="utf-8")
+        doc = (ROOT / "docs" / "game3-hardcoded-text-inventory.md").read_text(encoding="utf-8")
         inventory = doc.split("#### Inventory: game3 files flagged by the hardcoded-text scan", 1)[1]
         inventory = inventory.split("\n### ", 1)[0]
         listed = set(re.findall(r"^\| `(src/[^`]+)` \|", inventory, re.M))
