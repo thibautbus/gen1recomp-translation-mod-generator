@@ -7,10 +7,25 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus RedBlue rb.text_2.LinedUpText."
     },
+    "%s\ncanceled.": {
+      "override": "%s\nha annullato.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "%s\ndidn't answer.": {
+      "override": "%s\nnon ha risposto.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "%s\nfainted!": {
       "override": "%s\nè esausto!",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated neutral translation (it); shared incompatible contexts are rb.text_2.EnemyMonFaintedText, rb.text_2.PlayerMonFaintedText, and rb.text_4.PokemonFaintedText; could be improved by a split/context change upstream in Gen1Recomp for ROM fidelity; requires in-game validation of all callsites."
+    },
+    "%s\nhas left.": {
+      "override": "%s\nnon c'è più.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "%s\nis refusing!": {
       "override": "%s\nsi rifiuta!",
@@ -22,6 +37,16 @@
       "reason": "engine-contract-gap",
       "provenance": "Disambiguated: poke-corpus's automatic matcher found multiple candidate rows for this key and could not pick one on its own; this override selects the closer match by hand."
     },
+    "%s\nplays %s!\fImport %s\nto see them here.": {
+      "override": "%s\ngioca a %s!\fImporta %s\nper vedere com'è.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "%s\nsaid no.": {
+      "override": "%s\nha rifiutato.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "%s\nsnapped out of\nconfusion!": {
       "override": "%s non è\npiù\nconfuso!",
       "reason": "engine-original",
@@ -31,6 +56,11 @@
       "override": "%s",
       "reason": "engine-contract-gap",
       "provenance": "Disambiguated: poke-corpus's automatic matcher found multiple candidate rows for this key and could not pick one on its own; this override selects the closer match by hand."
+    },
+    "%s can't\ndo that now.": {
+      "override": "%s non può\nfarlo ora.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "%s can't\nlearn that move!": {
       "override": "%s non può\nimparare quella mossa!",
@@ -42,10 +72,25 @@
       "reason": "engine-contract-gap",
       "provenance": "Disambiguated: poke-corpus's automatic matcher found multiple candidate rows for this key and could not pick one on its own; this override selects the closer match by hand."
     },
+    "%s looks\nbusy right now.": {
+      "override": "%s sembra\navere da fare.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "%s looks\nunhappy about it!": {
       "override": "%s ha\nun'aria triste!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus Yellow y.text_3.PikachuUnhappyText."
+    },
+    "%s wants\nto BATTLE!\fWill you accept?": {
+      "override": "%s ti sfida\na LOTTARE!\fAccetti la sfida?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "%s wants\nto TRADE!\fWill you accept?": {
+      "override": "%s vuole\nfare uno SCAMBIO!\fAccetti l'offerta?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "%s's\n%s\ngreatly fell!": {
       "override": "Cala %2$s di\n%1$s\nmolto!",
@@ -117,6 +162,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-backed from poke-corpus RedBlue rb.town_map.AreaUnknownText: the cart's own label without its leading space, since ui/TownMap.lua already prepends one (the automatic corpus match kept it, printing two). Replaces the AI-composed value the upstream-only layer carried. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
     },
+    "AUDIO MODE": {
+      "override": "MOD. AUDIO",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); kept as short as the English for the option value column; requires in-game visual validation."
+    },
     "AUTO": {
       "override": "AUTO",
       "reason": "engine-original",
@@ -131,6 +181,11 @@
       "override": "MEDAGLIE",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated translation; concrete engine contract limitation is a fragmentary standalone status label; could be improved by an upstream Gen1Recomp change; requires in-game visual validation."
+    },
+    "BATTLE": {
+      "override": "LOTTA",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "BATTLE BG": {
       "override": "SFONDO LOTTA",
@@ -161,6 +216,11 @@
       "override": "SENZA BORDI",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated engine-original translation; raw VideoMode.modeLabel value; requires in-game visual validation; no compatible PokeCorpus qid."
+    },
+    "BOTH": {
+      "override": "ENTRAMBI",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); kept as short as the English for the option value column; requires in-game visual validation."
     },
     "BOX %d is full!": {
       "override": "SCATOLA %d piena!",
@@ -217,10 +277,20 @@
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
     },
+    "Do what with\n%s?": {
+      "override": "Cosa vuoi fare\ncon %s?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "EXIT GAME": {
       "override": "ESCI",
       "reason": "engine-contract-gap",
       "provenance": "Not on the cart (a real console is turned off, not exited from a menu); this port's own added row on the title menu (src/ui/TitleState.lua:564), worded as the Gold/Silver/Crystal mod words the same row (overrides/it/gsc/engine.json)."
+    },
+    "EXT ONLY": {
+      "override": "ESTERNO",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); kept as short as the English for the option value column; requires in-game visual validation."
     },
     "EXTENDED": {
       "override": "ESTESO",
@@ -262,6 +332,11 @@
       "reason": "engine-original",
       "provenance": "Link-battle (Colosseum) opponent-name fallback, engine-authored; user-approved per-language value."
     },
+    "GAME ONLY": {
+      "override": "GIOCO",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); kept as short as the English for the option value column; requires in-game visual validation."
+    },
     "GAME SPEED": {
       "override": "VELOCITÀ",
       "reason": "engine-original",
@@ -292,6 +367,16 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-backed from poke-corpus RedBlue rb.pokedex.HeightWeightText (the cart's own unknown height and weight): ui/DexEntryMenu.lua prints this mask instead of the imperial HT/WT/lb fields on an entry seen but not caught when the species carries dexEntry.heightM and weightKg; worded like the metric format beside it (GR. %.1fm, GEW. %.1fkg)."
     },
+    "Getting ready to\nBATTLE %s…": {
+      "override": "Pronti a LOTTARE\ncon %s…",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Getting ready to\nTRADE: %s…": {
+      "override": "Pronti a SCAMBIARE\ncon %s…",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "HEAL": {
       "override": "CURA",
       "reason": "engine-original",
@@ -321,6 +406,16 @@
       "override": "ORIZZONTALE",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+    },
+    "Linking to the\nUNION ROOM…": {
+      "override": "Collegamento alla\nSALA CONTATTO…",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Linking up with\n%s…": {
+      "override": "Collegamento con\n%s…",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "MAX FPS": {
       "override": "FPS MAX",
@@ -361,6 +456,11 @@
       "override": "Niente da fare!\nLontano dall'acqua.",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
+    },
+    "No link could be\nmade.\fNo other TRAINERS\nare here for now.": {
+      "override": "Collegamento non\nriuscito.\fPer ora non ci\nsono ALLENATORI.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "No.": {
       "override": "Nº",
@@ -567,10 +667,25 @@
       "reason": "engine-original",
       "provenance": "User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
+    "TRADE": {
+      "override": "SCAMBIO",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "TREES": {
       "override": "ALBERI",
       "reason": "engine-contract-gap",
       "provenance": "AI-generated engine-original translation; raw TileRenderer.voidFillLabel value; requires in-game visual validation; no compatible PokeCorpus qid."
+    },
+    "The UNION ROOM\ncouldn't be used.\fNo other TRAINERS\nare here for now.": {
+      "override": "SALA CONTATTO non\ndisponibile.\fPer ora non ci\nsono ALLENATORI.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "The UNION ROOM\nlink is too old.\fNo other TRAINERS\nare here for now.": {
+      "override": "La SALA CONTATTO\nnon è aggiornata.\fPer ora non ci\nsono ALLENATORI.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "The boulder fell\nthrough!": {
       "override": "Il masso è caduto\nnel buco!",
@@ -582,15 +697,35 @@
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
+    "The link couldn't\nbe made again.\fNo other TRAINERS\nare here for now.": {
+      "override": "Impossibile\nricollegarsi.\fPer ora non ci\nsono ALLENATORI.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "The link was lost.\nReconnecting…": {
+      "override": "Connessione persa.\nRiconnessione…",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "The party is full!": {
       "override": "LA SQUADRA È\nPIENA!",
       "reason": "engine-original",
       "provenance": "AI-generated RBY storage-message localization; source introduced by gen1recomp d633cb4d. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
     },
+    "The request was\ncanceled.": {
+      "override": "La richiesta è\nstata annullata.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "There isn't any\nresponse...": {
       "override": "Nessuna risposta!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus Yellow y.text_3.SleepingPikachuText1."
+    },
+    "This game is too\nold to link up.\fUpdate it to meet\nother TRAINERS.": {
+      "override": "Questo gioco è\ntroppo vecchio.\fAggiornalo per\nvedere altri\u000bALLENATORI.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "To %s": {
       "override": "A %s",
@@ -651,6 +786,11 @@
       "override": "WT",
       "reason": "engine-contract-gap",
       "provenance": "Kept identical to the English source: ui/DexEntryMenu.lua's imperial-unit branch (new in gen1recomp v0.2.56, replacing the old combined \"HT %d′%02d″\"/\"WT %.1flb\" templates) draws this label at a fixed pixel column, then draws the ′/″/lb unit glyphs as separate literals at their own fixed columns right after it -- a longer translated label would run into them. Every localized cart's own Pokédex uses metric units instead (poke-corpus RedBlue's own combined \"HT ?′??″<NEXT>WT ???lb\" row translates to metric TAI/GR./AL/h/たかさ ・ PDS/GEW/PE/P/おもさ with m/kg units in every shipped language), so this specific imperial branch has no real cart precedent to translate from in any language; requires in-game visual validation."
+    },
+    "Waiting for\n%s…": {
+      "override": "In attesa di\n%s…",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "auto": {
       "override": "AUTO",

@@ -102,11 +102,6 @@
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
     },
-    "BOX %d": {
-      "override": "ボックス%d",
-      "reason": "engine-original",
-      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself; worded in the cart's kana style; requires in-game visual validation."
-    },
     "CAVE have changed.": {
       "override": "ポケモンが　かわりました。",
       "reason": "engine-original",
@@ -636,6 +631,151 @@
       "override": "ｋｇ",
       "reason": "engine-corpus",
       "provenance": "Unit after a metric Pokédex weight (src/core/game3/pokedex_units.lua:23): the cart's own weight unit (frlg.common.strings.gText_Lbs, \"lbs.\" on the US cart)."
+    },
+    "AUDIO MODE": {
+      "override": "オーディオモード",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); worded in the cart's kana style; requires in-game visual validation."
+    },
+    "BOTH": {
+      "override": "りょうほう",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s canceled the request.": {
+      "override": "%sが　もうしこみを　キャンセルしました",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s from POKéMON %s is here.\nWhat would you like to do?": {
+      "override": "ポケモン　%2$sから　%1$sが　きています\nなにを　しますか？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s from POKéMON %s wants to battle!\nWill you accept?": {
+      "override": "ポケモン　%2$sの　%1$sが　たいせんを　もうしこんで　きました\nたいせん　しますか？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s from POKéMON %s wants to trade!\nWill you accept?": {
+      "override": "ポケモン　%2$sの　%1$sが　こうかんを　もうしこんで　きました\nこうかん　しますか？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s or %s": {
+      "override": "%s　または　%s",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s seems to be busy right now.": {
+      "override": "%sは　いま　とりこみちゅうの　ようです",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s turned down the battle.": {
+      "override": "%sに　たいせんを　ことわられました",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s turned down the trade.": {
+      "override": "%sに　こうかんを　ことわられました",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Battles and trades between different games aren't open yet. The request was canceled.": {
+      "override": "ちがう　ゲームとの　たいせんや　こうかんは　まだ　できません　もうしこみは　キャンセル　されました",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Getting ready to battle %s...": {
+      "override": "%sと　たいせんの　じゅんびを　しています…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Getting ready to trade with %s...": {
+      "override": "%sと　こうかんの　じゅんびを　しています…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Import POKéMON %s to see how %s really looks.": {
+      "override": "%2$sの　ほんとうの　すがたを　みるには　ポケモン　%1$sを　よみこんで　ください",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Please enjoy the UNION ROOM!": {
+      "override": "ユニオンルームを　おたのしみ　ください！",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "See you around!": {
+      "override": "それじゃ　またね！",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "The UNION ROOM is online.\nWould you like to connect?": {
+      "override": "ユニオンルームは　オンラインです\nせつぞく　しますか？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "The UNION ROOM server needs an update before trainers from other games can join you.": {
+      "override": "ほかの　ゲームの　トレーナーと　あうには　ユニオンルームの　サーバーの　アップデートが　ひつようです",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "The link with %s was lost.": {
+      "override": "%sとの　つうしんが　せつだん　されました",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "The request was canceled.": {
+      "override": "もうしこみは　キャンセル　されました",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Waiting for %s to answer\nthe battle request...": {
+      "override": "%sからの　たいせんの\nへんじを　まっています…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Waiting for %s to answer\nthe trade request...": {
+      "override": "%sからの　こうかんの\nへんじを　まっています…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Welcome to the UNION ROOM!\fTrainers from every POKéMON game meet here to battle and trade.\fWould you like to go in?": {
+      "override": "ユニオンルームへ　ようこそ！\fここには　すべての　ポケモンの　ゲームから　トレーナーが　あつまり　たいせんや　こうかんを　たのしんでいます\fなかに　はいりますか？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "You need at least two POKéMON that aren't EGGS to go in.": {
+      "override": "なかに　はいるには　タマゴ　いがいの　ポケモンが　２ひき　いじょう　ひつようです",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "You turned down the request.": {
+      "override": "もうしこみを　ことわりました",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Your games can't link up for this. The request was canceled.": {
+      "override": "この　ゲーム　どうしでは　それは　できません　もうしこみは　キャンセル　されました",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Your progress will be saved before you go in.": {
+      "override": "なかに　はいるまえに　レポートを　かきます",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "EXT. ONLY": {
+      "override": "がいぶのみ",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); worded in the cart's kana style; requires in-game visual validation."
+    },
+    "GAME ONLY": {
+      "override": "ゲームのみ",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); worded in the cart's kana style; requires in-game visual validation."
     }
   }
 }

@@ -232,6 +232,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "%s can't do\nthat right now.": {
+      "override": "%s no puede\nhacerlo ahora.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "%s can't escape now!": {
       "override": "¡%s\nno puede escapar!",
       "reason": "engine-corpus",
@@ -242,6 +247,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Adapted from poke-corpus GoldSilver gs.common_1.TMHMNotCompatibleText's own \"It can't learn @move.\" vocabulary; the real cart's version is a two-part message (species incompatibility, then \"can't learn\") that this port's PackMenu.lua reaches as a single standalone line after its own separate compatibility check, so it reuses only the \"can't learn\" wording of that row rather than the row's full text."
     },
+    "%s cancelled.": {
+      "override": "%s\nlo ha cancelado.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "%s cut its own HP and put a CURSE on %s!": {
       "override": "%s\nreduce sus PS y\fMALDICE a\n%s!",
       "reason": "engine-corpus",
@@ -251,6 +261,11 @@
       "override": "%s\nno aprendió\u000b%s.",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "%s didn't\nanswer.": {
+      "override": "%s no\nha respondido.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "%s dug a hole!": {
       "override": "¡%s\ncavó un agujero!",
@@ -372,6 +387,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "%s is\nbusy right now.": {
+      "override": "%s no está\nlibre ahora.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "%s is\nnot compatible\u000bwith %s.": {
       "override": "%s\nno es compatible\u000bcon %s.",
       "reason": "engine-corpus",
@@ -447,6 +467,11 @@
       "reason": "engine-contract-gap",
       "provenance": "No direct corpus match for this combined inflict-message template; wording follows this catalog's own \"%s's fully paralyzed!\" sibling entry, extended for the \"may be unable to move\" half."
     },
+    "%s is playing\n%s.\fImport %s\nto see them here.": {
+      "override": "%s juega a\n%s.\fImporta\n%s\u000bpara verlo aquí.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "%s is protected by SAFEGUARD!": {
       "override": "¡%s\nestá protegido por\u000bel VELO SAGRADO!",
       "reason": "engine-corpus",
@@ -471,6 +496,11 @@
       "override": "¡%s\nha aprendido\u000b%s!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "%s left the\nUNION ROOM.": {
+      "override": "%s salió de\nla SALA UNIÓN.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "%s lowered its head!": {
       "override": "%s\nbajó su cabeza.",
@@ -522,6 +552,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "%s said no.": {
+      "override": "%s\nha dicho que no.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "%s saved\nthe game.": {
       "override": "%s guardó\nel juego.",
       "reason": "engine-original",
@@ -566,6 +601,16 @@
       "override": "¡%s\nusó ATADURA con\u000b%s!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "%s wants\nto battle. OK?": {
+      "override": "%s quiere\nluchar. ¿Aceptas?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "%s wants\nto trade. OK?": {
+      "override": "%s quiere\ncambiar. ¿Aceptas?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "%s wants to\nlearn %s!": {
       "override": "¡%s quiere\naprender %s!",
@@ -1052,6 +1097,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "AUDIO MODE": {
+      "override": "MODO AUDIO",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); kept as short as the English for the option value column; requires in-game visual validation."
+    },
     "Aargh! Almost had it!": {
       "override": "¡Vaya!\n¡Te faltó poco!",
       "reason": "engine-corpus",
@@ -1142,6 +1192,11 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The PERFORMANCE row's balanced tier."
     },
+    "BATTLE": {
+      "override": "LUCHAR",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "BATTLE BG": {
       "override": "FONDO COMBATE",
       "reason": "engine-original",
@@ -1211,6 +1266,11 @@
       "override": "AZUL",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "BOTH": {
+      "override": "AMBOS",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); kept as short as the English for the option value column; requires in-game visual validation."
     },
     "BOULDER": {
       "override": "ROCA",
@@ -1442,6 +1502,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "Connecting to the\nUNION ROOM…": {
+      "override": "Conectando con la\nSALA UNIÓN…",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "Contains\nitems": {
       "override": "Contiene\nobjetos",
       "reason": "engine-corpus",
@@ -1451,6 +1516,21 @@
       "override": "No se pudo guardar.",
       "reason": "engine-contract-gap",
       "provenance": "Not on the cart (a write-failure case this port added); translated to match the SAVE screen's other messages."
+    },
+    "Couldn't connect.\fNo other trainers\ncan be seen now.": {
+      "override": "No se pudo\nconectar.\fNo se ve a ningún\nentrenador ahora.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Couldn't enter\nthe UNION ROOM.\fNo other trainers\ncan be seen now.": {
+      "override": "No se pudo entrar\nen la SALA UNIÓN.\fNo se ve a ningún\nentrenador ahora.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Couldn't link up\nagain.\fNo other trainers\ncan be seen now.": {
+      "override": "No se pudo volver\na conectar.\fNo se ve a ningún\nentrenador ahora.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "Current #DEX\ncompletion level:": {
       "override": "Nivel actual de\nla POKéDEX:",
@@ -1627,6 +1707,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.stats_screen.LoadPinkPage.ExpPointStr."
     },
+    "EXT ONLY": {
+      "override": "EXTERNO",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); kept as short as the English for the option value column; requires in-game visual validation."
+    },
     "EXTENDED": {
       "override": "AMPLIADO",
       "reason": "engine-original",
@@ -1752,6 +1837,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."
     },
+    "GAME ONLY": {
+      "override": "JUEGO",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); kept as short as the English for the option value column; requires in-game visual validation."
+    },
     "GAME SPEED": {
       "override": "VELOCIDAD",
       "reason": "engine-original",
@@ -1781,6 +1871,16 @@
       "override": "VERDE",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "Getting ready to\nbattle %s…": {
+      "override": "A punto de luchar\ncontra %s…",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Getting ready to\ntrade with %s…": {
+      "override": "A punto de cambiar\ncon %s…",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "Girl": {
       "override": "Chica",
@@ -2001,6 +2101,11 @@
       "override": "¡Impresionante!\nNo sólo atrapas\fPOKéMON, también\nevolucionan.",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "I'm sorry, the\nUNION ROOM isn't\u000bopen to you yet.": {
+      "override": "Lo siento, aún no\npuedes entrar en\u000bla SALA UNIÓN.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "ID No": {
       "override": "N.º",
@@ -2276,6 +2381,11 @@
       "override": "\nNº DE LA SUERTE!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "Linking up with\n%s…": {
+      "override": "Conectando con\n%s…",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "Look for #MON\nin grassy areas!": {
       "override": "¡Busca POKéMON en\nzonas de hierba!",
@@ -2867,6 +2977,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_3.CardFlipPlayWithThreeCoinsText); the cart's own Card Flip text."
     },
+    "Please come\nback anytime.": {
+      "override": "¡Vuelve cuando\nquieras!",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "Please remove the\nMAIL.": {
       "override": "Por favor, quita\nla CARTA.",
       "reason": "engine-corpus",
@@ -3397,6 +3512,11 @@
       "reason": "engine-original",
       "provenance": "Already carried by overrides/es/rby/engine.json for the same shared OptionsMenu/LauncherSettings label; missing here left Gold and Silver's own copy of this Options menu and launcher settings row showing the raw English label."
     },
+    "TRADE": {
+      "override": "CAMBIAR",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "TREES": {
       "override": "ÁRBOLES",
       "reason": "engine-original",
@@ -3512,6 +3632,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "The UNION ROOM\nserver is too old.\fNo other trainers\ncan be seen now.": {
+      "override": "La SALA UNIÓN\nestá anticuada.\fNo se ve a ningún\nentrenador ahora.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "The battle could not start.": {
       "override": "El combate no\npudo comenzar.",
       "reason": "engine-original",
@@ -3541,6 +3666,11 @@
       "override": "Cerrado enlace al\nPC del PROF. OAK.",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "The link was lost.\nReconnecting…": {
+      "override": "Conexión perdida.\nReconectando…",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "The move is DISABLED!": {
       "override": "¡El movimiento\nestá DESACTIVADO!",
@@ -3706,6 +3836,11 @@
       "override": "Esto certifica",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.diploma.PlaceDiplomaOnScreen.Certification, one <NEXT>-joined 5-line certificate text split at its own line boundaries."
+    },
+    "This game is too\nold to link up.\fUpdate it to meet\nother trainers.": {
+      "override": "Este juego está\nanticuado.\fActualízalo para\nconocer a otros\u000bentrenadores.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "This tree can be\nCUT!": {
       "override": "¡Este árbol se\npuede CORTAR!",
@@ -3902,6 +4037,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight, extracting the leading label word."
     },
+    "Waiting for\n%s…": {
+      "override": "Esperando a\n%s…",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "Want to get your\n#DEX rated?": {
       "override": "¿Quieres evaluar\ntu POKéDEX?",
       "reason": "engine-corpus",
@@ -3911,6 +4051,11 @@
       "override": "Bienvenido al\nCASINO.",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "Welcome to the\nUNION ROOM.\fTrainers from\nevery generation\u000bgather here.\fWould you like\nto go in?": {
+      "override": "¡Bienvenido a la\nSALA UNIÓN!\fAquí se reúnen\nentrenadores de\u000bcada generación.\f¿Quieres entrar en\nla SALA?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "Welcome!\fWe exchange your\ncoins for fabulous\u000bprizes!": {
       "override": "¡Bienvenido!\f¡Aquí te cambiamos\ntus fichas por\u000bpremios fabulosos!",
@@ -4076,6 +4221,11 @@
       "override": "¡%s\nsalvaje ha huido!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "With %s,\nwhat'll you do?": {
+      "override": "¿Qué quieres hacer\ncon %s?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "With DJ FERN!": {
       "override": "\n¡Con el DJ FLORO!",
@@ -4267,6 +4417,11 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row (this port's own Call-a-POKéMON-home refusal, no cart equivalent); composed keeping this catalog's own established POKéMON spelling."
     },
+    "You'll need at\nleast one POKéMON\u000bto go in.": {
+      "override": "Para entrar, debes\ntener al menos un\u000bPOKéMON.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "You're already\nSURFING.": {
       "override": "Ya estás\nhaciendo SURF.",
       "reason": "engine-corpus",
@@ -4306,6 +4461,21 @@
       "override": "Tu POKéDEX se\nestá llenando.\u000b¡Sigue así!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "Your POKéMON are\nall rested.\fRight this way.": {
+      "override": "Tus POKéMON están\nen plena forma.\fPasa por aquí.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Your game will be\nsaved before you\u000bgo in. OK?": {
+      "override": "Antes de entrar,\nse guardará el\u000bjuego. ¿Vale?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Your games can't\nlink up for this.": {
+      "override": "Vuestros juegos no\npermiten hacerlo.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "Your money's safe\nhere! Get going!": {
       "override": "¡Tu dinero está\nseguro! ¡Adelante!",
