@@ -1,0 +1,19 @@
+{
+  "schema": "gen1recomp-translation-mods/frlg-edition-name-choices",
+  "version": 1,
+  "source": "pokefirered src/oak_speech.c:588-660 (#if defined(FIRERED) / #elif defined(LEAFGREEN))",
+  "tables": {
+    "sMaleNameChoices": {
+      "firered": ["gNameChoice_Red", "gNameChoice_Fire", "gNameChoice_Ash", "gNameChoice_Kene", "gNameChoice_Geki"],
+      "leafgreen": ["gNameChoice_Green", "gNameChoice_Leaf", "gNameChoice_Gary", "gNameChoice_Kaz", "gNameChoice_Toru"]
+    },
+    "sFemaleNameChoices": {
+      "firered": ["gNameChoice_Red", "gNameChoice_Fire"],
+      "leafgreen": ["gNameChoice_Green", "gNameChoice_Leaf"]
+    },
+    "sRivalNameChoices": {
+      "firered": ["gNameChoice_Green", "gNameChoice_Gary", "gNameChoice_Kaz", "gNameChoice_Toru"],
+      "leafgreen": ["gNameChoice_Red", "gNameChoice_Ash", "gNameChoice_Kene", "gNameChoice_Geki"]
+    }
+  }
+}

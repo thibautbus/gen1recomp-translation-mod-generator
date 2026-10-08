@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import re
@@ -17,9 +18,10 @@ from pipeline.gen3.join import (
     load_dialogue_overrides, load_engine_scope, placeholders_supported,
     registry_id, registry_ids,
 )
+from pipeline.frlg.editions import derive_edition_text, load_name_choices, other_edition
 from pipeline.frlg.start_menu import join_start_menu
 from pipeline.frlg.mod import (
-    check_shared_catalogs, edition_guards, frlg_archive_name,
+    edition_guards, frlg_archive_name,
     frlg_mod_id, generate_frlg_mod, split_frlg_dialogue, write_gate_expectations,
 )
 from pipeline.gen3.mod import CATALOG_HOOKS, lua_ir
@@ -767,6 +769,146 @@ class FrlgModTests(unittest.TestCase):
         self.assertEqual(catalog, {"YES": "OUI"})
 
 
+def _ir(text):
+    return [{"t": "text", "s": text}, {"t": "eos"}]
+
+
+class FrlgEditionDerivationTests(unittest.TestCase):
+    """One cart keys both editions: each script address moves to the address
+    its pret label has in the other cart, and the naming screen's default
+    names follow each edition's own table (pokefirered src/oak_speech.c)."""
+
+    TABLES = {
+        "sMaleNameChoices": {"firered": ["gNameChoice_Red", "gNameChoice_Fire"],
+                             "leafgreen": ["gNameChoice_Green", "gNameChoice_Leaf"]},
+        "sRivalNameChoices": {"firered": ["gNameChoice_Green"], "leafgreen": ["gNameChoice_Red"]},
+    }
+    FIRERED_SYMBOLS = {0x08000010: ["Text_Shared"], 0x08000020: ["Text_Other"]}
+    LEAFGREEN_SYMBOLS = {0x08000030: ["Text_Shared"], 0x08000040: ["Text_Other"]}
+
+    def test_each_address_moves_to_its_label_in_the_other_cart(self):
+        text = {"g3:08000010": _ir("SHARED"), "g3:08000020": _ir("OTHER"), "gText_Named": _ir("NAMED")}
+        derived = derive_edition_text(text, self.FIRERED_SYMBOLS, self.LEAFGREEN_SYMBOLS,
+                                      unittest.mock.Mock(by_label={}), None, source="firered",
+                                      name_choices=self.TABLES)
+        self.assertEqual(derived, {"g3:08000030": _ir("SHARED"), "g3:08000040": _ir("OTHER"),
+                                   "gText_Named": _ir("NAMED")})
+
+    def test_default_names_follow_the_other_editions_table(self):
+        text = {"sMaleNameChoices[0]": _ir("RED"), "sMaleNameChoices[1]": _ir("FIRE"),
+                "sRivalNameChoices[0]": _ir("GREEN")}
+        corpus = unittest.mock.Mock(by_label={"gNameChoice_Leaf": (0,)}, english=["LEAF"])
+        with unittest.mock.patch("pipeline.frlg.editions.corpus_ir", lambda english, charmap: _ir(english)):
+            derived = derive_edition_text(text, {}, {}, corpus, None, source="firered", name_choices=self.TABLES)
+        # GREEN and RED are the read cart's own names, LEAF is only in the
+        # other cart and comes from its English corpus row
+        self.assertEqual(derived, {"sMaleNameChoices[0]": _ir("GREEN"), "sMaleNameChoices[1]": _ir("LEAF"),
+                                   "sRivalNameChoices[0]": _ir("RED")})
+
+    def test_leafgreen_keys_firered_the_same_way(self):
+        text = {"g3:08000030": _ir("SHARED"), "sMaleNameChoices[0]": _ir("GREEN"),
+                "sMaleNameChoices[1]": _ir("LEAF"), "sRivalNameChoices[0]": _ir("RED")}
+        corpus = unittest.mock.Mock(by_label={"gNameChoice_Fire": (0,)}, english=["FIRE"])
+        with unittest.mock.patch("pipeline.frlg.editions.corpus_ir", lambda english, charmap: _ir(english)):
+            derived = derive_edition_text(text, self.LEAFGREEN_SYMBOLS, self.FIRERED_SYMBOLS, corpus, None,
+                                          source="leafgreen", name_choices=self.TABLES)
+        self.assertEqual(derived, {"g3:08000010": _ir("SHARED"), "sMaleNameChoices[0]": _ir("RED"),
+                                   "sMaleNameChoices[1]": _ir("FIRE"), "sRivalNameChoices[0]": _ir("GREEN")})
+
+    def test_a_key_that_cannot_land_fails_the_build(self):
+        corpus = unittest.mock.Mock(by_label={}, english=[])
+        with self.assertRaisesRegex(ValueError, "no pret label in leafgreen"):
+            derive_edition_text({"g3:08000050": _ir("LOST")}, {0x08000050: ["Text_Gone"]}, self.LEAFGREEN_SYMBOLS,
+                                corpus, None, source="firered", name_choices=self.TABLES)
+        with self.assertRaisesRegex(ValueError, "both land on"):
+            derive_edition_text({"g3:08000010": _ir("A"), "g3:08000060": _ir("B")},
+                                {0x08000010: ["Text_Shared"], 0x08000060: ["Text_Shared"]},
+                                self.LEAFGREEN_SYMBOLS, corpus, None, source="firered", name_choices=self.TABLES)
+        with self.assertRaisesRegex(ValueError, "gNameChoice_Leaf"):
+            derive_edition_text({"sMaleNameChoices[1]": _ir("FIRE")}, {}, {}, corpus, None,
+                                source="firered", name_choices=self.TABLES)
+
+    def test_the_checked_in_tables_pair_the_editions(self):
+        tables = load_name_choices()
+        self.assertEqual(set(tables), {"sMaleNameChoices", "sFemaleNameChoices", "sRivalNameChoices"})
+        self.assertEqual(tables["sMaleNameChoices"]["leafgreen"][1], "gNameChoice_Leaf")
+        self.assertEqual((other_edition("firered"), other_edition("leafgreen")), ("leafgreen", "firered"))
+        with self.assertRaises(ValueError):
+            other_edition("emerald")
+
+
+class FrlgBuildFromOneCartTests(unittest.TestCase):
+    """build_frlg reads one cart and derives the other edition's text."""
+
+    def test_a_leafgreen_cart_gives_firered_its_derived_text(self):
+        from pipeline.frlg import mod as frlg_mod
+        calls: dict[str, object] = {}
+
+        def join(extracted, corpus_dir, language, symbols, charmap, gen1recomp=None, luajit=None,
+                 edition="firered", text=None):
+            calls.setdefault("joins", []).append((edition, text is not None, gen1recomp is not None))
+            return {"dialogue": {f"g3:{edition}": _ir(edition.upper())},
+                    "catalogs": {"strings": {"YES": edition}}, "numbers": {"species": {}}}
+
+        def gate(mod_dir, extracted, joined, gen1recomp, luajit, *, edition="firered", **kwargs):
+            calls["gate"] = (edition, joined["catalogs"]["strings"]["YES"])
+            return {}
+
+        @contextlib.contextmanager
+        def cache(gen1recomp, extracted, edition="firered"):
+            calls["cache"] = edition
+            yield
+
+        def generate(mod_dir, *, dialogue, leafgreen_dialogue, catalogs, **kwargs):
+            calls["mod"] = (dialogue, leafgreen_dialogue, catalogs["strings"]["YES"])
+            return mod_dir
+
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            (workspace / "leafgreen" / "extracted").mkdir(parents=True)
+            (workspace / "leafgreen" / "extracted" / "frlg_text.json").write_text("{}", encoding="utf-8")
+            context = unittest.mock.Mock(workspace=workspace, destination=workspace / "dist",
+                                         gen1recomp=workspace / "engine", corpus=workspace / "corpus")
+            coverage = {"rom": {"translated": 1, "total": 1, "percent": 100.0},
+                        "engine_gen3": {"translated": 1, "total": 1, "percent": 100.0}}
+            patches = {
+                "verify_frlg_rom": unittest.mock.Mock(return_value={"version": "leafgreen"}),
+                "prepare_pret_inputs": unittest.mock.Mock(return_value=({"firered": "fr.sym", "leafgreen": "lg.sym"}, "charmap")),
+                "import_frlg_rom": unittest.mock.Mock(),
+                "rom_text_cache": cache,
+                "join_frlg": join,
+                "load_symbols": unittest.mock.Mock(return_value={}),
+                "load_gen3_corpus": unittest.mock.Mock(),
+                "load_charmap": unittest.mock.Mock(),
+                "derive_edition_text": unittest.mock.Mock(return_value={"g3:derived": _ir("FIRERED")}),
+                "generate_frlg_mod": generate,
+                "prepare_pokedex_metrics": unittest.mock.Mock(),
+                "species_metrics": unittest.mock.Mock(return_value={}),
+                "gen3_coverage": unittest.mock.Mock(return_value=coverage),
+                "run_frlg_gate": gate,
+                "attach_frlg_validation": unittest.mock.Mock(),
+                "write_frlg_report": unittest.mock.Mock(),
+                "package_gen3_mod": unittest.mock.Mock(return_value=workspace / "dist" / "mod.zip"),
+                "project_config": unittest.mock.Mock(return_value={}),
+            }
+            with contextlib.ExitStack() as stack:
+                for name, value in patches.items():
+                    stack.enter_context(unittest.mock.patch.object(frlg_mod, name, value))
+                stack.enter_context(unittest.mock.patch("pipeline.shared.orchestration.prepare_build_context",
+                                                        return_value=context))
+                frlg_mod.build_frlg(workspace / "cart.gba", "fr", "French", "luajit")
+
+            patches["import_frlg_rom"].assert_called_once()
+            self.assertEqual(patches["import_frlg_rom"].call_args.kwargs["edition"], "leafgreen")
+            self.assertEqual(patches["derive_edition_text"].call_args.kwargs["source"], "leafgreen")
+        # the cart that was read is joined with the engine, the other from its derived text
+        self.assertEqual(calls["joins"], [("leafgreen", False, True), ("firered", True, False)])
+        self.assertEqual(calls["mod"], ({"g3:firered": _ir("FIRERED")}, {"g3:leafgreen": _ir("LEAFGREEN")},
+                                        "leafgreen"))
+        self.assertEqual(calls["gate"], ("leafgreen", "leafgreen"))
+        self.assertEqual(calls["cache"], "leafgreen")
+
+
 class FrlgLeafGreenTests(unittest.TestCase):
     """One mod for both editions: LeafGreen's script text sits at its own
     addresses, its named text and catalogs are FireRed's."""
@@ -860,13 +1002,6 @@ io.write(tostring(applied["g3:08000010"]), "|", tostring(applied["g3:08000020"])
             self.assertEqual(json.loads((mod / "manifest.json").read_text(encoding="utf-8"))["games"], ["firered"])
             self.assertEqual(sorted(path.name for path in (mod / "lang").iterdir()), ["dialogue.lua"])
 
-    def test_both_editions_must_agree_on_the_catalogs_the_mod_ships(self):
-        firered = {"catalogs": {"species_names": {"BULBASAUR": "BULBIZARRE"}, "strings": {"YES": "OUI"}}}
-        check_shared_catalogs(firered, {"catalogs": {"species_names": {"BULBASAUR": "BULBIZARRE"},
-                                                     "strings": {"Yes": "OUI"}}})
-        with self.assertRaisesRegex(BuildError, "species_names"):
-            check_shared_catalogs(firered, {"catalogs": {"species_names": {"BULBASAUR": "HERBIZARRE"}}})
-
     def test_gate_samples_the_editions_own_layer_and_its_guard(self):
         entries = [
             frlg_join.Gen3DialogueEntry("gText_Shared", TRANSLATED, [], translation=[{"t": "player"}, text(" PARTAGE"), EOS]),
@@ -901,8 +1036,9 @@ class FrlgConfigTests(unittest.TestCase):
 
     def test_release_profile(self):
         profile = release_profile("frlg")
-        # LeafGreen is required alongside FireRed, the way Crystal is for Gold.
-        self.assertEqual((profile.generation, profile.games), (3, ("firered", "leafgreen")))
+        # one cart, FireRed or LeafGreen, keys both editions' text
+        self.assertEqual((profile.generation, profile.games), (3, ("frlg",)))
+        self.assertEqual(game_spec("frlg").corpus_collection, "FireRedLeafGreen")
         self.assertEqual(game_spec("firered").corpus_collection, "FireRedLeafGreen")
         self.assertEqual(game_spec("leafgreen").corpus_collection, "FireRedLeafGreen")
         codes = [code for code, _ in languages_for_collection("FireRedLeafGreen")]

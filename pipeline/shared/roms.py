@@ -412,6 +412,24 @@ def verify_leafgreen_rom(path: str | Path) -> dict[str, Any]:
     return _verify_frlg_edition(path, "leafgreen")
 
 
+def verify_frlg_rom(path: str | Path) -> dict[str, Any]:
+    """Verify a real FireRed or LeafGreen (US) ROM; ``version`` names the
+    edition.  Either one keys both editions' text (pipeline/frlg/editions.py)."""
+    for edition in _FRLG_EDITIONS:
+        if CANONICAL.get(edition) is None:
+            raise ValueError(
+                f"missing [rom.{edition}] configuration: FireRed/LeafGreen ROM verification "
+                "requires that section in config/pipeline.toml"
+            )
+    path = Path(path)
+    actual = sha1(path)
+    for edition in _FRLG_EDITIONS:
+        if CANONICAL.get(edition) == actual:
+            return {"version": edition, "path": str(path.resolve()), "sha1": actual, "size": path.stat().st_size}
+    expected = ", ".join(f"{name} {CANONICAL.get(edition)}" for edition, name in _FRLG_EDITIONS.items())
+    raise ValueError(f"FireRed/LeafGreen ROM SHA-1 mismatch: {actual} (expected {expected})")
+
+
 def verify_emerald_rom(path: str | Path) -> dict[str, Any]:
     """Verify the canonical US Emerald ROM against its fingerprint."""
     expected = EMERALD_SHA1

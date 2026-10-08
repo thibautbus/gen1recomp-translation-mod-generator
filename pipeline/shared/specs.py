@@ -64,6 +64,10 @@ GAME_SPECS: Mapping[str, GameSpec] = {
     "crystal": GameSpec("crystal", 2, "Crystal"),
     "firered": GameSpec("firered", 3, "FireRedLeafGreen"),
     "leafgreen": GameSpec("leafgreen", 3, "FireRedLeafGreen"),
+    # FireRed and LeafGreen, either one: the build reads whichever cart it is
+    # given and keys the other's text through pret's symbols
+    # (pipeline/frlg/editions.py).
+    "frlg": GameSpec("frlg", 3, "FireRedLeafGreen"),
     # Ruby and Sapphire, either one (like "gs" and "rb"): the build reads
     # whichever cart it is given and keys the other's text through pret's
     # symbols (pipeline/rse/join.py).
@@ -82,12 +86,10 @@ RELEASE_PROFILES: Mapping[str, ReleaseProfile] = {
     # in its games tuple is GAME_SPECS' own Gold/Silver-only entry, matching
     # how "rby"'s games tuple keeps "rb"/"yellow" as separate sub-keys.
     "gsc": ReleaseProfile("gsc", 2, ("gs", "crystal")),
-    # LeafGreen is a mandatory companion ROM, like Crystal is for "gsc": one
-    # mod covers firered/leafgreen, gated at runtime by GameVersion.  The two
-    # carts share their named text and catalogs but lay their script text out
-    # at different addresses, so LeafGreen's dialogue can only be keyed from
-    # its own ROM (pipeline/frlg/mod.py's build_frlg()).
-    "frlg": ReleaseProfile("frlg", 3, ("firered", "leafgreen")),
+    # One mod covers firered/leafgreen, gated at runtime by GameVersion, from
+    # either cart: the two lay their script text out at different addresses,
+    # each on a pret label both share (pipeline/frlg/editions.py).
+    "frlg": ReleaseProfile("frlg", 3, ("frlg",)),
     # Emerald is a mandatory companion ROM, like Crystal is for "gsc": one
     # mod covers ruby/sapphire/emerald, gated at runtime by GameVersion.
     "rse": ReleaseProfile("rse", 3, ("rs", "emerald")),

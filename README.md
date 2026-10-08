@@ -91,8 +91,8 @@ emerald = "/absolute/path/to/PokemonEmerald.gba"
 
 The three RBY entries are required for the universal build; `gold`/`silver` are
 required only for the Gold and Silver build, and either one alone is enough (the
-prompt accepts a Gold or a Silver ROM interchangeably), and `firered` and
-`leafgreen` only for the FireRed and LeafGreen build. `ruby` or `sapphire`
+prompt accepts a Gold or a Silver ROM interchangeably), and `firered` or
+`leafgreen` (either one) only for the FireRed and LeafGreen build. `ruby` or `sapphire`
 (either one) and `emerald` are used only for the Ruby, Sapphire and Emerald
 build. Relative paths resolve from this file and `~` expands, although
 absolute paths are recommended. On Windows, use forward slashes or TOML
@@ -151,8 +151,8 @@ release.
 ## Pokémon FireRed and LeafGreen support
 
 FireRed and LeafGreen (US, v1.0) are published as one `translation-<lang>-gen3`
-mod for `fr`, `de`, `es`, `it` and `ja-Hrkt`, built from a real FireRed ROM and a
-real LeafGreen ROM. gen1recomp runs them on its own
+mod for `fr`, `de`, `es`, `it` and `ja-Hrkt`, built from a real FireRed or
+LeafGreen ROM, either one. gen1recomp runs them on its own
 generation-3 runtime, so the mod uses that runtime's content registries:
 dialogue through `mod.content.text`, species, move and item names, item
 descriptions, trainer names and class names through their record registries,
@@ -203,20 +203,25 @@ Japanese fonts (v0.3.4): its rows keep their characters instead of going
 through the cart's byte encoding, whose Japanese block reuses the Latin
 block's values.
 
-LeafGreen is required alongside FireRed, the way Crystal is alongside Gold and
-Silver. The two carts share their named text, their catalogs and the engine's
-own strings, but lay their script text out at different addresses: the
-dialogue keys of one cart mean nothing on the other, and the few addresses both
-use hold different lines. The LeafGreen ROM is therefore extracted and joined
-through pret's `pokeleafgreen.sym` like FireRed through `pokefirered.sym`, and
-the mod ships the dialogue in three layers: the named text both carts share
-(`lang/dialogue.lua`), then each edition's own (`lang/dialogue_firered.lua`,
-`lang/dialogue_leafgreen.lua`), picked at runtime from `GameVersion`. Where a
-ROM table points at another string in LeafGreen (the naming screen's GREEN and
-LEAF), the reviewed decision names LeafGreen's own row. The build refuses to
-package if the two carts would translate a catalog differently, and the
-release gate runs once per edition over that edition's extract, checking that
-an address both carts use keeps its own edition's line.
+Either cart is enough, as for Ruby and Sapphire. The two share their named
+text, their catalogs and the engine's own strings, but lay their script text
+out at different addresses: the dialogue keys of one cart mean nothing on the
+other, and the few addresses both use hold different lines. Every address the
+extractor keys sits on a pret label both editions share, so the build reads the
+cart it is given and keys the other edition's text through pret's symbols
+(`pokefirered.sym`, `pokeleafgreen.sym`; `pipeline/frlg/editions.py`); the
+naming screen's default names, which each edition's tables list differently
+(FireRed's RED and FIRE, LeafGreen's GREEN and LEAF), follow
+`config/frlg/edition_name_choices.json` (pokefirered `src/oak_speech.c`).
+Derived from either US cart, the other edition's text equals that cart's own
+extract, so a mod built from FireRed or from LeafGreen is the same as the former
+two-ROM build. The mod ships the dialogue in three layers: the named text both
+carts share (`lang/dialogue.lua`), then each edition's own
+(`lang/dialogue_firered.lua`, `lang/dialogue_leafgreen.lua`), picked at runtime
+from `GameVersion`. Where a ROM table points at another string in LeafGreen
+(the naming screen's GREEN and LEAF), the reviewed decision names LeafGreen's
+own row. The release gate runs over the cart that was read, checking that an
+address both carts use keeps its own edition's line.
 
 ## Pokémon Ruby, Sapphire and Emerald support
 
@@ -493,8 +498,8 @@ provenance. Future unresolved entries will keep their original English text.
   the honorific after it ship: the runtime always fills the name, and
   prints the honorific once it expands it in FireRed; see
   [docs/upstream-fixes.md](docs/upstream-fixes.md), FireRed entry 18.)
-- `LeafGreen ROM aggregate` measures the same way over the LeafGreen cart's
-  own extract, joined through `pokeleafgreen.sym`. It lands on the same
+- `LeafGreen ROM aggregate` measures the same way over LeafGreen's text,
+  keyed through `pokeleafgreen.sym`. It lands on the same
   figures in every language: the two carts differ in where their script
   text sits and in the naming screen's choices, not in what can be
   translated.
@@ -739,6 +744,7 @@ language overrides follow the same split under `overrides/<language>/`.
 | `config/gsc/crystal_rom_text_anchors.json` | Crystal-only RomText labels mapped to their PokeCorpus rows -- a labeled fallback path alongside Crystal's own pointer-based dialogue join. |
 | `config/gsc/crystal_semantic_anchors.json` | Evidence for Crystal engine-string corpus matches. |
 | `config/frlg/dialogue_decisions.json` | Reviewed corpus rows for FireRed standard-script lines gen1recomp reworded, with LeafGreen's own pick where its tables differ. |
+| `config/frlg/edition_name_choices.json` | The naming screen's default-name labels each edition lists (pokefirered `src/oak_speech.c`), so either cart keys the other's tables. |
 | `config/frlg/engine_scope.json` | FireRed-reachable `Strings()` keys, their callsites and reviewed cart rows. |
 | `config/rse/engine_scope.json` | Ruby/Sapphire-reachable `Strings()` keys, their callsites and Ruby/Sapphire cart rows (`python -m pipeline.gen3.engine_scope --family rs --extracted .cache/ruby/extracted/cache`). |
 | `config/rse/dialogue_decisions.json` | Reviewed rows for the Ruby and Sapphire texts pokeruby rewords between revisions, with Sapphire's own Pokédex row. |
@@ -773,7 +779,7 @@ the same split.
 | `pipeline/gsc/` | `text.py`, `join.py`, `index_join.py`, `localized_registries.py`, `trainer_names.py`, `engine.py`, `mod.py` | Join GoldSilver to pointer/index catalogs and engine strings, and emit the Gen 2 artifact. |
 | `pipeline/gsc/` | `crystal_mod.py`, `crystal_registries.py`, `crystal_strings.py` | The Crystal layer of the Gen 2 artifact. |
 | `pipeline/gen3/` | `family.py`, `text.py`, `join.py`, `engine_scope.py`, `mod.py` | What every generation-3 family shares: its corpus, pret charmap/symbols and text IR dialect, the address-to-label, catalog and engine joins, the engine scope generator and the mod helpers. |
-| `pipeline/frlg/` | `start_menu.py`, `audit.py`, `mod.py` | The FireRed/LeafGreen artifact: its edition layers, start menu, release gate and the game3 hardcoded-text audit. |
+| `pipeline/frlg/` | `editions.py`, `start_menu.py`, `audit.py`, `mod.py` | The FireRed/LeafGreen artifact: the other edition's text keyed through pret's symbols, its edition layers, start menu, release gate and the game3 hardcoded-text audit. |
 | `pipeline/rse/` | `join.py`, `emerald.py`, `european.py`, `mod.py` | The Ruby, Sapphire and Emerald artifact: Ruby/Sapphire's join and the layouts keyed through pret's symbols, Emerald's join and European trainers, the layered mod, its release gate and build. |
 | `tools/gsc/`, `tools/frlg/`, `tools/rse/` | `extract.lua`, `gate*.lua`, `measure_*.py` | ROM extractors and release gates run under LuaJIT, and the Gold join measurements. |
 

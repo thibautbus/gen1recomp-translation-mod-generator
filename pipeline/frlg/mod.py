@@ -31,6 +31,7 @@ from ..shared.corpus import canonical_language
 from ..shared.dependencies import DependencyError, fetch_files
 from ..gen3.family import FRLG
 from ..gen3.join import (
+    EDITION_NAMES,
     SHIPPED,
     CatalogResult,
     dialogue_catalog,
@@ -56,12 +57,13 @@ from ..gen3.mod import (
     unresolved_entries,
 )
 from ..gen3.text import load_charmap, load_symbols, text_key_address
+from .editions import derive_edition_text, other_edition
 from .start_menu import join_start_menu
 from ..shared.generate import lua_string
 from ..shared.pokedex_metrics import GEN3_SPECIES_METRICS_HOOK, lua_catalog, prepare_pokedex_metrics, species_metrics
 from ..shared.mod_assets import TRANSLATION_MOD_PRIORITY
 from ..shared.project import project_config, project_version, resource_root
-from ..shared.roms import import_frlg_rom, verify_firered_rom, verify_leafgreen_rom
+from ..shared.roms import import_frlg_rom, verify_frlg_rom
 from ..shared.specs import game_spec, languages_for_collection, release_profile
 
 MAIN = '''-- Generated FireRed translation mod.
@@ -269,15 +271,21 @@ def join_frlg(
     gen1recomp: str | Path | None = None,
     luajit: str | None = None,
     edition: str = "firered",
+    text: Mapping[str, list[dict]] | None = None,
 ) -> dict:
-    """Run every join of one edition for one language; return catalogs and stats."""
+    """Run every join of one edition for one language; return catalogs and stats.
+
+    ``text`` replaces the extract's own dialogue: the other edition's,
+    derived through pret's symbols (pipeline/frlg/editions.py), joined with
+    the catalogs of the cart that was read."""
     extracted = Path(extracted)
     language = canonical_language(language)
     charmap = load_charmap(charmap_path)
     symbols = load_symbols(symbols_path)
     corpus = load_gen3_corpus(corpus_dir, language, FRLG)
 
-    text = json.loads((extracted / "frlg_text.json").read_text(encoding="utf-8"))
+    if text is None:
+        text = json.loads((extracted / "frlg_text.json").read_text(encoding="utf-8"))
     entries, dialogue_stats = join_gen3_dialogue(
         text, corpus, symbols, charmap,
         overrides=load_dialogue_overrides(language, FRLG),
@@ -443,9 +451,10 @@ def run_frlg_gate(
 # ---------------------------------------------------------------- coverage
 
 def write_frlg_report(path: Path, joined: dict, coverage: dict, gate: dict, *,
-                      leafgreen: dict | None = None, leafgreen_gate: dict | None = None) -> None:
+                      leafgreen: dict | None = None, edition_read: str = "firered") -> None:
     """Private per-key report (it quotes ROM text: never packaged)."""
     report = {
+        "edition_read": edition_read,
         "coverage": coverage,
         "dialogue_unresolved": unresolved_entries(joined),
         "catalog_issues": joined["catalog_issues"],
@@ -454,34 +463,15 @@ def write_frlg_report(path: Path, joined: dict, coverage: dict, gate: dict, *,
     }
     if leafgreen is not None:
         report["leafgreen_dialogue_unresolved"] = unresolved_entries(leafgreen)
-        report["leafgreen_gate"] = leafgreen_gate
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-
-# The catalogs a LeafGreen join is compared on: the engine strings are keyed
-# by ROM label only in the FireRed join (rom_label_strings), which is the one
-# the mod ships.
-_EDITION_CATALOGS = ("species_names", "move_names", "item_names", "item_descriptions",
-                     "trainer_names", "trainer_class_names", "start_menu")
-
-
-def check_shared_catalogs(firered: dict, leafgreen: dict) -> None:
-    """One mod ships one set of name catalogs: both carts must agree on it."""
-    differ = [name for name in _EDITION_CATALOGS
-              if firered["catalogs"].get(name) != leafgreen["catalogs"].get(name)]
-    if differ:
-        raise BuildError(
-            "FireRed and LeafGreen translate these catalogs differently, and the mod "
-            "ships one set for both: " + ", ".join(differ)
-        )
 
 
 def edition_guards(firered: Mapping[str, list[dict]],
                    leafgreen: Mapping[str, list[dict]]) -> dict[str, dict]:
     """An address both editions use for different text, with each one's IR.
 
-    The gate loads the mod under each edition and expects that edition's
-    line there: the other edition's layer must not reach it.
+    The gate loads the mod under the edition that was read and expects that
+    edition's line there: the other edition's layer must not reach it.
     """
     for key in sorted(set(firered) & set(leafgreen)):
         if text_key_address(key) is not None and firered[key] != leafgreen[key]:
@@ -493,8 +483,7 @@ def edition_guards(firered: Mapping[str, list[dict]],
 # ---------------------------------------------------------------- build
 
 def build_frlg(
-    firered_rom: str | Path,
-    leafgreen_rom: str | Path,
+    rom: str | Path,
     language: str,
     language_name: str,
     luajit: str,
@@ -503,7 +492,9 @@ def build_frlg(
     log_fn: Callable[[str], None] | None = None,
     status_fn: Callable[[str], None] | None = None,
 ) -> Path:
-    """Extract both editions, join, gate and package the generation-3 mod."""
+    """Extract the FireRed or LeafGreen cart it is given, key the other
+    edition's text through pret's symbols, join, gate and package the
+    generation-3 mod."""
 
     def status(message: str) -> None:
         if status_fn:
@@ -516,7 +507,7 @@ def build_frlg(
 
     language = canonical_language(language)
     profile = release_profile("frlg")
-    spec = game_spec("firered")
+    spec = game_spec("frlg")
     supported = {code for code, _name in languages_for_collection(spec.corpus_collection)}
     if language not in supported:
         raise BuildError(
@@ -524,8 +515,9 @@ def build_frlg(
             "string with the US cart's Latin font (see docs/upstream-fixes.md, FireRed)."
         )
     status("Validating ROMs")
-    verify_firered_rom(firered_rom)
-    verify_leafgreen_rom(leafgreen_rom)
+    read = verify_frlg_rom(rom)["version"]
+    names = EDITION_NAMES
+    derived = other_edition(read)
 
     from ..shared.orchestration import prepare_build_context
     context = prepare_build_context(
@@ -536,42 +528,42 @@ def build_frlg(
     status("Preparing dependencies")
     symbols, charmap = prepare_pret_inputs(workspace, project_config())
 
-    extracted: dict[str, Path] = {}
-    for edition, rom, label in (("firered", firered_rom, "FireRed"), ("leafgreen", leafgreen_rom, "LeafGreen")):
-        log(f"\nExtracting private {label} ROM data...")
-        status(f"Extracting private {label} ROM data")
-        extracted[edition] = workspace / edition / "extracted"
-        import_frlg_rom(rom, gen1recomp, extracted[edition], log_fn=log_fn, edition=edition)
+    log(f"\nExtracting private {names[read]} ROM data...")
+    status(f"Extracting private {names[read]} ROM data")
+    extracted = workspace / read / "extracted"
+    import_frlg_rom(rom, gen1recomp, extracted, log_fn=log_fn, edition=read)
 
-    with rom_text_cache(gen1recomp, extracted["firered"]):
+    with rom_text_cache(gen1recomp, extracted, edition=read):
         log("\nJoining corpus and generating the mod...")
         status("Joining corpus and generating the mod")
-        joined = join_frlg(extracted["firered"], corpus_dir, language, symbols["firered"], charmap,
-                           gen1recomp, luajit)
-        leafgreen = join_frlg(extracted["leafgreen"], corpus_dir, language, symbols["leafgreen"], charmap,
-                              edition="leafgreen")
-        check_shared_catalogs(joined, leafgreen)
+        primary = join_frlg(extracted, corpus_dir, language, symbols[read], charmap, gen1recomp, luajit,
+                            edition=read)
+        read_text = json.loads((extracted / "frlg_text.json").read_text(encoding="utf-8"))
+        other_text = derive_edition_text(
+            read_text, load_symbols(symbols[read]), load_symbols(symbols[derived]),
+            load_gen3_corpus(corpus_dir, language, FRLG), load_charmap(charmap), source=read)
+        secondary = join_frlg(extracted, corpus_dir, language, symbols[derived], charmap,
+                              edition=derived, text=other_text)
+        joins = {read: primary, derived: secondary}
+        joined, leafgreen = joins["firered"], joins["leafgreen"]
         build_root = workspace / "interactive-gen3" / language
         mod_dir = build_root / frlg_mod_id(language)
         generate_frlg_mod(
             mod_dir, language=language, target_name=f"{language_name} translation for FireRed and LeafGreen",
-            dialogue=joined["dialogue"], leafgreen_dialogue=leafgreen["dialogue"], catalogs=joined["catalogs"],
+            dialogue=joined["dialogue"], leafgreen_dialogue=leafgreen["dialogue"], catalogs=primary["catalogs"],
             species_metrics=species_metrics(prepare_pokedex_metrics(workspace, project_config()),
-                                            joined["numbers"]["species"].values()),
+                                            primary["numbers"]["species"].values()),
         )
         coverage = gen3_coverage(joined)
         coverage["rom_leafgreen"] = gen3_coverage(leafgreen)["rom"]
 
         _shared, firered_layer, leafgreen_layer = split_frlg_dialogue(joined["dialogue"], leafgreen["dialogue"])
         guards = edition_guards(firered_layer, leafgreen_layer)
-        status("Running FireRed release gate")
-        gate = run_frlg_gate(mod_dir, extracted["firered"], joined, gen1recomp, luajit,
-                             dialogue_keys=set(firered_layer), edition_guard=guards.get("firered"),
+        layers = {"firered": firered_layer, "leafgreen": leafgreen_layer}
+        status(f"Running {names[read]} release gate")
+        gate = run_frlg_gate(mod_dir, extracted, primary, gen1recomp, luajit,
+                             edition=read, dialogue_keys=set(layers[read]), edition_guard=guards.get(read),
                              log_fn=log_fn)
-        status("Running LeafGreen release gate")
-        leafgreen_gate = run_frlg_gate(mod_dir, extracted["leafgreen"], leafgreen, gen1recomp, luajit,
-                                       edition="leafgreen", dialogue_keys=set(leafgreen_layer),
-                                       edition_guard=guards.get("leafgreen"), log_fn=log_fn)
         attach_frlg_validation(mod_dir, {
             "schema": 1, "policy": "english-fallback", "coverage": coverage,
             "runtime_limits": {
@@ -581,12 +573,13 @@ def build_frlg(
                 "strings_resolve_in_game": bool((gate.get("strings_live") or {}).get("resolves")),
             },
         })
-        write_frlg_report(build_root / "coverage.json", joined, coverage, gate,
-                          leafgreen=leafgreen, leafgreen_gate=leafgreen_gate)
+        write_frlg_report(build_root / "coverage.json", joined, coverage, gate, leafgreen=leafgreen,
+                          edition_read=read)
         for key, label in (("rom", "FireRed ROM aggregate"), ("rom_leafgreen", "LeafGreen ROM aggregate"),
                            ("engine_gen3", "FireRed engine strings")):
             section = coverage[key]
             log(f"  {label}: {section['translated']}/{section['total']} ({section['percent']:.2f}%)")
+        log(f"  {names[derived]} text keyed from the {names[read]} cart through pret's symbols")
         blank = gate.get("blank_glyphs", {})
         if blank.get("total"):
             log(f"  runtime limit: {blank['total']} shipped characters have no glyph in FrlgFont yet"
