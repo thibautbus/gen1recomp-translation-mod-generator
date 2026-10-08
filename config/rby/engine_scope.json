@@ -254,16 +254,6 @@
       "eligibility": "ineligible",
       "reason": "defensive"
     },
-    "GEW. %.1fkg": {
-      "category": "rby",
-      "eligibility": "ineligible",
-      "reason": "fallback-only"
-    },
-    "GR. %.1fm": {
-      "category": "rby",
-      "eligibility": "ineligible",
-      "reason": "fallback-only"
-    },
     "Gyaoo!": {
       "category": "rby",
       "eligibility": "ineligible",

@@ -17,9 +17,10 @@ from typing import Callable
 
 from ..shared.align import align, apply_corpus_overrides
 from ..shared.corpus import canonical_language, parse_redblue, parse_yellow
-from .mod import YELLOW_CATALOG_HOOKS, generate_mod, yellow_isyellow_guard_lines
+from .mod import SPECIES_METRICS_HOOK, YELLOW_CATALOG_HOOKS, generate_mod, yellow_isyellow_guard_lines
 from ..shared.mod_assets import ttf_registration, validate_font_profile
-from ..shared.project import is_frozen, project_version, resource_root
+from ..shared.pokedex_metrics import prepare_pokedex_metrics
+from ..shared.project import is_frozen, project_config, project_version, resource_root
 from ..shared.roms import import_rom, verify_rb_rom, verify_rom
 from ..shared.leak_audit import audit_generated_catalogs
 from ..shared.specs import release_profile
@@ -295,6 +296,13 @@ def preserve_scaffold_support(
                 scaffold_main = scaffold_main[:end] + species_kind_injection + scaffold_main[end:]
             else:
                 raise BuildError(f"Modkit scaffold main has no statuses block to extend: {main}")
+    # Metric heights and weights patch dexEntry with tables, which the
+    # scaffold's string-only each() skips: append their own loop.
+    if (mod / "lang" / "species_metrics.lua").is_file() and 'catalog("species_metrics")' not in scaffold_main:
+        end = scaffold_main.rfind("\nend")
+        if end < 0:
+            raise BuildError(f"Modkit scaffold main has no closing function: {main}")
+        scaffold_main = scaffold_main[:end] + "\n" + SPECIES_METRICS_HOOK.rstrip("\n") + scaffold_main[end:]
     # Yellow layers are applied only after the shared catalogs and only for
     # the Yellow game.  Keep the hook in the final scaffold-owned main.lua;
     # generate_mod's standalone main remains useful for unit tests.
@@ -774,6 +782,7 @@ def build(
         yellow_catalogs=yellow_catalogs,
         yellow_engine_overrides=yellow_engine_values,
         precomputed_join=(red_joined, red_join_report) if red_joined is not None else None,
+        pokedex_entries=prepare_pokedex_metrics(workspace, project_config()),
     )
     preserve_scaffold_support(scaffold, mod, language, font_source, font_profile)
     leaks = audit_generated_catalogs(mod)

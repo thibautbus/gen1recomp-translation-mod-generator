@@ -385,11 +385,11 @@ engine's English fallback.
 
 | Target | Red Blue ROM aggregate | Yellow ROM aggregate | RBY-related engine strings |
 | --- | ---: | ---: | ---: |
-| `fr` | 3286/3286 (100%) | 3400/3400 (100%) | 423/423 (100%) |
-| `de` | 3286/3286 (100%) | 3400/3400 (100%) | 423/423 (100%) |
-| `es` | 3286/3286 (100%) | 3400/3400 (100%) | 423/423 (100%) |
-| `it` | 3286/3286 (100%) | 3400/3400 (100%) | 423/423 (100%) |
-| `ja-Hrkt` | 3286/3286 (100%) | 3397/3400 (99.91%) | 423/423 (100%) |
+| `fr` | 3286/3286 (100%) | 3400/3400 (100%) | 425/425 (100%) |
+| `de` | 3286/3286 (100%) | 3400/3400 (100%) | 425/425 (100%) |
+| `es` | 3286/3286 (100%) | 3400/3400 (100%) | 425/425 (100%) |
+| `it` | 3286/3286 (100%) | 3400/3400 (100%) | 425/425 (100%) |
+| `ja-Hrkt` | 3286/3286 (100%) | 3397/3400 (99.91%) | 425/425 (100%) |
 
 The ROM aggregates exclude extracted labels that do not render visible text.
 Reviewed exceptions are recorded in
@@ -604,7 +604,7 @@ runtime displays.
 
 The remaining engine keys are reported separately below. They are keys used by
 neither RBY nor Gold and Silver, so their denominator is the residual scope:
-`2623 - (423 + 989 - 90) = 1301`. The numerator counts keys translated in at
+`2623 - (425 + 989 - 90) = 1299`. The numerator counts keys translated in at
 least one of the RBY and Gold/Silver/Crystal artifacts, the RBY release's
 Yellow layer included; this is a project-level metric, not a claim that
 every key is present in both games.
@@ -614,17 +614,17 @@ and its numerators leave the generation-3 artifacts out.
 
 | Target | Other engine strings |
 | --- | ---: |
-| `fr` | 172/1301 (13.22%) |
-| `de` | 172/1301 (13.22%) |
-| `es` | 170/1301 (13.07%) |
-| `it` | 171/1301 (13.14%) |
-| `ja-Hrkt` | 168/1301 (12.91%) |
-| `ko` | 100/1301 (7.69%) |
+| `fr` | 172/1299 (13.24%) |
+| `de` | 172/1299 (13.24%) |
+| `es` | 170/1299 (13.09%) |
+| `it` | 171/1299 (13.16%) |
+| `ja-Hrkt` | 168/1299 (12.93%) |
+| `ko` | 100/1299 (7.70%) |
 
 The denominator is calculated as follows: `2623` total engine keys, minus the
-`423` RBY-related keys and the `989` Gold and Silver-related keys, plus back the `90` keys
+`425` RBY-related keys and the `989` Gold and Silver-related keys, plus back the `90` keys
 shared by both scopes so they are subtracted only once. The resulting residual
-scope is `1301` keys.
+scope is `1299` keys.
 
 All figures use Gen1Recomp revision `7ac15ebb` (v0.3.61) and the pinned ROMs
 and corpus snapshots; regenerate them whenever one of those inputs changes.
@@ -769,6 +769,7 @@ the same split.
 | `pipeline/shared/` | `corpus.py`, `model.py`, `align.py`, `worksheet.py`, `tokens.py`, `generate.py` | Parse parallel corpora, align qids, preserve control-token contracts and write Lua. |
 | `pipeline/shared/` | `engine_manifest.py`, `strings_harvest.py`, `engine.py` | The pinned engine string universe, the `Strings()`/RomText callsite harvester, and the engine-string join Red/Blue and Gold share. |
 | `pipeline/shared/` | `mod_assets.py`, `validate.py`, `leak_audit.py` | What every mod ships besides its catalogs (fonts, load priority), and the release gates. |
+| `pipeline/shared/` | `pokedex_metrics.py` | The official Pokédex heights and weights in metres and kilograms (pret pokeemerald's `pokedex_entries.h`, pinned as `[pret.pokedex_metrics]`), which every mod patches into each species (the generation-3 mods once the engine carries `src/core/game3/pokedex_units.lua`). |
 | `pipeline/rby/` | `build.py`, `join.py`, `mod.py`, `yellow.py`, `yellow_audit.py`, `literals.py` | Build the Red/Blue and Yellow mod: join the catalogs, resolve literal handlers, write the mod and its Yellow layer. |
 | `pipeline/rby/` | `engine_scope.py`, `engine_backlog.py`, `disassembly_audit.py` | Classify the engine strings for Red/Blue, report the private backlog and audit the localized disassemblies. |
 | `pipeline/gsc/` | `text.py`, `join.py`, `index_join.py`, `localized_registries.py`, `trainer_names.py`, `engine.py`, `mod.py` | Join GoldSilver to pointer/index catalogs and engine strings, and emit the Gen 2 artifact. |

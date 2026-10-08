@@ -58,6 +58,7 @@ from ..gen3.mod import (
 from ..gen3.text import load_charmap, load_symbols, text_key_address
 from .start_menu import join_start_menu
 from ..shared.generate import lua_string
+from ..shared.pokedex_metrics import GEN3_SPECIES_METRICS_HOOK, lua_catalog, prepare_pokedex_metrics, species_metrics
 from ..shared.mod_assets import TRANSLATION_MOD_PRIORITY
 from ..shared.project import project_config, project_version, resource_root
 from ..shared.roms import import_frlg_rom, verify_firered_rom, verify_leafgreen_rom
@@ -147,11 +148,14 @@ def generate_frlg_mod(
     catalogs: Mapping[str, Mapping[str, str]],
     mod_id: str | None = None,
     leafgreen_dialogue: Mapping[str, list[dict]] | None = None,
+    species_metrics: Mapping[str, tuple[float, float]] | None = None,
 ) -> Path:
     """Write a deterministic manifest, entry point and catalogs.
 
     ``dialogue`` is FireRed's; with ``leafgreen_dialogue`` the mod covers both
-    editions, its dialogue split by split_frlg_dialogue().
+    editions, its dialogue split by split_frlg_dialogue().  ``species_metrics``
+    is every species' height and weight in metres and kilograms
+    (pipeline.shared.pokedex_metrics).
     """
     language = canonical_language(language)
     destination = Path(destination)
@@ -192,6 +196,10 @@ def generate_frlg_mod(
         lines.append("}")
         (lang_dir / f"{name}.lua").write_text("\n".join(lines) + "\n", encoding="utf-8")
         registration += f'  each("{name}", function(id, value) {CATALOG_HOOKS[name]} end)\n'
+    if species_metrics:
+        (lang_dir / "species_metrics.lua").write_text(
+            lua_catalog(species_metrics, "species_metrics"), encoding="utf-8")
+        registration += GEN3_SPECIES_METRICS_HOOK
     main = MAIN.replace("__CATALOG_REGISTRATION__", registration).replace(
         "__START_MENU_REGISTRATION__", _START_MENU_REGISTRATION if start_menu else "")
     (destination / "main.lua").write_text(main, encoding="utf-8")
@@ -548,6 +556,8 @@ def build_frlg(
         generate_frlg_mod(
             mod_dir, language=language, target_name=f"{language_name} translation for FireRed and LeafGreen",
             dialogue=joined["dialogue"], leafgreen_dialogue=leafgreen["dialogue"], catalogs=joined["catalogs"],
+            species_metrics=species_metrics(prepare_pokedex_metrics(workspace, project_config()),
+                                            joined["numbers"]["species"].values()),
         )
         coverage = gen3_coverage(joined)
         coverage["rom_leafgreen"] = gen3_coverage(leafgreen)["rom"]

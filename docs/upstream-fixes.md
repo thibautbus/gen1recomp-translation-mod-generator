@@ -128,6 +128,25 @@ build shows this NPC's real French text without any workaround.
 
 ### Fixed upstream (engine changes, not just this project's config)
 
+- **Pokédex heights and weights in metres and kilograms (gen1recomp#2747,
+  v0.3.61).** The US cart stores and prints feet, inches and pounds; every
+  localized cart prints metres and kilograms (poke-corpus RedBlue
+  `rb.pokedex.HeightWeightText`: `TAI  ???m` / `PDS  ???kg`, `GR.` /
+  `GEW`, `AL` / `PE`, `h` / `P`, `たかさ` / `おもさ`). `ui/DexEntryMenu.lua:250`
+  prints a species' `dexEntry.heightM` and `weightKg` through
+  `Strings("GR. %.1fm")` and `Strings("GEW. %.1fkg")` when the species
+  carries them, so the mod patches every species with its official metric
+  values (`lang/species_metrics.lua`, from pret pokeemerald's
+  `src/data/pokemon/pokedex_entries.h`, pinned as
+  `[pret.pokedex_metrics]`) and translates both formats with the cart's
+  own labels. Before v0.3.61 the metric branch printed nothing for an
+  entry seen but not caught (the cart prints `???m` / `???kg`); since
+  gen1recomp#2747 it prints `Strings("GR. ???m")` and `Strings("GEW.
+  ???kg")`, which the mod translates from the same row. main.lua patches
+  the species at every revision, since a Red/Blue game may not load the
+  Gen 3 module the generation-3 mods probe
+  (`src/core/game3/pokedex_units.lua`). The metric branch always writes
+  the decimal with a comma (`:279`), which the Japanese carts do not use.
 - **Stat-rise messages:** the X-item/vitamin `"rose!"` messages
   substituted the raised stat's name as a raw Lua string, bypassing
   `Strings()`. Fixed on gen1recomp `fix/stat-rise-message-translation`
@@ -497,6 +516,7 @@ guess.
   (241/241, down from 242/242 -- the one retired key) and Gold/Silver-
   related (302/302, unchanged) engine-string coverage, plus 100%
   ROM-aggregate coverage on every side, after these two fixes.
+
 
 ### Fixed: Surfing Pikachu/Hall of Fame HUD text rewritten upstream
 
@@ -1011,6 +1031,7 @@ prompt: this port's fixed 2-line box has no pagination.
 
 ### Fixed upstream (engine changes, not just this project's config)
 
+- **Pokédex heights and weights in metres and kilograms (gen1recomp#2747, v0.3.61).** The #DEX page printed the US cart's height in feet and inches and its weight, in tenths of a pound, after the `lb` label; the localized carts print metres and kilograms (`gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight`), and the translations label that weight `kg`, so the number was a pound value under a kilogram label (Bulbasaur's 15.2 for 6.9 kg). Since v0.3.61 the page prints a species' `dexEntry.heightM` and `weightKg`, right-aligned before `Strings("m")` and `Strings("kg")`, and `???` until the species is caught. The mod patches every species with its official values (`lang/species_metrics.lua`, as for Red/Blue) at every revision, as a Gold/Silver game may not load a Gen 3 module; `m` and `kg` are the English in the European languages and the cart's full-width `ｍ` and `ｋｇ` in Japanese and Korean.
 - **Clock UI (weekdays, `o'clock`, `MORN`/`DAY`/`NITE`):** `DAYS`
   (SUNDAY..SATURDAY), the `PrintHour` daytime word, and the `"%s
   o'clock"`/`"%d min."` suffixes on InitClock's screens, the main menu
@@ -2023,7 +2044,7 @@ Produced by `python scripts/pipeline.py frlg-hardcoded-strings` (`pipeline/frlg/
 
 - **TM/HM pickup** (`Text_FoundTMHMContainsMove`): gen1recomp's item-ball script buffers only the TM's name and prints `"[PLAYER] found\n[STR_VAR_2]!"`, while the cart's line also names the move from `STR_VAR_1`. Each language keeps the first clause of its own cart row (`overrides/<lang>/frlg/dialogue.json`); German, whose cart line names only the move, is reworded around the TM name.
 - **Corrupted-save warning**: `src/ui/game3/boot.lua` prints the cart's `gText_SaveFileCorrupted` as two `Strings()` pages. The official translation is split at its sentence (Italian: paragraph) boundary.
-- **Imperial units**: the Pokédex and its size page print weights and heights gen1recomp computes in pounds and feet (`pokedex_data.lua`); the European carts print kilograms and metres. A template cannot convert the number, so the translations keep `lbs.` and feet/inches and only localise the labels (HAUT./POIDS…) and the decimal comma.
+- **Imperial units**: the Pokédex and its size page print weights and heights gen1recomp computes in pounds and feet (`pokedex_data.lua`); the European carts print kilograms and metres. A template cannot convert the number, so the translations keep feet/inches and only localise the labels (HAUT./POIDS…) and the decimal comma; the weight's unit is the cart row `gText_Lbs` (`pokedex_data.lua:210`), whose localized rows are the kilogram, a pound value under a kilogram label. Since gen1recomp#2747 (v0.3.61) the Pokédex prints a species' metric height and weight when a mod gives them (`dexEntry.heightM`/`weightKg`, `src/core/game3/pokedex_units.lua`), and the mod patches every species with its official values (`lang/species_metrics.lua`, as for Red/Blue) when the engine carries that module, as v0.3.61 does, so a caught Bulbasaur reads `0,7 m` and `6,9 kg`; the unit's `kg` key takes the cart's `gText_Lbs` row (`ｋｇ` in Japanese).
 - **Trainer names**: gen1recomp composes "<class> <name>" (`battle/init.lua`, `switch_seq.lua`, `trainers.lua`) and passes it as one argument to messages such as "%s defeated\n%s!". The Italian cart writes "<name>, <class>"; the Italian lines keep gen1recomp's order.
 - **Lines gen1recomp words its own way**: 290 French keys (similar in de/es/it) have no cart row that reads as them. They are either English the port added (PC item storage, Hall of Fame banner, bicycle, repel reuse, release, OAK's refusal without the player's name…) or cart messages gen1recomp rewords or splits (the stat-change lines the cart builds from `sText_AttackersStatRose` and a verb row, "gained a boosted", the double send-out, the berry flavour lines). They are worded from the nearest cart row, named in each entry's `provenance` (`overrides/<lang>/frlg/engine.json`, `reason: "engine-corpus"`, `"engine-contract-gap"` or `"engine-original"`).
 - **One English label, several cart wordings**: FireRed words the same English differently from menu to menu (CANCEL is RETOUR in most French menus, ANNUL. in the PC). A `Strings()` key has one value, so the scope keeps the wording most cart rows share for that English (a `REVIEWED` pin where the majority is the wrong sense: FIGHT is the battle menu's ATTAQUE, not the FIGHT type).
@@ -2048,7 +2069,7 @@ Summary of what a translation mod can and cannot reach at the pinned revision:
 | Cart text the native screens print from their own pack: party menu actions and prompts, shop, decoration, move relearner, contest paintings, Easy Chat editors and words, the summary's contest effect descriptions | Yes since v0.3.58 (entry 3) | `text` overrides by label, `strings` for the contest descriptions |
 | The same for the secret base, roulette, trainer card, diploma, berry tag, PokéNav and Battle Tower records screens | **No** (entry 3) | `text` overrides once their extractors record the labels |
 | A secret base's name in the European languages | Yes since v0.3.61 (entry 4) | the runtime fills the row's `[PLAYER]` with the owner |
-| Heights and weights in metric units, as the European and Japanese carts print them | **No** (entry 8) | a metric printer in the runtime |
+| Heights and weights in metric units, as the European and Japanese carts print them | Yes since v0.3.61 (entry 8) | `pokemon` patches (`dexEntry.heightM`/`weightKg`) |
 | Japanese | Yes (the cart's own Japanese fonts) | as for FireRed |
 
 ### Fixed upstream in v0.3.58 (gen1recomp#2724)
@@ -2065,7 +2086,7 @@ The Ruby/Sapphire entry page printed the entry's category and both pages of its 
 
 Several Ruby/Sapphire screens printed a cart string their extractor copied into their pack (`src/import/gba/rs/extract_*.lua`, `textBytes` and `strings`) instead of reading the script cache, where the mod's `text` overrides land. Since gen1recomp#2724 (v0.3.58), as gen1recomp#2678 did for Emerald's screens, they read the script cache by label with the pack's copy as the fallback: the party menu's actions (by the labels `sPokemonMenuActions` points at, a field move by its move's name) and its prompts (`PartyMenuPromptTexts`, with the POKéMON's name in `Do what with {STR_VAR_1}?`), the shop, the decoration menus, the move relearner, the contest paintings' captions, and the summary's contest effect descriptions (through `Strings()`, which the mod's `strings_by_english` catalog fills); the Easy Chat editors, the mail composer and reader, the trendy phrase, the trainer card's profile and the TV print each word translated (`EasyChatText.word`). The secret base, roulette, trainer card labels, diploma, berry tag, PokéNav and Battle Tower records packs keep their strings under local names and need their extractors to record the labels first; strings no cache key holds (the PokéNav's help lines, the option menu) need the import plan to add them first, as Emerald entry 5 describes. The summary screen's titles (CONTEST MOVES, EFFECT, DESCRIPTION...) are the US cart's graphics.
 
-### Fixed upstream in v0.3.61 (gen1recomp#2743, #2745)
+### Fixed upstream in v0.3.61 (gen1recomp#2743, #2745, #2747)
 
 #### 4. A secret base's name ended in the English row
 
@@ -2074,6 +2095,10 @@ The TV and the region map named a secret base as the owner's name followed by `g
 #### 5. The starter's category was cut by bytes
 
 The starter selection printed the species' category cut to its first 11 bytes (`category:sub(1, 11)`), so a translated Japanese category, three bytes per character, was cut in the middle of a character. Since gen1recomp#2743 it is cut by character (`FrlgFont.truncate`, `src/ui/game3/rs/starter_choose_policy.lua:23`).
+
+#### 8. Heights and weights were printed in US units
+
+The native Pokédex printed a caught entry's height in feet and inches and its weight in pounds (`src/ui/game3/rse/pokedex.lua:900`, `Pokedex.heightText`; `src/ui/game3/rs/pokedex_policy.lua:28`, `weightText`), as pokeruby's US build does (`include/config.h:53`, `UNITS_IMPERIAL`; `src/pokedex.c:4335`, `:4375`). The European carts print metres and kilograms (the `#else` printers, `src/pokedex.c:4368`, `:4438`), and so do their unknown-entry rows (`???,?  m`, `???,?  kg`; Japanese `？？？．？ｍ`). The mod ships both unknown rows as the corpus has them, so with a European or Japanese mod an unseen entry's height and weight read `???,?  m` and `???,?  kg`. The cart's unknown weight string ends with an extra terminator (`????.? lbs.$`, pokeruby `src/strings.c:79`), so PokeCorpus splits its label into `gDexText_UnknownWeight.0` and an empty `.1`; a reviewed decision (`config/rse/dialogue_decisions.json`) joins the first. Since gen1recomp#2747 the native screen, as Emerald's, prints a caught species' metric height and weight when a mod gives them (`dexEntry.heightM`/`weightKg`, `src/core/game3/pokedex_units.lua`), padding a missing digit with two spaces as the European cart's printer shifts the number by a digit's width (pokeruby `src/pokedex.c:4300`), and keeps the cart's unknown rows for a seen one; the mod patches every species with its official values (`lang/species_metrics.lua`, shared by the three games).
 
 ### Required upstream capabilities
 
@@ -2085,9 +2110,6 @@ Six `Strings()` keys keep their English in every language, the same as Emerald's
 
 As for Emerald (entry 7), a few official rows print a value the US line does not: four European fragments (`BattleText_Berry`, `PCText_WasReleased`, `gOtherText_Berry`, `gOtherText_PokeBlockMade`) and 29 Japanese lines that name a trainer, the rival or Kiri with a `STR_VAR` buffer the US script leaves empty. Their English stays.
 
-#### 8. Heights and weights are printed in US units
-
-The native Pokédex prints a caught entry's height in feet and inches and its weight in pounds (`src/ui/game3/rse/pokedex.lua:874`, `Pokedex.heightText`; `src/ui/game3/rs/pokedex_policy.lua:28`, `weightText`), as pokeruby's US build does (`include/config.h:53`, `UNITS_IMPERIAL`; `src/pokedex.c:4335`, `:4375`). The European carts print metres and kilograms (the `#else` printers, `src/pokedex.c:4368`, `:4438`), and so do their unknown-entry rows (`???,?  m`, `???,?  kg`; Japanese `？？？．？ｍ`). The mod ships both unknown rows as the corpus has them, so with a European or Japanese mod an unseen entry's height and weight read `???,?  m` and `???,?  kg` while a caught entry's read `1'04"` and `5.5 lbs.` (Torchic). The cart's unknown weight string ends with an extra terminator (`????.? lbs.$`, pokeruby `src/strings.c:79`), so PokeCorpus splits its label into `gDexText_UnknownWeight.0` and an empty `.1`; a reviewed decision (`config/rse/dialogue_decisions.json`) joins the first. A metric printer in the runtime, chosen by the mod's language, would make the caught entries agree.
 
 ### Verified working, not a gap
 
@@ -2162,7 +2184,7 @@ Some screens print cart strings that only their own pack holds: the script cache
 - Decorations: names and descriptions in the PC and the secret base (`src/ui/game3/rse/decoration.lua:940`, `:959`, `gDecorations`).
 - The Battle Pyramid's rest and retire prompts (`src/ui/game3/save_menu.lua:323`, `src/ui/game3/rse/pyramid_retire.lua:23`, `gText_BattlePyramidConfirmRest`/`Retire`) and its post-battle hints.
 - The Battle Frontier lounges: the Frontier Maniac's, the nature girl's and the gambler's messages (`src/core/game3/scripting/natives_frontier.lua:387-415`, `BattleFrontier_Lounge2_Text_*`, `Lounge3`, `Lounge5`), and the Battle Tower multi battle partners' lines (`src/core/game3/rse/frontier/tower.lua:490`). The script cache does key the partners' lines by their table's label (`sPartnerTextsHiker[0]`), but the pack keeps only each line's own symbol, which the cache does not hold, so the partners need their table's name in the pack rather than a new extraction.
-- Strings gen1recomp writes itself in Lua: the contest results' link save error (`src/ui/game3/rse/contest_results.lua:483`), which has no cart row, and the Pokédex's weight in pounds (`src/ui/game3/rse/pokedex.lua:888`), as for FireRed. The Berry Blender's two link messages are written in Lua too (`src/ui/game3/rse/berry_blender.lua:1005-1007`), although the cache holds the cart's own `sText_HasNoBerriesToPut` and `sText_ApostropheSPokeblockCaseIsFull`.
+- Strings gen1recomp writes itself in Lua: the contest results' link save error (`src/ui/game3/rse/contest_results.lua:483`), which has no cart row, and the Pokédex's weight in pounds (`src/ui/game3/rse/pokedex.lua:910`), as for FireRed, which a mod's metric values replace since v0.3.61. The Berry Blender's two link messages are written in Lua too (`src/ui/game3/rse/berry_blender.lua:1005-1007`), although the cache holds the cart's own `sText_HasNoBerriesToPut` and `sText_ApostropheSPokeblockCaseIsFull`.
 
 Fix: have the import plan put these strings in the script cache's text table (pret's `TEXT_TABLES`/`NAMED_TEXTS` in `src/import/gba/versions_text_emerald.lua` already list most Emerald tables) and the screens read them through entry 4's helpers (`RomText.refIr`), so this project's extract emits their keys; the join then picks up their corpus rows with no new work.
 

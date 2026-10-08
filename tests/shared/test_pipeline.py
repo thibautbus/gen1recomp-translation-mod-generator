@@ -566,6 +566,37 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(report["rom"]["details"]["strings_pokedex"]["translated"], 0)
             self.assertGreaterEqual(report["rom"]["translated"], 0)
 
+    def test_generate_mod_ships_each_named_species_metric_values(self):
+        catalog_names = (
+            "dialogue", "strings", "species_names", "move_names",
+            "item_names", "trainer_names", "status_labels", "type_names",
+            "demo_names", "species_kinds",
+        )
+        joined = {name: {} for name in catalog_names}
+        joined["species_names"] = {"BULBASAUR": "BULBIZARRE"}
+        join_report = {"matched": {}, "unmatched": {}, "ambiguous": {}, "strategies": {}, "reasons": {}}
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            worksheet = root / "ws"
+            worksheet.mkdir()
+            for name in ("dialogue", "species_names", "move_names", "item_names", "trainer_names", "status_labels"):
+                (worksheet / f"{name}.txt").write_text("# header\n", encoding="utf-8")
+            (worksheet / "strings.lua").write_text("return {}\n", encoding="utf-8")
+            entries = root / "pokedex_entries.h"
+            entries.write_text(
+                "[NATIONAL_DEX_BULBASAUR] =\n    {\n        .height = 7,\n        .weight = 69,\n    },\n",
+                encoding="utf-8",
+            )
+            generate_mod(
+                [], root / "mod", language="fr", modkit_worksheet=worksheet,
+                precomputed_join=(joined, join_report), pokedex_entries=entries,
+            )
+            metrics = (root / "mod" / "lang" / "species_metrics.lua").read_text(encoding="utf-8")
+            main = (root / "mod" / "main.lua").read_text(encoding="utf-8")
+        self.assertIn('["BULBASAUR"] = { 0.7, 6.9 }', metrics)
+        self.assertIn('for id, value in pairs(catalog("species_metrics")) do', main)
+        self.assertNotIn("src.core.game3", main)
+
     def test_generate_mod_reports_species_kind_coverage(self):
         catalog_names = (
             "dialogue", "strings", "species_names", "move_names",

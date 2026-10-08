@@ -153,6 +153,17 @@ archive_base_url = "https://raw.githubusercontent.com/pret/pokeruby/5784633ce4ef
 [pret.ruby_sapphire_charmap.archive_files]
 "charmap.txt" = "8c1db143d4f5f8186a6853d076b8b5dbd5d505b64e3c04ed79fe75afa54b7e9c"
 
+# The official Pokédex heights and weights in decimetres and hectograms,
+# which the European and Japanese carts print in metres and kilograms
+# (pipeline/shared/pokedex_metrics.py).
+[pret.pokedex_metrics]
+source = "https://github.com/pret/pokeemerald.git"
+revision = "c65e93f20a5275ab03b07d6f6411096a82a60ffd"
+archive_base_url = "https://raw.githubusercontent.com/pret/pokeemerald/c65e93f20a5275ab03b07d6f6411096a82a60ffd/src/data/pokemon"
+
+[pret.pokedex_metrics.archive_files]
+"pokedex_entries.h" = "b830c2dc436790a4d9bacb4794753af689f059000d13004b8e69cfa36907d4ae"
+
 [fonts.pokemon]
 revision = "81b60805150c75ebfdfcec6d8352c67e491f8a6c"
 archive_base_url = "https://raw.githubusercontent.com/cooljeanius/pokemon-font/81b60805150c75ebfdfcec6d8352c67e491f8a6c"
