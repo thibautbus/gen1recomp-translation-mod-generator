@@ -107,11 +107,6 @@
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; the slot machine's bet counter, drawn only when the ROM's reel graphics are missing (src/ui/game3/slot_machine.lua)."
     },
-    "BOX %d": {
-      "override": "BOITE %d",
-      "reason": "engine-corpus",
-      "provenance": "Default box name: strings.gText_Box followed by the number."
-    },
     "CAVE have changed.": {
       "override": "METAMO ont changé.",
       "reason": "engine-contract-gap",
@@ -641,6 +636,151 @@
       "override": "kg",
       "reason": "engine-corpus",
       "provenance": "Unit after a metric Pokédex weight (src/core/game3/pokedex_units.lua:23): the cart's own weight unit (frlg.common.strings.gText_Lbs, \"lbs.\" on the US cart)."
+    },
+    "AUDIO MODE": {
+      "override": "MODE AUDIO",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); kept as short as the English for the option value column; requires in-game visual validation."
+    },
+    "BOTH": {
+      "override": "LES DEUX",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); kept as short as the English for the option value column; requires in-game visual validation."
+    },
+    "%s canceled the request.": {
+      "override": "%s a annulé la demande.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "%s from POKéMON %s is here.\nWhat would you like to do?": {
+      "override": "%s de POKéMON %s est là.\nQue voulez-vous faire?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "%s from POKéMON %s wants to battle!\nWill you accept?": {
+      "override": "%s de POKéMON %s veut se battre!\nAccepter le combat?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "%s from POKéMON %s wants to trade!\nWill you accept?": {
+      "override": "%s de POKéMON %s veut échanger!\nAccepter l'échange?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "%s or %s": {
+      "override": "%s ou %s",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "%s seems to be busy right now.": {
+      "override": "%s n'est pas disponible pour le moment.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "%s turned down the battle.": {
+      "override": "%s a refusé le combat.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "%s turned down the trade.": {
+      "override": "%s a refusé l'échange.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Battles and trades between different games aren't open yet. The request was canceled.": {
+      "override": "Les combats et les échanges entre jeux différents ne sont pas encore possibles. La demande a été annulée.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Getting ready to battle %s...": {
+      "override": "Préparation du combat contre %s...",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Getting ready to trade with %s...": {
+      "override": "Préparation de l'échange avec %s...",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Import POKéMON %s to see how %s really looks.": {
+      "override": "Importez POKéMON %s pour voir à quoi %s ressemble vraiment.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Please enjoy the UNION ROOM!": {
+      "override": "Amusez-vous bien dans la SALLE UNION!",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "See you around!": {
+      "override": "A bientôt!",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "The UNION ROOM is online.\nWould you like to connect?": {
+      "override": "La SALLE UNION est en ligne.\nVoulez-vous vous connecter?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "The UNION ROOM server needs an update before trainers from other games can join you.": {
+      "override": "Le serveur de la SALLE UNION doit être mis à jour pour que des DRESSEURS d'autres jeux puissent vous rejoindre.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "The link with %s was lost.": {
+      "override": "La connexion avec %s a été interrompue.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "The request was canceled.": {
+      "override": "La demande a été annulée.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Waiting for %s to answer\nthe battle request...": {
+      "override": "Attente d'une réponse de %s\npour le combat...",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Waiting for %s to answer\nthe trade request...": {
+      "override": "Attente d'une réponse de %s\npour l'échange...",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Welcome to the UNION ROOM!\fTrainers from every POKéMON game meet here to battle and trade.\fWould you like to go in?": {
+      "override": "Bienvenue dans la SALLE UNION!\fLes DRESSEURS de tous les jeux POKéMON s'y retrouvent pour combattre et échanger.\fVoulez-vous entrer?",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "You need at least two POKéMON that aren't EGGS to go in.": {
+      "override": "Il vous faut au moins deux POKéMON autres que des OEUFS pour entrer.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "You turned down the request.": {
+      "override": "Vous avez refusé la demande.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Your games can't link up for this. The request was canceled.": {
+      "override": "Vos jeux ne peuvent pas se connecter pour cela. La demande a été annulée.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Your progress will be saved before you go in.": {
+      "override": "Votre partie sera sauvegardée avant d'entrer.",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/core/game3/link/union_room.lua and src/core/game3/rse/union_rs.lua), worded with the carts' Union Room terms (SALLE UNION) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "EXT. ONLY": {
+      "override": "EXTERNE",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); kept as short as the English for the option value column; requires in-game visual validation."
+    },
+    "GAME ONLY": {
+      "override": "JEU SEUL",
+      "reason": "engine-original",
+      "provenance": "AI-generated translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); kept as short as the English for the option value column; requires in-game visual validation."
     }
   }
 }

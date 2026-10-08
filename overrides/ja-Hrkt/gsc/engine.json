@@ -237,6 +237,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "%s can't do\nthat right now.": {
+      "override": "%sは　いま\nそれが　できません",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
     "%s can't escape now!": {
       "override": "%sは\nもう　にげられない！",
       "reason": "engine-corpus",
@@ -247,6 +252,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Adapted from poke-corpus GoldSilver gs.common_1.TMHMNotCompatibleText's own \"It can't learn @move.\" vocabulary; the real cart's version is a two-part message (species incompatibility, then \"can't learn\") that this port's PackMenu.lua reaches as a single standalone line after its own separate compatibility check, so it reuses only the \"can't learn\" wording of that row rather than the row's full text."
     },
+    "%s cancelled.": {
+      "override": "%sが　とりやめました",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
     "%s cut its own HP and put a CURSE on %s!": {
       "override": "%sは\nじぶんの　たいりょくを　けずって\f%sに\nのろいを　かけた！",
       "reason": "engine-corpus",
@@ -256,6 +266,11 @@
       "override": "%sは　%sを\nおぼえずに　おわった！",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "%s didn't\nanswer.": {
+      "override": "%sから\nへんじが　ありません",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
     },
     "%s dug a hole!": {
       "override": "%sは\nじめんに　もぐった！",
@@ -377,6 +392,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.battle.IgnoredOrdersText)."
     },
+    "%s is\nbusy right now.": {
+      "override": "%sは　いま\nいそがしい　ようです",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
     "%s is\nnot compatible\u000bwith %s.": {
       "override": "%sと %sは\nあいしょうが わるかった！",
       "reason": "engine-contract-gap",
@@ -452,6 +472,11 @@
       "reason": "engine-contract-gap",
       "provenance": "No direct corpus match for this combined inflict-message template; wording follows this catalog's own \"%s's fully paralyzed!\" sibling entry, extended for the \"may be unable to move\" half."
     },
+    "%s is playing\n%s.\fImport %s\nto see them here.": {
+      "override": "%sの　ゲームは\n%s！\f%sを\nよみこむと　ここで　みられます",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
     "%s is protected by SAFEGUARD!": {
       "override": "%sは\nしんぴのベールに　まもられている！",
       "reason": "engine-corpus",
@@ -476,6 +501,11 @@
       "override": "%sは　あたらしく\n%sを　おぼえた！",
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver gs.common_3.LearnedMoveText."
+    },
+    "%s left the\nUNION ROOM.": {
+      "override": "%sは\nユニオンルームを　でていきました",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
     },
     "%s lowered its head!": {
       "override": "%sは\nくびを　ひっこめた！",
@@ -527,6 +557,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "%s said no.": {
+      "override": "%sが　ことわりました",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
     "%s saved\nthe game.": {
       "override": "%sは\nレポートに　しっかり　かきのこした！",
       "reason": "engine-original",
@@ -571,6 +606,16 @@
       "override": "%2$sは　%1$sに\nしめつけられた！",
       "reason": "engine-corpus-reordered",
       "provenance": "Restores GoldSilver's own wording now that Strings() accepts numbered directives (gen1recomp#2346): gs.battle.UsedBindText names the target first, while Battle.lua passes the user then the target."
+    },
+    "%s wants\nto battle. OK?": {
+      "override": "%sが　たいせんを\nもうしこんできた！　うける？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s wants\nto trade. OK?": {
+      "override": "%sが　こうかんを\nもうしこんできた！　うける？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
     },
     "%s wants to\nlearn %s!": {
       "override": "%sは　%sを\nおぼえたがっている！",
@@ -1077,6 +1122,11 @@
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of the port-added grouped Gen 2 Options label; requires in-game visual validation."
     },
+    "AUDIO MODE": {
+      "override": "オーディオモード",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); worded in the cart's kana style; requires in-game visual validation."
+    },
     "AUTO": {
       "override": "オート",
       "reason": "engine-original",
@@ -1172,6 +1222,11 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The PERFORMANCE row's balanced tier."
     },
+    "BATTLE": {
+      "override": "たいせん",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
     "BATTLE BG": {
       "override": "バトルバック",
       "reason": "engine-original",
@@ -1241,6 +1296,11 @@
       "override": "ブルー",
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation; a colour-palette tint name (render/Palette.lua), not the version or trainer name the corpus candidates were; follows this catalog's own wording for the sibling tints; requires in-game visual validation."
+    },
+    "BOTH": {
+      "override": "りょうほう",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); worded in the cart's kana style; requires in-game visual validation."
     },
     "BOULDER": {
       "override": "グレー",
@@ -1477,6 +1537,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "Connecting to the\nUNION ROOM…": {
+      "override": "ユニオンルームに\nせつぞく　しています…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
     "Contains\nitems": {
       "override": "どうぐを　いれておく\nポケットつきリュック",
       "reason": "engine-corpus",
@@ -1486,6 +1551,21 @@
       "override": "セーブできませんでした。",
       "reason": "engine-original",
       "provenance": "Not on the cart (a write-failure case this port added); translated to match the SAVE screen's other messages."
+    },
+    "Couldn't connect.\fNo other trainers\ncan be seen now.": {
+      "override": "せつぞく　できませんでした\fいまは　ほかの　トレーナーが\nみあたりません",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Couldn't enter\nthe UNION ROOM.\fNo other trainers\ncan be seen now.": {
+      "override": "ユニオンルームに\nはいれませんでした\fいまは　ほかの　トレーナーが\nみあたりません",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Couldn't link up\nagain.\fNo other trainers\ncan be seen now.": {
+      "override": "もういちど\nせつぞく　できませんでした\fいまは　ほかの　トレーナーが\nみあたりません",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
     },
     "Current #DEX\ncompletion level:": {
       "override": "ポケモンずかんの\nげんざいの　かんせいど……",
@@ -1677,6 +1757,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.stats_screen.LoadPinkPage.ExpPointStr."
     },
+    "EXT ONLY": {
+      "override": "がいぶのみ",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); worded in the cart's kana style; requires in-game visual validation."
+    },
     "EXTENDED": {
       "override": "かくちょう",
       "reason": "engine-original",
@@ -1807,6 +1892,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus Crystal; printf and multiline contract validated."
     },
+    "GAME ONLY": {
+      "override": "ゲームのみ",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); worded in the cart's kana style; requires in-game visual validation."
+    },
     "GAME SPEED": {
       "override": "ゲームスピード",
       "reason": "engine-original",
@@ -1836,6 +1926,16 @@
       "override": "グリーン",
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation; a colour-palette tint name (render/Palette.lua), not the version or trainer name the corpus candidates were; follows this catalog's own wording for the sibling tints; requires in-game visual validation."
+    },
+    "Getting ready to\nbattle %s…": {
+      "override": "%sと　たいせんの\nじゅんびを　しています…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Getting ready to\ntrade with %s…": {
+      "override": "%sと　こうかんの\nじゅんびを　しています…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
     },
     "Girl": {
       "override": "おんな",
@@ -2051,6 +2151,11 @@
       "override": "ほうっ！　かんしん　じゃな！\nつかまえる　だけでなく\u000bしんかも　させておるな！",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "I'm sorry, the\nUNION ROOM isn't\u000bopen to you yet.": {
+      "override": "もうしわけ　ありません\nユニオンルームは\u000bまだ　ごりよう　いただけません",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
     },
     "ID No": {
       "override": "ID№",
@@ -2331,6 +2436,11 @@
       "override": "\nじゃあ　はっぴょう　するよ",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "Linking up with\n%s…": {
+      "override": "%sと\nつうしん　しています…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
     },
     "Look for #MON\nin grassy areas!": {
       "override": "あちこちの　くさむらに　はいって\nポケモンを　つかまえるのじゃ！",
@@ -2982,6 +3092,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_3.CardFlipPlayWithThreeCoinsText); the cart's own Card Flip text."
     },
+    "Please come\nback anytime.": {
+      "override": "それでは　また\nおこし　ください",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
     "Please remove the\nMAIL.": {
       "override": "メールを　はずしてください",
       "reason": "engine-corpus",
@@ -3527,6 +3642,11 @@
       "reason": "engine-original",
       "provenance": "Already carried by overrides/ja-Hrkt/rby/engine.json for the same shared OptionsMenu/LauncherSettings label; missing here left Gold and Silver's own copy of this Options menu and launcher settings row showing the raw English label."
     },
+    "TRADE": {
+      "override": "こうかん",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
     "TREES": {
       "override": "き",
       "reason": "engine-original",
@@ -3642,6 +3762,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "The UNION ROOM\nserver is too old.\fNo other trainers\ncan be seen now.": {
+      "override": "ユニオンルームの\nサーバーが　ふるすぎます\fいまは　ほかの　トレーナーが\nみあたりません",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
     "The battle could not start.": {
       "override": "バトルを　かいしできませんでした。",
       "reason": "engine-original",
@@ -3671,6 +3796,11 @@
       "override": "……　オーキドの　パソコンとの\nせつぞくを　おわった！",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "The link was lost.\nReconnecting…": {
+      "override": "つうしんが　とぎれました\nさいせつぞく　しています…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
     },
     "The move is DISABLED!": {
       "override": "わざを　ふうじられている！",
@@ -3836,6 +3966,11 @@
       "override": "しんがた　ポケモンずかんを",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.diploma.PlaceDiplomaOnScreen.Certification, one <NEXT>-joined 4-line certificate text split at its own line boundaries (its own \"Congratulations!\" idea is folded into an already-existing separate composed entry for this key, so it is not repeated here)."
+    },
+    "This game is too\nold to link up.\fUpdate it to meet\nother trainers.": {
+      "override": "この　ゲームは　ふるいので\nつうしん　できません\fアップデートすると\nほかの　トレーナーに　あえます",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
     },
     "This tree can be\nCUT!": {
       "override": "このきは　なんだか\nきれそうだ！",
@@ -4032,6 +4167,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight, extracting the leading label word."
     },
+    "Waiting for\n%s…": {
+      "override": "%sの　へんじを\nまっています…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
     "Want to get your\n#DEX rated?": {
       "override": "げんざいの　ポケモンずかんを\nひょうか　して　もらいますか？",
       "reason": "engine-corpus",
@@ -4041,6 +4181,11 @@
       "override": "いらっしゃい！\nゲーム　コーナーだよ！",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "Welcome to the\nUNION ROOM.\fTrainers from\nevery generation\u000bgather here.\fWould you like\nto go in?": {
+      "override": "ユニオンルームに\nようこそ！\fこちらには\nすべての　せだいの\u000bトレーナーが　あつまります\fなかに　おはいりに\nなりますか？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
     },
     "Welcome!\fWe exchange your\ncoins for fabulous\u000bprizes!": {
       "override": "いらっしゃいませ！\fゲームで　ためた　コインは\nこちらで　おすきな\u000bけいひんと　こうかん　します！",
@@ -4206,6 +4351,11 @@
       "override": "やせいの%sは　にげだした！",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "With %s,\nwhat'll you do?": {
+      "override": "%sと\nなにを　しますか？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
     },
     "With DJ FERN!": {
       "override": "\nディージェイは　コージ　なのだー",
@@ -4397,6 +4547,11 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row (this port's own Call-a-POKéMON-home refusal, no cart equivalent); composed keeping this catalog's own established POKéMON spelling."
     },
+    "You'll need at\nleast one POKéMON\u000bto go in.": {
+      "override": "なかに　はいるには\nポケモンが　１ぴき　いじょう\u000bひつようです",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
     "You're already\nSURFING.": {
       "override": "すでに　なみのりを\nつかっています",
       "reason": "engine-corpus",
@@ -4436,6 +4591,21 @@
       "override": "ページも　ふえてきた　ようじゃな！\nその　ちょうしで　がんばってくれい！",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "Your POKéMON are\nall rested.\fRight this way.": {
+      "override": "ポケモンは　みんな\nげんきに　なりました\fどうぞ　こちらへ",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Your game will be\nsaved before you\u000bgo in. OK?": {
+      "override": "なかに　はいるまえに\nレポートを　かきます\u000bよろしいですか？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "Your games can't\nlink up for this.": {
+      "override": "この　ゲーム　どうしでは\nそれは　できません",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
     },
     "Your money's safe\nhere! Get going!": {
       "override": "たいせつに　あずかるわ\nがんばってね！",

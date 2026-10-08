@@ -142,6 +142,8 @@ LOCAL_SOURCES: tuple[tuple[str, str, str], ...] = (
     ("src/ui/game3/tm_case.lua", "table", "ACTIONS"),
     ("src/ui/game3/box_storage_ui.lua", "lines", r"(_activeActions = \{|boxActions = \{|or \{ \"CANCEL\" \})"),
     ("src/ui/game3/option_rows.lua", "lines", r"(cartLabel\(c, \"\w+\", \{|^local FILTERS|uiLayout == \"dynamic\" and)"),
+    # the AUDIO MODE row's values (src/ui/game3/option_rows.lua, AUDIO_MODES)
+    ("src/ui/game3/option_rows.lua", "table", "AUDIO_MODES"),
     ("src/core/VSync.lua", "table", "LABELS"),
     ("src/core/FrameCap.lua", "lines", r"FrameCap\.DISPLAY and \"DISPLAY\""),
     ("src/ui/game3/party_menu.lua", "lines", r"(ACTIONS = \{|actions\[#actions \+ 1\] = \")"),

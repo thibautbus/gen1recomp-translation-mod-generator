@@ -237,6 +237,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "%s can't do\nthat right now.": {
+      "override": "%s는(은) 지금\n그것을 할 수 없다",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "%s can't escape now!": {
       "override": "%s는(은)\n도망칠 수 없다!",
       "reason": "engine-corpus",
@@ -247,6 +252,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Adapted from poke-corpus GoldSilver gs.common_1.TMHMNotCompatibleText's own \"It can't learn @move.\" vocabulary; the real cart's version is a two-part message (species incompatibility, then \"can't learn\") that this port's PackMenu.lua reaches as a single standalone line after its own separate compatibility check, so it reuses only the \"can't learn\" wording of that row rather than the row's full text."
     },
+    "%s cancelled.": {
+      "override": "%s는(은) 취소했다",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "%s cut its own HP and put a CURSE on %s!": {
       "override": "%s는(은)\n자신의 체력을 깎아먹고\f%s에게\n저주를 걸었다!",
       "reason": "engine-corpus",
@@ -256,6 +266,11 @@
       "override": "%s는(은)\n%s를(을)\u000b배우지 않고 끝났다!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "%s didn't\nanswer.": {
+      "override": "%s는(은)\n응답하지 않았다",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "%s dug a hole!": {
       "override": "%s는(은)\n땅속으로 파고들었다!",
@@ -377,6 +392,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.battle.IgnoredOrdersText)."
     },
+    "%s is\nbusy right now.": {
+      "override": "%s는(은)\n지금 바쁜 것 같다",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "%s is\nnot compatible\u000bwith %s.": {
       "override": "%s과(와)\n%s는(은)\u000b상성이 좋지 않았다!",
       "reason": "engine-corpus",
@@ -452,6 +472,11 @@
       "reason": "engine-contract-gap",
       "provenance": "No direct corpus match for this combined inflict-message template; wording follows this catalog's own \"%s's fully paralyzed!\" sibling entry, extended for the \"may be unable to move\" half."
     },
+    "%s is playing\n%s.\fImport %s\nto see them here.": {
+      "override": "%s는(은) 지금\n%s\u000b플레이 중이다\f%s\nROM을 불러오면\u000b여기서 볼 수 있다",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "%s is protected by SAFEGUARD!": {
       "override": "%s는(은)\n신비의 베일에의해 지켜지고 있다!",
       "reason": "engine-corpus",
@@ -476,6 +501,11 @@
       "override": "%s는(은) 새로\n%s를(을) 배웠다",
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver gs.common_3.LearnedMoveText."
+    },
+    "%s left the\nUNION ROOM.": {
+      "override": "%s는(은)\n유니온룸을 떠났다",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "%s lowered its head!": {
       "override": "%s는(은)\n목을 집어넣었다!",
@@ -527,6 +557,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "%s said no.": {
+      "override": "%s는(은) 거절했다",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "%s saved\nthe game.": {
       "override": "%s는(은)\n레포트에 정확히 기록했습니다!",
       "reason": "engine-original",
@@ -571,6 +606,16 @@
       "override": "%2$s는(은) %1$s\n에게 조이기를 당했다!",
       "reason": "engine-corpus-reordered",
       "provenance": "Restores GoldSilver's own wording now that Strings() accepts numbered directives (gen1recomp#2346): gs.battle.UsedBindText names the target first, while Battle.lua passes the user then the target."
+    },
+    "%s wants\nto battle. OK?": {
+      "override": "%s(이)가 대전을\n신청했다! 받겠습니까?",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "%s wants\nto trade. OK?": {
+      "override": "%s(이)가 교환을\n신청했다! 받겠습니까?",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "%s wants to\nlearn %s!": {
       "override": "%s는(은) %s를(을)\n배우고 싶어한다!",
@@ -1077,6 +1122,11 @@
       "reason": "engine-original",
       "provenance": "AI-generated Korean translation of the port-added grouped Gen 2 Options label; requires in-game visual validation."
     },
+    "AUDIO MODE": {
+      "override": "오디오 모드",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); requires in-game visual validation."
+    },
     "AUTO": {
       "override": "자동",
       "reason": "engine-original",
@@ -1172,6 +1222,11 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The PERFORMANCE row's balanced tier."
     },
+    "BATTLE": {
+      "override": "대전",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "BATTLE BG": {
       "override": "배틀 배경",
       "reason": "engine-original",
@@ -1241,6 +1296,11 @@
       "override": "파랑",
       "reason": "engine-original",
       "provenance": "AI-generated Korean translation; a colour-palette tint name (render/Palette.lua), not the version or trainer name the corpus candidates were; follows this catalog's own wording for the sibling tints; requires in-game visual validation."
+    },
+    "BOTH": {
+      "override": "둘 다",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); requires in-game visual validation."
     },
     "BOULDER": {
       "override": "회색",
@@ -1477,6 +1537,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "Connecting to the\nUNION ROOM…": {
+      "override": "유니온룸에\n접속하는 중…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "Contains\nitems": {
       "override": "도구를 집어넣는\n포켓 낚시배낭",
       "reason": "engine-corpus",
@@ -1486,6 +1551,21 @@
       "override": "저장하지 못했습니다.",
       "reason": "engine-original",
       "provenance": "Not on the cart (a write-failure case this port added); translated to match the SAVE screen's other messages."
+    },
+    "Couldn't connect.\fNo other trainers\ncan be seen now.": {
+      "override": "접속할 수 없었다\f지금은 다른\n트레이너가 보이지 않는다",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Couldn't enter\nthe UNION ROOM.\fNo other trainers\ncan be seen now.": {
+      "override": "유니온룸에\n들어갈 수 없었다\f지금은 다른\n트레이너가 보이지 않는다",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Couldn't link up\nagain.\fNo other trainers\ncan be seen now.": {
+      "override": "다시 통신할 수\n없었다\f지금은 다른\n트레이너가 보이지 않는다",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "Current #DEX\ncompletion level:": {
       "override": "포켓몬 도감의\n현재 완성도……",
@@ -1677,6 +1757,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.stats_screen.LoadPinkPage.ExpPointStr."
     },
+    "EXT ONLY": {
+      "override": "외부만",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); requires in-game visual validation."
+    },
     "EXTENDED": {
       "override": "확장",
       "reason": "engine-original",
@@ -1807,6 +1892,11 @@
       "reason": "engine-original",
       "provenance": "No PokeCorpus row: Crystal was never localized to Korean, so this port's own automatic Crystal-corpus matcher (used for every other language on this key) has nothing to draw from. Composed instead, reusing this catalog's own established POKéMON/level/trade vocabulary."
     },
+    "GAME ONLY": {
+      "override": "게임만",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of a string gen1recomp writes itself (the AUDIO MODE option row added in v0.3.63: the game's own sound, an external soundtrack, or both); requires in-game visual validation."
+    },
     "GAME SPEED": {
       "override": "게임 속도",
       "reason": "engine-original",
@@ -1836,6 +1926,16 @@
       "override": "초록",
       "reason": "engine-original",
       "provenance": "AI-generated Korean translation; a colour-palette tint name (render/Palette.lua), not the version or trainer name the corpus candidates were; follows this catalog's own wording for the sibling tints; requires in-game visual validation."
+    },
+    "Getting ready to\nbattle %s…": {
+      "override": "%s와(과)의\n대전을 준비하는 중…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Getting ready to\ntrade with %s…": {
+      "override": "%s와(과)의\n교환을 준비하는 중…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "Girl": {
       "override": "여자",
@@ -2051,6 +2151,11 @@
       "override": "호오! 흥미가 생기는구나!\n잡는 것뿐만 아니라\u000b진화도 시켜놓거라!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "I'm sorry, the\nUNION ROOM isn't\u000bopen to you yet.": {
+      "override": "대단히 죄송합니다\n유니온룸은 아직\u000b이용하실 수 없습니다",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "IN%d": {
       "override": "+%d",
@@ -2326,6 +2431,11 @@
       "override": "\n그럼 발표합니다",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "Linking up with\n%s…": {
+      "override": "%s와(과)\n통신하는 중…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "Look for #MON\nin grassy areas!": {
       "override": "여기저기의 풀숲에 들어가\n포켓몬을 잡는 것이다!",
@@ -2977,6 +3087,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_3.CardFlipPlayWithThreeCoinsText); the cart's own Card Flip text."
     },
+    "Please come\nback anytime.": {
+      "override": "언제든지\n또 오세요",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "Please remove the\nMAIL.": {
       "override": "메일을 받아주세요",
       "reason": "engine-corpus",
@@ -3522,6 +3637,11 @@
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by RBY, but ko has no RBY release to copy from; no compatible PokeCorpus qid; requires in-game visual validation."
     },
+    "TRADE": {
+      "override": "교환",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "TREES": {
       "override": "나무",
       "reason": "engine-original",
@@ -3637,6 +3757,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "The UNION ROOM\nserver is too old.\fNo other trainers\ncan be seen now.": {
+      "override": "유니온룸 서버의\n버전이 너무 낮다\f지금은 다른\n트레이너가 보이지 않는다",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "The battle could not start.": {
       "override": "배틀을 시작할 수\n없었습니다.",
       "reason": "engine-original",
@@ -3666,6 +3791,11 @@
       "override": "…… 오박사의 컴퓨터와의\n접속을 끝냈다!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "The link was lost.\nReconnecting…": {
+      "override": "통신이 끊어졌다\n다시 접속하는 중…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "The move is DISABLED!": {
       "override": "기술을 봉인 당해있다!",
@@ -3831,6 +3961,11 @@
       "override": "신형 포켓몬 도감을",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.diploma.PlaceDiplomaOnScreen.Certification, one <NEXT>-joined 4-line certificate text split at its own line boundaries (its own \"Congratulations!\" idea is folded into an already-existing separate composed entry for this key, so it is not repeated here)."
+    },
+    "This game is too\nold to link up.\fUpdate it to meet\nother trainers.": {
+      "override": "이 게임의 버전이\n낮아서 통신할 수 없다\f업데이트하면 다른\n트레이너와 만날 수 있다",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "This tree can be\nCUT!": {
       "override": "이 나무는 어쩐지\n베어질 것 같다!",
@@ -4027,6 +4162,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight, extracting the leading label word."
     },
+    "Waiting for\n%s…": {
+      "override": "%s의\n응답을 기다리는 중…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "Want to get your\n#DEX rated?": {
       "override": "현재의 포켓몬 도감을\n평가받겠습니까?",
       "reason": "engine-corpus",
@@ -4036,6 +4176,11 @@
       "override": "어서오세요!\n게임코너입니다!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "Welcome to the\nUNION ROOM.\fTrainers from\nevery generation\u000bgather here.\fWould you like\nto go in?": {
+      "override": "유니온룸에\n잘 오셨습니다!\f이곳에는 모든 세대의\n트레이너가\u000b모여 있습니다\f그럼 안으로\n들어가시겠습니까?",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "Welcome!\fWe exchange your\ncoins for fabulous\u000bprizes!": {
       "override": "어서오세요!\f게임을 해서 모은 동전은\n여기서 좋아하는\u000b경품으로 교환할 수 있습니다!",
@@ -4201,6 +4346,11 @@
       "override": "야생의 %s는(은)\n도망쳤다!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "With %s,\nwhat'll you do?": {
+      "override": "%s와(과)\n무엇을 하겠습니까?",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "With DJ FERN!": {
       "override": "\nDJ는 석호인 것이다-",
@@ -4392,6 +4542,11 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row (this port's own Call-a-POKéMON-home refusal, no cart equivalent); composed keeping this catalog's own established POKéMON spelling."
     },
+    "You'll need at\nleast one POKéMON\u000bto go in.": {
+      "override": "들어가시려면\n포켓몬이\u000b한 마리 이상 필요합니다",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
     "You're already\nSURFING.": {
       "override": "이미 파도타기를\n사용하고 있습니다",
       "reason": "engine-corpus",
@@ -4431,6 +4586,21 @@
       "override": "페이지도 늘어난 것 같구나!\n그 상태로 더욱 열심히 하거라!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "Your POKéMON are\nall rested.\fRight this way.": {
+      "override": "포켓몬은 모두\n건강해졌습니다!\f그럼 안으로 드세요",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Your game will be\nsaved before you\u000bgo in. OK?": {
+      "override": "들어가기 전에\n레포트를 쓰겠습니다\u000b괜찮습니까?",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Your games can't\nlink up for this.": {
+      "override": "서로의 게임으로는\n이 통신을 할 수 없다",
+      "reason": "engine-original",
+      "provenance": "AI-generated Korean translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (유니온룸) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "Your money's safe\nhere! Get going!": {
       "override": "소중히 맡아둘께\n힘내!",

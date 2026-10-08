@@ -64,12 +64,13 @@ target_lang = "fr"
 
 [gen1recomp]
 # Immutable engine source used by the interactive builder and Modkit.
-# Pinned at v0.3.61, which carries Ruby and Sapphire
+# Pinned at v0.3.63, which carries Ruby and Sapphire
 # (gen1recomp 67748895, released in v0.3.52), the Emerald screens translation
 # mods reach (gen1recomp#2678, released in v0.3.53), the Ruby and Sapphire
 # screens they reach (gen1recomp#2724, released in v0.3.58), Ruby and
 # Sapphire's starter category and secret base name (gen1recomp#2743, #2745)
-# and the metric Pokedex heights and weights (gen1recomp#2747), used to validate and
+# and the metric Pokedex heights and weights (gen1recomp#2747), all three
+# released in v0.3.61, used to validate and
 # package the RBY, Gold/Silver, Crystal, FireRed/LeafGreen and
 # Ruby/Sapphire/Emerald translation mods.
 # Since v0.3.4, FireRed draws most of its own text from the cart instead of
@@ -80,10 +81,10 @@ target_lang = "fr"
 # (gen1recomp#2398), takes Unicode braille cells (gen1recomp#2400) and draws
 # Japanese with the cart's own fonts (gen1recomp#2406).
 source = "https://github.com/bryanthaboi/gen1recomp.git"
-revision = "7ac15ebbf78b298344e15db72406ff37e94099f6"
-archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/7ac15ebbf78b298344e15db72406ff37e94099f6"
-archive_sha256 = "d785c8ca1b4c58ed7a535cd213ee223003f332cd20539a1fb1e1c43c5979a179"
-archive_tree_sha256 = "e33c5dbe80ab07837a60db4fbcc24acbd792c6091d7538b8ab898726441a787d"
+revision = "7ab2f86586d73b9cf73d07915086ca89071ed887"
+archive_url = "https://codeload.github.com/bryanthaboi/gen1recomp/zip/7ab2f86586d73b9cf73d07915086ca89071ed887"
+archive_sha256 = "fd61319212fb842192471c3ebda5fb53bcaf4d1c32012f5bc09aa644c5e9c22f"
+archive_tree_sha256 = "a8cde077b9dc19efa6ea6a8b2acce1cbf85b068d5e2b483ff56a56d01189b55c"
 
 # pret's FireRed/LeafGreen decompilation data the generation-3 release joins
 # through (never code, never game text): the symbol tables name every ROM
