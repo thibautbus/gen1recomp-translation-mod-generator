@@ -10,7 +10,8 @@ from pipeline.shared.project import project_config
 from pipeline.shared.roms import (
     CANONICAL, CRYSTAL_SHA1, GS_REQUIRED_TSV, GOLD_SHA1, SILVER_SHA1, import_crystal_rom,
     GS_PINNED_REQUIRED_TSV, import_gs_rom, import_rom, verify_crystal_rom,
-    import_frlg_rom, verify_firered_rom, verify_gs_rom, verify_leafgreen_rom, verify_rb_rom, verify_rom,
+    import_frlg_rom, verify_firered_rom, verify_frlg_rom, verify_gs_rom, verify_leafgreen_rom, verify_rb_rom,
+    verify_rom,
 )
 from pipeline.shared.engine_profile import UPSTREAM_PROFILE
 
@@ -62,6 +63,19 @@ class RomConfigTests(unittest.TestCase):
             with patch("pipeline.shared.roms.CANONICAL", {"firered": "0" * 40}):
                 with self.assertRaisesRegex(ValueError, r"missing \[rom.leafgreen\]"):
                     verify_leafgreen_rom(rom)
+
+    def test_either_firered_or_leafgreen_names_its_edition(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rom = Path(tmp) / "cart.gba"
+            rom.write_bytes(b"test LeafGreen ROM")
+            digest = hashlib.sha1(b"test LeafGreen ROM").hexdigest()
+            with patch("pipeline.shared.roms.CANONICAL", {"firered": "0" * 40, "leafgreen": digest}):
+                self.assertEqual(verify_frlg_rom(rom)["version"], "leafgreen")
+            with patch("pipeline.shared.roms.CANONICAL", {"firered": digest, "leafgreen": "0" * 40}):
+                self.assertEqual(verify_frlg_rom(rom)["version"], "firered")
+            with patch("pipeline.shared.roms.CANONICAL", {"firered": "0" * 40, "leafgreen": "1" * 40}):
+                with self.assertRaisesRegex(ValueError, "FireRed/LeafGreen ROM SHA-1 mismatch"):
+                    verify_frlg_rom(rom)
 
     def test_generation_3_import_refuses_an_unknown_edition(self):
         with tempfile.TemporaryDirectory() as tmp:

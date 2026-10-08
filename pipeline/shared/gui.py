@@ -39,7 +39,7 @@ GENERATION_OF_SELECTION = {4: 3}
 
 ROMS_BY_GENERATION = {
     1: ("rb", "yellow"), 2: ("gs", "crystal"),
-    3: ("firered", "leafgreen"), 4: ("rs", "emerald"),
+    3: ("frlg",), 4: ("rs", "emerald"),
 }
 
 # Where each release leaves its coverage report (pipeline/*_mod.py).
@@ -160,8 +160,8 @@ def validate_inputs(
     for game in ROMS_BY_GENERATION[generation]:
         raw = rom_paths.get(game)
         if not raw or not str(raw).strip():
-            display = {"gs": "Gold or Silver", "rb": "Red or Blue", "firered": "FireRed",
-                       "leafgreen": "LeafGreen", "rs": "Ruby or Sapphire",
+            display = {"gs": "Gold or Silver", "rb": "Red or Blue", "frlg": "FireRed or LeafGreen",
+                       "rs": "Ruby or Sapphire",
                        "emerald": "Emerald"}.get(game, game.capitalize())
             raise builder.BuildError(f"A Pokemon {display} ROM path is required.")
         path = Path(raw).expanduser()
@@ -173,10 +173,8 @@ def validate_inputs(
             builder.verify_gs_rom(path)
         elif game == "crystal":
             builder.verify_crystal_rom(path)
-        elif game == "firered":
-            builder.verify_firered_rom(path)
-        elif game == "leafgreen":
-            builder.verify_leafgreen_rom(path)
+        elif game == "frlg":
+            builder.verify_frlg_rom(path)
         elif game == "rs":
             builder.verify_rs_rom(path)
         elif game == "emerald":
@@ -302,7 +300,7 @@ class TranslationBuilderApp:
         tk, ttk = self.tk, self.ttk
         self.generation_var = tk.StringVar(value=generation_label(1))
         self.rom_vars = {game: tk.StringVar() for game in
-                         ("rb", "yellow", "gs", "crystal", "firered", "leafgreen", "rs", "emerald")}
+                         ("rb", "yellow", "gs", "crystal", "frlg", "rs", "emerald")}
         self.language_var = tk.StringVar(value=language_label("fr"))
         self.font_profile_var = tk.StringVar(value=font_profile_label("fusion"))
         self.output_var = tk.StringVar()
@@ -326,16 +324,14 @@ class TranslationBuilderApp:
         # is a flat form, not a wizard). Crystal takes row 4 (formerly
         # Blue's own field, free since Red and Blue share byte-identical
         # game text and only need one field between them), and so does
-        # LeafGreen, FireRed's companion the way Crystal is Gold's, and
-        # Emerald, Ruby and Sapphire's.
+        # Emerald, Ruby and Sapphire's companion the way Crystal is Gold's.
         rom_fields = (
             ("rb", 2, "Required to extract shared Pokémon Red/Blue game text and data. Either ROM works: Red and Blue share identical text.", "Pokemon Red or Blue ROM (US)"),
             ("gs", 2, "Required to extract Pokémon Gold and Silver game text and data. Either ROM works: Gold and Silver share identical text.", "Pokemon Gold or Silver ROM (US)"),
-            ("firered", 2, "Required to extract Pokémon FireRed game text and data.", "Pokemon FireRed ROM (US)"),
+            ("frlg", 2, "Required to extract Pokémon FireRed and LeafGreen game text and data. Either ROM works: FireRed and LeafGreen share one translation.", "Pokemon FireRed or LeafGreen ROM (US)"),
             ("rs", 2, "Required to extract Pokémon Ruby and Sapphire game text and data. Either ROM works: Ruby and Sapphire share one translation.", "Pokemon Ruby or Sapphire ROM (US)"),
             ("emerald", 4, "Required to extract Pokémon Emerald game text and data.", "Pokemon Emerald ROM (US)"),
             ("crystal", 4, "Required to extract Pokémon Crystal-specific game text and data.", "Pokemon Crystal ROM (US)"),
-            ("leafgreen", 4, "Required to extract Pokémon LeafGreen game text and data.", "Pokemon LeafGreen ROM (US)"),
             ("yellow", 6, "Required to extract Pokémon Yellow-specific game text and data.", "Pokemon Yellow ROM (US)"),
         )
         self.rom_widgets: dict[str, tuple] = {}
@@ -411,9 +407,10 @@ class TranslationBuilderApp:
         elif generation == 3:
             self.games_hint_var.set(
                 "Which games do you want to translate?\n"
-                "FireRed and LeafGreen share one translation: select the two "
-                "ROMs below. Both print every string with the cart's own "
-                "font, so no font profile applies."
+                "FireRed and LeafGreen share one translation: select the ROM "
+                "below (FireRed or LeafGreen, whichever you own). They print "
+                "every string with the cart's own font, so no font profile "
+                "applies."
             )
         elif generation == 4:
             self.games_hint_var.set(

@@ -21,8 +21,8 @@ from .project import (
 )
 from .dependencies import DependencyError, fetch_archive, fetch_files
 from .roms import (
-    verify_crystal_rom, verify_emerald_rom, verify_firered_rom, verify_gs_rom,
-    verify_leafgreen_rom, verify_rb_rom, verify_rom, verify_rs_rom,
+    verify_crystal_rom, verify_emerald_rom, verify_frlg_rom, verify_gs_rom,
+    verify_rb_rom, verify_rom, verify_rs_rom,
 )
 from .subprocess_run import run_streamed
 from .rom_paths import configured_path, load_rom_paths
@@ -504,29 +504,22 @@ def main(
                 language_name=language_name, luajit=luajit,
             )
         elif generation == 3:
-            firered_prompt = (
-                "Please specify the location of your Pokemon FireRed ROM "
+            # Either FireRed or LeafGreen: the other edition's text is keyed
+            # through pret's symbols (pipeline/frlg/editions.py).
+            frlg_prompt = (
+                "Please specify the location of your Pokemon FireRed or LeafGreen ROM "
                 "(full path, e.g. C:\\Games\\PokemonFireRed.gba): "
             )
-            firered_rom = _prompt_configured_path(
-                firered_prompt, configured_path(rom_paths, "rom", "firered"), input_fn
-            )
-            # LeafGreen lays its script text out at its own addresses, so its
-            # dialogue can only be keyed from its own ROM: it is required,
-            # like Crystal for Gold and Silver.
-            leafgreen_prompt = (
-                "Please specify the location of your Pokemon LeafGreen ROM "
-                "(full path, e.g. C:\\Games\\PokemonLeafGreen.gba): "
-            )
-            leafgreen_rom = _prompt_configured_path(
-                leafgreen_prompt, configured_path(rom_paths, "rom", "leafgreen"), input_fn
+            frlg_rom = _prompt_configured_path(
+                frlg_prompt,
+                configured_path(rom_paths, "rom", "firered") or configured_path(rom_paths, "rom", "leafgreen"),
+                input_fn,
             )
             language, language_name = _prompt_language(input_fn, generation=generation)
             if font_profile:
                 print("Note: FireRed and LeafGreen print every string with the cart's own font; "
                       "--font-profile is ignored.")
-            verify_firered_rom(firered_rom)
-            verify_leafgreen_rom(leafgreen_rom)
+            verify_frlg_rom(frlg_rom)
             if not _confirm(input_fn):
                 if is_frozen():
                     print("\nBuild cancelled. No dependency downloads were performed.")
@@ -535,8 +528,7 @@ def main(
                 return 0
             from .orchestration import build_request
             output = build_request(
-                BuildRequest({"firered": firered_rom, "leafgreen": leafgreen_rom},
-                             release_profile("frlg"), language, None),
+                BuildRequest({"frlg": frlg_rom}, release_profile("frlg"), language, None),
                 language_name=language_name, luajit=luajit,
             )
         elif generation == 1:
