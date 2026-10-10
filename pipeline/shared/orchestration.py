@@ -7,6 +7,7 @@ contracts, while dependency setup and profile selection stay declarative.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from pathlib import Path
 from typing import Callable
 
@@ -63,7 +64,7 @@ def package_release(
     log_fn: Callable[[str], None] | None = None,
 ) -> Path:
     """Pack a generated mod and publish it through one deterministic phase."""
-    from .builder import _modkit_command, _run, publish_archive
+    from .builder import MODKIT_IDENTITY, _modkit_command, _run, publish_archive
 
     mod_dir = Path(mod_dir).resolve()
     gen1recomp = Path(gen1recomp).resolve()
@@ -77,6 +78,8 @@ def package_release(
     command = _modkit_command(modkit, "--repo", str(gen1recomp), "pack", str(mod_dir), "-o", str(candidate))
     if base is not None:
         command.extend(("--base", base))
+    env = dict(os.environ if env is None else env)
+    env["POKEPORT_IDENTITY"] = MODKIT_IDENTITY
     _run(command, cwd=gen1recomp, env=env, log_fn=log_fn)
     return publish_archive(candidate, destination / archive_name)
 
