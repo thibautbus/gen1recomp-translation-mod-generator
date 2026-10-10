@@ -1,6 +1,9 @@
+import importlib.util
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from pipeline.shared.align import align
 from pipeline.shared.corpus import read_parallel_yellow
@@ -416,6 +419,29 @@ class UniversalBuildTests(unittest.TestCase):
             (corpus / "fr_msg.txt").write_text("Salut\n", encoding="utf-8")
             records = parse_yellow(root, "fr")
             self.assertEqual([r.qid for r in records if r.language == "fr"], ["y.text.A"])
+
+    def test_modkit_env_hides_gen3_caches_the_game_imported(self):
+        # A FireRed cache the game imported into the LOVE save directory used
+        # to land 1629 ROM labels in the scaffold's strings.lua, which then
+        # failed the catalog/source universe check.
+        from pipeline.rby.build import _modkit_env
+        checkout = Path(".cache/dependencies/gen1recomp").resolve()
+        script = checkout / "tools" / "modkit.py"
+        if not script.is_file():
+            self.skipTest("pinned Gen1Recomp checkout is unavailable")
+        spec = importlib.util.spec_from_file_location("pinned_modkit", script)
+        modkit = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(modkit)
+        with tempfile.TemporaryDirectory() as tmp:
+            user = {"APPDATA": tmp, "HOME": tmp, "XDG_DATA_HOME": tmp}
+            with patch.dict(os.environ, user):
+                os.environ.pop("POKEPORT_IDENTITY", None)
+                gba = Path(modkit._love_user_data_root()) / "firered" / "data" / "generated" / "gba"
+                (gba / "scripts").mkdir(parents=True)
+                (gba / "scripts" / "text.lua").write_text("return {}\n", encoding="utf-8")
+                self.assertEqual(len(modkit.rom_text_caches(str(checkout))), 1)
+                with patch.dict(os.environ, _modkit_env(checkout, "luajit")):
+                    self.assertEqual(modkit.rom_text_caches(str(checkout)), [])
 
 
 class EscapeDecodingTests(unittest.TestCase):

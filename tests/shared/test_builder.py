@@ -88,6 +88,39 @@ class BuilderTests(unittest.TestCase):
                 builder._run(["tool"])
         self.assertEqual(str(caught.exception), "Command failed with exit code 1: tool")
 
+    def test_package_release_runs_modkit_pack_outside_the_game_identity(self):
+        # modkit pack's MK306 check reads the Gen 3 caches the game imported
+        # under its LOVE identity, and refused Gold, FireRed and RSE mods
+        # when one was there.
+        from pipeline.shared.orchestration import package_release
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for env in (None, {"POKEPORT_IDENTITY": "pokemon-love2d"}):
+                with patch("pipeline.shared.builder._run") as run, \
+                        patch("pipeline.shared.builder.publish_archive"):
+                    package_release(root / "mod", root, root / "modkit.py", root / "build", root / "out",
+                                    "mod.zip", env=env)
+                self.assertEqual(run.call_args.kwargs["env"]["POKEPORT_IDENTITY"], builder.MODKIT_IDENTITY)
+
+    def test_stale_rom_text_links_are_removed_from_the_engine_checkout(self):
+        # A Gen 3 build killed while its extract was linked left FireRed's
+        # labels in every later Red/Blue/Yellow scaffold.
+        from pipeline.shared.links import link_directory, remove_rom_text_links
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            checkout, extract = root / "gen1recomp", root / "extract"
+            checkout.mkdir()
+            (extract / "data").mkdir(parents=True)
+            link_directory(checkout / "firered", extract.resolve())
+            link_directory(checkout / "emerald", extract.resolve())
+            (checkout / "ruby").mkdir()
+            removed = remove_rom_text_links(checkout)
+            self.assertEqual(sorted(path.name for path in removed), ["emerald", "firered"])
+            self.assertFalse(os.path.lexists(checkout / "firered"))
+            self.assertFalse(os.path.lexists(checkout / "emerald"))
+            self.assertTrue((checkout / "ruby").is_dir())
+            self.assertTrue((extract / "data").is_dir())
+
     def test_font_dependencies_use_private_cache_and_checked_in_pins(self):
         config = project.project_config()
         with tempfile.TemporaryDirectory() as directory, patch(
@@ -726,12 +759,16 @@ class BuilderTests(unittest.TestCase):
 
         def fake_ensure(config, destination, **kwargs):
             calls.append(destination.name)
+            if destination.name == "gen1recomp":
+                destination.mkdir(parents=True)
+                link_directory(destination / "firered", Path(directory).resolve())
             return destination
 
         def fake_verify(*args):
             calls.append("verify-engine")
             return args[0] / "src", args[0], "revision"
 
+        from pipeline.shared.links import link_directory
         with tempfile.TemporaryDirectory() as directory, \
                 patch.object(builder, "_ensure_dependency", side_effect=fake_ensure), \
                 patch.object(builder, "_font_source", side_effect=lambda *args, **kwargs: calls.append("font") or Path(directory) / "font"), \
@@ -740,6 +777,7 @@ class BuilderTests(unittest.TestCase):
                 Path(directory), project.project_config(),
                 corpus_collection="RedBlue", font_profile="fusion", language="fr",
             )
+            self.assertFalse(os.path.lexists(Path(directory) / "dependencies" / "gen1recomp" / "firered"))
         self.assertEqual(calls[:3], ["gen1recomp", "verify-engine", "poke-corpus"])
         self.assertEqual(calls[3], "font")
 
@@ -756,6 +794,8 @@ class BuilderTests(unittest.TestCase):
             (engine / "src").mkdir(parents=True)
             (engine / "tools").mkdir()
             (engine / "tools" / "modkit.py").write_text("", encoding="utf-8")
+            from pipeline.shared.links import is_link, link_directory
+            link_directory(engine / "firered", root.resolve())
             with patch.object(builder, "_ensure_dependency", side_effect=fake_ensure), \
                     patch.object(builder, "_font_source", return_value=root / "font"), \
                     patch("pipeline.shared.engine_manifest.verified_source") as verify:
@@ -767,6 +807,7 @@ class BuilderTests(unittest.TestCase):
             self.assertEqual(prepared, engine.resolve())
             self.assertEqual(calls, ["poke-corpus"])
             verify.assert_not_called()
+            self.assertTrue(is_link(engine / "firered"))
 
     def test_rby_upstream_profile_requires_an_explicit_checkout(self):
         with self.assertRaisesRegex(builder.BuildError, "upstream-local.*engine-source.*checkout"):

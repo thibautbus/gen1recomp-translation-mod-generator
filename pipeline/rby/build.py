@@ -27,7 +27,7 @@ from ..shared.specs import release_profile
 from ..shared.engine_profile import (
     PINNED_PROFILE, UPSTREAM_PROFILE, normalize_engine_profile, validate_engine_profile_and_source,
 )
-from ..shared.builder import BuildError, _modkit_command, _run
+from ..shared.builder import MODKIT_IDENTITY, BuildError, _modkit_command, _run
 
 
 def load_yellow_coverage_exceptions(path: str | Path) -> dict[str, frozenset[str]]:
@@ -496,6 +496,32 @@ def print_coverage(
             log_fn(line)
 
 
+def _modkit_env(gen1recomp: Path, luajit: str) -> dict[str, str]:
+    """Environment for the Modkit runs of a Red/Blue/Yellow build."""
+    env = dict(os.environ)
+    env["MODKIT_LUAJIT"] = luajit
+    env["LUA"] = luajit
+    # Modkit's dump_dataset() decodes the LuaJIT dump with subprocess
+    # text=True and no explicit encoding, which falls back to the OS locale
+    # codepage (e.g. cp1252 on Windows). Some dumped text (observed in the
+    # Yellow-layer dataset, across target languages) isn't representable in
+    # that codepage and crashes the internal reader thread with a
+    # UnicodeDecodeError, leaving proc.stdout as None. Force Python-wide
+    # UTF-8 mode (PEP 540) for this worker so that fallback decodes as UTF-8
+    # instead, matching the UTF-8 the Lua source files are read/written as.
+    env["PYTHONUTF8"] = "1"
+    # v0.1.69+'s modkit pack/validate drives the real loader headlessly.
+    # Data.loadModule supports POKEPORT_DATA_DIR, which loadfiles the
+    # imported dataset directly and skips the love.filesystem-dependent
+    # CacheFs path (a bare loader run would crash on CacheFs.read).
+    env["POKEPORT_DATA_DIR"] = str(gen1recomp / "data" / "generated")
+    if is_frozen():
+        lua_dir = str(Path(luajit).resolve().parent)
+        env["PATH"] = lua_dir + os.pathsep + env.get("PATH", "")
+    env["POKEPORT_IDENTITY"] = MODKIT_IDENTITY
+    return env
+
+
 def build(
     rb_rom: Path,
     language: str,
@@ -573,26 +599,7 @@ def build(
     build_root = workspace / "interactive" / language
     scaffold = build_root / "translation_source"
     modkit = gen1recomp / "tools" / "modkit.py"
-    env = dict(os.environ)
-    env["MODKIT_LUAJIT"] = luajit
-    env["LUA"] = luajit
-    # Modkit's dump_dataset() decodes the LuaJIT dump with subprocess
-    # text=True and no explicit encoding, which falls back to the OS locale
-    # codepage (e.g. cp1252 on Windows). Some dumped text (observed in the
-    # Yellow-layer dataset, across target languages) isn't representable in
-    # that codepage and crashes the internal reader thread with a
-    # UnicodeDecodeError, leaving proc.stdout as None. Force Python-wide
-    # UTF-8 mode (PEP 540) for this worker so that fallback decodes as UTF-8
-    # instead, matching the UTF-8 the Lua source files are read/written as.
-    env["PYTHONUTF8"] = "1"
-    # v0.1.69+'s modkit pack/validate drives the real loader headlessly.
-    # Data.loadModule supports POKEPORT_DATA_DIR, which loadfiles the
-    # imported dataset directly and skips the love.filesystem-dependent
-    # CacheFs path (a bare loader run would crash on CacheFs.read).
-    env["POKEPORT_DATA_DIR"] = str(gen1recomp / "data" / "generated")
-    if is_frozen():
-        lua_dir = str(Path(luajit).resolve().parent)
-        env["PATH"] = lua_dir + os.pathsep + env.get("PATH", "")
+    env = _modkit_env(gen1recomp, luajit)
     # Modkit refuses to refresh a scaffold it finds in place unless an
     # imported FireRed cache is there to re-key the cart's text with (v0.3.0);
     # this scaffold is a disposable key list, so it is written from scratch.
