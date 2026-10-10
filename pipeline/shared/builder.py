@@ -20,6 +20,7 @@ from .project import (
     luajit_install_hint as _luajit_install_hint,
 )
 from .dependencies import DependencyError, fetch_archive, fetch_files
+from .links import remove_rom_text_links
 from .roms import (
     verify_crystal_rom, verify_emerald_rom, verify_frlg_rom, verify_gs_rom,
     verify_rb_rom, verify_rom, verify_rs_rom,
@@ -109,6 +110,20 @@ def _run(
     # panel, so a bare exit code left a bug report with nothing else to go
     # on -- run_streamed includes the command's own tail in the message too.
     run_streamed(command, cwd=cwd, env=env, log_fn=log_fn, error_cls=BuildError)
+
+
+# Modkit's rom_text_caches() also reads the FireRed, LeafGreen, Ruby,
+# Sapphire and Emerald text caches imported into the unfused LOVE save
+# directory of POKEPORT_IDENTITY (%APPDATA%\LOVE\pokemon-love2d on Windows,
+# where a game run through love.exe imports; the released exe saves to
+# %APPDATA%\pokemon-love2d instead). With a FireRed or LeafGreen cache there,
+# the Red/Blue/Yellow scaffold lists every label of that cart in
+# lang/strings.lua (the catalog/source universe check then fails,
+# missing=1629), and `modkit pack` compares every mod's strings catalog with
+# that cart's English (MK306 refuses Gold, FireRed and Ruby/Sapphire/Emerald
+# keys another cart also prints). Every Modkit run uses an identity no game
+# writes to, so that directory is never read.
+MODKIT_IDENTITY = "gen1recomp-translation-mod-generator"
 
 
 def _modkit_command(modkit: Path, *args: str) -> list[str]:
@@ -256,6 +271,7 @@ def prepare_dependencies(
             verified_source(gen1recomp, load_manifest())
         except (OSError, ValueError) as error:
             raise BuildError(f"Unable to verify prepared Gen1Recomp dependency: {error}") from error
+        remove_rom_text_links(gen1recomp)
     # A profile declares its collection; callers cannot accidentally fetch a
     # second generation's corpus just because the other flow did so first.
     collections = (corpus_collection,) if isinstance(corpus_collection, str) else corpus_collection

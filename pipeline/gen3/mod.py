@@ -18,6 +18,7 @@ from typing import Callable, Mapping
 
 from ..shared.builder import BuildError
 from ..shared.generate import lua_string
+from ..shared.links import is_link, link_directory, unlink_directory
 from ..shared.project import is_frozen, which_luajit
 from .join import COVERED, SAME_AS_ENGLISH, SHIPPED
 from .text import ir_plain, text_key_address
@@ -230,43 +231,6 @@ def unresolved_entries(joined: dict) -> list[dict]:
 
 # ---------------------------------------------------------------- build
 
-def _is_link(path: Path) -> bool:
-    """A symlink, or the directory junction a Windows build links with."""
-    if path.is_symlink():
-        return True
-    if hasattr(os.path, "isjunction"):  # Python 3.12
-        return os.path.isjunction(path)
-    try:
-        tag = getattr(os.lstat(path), "st_reparse_tag", 0)
-    except OSError:
-        return False
-    return tag == 0xA0000003  # IO_REPARSE_TAG_MOUNT_POINT
-
-
-def _link_directory(link: Path, target: Path) -> None:
-    """Point ``link`` at the directory ``target``.
-
-    Windows only lets an elevated prompt or Developer Mode make a symlink, so
-    a build there makes a directory junction instead, which needs neither and
-    which Modkit reads through the same way.
-    """
-    if os.name == "nt":
-        import _winapi
-        _winapi.CreateJunction(str(target), str(link))
-    else:
-        link.symlink_to(target, target_is_directory=True)
-
-
-def _unlink_directory(link: Path) -> None:
-    """Remove a link made by _link_directory, never what it points at."""
-    try:
-        link.unlink()
-    except OSError:
-        if not _is_link(link):
-            raise
-        os.rmdir(link)  # a junction, where unlink refuses a directory
-
-
 @contextmanager
 def rom_text_cache(gen1recomp: Path, extracted: Path, edition: str = "firered"):
     """Let Modkit read the imported cart text while the mod is built.
@@ -284,20 +248,20 @@ def rom_text_cache(gen1recomp: Path, extracted: Path, edition: str = "firered"):
     target = (extracted / "cache").resolve()
     if not (target / "data" / "generated" / "gba" / "scripts" / "text.lua").is_file():
         raise BuildError(f"the {edition} extract has no script text cache: {target}")
-    if _is_link(link):
-        _unlink_directory(link)
+    if is_link(link):
+        unlink_directory(link)
     elif link.is_file():
         link.unlink()
     elif link.is_dir():
         # A real import lives there (Modkit documents <repo>/firered as the
         # place it reads the cart's text from): the build never removes one.
         raise BuildError(f"{link} is a directory, not this build's link to its extract")
-    _link_directory(link, target)
+    link_directory(link, target)
     try:
         yield link
     finally:
-        if _is_link(link):
-            _unlink_directory(link)
+        if is_link(link):
+            unlink_directory(link)
 
 
 def package_gen3_mod(

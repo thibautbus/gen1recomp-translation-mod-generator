@@ -707,6 +707,7 @@ class FrlgModTests(unittest.TestCase):
         # A symlink, or on Windows a directory junction, which needs no
         # privilege: either way Modkit finds the cart's text through it.
         from pipeline.gen3 import mod as gen3_mod
+        from pipeline.shared.links import is_link, link_directory
         with tempfile.TemporaryDirectory() as directory:
             engine, extracted = Path(directory) / "engine", Path(directory) / "extracted"
             text = extracted / "cache" / "data" / "generated" / "gba" / "scripts" / "text.lua"
@@ -715,12 +716,12 @@ class FrlgModTests(unittest.TestCase):
             engine.mkdir()
             link = engine / "firered"
             with gen3_mod.rom_text_cache(engine, extracted) as made:
-                self.assertTrue(gen3_mod._is_link(made))
+                self.assertTrue(is_link(made))
                 self.assertTrue((made / "data" / "generated" / "gba" / "scripts" / "text.lua").is_file())
             self.assertFalse(os.path.lexists(link))
             self.assertTrue(text.is_file())
             # a crashed build's link is replaced, not followed into
-            gen3_mod._link_directory(link, (extracted / "cache").resolve())
+            link_directory(link, (extracted / "cache").resolve())
             with gen3_mod.rom_text_cache(engine, extracted):
                 pass
             self.assertFalse(os.path.lexists(link))
