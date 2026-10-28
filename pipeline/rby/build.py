@@ -740,6 +740,7 @@ def build(
                 if errors:
                     raise BuildError(f"Invalid Yellow engine override {source!r}: {errors[0]}")
                 yellow_engine_values[source] = value
+        if yellow_engine_values:
             yellow_catalogs.setdefault("strings", {}).update(yellow_engine_values)
         log(f"  Yellow layer: {yellow_stats['layer_entries']} entries "
             f"({yellow_stats['versioned_required']} versioned, "

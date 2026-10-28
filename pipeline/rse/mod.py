@@ -49,7 +49,7 @@ from ..shared.project import project_config, project_version, resource_root
 from ..shared.roms import (
     RS_EDITIONS, import_rse_rom, rs_revision_for_sha1, verify_emerald_rom, verify_rs_rom,
 )
-from ..shared.specs import game_spec, languages_for_collection, release_profile
+from ..shared.specs import DEVELOPER_LANGUAGE, game_spec, languages_for_collection, release_profile
 from .emerald import join_emerald, prepare_emerald_pret_inputs
 from .join import join_rs, layer_name, prepare_rs_pret_inputs
 
@@ -316,7 +316,7 @@ def write_gate_expectations(path: Path, joined: dict, game: str = "emerald") -> 
     for key in sorted(dialogue):
         value = _plain_text(dialogue[key]) if key.startswith("STRINGID_") else None
         if value:
-            expectations["battle"] = {"key": key, "value": value}
+            expectations["battle"] = {"key": key, "value": value, "ir": dialogue[key]}
             break
     natures = []
     for index in range(25):
@@ -360,7 +360,9 @@ def write_gate_expectations(path: Path, joined: dict, game: str = "emerald") -> 
             expectations["easy_chat"] = {"group": group, "word": word, "value": value}
             break
     # The Emerald screens that print the cart's English through Strings()
-    # (gen1recomp#2678), which the gate checks.
+    # (gen1recomp#2678), which the gate checks. English development builds
+    # ship identity rows too, so these samples must resolve through the
+    # generated catalog just like translated values.
     if game == "emerald":
         by_english = catalogs.get("strings_by_english", {})
         english = {**strings, **by_english}
@@ -370,9 +372,16 @@ def write_gate_expectations(path: Path, joined: dict, game: str = "emerald") -> 
                             ("src/core/game3/summary_data.lua (SummaryData.contest", "contest"),
                             ("src/ui/game3/rse/mapsec.lua", "map_section")):
             for key, row in sorted(joined.get("scope", {}).items()):
-                if (str(row.get("callsite", "")).startswith(site) and "{" not in key and key == key.strip()
-                        and key in english and english[key] != key):
-                    hooks[label] = {"source": key, "value": english[key]}
+                if (str(row.get("callsite", "")).startswith(site) and "{" not in key and key == key.strip()):
+                    if key in english:
+                        hooks[label] = {
+                            "source": key, "value": english[key],
+                            "catalog": "strings_by_english" if key in by_english else "strings",
+                        }
+                    elif joined.get("language") == "en":
+                        raise ValueError(f"English development catalog dropped {label} hook source {key!r}")
+                    else:
+                        continue
                     break
         if hooks:
             expectations["hooks"] = hooks
@@ -389,7 +398,9 @@ def write_gate_expectations(path: Path, joined: dict, game: str = "emerald") -> 
                  "trainer_names", "trainer_class_names"):
         sources[name] = bool(catalogs.get(name))
     if game != "emerald":
-        sources["layout"] = True
+        if joined.get("language") == "en" and not expectations.get("layout"):
+            raise ValueError("English development catalog dropped English layout guard text")
+        sources["layout"] = joined.get("language") != "en" or bool(expectations.get("layout"))
     expectations["required"] = sorted(name for name, present in sources.items() if present)
     path.write_text(json.dumps(expectations, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return expectations
@@ -469,6 +480,7 @@ def build_rse(
     profile = release_profile("rse")
     supported = set.intersection(*({code for code, _name in languages_for_collection(game_spec(game).corpus_collection)}
                                    for game in profile.games))
+    supported.add(DEVELOPER_LANGUAGE[0])
     if language not in supported:
         raise BuildError(f"Ruby, Sapphire and Emerald have no {language} release.")
     status("Validating ROMs")

@@ -34,6 +34,18 @@ from pipeline.shared.worksheet import dump, load
 
 
 class PipelineTests(unittest.TestCase):
+    def test_english_source_can_be_aligned_as_opt_in_english_target(self):
+        records = [
+            CorpusRecord("a", "en", "Hello"),
+            # Parallel corpus readers preserve both source and target records
+            # even when developer mode selects English as the target.
+            CorpusRecord("a", "en", "Hello"),
+        ]
+        rows = align(records, target_lang="en")
+        self.assertEqual(len(rows), 2)
+        self.assertTrue(all(row.method == "same-language" for row in rows))
+        self.assertTrue(all(row.translation == "Hello" for row in rows))
+
     def test_cli_gen2_profile_defaults_to_pinned_and_rejects_versioned_names(self):
         with patch("pipeline.shared.cli.import_gs_rom") as import_gs:
             self.assertEqual(cli_main([
@@ -807,6 +819,20 @@ class YellowCorpusTests(unittest.TestCase):
             self.assertEqual(scopes, {("rb.text.Shard^B", "blue"), ("rb.text.Shared", "both")})
             # The redblue wrapper delegates to the generic reader.
             self.assertEqual(read_parallel_game(corpus, "fr", "redblue"), records)
+
+    def test_parallel_english_target_deduplicates_source_and_aligns(self):
+        from pipeline.shared.corpus import read_parallel_redblue
+        with tempfile.TemporaryDirectory() as tmp:
+            corpus = Path(tmp) / "RedBlue"
+            corpus.mkdir(parents=True)
+            (corpus / "qid_msg.txt").write_text("rb.text.StartText\n", encoding="utf-8")
+            (corpus / "en_msg.txt").write_text("Hello\n", encoding="utf-8")
+            records = read_parallel_redblue(corpus, "en")
+            self.assertEqual(len(records), 1)
+            rows = align(records, target_lang="en")
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0].translation, "Hello")
+            self.assertEqual(rows[0].method, "same-language")
 
 
 class YellowCliTests(unittest.TestCase):

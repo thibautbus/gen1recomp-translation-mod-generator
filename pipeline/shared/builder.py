@@ -28,19 +28,23 @@ from .roms import (
 from .subprocess_run import run_streamed
 from .rom_paths import configured_path, load_rom_paths
 from .specs import (
-    game_spec, languages_for_collection, release_profile, release_profile_for_generation,
+    DEVELOPER_LANGUAGE, game_spec, languages_for_collection, release_profile, release_profile_for_generation,
     release_profile_for_selection,
 )
 from .specs import BuildRequest
 
 
-def languages_for_generation(generation: int) -> tuple[tuple[str, str], ...]:
-    """Return the union of languages published by a release's collections."""
+def languages_for_generation(
+    generation: int, *, dev_mode: bool = False,
+) -> tuple[tuple[str, str], ...]:
+    """Return languages published by a release, optionally including English."""
     profile = release_profile_for_selection(generation)
     languages: dict[str, str] = {}
     for game in profile.games:
         for code, name in languages_for_collection(game_spec(game).corpus_collection):
             languages.setdefault(code, name)
+    if dev_mode:
+        languages[DEVELOPER_LANGUAGE[0]] = DEVELOPER_LANGUAGE[1]
     return tuple(languages.items())
 
 
@@ -381,8 +385,12 @@ def _prompt_generation(input_fn: Callable[[str], str]) -> int:
 
 def _prompt_language(
     input_fn: Callable[[str], str], collection: str | None = "RedBlue", generation: int | None = None,
+    *, dev_mode: bool = False,
 ) -> tuple[str, str]:
-    languages = languages_for_generation(generation) if generation is not None else languages_for_collection(collection or "RedBlue")
+    languages = (languages_for_generation(generation, dev_mode=dev_mode) if generation is not None
+                 else languages_for_collection(collection or "RedBlue"))
+    if generation is None and dev_mode:
+        languages = (*languages, DEVELOPER_LANGUAGE)
     print("\nPlease specify the output language:")
     for index, (code, name) in enumerate(languages, 1):
         print(f"  {index} - {name} ({code})")
@@ -474,6 +482,7 @@ def main(
     input_fn: Callable[[str], str] = input,
     font_profile: str | None = None,
     generation: int | None = None,
+    dev_mode: bool = False,
 ) -> int:
     print("Gen1Recomp translation mod builder\n")
     try:
@@ -502,7 +511,7 @@ def main(
             emerald_rom = _prompt_configured_path(
                 emerald_prompt, configured_path(rom_paths, "rom", "emerald"), input_fn
             )
-            language, language_name = _prompt_language(input_fn, generation=generation)
+            language, language_name = _prompt_language(input_fn, generation=generation, dev_mode=dev_mode)
             if font_profile:
                 print("Note: Ruby, Sapphire and Emerald print strings with the cart's own font; "
                       "--font-profile is ignored.")
@@ -531,7 +540,7 @@ def main(
                 configured_path(rom_paths, "rom", "firered") or configured_path(rom_paths, "rom", "leafgreen"),
                 input_fn,
             )
-            language, language_name = _prompt_language(input_fn, generation=generation)
+            language, language_name = _prompt_language(input_fn, generation=generation, dev_mode=dev_mode)
             if font_profile:
                 print("Note: FireRed and LeafGreen print every string with the cart's own font; "
                       "--font-profile is ignored.")
@@ -562,7 +571,7 @@ def main(
             yellow = _prompt_configured_path(
                 yellow_prompt, configured_path(rom_paths, "rom", "yellow"), input_fn
             )
-            language, language_name = _prompt_language(input_fn, generation=generation)
+            language, language_name = _prompt_language(input_fn, generation=generation, dev_mode=dev_mode)
             selected_profile = font_profile or _prompt_font_profile(language, input_fn)
             selected_profile = validate_font_profile(language, selected_profile)
             if font_profile:
@@ -597,7 +606,7 @@ def main(
             crystal_rom = _prompt_configured_path(
                 crystal_prompt, configured_path(rom_paths, "rom", "crystal"), input_fn
             )
-            language, language_name = _prompt_language(input_fn, generation=generation)
+            language, language_name = _prompt_language(input_fn, generation=generation, dev_mode=dev_mode)
             selected_profile = font_profile or _prompt_font_profile(language, input_fn)
             selected_profile = validate_font_profile(language, selected_profile)
             if font_profile:

@@ -154,6 +154,16 @@ end
 local sample = expectations.dialogue
 if sample then
   check(sameIr(data.gen3Text[sample.key], sample.ir), "dialogue " .. sample.key .. " holds the translated IR")
+  local textOps = result.loader and result.loader.content and result.loader.content.text
+    and result.loader.content.text.ops and result.loader.content.text.ops[sample.key]
+  local registered = false
+  for _, op in pairs(textOps or {}) do
+    if op.op == "override" and sameIr(op.value, sample.ir) then
+      registered = true
+      break
+    end
+  end
+  check(registered, "dialogue " .. sample.key .. " registers the expected text override")
   local rendered = RomText.box(sample.key, { playerName = "BRENDAN" })
   check(type(rendered) == "string" and rendered:find(sample.probe, 1, true) ~= nil,
     "dialogue " .. sample.key .. " renders through RomText.box")
@@ -163,10 +173,30 @@ local layout = expectations.layout
 if layout then
   check(sameIr(data.gen3Text[layout.key], layout.ir),
     "the guard address " .. layout.key .. " holds this revision's translation")
+  local textOps = result.loader and result.loader.content and result.loader.content.text
+    and result.loader.content.text.ops and result.loader.content.text.ops[layout.key]
+  local registered = false
+  for _, op in pairs(textOps or {}) do
+    if op.op == "override" and sameIr(op.value, layout.ir) then
+      registered = true
+      break
+    end
+  end
+  check(registered, "the guard address " .. layout.key .. " registers the expected text override")
 end
 
 local row = expectations.battle
 if row then
+  local textOps = result.loader and result.loader.content and result.loader.content.text
+    and result.loader.content.text.ops and result.loader.content.text.ops[row.key]
+  local registered = false
+  for _, op in pairs(textOps or {}) do
+    if op.op == "override" and sameIr(op.value, row.ir) then
+      registered = true
+      break
+    end
+  end
+  check(registered, "battle string " .. row.key .. " registers the expected text override")
   local Versions = require("src.import.gba.versions")
   local id
   for number, key in pairs(Versions.BATTLE_STRING_IDS or {}) do
@@ -238,6 +268,15 @@ local function measure(name, fn, want)
   check(hooks[name].routed, "the Emerald " .. name .. " screen prints the mod's text: " .. tostring(hooks[name].got))
 end
 local wanted = expectations.hooks or {}
+for name, row in pairs(wanted) do
+  -- The screen can print its English source without a translation. Prove the
+  -- mod's registry actually contains each hook value before testing the
+  -- consumer, so an identity fallback cannot pass by itself.
+  check(type(data.strings) == "table" and data.strings[row.source] ~= nil,
+    "the Emerald " .. name .. " source is registered by the mod")
+  eq(data.strings and data.strings[row.source], row.value,
+    "the Emerald " .. name .. " registry value")
+end
 if wanted.ability_name then
   local id
   for number = 1, 255 do

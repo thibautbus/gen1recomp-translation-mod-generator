@@ -33,6 +33,7 @@ from ..gen3.family import FRLG
 from ..gen3.join import (
     EDITION_NAMES,
     SHIPPED,
+    SAME_AS_ENGLISH,
     CatalogResult,
     dialogue_catalog,
     join_gen3_dialogue,
@@ -64,7 +65,7 @@ from ..shared.pokedex_metrics import GEN3_SPECIES_METRICS_HOOK, lua_catalog, pre
 from ..shared.mod_assets import TRANSLATION_MOD_PRIORITY
 from ..shared.project import project_config, project_version, resource_root
 from ..shared.roms import import_frlg_rom, verify_frlg_rom
-from ..shared.specs import game_spec, languages_for_collection, release_profile
+from ..shared.specs import DEVELOPER_LANGUAGE, game_spec, languages_for_collection, release_profile
 
 MAIN = '''-- Generated FireRed translation mod.
 return function(mod)
@@ -385,10 +386,13 @@ def write_gate_expectations(path: Path, joined: dict, *,
     if edition_guard:
         expectations["edition_guard"] = dict(edition_guard)
 
+    def has_dialogue_ir(entry) -> bool:
+        return entry.status in SHIPPED or entry.status == SAME_AS_ENGLISH
+
     for entry in joined["entries"]:
         if dialogue_keys is not None and entry.key not in dialogue_keys:
             continue
-        if entry.status in SHIPPED and entry.translation and any(
+        if has_dialogue_ir(entry) and entry.translation and any(
                 segment.get("t") == "player" for segment in entry.translation):
             probe = max((segment.get("s", "") for segment in entry.translation if segment.get("t") == "text"),
                         key=len)
@@ -422,7 +426,7 @@ def write_gate_expectations(path: Path, joined: dict, *,
         name for name in ("species_names", "move_names", "item_names", "item_descriptions",
                           "trainer_names", "trainer_class_names", "start_menu", "strings")
         if catalogs.get(name))
-    if any(entry.status in SHIPPED and entry.translation and (dialogue_keys is None or entry.key in dialogue_keys)
+    if any(has_dialogue_ir(entry) and entry.translation and (dialogue_keys is None or entry.key in dialogue_keys)
            and any(segment.get("t") == "player" for segment in entry.translation)
            for entry in joined["entries"]):
         expectations["required"].append("dialogue")
@@ -510,6 +514,7 @@ def build_frlg(
     profile = release_profile("frlg")
     spec = game_spec("frlg")
     supported = {code for code, _name in languages_for_collection(spec.corpus_collection)}
+    supported.add(DEVELOPER_LANGUAGE[0])
     if language not in supported:
         raise BuildError(
             f"FireRed has no {language} release: gen1recomp's game3 runtime prints every "

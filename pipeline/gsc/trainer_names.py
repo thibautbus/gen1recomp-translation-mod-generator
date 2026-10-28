@@ -56,11 +56,13 @@ def _name(text: str) -> str:
 def trainer_name_catalog(
     rows: list[tuple[str, int, str]],
     corpus_rows: list[tuple[str, str, str]],
+    target_lang: str = "fr",
 ) -> tuple[dict[str, str], dict]:
     """Return ({"CLASS#member#ENGLISH": localized}, stats).
 
-    A localized name identical to the English one counts as translated but is
-    not emitted, since renaming a row to its own name is a no-op.
+    A localized name identical to the English one counts as matched. It is
+    emitted only for the English development target, which exercises the
+    same trainer-name replacement route as a translated build.
     """
     corpus: dict[tuple[str, int], tuple[str, str, str]] = {}
     for qid, english, target in corpus_rows:
@@ -69,6 +71,7 @@ def trainer_name_catalog(
             corpus[(_normalise(match.group(1)), int(match.group(2)))] = (qid, english, target)
     catalog: dict[str, str] = {}
     translated = same_as_english = 0
+    shipped = 0
     backlog = []
     scoped = [row for row in rows if row[0] not in UNREACHABLE_CLASSES]
     for class_id, member, english in scoped:
@@ -84,12 +87,17 @@ def trainer_name_catalog(
         translated += 1
         if value == english:
             same_as_english += 1
+            if target_lang == "en":
+                catalog[f"{class_id}#{member}#{english}"] = value
+                shipped += 1
         else:
             catalog[f"{class_id}#{member}#{english}"] = value
+            shipped += 1
     total = len(scoped)
     return catalog, {
         "total": total,
         "translated": translated,
+        "shipped": shipped,
         "no_corpus_entry": total - translated,
         "fallback_english": total - translated,
         "same_as_english": same_as_english,

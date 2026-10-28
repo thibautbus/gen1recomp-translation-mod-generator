@@ -28,6 +28,16 @@ def align(records: Iterable[CorpusRecord], source_lang: str = "en", target_lang:
             by_text[(r.game, _norm(r.english))].append(r)
     result: list[Alignment] = []
     for source in en:
+        if target_lang == source_lang:
+            # English is an opt-in development target. Parallel corpus files
+            # naturally contain the same English row as both the source and
+            # target side, so key lookup would otherwise see two candidates
+            # and mark every line ambiguous.
+            result.append(Alignment(
+                source.qid or f"unkeyed:{len(result)}", source.game,
+                source, source, "same-language", target_lang=target_lang,
+            ))
+            continue
         target = by_qid.get((source.game, source.qid), []) if source.qid else []
         method = "qid" if len(target) == 1 else "unmatched"
         if not target:

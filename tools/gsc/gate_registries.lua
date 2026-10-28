@@ -387,14 +387,31 @@ if expectations then
     local expected = expectations[spec.name]
     if expected then
       for _, edition in ipairs({ "gold", "silver", "crystal" }) do
-        local trainerResult, roster, member = loadTrainerNames(edition, expected.id, true)
+        local trainerResult, roster, member, english = loadTrainerNames(edition, expected.id, true)
         local actual = roster[member] and roster[member].name
         if spec.editions[edition] then
           eq(actual, expected.value, spec.name .. "[" .. expected.id .. "] renames the roster row under GameVersion=" .. edition)
+          local trainerOps = trainerResult.loader and trainerResult.loader.content
+            and trainerResult.loader.content.trainers and trainerResult.loader.content.trainers.ops
+            and trainerResult.loader.content.trainers.ops[member and (expected.id:match("^(.-)#") or "")]
+          local registered = false
+          for _, op in pairs(trainerOps or {}) do
+            local patched = op.value and op.value.trainers and op.value.trainers[member]
+            if op.op == "patch" and patched and patched.name == expected.value then
+              registered = true
+              break
+            end
+          end
+          check(registered,
+            spec.name .. "[" .. expected.id .. "] registers the expected roster name patch under GameVersion=" .. edition)
           check(roster[member] and roster[member].party and #roster[member].party == 1
               and roster[member].party[1].item ~= nil,
             spec.name .. " keeps the renamed trainer's party under GameVersion=" .. edition)
-        elseif spec.name == "trainer_names_crystal" and expected.distinct then
+        elseif spec.name == "trainer_names_crystal" and expected.distinct
+            and expected.value ~= english then
+          -- An English identity is observationally the original ROM value,
+          -- so the roster alone cannot reveal whether that no-op leaked.
+          -- Keep the cross-edition leak assertion for actual changed values.
           check(actual ~= expected.value,
             spec.name .. "[" .. expected.id .. "] does not leak into " .. edition)
         end

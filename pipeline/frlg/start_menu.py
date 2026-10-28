@@ -52,6 +52,9 @@ def join_start_menu(corpus: Gen3Corpus, charmap: PretCharmap) -> CatalogResult:
         value = _plain(target, charmap, corpus.language)
         if value == START_MENU_ENGLISH[entry_id]:
             result.stats["same_as_english"] += 1
+            if corpus.language == "en":
+                result.values[entry_id] = value
+                result.stats["identity_shipped"] += 1
             continue
         result.values[entry_id] = value
         result.stats["translated"] += 1

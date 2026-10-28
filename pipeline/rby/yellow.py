@@ -106,10 +106,11 @@ def yellow_dialogue_layer(
 
     Returns ``(dialogue_yellow, stats)``; ``dialogue_yellow`` maps label to
     translation for versioned-required and yellow-only labels.  A
-    versioned-required label without a Yellow corpus match is mapped to the
-    ROM's own Yellow content (the genuine English fallback) so the shared
-    Red/Blue translation never overrides Yellow's different text; yellow-only
-    labels without a match are omitted (the ROM text shows untouched).
+    In non-English builds, an unmatched versioned-required label is mapped to
+    the ROM's own Yellow content so the shared Red/Blue translation cannot
+    override Yellow's different text. English template builds never copy ROM
+    text: if a shared Red translation would shadow an unmatched Yellow label,
+    the join fails with a provenance error; otherwise the label is omitted.
     """
     yellow_entries = [
         WorksheetEntry(label, content, "dialogue")
@@ -133,7 +134,8 @@ def yellow_dialogue_layer(
         red_content = red_text.get(label)
         is_translation_variant = False
         if red_content is not None and red_content == yellow_text.get(label):
-            if red_translation is None or red_translation.get(label, "") == translation:
+            if (red_translation is None
+                    or red_translation.get(label, "") == translation):
                 stats["shared_safe"] += 1
                 continue
             stats["translation_variant"] += 1
@@ -149,6 +151,19 @@ def yellow_dialogue_layer(
             stats["matched"] += 1
             layer[label] = translation
         elif red_content is not None:
+            if target_lang == "en":
+                # A raw ROM string is not a valid English template value. If
+                # the common catalog would replace this Yellow line with a
+                # Red translation, fail rather than silently shipping either
+                # that wrong translation or a ROM-derived copy.
+                if red_translation and red_translation.get(label):
+                    raise ValueError(
+                        f"Yellow dialogue {label!r} differs from Red but has no "
+                        "matched English PokeCorpus row; common Red translation would shadow it"
+                    )
+                stats["unmatched"] += 1
+                unmatched_labels.append(label)
+                continue
             # Versioned-required label with no Yellow corpus match: the
             # shared Red/Blue dialogue.lua would otherwise override Yellow's
             # different text with the Red translation.  Re-emit the ROM's own

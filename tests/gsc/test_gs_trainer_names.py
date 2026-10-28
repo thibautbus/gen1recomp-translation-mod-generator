@@ -41,6 +41,17 @@ class TrainerNameCatalogTests(unittest.TestCase):
         self.assertEqual(catalog, {"YOUNGSTER#1#JOEY": "JULIAN"})
         self.assertEqual(stats["translated"], 1)
 
+    def test_english_identity_trainer_names_ship_but_french_still_omits_them(self):
+        rows = [("YOUNGSTER", 2, "MIKEY")]
+        catalog, stats = trainer_name_catalog(rows, CORPUS, target_lang="en")
+        self.assertEqual(catalog, {"YOUNGSTER#2#MIKEY": "MIKEY"})
+        self.assertEqual(stats["same_as_english"], 1)
+        self.assertEqual(stats["shipped"], 1)
+
+        catalog, stats = trainer_name_catalog(rows, CORPUS, target_lang="fr")
+        self.assertEqual(catalog, {})
+        self.assertEqual(stats["shipped"], 0)
+
     def test_parse_rejects_a_malformed_row(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "gs_trainer_names.tsv"

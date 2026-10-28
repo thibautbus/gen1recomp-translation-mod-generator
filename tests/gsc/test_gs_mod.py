@@ -396,22 +396,52 @@ class GsReleaseGateFlowTests(unittest.TestCase):
             "trainer_class_names": {"MYSTICALMAN": "MYSTIQUE"},
             "landmarks": {"LANDMARK_BATTLE_TOWER": "TOUR DE COMBAT"},
         }
+        # Identity values equal the source roster value, so output alone
+        # cannot distinguish a harmless no-op from a Crystal patch leaked to
+        # Gold/Silver. Keep a changed Crystal value case beside the identity
+        # case so the real anti-leak assertion remains exercised.
+        crystal_name_cases = (
+            {"BEAUTY#17#OLIVIA": "OLIVIA"},
+            {"YOUNGSTER#1#JOEY": "JULIAN"},
+        )
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            mod = generate_gs_mod(
-                root / "mod", language="fr", extra_catalogs=catalogs,
-                crystal_catalogs=crystal_catalogs,
-            )
-            expectations = _write_gate_expectations(
-                mod, catalogs, crystal_catalogs=crystal_catalogs,
-            )
-            result = subprocess.run(
-                [luajit, str(REGISTRIES_GATE_SCRIPT), str(ENGINE_ROOT), str(mod), str(expectations)],
-                capture_output=True, text=True,
-            )
-            expectations.unlink(missing_ok=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("all gs registries gate checks passed", result.stdout)
+            for index, crystal_names in enumerate(crystal_name_cases):
+                with self.subTest(crystal_names=crystal_names):
+                    trainer_names = {"gold": {}, "crystal": crystal_names}
+                    mod = generate_gs_mod(
+                        root / f"mod-{index}", language="fr", extra_catalogs=catalogs,
+                        crystal_catalogs=crystal_catalogs,
+                        crystal_trainer_name_catalog=crystal_names,
+                    )
+                    expectations = _write_gate_expectations(
+                        mod, catalogs, crystal_catalogs=crystal_catalogs,
+                        trainer_names=trainer_names,
+                    )
+                    result = subprocess.run(
+                        [luajit, str(REGISTRIES_GATE_SCRIPT), str(ENGINE_ROOT), str(mod), str(expectations)],
+                        capture_output=True, text=True,
+                    )
+                    expectations.unlink(missing_ok=True)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertIn("all gs registries gate checks passed", result.stdout)
+                    if crystal_names == {"BEAUTY#17#OLIVIA": "OLIVIA"}:
+                        catalog = mod / "lang" / "trainer_names_crystal.lua"
+                        catalog.write_text("\n".join(
+                            line for line in catalog.read_text(encoding="utf-8").splitlines()
+                            if '"BEAUTY#17#OLIVIA"' not in line
+                        ) + "\n", encoding="utf-8")
+                        expectations = _write_gate_expectations(
+                            mod, catalogs, crystal_catalogs=crystal_catalogs,
+                            trainer_names=trainer_names,
+                        )
+                        missing = subprocess.run(
+                            [luajit, str(REGISTRIES_GATE_SCRIPT), str(ENGINE_ROOT), str(mod), str(expectations)],
+                            capture_output=True, text=True,
+                        )
+                        expectations.unlink(missing_ok=True)
+                        self.assertNotEqual(missing.returncode, 0)
+                        self.assertIn("registers the expected roster name patch", missing.stderr)
 
     def test_crystal_rom_text_gate_uses_data_text_and_the_real_rom_text_consumer(self):
         luajit = _which_luajit()

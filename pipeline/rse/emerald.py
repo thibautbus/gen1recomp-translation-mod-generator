@@ -133,8 +133,10 @@ def join_emerald(
     # the values themselves, before the ROM-label migration below, which
     # Ruby and Sapphire take for the screens their carts never had (a value
     # the language keeps in English included)
-    engine_values = {**{key: key for key, origin in engine_stats["details"].items()
-                        if origin == "same_as_english"}, **strings}
+    engine_values = (strings if corpus.language == "en" else {
+        **{key: key for key, origin in engine_stats["details"].items()
+           if origin == "same_as_english"}, **strings
+    })
     by_english: dict[str, str] = {}
     if gen1recomp is not None:
         strings, by_english = rom_label_strings(strings, gen1recomp, scope, luajit, ENGLISH_LOOKUP_SITES,
@@ -144,6 +146,7 @@ def join_emerald(
     if by_english:
         catalogs["strings_by_english"] = by_english
     return {
+        "language": corpus.language,
         "entries": entries,
         "dialogue": dialogue_catalog(entries),
         "dialogue_stats": dialogue_stats,
