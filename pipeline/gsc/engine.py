@@ -18,6 +18,8 @@ def load_gs_engine_fallbacks(
     language: str | None = None, path: str | Path | None = None,
 ) -> dict[str, dict]:
     """Load the audited English fallbacks kept outside runtime overrides."""
+    if language == "en":
+        return {"en": {}}
     if path is None:
         path = Path(__file__).resolve().parents[2] / "config" / "gsc" / "engine_fallbacks.json"
     data = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -65,6 +67,8 @@ def load_gs_engine_reviewed_identities(language: str, path: str | Path | None = 
     The ledger's ``no_op_entries`` (identity rows retired from the runtime
     overrides) plus every fallback entry that is not an unresolved gap.
     """
+    if language == "en":
+        return set()
     if path is None:
         path = Path(__file__).resolve().parents[2] / "config" / "gsc" / "engine_fallbacks.json"
     entries = load_gs_engine_fallbacks(language, path)[language]
@@ -152,7 +156,10 @@ def _corpus_records(
 ) -> list[CorpusRecord]:
     records: list[CorpusRecord] = []
     for qid, english, target in corpus_rows:
-        records.append(CorpusRecord(qid, "en", english, "gold"))
+        source = CorpusRecord(qid, "en", english, "gold")
+        records.append(source)
+        if target_lang == "en":
+            continue
         records.append(CorpusRecord(qid, target_lang, target, "gold", english=english))
     return records
 
@@ -176,7 +183,7 @@ def match_gs_engine_strings(
     callsites = iter_callsites(source)
     all_keys, gen2_keys = engine_string_keys(callsites, manifest)
     root = Path(__file__).resolve().parents[2]
-    overrides = load_engine_overrides(
+    overrides = {} if target_lang == "en" else load_engine_overrides(
         root / "overrides" / target_lang / "gsc" / "engine.json",
     )
     fallback_entries = load_gs_engine_fallbacks(target_lang)[target_lang]
@@ -214,11 +221,9 @@ def match_gs_engine_strings(
     )
     # ``match_engine_catalog`` deliberately reports an exact corpus match even
     # when the localized value is byte-for-byte identical to the English
-    # source.  That is useful for coverage accounting and audit provenance,
-    # but an identity row is a runtime no-op and must not be regenerated in
-    # the shipped catalogue after it has been removed from the overrides.
-    # Keep the matcher output (and therefore its coverage counters/details)
-    # intact, filtering only at this final runtime-catalogue boundary.
+    # source. English developer mods ship those rows to exercise the same
+    # replacement paths as translated builds; other languages omit runtime
+    # no-ops.
     translated = {key for key, value in values.items() if value}
     # Crystal-only-feature keys stay in all_keys/overrides (engine_string_keys'
     # own docstring: a Gold/Silver override "could still target" one), but
@@ -232,12 +237,13 @@ def match_gs_engine_strings(
     crystal_only = load_gs_engine_scope_exclusions()
     shipped = {
         key: value for key, value in values.items()
-        if value and value != key and key not in crystal_only
+        if value and (value != key or target_lang == "en") and key not in crystal_only
     }
     report.update({
         "source_revision": revision,
         "engine_profile": profile,
         "fallback_english": len(fallback_entries),
+        "shipped": len(shipped),
         "catalog_kind": "Strings and Strings.source callsites",
     })
     # A reviewed identity counts the same as a corpus match that happens to
@@ -249,6 +255,7 @@ def match_gs_engine_strings(
         "engine_profile": profile,
         "scope": "at least one callsite in a gen2 source subtree",
         "translated": gen2_translated,
+        "shipped": len(set(shipped) & gen2_keys),
         "reviewed_identity": len(reviewed_identities),
         "total": len(gen2_keys),
         "percent": round(100.0 * gen2_translated / len(gen2_keys), 2) if gen2_keys else 100.0,

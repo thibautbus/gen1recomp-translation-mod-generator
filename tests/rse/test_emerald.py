@@ -5,11 +5,12 @@ import tempfile
 import unittest
 import unittest.mock
 from pathlib import Path
+from types import SimpleNamespace
 
 from pipeline.gen3.family import EMERALD, FRLG
 from pipeline.gen3.join import (
     CONTENT_MATCH, SAME_AS_ENGLISH, TRANSLATED, UNRESOLVED,
-    join_gen3_dialogue, join_gen3_engine_strings, join_indexed_catalog, join_item_descriptions,
+    dialogue_catalog, join_gen3_dialogue, join_gen3_engine_strings, join_indexed_catalog, join_item_descriptions,
     load_dialogue_decisions, load_dialogue_overrides, load_engine_scope, load_gen3_corpus,
 )
 from pipeline.gen3.join import Gen3DialogueEntry
@@ -133,6 +134,48 @@ class EmeraldJoinTests(unittest.TestCase):
     def corpus(self, rows, language="fr"):
         return load_gen3_corpus(write_corpus(self.tmp / language, language, rows), language, EMERALD)
 
+    def test_english_is_a_valid_generation3_corpus_target(self):
+        corpus = self.corpus([("e.common.pokemon_summary_screen.sHardyNatureName", "HARDY", "HARDY")], "en")
+        self.assertEqual(corpus.language, "en")
+        self.assertEqual(corpus.target, ("HARDY",))
+        entries, _ = join_gen3_dialogue(
+            {"gNatureNamePointers[0]": [text("HARDY"), EOS]}, corpus, {},
+            self.charmap, aliases={"gNatureNamePointers[0]": ("sHardyNatureName",)},
+        )
+        self.assertIn(entries[0].status, {SAME_AS_ENGLISH, TRANSLATED})
+
+    def test_english_dev_target_passes_the_release_language_gate(self):
+        from pipeline.rse import mod as rse_mod
+        with unittest.mock.patch.object(
+            rse_mod, "verify_rs_rom", side_effect=RuntimeError("ROM validation reached"),
+        ) as verify:
+            with self.assertRaisesRegex(RuntimeError, "ROM validation reached"):
+                rse_mod.build_rse("ruby.gba", "emerald.gba", "en", "English", "luajit")
+        verify.assert_called_once()
+
+    def test_gate_requires_an_emitted_rse_layout_sample(self):
+        for language, emits_layout in (
+            ("en", False), ("en", True), ("fr", False), ("fr", True),
+        ):
+            with self.subTest(language=language, emits_layout=emits_layout):
+                script = {"ruby_1_1": {}}
+                if emits_layout:
+                    script["ruby_1_1"]["g3:08000010"] = [text("BONJOUR"), EOS]
+                joined = {
+                    "language": language,
+                    "source": SimpleNamespace(edition="ruby", layout="1_1"),
+                    "guards": {"ruby": [{"dir": "ruby_1_1", "key": "g3:08000010"}]},
+                    "script": script,
+                    "dialogue": {}, "catalogs": {},
+                    "numbers": {"species": {}, "moves": {}, "items": {}},
+                }
+                if language == "en" and not emits_layout:
+                    with self.assertRaisesRegex(ValueError, "dropped English layout"):
+                        write_gate_expectations(self.tmp / "gate.json", joined, game="ruby")
+                else:
+                    expectations = write_gate_expectations(self.tmp / "gate.json", joined, game="ruby")
+                    self.assertIn("layout", expectations["required"])
+
     # pret pokeemerald multi-language: src/battle_message.c:3937 and
     # src/international_string_util.c:280
     EUROPEAN_TRAINERS = {
@@ -236,6 +279,44 @@ class EmeraldJoinTests(unittest.TestCase):
         statuses = {entry.key: entry.status for entry in entries}
         self.assertEqual(statuses, {"gText_Ok": SAME_AS_ENGLISH, "sTable[0]": CONTENT_MATCH})
 
+    def test_english_identity_rows_are_shipped_across_dialogue_catalogs_and_engine(self):
+        corpus = self.corpus([
+            ("e.common.strings.gText_Ok", "OK", "OK"),
+            ("e.common.items.gItems.1", "POTION", "POTION"),
+            ("e.common.item_descriptions.sPotionDesc", "Restores HP.", "Restores HP."),
+            ("e.common.strings.gText_Yes", "YES", "YES"),
+        ], "en")
+        entries, stats = join_gen3_dialogue(
+            {"gText_Ok": [text("OK"), EOS]}, corpus, {}, self.charmap)
+        self.assertEqual(entries[0].status, SAME_AS_ENGLISH)
+        self.assertEqual(entries[0].translation, [text("OK"), EOS])
+        self.assertEqual((stats["covered"], stats["shipped"]), (1, 1))
+        self.assertEqual(dialogue_catalog(entries), {"gText_Ok": [text("OK"), EOS]})
+        self.assertEqual(dialogue_label_rows(entries), {"gText_Ok": None})
+
+        names = join_indexed_catalog({1: "POTION"}, {1: "POTION"}, corpus,
+                                     "e.common.items.gItems.", self.charmap)
+        self.assertEqual(names.values, {"POTION": "POTION"})
+        self.assertEqual(names.summary()["shipped"], 1)
+        descriptions = join_item_descriptions(
+            {1: {"name": "POTION", "description": "Restores HP."}}, {1: "POTION"},
+            corpus, self.charmap)
+        self.assertEqual(descriptions.values, {"POTION": "Restores HP."})
+        self.assertEqual(descriptions.summary()["shipped"], 1)
+
+        values, engine = join_gen3_engine_strings(
+            {"YES": {"callsite": "x", "qid": "e.common.strings.gText_Yes"}},
+            corpus, self.charmap, root=self.tmp / "empty-repo")
+        self.assertEqual(values, {"YES": "YES"})
+        self.assertEqual(engine["shipped"], 1)
+
+    def test_non_english_identity_rows_remain_fallbacks(self):
+        corpus = self.corpus([("e.common.strings.gText_Ok", "OK", "OK")], "fr")
+        entries, stats = join_gen3_dialogue(
+            {"gText_Ok": [text("OK"), EOS]}, corpus, {}, self.charmap)
+        self.assertIsNone(entries[0].translation)
+        self.assertEqual(stats["shipped"], 0)
+
     def test_catalogs_keep_glyph_run_tags_and_spell_the_pkmn_ligature(self):
         corpus = self.corpus([
             ("e.common.items.gItems.1", "[POKEBLOCK] CASE", "BOITE [POKEBLOCK]"),
@@ -266,6 +347,19 @@ class EmeraldJoinTests(unittest.TestCase):
         self.assertEqual(values, {"YES": "OUI", "MUSIC VOL": "VOL. MUSIQUE", "EMERALD ONLY": "EMERAUDE"})
         self.assertEqual(stats["details"], {"YES": "corpus", "MUSIC VOL": "game3_override",
                                             "EMERALD ONLY": "emerald_override", "VSYNC": "fallback_english"})
+
+    def test_english_engine_identity_requires_a_corpus_row(self):
+        corpus = self.corpus([("e.common.strings.gText_Yes", "YES", "YES")], "en")
+        base = self.tmp / "repo"
+        path = EMERALD.overrides_path(base, "en", "engine.json")
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps({"entries": {"MANUAL": {"override": "MANUAL"}}}),
+                        encoding="utf-8")
+        scope = {"YES": {"callsite": "x", "qid": "e.common.strings.gText_Yes"},
+                 "MANUAL": {"callsite": "x"}}
+        values, stats = join_gen3_engine_strings(scope, corpus, self.charmap, root=base)
+        self.assertEqual(values, {"YES": "YES"})
+        self.assertEqual(stats["shipped"], 1)
 
     def test_family_configuration_is_read_from_its_own_directories(self):
         base = self.tmp / "repo"
@@ -368,11 +462,52 @@ class EmeraldModTests(unittest.TestCase):
         }
         expectations = write_gate_expectations(self.tmp / "gate.json", joined)
         self.assertEqual(expectations["dialogue"]["key"], "g3:08000010")
-        self.assertEqual(expectations["battle"], {"key": "STRINGID_ATTACKMISSED", "value": "Raté !"})
+        self.assertEqual(expectations["battle"], {
+            "key": "STRINGID_ATTACKMISSED", "value": "Raté !",
+            "ir": joined["dialogue"]["STRINGID_ATTACKMISSED"],
+        })
         self.assertEqual(expectations["natures"], [{"id": 0, "value": "HARDI"}])
         self.assertEqual(expectations["species_names"]["number"], 252)
         self.assertEqual(expectations["easy_chat"], {"id": 2560, "value": "BONJOUR"})
         self.assertEqual(expectations["hooks"]["contest"]["value"], "Une démonstration qui\nplaît énormément.")
+
+    def test_emerald_english_identity_hooks_require_shipped_catalog_entries(self):
+        callsites = {
+            "STENCH": "src/core/game3/battle/abilities.lua",
+            "The sleepy Pokémon.": "src/ui/game3/rse/pokedex.lua",
+            "A highly appealing move.": "src/core/game3/summary_data.lua (SummaryData.contestEffectDescription)",
+            "PETALBURG CITY": "src/ui/game3/rse/mapsec.lua",
+        }
+        translated = {
+            "STENCH": "PUANT",
+            "The sleepy Pokémon.": "Le Pokémon endormi.",
+            "A highly appealing move.": "Une démonstration qui plaît.",
+            "PETALBURG CITY": "POIVRESSELLE",
+        }
+        for language in ("en", "fr"):
+            with self.subTest(language=language):
+                joined = {
+                    "language": language,
+                    "dialogue": {}, "catalogs": {"strings": {
+                        source: source if language == "en" else translated[source]
+                        for source in callsites
+                    }},
+                    "numbers": {"species": {}, "moves": {}, "items": {}},
+                    "scope": {key: {"callsite": site} for key, site in callsites.items()},
+                }
+                expectations = write_gate_expectations(self.tmp / f"{language}-gate.json", joined)
+                self.assertEqual(set(expectations["hooks"]), {
+                    "ability_name", "pokedex", "contest", "map_section",
+                })
+                for label, source in zip(expectations["hooks"], callsites):
+                    expected = source if language == "en" else translated[source]
+                    self.assertEqual(expectations["hooks"][label], {
+                        "source": source, "value": expected,
+                        "catalog": "strings",
+                    })
+                gate_source = (ROOT / "tools" / "rse" / "gate.lua").read_text(encoding="utf-8")
+                self.assertIn("data.strings[row.source] ~= nil", gate_source)
+                self.assertIn('"the Emerald " .. name .. " registry value"', gate_source)
 
 
 class LabelRowTests(unittest.TestCase):

@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from pipeline.gsc.engine import (
-    engine_string_keys, is_reviewed_identity, load_gs_engine_fallbacks,
+    _corpus_records, engine_string_keys, is_reviewed_identity, load_gs_engine_fallbacks,
     load_gs_engine_reviewed_identities, load_gs_engine_scope_exclusions, match_gs_engine_strings,
 )
 from pipeline.shared.engine import load_engine_overrides
@@ -31,6 +31,13 @@ CALLSITES = [
 
 
 class GoldEngineCatalogTests(unittest.TestCase):
+    def test_english_development_rows_are_single_source_targets(self):
+        rows = _corpus_records([("gs.text.Start", "Hello", "Hello")], "en")
+        self.assertEqual(len(rows), 1)
+        self.assertEqual((rows[0].language, rows[0].text), ("en", "Hello"))
+        self.assertEqual(load_gs_engine_fallbacks("en"), {"en": {}})
+        self.assertEqual(load_gs_engine_reviewed_identities("en"), set())
+
     def test_fallback_rows_must_declare_their_status(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "fallbacks.json"
@@ -212,7 +219,23 @@ class GoldEngineCatalogTests(unittest.TestCase):
         self.assertEqual(coverage["engine_gen2"]["total"], 1)
         self.assertEqual(coverage["engine"]["source_revision"], "0" * 40)
 
-    def test_runtime_catalogue_drops_identity_matches_for_every_language(self):
+    def test_english_engine_rows_ignore_manual_overrides(self):
+        rows = [("gs.a.Hello", "Hello!", "Hello!")]
+        manifest = {**load_manifest(), "forced_dynamic_keys": {}, "engine_dynamic_values": {}}
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch("pipeline.gsc.engine.load_manifest", return_value=manifest),
+            patch("pipeline.gsc.engine.verified_source",
+                  return_value=(Path(tmp) / "src", Path(tmp), "0" * 40)),
+            patch("pipeline.gsc.engine.iter_callsites", return_value=CALLSITES[:1]),
+            patch("pipeline.gsc.engine.load_engine_overrides",
+                  return_value={"Hello!": {"override": "Manual"}}) as load_overrides,
+        ):
+            values, _coverage = match_gs_engine_strings(rows, tmp, "en")
+        self.assertEqual(values, {"Hello!": "Hello!"})
+        load_overrides.assert_not_called()
+
+    def test_runtime_catalogue_keeps_identity_matches_only_for_english(self):
         rows = [
             ("gs.identity", "SAME", "SAME"),
             ("gs.translated", "Hello!", "Bonjour!"),
@@ -223,7 +246,7 @@ class GoldEngineCatalogTests(unittest.TestCase):
             {"source": "Hello!", "path": "world/gen2/World.lua", "kind": "call"},
         ]
         with tempfile.TemporaryDirectory() as tmp:
-            for language in ("fr", "de", "es", "it", "ja-Hrkt", "ko"):
+            for language in ("en", "fr", "de", "es", "it", "ja-Hrkt", "ko"):
                 with (
                     patch("pipeline.gsc.engine.load_manifest", return_value=manifest),
                     patch(
@@ -234,11 +257,17 @@ class GoldEngineCatalogTests(unittest.TestCase):
                     patch("pipeline.gsc.engine.load_engine_overrides", return_value={}),
                 ):
                     values, coverage = match_gs_engine_strings(rows, tmp, language)
-                self.assertEqual(values, {"Hello!": "Bonjour!"}, language)
-                self.assertFalse(any(key == value for key, value in values.items()), language)
+                expected = {"Hello!": "Bonjour!"}
+                if language == "en":
+                    expected["Hello!"] = "Hello!"
+                    expected["SAME"] = "SAME"
+                self.assertEqual(values, expected, language)
+                if language != "en":
+                    self.assertFalse(any(key == value for key, value in values.items()), language)
                 # The identity remains counted and traceable by the matcher;
                 # only the runtime catalogue is filtered.
                 self.assertEqual(coverage["engine"]["translated"], 2, language)
+                self.assertEqual(coverage["engine"]["shipped"], 2 if language == "en" else 1, language)
                 self.assertEqual(coverage["engine"]["total"], 2, language)
                 self.assertEqual(coverage["engine"]["percent"], 100.0, language)
                 self.assertEqual(coverage["engine_gen2"]["translated"], 2, language)

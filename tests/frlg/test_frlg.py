@@ -370,6 +370,16 @@ class FrlgDialogueJoinTests(unittest.TestCase):
         self.assertEqual(entries[0].status, TRANSLATED)
         self.assertEqual(entries[0].translation, [text("⠁⠜"), EOS])
 
+    def test_english_braille_identity_is_shipped_as_cells(self):
+        corpus = load_gen3_corpus(write_corpus(self.tmp / "en-braille", "en", [
+            ("frlg.script.Map.Map_Text_Braille", "⠁⠃", "⠁⠃"),
+        ]), "en")
+        entries, stats = join_gen3_dialogue({"g3:08000060": [text("AB"), EOS]}, corpus,
+                                            self.symbols, self.charmap)
+        self.assertEqual(entries[0].status, SAME_AS_ENGLISH)
+        self.assertEqual(entries[0].translation, [text("⠁⠃"), EOS])
+        self.assertEqual(stats["shipped"], 1)
+
     def test_braille_english_mismatch_is_reported(self):
         entries, _ = join_gen3_dialogue({"g3:08000060": [text("AC"), EOS]}, self.corpus,
                                         self.symbols, self.charmap)
@@ -477,6 +487,23 @@ class FrlgCatalogTests(unittest.TestCase):
         self.assertEqual(result.values, {"bag": "SAC"})
         self.assertEqual(result.stats["same_as_english"], 1)
         self.assertEqual(result.stats["no_corpus_row"], 4)
+
+    def test_english_start_menu_identities_are_kept_from_the_corpus_rows(self):
+        rows = [
+            ("frlg.common.strings.gText_MenuPokedex", "POKéDEX", "POKéDEX"),
+            ("frlg.common.strings.gText_MenuPokemon", "POKéMON", "POKéMON"),
+            ("frlg.common.strings.gText_MenuBag", "BAG", "BAG"),
+            ("frlg.common.strings.gText_MenuSave", "SAVE", "SAVE"),
+            ("frlg.common.strings.gText_MenuOption", "OPTION", "OPTION"),
+            ("frlg.common.strings.gText_MenuExit", "EXIT", "EXIT"),
+        ]
+        corpus = load_gen3_corpus(write_corpus(self.tmp / "en-start-menu", "en", rows), "en")
+        result = join_start_menu(corpus, self.charmap)
+        self.assertEqual(result.values, {
+            "pokedex": "POKéDEX", "pokemon": "POKéMON", "bag": "BAG",
+            "save": "SAVE", "option": "OPTION", "exit": "EXIT",
+        })
+        self.assertEqual(result.summary()["shipped"], 6)
 
     def test_item_descriptions_prefer_the_items_own_row(self):
         items = {1: {"name": "BEAD MAIL", "description": "Mail."},
@@ -841,6 +868,15 @@ class FrlgEditionDerivationTests(unittest.TestCase):
 class FrlgBuildFromOneCartTests(unittest.TestCase):
     """build_frlg reads one cart and derives the other edition's text."""
 
+    def test_english_dev_target_passes_the_release_language_gate(self):
+        from pipeline.frlg import mod as frlg_mod
+        with unittest.mock.patch.object(
+            frlg_mod, "verify_frlg_rom", side_effect=RuntimeError("ROM validation reached"),
+        ) as verify:
+            with self.assertRaisesRegex(RuntimeError, "ROM validation reached"):
+                frlg_mod.build_frlg("cart.gba", "en", "English", "luajit")
+        verify.assert_called_once()
+
     def test_a_leafgreen_cart_gives_firered_its_derived_text(self):
         from pipeline.frlg import mod as frlg_mod
         calls: dict[str, object] = {}
@@ -1015,6 +1051,23 @@ io.write(tostring(applied["g3:08000010"]), "|", tostring(applied["g3:08000020"])
                 dialogue_keys={"g3:08000020"}, edition_guard=guard)
         self.assertEqual(expectations["dialogue"]["key"], "g3:08000020")
         self.assertEqual(expectations["edition_guard"], guard)
+
+    def test_gate_samples_corpus_backed_english_identity_ir_only(self):
+        identity = frlg_join.Gen3DialogueEntry(
+            "g3:08000030", SAME_AS_ENGLISH, [], translation=[{"t": "player"}, text(" OK"), EOS],
+        )
+        no_ir = frlg_join.Gen3DialogueEntry("g3:08000040", SAME_AS_ENGLISH, [], translation=None)
+        with tempfile.TemporaryDirectory() as directory:
+            english = write_gate_expectations(
+                Path(directory) / "en.json", {"entries": [identity], "catalogs": {}, "numbers": {}},
+            )
+            french = write_gate_expectations(
+                Path(directory) / "fr.json", {"entries": [no_ir], "catalogs": {}, "numbers": {}},
+            )
+        self.assertEqual(english["dialogue"]["key"], "g3:08000030")
+        self.assertIn("dialogue", english["required"])
+        self.assertNotIn("dialogue", french)
+        self.assertNotIn("dialogue", french["required"])
 
 
 class FrlgConfigTests(unittest.TestCase):

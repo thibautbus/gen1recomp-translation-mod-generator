@@ -155,6 +155,16 @@ local sample = expectations.dialogue
 if sample then
   local live = data.gen3Text[sample.key]
   check(sameIr(live, sample.ir), "dialogue " .. sample.key .. " holds the translated IR")
+  local textOps = result.loader and result.loader.content and result.loader.content.text
+    and result.loader.content.text.ops and result.loader.content.text.ops[sample.key]
+  local registered = false
+  for _, op in pairs(textOps or {}) do
+    if op.op == "override" and sameIr(op.value, sample.ir) then
+      registered = true
+      break
+    end
+  end
+  check(registered, "dialogue " .. sample.key .. " registers the expected text override")
   local rendered = TextIR.toTextBox(live or {}, { playerName = "RED" })
   check(type(rendered) == "string" and rendered:find(sample.probe, 1, true) ~= nil,
     "dialogue " .. sample.key .. " renders through TextIR.toTextBox")

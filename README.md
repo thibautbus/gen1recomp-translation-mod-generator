@@ -239,6 +239,20 @@ compact, but translated text can still overflow fixed-width interfaces.
 Macros and interface chrome remain tile-rendered. Each mod packages only the
 selected TTF and its applicable license notices.
 
+English is hidden from normal language choices because it is intended for
+development and testing, rather than as a localized release. In the GUI,
+check **Developer mode** to add it to the language list. For
+the interactive CLI, pass `--dev`:
+
+```sh
+python build_translation.py --dev
+```
+
+The generated English target retains matched PokeCorpus text even when it
+is identical to the ROM, providing an editable starting point for translating
+new languages. Text without a verified corpus match is not filled in from
+hardcoded English labels.
+
 ## Build from source with the CLI
 
 Install Python 3.11+, Git, LuaJIT (`sudo apt install luajit` on
@@ -255,6 +269,7 @@ python build_translation.py
 ```
 
 Add `--font-profile pokemon` to select the optional Pokemon Font profile.
+Add `--dev` to include English as an interactive development target.
 Substitute `python3`, `py -3`, or a virtual-environment interpreter when
 appropriate.
 

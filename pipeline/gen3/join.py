@@ -393,7 +393,7 @@ def _reads_as(english: str, rom_ir: list[dict], charmap: PretCharmap, battle: bo
 
 
 def _join_braille(entry: "Gen3DialogueEntry", spelled: str, target: str,
-                  rom_ir: list[dict]) -> None:
+                  rom_ir: list[dict], language: str) -> None:
     """A braille message: the corpus writes every cart's line as Unicode
     braille, the extractor decodes the cart's own line to Latin letters
     (``decode_braille``), and the runtime draws a Unicode cell as that very
@@ -413,6 +413,8 @@ def _join_braille(entry: "Gen3DialogueEntry", spelled: str, target: str,
         return
     if braille_text(target) == spelled:
         entry.status = SAME_AS_ENGLISH
+        if language == "en":
+            entry.translation = [{"t": "text", "s": target}, {"t": "eos"}]
         return
     entry.translation = [{"t": "text", "s": target}, {"t": "eos"}]
     entry.status = TRANSLATED
@@ -523,7 +525,7 @@ def join_gen3_dialogue(
             continue
         spelled = braille_text(corpus.english[index])
         if spelled is not None:
-            _join_braille(entry, spelled, corpus.target[index], rom_ir)
+            _join_braille(entry, spelled, corpus.target[index], rom_ir, corpus.language)
             continue
         try:
             english_ir = corpus_ir(corpus.english[index], charmap, battle=battle)
@@ -564,6 +566,8 @@ def join_gen3_dialogue(
             continue
         if target_ir == rom_ir:
             entry.status = SAME_AS_ENGLISH
+            if corpus.language == "en":
+                entry.translation = target_ir
             continue
         entry.translation = target_ir
         entry.status = (OVERRIDE if override else REVIEWED if reviewed
@@ -581,7 +585,8 @@ def dialogue_stats(entries: Iterable[Gen3DialogueEntry]) -> dict:
     return {
         "total": total,
         "covered": covered,
-        "shipped": sum(stats[status] for status in SHIPPED),
+        "shipped": sum(stats[status] for status in SHIPPED)
+                   + sum(entry.status == SAME_AS_ENGLISH and bool(entry.translation) for entry in entries),
         "percent": round(100.0 * covered / total, 2) if total else 100.0,
         "ignored_markup_only": stats[MARKUP_ONLY],
         "ignored_undecodable": stats[UNDECODABLE],
@@ -592,7 +597,7 @@ def dialogue_stats(entries: Iterable[Gen3DialogueEntry]) -> dict:
 
 def dialogue_catalog(entries: Iterable[Gen3DialogueEntry]) -> dict[str, list[dict]]:
     return {entry.key: entry.translation for entry in entries
-            if entry.status in SHIPPED and entry.translation}
+            if (entry.status in SHIPPED or entry.status == SAME_AS_ENGLISH) and entry.translation}
 
 
 # ------------------------------------------------------------------ names
@@ -676,6 +681,7 @@ class CatalogResult:
             "total": total,
             "translated": self.stats["translated"],
             "same_as_english": self.stats["same_as_english"],
+            "shipped": self.stats["translated"] + self.stats["identity_shipped"],
             "percent": round(100.0 * covered / total, 2) if total else 100.0,
             "fallback_english": total - covered,
         }
@@ -724,6 +730,9 @@ def join_indexed_catalog(
             continue
         if value == english:
             result.stats["same_as_english"] += 1
+            if corpus.language == "en":
+                result.values[id_] = value
+                result.stats["identity_shipped"] += 1
             continue
         result.values[id_] = value
         result.stats["translated"] += 1
@@ -812,6 +821,9 @@ def join_item_descriptions(
             continue
         if value == english:
             result.stats["same_as_english"] += 1
+            if corpus.language == "en":
+                result.values[id_] = value
+                result.stats["identity_shipped"] += 1
             continue
         result.values[id_] = value
         result.stats["translated"] += 1
@@ -1133,12 +1145,18 @@ def join_gen3_engine_strings(
     language = corpus.language
     family = corpus.family
     base = Path(root) if root else Path(__file__).resolve().parents[2]
-    own = _override_values(family.overrides_path(base, language, "engine.json"))
+    # English catalogs are translation templates: never source their values
+    # from hand-authored override files. Each emitted English string must
+    # have a matched corpus row below.
+    own = {} if language == "en" else _override_values(family.overrides_path(base, language, "engine.json"))
     game3 = {}
-    for other in reversed(family.shared_engine_families):
-        game3.update(_override_values(FAMILIES[other].overrides_path(base, language, "engine.json")))
-    shared = {**_override_values(base / "overrides" / language / "rby" / "engine.json"),
-              **_override_values(base / "overrides" / language / "gsc" / "engine.json")}
+    if language != "en":
+        for other in reversed(family.shared_engine_families):
+            game3.update(_override_values(FAMILIES[other].overrides_path(base, language, "engine.json")))
+    shared = {} if language == "en" else {
+        **_override_values(base / "overrides" / language / "rby" / "engine.json"),
+        **_override_values(base / "overrides" / language / "gsc" / "engine.json"),
+    }
     where = f"{family.game} engine scope row"
     values: dict[str, str] = {}
     details: dict[str, str] = {}
@@ -1186,12 +1204,16 @@ def join_gen3_engine_strings(
         check_engine_directives(engine_context_source(key), value, language)
         _check_engine_glyphs(key, value, charmap, language)
         details[key] = origin if value != key else "same_as_english"
-        if value != key:
+        # The English developer catalog may retain a no-op only when the
+        # selected value came from this row's validated PokeCorpus match.
+        # ROM labels and manual/shared overrides are not English provenance.
+        if value != key or (language == "en" and origin in {"corpus", "companion"}):
             values[key] = value
     translated = sum(1 for origin in details.values() if origin != "fallback_english")
     return values, {
         "total": len(scope),
         "translated": translated,
+        "shipped": len(values),
         "percent": round(100.0 * translated / len(scope), 2) if scope else 100.0,
         "fallback_english": sorted(key for key, origin in details.items() if origin == "fallback_english"),
         "details": details,

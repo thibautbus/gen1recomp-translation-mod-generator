@@ -411,6 +411,7 @@ def join_rs(
         catalogs["strings_by_english"] = by_english
     decisions = load_dialogue_decisions(family)
     return {
+        "language": corpus.language,
         "source": source,
         "layouts": layouts,
         "guards": layout_guards(text, tables[read], tables, decisions),
