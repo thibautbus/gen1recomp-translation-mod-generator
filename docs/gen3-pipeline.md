@@ -20,7 +20,7 @@ dialogue through `mod.content.text`, species, move and item names, item
 descriptions, trainer names and class names through their record
 registries, the start menu through the public `ui.start_menu.items` hook,
 and game3's own text (its own menus, the mod manager, the options it adds)
-through `Strings()`. At the pinned revision (gen1recomp v0.3.63), most
+through `Strings()`. At the pinned revision (gen1recomp v0.4.0), most
 screens draw their text from the cart itself: the option menu, the summary
 pages, the intro, the region map, the battle messages and the lists read
 the cart's rows through `RomText`, so the mod translates them with the

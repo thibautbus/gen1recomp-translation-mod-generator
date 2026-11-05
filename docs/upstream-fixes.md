@@ -2,7 +2,7 @@
 
 This file tracks, game by game, what the translation mods cannot translate, or translate only through a compromise, because of how gen1recomp draws the text. The mods use only the public `gen1recomp` content and hook APIs, so a gap here is closed by an engine change, never by reaching into private UI classes.
 
-The pin is gen1recomp v0.3.63 (`7ab2f865`, `gen1recomp_revision` in `config/shared/engine_manifest.json` and `config/pipeline.toml`). Each game section says which revision its file:line citations were reviewed at; a citation marked "(v0.3.63)" was checked against the pin. Line numbers drift between releases, so a citation from an older revision names the right function, not always the right line.
+The pin is gen1recomp v0.4.0 (`5bf900e3`, `gen1recomp_revision` in `config/shared/engine_manifest.json` and `config/pipeline.toml`). Each game section says which revision its file:line citations were reviewed at; a citation marked "(v0.4.0)" was checked against the pin, one marked "(v0.3.63)" against the previous pin. Line numbers drift between releases, so a citation from an older revision names the right function, not always the right line.
 
 Each game section follows the same order:
 
@@ -20,7 +20,7 @@ Two reports that are not translation gaps close the file: gen1recomp rendering b
 
 ## Contents
 
-- [Open gaps at the pinned revision (v0.3.63)](#open-gaps-at-the-pinned-revision-v0363)
+- [Open gaps at the pinned revision (v0.4.0)](#open-gaps-at-the-pinned-revision-v040)
 - [RBY](#rby): Red, Blue and Yellow
 - [Gold and Silver](#gold-and-silver): Gold, Silver and Crystal
 - [FireRed](#firered): FireRed and LeafGreen
@@ -31,7 +31,7 @@ Two reports that are not translation gaps close the file: gen1recomp rendering b
 - [Build tooling bugs in `tools/modkit.py` on Windows](#build-tooling-bugs-in-toolsmodkitpy-on-windows-not-translation-gaps)
 - [History of the fixed entries](upstream-fixes-history.md) and the [game3 hardcoded-text inventory](game3-hardcoded-text-inventory.md)
 
-## Open gaps at the pinned revision (v0.3.63)
+## Open gaps at the pinned revision (v0.4.0)
 
 The code path behind every entry below was checked against the pinned tree; figures measured at an older revision are dated in the entry itself. Most entries leave text in English because no override reaches it; FireRed entries 14 and 15 are translated today, through a catalog `modkit pack` would refuse if it were keyed the usual way, and Emerald entry 9 is translated but overflows.
 
@@ -41,11 +41,12 @@ The code path behind every entry below was checked against the pinned tree; figu
 | Gold, Silver, Crystal | [Buena's password words](#buenas-password-words-crystal) | Crystal: the radio password's town, type and station words | Pass a `string` word through `Strings()` (or a registry) where it is drawn |
 | Gold, Silver, Crystal | [Item descriptions](#item-and-tm-descriptions-in-the-pack) | The PACK's item and TM descriptions | A `description` field in the Gen 2 `items` registry, or `Strings()` on the description |
 | Gold, Silver, Crystal | [Default box names](#default-box-names) | `BOX1` … `BOX14` for a box the player never renamed | `Strings()` in `Boxes.defaultName` |
+| Gold, Silver, Crystal | [In-game trades](#in-game-trades) | What a trade NPC says (offer, refusal, thanks, the cable line) | Read the trade lines through the text registry by label |
 | FireRed, LeafGreen | [4](#4-pokédex-categories-and-descriptions-have-no-reachable-registry) | Pokédex categories and descriptions | Route the merged `dexEntry` (kind, text) into `PokedexData` |
 | FireRed, LeafGreen | [5](#5-help-system-and-quest-log) | The help system, the quest log and the place names it records | A text registry keyed by pret label; places recorded as section ids |
 | FireRed, LeafGreen | [8](#8-the-naming-keyboard-is-the-us-layout) | The naming keyboard's letters (no accented letters, no `ß`) | A keyboard layout the language can supply |
 | FireRed, LeafGreen | [9](#9-minor-extraction-and-runtime-inconsistencies) | Small extraction inconsistencies; type badges baked into graphics | Per item (see the entry) |
-| FireRed, LeafGreen | [10](#10-cart-text-the-extractor-never-reaches) | Fame Checker, Safari Zone, cable club, Pokédude and Pokédex rating lines | Extract those texts and look them up by key |
+| FireRed, LeafGreen | [10](#10-cart-text-the-extractor-never-reaches) | Fame Checker, Safari Zone, cable club, Pokédude and Pokédex rating lines | Fame Checker: read its lines through the text table by label; the others: extract them and look them up by key |
 | FireRed, LeafGreen | [13](#13-the-mod-managers-own-screens-are-in-english) | The mod manager's tab headers, titles and mod states | `Strings()` on those literals |
 | FireRed, LeafGreen | [14](#14-the-map-name-popup-spells-its-floor-label-itself) | Translated through a by-English key (entry 15) | Read `gText_%dF`/`gText_B%dF` through `RomText` |
 | FireRed, LeafGreen | [15](#15-a-cart-string-keyed-by-its-english-is-refused-even-where-nothing-else-reaches-it) | Translated through `lang/strings_by_english.lua`: section names, region map guide text, ability names | A label path for those lookups, or an MK306 exemption |
@@ -128,7 +129,8 @@ Summary of what a translation mod can reach at the pinned revision:
 | Menu rows the engine hands to a public list hook (PC, START menu descriptions, party submenu) | Yes | `ui.*` hooks, `config/gsc/literal_handlers.json` |
 | Status abbreviations, #DEX kinds and texts | Yes | `statuses` and `pokemon` registries |
 | Pokédex heights and weights in metres and kilograms | Yes since v0.3.61 | `pokemon` patches (`dexEntry.heightM`/`weightKg`) |
-| Buena's password words, item descriptions, default box names | **No** | see below |
+| Battle messages read by cart label (`Battle:romText`, v0.4.0) | Not yet | the `rom_text` registry (`Schemas.GEN2`, `data.text`), which this mod does not fill yet |
+| Buena's password words, item descriptions, default box names, in-game trades | **No** | see below |
 
 ### Required upstream capabilities
 
@@ -146,9 +148,13 @@ The PACK prints an item's description, or a TM's move description, straight from
 
 A box the player never renamed is named `"BOX" .. index` (`Boxes.defaultName`, `src/core/gen2/Boxes.lua:28-30`, v0.3.63, after pokecrystal's `SetDefaultBoxNames`), with no `Strings()` on the way. Fix: `Strings()` on that name (or a `%d` template).
 
+#### In-game trades
+
+What a trade NPC says (the offer, the refusal, the thanks, the cable line, `TradedForText`) comes from the cart's trade tables (`eventTables.tradeTexts`), which `TradeMenu:lineFor` and `TradeMenu:say` print as extracted (`src/ui/gen2/TradeMenu.lua:154`, `:246`, v0.4.0), with no `Strings()` and no registry on the way, so a Crystal or Gold trade NPC speaks English in every language. Fix: read those lines through the text registry by their label, as the battle messages do since v0.4.0.
+
 ### Translated via a compromise (`engine-contract-gap`)
 
-Between 152 and 182 entries per language in `overrides/<language>/gsc/engine.json` (152 in French). They fall into these kinds:
+Between 145 and 177 entries per language in `overrides/<language>/gsc/engine.json` (145 in French). They fall into these kinds:
 
 - **One cart sentence split across engine fragments**: `Registered the` + `that item.`, `You can't register`, `{PLAYER} used the`, the #DEX rating's two `printf` calls, `%s got %s%d for winning!`.
 - **Bare-suffix cart rows**: `%s o'clock` and `%d min.` come from rows with no placeholder to align against.
@@ -171,7 +177,7 @@ The stat-change and item/move status messages ship the cart's order through numb
 - The clock's weekdays, `o'clock`, minutes and `MORN`/`DAY`/`NITE`: PR #1450; its `AM`/`PM` marker: PR #1759, v0.2.21 ([details](upstream-fixes-history.md#gold-fixed-upstream-engine-changes-not-just-this-projects-config)).
 - PcMenu's CHANGE BOX save flow goes through `Strings()`: PR #1774, v0.2.24 ([details](upstream-fixes-history.md#gold-pcmenus-own-change-box-save-flow)).
 - The SAVE screen's overwrite prompt is the cart's whole three-line text since v0.2.55 ([details](upstream-fixes-history.md#gold-the-save-overwrite-prompts-missing-third-page)).
-- The Options menu (PR #1735) and the naming screen (PR #1738), both in v0.2.24; the PC and storage dialogue and the battle action menu by v0.2.51; the status abbreviations, the #DEX screen and the Pokegear's exit line by v0.3.51; `src/battle/gen2/Battle.lua`'s messages, which at v0.3.63 all go through `Strings()` ([details](upstream-fixes-history.md#gold-formerly-required-upstream-capabilities)).
+- The Options menu (PR #1735) and the naming screen (PR #1738), both in v0.2.24; the PC and storage dialogue and the battle action menu by v0.2.51; the status abbreviations, the #DEX screen and the Pokegear's exit line by v0.3.51; `src/battle/gen2/Battle.lua`'s messages, which at v0.3.63 all went through `Strings()` (since v0.4.0 about forty of them read the cart's row by label through `Battle:romText`, `src/battle/gen2/Battle.lua:2306`) ([details](upstream-fixes-history.md#gold-formerly-required-upstream-capabilities)).
 - On this project's side: the PC rows, the party submenu and the START menu descriptions reached through public hooks ([details](upstream-fixes-history.md#gold-rows-already-reachable-through-an-existing-public-hook)); received-item names (PR #37, see the [same section](upstream-fixes-history.md#gold-formerly-required-upstream-capabilities)); the word order of the stat-change messages before numbered directives ([details](upstream-fixes-history.md#gold-stat-change-and-itemmove-status-messages)); the compromise table of that time is [kept too](upstream-fixes-history.md#gold-the-compromise-table-before-numbered-directives).
 
 ## FireRed
@@ -210,6 +216,8 @@ Fix: route the merged `dexEntry` (kind, and new `text`/`text2` fields) into `Pok
 
 The help system and the "Previously on your quest…" log are extracted packs installed straight into their UI modules (`Help.install`/`QuestLog.install`, `src/core/Game3.lua:152-153`, v0.3.63), with no registry. Corpus: `frlg.script.help_system.*` (369 rows) and `frlg.common.quest_log.*` (125), both keyed by pret label. Their button bars go through `Strings()`; the help text's `{PC_OWNER}` reads the cart's `gString_Bill`/`gString_Someone` (`src/ui/game3/help_system.lua:220`, v0.3.63), but its `{PLAYER}`/`{RIVAL}` fallbacks (`PLAYER`, `RIVAL`, `:217-218`) stay English with the text they belong to. The quest log also records place names in English (`R.location`, `src/core/game3/quest_log_recorder.lua:4-10`, v0.3.63, reads the map section extract's name), so a translated log would still mix in English places.
 
+At v0.4.0 the extractor emits the quest log's rows, so the mod ships them translated in `lang/dialogue.lua` (`gText_QuestLog_*`), but the screen still reads its own pack (`UI.text`, `src/ui/game3/quest_log.lua:18`, v0.4.0) and prints English.
+
 Fix: a text registry (or the dialogue `text` registry itself) consulted by both packs, keyed by their pret labels, and place names recorded as section ids and translated when the log is shown.
 
 #### 8. The naming keyboard is the US layout
@@ -241,7 +249,7 @@ Joining the other way round -- every `frlg.script.*` corpus row whose pret label
 | rival and trainer lines on individual maps (`SilphCo_7F`, `Route22`, `SSAnne_2F_Corridor`, `Route21_North`, …) | 62 | Rival win lines and a few map scripts the BFS does not reach |
 | `berries`, `competitive_brothers`, `eon_ticket`, `mystery_event_msg`, `test`, `*JP*`/`JPText_*` lines | 90 | Ruby/Sapphire leftovers, Japanese-only and debug text: not shown in FireRed |
 
-Where game3 writes the text itself (white-out, REPEL, VS Seeker, field moves, save and PC prompts), it goes through `Strings()` and the pipeline joins the cart's row by its English, so those lines are translated even though the extractor does not emit their keys. The Safari Zone, cable club, Pokédude, Pokédex rating and Fame Checker screens are still missing features or English-only paths. Trainer battle lines are not affected: 913 of the 919 trainer dialog strings carry a text key the table holds, and `trainerbattle` resolves them through it (`src/core/game3/scripting/ops_a.lua`); only the pack's plain-string fallback stays English.
+Where game3 writes the text itself (white-out, REPEL, VS Seeker, field moves, save and PC prompts), it goes through `Strings()` and the pipeline joins the cart's row by its English, so those lines are translated even though the extractor does not emit their keys. The Safari Zone, cable club, Pokédude, Pokédex rating and Fame Checker screens are still missing features or English-only paths. At v0.4.0 the Fame Checker's rows do reach the text table, and the mod ships them translated in `lang/dialogue.lua` (`sFameCheckerFlavorTextPointers`, `sFameCheckerNameAndQuotesPointers`, `sFlavorTextOrigin*`), but the screen reads its own pack for the flavor text, the names and quotes and the origin lines (`FameCheckerUi.flavorText`, `.pickModeText`, `.iconDescription`, `src/ui/game3/fame_checker.lua:270-293`, v0.4.0), so it prints English. Trainer battle lines are not affected: 913 of the 919 trainer dialog strings carry a text key the table holds, and `trainerbattle` resolves them through it (`src/core/game3/scripting/ops_a.lua`); only the pack's plain-string fallback stays English.
 
 Fix: seed the script BFS from the same labels the cart uses for these features (or extract those text tables alongside the scripts), and have the Lua screens look their messages up in the text table by that key. Because every row above is keyed by a pret label with a known address, the pipeline joins them without any new work: they land in `lang/dialogue.lua` as soon as the extractor emits their keys.
 

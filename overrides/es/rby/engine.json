@@ -62,6 +62,11 @@
       "reason": "engine-original",
       "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- this port simplifies the cart's own two-sentence _MonCannotLearnMachineMoveText (\"X is not compatible with Y. It can't learn Y.\") into one generic line naming neither the TM/HM nor the move by name)."
     },
+    "%s checked the\nTRADING BOARD.": {
+      "override": "%s echó un\nojo al PANEL de\u000blos INTERCAMBIOS.",
+      "reason": "engine-original",
+      "provenance": "AI-generated Spanish translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_XCheckedTradingBoard; requires in-game visual validation."
+    },
     "%s found\n%s!": {
       "override": "¡%s encontró\n%s!",
       "reason": "engine-contract-gap",
@@ -141,11 +146,6 @@
       "override": "PP de %s\naumentados!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus RedBlue rb.text_6.PPIncreasedText."
-    },
-    ":L%d": {
-      "override": ":N%d",
-      "reason": "engine-original",
-      "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation. Renamed from \"%s :L%d\" -- gen1recomp v0.2.33's src/ui/BoxMenu.lua:monRow split the nickname (now unwrapped, not run through Strings()) from the level suffix into a separate Strings(\":L%d\", ...) call."
     },
     ":L%d No.%03d": {
       "override": ":N%d Nº%03d",
@@ -261,6 +261,11 @@
       "override": "CONTROLES",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; shared OptionsMenu.lua/LauncherSettings.lua row also used by Gold and Silver (ui/gen2/OptionsMenu.lua); no compatible PokeCorpus qid; requires in-game visual validation."
+    },
+    "Cancel the\nregistration of\u000byour Lv.%s %s?": {
+      "override": "¿Cancelas el\nregistro de tu\u000b%2$s de\u000bnivel %1$s?",
+      "reason": "engine-original",
+      "provenance": "AI-generated Spanish translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_CancelRegistrationOfMon; requires in-game visual validation."
     },
     "Choose a\n<PK><MN> BOX.": {
       "override": "Elige una CAJA\nde <PK><MN>.",
@@ -402,6 +407,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Disambiguated: poke-corpus's automatic matcher found multiple candidate rows for this key and could not pick one on its own; this override selects the closer match by hand."
     },
+    "INFO": {
+      "override": "INFO.",
+      "reason": "engine-original",
+      "provenance": "AI-generated Spanish translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_Info; requires in-game visual validation."
+    },
     "ITEMS": {
       "override": "OBJETOS",
       "reason": "engine-original",
@@ -426,6 +436,11 @@
       "override": "Conectando con\n%s…",
       "reason": "engine-original",
       "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Lv%d": {
+      "override": "Nv.%d",
+      "reason": "engine-original",
+      "provenance": "AI-generated Spanish translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.strings.gText_Level; requires in-game visual validation."
     },
     "MAX FPS": {
       "override": "FPS MÁX",
@@ -582,6 +597,11 @@
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; no compatible PokeCorpus qid was found; requires in-game visual validation."
     },
+    "Please choose the\ntype of POKéMON\u000bthat you would\u000blike in the trade.": {
+      "override": "Elige el tipo de\nPOKéMON que te\u000bgustaría recibir.",
+      "reason": "engine-original",
+      "provenance": "AI-generated Spanish translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_ChooseRequestedMonType; requires in-game visual validation."
+    },
     "Printed %s's\ndata!\f": {
       "override": "¡Datos de %s\nimpresos!\f",
       "reason": "engine-original",
@@ -592,6 +612,11 @@
       "reason": "engine-original",
       "provenance": "No PokeCorpus row: this port composes its own text here (no exact vanilla cart precedent -- the Game Boy Printer's own BOX-printed confirmation, composed for this port's box number + printer feature, no matching cart string)."
     },
+    "REGISTER": {
+      "override": "REGISTRO",
+      "reason": "engine-original",
+      "provenance": "AI-generated Spanish translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.strings.gText_Register2; requires in-game visual validation."
+    },
     "RESET DEFAULTS": {
       "override": "RESTABLECER",
       "reason": "engine-original",
@@ -601,6 +626,16 @@
       "override": "HORIZ. INVERTIDO",
       "reason": "engine-original",
       "provenance": "User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+    },
+    "Registration has\nbeen canceled.": {
+      "override": "Se ha cancelado\nel registro.",
+      "reason": "engine-original",
+      "provenance": "AI-generated Spanish translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_RegistrationCanceled; requires in-game visual validation."
+    },
+    "Registration has\nbeen completed.": {
+      "override": "Se ha finalizado\nel registro.",
+      "reason": "engine-original",
+      "provenance": "AI-generated Spanish translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_RegistraionCompleted; requires in-game visual validation."
     },
     "SCREEN POS": {
       "override": "POS. PANTALLA",
@@ -682,6 +717,11 @@
       "reason": "engine-original",
       "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
+    "TRADING BOARD": {
+      "override": "PANEL INTERCAMB.",
+      "reason": "engine-original",
+      "provenance": "AI-generated Spanish translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_XCheckedTradingBoard; requires in-game visual validation."
+    },
     "TREES": {
       "override": "ÁRBOLES",
       "reason": "engine-contract-gap",
@@ -722,6 +762,11 @@
       "reason": "engine-original",
       "provenance": "AI-generated RBY storage-message localization; source introduced by gen1recomp d633cb4d. Promoted from the upstream-only overrides/<language>/rby/engine_upstream.json layer (the v0.2.41 contract) into the pinned layer: this key is a real Strings() callsite on the pinned gen1recomp revision (v0.2.61), so pinned builds -- which never load the upstream layer -- were showing it in English."
     },
+    "The registration\nhas been canceled.": {
+      "override": "Se ha cancelado\nel registro.",
+      "reason": "engine-original",
+      "provenance": "AI-generated Spanish translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_RegistrationCanceled2; requires in-game visual validation."
+    },
     "The request was\ncanceled.": {
       "override": "Se ha cancelado\nla petición.",
       "reason": "engine-original",
@@ -731,6 +776,11 @@
       "override": "No hay\nrespuesta...",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus Yellow y.text_3.SleepingPikachuText1."
+    },
+    "This TRADING BOARD\nis used for\u000boffering a POKéMON\u000bfor a trade.\fAll you need to do\nis register a\u000bPOKéMON for a\u000btrade.\fAnother TRAINER\nmay offer a party\u000bPOKéMON in return\u000bfor the trade.": {
+      "override": "El PANEL de los\nINTERCAMBIOS se\u000busa para ofrecer\u000bPOKéMON para\u000bintercambio.\fLo único que hay\nque hacer es\u000bregistrar al\u000bPOKéMON que\u000bquieras ofrecer.\fHabrá algún\nENTRENADOR que\u000bofrezca un POKéMON\u000bde su equipo a\u000bcambio.",
+      "reason": "engine-original",
+      "provenance": "AI-generated Spanish translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_TradingBoardInfo; requires in-game visual validation."
     },
     "This game is too\nold to link up.\fUpdate it to meet\nother TRAINERS.": {
       "override": "Este juego está\nanticuado.\fActualízalo para\nconocer a otros\u000bENTRENADORES.",
@@ -801,6 +851,26 @@
       "override": "Esperando a\n%s…",
       "reason": "engine-original",
       "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/union/gen1/Text.lua), worded with the carts' Union Room terms (SALA UNIÓN) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "Welcome to the\nTRADING BOARD.\fYou may register\nyour POKéMON and\u000boffer it up for\u000ba trade.\fWould you like to\nregister one of\u000byour POKéMON?": {
+      "override": "Éste es el PANEL\nde los\u000bINTERCAMBIOS.\fAquí se pueden\nregistrar POKéMON\u000by ofrecerlos para\u000bintercambio.\f¿Quieres registrar\na algún POKéMON?",
+      "reason": "engine-original",
+      "provenance": "AI-generated Spanish translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_RegisterMonAtTradingBoard; requires in-game visual validation."
+    },
+    "Which of your\nparty POKéMON will\u000byou offer in\u000btrade?": {
+      "override": "¿A qué miembro de\ntu equipo POKéMON\u000bofreces en el\u000bintercambio?",
+      "reason": "engine-original",
+      "provenance": "AI-generated Spanish translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_WhichMonWillYouOffer; requires in-game visual validation."
+    },
+    "Would you like to\nask %s to\u000bmake a trade?": {
+      "override": "¿Quieres pedirle a\n%s un\u000bintercambio?",
+      "reason": "engine-original",
+      "provenance": "AI-generated Spanish translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_AskTrainerToMakeTrade; requires in-game visual validation."
+    },
+    "You don't have a\n%s-type POKéMON\u000bthat %s wants.": {
+      "override": "%2$s quiere un\nPOKéMON de tipo\u000b%1$s,\u000by no tienes…",
+      "reason": "engine-original",
+      "provenance": "AI-generated Spanish translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_DontHaveTypeTrainerWants; requires in-game visual validation."
     },
     "auto": {
       "override": "AUTO",

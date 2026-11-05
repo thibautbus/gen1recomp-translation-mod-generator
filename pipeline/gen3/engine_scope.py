@@ -114,6 +114,7 @@ each("src/core/game3/link/union_room.lua (Union.INVITE_ITEMS key)", Union.INVITE
 local LinkStatus = require("src.core.game3.link.status")
 each("src/core/game3/link/status.lua (Status.LABELS)", LinkStatus.LABELS)
 add("src/core/game3/link/status.lua (Status.TITLE)", LinkStatus.TITLE)
+add("src/core/game3/link/init.lua (Caps.MODS_TEXT)", require("src.online.union.Caps").MODS_TEXT)
 --[[FAMILY_RECORDS]]
 -- the nine in-game trades: their nickname and OT name are printed through
 -- Strings() (src/core/game3/scripting/natives_trade.lua:244, :260, :424)

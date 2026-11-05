@@ -457,9 +457,23 @@
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"kg\" in this language.",
           "original_reason": "engine-contract-gap",
           "original_provenance": "Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"kg\" in this language."
+        },
+        "INFO": {
+          "override": "INFO",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: AI-generated German translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_Info; requires in-game visual validation.",
+          "original_reason": "engine-original",
+          "original_provenance": "AI-generated German translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_Info; requires in-game visual validation."
+        },
+        "Lv%d": {
+          "override": "Lv%d",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: AI-generated German translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.strings.gText_Level; requires in-game visual validation.",
+          "original_reason": "engine-original",
+          "original_provenance": "AI-generated German translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.strings.gText_Level; requires in-game visual validation."
         }
       },
-      "no_op_total": 26
+      "no_op_total": 28
     },
     "es": {
       "total": 30,
@@ -1247,9 +1261,16 @@
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"kg\" in this language.",
           "original_reason": "engine-contract-gap",
           "original_provenance": "Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"kg\" in this language."
+        },
+        "BALLS:": {
+          "override": "BALLS:",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus gs.menu_2.StartMenu_PrintBugContestStatus.BallsString, which the French cart writes BALLS: too.",
+          "original_reason": "engine-corpus",
+          "original_provenance": "Corpus gs.menu_2.StartMenu_PrintBugContestStatus.BallsString (identical to the English source)."
         }
       },
-      "no_op_total": 28
+      "no_op_total": 29
     },
     "it": {
       "total": 34,
@@ -1619,9 +1640,16 @@
           "provenance": "Explicit English fallback: runtime identity no-op; original provenance: Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"kg\" in this language.",
           "original_reason": "engine-contract-gap",
           "original_provenance": "Corpus-confirmed from gs.pokedex.Pokedex_DrawDexEntryScreenBG.Weight: the unit after a metric #DEX value (ui/gen2/PokedexMenu.lua) is the English \"kg\" in this language."
+        },
+        "INFO": {
+          "override": "INFO",
+          "reason": "engine-fallback",
+          "provenance": "Explicit English fallback: runtime identity no-op; original provenance: AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_Info; requires in-game visual validation.",
+          "original_reason": "engine-original",
+          "original_provenance": "AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_Info; requires in-game visual validation."
         }
       },
-      "no_op_total": 22
+      "no_op_total": 23
     },
     "ja-Hrkt": {
       "total": 10,
