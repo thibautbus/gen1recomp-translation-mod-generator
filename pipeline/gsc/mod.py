@@ -29,6 +29,7 @@ from .join import (
     join_gs_pointers, load_gs_dialogue_overrides, load_gs_placeholder_decisions,
     load_gs_pointer_decisions, load_gold_silver_pointer_aliases, read_corpus_rows,
 )
+from .rom_text import join_rom_text, parse_rom_text_catalog, rom_text_scope
 from .text import parse_gs_text_catalog
 from .trainer_names import parse_trainer_names, trainer_name_catalog
 from ..shared.leak_audit import audit_generated_catalogs
@@ -124,6 +125,9 @@ GS_CATALOG_HOOKS = {
     "phone_contacts": "mod.content.phone_contacts:patch(id, { name = value })",
     "decorations": "mod.content.decorations:patch(id, { name = value })",
     "radio_channels": "mod.content.radio_channels:patch(id, { name = value })",
+    # The cart text the engine reads by label (data.text, src/core/RomText.lua):
+    # the Gen 2 battle messages since gen1recomp v0.4.0 (pipeline.gsc.rom_text).
+    "rom_text": "mod.content.rom_text:override(id, value)",
 }
 GS_CATALOG_HOOKS["ui_labels"] = None
 
@@ -264,9 +268,9 @@ GS_OPTIONAL_CONTENT_REGISTRIES = ("phone_contacts", "decorations", "radio_channe
 
 CRYSTAL_CATALOG_HOOKS = {
     "strings": "mod.content.strings:override(id, value)",
-    # Upstream-dependent: v0.2.41 routes content.text to gen2Text, while
-    # src/core/RomText reads data.text. The dedicated non-routed registry is
-    # the only public API that reaches these seven extracted labels.
+    # content.text is routed to gen2Text, while src/core/RomText reads
+    # data.text: the dedicated rom_text registry is the only public API that
+    # reaches Crystal's own wording of the labels it prints.
     "rom_text": "mod.content.rom_text:override(id, value)",
     "item_names": "mod.content.items:patch(id, { name = value })",
     "trainer_class_names": "mod.content.trainers:patch(id, { name = value })",
@@ -278,7 +282,7 @@ CRYSTAL_CATALOG_HOOKS = {
 # #DEX rows at all leaves it {} rather than raising a BuildError.  ja-Hrkt/ko
 # rows are single-page and ship a blank second page (BLANK_DEX_PAGE).
 # Verified by the release gate like any required registry when non-empty.
-GS_OPTIONAL_VERIFIED_REGISTRIES = ("species_dex_text2",)
+GS_OPTIONAL_VERIFIED_REGISTRIES = ("species_dex_text2", "rom_text")
 
 def gs_mod_id(language: str) -> str:
     """Return the generation-scoped Gold mod identifier."""
@@ -498,7 +502,7 @@ def generate_gs_mod(
                     "    end\n"
                 )
             crystal_registry_registration = (
-                "  -- Crystal-only named records, RomText labels and Strings keys.\n"
+                "  -- Crystal-only named records and Strings keys, and Crystal's own wording of the cart text read by label.\n"
                 "  -- The edition guard prevents every one from leaking into Gold/Silver.\n"
                 + _CRYSTAL_GUARD
                 + "  if crystal_game_version then\n"
@@ -1117,7 +1121,8 @@ def build_gs_dialogue_mod(
     ``crystal_text_catalog`` and ``crystal_catalogs`` are passed through to
     generate_gs_mod(); their Crystal ROM extraction and corpus joins happen
     separately in build_gs().  The latter contains only edition-exclusive
-    names, RomText labels and Strings keys, never shared Gold/Silver rows.
+    names and Strings keys, and Crystal's own rom_text wording, which this
+    function trims to the lines that differ from the Gold/Silver catalog.
 
     ``crystal_corpus_dir``, when given, is poke-corpus's own Crystal/
     collection: used here (not in pipeline/gsc/crystal_mod.py, unlike the dialogue join)
@@ -1297,6 +1302,27 @@ def build_gs_dialogue_mod(
     # ui_labels reuses hooks already exposed on the pinned engine
     # (ui.pc.items, ui.options.rows, ...), same as oak_speech above.
     extra_catalogs["ui_labels"] = _gs_ui_labels(corpus_rows)
+    # The cart text the engine reads by label (pipeline.gsc.rom_text).  Its
+    # scope comes from the engine checkout, like the engine strings above.
+    if engine_source is not None and profile_for(profile).supports_rom_text:
+        rom_text_source = parse_rom_text_catalog(gold_out_dir / "gs_rom_text.tsv")
+        rom_text, rom_text_stats = join_rom_text(
+            rom_text_source, rom_text_scope(engine_source, rom_text_source),
+            corpus_rows, language, "gs.",
+        )
+        extra_catalogs["rom_text"] = rom_text
+        stats["rom_text"] = rom_text_stats
+        # Crystal's catalog carries its own row for every label in scope;
+        # the ones that read the same as Gold/Silver's add nothing on top of
+        # the catalog every edition applies.
+        crystal_rom_text = (crystal_catalogs or {}).get("rom_text")
+        if crystal_rom_text:
+            crystal_catalogs["rom_text"] = {
+                label: value for label, value in crystal_rom_text.items()
+                if rom_text.get(label) != value
+            }
+            if crystal_coverage is not None and isinstance(crystal_coverage.get("rom_text"), dict):
+                crystal_coverage["rom_text"]["shipped"] = len(crystal_catalogs["rom_text"])
     stats["index_catalogs"] = index_stats
     stats["engine_profile"] = profile
     pointer_coverage = gs_coverage_report(entries)
@@ -1319,7 +1345,7 @@ def build_gs_dialogue_mod(
             "percent": round(100.0 * rom_translated / rom_total, 2) if rom_total else 100.0,
         },
     }
-    for key in ("engine", "engine_gen2"):
+    for key in ("engine", "engine_gen2", "rom_text"):
         if key in stats:
             stats["coverage"][key] = stats[key]
     if crystal_coverage is not None:
@@ -1430,6 +1456,7 @@ def build_gs(
     crystal_text_catalog = crystal_text_catalog_from_join(crystal_entries)
     crystal_catalogs, crystal_feature_stats = crystal_feature_catalogs(
         crystal_out, corpus_crystal, language, engine_profile=engine_profile,
+        engine_source=gen1recomp,
     )
     # Same convention as Gold/Silver's pointer coverage (gs_coverage_report):
     # markup-only records ("…" alone, empty boxes) have no prose to translate
@@ -1503,6 +1530,7 @@ def build_gs(
         ("rom", "Gold and Silver ROM aggregate"),
         ("engine_gen2", "Gold and Silver-related engine strings"),
         ("engine", "All engine strings"),
+        ("rom_text", "Engine text read by cart label"),
     ):
         section = gate_report["coverage"].get(key) or {}
         log(

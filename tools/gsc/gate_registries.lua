@@ -91,7 +91,7 @@ if expectationPath and expectationPath ~= "" then
   -- species_dex_text2 is (a missing/empty per-edition catalog -- e.g. no
   -- Crystal corpus supplied -- degrades to omitting the key, not a
   -- BuildError; see pipeline.gsc.mod._write_gate_expectations).
-  local optional = { species_dex_text2 = true,
+  local optional = { species_dex_text2 = true, rom_text = true,
     phone_contacts = true, decorations = true, radio_channels = true,
     trainer_names = true, trainer_names_crystal = true }
   for name, _ in pairs(EDITION_DEX_TEXT_KEYS) do optional[name] = true end
@@ -193,6 +193,12 @@ if expectations then
     if editionSpecific[name] then
       -- shape already checked above; value verified under its own edition
       -- load further down.
+    elseif name == "rom_text" and type(expected) == "table" then
+      eq(data.text and data.text[expected.id], expected.value,
+        "rom_text[" .. expected.id .. "] is selected in data.text")
+      local RomText = require("src.core.RomText")
+      eq(RomText(data, expected.id, "ROMTEXT FALLBACK"), expected.value,
+        "RomText reads rom_text[" .. expected.id .. "] from data.text")
     elseif name == "oak_speech" and type(expected) == "table" then
       local Runtime = require("src.mods.Runtime")
       local speech = { texts = {} }

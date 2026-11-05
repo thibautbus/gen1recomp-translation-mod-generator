@@ -92,6 +92,17 @@ leak onto a Gold or Silver one.
   corpus, so its Crystal dialogue stays in English, but its 6/6 named
   registries and 38/39 engine strings are hand-composed; the 39th, "???",
   is an English-identical no-op.
+- `Engine text read by cart label` covers the cart lines the engine prints
+  by label from `data.text` rather than through `Strings()`: the battle
+  messages since gen1recomp v0.4.0, plus the Union Room's cancelled link
+  (48 labels on Gold and Silver). The scope is every label of the extracted
+  catalog named in an engine file
+  [`config/gsc/rom_text_scope.json`](../config/gsc/rom_text_scope.json)
+  lists as a reader, and each label takes the corpus row of the same name.
+  Every language reaches 48/48. Crystal's own wording of those lines, its
+  gender question and Battle Tower rules (55 labels) is reported as the
+  Crystal `rom_text` section, 55/55 except in Korean, whose Crystal battles
+  show the Gold/Silver lines.
 
 ## FireRed and LeafGreen
 

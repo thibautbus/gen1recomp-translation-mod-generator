@@ -189,13 +189,11 @@ GS_REQUIRED_TSV = (
     "gs_trainer_classes.tsv", "gs_trainer_names.tsv", "gs_landmarks.tsv",
 )
 
-# v0.2.41 has neither the public RomText registry nor the type-search
-# registry.  Keep both artifacts in the complete extractor contract for the
-# opt-in upstream overlay, while the published profile accepts the ordinary
-# Gold/Silver/Crystal extraction without requiring either upstream-only TSV.
+# The type-search registry is an opt-in upstream overlay, so the published
+# profile accepts an extraction without its TSV.  gs_rom_text.tsv is required
+# on both: the pinned engine reads its Gen 2 battle text from data.text.
 GS_PINNED_REQUIRED_TSV = tuple(
-    name for name in GS_REQUIRED_TSV
-    if name not in {"gs_rom_text.tsv", "gs_types.tsv"}
+    name for name in GS_REQUIRED_TSV if name != "gs_types.tsv"
 )
 
 

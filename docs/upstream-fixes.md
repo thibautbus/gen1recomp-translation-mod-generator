@@ -129,12 +129,12 @@ Summary of what a translation mod can reach at the pinned revision:
 | Menu rows the engine hands to a public list hook (PC, START menu descriptions, party submenu) | Yes | `ui.*` hooks, `config/gsc/literal_handlers.json` |
 | Status abbreviations, #DEX kinds and texts | Yes | `statuses` and `pokemon` registries |
 | Pokédex heights and weights in metres and kilograms | Yes since v0.3.61 | `pokemon` patches (`dexEntry.heightM`/`weightKg`) |
-| Battle messages read by cart label (`Battle:romText`, v0.4.0) | Not yet | the `rom_text` registry (`Schemas.GEN2`, `data.text`), which this mod does not fill yet |
+| Battle messages and the few other lines the engine reads by cart label (`Battle:romText`, `src/core/RomText.lua`) | Yes since v0.4.0 | `rom_text` registry (`data.text`), `lang/rom_text.lua` plus Crystal's own wording in `lang/crystal_rom_text.lua` |
 | Buena's password words, item descriptions, default box names, in-game trades | **No** | see below |
 
 ### Required upstream capabilities
 
-Gen 2 keys its cart text by `bank:address` and, outside two Crystal screens (`src/ui/gen2/GenderSelect.lua`, `src/script/gen2/specials/battle_tower.lua`), reads none of it by label, so a screen that prints cart text without `Strings()` or a registry is out of a mod's reach.
+Gen 2 keys its script text by `bank:address`. The engine reads a small part of the cart's text by label from `data.text` instead (the battle messages since v0.4.0, Crystal's gender question and Battle Tower rules, the Union Room's cancelled link), which the mod overrides through the `rom_text` registry; `config/gsc/rom_text_scope.json` lists the files that read it. A screen that prints cart text through neither, nor `Strings()`, is out of a mod's reach.
 
 #### Buena's password words (Crystal)
 
@@ -177,7 +177,7 @@ The stat-change and item/move status messages ship the cart's order through numb
 - The clock's weekdays, `o'clock`, minutes and `MORN`/`DAY`/`NITE`: PR #1450; its `AM`/`PM` marker: PR #1759, v0.2.21 ([details](upstream-fixes-history.md#gold-fixed-upstream-engine-changes-not-just-this-projects-config)).
 - PcMenu's CHANGE BOX save flow goes through `Strings()`: PR #1774, v0.2.24 ([details](upstream-fixes-history.md#gold-pcmenus-own-change-box-save-flow)).
 - The SAVE screen's overwrite prompt is the cart's whole three-line text since v0.2.55 ([details](upstream-fixes-history.md#gold-the-save-overwrite-prompts-missing-third-page)).
-- The Options menu (PR #1735) and the naming screen (PR #1738), both in v0.2.24; the PC and storage dialogue and the battle action menu by v0.2.51; the status abbreviations, the #DEX screen and the Pokegear's exit line by v0.3.51; `src/battle/gen2/Battle.lua`'s messages, which at v0.3.63 all went through `Strings()` (since v0.4.0 about forty of them read the cart's row by label through `Battle:romText`, `src/battle/gen2/Battle.lua:2306`) ([details](upstream-fixes-history.md#gold-formerly-required-upstream-capabilities)).
+- The Options menu (PR #1735) and the naming screen (PR #1738), both in v0.2.24; the PC and storage dialogue and the battle action menu by v0.2.51; the status abbreviations, the #DEX screen and the Pokegear's exit line by v0.3.51; `src/battle/gen2/Battle.lua`'s messages, which at v0.3.63 all went through `Strings()` (since v0.4.0 most of them read the cart's row by label through `Battle:romText`, `src/battle/gen2/Battle.lua:2306`, which the mod translates through the `rom_text` registry) ([details](upstream-fixes-history.md#gold-formerly-required-upstream-capabilities)).
 - On this project's side: the PC rows, the party submenu and the START menu descriptions reached through public hooks ([details](upstream-fixes-history.md#gold-rows-already-reachable-through-an-existing-public-hook)); received-item names (PR #37, see the [same section](upstream-fixes-history.md#gold-formerly-required-upstream-capabilities)); the word order of the stat-change messages before numbered directives ([details](upstream-fixes-history.md#gold-stat-change-and-itemmove-status-messages)); the compromise table of that time is [kept too](upstream-fixes-history.md#gold-the-compromise-table-before-numbered-directives).
 
 ## FireRed

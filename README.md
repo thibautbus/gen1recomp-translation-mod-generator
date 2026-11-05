@@ -352,16 +352,17 @@ Yellow; the engine strings are those original RBY gameplay and interfaces use.
 ### Gold, Silver and Crystal
 
 Crystal's own dialogue is measured separately from Gold and Silver's text.
-Korean's gaps are Crystal's own text, which has no Korean collection.
+Korean's gaps are Crystal's own text, which has no Korean collection. The
+battle messages the engine reads by cart label are their own column.
 
-| Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings | Crystal dialogue coverage |
-| --- | ---: | ---: | ---: |
-| `fr` | 6839/6839 (100%) | 983/983 (100%) | 3994/3994 (100%) |
-| `de` | 6839/6839 (100%) | 983/983 (100%) | 3994/3994 (100%) |
-| `es` | 6839/6839 (100%) | 983/983 (100%) | 3994/3994 (100%) |
-| `it` | 6839/6839 (100%) | 983/983 (100%) | 3994/3994 (100%) |
-| `ja-Hrkt` | 6839/6839 (100%) | 983/983 (100%) | 3994/3994 (100%) |
-| `ko` | 5796/6839 (84.75%) | 983/983 (100%) | 0/3994 (0%) |
+| Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings | Engine text read by cart label | Crystal dialogue coverage |
+| --- | ---: | ---: | ---: | ---: |
+| `fr` | 6839/6839 (100%) | 983/983 (100%) | 48/48 (100%) | 3994/3994 (100%) |
+| `de` | 6839/6839 (100%) | 983/983 (100%) | 48/48 (100%) | 3994/3994 (100%) |
+| `es` | 6839/6839 (100%) | 983/983 (100%) | 48/48 (100%) | 3994/3994 (100%) |
+| `it` | 6839/6839 (100%) | 983/983 (100%) | 48/48 (100%) | 3994/3994 (100%) |
+| `ja-Hrkt` | 6839/6839 (100%) | 983/983 (100%) | 48/48 (100%) | 3994/3994 (100%) |
+| `ko` | 5796/6839 (84.75%) | 983/983 (100%) | 48/48 (100%) | 0/3994 (0%) |
 
 ### FireRed and LeafGreen
 

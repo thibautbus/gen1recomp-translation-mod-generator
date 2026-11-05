@@ -14,7 +14,8 @@ class EngineProfileTests(unittest.TestCase):
     def test_default_is_the_published_pinned_profile(self):
         self.assertEqual(PINNED_PROFILE, "pinned")
         self.assertEqual(normalize_engine_profile(None), PINNED_PROFILE)
-        self.assertNotIn("gs_rom_text.tsv", gs_required_tsv())
+        # The pinned engine reads its Gen 2 battle text from data.text.
+        self.assertIn("gs_rom_text.tsv", gs_required_tsv())
         self.assertNotIn("gs_types.tsv", gs_required_tsv())
         self.assertIn("gs_rom_text.tsv", gs_required_tsv(UPSTREAM_PROFILE))
         self.assertIn("gs_types.tsv", gs_required_tsv(UPSTREAM_PROFILE))
@@ -30,7 +31,7 @@ class EngineProfileTests(unittest.TestCase):
     def test_pinned_and_upstream_paths_keep_their_capability_boundaries(self):
         self.assertEqual(normalize_engine_profile("pinned"), PINNED_PROFILE)
         self.assertEqual(normalize_engine_profile("upstream-local"), UPSTREAM_PROFILE)
-        self.assertFalse(profile_for(PINNED_PROFILE).supports_rom_text)
+        self.assertTrue(profile_for(PINNED_PROFILE).supports_rom_text)
         self.assertTrue(profile_for(UPSTREAM_PROFILE).supports_rom_text)
         # Strings()/Strings.source() matching works on both profiles --
         # match_gs_engine_strings() verifies a pinned checkout against the

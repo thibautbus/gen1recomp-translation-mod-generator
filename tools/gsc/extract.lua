@@ -25,8 +25,8 @@
 -- same manifest gen1recomp's own RomExtractorGen2 would read this ROM
 -- through at runtime (RomExtractorGen2.lua's own edition branches already
 -- cover "crystal" alongside "gold"/"silver").
--- The optional engine_profile is "pinned" (default, currently backed by
--- gen1recomp v0.2.41) or "upstream-local".
+-- The optional engine_profile is "pinned" (default: config/pipeline.toml's
+-- gen1recomp revision) or "upstream-local".
 --
 -- Writes, in <out_dir>:
 --   gs_text.tsv     pointer -> text, from the "scripts" stage (required)
@@ -44,7 +44,6 @@ assert(edition == "gold" or edition == "silver" or edition == "crystal",
 engineProfile = engineProfile or "pinned"
 assert(engineProfile == "pinned" or engineProfile == "upstream-local",
   "engine profile must be \"pinned\" or \"upstream-local\", got " .. tostring(engineProfile))
-local upstreamProfile = engineProfile == "upstream-local"
 
 package.path = table.concat({
   root .. "/?.lua",
@@ -118,18 +117,10 @@ stage("stdScripts", function() return extractor:extractStdScripts() end)
 stage("scripts", function()
   return extractor:extractScriptsAndText(results.maps, results.stdScripts)
 end)
-if upstreamProfile then
-  stage("text", function()
-    assert(type(extractor.extractText) == "function", "upstream profile requires RomExtractorGen2:extractText")
-    return extractor:extractText()
-  end)
-else
-  -- RomExtractorGen2:extractText() and its public data.text output were
-  -- introduced after the v0.2.41 API.  Script text remains available through
-  -- extractScriptsAndText and is sufficient for the pinned release.
-  report[#report + 1] = { name = "text", ok = true, skipped = true,
-    err = "not supported by pinned v0.2.41 API" }
-end
+-- data.text (data/generated/rom_text.lua): the engine prose the runtime
+-- reads by label through src/core/RomText.lua, which mods reach through
+-- the rom_text registry.
+stage("text", function() return extractor:extractText() end)
 stage("pokemon", function() return extractor:extractPokemon() end)
 stage("moves", function() return extractor:extractMoves() end)
 stage("items", function() return extractor:extractItems() end)
@@ -237,7 +228,7 @@ for _, row in ipairs(report) do
 end
 stagesOut:close()
 
-if upstreamProfile then
+do
   local romTextOut = assert(io.open(outDir .. "/gs_rom_text.tsv", "w"))
   local romTextLabels = {}
   for label, _ in pairs(results.text or {}) do romTextLabels[#romTextLabels + 1] = label end

@@ -99,8 +99,7 @@ def match_crystal_engine_strings(
     reason to discard it). Keys neither in the corpus nor in overrides stay
     an explicit English fallback, same as everywhere else in this catalog.
     ``corpus_rows``, when given, is read_corpus_rows()'s own output for this
-    corpus_dir/language, same as crystal_registry_catalogs()/
-    join_crystal_rom_text().
+    corpus_dir/language, same as crystal_registry_catalogs().
     """
     keys = sorted(load_gs_engine_scope_exclusions())
     corpus_dir = Path(corpus_dir)
