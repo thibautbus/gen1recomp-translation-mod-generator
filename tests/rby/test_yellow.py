@@ -53,6 +53,43 @@ class YellowDialogueLayerTests(unittest.TestCase):
         self.assertEqual(stats["shared_safe"], 1)
         self.assertEqual(stats["versioned_required"], 0)
 
+    def test_english_shared_safe_labels_are_skipped(self):
+        red = {"_OakSpeechText1": "Fixture line one.\nLine two."}
+        yellow = dict(red)
+        records = [
+            Alignment("y.text_3.OakSpeechText1", "yellow",
+                      CorpusRecord("y.text_3.OakSpeechText1", "en", "Fixture line one.\nLine two.", "yellow", "en"),
+                      CorpusRecord("y.text_3.OakSpeechText1", "en", "Fixture line one.\nLine two.", "yellow", "en"),
+                      "anchor"),
+        ]
+        layer, stats = yellow_dialogue_layer(red, yellow, records, "en", red_translation=red)
+        self.assertEqual(layer, {})
+        self.assertEqual(stats["shared_safe"], 1)
+        self.assertNotIn("identity_emitted", stats)
+
+    def test_unmatched_english_shared_safe_rows_are_not_emitted_as_empty_identities(self):
+        text = {"_Absent": "Keep this!"}
+        layer, stats = yellow_dialogue_layer(text, text, [], "en", red_translation={})
+        self.assertEqual(layer, {})
+        self.assertNotIn("identity_emitted", stats)
+
+    def test_english_shared_text_with_different_yellow_target_is_emitted(self):
+        red = {"_OakSpeechText1": "Fixture line one."}
+        yellow = dict(red)
+        records = [
+            Alignment("y.text_3.OakSpeechText1", "yellow",
+                      CorpusRecord("y.text_3.OakSpeechText1", "en", "Fixture line one.", "yellow", "en"),
+                      CorpusRecord("y.text_3.OakSpeechText1", "en", "Fixture Yellow line.", "yellow", "en"),
+                      "anchor"),
+        ]
+        layer, stats = yellow_dialogue_layer(
+            red, yellow, records, "en",
+            red_translation={"_OakSpeechText1": "Hi there!"},
+        )
+        self.assertEqual(layer, {"_OakSpeechText1": "Fixture Yellow line."})
+        self.assertEqual(stats["translation_variant"], 1)
+        self.assertEqual(stats["versioned_required"], 0)
+
     def test_same_english_with_yellow_target_variant_is_emitted(self):
         red = {"_BattleCryText": "Ayah!"}
         yellow = {"_BattleCryText": "Ayah!"}
@@ -103,6 +140,29 @@ class YellowDialogueLayerTests(unittest.TestCase):
         self.assertEqual(stats["versioned_required"], 1)
         self.assertEqual(stats["matched"], 0)
         self.assertEqual(stats["unmatched"], 1)
+
+    def test_unmatched_english_versioned_label_never_copies_yellow_rom_text(self):
+        layer, stats = yellow_dialogue_layer(
+            {"_X": "Red"}, {"_X": "Yellow"}, [], "en", red_translation={},
+        )
+        self.assertEqual(layer, {})
+        self.assertEqual(stats["matched"], 0)
+        self.assertEqual(stats["unmatched"], 1)
+
+    def test_unmatched_english_line_shared_with_red_keeps_the_common_row(self):
+        text = {"_X": "Fixture line one."}
+        layer, stats = yellow_dialogue_layer(
+            text, text, [], "en", red_translation={"_X": "Fixture line one."},
+        )
+        self.assertEqual(layer, {})
+        self.assertEqual((stats["shared_safe"], stats["translation_variant"]), (1, 0))
+
+    def test_unmatched_english_versioned_label_rejects_red_translation_shadow(self):
+        with self.assertRaisesRegex(ValueError, "no matched English PokeCorpus row"):
+            yellow_dialogue_layer(
+                {"_X": "Red"}, {"_X": "Yellow"}, [], "en",
+                red_translation={"_X": "Red translation"},
+            )
 
     def test_yellow_dex_entry_matches_through_y_canonical_prefix(self):
         # Regression: the canonical dex_text rule used to hard-code the "rb."

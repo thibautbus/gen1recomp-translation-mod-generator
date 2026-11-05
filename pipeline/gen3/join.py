@@ -393,7 +393,7 @@ def _reads_as(english: str, rom_ir: list[dict], charmap: PretCharmap, battle: bo
 
 
 def _join_braille(entry: "Gen3DialogueEntry", spelled: str, target: str,
-                  rom_ir: list[dict]) -> None:
+                  rom_ir: list[dict], language: str) -> None:
     """A braille message: the corpus writes every cart's line as Unicode
     braille, the extractor decodes the cart's own line to Latin letters
     (``decode_braille``), and the runtime draws a Unicode cell as that very
@@ -413,6 +413,8 @@ def _join_braille(entry: "Gen3DialogueEntry", spelled: str, target: str,
         return
     if braille_text(target) == spelled:
         entry.status = SAME_AS_ENGLISH
+        if language == "en":
+            entry.translation = [{"t": "text", "s": target}, {"t": "eos"}]
         return
     entry.translation = [{"t": "text", "s": target}, {"t": "eos"}]
     entry.status = TRANSLATED
@@ -523,7 +525,7 @@ def join_gen3_dialogue(
             continue
         spelled = braille_text(corpus.english[index])
         if spelled is not None:
-            _join_braille(entry, spelled, corpus.target[index], rom_ir)
+            _join_braille(entry, spelled, corpus.target[index], rom_ir, corpus.language)
             continue
         try:
             english_ir = corpus_ir(corpus.english[index], charmap, battle=battle)
@@ -564,6 +566,8 @@ def join_gen3_dialogue(
             continue
         if target_ir == rom_ir:
             entry.status = SAME_AS_ENGLISH
+            if corpus.language == "en":
+                entry.translation = target_ir
             continue
         entry.translation = target_ir
         entry.status = (OVERRIDE if override else REVIEWED if reviewed
@@ -581,7 +585,7 @@ def dialogue_stats(entries: Iterable[Gen3DialogueEntry]) -> dict:
     return {
         "total": total,
         "covered": covered,
-        "shipped": sum(stats[status] for status in SHIPPED),
+        "shipped": sum(ships_dialogue(entry) for entry in entries),
         "percent": round(100.0 * covered / total, 2) if total else 100.0,
         "ignored_markup_only": stats[MARKUP_ONLY],
         "ignored_undecodable": stats[UNDECODABLE],
@@ -590,9 +594,14 @@ def dialogue_stats(entries: Iterable[Gen3DialogueEntry]) -> dict:
     }
 
 
+def ships_dialogue(entry: "Gen3DialogueEntry") -> bool:
+    """Whether the mod carries this entry: a translation, or an English
+    template's identity row."""
+    return bool(entry.translation) and (entry.status in SHIPPED or entry.status == SAME_AS_ENGLISH)
+
+
 def dialogue_catalog(entries: Iterable[Gen3DialogueEntry]) -> dict[str, list[dict]]:
-    return {entry.key: entry.translation for entry in entries
-            if entry.status in SHIPPED and entry.translation}
+    return {entry.key: entry.translation for entry in entries if ships_dialogue(entry)}
 
 
 # ------------------------------------------------------------------ names
@@ -676,6 +685,7 @@ class CatalogResult:
             "total": total,
             "translated": self.stats["translated"],
             "same_as_english": self.stats["same_as_english"],
+            "shipped": self.stats["translated"] + self.stats["identity_shipped"],
             "percent": round(100.0 * covered / total, 2) if total else 100.0,
             "fallback_english": total - covered,
         }
@@ -724,6 +734,9 @@ def join_indexed_catalog(
             continue
         if value == english:
             result.stats["same_as_english"] += 1
+            if corpus.language == "en":
+                result.values[id_] = value
+                result.stats["identity_shipped"] += 1
             continue
         result.values[id_] = value
         result.stats["translated"] += 1
@@ -812,6 +825,9 @@ def join_item_descriptions(
             continue
         if value == english:
             result.stats["same_as_english"] += 1
+            if corpus.language == "en":
+                result.values[id_] = value
+                result.stats["identity_shipped"] += 1
             continue
         result.values[id_] = value
         result.stats["translated"] += 1
@@ -1173,7 +1189,7 @@ def join_gen3_engine_strings(
                     origin = "corpus"
                 except ValueError:
                     value = None
-        if value is None and companion and key in companion:
+        if value is None and companion and companion.get(key):
             value, origin = companion[key], "companion"
         if value is None and key in game3:
             value, origin = game3[key], "game3_override"
@@ -1182,16 +1198,21 @@ def join_gen3_engine_strings(
             value, origin = shared[key].replace("\v", "\n"), "shared_override"
         if value is None:
             details[key] = "fallback_english"
+            # The English template lists every row of the scope: an empty
+            # value is one the corpus does not hold, left for a translator.
+            if language == "en":
+                values[key] = ""
             continue
         check_engine_directives(engine_context_source(key), value, language)
         _check_engine_glyphs(key, value, charmap, language)
         details[key] = origin if value != key else "same_as_english"
-        if value != key:
+        if value != key or language == "en":
             values[key] = value
     translated = sum(1 for origin in details.values() if origin != "fallback_english")
     return values, {
         "total": len(scope),
         "translated": translated,
+        "shipped": sum(1 for value in values.values() if value),
         "percent": round(100.0 * translated / len(scope), 2) if scope else 100.0,
         "fallback_english": sorted(key for key, origin in details.items() if origin == "fallback_english"),
         "details": details,

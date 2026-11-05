@@ -239,6 +239,30 @@ compact, but translated text can still overflow fixed-width interfaces.
 Macros and interface chrome remain tile-rendered. Each mod packages only the
 selected TTF and its applicable license notices.
 
+### English template (developer mode)
+
+English is not a release language. Developer mode builds an English mod
+that serves as a template for translating a language PokeCorpus does not
+cover: in the GUI, check **Developer mode** to add English to the language
+list; in the interactive CLI, pass `--dev`:
+
+```sh
+python build_translation.py --dev
+```
+
+The English mod has the same catalogs and keys as a translated build:
+
+- dialogue and named catalogs (species, moves, items, trainers…) hold the
+  PokeCorpus English of every row the corpus matches, even where it reads
+  the same as the cart;
+- `lang/strings.lua` lists every engine string the mod can translate. The
+  key is the engine's English; the value is the PokeCorpus English where the
+  corpus has the line, and empty otherwise.
+
+An empty value keeps printing English in game, so a half-translated template
+stays playable. The template copies nothing from your ROM: a
+dialogue line the corpus does not hold is left out of the template.
+
 ## Build from source with the CLI
 
 Install Python 3.11+, Git, LuaJIT (`sudo apt install luajit` on
@@ -255,6 +279,7 @@ python build_translation.py
 ```
 
 Add `--font-profile pokemon` to select the optional Pokemon Font profile.
+Add `--dev` to include English as an interactive development target.
 Substitute `python3`, `py -3`, or a virtual-environment interpreter when
 appropriate.
 

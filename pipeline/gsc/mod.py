@@ -1261,7 +1261,7 @@ def build_gs_dialogue_mod(
     trainer_names_path = gold_out_dir / "gs_trainer_names.tsv"
     if trainer_names_path.is_file():
         trainer_names, index_stats["trainer_names"] = trainer_name_catalog(
-            parse_trainer_names(trainer_names_path), corpus_rows,
+            parse_trainer_names(trainer_names_path), corpus_rows, target_lang=language,
         )
     if crystal_corpus_dir is not None and crystal_out_dir is not None:
         crystal_names_path = Path(crystal_out_dir) / "gs_trainer_names.tsv"
@@ -1270,6 +1270,7 @@ def build_gs_dialogue_mod(
             if (Path(crystal_corpus_dir) / f"{language}_msg.txt").is_file():
                 crystal_trainer_names, index_stats["trainer_names_crystal"] = trainer_name_catalog(
                     crystal_rows, read_corpus_rows(crystal_corpus_dir, target_lang=language),
+                    target_lang=language,
                 )
             else:
                 _unused, index_stats["trainer_names_crystal"] = trainer_name_catalog(crystal_rows, [])

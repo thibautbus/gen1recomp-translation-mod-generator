@@ -208,7 +208,13 @@ def read_parallel_game(directory: str | Path, target_lang: str = "fr", game: str
             scope = {"B": "blue", "R": "red", "RG": "red", "G": "green"}.get(suffix, "both")
             base_qid = qid[:suffix_match.start()] if suffix_match else qid
         metadata = {"version_suffix": suffix or None, "version_scope": scope, "base_qid": base_qid, "line": index + 1, "format": "parallel-msg"}
-        result.append(CorpusRecord(qid, "en", english, scope, str(paths["en"]), metadata=metadata))
+        source = CorpusRecord(qid, "en", english, scope, str(paths["en"]), metadata=metadata)
+        result.append(source)
+        if target_lang == "en":
+            # The source row is also the target row in developer mode. Avoid
+            # duplicating each qid, which would make downstream joins treat
+            # the otherwise identical English rows as ambiguous.
+            continue
         # English is retained on the target-language record to make exact
         # fallback auditable even when a qid is absent in future corpus
         # revisions.

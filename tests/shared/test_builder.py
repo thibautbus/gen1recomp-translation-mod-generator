@@ -16,7 +16,7 @@ from pipeline.rby import build as rby_build
 from pipeline.shared import project
 from pipeline.shared.project import project_version
 from pipeline.shared.rom_paths import load_rom_paths
-from pipeline.shared.gui import GEN3_FONT_LABEL, available_font_profiles, coverage_lines, font_profile_code, font_profile_label, language_code, validate_inputs
+from pipeline.shared.gui import GEN3_FONT_LABEL, available_font_profiles, coverage_lines, font_profile_code, font_profile_label, language_code, valid_language_selection, validate_inputs
 from pipeline.shared.mod_assets import FONT_PROFILES
 from pipeline.shared.specs import BuildRequest, ReleaseProfile, release_profile
 from pipeline.shared.engine_profile import PINNED_PROFILE, UPSTREAM_PROFILE
@@ -173,6 +173,38 @@ class BuilderTests(unittest.TestCase):
         self.assertEqual(builder.languages_for_generation(1)[-1][0], "ja-Hrkt")
         self.assertEqual(builder.languages_for_generation(2)[-1][0], "ko")
         self.assertEqual(language_code("Korean (ko)", 2), "ko")
+        for generation in (1, 2, 3, 4):
+            self.assertNotIn("en", dict(builder.languages_for_generation(generation)))
+            self.assertEqual(dict(builder.languages_for_generation(generation, dev_mode=True))["en"], "English")
+        self.assertEqual(language_code("English (en)", 4, dev_mode=True), "en")
+        self.assertEqual(valid_language_selection("English (en)", 1, dev_mode=True), "English (en)")
+        # Turning developer mode off resets English to the first valid release language.
+        self.assertEqual(valid_language_selection("English (en)", 1), "French (fr)")
+        class Variable:
+            def __init__(self, value): self.value = value
+            def get(self): return self.value
+            def set(self, value): self.value = value
+
+        class Widget:
+            def __init__(self): self.options = {}
+            def configure(self, **options): self.options.update(options)
+
+        app = gui.TranslationBuilderApp.__new__(gui.TranslationBuilderApp)
+        app.generation_var = Variable(gui.generation_label(1))
+        app.games_hint_var = Variable("")
+        app.rom_widgets = {}
+        app.language_var = Variable("English (en)")
+        app.dev_mode_var = Variable(True)
+        app.language_box = Widget()
+        app.font_profile_var = Variable(gui.font_profile_label("fusion", "en"))
+        app.font_profile_box = Widget()
+        app._sync_generation()
+        self.assertEqual(app.language_var.get(), "English (en)")
+        self.assertTrue(any(value == "English (en)" for value in app.language_box.options["values"]))
+        app.dev_mode_var.set(False)
+        app._sync_generation()
+        self.assertEqual(app.language_var.get(), "French (fr)")
+        self.assertFalse(any(value == "English (en)" for value in app.language_box.options["values"]))
         with tempfile.TemporaryDirectory() as directory:
             report = Path(directory) / "coverage.json"
             report.write_text(json.dumps({"rom": {"translated": 2, "total": 4, "percent": 50}, "engine": {"translated": 1, "total": 2, "percent": 50}, "engine_rby": {"translated": 3, "total": 4, "percent": 75}}), encoding="utf-8")
@@ -234,6 +266,20 @@ class BuilderTests(unittest.TestCase):
             self.assertEqual(inputs.language, "fr")
             self.assertEqual(inputs.font_profile, "fusion")
             self.assertEqual(inputs.rom_paths["yellow"], yellow.resolve())
+
+    def test_gui_english_requires_developer_mode_and_can_be_validated_when_enabled(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rb, yellow = root / "red.gb", root / "yellow.gb"
+            rb.write_bytes(b"red")
+            yellow.write_bytes(b"yellow")
+            rom_paths = {"rb": rb, "yellow": yellow}
+            with self.assertRaisesRegex(builder.BuildError, "Invalid language selection"):
+                validate_inputs(1, rom_paths, "English (en)", root / "out")
+            with patch.object(builder, "verify_rb_rom"), patch.object(builder, "verify_rom"):
+                inputs = validate_inputs(1, rom_paths, "English (en)", root / "out", dev_mode=True)
+            self.assertEqual(inputs.language, "en")
+            self.assertTrue(inputs.dev_mode)
 
     def test_gui_font_profile_reads_as_none_for_firered(self):
         # Generation 3 registers no font (Schemas.GEN3 gates the registry), so
@@ -675,6 +721,32 @@ class BuilderTests(unittest.TestCase):
     def test_language_menu(self):
         with patch("builtins.print"):
             self.assertEqual(builder._prompt_language(lambda _: "5"), ("ja-Hrkt", "Japanese"))
+            with self.assertRaises(builder.BuildError):
+                builder._prompt_language(lambda _: "6", generation=4)
+            self.assertEqual(
+                builder._prompt_language(lambda _: "6", generation=4, dev_mode=True),
+                ("en", "English"),
+            )
+
+    def test_cli_dev_mode_resolves_english_for_the_build_worker(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rb, yellow = root / "red.gb", root / "yellow.gb"
+            rb.write_bytes(b"rom")
+            yellow.write_bytes(b"rom")
+            configured = {"rom": {"red": rb, "yellow": yellow}}
+            answers = iter(("", "", "6", ""))
+            with (
+                patch.object(builder, "check_prerequisites", return_value="luajit"),
+                patch.object(builder, "load_rom_paths", return_value=configured),
+                patch.object(builder, "verify_rb_rom"),
+                patch.object(builder, "verify_rom"),
+                patch.object(builder, "_confirm", return_value=True),
+                patch("pipeline.shared.orchestration.build_request", return_value=root / "out.zip") as build,
+            ):
+                self.assertEqual(builder.main(lambda _prompt: next(answers), generation=1, dev_mode=True), 0)
+            self.assertEqual(build.call_args.args[0].language, "en")
+            self.assertEqual(build.call_args.kwargs["language_name"], "English")
 
     def test_invalid_language_menu(self):
         with patch("builtins.print"), self.assertRaises(builder.BuildError):

@@ -117,6 +117,10 @@ COLLECTION_LANGUAGES: Mapping[str, tuple[tuple[str, str], ...]] = {
                 ("it", "Italian"), ("ja-Hrkt", "Japanese")),
 }
 
+# English remains the corpus source/runtime fallback; interactive products
+# expose it only when the user explicitly enables developer mode.
+DEVELOPER_LANGUAGE = ("en", "English")
+
 
 def game_spec(game: str) -> GameSpec:
     try:
