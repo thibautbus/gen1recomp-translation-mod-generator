@@ -151,10 +151,22 @@ local function sameIr(actual, expected)
   return true
 end
 
+-- Whether the mod itself registered `ir` for `key`: an English identity reads
+-- the same as the cart's own text, so the live table alone proves nothing.
+local function registersOverride(key, ir)
+  local content = result.loader and result.loader.content
+  local ops = content and content.text and content.text.ops and content.text.ops[key]
+  for _, op in pairs(ops or {}) do
+    if op.op == "override" and sameIr(op.value, ir) then return true end
+  end
+  return false
+end
+
 local sample = expectations.dialogue
 if sample then
   local live = data.gen3Text[sample.key]
   check(sameIr(live, sample.ir), "dialogue " .. sample.key .. " holds the translated IR")
+  check(registersOverride(sample.key, sample.ir), "dialogue " .. sample.key .. " registers the expected text override")
   local rendered = TextIR.toTextBox(live or {}, { playerName = "RED" })
   check(type(rendered) == "string" and rendered:find(sample.probe, 1, true) ~= nil,
     "dialogue " .. sample.key .. " renders through TextIR.toTextBox")

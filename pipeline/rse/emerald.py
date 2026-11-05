@@ -144,6 +144,7 @@ def join_emerald(
     if by_english:
         catalogs["strings_by_english"] = by_english
     return {
+        "language": corpus.language,
         "entries": entries,
         "dialogue": dialogue_catalog(entries),
         "dialogue_stats": dialogue_stats,

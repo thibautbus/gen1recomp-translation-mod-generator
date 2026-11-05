@@ -88,5 +88,6 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Build a Gen1Recomp translation mod")
     parser.add_argument("--font-profile", choices=("fusion", "pokemon"), default=None)
+    parser.add_argument("--dev", action="store_true", help="include English as a developer-only target language")
     args = parser.parse_args()
-    raise SystemExit(main(font_profile=args.font_profile))
+    raise SystemExit(main(font_profile=args.font_profile, dev_mode=args.dev))

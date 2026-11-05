@@ -187,7 +187,7 @@ def dialogue_label_rows(entries) -> dict[str, str | None]:
         if entry.status not in COVERED or text_key_address(entry.key) is not None:
             continue
         own = None
-        if entry.status == SAME_AS_ENGLISH and all(
+        if entry.status == SAME_AS_ENGLISH and not entry.translation and all(
                 segment.get("t") in {"text", "eos"} for segment in entry.english):
             own = "".join(segment.get("s", "") for segment in entry.english)
         rows[entry.key] = own
@@ -216,7 +216,7 @@ def gen3_coverage(joined: dict) -> dict:
                      ("total", "covered", "shipped", "percent", "by_status",
                       "ignored_markup_only", "ignored_undecodable", "ignored_japanese_source")},
         "named_catalogs": catalog_stats,
-        "engine_gen3": {key: engine[key] for key in ("translated", "total", "percent", "fallback_english")},
+        "engine_gen3": {key: engine[key] for key in ("translated", "shipped", "total", "percent", "fallback_english")},
         "policy": "english-fallback",
     }
 

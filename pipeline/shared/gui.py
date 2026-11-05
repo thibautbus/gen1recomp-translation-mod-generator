@@ -23,6 +23,7 @@ class GuiInputs:
     language: str
     font_profile: str
     output_dir: Path
+    dev_mode: bool = False
 
 
 # Named by game, not by generation, matching the CLI's _prompt_generation --
@@ -78,22 +79,22 @@ def generation_code(value: str) -> int:
     raise builder.BuildError(f"Invalid games selection: {value!r}")
 
 
-def language_code(value: str, generation: int = 1) -> str:
+def language_code(value: str, generation: int = 1, *, dev_mode: bool = False) -> str:
     """Return a canonical language code from a combobox label or code."""
     raw = value.strip()
-    for code, name in builder.languages_for_generation(generation):
+    for code, name in builder.languages_for_generation(generation, dev_mode=dev_mode):
         if raw == code or raw == f"{name} ({code})":
             return code
     raise builder.BuildError(f"Invalid language selection: {value!r}")
 
 
-def languages_for_generation(generation: int) -> tuple[tuple[str, str], ...]:
-    return builder.languages_for_generation(generation)
+def languages_for_generation(generation: int, *, dev_mode: bool = False) -> tuple[tuple[str, str], ...]:
+    return builder.languages_for_generation(generation, dev_mode=dev_mode)
 
 
-def language_label(code: str, generation: int = 1) -> str:
+def language_label(code: str, generation: int = 1, *, dev_mode: bool = False) -> str:
     code = builder.canonical_language(code)
-    for candidate, name in languages_for_generation(generation):
+    for candidate, name in languages_for_generation(generation, dev_mode=dev_mode):
         if candidate == code:
             return f"{name} ({candidate})"
     raise builder.BuildError(f"Invalid language selection: {code!r}")
@@ -143,6 +144,7 @@ def validate_inputs(
     language: str,
     output_dir: str | Path,
     font_profile: str = "fusion",
+    dev_mode: bool = False,
 ) -> GuiInputs:
     """Validate GUI values using the same ROM checks as the CLI.
 
@@ -151,7 +153,7 @@ def validate_inputs(
     """
     if generation not in ROMS_BY_GENERATION:
         raise builder.BuildError(f"Invalid games selection: {generation!r}")
-    code = language_code(language, generation)
+    code = language_code(language, generation, dev_mode=dev_mode)
     profile = builder.validate_font_profile(code, font_profile_code(font_profile))
     if not str(output_dir).strip():
         raise builder.BuildError("An output directory is required.")
@@ -182,7 +184,20 @@ def validate_inputs(
         else:
             builder.verify_rom(path, game)
         resolved[game] = path.resolve()
-    return GuiInputs(generation, resolved, code, profile, output.resolve())
+    return GuiInputs(generation, resolved, code, profile, output.resolve(), dev_mode)
+
+
+def valid_language_selection(current: str, generation: int, *, dev_mode: bool = False) -> str:
+    """Keep a selection valid when the generation or developer toggle changes."""
+    languages = languages_for_generation(generation, dev_mode=dev_mode)
+    try:
+        code = language_code(current, generation, dev_mode=dev_mode)
+    except (builder.BuildError, TypeError, ValueError):
+        code = ""
+    allowed = {candidate for candidate, _name in languages}
+    if code not in allowed:
+        code = languages[0][0]
+    return language_label(code, generation, dev_mode=dev_mode)
 
 
 def coverage_lines(path: str | Path, generation: int = 1) -> list[str]:
@@ -282,6 +297,15 @@ class TranslationBuilderApp:
         style.configure("TFrame", background="#202124")
         style.configure("TLabel", background="#202124", foreground="#f1f3f4")
         style.configure(
+            "Dev.TCheckbutton", background="#202124", foreground="#9aa0a6",
+            font=("TkDefaultFont", 9),
+        )
+        style.map(
+            "Dev.TCheckbutton",
+            background=[("active", "#202124"), ("disabled", "#202124")],
+            foreground=[("disabled", "#6f7479"), ("active", "#c5c9ce")],
+        )
+        style.configure(
             "Hint.TLabel", background="#202124", foreground="#9aa0a6",
             font=("TkDefaultFont", 9), wraplength=HINT_WRAPLENGTH,
         )
@@ -302,6 +326,7 @@ class TranslationBuilderApp:
         self.rom_vars = {game: tk.StringVar() for game in
                          ("rb", "yellow", "gs", "crystal", "frlg", "rs", "emerald")}
         self.language_var = tk.StringVar(value=language_label("fr"))
+        self.dev_mode_var = tk.BooleanVar(value=False)
         self.font_profile_var = tk.StringVar(value=font_profile_label("fusion"))
         self.output_var = tk.StringVar()
         self.status_var = tk.StringVar(value="Ready")
@@ -384,6 +409,12 @@ class TranslationBuilderApp:
         self.start_button = ttk.Button(frame, text="Build translation mod", command=self.start)
         self.start_button.grid(row=16, column=2, sticky="e")
         self._controls.append((self.start_button, "normal"))
+        self.dev_mode_box = ttk.Checkbutton(
+            frame, text="Developer mode", variable=self.dev_mode_var,
+            command=self._sync_generation, style="Dev.TCheckbutton",
+        )
+        self.dev_mode_box.grid(row=17, column=0, columnspan=2, sticky="w", pady=(4, 0))
+        self._controls.append((self.dev_mode_box, "normal"))
         frame.columnconfigure(1, weight=1)
         self.toggle_log()
         self._sync_generation()
@@ -428,13 +459,12 @@ class TranslationBuilderApp:
                     widget.grid()
                 else:
                     widget.grid_remove()
-        languages = languages_for_generation(generation)
-        current = builder.canonical_language(self.language_var.get())
-        allowed = {code for code, _ in languages}
-        if current not in allowed:
-            current = languages[0][0]
-            self.language_var.set(language_label(current, generation))
-        self.language_box.configure(values=[language_label(code, generation) for code, _ in languages])
+        dev_mode = self.dev_mode_var.get()
+        languages = languages_for_generation(generation, dev_mode=dev_mode)
+        self.language_var.set(valid_language_selection(
+            self.language_var.get(), generation, dev_mode=dev_mode,
+        ))
+        self.language_box.configure(values=[language_label(code, generation, dev_mode=dev_mode) for code, _ in languages])
         # Setting language_var programmatically (above) does not fire the
         # language box's own <<ComboboxSelected>> handler, so the font
         # profile box must be resynced here too -- otherwise switching
@@ -458,7 +488,9 @@ class TranslationBuilderApp:
 
     def _sync_font_profile(self):
         generation = generation_code(self.generation_var.get())
-        language = language_code(self.language_var.get(), generation)
+        language = language_code(
+            self.language_var.get(), generation, dev_mode=self.dev_mode_var.get(),
+        )
         profiles = available_font_profiles(language)
         if len(profiles) == 1:
             self.font_profile_var.set(font_profile_label("fusion", language))
@@ -500,12 +532,14 @@ class TranslationBuilderApp:
             self.progress.grid(row=16, column=0, columnspan=3, sticky="ew", pady=8)
             self.status_label.grid(row=17, column=0, columnspan=2, sticky="w")
             self.start_button.grid(row=17, column=2, sticky="e")
+            self.dev_mode_box.grid(row=18, column=0, columnspan=2, sticky="w", pady=(4, 0))
             self.log_toggle.configure(text="Hide log")
         else:
             self.log_text.grid_remove()
             self.progress.grid(row=15, column=0, columnspan=3, sticky="ew", pady=8)
             self.status_label.grid(row=16, column=0, columnspan=2, sticky="w")
             self.start_button.grid(row=16, column=2, sticky="e")
+            self.dev_mode_box.grid(row=17, column=0, columnspan=2, sticky="w", pady=(4, 0))
             self.log_toggle.configure(text="Show log")
 
     def start(self):
@@ -513,7 +547,10 @@ class TranslationBuilderApp:
         try:
             generation = generation_code(self.generation_var.get())
             rom_paths = {game: self.rom_vars[game].get() for game in ROMS_BY_GENERATION[generation]}
-            inputs = validate_inputs(generation, rom_paths, self.language_var.get(), self.output_var.get(), self.font_profile_var.get())
+            inputs = validate_inputs(
+                generation, rom_paths, self.language_var.get(), self.output_var.get(),
+                self.font_profile_var.get(), dev_mode=self.dev_mode_var.get(),
+            )
         except (builder.BuildError, OSError, ValueError) as error:
             messagebox.showerror("Unable to build", str(error), parent=self.root)
             return
@@ -533,7 +570,9 @@ class TranslationBuilderApp:
     def _worker(self, inputs: GuiInputs):
         try:
             luajit = builder.check_prerequisites()
-            language_name = dict(languages_for_generation(inputs.generation))[inputs.language]
+            language_name = dict(languages_for_generation(
+                inputs.generation, dev_mode=inputs.dev_mode,
+            ))[inputs.language]
             request = BuildRequest(
                 inputs.rom_paths,
                 release_profile_for_selection(inputs.generation),
