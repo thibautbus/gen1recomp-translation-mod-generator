@@ -174,7 +174,7 @@ FireRed and LeafGreen (US, v1.0) are published as one `translation-<lang>-gen3`
 mod for `fr`, `de`, `es`, `it` and `ja-Hrkt`, built from either cart: the
 build keys the other edition's text through pret's symbol tables, so a mod
 built from FireRed or from LeafGreen is the same. At the pinned Gen1Recomp
-v0.3.63, most FireRed screens draw their text from the cart, so the mod
+v0.4.0, most FireRed screens draw their text from the cart, so the mod
 translates them with the official rows, in the cart's own fonts (Japanese
 included). [docs/gen3-pipeline.md](docs/gen3-pipeline.md) explains the join
 and the release gate; the [known gaps](#known-gaps) list what stays English.
@@ -331,7 +331,7 @@ copying the ZIP itself.
 ## Translation coverage
 
 The tables measure what each mod ships, not what the current runtime
-displays, at Gen1Recomp revision `7ab2f865` (v0.3.63) with the pinned ROMs and
+displays, at Gen1Recomp revision `5bf900e3` (v0.4.0) with the pinned ROMs and
 corpus snapshots; what is not shipped keeps its English.
 [docs/coverage.md](docs/coverage.md) defines each metric and breaks down what
 is left.
@@ -343,11 +343,11 @@ Yellow; the engine strings are those original RBY gameplay and interfaces use.
 
 | Target | Red Blue ROM aggregate | Yellow ROM aggregate | RBY-related engine strings |
 | --- | ---: | ---: | ---: |
-| `fr` | 3286/3286 (100%) | 3400/3400 (100%) | 425/425 (100%) |
-| `de` | 3286/3286 (100%) | 3400/3400 (100%) | 425/425 (100%) |
-| `es` | 3286/3286 (100%) | 3400/3400 (100%) | 425/425 (100%) |
-| `it` | 3286/3286 (100%) | 3400/3400 (100%) | 425/425 (100%) |
-| `ja-Hrkt` | 3286/3286 (100%) | 3397/3400 (99.91%) | 425/425 (100%) |
+| `fr` | 3286/3286 (100%) | 3400/3400 (100%) | 417/417 (100%) |
+| `de` | 3286/3286 (100%) | 3400/3400 (100%) | 417/417 (100%) |
+| `es` | 3286/3286 (100%) | 3400/3400 (100%) | 417/417 (100%) |
+| `it` | 3286/3286 (100%) | 3400/3400 (100%) | 417/417 (100%) |
+| `ja-Hrkt` | 3286/3286 (100%) | 3397/3400 (99.91%) | 417/417 (100%) |
 
 ### Gold, Silver and Crystal
 
@@ -356,12 +356,12 @@ Korean's gaps are Crystal's own text, which has no Korean collection.
 
 | Target | Gold and Silver ROM aggregate | Gold and Silver-related engine strings | Crystal dialogue coverage |
 | --- | ---: | ---: | ---: |
-| `fr` | 6839/6839 (100%) | 993/993 (100%) | 3994/3994 (100%) |
-| `de` | 6839/6839 (100%) | 993/993 (100%) | 3994/3994 (100%) |
-| `es` | 6839/6839 (100%) | 993/993 (100%) | 3994/3994 (100%) |
-| `it` | 6839/6839 (100%) | 993/993 (100%) | 3994/3994 (100%) |
-| `ja-Hrkt` | 6839/6839 (100%) | 993/993 (100%) | 3994/3994 (100%) |
-| `ko` | 5796/6839 (84.75%) | 993/993 (100%) | 0/3994 (0%) |
+| `fr` | 6839/6839 (100%) | 983/983 (100%) | 3994/3994 (100%) |
+| `de` | 6839/6839 (100%) | 983/983 (100%) | 3994/3994 (100%) |
+| `es` | 6839/6839 (100%) | 983/983 (100%) | 3994/3994 (100%) |
+| `it` | 6839/6839 (100%) | 983/983 (100%) | 3994/3994 (100%) |
+| `ja-Hrkt` | 6839/6839 (100%) | 983/983 (100%) | 3994/3994 (100%) |
+| `ko` | 5796/6839 (84.75%) | 983/983 (100%) | 0/3994 (0%) |
 
 ### FireRed and LeafGreen
 
@@ -396,25 +396,25 @@ The engine strings reach 2678/2685 (99.74%) in every language.
 
 | Target | Emerald ROM aggregate |
 | --- | ---: |
-| `fr` | 17716/17721 (99.97%) |
-| `de` | 17710/17721 (99.94%) |
-| `es` | 17714/17721 (99.96%) |
-| `it` | 17716/17721 (99.97%) |
-| `ja-Hrkt` | 17579/17723 (99.19%) |
+| `fr` | 17717/17722 (99.97%) |
+| `de` | 17711/17722 (99.94%) |
+| `es` | 17715/17722 (99.96%) |
+| `it` | 17717/17722 (99.97%) |
+| `ja-Hrkt` | 17580/17724 (99.19%) |
 
 ### Other engine strings
 
-The engine keys neither RBY nor Gold and Silver use (a residual scope of 1307
+The engine keys neither RBY nor Gold and Silver use (a residual scope of 1329
 keys), translated in at least one of those two mods; a project-level metric.
 
 | Target | Other engine strings |
 | --- | ---: |
-| `fr` | 191/1307 (14.61%) |
-| `de` | 191/1307 (14.61%) |
-| `es` | 189/1307 (14.46%) |
-| `it` | 190/1307 (14.54%) |
-| `ja-Hrkt` | 187/1307 (14.31%) |
-| `ko` | 100/1307 (7.65%) |
+| `fr` | 199/1329 (14.97%) |
+| `de` | 199/1329 (14.97%) |
+| `es` | 197/1329 (14.82%) |
+| `it` | 198/1329 (14.90%) |
+| `ja-Hrkt` | 195/1329 (14.67%) |
+| `ko` | 112/1329 (8.43%) |
 
 ## Remaining limitations
 

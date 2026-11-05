@@ -944,7 +944,9 @@ class MultilingualTests(unittest.TestCase):
             "You can't carry\nany more items.": {"ui/PlayerPC.lua", "ui/ShopMenu.lua"},
             "SEEN %3d  OWN %3d": {"ui/PokedexMenu.lua"},
             "%s is out of\nuseable POKéMON!": {"battle/BattleState.lua"},
-            "%s blacked\nout!": {"battle/BattleState.lua", "world/OverworldController.lua"},
+            # v0.4.0: the overworld's white-out reads the cart's
+            # _PlayerBlackedOutText by label; only the battle still calls Strings().
+            "%s blacked\nout!": {"battle/BattleState.lua"},
             "Diploma": {"ui/Diploma.lua"},
             "BATTLE ANIMATION": {"ui/OptionsMenu.lua", "import/LauncherSettings.lua"},
             "When you change a\nPOKéMON BOX, data\x0bwill be saved.\x0cIs that okay?": {"ui/BoxMenu.lua"},

@@ -107,11 +107,6 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.battle.BattleText_EnemyIsAboutToUseWillPlayerChangeMon. German/Korean already had this key from an earlier pass; the <ENEMY>/<PLAYER> named tokens are re-expressed as %s to match this port's own format-string call."
     },
-    "%s\nis in love with": {
-      "override": "%s\nè innamorato di",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-backed from gs.battle.InLoveWithText (real Gold ROM text), the affected #MON's half of the two-message split."
-    },
     "%s\nis revitalized.": {
       "override": "%s\nè rivitalizzato.",
       "reason": "engine-corpus",
@@ -192,11 +187,6 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row (the real cart's own TM-teach flow silently allows re-teaching an already-known move rather than refusing it with a message; this is this port's own added guard). Composed reusing this catalog's own already-know vocabulary (poke-corpus GoldSilver gs.OlivineMart.OlivineMartCooltrainerFText's it/ja \"already know\" phrasing, and this catalog's own \"%s learned %s!\"/\"%s did not learn %s.\" verb choices) for consistency."
     },
-    "%s ate the %s!": {
-      "override": "%s mangia\n%s!",
-      "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
-    },
     "%s became confused!": {
       "override": "%s\nè stato confuso!",
       "reason": "engine-corpus",
@@ -246,6 +236,11 @@
       "override": "%s ha\nannullato.",
       "reason": "engine-original",
       "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
+    },
+    "%s checked the\nTRADING BOARD.": {
+      "override": "%s visita\nl'AREA SCAMBI.",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_XCheckedTradingBoard; requires in-game visual validation."
     },
     "%s cut its own HP and put a CURSE on %s!": {
       "override": "%s\nperde PS e lancia\fMALEDIZIONE su\n%s!",
@@ -311,16 +306,6 @@
       "override": "%s\nè volato in alto!",
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_2.BattleFlewText); <LINE> mapped to a newline, same as this catalog's other charge-move lines."
-    },
-    "%s flinched!": {
-      "override": "%s\ntentenna!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
-    "%s foresaw an attack!": {
-      "override": "%s\nprevede attacco.",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "%s gained %d EXP. Points!": {
       "override": "%s riceve %d Punti ESP.!",
@@ -402,23 +387,8 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
-    "%s is buffeted by the sandstorm!": {
-      "override": "%s è colpito\ndalla TERREMPESTA!",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-inspired from poke-corpus GoldSilver gs.battle.SandstormHitsText (\"The SANDSTORM hits <USER>!\", weather-first); Battle:tickWeather() always binds the one %s to the POKéMON name, so the corpus's weather-first phrasing is rephrased POKéMON-first, keeping the corpus's own SANDSTORM translation."
-    },
-    "%s is confused!": {
-      "override": "%s\nè confuso!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
     "%s is fast asleep!": {
       "override": "%s\ndorme!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
-    "%s is frozen solid!": {
-      "override": "%s\nè congelato!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
@@ -517,11 +487,6 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-backed from poke-corpus Crystal c.mobile_46.Text_UberRestriction, the cart's own two-line paragraphs kept verbatim with <PARA> mapped to \"\\n\\n\". BattleTowerMenu:refuse splits this text into pages on the engine's own \"\\n\\n\" paragraph break and prints each page on two rows (Chrome.printWrapped(..., 2, 2)), so the cart's <PARA> must land exactly there and no page may exceed two lines."
     },
-    "%s must recharge!": {
-      "override": "%s\ndeve ricaricarsi!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
     "%s o'clock": {
       "override": "%s (ora)",
       "reason": "engine-contract-gap",
@@ -557,11 +522,6 @@
       "reason": "engine-original",
       "provenance": "Corpus-confirmed from gs.common_2.SavedTheGameText (real Gold ROM text; <PLAYER> re-expressed as %s to match this port's own format-string call)."
     },
-    "%s thawed out!": {
-      "override": "%s\nsi scongela!",
-      "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
-    },
     "%s took aim!": {
       "override": "%s\nprende la mira!",
       "reason": "engine-corpus",
@@ -571,11 +531,6 @@
       "override": "%s\nassorbe la luce!",
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_2.BattleTookSunlightText); <LINE> mapped to a newline, same as this catalog's other charge-move lines."
-    },
-    "%s took the FUTURE SIGHT attack!": {
-      "override": "%s subisce\nl'attacco\u000bDIVINAZIONE!",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-inspired from poke-corpus GoldSilver gs.battle.BattleText_TargetWasHitByFutureSight (\"<TARGET> was hit by FUTURE SIGHT!\"); rephrased to the engine's own \"took the attack\" framing while keeping each language's own FUTURE SIGHT translation and control-code shape."
     },
     "%s turned away!": {
       "override": "%s\ndisobbedisce!",
@@ -747,11 +702,6 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_1.HealthReturnedText."
     },
-    "%s's\ninfatuation kept": {
-      "override": "%s\nè innamorato: non",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-backed from gs.battle.InfatuationText (real Gold ROM text); the ROM's own name-in-the-middle word order is reflowed to keep %s inside this first message, since gen1recomp's second message (the fixed continuation) carries no argument."
-    },
     "%s's\nrid of paralysis.": {
       "override": "Finita paralisi di\n%s.",
       "reason": "engine-corpus",
@@ -762,16 +712,6 @@
       "reason": "engine-corpus-reordered",
       "provenance": "poke-corpus GoldSilver gs.battle.BattleText_UsersStringBuffer1Activated, rendered through the same token expansion the automatic matches use. The cart names the held item before the POKéMON, which numbered directives express now that Strings() accepts them (gen1recomp#2346); Battle.lua passes the POKéMON first."
     },
-    "%s's %s cured its confusion!": {
-      "override": "%s cura la\nconfusione\u000bgrazie al suo %s!",
-      "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row found for this exact message. The previous AI-generated translation used an item-before-Pokemon construction, but battle/gen2/Battle.lua's Strings(source, name, item) call always binds the first %s to the Pokemon's own name and the second to the item name -- the same reversed-argument bug class already fixed for the sibling stat-stage keys in this same file (\"%s's %s rose!\"/\"%s's %s won't rise anymore!\"). Rephrased to keep the engine's forced Pokemon-first order while staying natural; requires in-game visual validation."
-    },
-    "%s's %s cured its status!": {
-      "override": "%s cura lo\nstato\u000bgrazie al suo %s!",
-      "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row found for this exact message. The previous AI-generated translation used an item-before-Pokemon construction, but battle/gen2/Battle.lua's Strings(source, name, item) call always binds the first %s to the Pokemon's own name and the second to the item name -- the same reversed-argument bug class already fixed for the sibling stat-stage keys in this same file (\"%s's %s rose!\"/\"%s's %s won't rise anymore!\"). Rephrased to keep the engine's forced Pokemon-first order while staying natural; requires in-game visual validation."
-    },
     "%s's %s fell!": {
       "override": "%2$s di\n%1$s\u000bcala!",
       "reason": "engine-corpus-reordered",
@@ -781,11 +721,6 @@
       "override": "%2$s di\n%1$s\u000bè fuori uso!",
       "reason": "engine-corpus-reordered",
       "provenance": "poke-corpus GoldSilver gs.battle.DisabledMoveText, rendered through the same token expansion the automatic matches use. The cart names the move before the POKéMON, which numbered directives express now that Strings() accepts them (gen1recomp#2346); Battle.lua passes the POKéMON first."
-    },
-    "%s's %s restored health!": {
-      "override": "%s ripristina la\nsalute\u000bgrazie al suo %s!",
-      "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row found for this exact message. The previous AI-generated translation used an item-before-Pokemon construction, but battle/gen2/Battle.lua's Strings(source, name, item) call always binds the first %s to the Pokemon's own name and the second to the item name -- the same reversed-argument bug class already fixed for the sibling stat-stage keys in this same file (\"%s's %s rose!\"/\"%s's %s won't rise anymore!\"). Rephrased to keep the engine's forced Pokemon-first order while staying natural; requires in-game visual validation."
     },
     "%s's %s rose!": {
       "override": "%2$s di\n%1$s\u000bsale!",
@@ -862,11 +797,6 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_3.PPIsMaxedOutText."
     },
-    "%s's SAFEGUARD faded!": {
-      "override": "Cade\nSALVAGUARDIA di\u000b%s!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
     "%s's SPCL.DEF rose!": {
       "override": "Aumenta\nDIFESA SPECIALE di\u000b%s!",
       "reason": "engine-contract-gap",
@@ -911,11 +841,6 @@
       "override": "L'energia di\n%s è drenata!",
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
-    },
-    "%s's fully paralyzed!": {
-      "override": "%s\nè paralizzato!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "%s's hurt by %s!": {
       "override": "%2$s\nha effetto su\u000b%1$s!",
@@ -1172,6 +1097,11 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The PERFORMANCE row's balanced tier."
     },
+    "BALLS:": {
+      "override": "BALL:",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.menu_2.StartMenu_PrintBugContestStatus.BallsString), the Bug-Catching Contest status label; StartMenu:drawContestStatus prints the ball count after it."
+    },
     "BATTLE": {
       "override": "LOTTA",
       "reason": "engine-original",
@@ -1357,6 +1287,11 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. src/core/ScreenPosition.lua's centred mode."
     },
+    "CENTERED": {
+      "override": "CENTRATO",
+      "reason": "engine-original",
+      "provenance": "Same Options label as overrides/it/rby/engine.json (gen1recomp v0.4.0 adds the UI LAYOUT row to the Gen 2 Options menu); User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+    },
     "CHANGE BOX": {
       "override": "CAMBIA BOX",
       "reason": "engine-corpus",
@@ -1421,6 +1356,11 @@
       "override": "Annulla",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; generic launcher/UI Cancel button (import/LauncherView.lua, ui/kit/Loader.lua) also reused by a Battle Tower special (Crystal-only feature, out of this project's scope, but the literal Strings(\"Cancel\") call is shared); no compatible PokeCorpus qid -- real corpus candidates for this exact word are ambiguous across multiple unrelated rows; requires in-game visual validation."
+    },
+    "Cancel the\nregistration of\u000byour Lv.%s %s?": {
+      "override": "Annulli la\nregistrazione di\u000b%2$s del L.%1$s?",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_CancelRegistrationOfMon; requires in-game visual validation."
     },
     "Cancel your BATTLE\nROOM challenge?": {
       "override": "Annulli la sfida\nnella SALA LOTTA?",
@@ -1577,6 +1517,11 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The MAX FPS row's \"match the display's refresh rate\" mode, with the detected refresh rate shown."
     },
+    "DYNAMIC": {
+      "override": "DINAMICO",
+      "reason": "engine-original",
+      "provenance": "Same Options label as overrides/it/rby/engine.json (gen1recomp v0.4.0 adds the UI LAYOUT row to the Gen 2 Options menu); User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+    },
     "Darn!": {
       "override": "Che sfortuna!",
       "reason": "engine-corpus",
@@ -1706,6 +1651,11 @@
       "override": "nemico",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "Enemy %s": {
+      "override": "%s nemico",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.text.EnemyText), the cart's enemy qualifier, printed after the POKéMON's name; %s stands where the cart prints the name. Battle:battlerName (src/battle/gen2/Battle.lua) qualifies every enemy battler with Strings(\"Enemy %s\") since gen1recomp v0.4.0."
     },
     "Excellent! You\nseem to like col-\u000blecting things!": {
       "override": "Eccellente! Ti\npiacciono le\u000bcollezioni, vero?",
@@ -2162,20 +2112,10 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
-    "It doesn't affect %s...": {
-      "override": "Non ha effetto su\n%s!",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.battle.DoesntAffectText). Fixed for one language whose own corpus row diverges from the engine's exact %s-argument contract; see the composed override for details."
-    },
     "It has no interest\nin {STRBUF}.": {
       "override": "Nessun interesse\nper {STRBUF}.",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_2.BreedNoInterestText."
-    },
-    "It hurt itself in its confusion!": {
-      "override": "Così confuso da\ncolpirsi da solo!",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "It might look the\nsame as before,\fbut this new name\nis much better!\fWell done!": {
       "override": "Può sembrare come\nl'altro, ma in\frealtà questo nome\nè molto meglio!\fBel lavoro!",
@@ -2376,6 +2316,11 @@
       "override": "Sembra che non ci\nsia niente qua.",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_2.UnusedNothingHereText."
+    },
+    "Lv%d": {
+      "override": "L.%d",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.strings.gText_Level; requires in-game visual validation."
     },
     "L▶BEFORE": {
       "override": "L▶PRECED.",
@@ -2957,6 +2902,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_3.CardFlipPlayWithThreeCoinsText); the cart's own Card Flip text."
     },
+    "Please choose the\ntype of POKéMON\u000bthat you would\u000blike in the trade.": {
+      "override": "Scegli il tipo\ndel POKéMON che\u000bcerchi per lo\u000bscambio.",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_ChooseRequestedMonType; requires in-game visual validation."
+    },
     "Please come\nback anytime.": {
       "override": "Torna pure\nquando vuoi.",
       "reason": "engine-original",
@@ -3047,6 +2997,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "REGISTER": {
+      "override": "ASSEGNA",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.strings.gOtherText_Register; requires in-game visual validation."
+    },
     "RELEASE": {
       "override": "LIBERA",
       "reason": "engine-contract-gap",
@@ -3101,6 +3056,16 @@
       "override": "Assegnato:\n%s.",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "Registration has\nbeen canceled.": {
+      "override": "La registrazione\nè stata annullata.",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_RegistrationCanceled; requires in-game visual validation."
+    },
+    "Registration has\nbeen completed.": {
+      "override": "Registrazione\ncompletata.",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_RegistraionCompleted; requires in-game visual validation."
     },
     "Release <PK><MN>?": {
       "override": "Liberare <PK><MN>?",
@@ -3482,6 +3447,11 @@
       "reason": "engine-original",
       "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
+    "TRADING BOARD": {
+      "override": "AREA SCAMBI",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_XCheckedTradingBoard; requires in-game visual validation."
+    },
     "TREES": {
       "override": "ALBERI",
       "reason": "engine-original",
@@ -3647,6 +3617,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "The registration\nhas been canceled.": {
+      "override": "La registrazione\nè stata annullata.",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_RegistrationCanceled2; requires in-game visual validation."
+    },
     "The sandstorm rages.": {
       "override": "La TERREMPESTA è\nimpetuosa.",
       "reason": "engine-corpus",
@@ -3797,6 +3772,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "This TRADING BOARD\nis used for\u000boffering a POKéMON\u000bfor a trade.\fAll you need to do\nis register a\u000bPOKéMON for a\u000btrade.\fAnother TRAINER\nmay offer a party\u000bPOKéMON in return\u000bfor the trade.": {
+      "override": "Nell'AREA SCAMBI\nsi può offrire\u000bun POKéMON per\u000buno scambio.\fDevi solo\nregistrare il\u000bPOKéMON che vuoi\u000bscambiare.\fUn altro\nALLENATORE potrà\u000boffrirti un suo\u000bPOKéMON in cambio.",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_TradingBoardInfo; requires in-game visual validation."
+    },
     "This certifies": {
       "override": "Questo documento",
       "reason": "engine-corpus",
@@ -3837,6 +3817,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "To enter the UNION\nROOM, you must\u000bhave at least two\u000bPOKéMON.": {
+      "override": "Per accedere alla\nSALA CONTATTO\u000bdevi avere almeno\u000bdue POKéMON.",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.script.cable_club.CableClub_Text_NeedTwoMonsForUnionRoom; requires in-game visual validation."
+    },
     "To evolve, some\n#MON grow,\fothers use the\neffects of STONES.": {
       "override": "Certi POKéMON si\nevolvono crescendo\fdi livello, altri\nusando le PIETRE.",
       "reason": "engine-corpus",
@@ -3861,6 +3846,11 @@
       "override": "Strumento\nprincipale",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "UI LAYOUT": {
+      "override": "INTERFACCIA",
+      "reason": "engine-original",
+      "provenance": "Same Options label as overrides/it/rby/engine.json (gen1recomp v0.4.0 adds the UI LAYOUT row to the Gen 2 Options menu); User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "UI LETTERBOX": {
       "override": "BANDE UI",
@@ -4012,6 +4002,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "Welcome to the\nTRADING BOARD.\fYou may register\nyour POKéMON and\u000boffer it up for\u000ba trade.\fWould you like to\nregister one of\u000byour POKéMON?": {
+      "override": "Questa è\nl'AREA SCAMBI.\fQui puoi\nregistrare i tuoi\u000bPOKéMON e offrirli\u000bper uno scambio.\fVuoi registrare\nuno dei tuoi\u000bPOKéMON?",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_RegisterMonAtTradingBoard; requires in-game visual validation."
+    },
     "Welcome to the\nUNION ROOM.\fTrainers from\nevery generation\u000bgather here.\fWould you like\nto go in?": {
       "override": "Benvenuto nella\nSALA CONTATTO.\fQui si riuniscono\nallenatori di\u000bogni generazione.\fVuoi entrare\nnella SALA?",
       "reason": "engine-original",
@@ -4137,6 +4132,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_3.DeleterAskWhichMoveText."
     },
+    "Which of your\nparty POKéMON will\u000byou offer in\u000btrade?": {
+      "override": "Quale POKéMON\ndella tua squadra\u000bvuoi offrire per\u000buno scambio?",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_WhichMonWillYouOffer; requires in-game visual validation."
+    },
     "Which prize would\nyou like?": {
       "override": "Che premio\npreferisci?",
       "reason": "engine-corpus",
@@ -4172,11 +4172,6 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
-    "Wild %s fainted!": {
-      "override": "%s\nselvatico è esausto!",
-      "reason": "engine-contract-gap",
-      "provenance": "gen1recomp splits the ROM's single wEnemyMonNickname faint line (corpus: \"%s nemico\nè esausto!\") into a wild-battle variant (src/battle/gen2/Battle.lua) with no direct corpus match; wording follows the sibling \"Wild %s fled!\" entry's established \"%s\nselvatico ...\" pattern for consistency."
-    },
     "Wild %s fled!": {
       "override": "%s\nselvatico fugge!",
       "reason": "engine-corpus",
@@ -4206,6 +4201,11 @@
       "override": "Chissà cosa\nc'è dentro! Ma\nbisogna ancora\naspettare.",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "Would you like to\nask %s to\u000bmake a trade?": {
+      "override": "Vuoi chiedere a\n%s di fare\u000buno scambio?",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_AskTrainerToMakeTrade; requires in-game visual validation."
     },
     "Would you like to\nsave the game?": {
       "override": "Vuoi salvare il\ngioco?",
@@ -4327,6 +4327,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_2.YouDontHaveAMonText (#MON substituted for this catalog's own established POKéMON spelling)."
     },
+    "You don't have a\n%s-type POKéMON\u000bthat %s wants.": {
+      "override": "Non hai un POKéMON\ndi tipo %s\u000bche %s cerca.",
+      "reason": "engine-original",
+      "provenance": "AI-generated Italian translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_DontHaveTypeTrainerWants; requires in-game visual validation."
+    },
     "You don't have a\nCOIN CASE.": {
       "override": "Ti manca il\nSALVADANAIO.",
       "reason": "engine-corpus",
@@ -4376,11 +4381,6 @@
       "override": "Ti serve un\nPOKéMON per\u000bchiamare.",
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row (this port's own Call-a-POKéMON-home refusal, no cart equivalent); composed keeping this catalog's own established POKéMON spelling."
-    },
-    "You'll need at\nleast one POKéMON\u000bto go in.": {
-      "override": "Per entrare devi\navere almeno un\u000bPOKéMON.",
-      "reason": "engine-original",
-      "provenance": "AI-generated translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (SALA CONTATTO) and their official Emerald/FireRed phrasing where it matches; requires in-game visual validation."
     },
     "You're already\nSURFING.": {
       "override": "Stai già usando\nSURF.",
@@ -4567,11 +4567,6 @@
       "reason": "engine-contract-gap",
       "provenance": "Adapted from poke-corpus GoldSilver gs.pokedex.Pokedex_DisplayModeDescription.UnownMode's own \"catching order\" vocabulary to read correctly after the shared \"<PK><MN> are listed\" first line above."
     },
-    "infatuation kept\nit from attacking!": {
-      "override": "è innamorato: non\npuò attaccare!",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-backed from gs.battle.InfatuationText, continuation half with no argument; see \"%s's\\ninfatuation kept\"."
-    },
     "inspiring.": {
       "override": "\nesaltante.",
       "reason": "engine-corpus",
@@ -4596,11 +4591,6 @@
       "override": "\nè originale!",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
-    "is in love with\n%s!": {
-      "override": "è innamorato di\n%s!",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-backed from gs.battle.InLoveWithText, the partner-#MON half of the two-message split; see \"%s\\nis in love with\"."
     },
     "is inspiring!": {
       "override": "\nè esaltante!",

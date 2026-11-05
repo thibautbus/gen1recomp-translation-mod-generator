@@ -7,7 +7,7 @@ displays: text gen1recomp keeps out of a mod's reach is tracked in
 [docs/upstream-fixes.md](upstream-fixes.md). Every build writes a coverage
 report with the full per-key scope, matching strategy and fallback
 provenance; it stays under the ignored `.cache/` tree. All figures use
-Gen1Recomp revision `7ab2f865` (v0.3.63) and the pinned ROMs and corpus
+Gen1Recomp revision `5bf900e3` (v0.4.0) and the pinned ROMs and corpus
 snapshots; regenerate them whenever one of those inputs changes. Engine
 metrics are informational: unmatched or ambiguous entries keep the
 engine's English fallback.
@@ -67,7 +67,7 @@ leak onto a Gold or Silver one.
   than left to the English ROM's own. `ko` falls short of 100% because
   PokeCorpus has no Korean Crystal collection (Crystal's own #DEX text and
   trainer names).
-- `Gold and Silver-related engine strings` covers the 993 engine keys used
+- `Gold and Silver-related engine strings` covers the 983 engine keys used
   by at least one production Gen 2 callsite. 39 keys reachable only from a
   Crystal-exclusive feature (Move Tutor, gender selection, the PokeSeer,
   Buena's prize exchange, Battle Tower) are excluded from this scope, since
@@ -201,10 +201,10 @@ leak onto a Gold or Silver one.
 ## Other engine strings
 
 The remaining engine keys are keys used by neither RBY nor Gold and Silver,
-so their denominator is the residual scope: `2635` total engine keys, minus
-the `425` RBY-related keys and the `993` Gold and Silver-related keys, plus
-back the `90` keys shared by both scopes so they are subtracted only once:
-`2635 - (425 + 993 - 90) = 1307`. The numerator counts keys translated in
+so their denominator is the residual scope: `2638` total engine keys, minus
+the `417` RBY-related keys and the `983` Gold and Silver-related keys, plus
+back the `91` keys shared by both scopes so they are subtracted only once:
+`2638 - (417 + 983 - 91) = 1329`. The numerator counts keys translated in
 at least one of the RBY and Gold/Silver/Crystal artifacts, the RBY
 release's Yellow layer included; this is a project-level metric, not a
 claim that every key is present in both games. The FireRed-, Ruby/Sapphire-

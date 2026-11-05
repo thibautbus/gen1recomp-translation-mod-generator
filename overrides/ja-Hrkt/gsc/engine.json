@@ -117,11 +117,6 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.battle.BattleText_EnemyIsAboutToUseWillPlayerChangeMon. German/Korean already had this key from an earlier pass; the <ENEMY>/<PLAYER> named tokens are re-expressed as %s to match this port's own format-string call."
     },
-    "%s\nis in love with": {
-      "override": "%sは",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-backed from gs.battle.InLoveWithText (real Gold ROM text), the affected #MON's half of the two-message split."
-    },
     "%s\nis revitalized.": {
       "override": "%sは\nげんきを　とりもどした！",
       "reason": "engine-corpus",
@@ -136,6 +131,11 @@
       "override": "%sは\n%sを　くりだした！",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated. v0.2.55 reformatted the engine's own English source to match the corpus row's own line breaks (previously a single unbroken line); the translation already used a different (also corpus-derived) line-break shape, so it carries over unchanged."
+    },
+    "%s\nstole %s\u000bfrom its foe!": {
+      "override": "%sは\n%sを　うばいとった！",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.battle.StoleText, \"<USER><WA><TARGET>から<LINE>@<ITEM><WO>うばいとっ<TA!>\"); the engine's call site passes only the thief and the item, so the corpus's <TARGET>から is dropped."
     },
     "%s\nused %s!": {
       "override": "%sは\n%sを　つかった！",
@@ -202,11 +202,6 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row (the real cart's own TM-teach flow silently allows re-teaching an already-known move rather than refusing it with a message; this is this port's own added guard). Composed reusing this catalog's own already-know vocabulary (poke-corpus GoldSilver gs.OlivineMart.OlivineMartCooltrainerFText's it/ja \"already know\" phrasing, and this catalog's own \"%s learned %s!\"/\"%s did not learn %s.\" verb choices) for consistency."
     },
-    "%s ate the %s!": {
-      "override": "%sは\n%sを　たべた！",
-      "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
-    },
     "%s became confused!": {
       "override": "%sは\nこんらんした！",
       "reason": "engine-corpus",
@@ -256,6 +251,11 @@
       "override": "%sが　とりやめました",
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
+    },
+    "%s checked the\nTRADING BOARD.": {
+      "override": "%sは\nこうかんけいじばんを　みた！",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_XCheckedTradingBoard; requires in-game visual validation."
     },
     "%s cut its own HP and put a CURSE on %s!": {
       "override": "%sは\nじぶんの　たいりょくを　けずって\f%sに\nのろいを　かけた！",
@@ -321,16 +321,6 @@
       "override": "%sは\nそらたかく　とびあがった！",
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_2.BattleFlewText); <LINE> mapped to a newline, same as this catalog's other charge-move lines."
-    },
-    "%s flinched!": {
-      "override": "%sは　ひるんだ！",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
-    "%s foresaw an attack!": {
-      "override": "%sは　みらいに\nこうげきを　よちした！",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "%s gained %d EXP. Points!": {
       "override": "%sは\n%d　けいけんちを\nもらった！",
@@ -412,23 +402,8 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
-    "%s is buffeted by the sandstorm!": {
-      "override": "%sは\nすなあらしに　おそわれた！",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-inspired from poke-corpus GoldSilver gs.battle.SandstormHitsText (\"The SANDSTORM hits <USER>!\", weather-first); Battle:tickWeather() always binds the one %s to the POKéMON name, so the corpus's weather-first phrasing is rephrased POKéMON-first, keeping the corpus's own SANDSTORM translation."
-    },
-    "%s is confused!": {
-      "override": "%sは\nこんらんしている！",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
     "%s is fast asleep!": {
       "override": "%sは\nぐうぐう　ねむっている",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
-    "%s is frozen solid!": {
-      "override": "%sは\nこおって　しまって　うごかない！",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
@@ -527,11 +502,6 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-backed from poke-corpus Crystal c.mobile_46.Text_UberRestriction; the Japanese cart text is a single two-line paragraph with no <PARA>, so it stays one page. BattleTowerMenu:refuse splits this text into pages on the engine's own \"\\n\\n\" paragraph break and prints each page on two rows (Chrome.printWrapped(..., 2, 2)), so the cart's <PARA> must land exactly there and no page may exceed two lines."
     },
-    "%s must recharge!": {
-      "override": "こうげきの　はんどうで\n%sは　うごけない！",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
     "%s o'clock": {
       "override": "%sじ",
       "reason": "engine-contract-gap",
@@ -567,11 +537,6 @@
       "reason": "engine-original",
       "provenance": "Corpus-confirmed from gs.common_2.SavedTheGameText (real Gold ROM text; <PLAYER> re-expressed as %s to match this port's own format-string call), matching this catalog's own already-established fr/de/es/it entries."
     },
-    "%s thawed out!": {
-      "override": "%sの\nこおりが　とけた！",
-      "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
-    },
     "%s took aim!": {
       "override": "%sは\nねらいを　さだめた！",
       "reason": "engine-contract-gap",
@@ -581,11 +546,6 @@
       "override": "%sは\nひかりを　きゅうしゅうした！",
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_2.BattleTookSunlightText); <LINE> mapped to a newline, same as this catalog's other charge-move lines."
-    },
-    "%s took the FUTURE SIGHT attack!": {
-      "override": "%sは　みらいよちの\nこうげきを　うけた！",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-inspired from poke-corpus GoldSilver gs.battle.BattleText_TargetWasHitByFutureSight (\"<TARGET> was hit by FUTURE SIGHT!\"); rephrased to the engine's own \"took the attack\" framing while keeping each language's own FUTURE SIGHT translation and control-code shape."
     },
     "%s turned away!": {
       "override": "%sは　そっぽを　むいた",
@@ -757,11 +717,6 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_1.HealthReturnedText."
     },
-    "%s's\ninfatuation kept": {
-      "override": "%sは\nメロメロで",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-backed from gs.battle.InfatuationText (real Gold ROM text); the ROM's own name-in-the-middle word order is reflowed to keep %s inside this first message, since gen1recomp's second message (the fixed continuation) carries no argument."
-    },
     "%s's\nrid of paralysis.": {
       "override": "%sの　からだの\nしびれが　とれた",
       "reason": "engine-corpus",
@@ -772,16 +727,6 @@
       "reason": "engine-corpus-cart-order",
       "provenance": "poke-corpus GoldSilver gs.battle.BattleText_UsersStringBuffer1Activated, rendered through the same token expansion the automatic matches use. The cart names the held item before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
     },
-    "%s's %s cured its confusion!": {
-      "override": "%sの　%sで\nこんらんが　なおった！",
-      "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
-    },
-    "%s's %s cured its status!": {
-      "override": "%sの　%sで\nじょうたいが　なおった！",
-      "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
-    },
     "%s's %s fell!": {
       "override": "%sの\n%sが　さがった！",
       "reason": "engine-contract-gap",
@@ -791,11 +736,6 @@
       "override": "%sは　かなしばりで\n%sがだせない！",
       "reason": "engine-corpus-cart-order",
       "provenance": "poke-corpus GoldSilver gs.battle.DisabledMoveText, rendered through the same token expansion the automatic matches use. The cart names the move before the POKéMON, in this language in the same order Battle.lua passes them, so no directive is numbered."
-    },
-    "%s's %s restored health!": {
-      "override": "%sの　%sで\nHPが　かいふくした！",
-      "reason": "engine-original",
-      "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
     },
     "%s's %s rose!": {
       "override": "%sの\n%sが　あがった！",
@@ -872,11 +812,6 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_3.PPIsMaxedOutText."
     },
-    "%s's SAFEGUARD faded!": {
-      "override": "%sを　つつんでいた\nしんぴの　ベールが　なくなった！",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
     "%s's SPCL.DEF rose!": {
       "override": "%sは　ひかりのかべで\nとくしゅこうげきに　つよくなった！",
       "reason": "engine-contract-gap",
@@ -921,11 +856,6 @@
       "override": "%sの\nエネルギーが　すわれた！",
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row found for this exact message; AI-generated translation kept consistent with this catalog's own established vocabulary for the same terms (SUBSTITUTE/CLONE etc.); requires in-game visual validation."
-    },
-    "%s's fully paralyzed!": {
-      "override": "%sは\nからだが　しびれて　うごけない",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "%s's hurt by %s!": {
       "override": "%sは　%sの\nダメージを　うけている",
@@ -1222,6 +1152,11 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. The PERFORMANCE row's balanced tier."
     },
+    "BALLS:": {
+      "override": "のこり",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.menu_2.StartMenu_PrintBugContestStatus.BallsString), the Bug-Catching Contest status label; StartMenu:drawContestStatus prints the ball count after it. The cart's line frames the count with a counter word; the engine prints the count after the label, so only the leading word is kept."
+    },
     "BATTLE": {
       "override": "たいせん",
       "reason": "engine-original",
@@ -1412,6 +1347,11 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. src/core/ScreenPosition.lua's centred mode. Written in kana only, as the Japanese carts are: the 8px Japanese font draws kanji illegibly."
     },
+    "CENTERED": {
+      "override": "ちゅうおう",
+      "reason": "engine-original",
+      "provenance": "Same Options label as overrides/ja-Hrkt/rby/engine.json (gen1recomp v0.4.0 adds the UI LAYOUT row to the Gen 2 Options menu); User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line. Converted to kana-only: the Gen-1 ja GB font has no kanji (corpus ja charset check 2026-08-05)."
+    },
     "CHANGE BOX": {
       "override": "ボックスを　かえる",
       "reason": "engine-corpus",
@@ -1476,6 +1416,11 @@
       "override": "キャンセル",
       "reason": "engine-original",
       "provenance": "AI-generated engine-original translation; generic launcher/UI Cancel button (import/LauncherView.lua, ui/kit/Loader.lua) also reused by a Battle Tower special (Crystal-only feature, out of this project's scope, but the literal Strings(\"Cancel\") call is shared); no compatible PokeCorpus qid -- real corpus candidates for this exact word are ambiguous across multiple unrelated rows; requires in-game visual validation."
+    },
+    "Cancel the\nregistration of\u000byour Lv.%s %s?": {
+      "override": "とうろく　されている\n%2$s　レベル%1$sを\u000bかいじょ　しますか？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_CancelRegistrationOfMon; requires in-game visual validation."
     },
     "Cancel your BATTLE\nROOM challenge?": {
       "override": "バトルルームへの　ちょうせんを\nちゅうし　しますか？",
@@ -1637,6 +1582,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.names.PokemonNames.147. Missed in this catalog's original PrizeMenu.lua batch, which only covered ABRA/PORYGON from the same prize list. German/Spanish/Italian already spell this identically to the English source."
     },
+    "DYNAMIC": {
+      "override": "ダイナミック",
+      "reason": "engine-original",
+      "provenance": "Same Options label as overrides/ja-Hrkt/rby/engine.json (gen1recomp v0.4.0 adds the UI LAYOUT row to the Gen 2 Options menu); User-validated 2026-08-05; engine-only option value (no pokered/ROM equivalent in poke-corpus); <=17 chars in-game value line."
+    },
     "Darn!": {
       "override": "はずれー",
       "reason": "engine-corpus",
@@ -1776,6 +1726,11 @@
       "override": "てき",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "Enemy %s": {
+      "override": "てきの　%s",
+      "reason": "engine-contract-gap",
+      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.text.EnemyText), the cart's enemy qualifier, printed before the POKéMON's name; %s stands where the cart prints the name. Battle:battlerName (src/battle/gen2/Battle.lua) qualifies every enemy battler with Strings(\"Enemy %s\") since gen1recomp v0.4.0."
     },
     "Excellent! You\nseem to like col-\u000blecting things!": {
       "override": "エクセレントじゃ！\nきみは　ものを　あつめるのが\u000bすき　なんじゃろ？",
@@ -2172,6 +2127,11 @@
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row: this is gen1recomp's own settings-menu vocabulary (src/ui/gen2/OptionsMenu.lua's FINITE_VALUE_SOURCES), not real cart text. Composed. A colour-palette theme name. French/German already spell this identically to the English source."
     },
+    "INFO": {
+      "override": "せつめいをきく",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_Info; requires in-game visual validation."
+    },
     "ITEM": {
       "override": "もちもの",
       "reason": "engine-corpus",
@@ -2232,20 +2192,10 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus rows poke-corpus GoldSilver gs.battle.DidntAffect1Text (\"しかし　\") and gs.battle.DidntAffect2Text, joined: on the Japanese cart DidntAffect1Text is only the \"しかし　\" opening of the sentence and runs on into DidntAffect2Text, so the line it prints is \"しかし　<TARGET>には／きかなかった！\". Crystal's rows (c.battle.*) are identical."
     },
-    "It doesn't affect %s...": {
-      "override": "%sには\nこうかが　ない　みたいだ……",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.battle.DoesntAffectText). Fixed for one language whose own corpus row diverges from the engine's exact %s-argument contract; see the composed override for details."
-    },
     "It has no interest\nin {STRBUF}.": {
       "override": "{STRBUF}には　ぜんぜん\nきょうみが　なさそう",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_2.BreedNoInterestText."
-    },
-    "It hurt itself in its confusion!": {
-      "override": "わけも　わからず\nじぶんを　こうげきした！",
-      "reason": "engine-corpus",
-      "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
     "It might look the\nsame as before,\fbut this new name\nis much better!\fWell done!": {
       "override": "まえと　おなじように　みえるが\nこっちの　ほうが　だんぜん　いいぞ！\u000bよかったな！",
@@ -2451,6 +2401,11 @@
       "override": "ここには　なにも\nいないようだ",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_2.UnusedNothingHereText."
+    },
+    "Lv%d": {
+      "override": "Ｌｖ%d",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.strings.gText_Level; requires in-game visual validation."
     },
     "L▶BEFORE": {
       "override": "L▶まえ",
@@ -3092,6 +3047,11 @@
       "reason": "engine-contract-gap",
       "provenance": "Corpus-derived from poke-corpus GoldSilver (gs.common_3.CardFlipPlayWithThreeCoinsText); the cart's own Card Flip text."
     },
+    "Please choose the\ntype of POKéMON\u000bthat you would\u000blike in the trade.": {
+      "override": "ほしい　ポケモンの　タイプを\nえらんで　ください",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_ChooseRequestedMonType; requires in-game visual validation."
+    },
     "Please come\nback anytime.": {
       "override": "それでは　また\nおこし　ください",
       "reason": "engine-original",
@@ -3187,6 +3147,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "REGISTER": {
+      "override": "とうろく",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.strings.gOtherText_Register; requires in-game visual validation."
+    },
     "RELEASE": {
       "override": "にがす",
       "reason": "engine-contract-gap",
@@ -3241,6 +3206,16 @@
       "override": "%sを　\nべんりボタンに　とうろくした！",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "Registration has\nbeen canceled.": {
+      "override": "とうろくを　ちゅうし　しました",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_RegistrationCanceled; requires in-game visual validation."
+    },
+    "Registration has\nbeen completed.": {
+      "override": "とうろくが　かんりょう　しました！",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_RegistraionCompleted; requires in-game visual validation."
     },
     "Release <PK><MN>?": {
       "override": "ほんとうに　にがしますか？",
@@ -3647,6 +3622,11 @@
       "reason": "engine-original",
       "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
     },
+    "TRADING BOARD": {
+      "override": "こうかんけいじばん",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_XCheckedTradingBoard; requires in-game visual validation."
+    },
     "TREES": {
       "override": "き",
       "reason": "engine-original",
@@ -3812,6 +3792,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "The registration\nhas been canceled.": {
+      "override": "とうろくを　かいじょ　しました",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_RegistrationCanceled2; requires in-game visual validation."
+    },
     "The sandstorm rages.": {
       "override": "すなあらしが　ふきあれる",
       "reason": "engine-corpus",
@@ -3962,6 +3947,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "This TRADING BOARD\nis used for\u000boffering a POKéMON\u000bfor a trade.\fAll you need to do\nis register a\u000bPOKéMON for a\u000btrade.\fAnother TRAINER\nmay offer a party\u000bPOKéMON in return\u000bfor the trade.": {
+      "override": "この　こうかんけいじばん　に\nポケモンを　とうろく　しておくと\fけいじばんを　みた　トレーナーが\nその　とうろくされた　ポケモンと\fてもちの　ポケモンを\nこうかん　することが　できます",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_TradingBoardInfo; requires in-game visual validation."
+    },
     "This certifies": {
       "override": "しんがた　ポケモンずかんを",
       "reason": "engine-corpus",
@@ -4002,6 +3992,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "To enter the UNION\nROOM, you must\u000bhave at least two\u000bPOKéMON.": {
+      "override": "ユニオンルームに　はいるには\n２ひき　いじょうの　ポケモンを\u000bもって　おこしください",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.script.cable_club.CableClub_Text_NeedTwoMonsForUnionRoom; requires in-game visual validation."
+    },
     "To evolve, some\n#MON grow,\fothers use the\neffects of STONES.": {
       "override": "そだてて　しんかするもの\nいしの　えいきょうで　しんかするもの\u000bいろんな　ポケモンが　いるぞ！",
       "reason": "engine-corpus",
@@ -4026,6 +4021,11 @@
       "override": "トレーナーの　たびに\nやくだつ　ツール",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "UI LAYOUT": {
+      "override": "UIレイアウト",
+      "reason": "engine-original",
+      "provenance": "Same Options label as overrides/ja-Hrkt/rby/engine.json (gen1recomp v0.4.0 adds the UI LAYOUT row to the Gen 2 Options menu); User-validated manual translation (2026-08-05); in-game Options menu label (20-tile box, <=18 chars) and launcher settings row."
     },
     "UI LETTERBOX": {
       "override": "UIよはく",
@@ -4182,6 +4182,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
+    "Welcome to the\nTRADING BOARD.\fYou may register\nyour POKéMON and\u000boffer it up for\u000ba trade.\fWould you like to\nregister one of\u000byour POKéMON?": {
+      "override": "いらっしゃいませ\nこうかんけいじばん　です\fここでは　ごじぶんの\nポケモンを　とうろくして\u000bこうかんに　だすことが　できます\fごじぶんの　ポケモンを\nとうろく　しますか？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_RegisterMonAtTradingBoard; requires in-game visual validation."
+    },
     "Welcome to the\nUNION ROOM.\fTrainers from\nevery generation\u000bgather here.\fWould you like\nto go in?": {
       "override": "ユニオンルームに\nようこそ！\fこちらには\nすべての　せだいの\u000bトレーナーが　あつまります\fなかに　おはいりに\nなりますか？",
       "reason": "engine-original",
@@ -4307,6 +4312,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_3.DeleterAskWhichMoveText."
     },
+    "Which of your\nparty POKéMON will\u000byou offer in\u000btrade?": {
+      "override": "こうかんに　だす　ポケモンを\nてもちから　えらんで　ください",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_WhichMonWillYouOffer; requires in-game visual validation."
+    },
     "Which prize would\nyou like?": {
       "override": "どれが　いいですか？",
       "reason": "engine-corpus",
@@ -4342,11 +4352,6 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
     },
-    "Wild %s fainted!": {
-      "override": "やせいの%sは　たおれた！",
-      "reason": "engine-contract-gap",
-      "provenance": "gen1recomp splits the ROM's single wEnemyMonNickname faint line (corpus: \"てきの%sは　たおれた！\") into a wild-battle variant (src/battle/gen2/Battle.lua) with no direct corpus match; wording follows the sibling \"Wild %s fled!\" entry's established \"やせいの%sは　...\" pattern for consistency."
-    },
     "Wild %s fled!": {
       "override": "やせいの%sは　にげだした！",
       "reason": "engine-corpus",
@@ -4376,6 +4381,11 @@
       "override": "なにが　うまれて\nくるのかな？\nうまれるまで\nまだまだ　かかりそう",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
+    },
+    "Would you like to\nask %s to\u000bmake a trade?": {
+      "override": "%sに　こうかんを\nもうしこみ　ますか？",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_AskTrainerToMakeTrade; requires in-game visual validation."
     },
     "Would you like to\nsave the game?": {
       "override": "ここまでの　かつやくを\n#レポートに　かきこみますか？",
@@ -4497,6 +4507,11 @@
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver gs.common_2.YouDontHaveAMonText (#MON substituted for this catalog's own established POKéMON spelling)."
     },
+    "You don't have a\n%s-type POKéMON\u000bthat %s wants.": {
+      "override": "てもちに\n%2$sの　ほしがっている\u000b%1$sポケモンが　ありません",
+      "reason": "engine-original",
+      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room TRADING BOARD text (src/online/union/Board.lua, src/ui/union/gen1/Board.lua or src/ui/gen2/union/Board.lua), worded from the official FireRed/LeafGreen row frlg.common.union_room_message.gText_UR_DontHaveTypeTrainerWants; requires in-game visual validation."
+    },
     "You don't have a\nCOIN CASE.": {
       "override": "コインケースをもっていません！",
       "reason": "engine-corpus",
@@ -4546,11 +4561,6 @@
       "override": "でんわを　かけるには\nポケモンが　ひつようです。",
       "reason": "engine-original",
       "provenance": "No compatible PokeCorpus row (this port's own Call-a-POKéMON-home refusal, no cart equivalent); composed keeping this catalog's own established POKéMON spelling."
-    },
-    "You'll need at\nleast one POKéMON\u000bto go in.": {
-      "override": "なかに　はいるには\nポケモンが　１ぴき　いじょう\u000bひつようです",
-      "reason": "engine-original",
-      "provenance": "AI-generated Japanese translation of gen1recomp's cross-game Union Room text (src/ui/gen2/union/Text.lua and src/world/gen2/UnionCenter2F.lua), worded with the carts' Union Room terms (ユニオンルーム) and their official Emerald/FireRed phrasing where it matches; worded in the cart's kana style; requires in-game visual validation."
     },
     "You're already\nSURFING.": {
       "override": "すでに　なみのりを\nつかっています",
@@ -4742,11 +4752,6 @@
       "reason": "engine-contract-gap",
       "provenance": "Adapted from poke-corpus GoldSilver gs.pokedex.Pokedex_DisplayModeDescription.UnownMode's own \"catching order\" vocabulary to read correctly after the shared \"<PK><MN> are listed\" first line above."
     },
-    "infatuation kept\nit from attacking!": {
-      "override": "わざが\nだせなかった！",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-backed from gs.battle.InfatuationText, continuation half with no argument; see \"%s's\\ninfatuation kept\". Written in kana only, as the Japanese carts are: the 8px Japanese font draws kanji illegibly."
-    },
     "inspiring.": {
       "override": "\nあこがれちゃうー！",
       "reason": "engine-corpus",
@@ -4771,11 +4776,6 @@
       "override": "\nやっぱり　へん！",
       "reason": "engine-corpus",
       "provenance": "Corpus automatic unique match from poke-corpus GoldSilver; printf and multiline contract validated."
-    },
-    "is in love with\n%s!": {
-      "override": "%sに\nメロメロだ！",
-      "reason": "engine-contract-gap",
-      "provenance": "Corpus-backed from gs.battle.InLoveWithText, the partner-#MON half of the two-message split; see \"%s\\nis in love with\"."
     },
     "is inspiring!": {
       "override": "\nわたし　あこがれちゃう！",

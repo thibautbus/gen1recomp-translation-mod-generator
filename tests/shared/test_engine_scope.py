@@ -106,7 +106,7 @@ class EngineScopeTests(unittest.TestCase):
         self.assertEqual(result["ADAPTIVE"]["eligibility"], "ineligible")
         self.assertEqual(result["ADAPTIVE"]["provenance"], "engine_dynamic")
         self.assertIn("src/ui/OptionsMenu.lua:533", result["ADAPTIVE"]["callsite"])
-        self.assertIn("src/ui/gen2/OptionsMenu.lua:467", result["ADAPTIVE"]["callsite"])
+        self.assertIn("src/ui/gen2/OptionsMenu.lua:469", result["ADAPTIVE"]["callsite"])
 
     def test_finite_dynamic_option_and_time_domains_are_manifested(self):
         scope = load_scope()
@@ -238,7 +238,7 @@ class EngineScopeTests(unittest.TestCase):
 
     def test_manifest_and_lua_suffix_rules(self):
         scope = load_scope()
-        self.assertEqual(scope["gen1recomp_revision"], "7ab2f86586d73b9cf73d07915086ca89071ed887")
+        self.assertEqual(scope["gen1recomp_revision"], "5bf900e3fa8510bbec9f2d02a3015ee17c08eb64")
         self.assertEqual(
             classify_callsites([{"source": "x", "path": "ui/BagMenu.lua", "line": 1}])["x"]["eligibility"],
             "eligible",
