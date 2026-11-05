@@ -443,7 +443,7 @@ class GsReleaseGateFlowTests(unittest.TestCase):
                         self.assertNotEqual(missing.returncode, 0)
                         self.assertIn("registers the expected roster name patch", missing.stderr)
 
-    def test_crystal_rom_text_gate_uses_data_text_and_the_real_rom_text_consumer(self):
+    def test_rom_text_gate_uses_data_text_and_the_real_rom_text_consumer(self):
         luajit = _which_luajit()
         if luajit is None:
             self.skipTest("LuaJIT unavailable")
@@ -467,6 +467,7 @@ class GsReleaseGateFlowTests(unittest.TestCase):
             "type_names": {"FIRE": "FEU"},
             "status_labels": {"sleep": "SOM"},
             "oak_speech": {"_OakText1": "Bienvenue dans le monde des POKéMON !"},
+            "rom_text": {"FixtureBattleText": "{USER}\nligne de combat de test!{PROMPT}"},
         }
         crystal = {
             "rom_text": {"_AreYouABoyOrAreYouAGirlText": "Es-tu un garçon ou une fille ?"},
@@ -486,6 +487,7 @@ class GsReleaseGateFlowTests(unittest.TestCase):
             )
             expectations.unlink(missing_ok=True)
         self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("RomText reads rom_text[FixtureBattleText]", result.stdout)
         self.assertIn("RomText reads crystal_rom_text", result.stdout)
 
     def test_registry_expectations_gate_rejects_empty_file(self):
@@ -693,7 +695,20 @@ class BuildGsDialogueModTests(unittest.TestCase):
         )
         (gold_out / "gs_labels.tsv").write_text("Greeting\t55:0001\n", encoding="utf-8")
         (gold_out / "gs_stages.tsv").write_text("text\tok\n", encoding="utf-8")
-        (gold_out / "gs_rom_text.tsv").write_text("_FixtureText\tFixture text.\n", encoding="utf-8")
+        (gold_out / "gs_rom_text.tsv").write_text(
+            "FixtureBattleText\t{USER}\\nfixture line!{PROMPT}\n_FixtureText\tFixture text.\n",
+            encoding="utf-8",
+        )
+        # The engine files config/gsc/rom_text_scope.json lists as data.text
+        # readers; only the battle names one of the extracted labels.
+        engine = root / "engine"
+        for reader in ("src/battle/gen2/Battle.lua", "src/script/gen2/specials/battle_tower.lua",
+                       "src/ui/gen2/GenderSelect.lua", "src/ui/gen2/union/Text.lua"):
+            (engine / reader).parent.mkdir(parents=True, exist_ok=True)
+            (engine / reader).write_text("return {}\n", encoding="utf-8")
+        (engine / "src/battle/gen2/Battle.lua").write_text(
+            'self:moveText("FixtureBattleText", attacker, defender)\n', encoding="utf-8",
+        )
         (gold_out / "gs_species.tsv").write_text("BULBASAUR\t1\tBULBASAUR\n", encoding="utf-8")
         (gold_out / "gs_moves.tsv").write_text("ABSORB\t71\tABSORB\n", encoding="utf-8")
         (gold_out / "gs_items.tsv").write_text("AMULET_COIN\t91\tAMULET COIN\n", encoding="utf-8")
@@ -703,9 +718,15 @@ class BuildGsDialogueModTests(unittest.TestCase):
         (gold_out / "gs_landmarks.tsv").write_text("LANDMARK_TEST\t1\tTEST\n", encoding="utf-8")
         corpus = root / "corpus"
         corpus.mkdir()
-        (corpus / "qid_msg.txt").write_text("gs.a.Greeting\n", encoding="utf-8")
-        (corpus / "en_msg.txt").write_text("Hello there!\n", encoding="utf-8")
-        (corpus / "fr_msg.txt").write_text("Bonjour!\n", encoding="utf-8")
+        (corpus / "qid_msg.txt").write_text(
+            "gs.a.Greeting\ngs.battle.FixtureBattleText\n", encoding="utf-8",
+        )
+        (corpus / "en_msg.txt").write_text(
+            "Hello there!\n{text_start}<USER><LINE>fixture line!<PROMPT>\n", encoding="utf-8",
+        )
+        (corpus / "fr_msg.txt").write_text(
+            "Bonjour!\n{text_start}<USER><LINE>ligne de test!<PROMPT>\n", encoding="utf-8",
+        )
         return gold_out, corpus
 
     def test_builds_a_mod_with_the_joined_text_catalog(self):
@@ -891,6 +912,13 @@ class BuildGsDialogueModTests(unittest.TestCase):
             self.assertEqual(match.call_args.kwargs["engine_profile"], PINNED_PROFILE)
             self.assertEqual(stats["_gate_catalogs"]["strings"], {"Hello!": "Bonjour!"})
             self.assertEqual(stats["engine_profile"], PINNED_PROFILE)
+            # The pinned engine reads its battle text by label: the label the
+            # battle names joins its corpus row and keeps the line's ending.
+            self.assertEqual(stats["_gate_catalogs"]["rom_text"],
+                             {"FixtureBattleText": "{USER}\nligne de test!{PROMPT}"})
+            self.assertEqual(stats["coverage"]["rom_text"]["total"], 1)
+            self.assertIn("mod.content.rom_text:override(id, value)",
+                          (mod_dir / "main.lua").read_text(encoding="utf-8"))
 
 
 class GsDialogueGateTests(unittest.TestCase):

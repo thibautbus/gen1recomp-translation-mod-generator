@@ -30,14 +30,16 @@ class EngineProfile:
 PROFILES = {
     # The pinned profile still resolves engine Strings()/Strings.source()
     # callsites (match_gs_engine_strings verifies the checkout against the
-    # pin itself instead of trusting it outright) -- only the genuinely new
-    # Gen 2 registries and RomText support are upstream-local exclusives.
+    # pin itself instead of trusting it outright), and fills the rom_text
+    # registry the pinned engine reads its Gen 2 battle text from (data.text,
+    # src/core/RomText.lua) -- only the genuinely new Gen 2 registries are
+    # upstream-local exclusives.
     # supports_gen2_registries covers type_names/status_labels, whose Gen 2
     # screens still derive their labels without reading the merged registry;
     # the phone_contacts/decorations/radio_channels content registries are
     # read by the pinned engine's own Phone, Decorations and Pokegear/MapRadio
     # modules, so both profiles ship them.
-    PINNED_PROFILE: EngineProfile(PINNED_PROFILE, True, False, False, True),
+    PINNED_PROFILE: EngineProfile(PINNED_PROFILE, True, True, False, True),
     UPSTREAM_PROFILE: EngineProfile(UPSTREAM_PROFILE, True, True, True, True),
 }
 

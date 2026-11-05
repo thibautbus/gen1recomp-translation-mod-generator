@@ -307,7 +307,7 @@ class GsImportTests(unittest.TestCase):
             (destination / name).write_text("fixture\n", encoding="utf-8")
 
     def test_pinned_gold_and_silver_imports_do_not_require_upstream_only_tsv(self):
-        self.assertNotIn("gs_rom_text.tsv", GS_PINNED_REQUIRED_TSV)
+        self.assertIn("gs_rom_text.tsv", GS_PINNED_REQUIRED_TSV)
         self.assertNotIn("gs_types.tsv", GS_PINNED_REQUIRED_TSV)
         for import_function, verifier, version in (
             (import_gs_rom, "verify_gs_rom", "gold"),

@@ -1,0 +1,39 @@
+{
+  "schema": "gen1recomp-translation-mods/gs-rom-text-scope",
+  "version": 1,
+  "description": "Engine files that print the cart's own text by label through data.text (src/core/RomText.lua), which mod.content.rom_text overrides on Gen 2. The scope is every label of the extracted rom_text catalog named in these files' code. `slots` says how the reader fills the text's {MARKERS}: `named` readers substitute them by name, so a translation may reorder them, drop one, or name the battler the engine always passes; `exact` readers print the text as stored, so a translation keeps the English markers in order. `anchors` replaces the corpus row a label would join by its own name, per language, where the corpus places that label's text elsewhere. This file contains selectors only, never translated prose.",
+  "readers": {
+    "src/battle/gen2": {
+      "slots": "named",
+      "why": "Battle:romText fills {USER} and {TARGET} with the battlers it is always given, {STRBUF} and {NUM} with the value it is passed (src/battle/gen2/Battle.lua)."
+    },
+    "src/script/gen2/specials/battle_tower.lua": {
+      "slots": "exact",
+      "why": "The Battle Tower's entry rules are shown as RomText returns them; the script VM fills {STRBUF} itself."
+    },
+    "src/ui/gen2/GenderSelect.lua": {
+      "slots": "exact",
+      "why": "Crystal's gender question is printed as RomText returns it."
+    },
+    "src/ui/gen2/union/Text.lua": {
+      "slots": "exact",
+      "why": "The Union Room's cancelled-link line is read straight from data.text."
+    }
+  },
+  "anchors": {
+    "ko": {
+      "InLoveWithText": {
+        "qid": "gs.battle.InfatuationText",
+        "why": "The Korean cart's battle text sits one label later than the English around the infatuation messages: InLoveWithText's own row is the ENDURE line, InfatuationText's row is the falling-in-love line."
+      },
+      "InfatuationText": {
+        "qid": "gs.battle.DisabledMoveText",
+        "why": "Same shift: DisabledMoveText's Korean row is the infatuation-kept-it-from-attacking line."
+      },
+      "DisabledMoveText": {
+        "qid": "gs.battle.LoafingAroundText",
+        "why": "Same shift: LoafingAroundText's Korean row is the move-is-disabled line."
+      }
+    }
+  }
+}

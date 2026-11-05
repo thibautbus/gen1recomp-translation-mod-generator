@@ -6,7 +6,6 @@ from unittest.mock import patch
 
 from pipeline.gsc.crystal_mod import (
     crystal_feature_catalogs, crystal_text_catalog_from_join, join_crystal_dialogue,
-    join_crystal_rom_text, load_crystal_rom_text_anchors, parse_rom_text_catalog,
     load_crystal_dialogue_overrides, load_crystal_pointer_decisions,
 )
 from pipeline.gsc.crystal_registries import (
@@ -113,36 +112,6 @@ class CrystalFeatureCatalogTests(unittest.TestCase):
         (root / "qid_msg.txt").write_text("\n".join(row[0] for row in rows) + "\n", encoding="utf-8")
         (root / "en_msg.txt").write_text("\n".join(row[1] for row in rows) + "\n", encoding="utf-8")
         (root / f"{language}_msg.txt").write_text("\n".join(row[2] for row in rows) + "\n", encoding="utf-8")
-
-    def test_rom_text_parser_decodes_only_the_extractor_escape_contract(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "gs_rom_text.tsv"
-            path.write_text("_One\tLine\\nTwo\\tX\\\\Y\n", encoding="utf-8")
-            self.assertEqual(parse_rom_text_catalog(path), {"_One": "Line\nTwo\tX\\Y"})
-            path.write_text("_One\tbad\\q\n", encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "invalid escape"):
-                parse_rom_text_catalog(path)
-
-    def test_joins_all_seven_crystal_rom_text_labels_by_reviewed_qid(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            labels = load_crystal_rom_text_anchors()
-            rows = []
-            extracted = []
-            for index, (label, qid) in enumerate(labels.items()):
-                source = f"Unique Crystal ROM text {index}."
-                target = f"Texte Cristal unique {index}."
-                extracted.append(f"{label}\t{source}")
-                rows.append((qid, source, target))
-            (root / "extracted").mkdir()
-            (root / "extracted" / "gs_rom_text.tsv").write_text(
-                "\n".join(extracted) + "\n", encoding="utf-8",
-            )
-            self.write_corpus(root / "corpus", rows)
-            catalog, stats = join_crystal_rom_text(root / "extracted", root / "corpus", "fr")
-            self.assertEqual(set(catalog), set(labels))
-            self.assertEqual(stats["translated"], 7)
-            self.assertEqual(stats["fallback_english"], 0)
 
     def test_crystal_registry_catalog_is_exactly_four_items_one_class_one_landmark(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -295,10 +264,12 @@ class CrystalFeatureCatalogTests(unittest.TestCase):
         }
         with (
             patch("pipeline.gsc.crystal_mod.crystal_registry_catalogs", return_value=({}, named_stats)),
-            patch("pipeline.gsc.crystal_mod.join_crystal_rom_text", return_value=({}, {"translated": 7, "total": 7})),
+            patch("pipeline.gsc.crystal_mod.parse_rom_text_catalog", return_value={}),
+            patch("pipeline.gsc.crystal_mod.rom_text_scope", return_value={}),
+            patch("pipeline.gsc.crystal_mod.join_rom_text", return_value=({}, {"translated": 55, "total": 55})),
             patch("pipeline.gsc.crystal_mod.match_crystal_engine_strings", return_value=({}, {"translated": 48, "total": 48})),
         ):
-            _catalogs, stats = crystal_feature_catalogs("unused", "unused", "fr")
+            _catalogs, stats = crystal_feature_catalogs("unused", "unused", "fr", engine_source="unused")
         self.assertEqual(stats["aggregate"], {
             "translated": 54, "total": 54, "percent": 100.0,
             "policy": "english-fallback",
@@ -307,7 +278,7 @@ class CrystalFeatureCatalogTests(unittest.TestCase):
         self.assertEqual(stats["engine_crystal"]["translated"], 48)
         self.assertEqual(stats["rom_text"]["runtime_dependency"], "mod.content.rom_text")
 
-    def test_pinned_profile_keeps_the_54_autonomous_crystal_catalogs(self):
+    def test_without_an_engine_checkout_no_rom_text_catalog_is_built(self):
         named = {
             "item_names": {"BLUE_CARD": "CARTE"},
             "trainer_class_names": {"MYSTICALMAN": "MYSTIQUE"},
@@ -330,7 +301,7 @@ class CrystalFeatureCatalogTests(unittest.TestCase):
         self.assertEqual(set(catalogs), {"item_names", "trainer_class_names", "landmarks", "strings"})
         self.assertEqual(stats["aggregate"]["total"], 54)
         self.assertNotIn("rom_text", catalogs)
-        self.assertEqual(stats["rom_text"]["runtime_dependency"], "not available in v0.2.41")
+        self.assertEqual(stats["rom_text"]["total"], 0)
 
 
 class LoadCrystalPointerDecisionsTests(unittest.TestCase):
